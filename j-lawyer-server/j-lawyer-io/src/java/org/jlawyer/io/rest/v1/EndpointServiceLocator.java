@@ -673,6 +673,7 @@ import org.jlawyer.io.rest.v3.CasesEndpointV3;
 import org.jlawyer.io.rest.v4.CalendarEndpointV4;
 import org.jlawyer.io.rest.v4.CasesEndpointV4;
 import org.jlawyer.io.rest.v5.CasesEndpointV5;
+import org.jlawyer.io.rest.v5.ContactsEndpointV5;
 
 @ApplicationPath("/rest")
 public class EndpointServiceLocator extends Application
@@ -691,6 +692,7 @@ public class EndpointServiceLocator extends Application
         s.add(FormsEndpointV1.class);
         s.add(CalendarEndpointV4.class);
         s.add(CasesEndpointV5.class);
+        s.add(ContactsEndpointV5.class);
         return s;
     }
 }

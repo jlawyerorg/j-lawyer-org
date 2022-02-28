@@ -836,7 +836,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileTagsBean> tags = cases.getTags(id);
-            ArrayList<RestfulTagV1> tagList = new ArrayList<RestfulTagV1>();
+            ArrayList<RestfulTagV1> tagList = new ArrayList<>();
             for (ArchiveFileTagsBean tag : tags) {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());

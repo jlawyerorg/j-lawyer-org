@@ -664,10 +664,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v5;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -682,6 +685,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
 
@@ -808,6 +812,48 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    /**
+     * Returns all tags attached to the document given by its ID
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/document/{id}/tags")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentTags(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileDocumentsBean doc=cases.getDocument(id);
+            if (doc == null) {
+                log.error("document with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<DocumentTagsBean> tags = cases.getDocumentTags(id);
+            ArrayList<RestfulTagV1> tagList = new ArrayList<>();
+            for (DocumentTagsBean tag : tags) {
+                RestfulTagV1 t = new RestfulTagV1();
+                t.setId(tag.getId());
+                t.setName(tag.getTagName());
+                tagList.add(t);
+            }
+
+            Response res = Response.ok(tagList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
             Response res = Response.serverError().build();
             return res;
         }

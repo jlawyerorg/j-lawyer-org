@@ -663,22 +663,126 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v5;
 
-import javax.ejb.Local;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressTagsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/contacts
  */
-@Local
-public interface CasesEndpointLocalV5 {
+@Stateless
+@Path("/v5/contacts")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
 
-    Response getSynced(String principalId);
+    private static final Logger log = Logger.getLogger(ContactsEndpointV5.class.getName());
+
+    /**
+     * Returns all tags attached to the contact give by its ID
+     *
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/tags")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContactTags(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr = addresses.getAddress(id);
+            if (adr == null) {
+                log.error("contact with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            
+            Collection<AddressTagsBean> tags = addresses.getTags(id);
+            ArrayList<RestfulTagV1> tagList = new ArrayList<>();
+            for (AddressTagsBean tag : tags) {
+                RestfulTagV1 t = new RestfulTagV1();
+                t.setId(tag.getId());
+                t.setName(tag.getTagName());
+                tagList.add(t);
+            }
+
+            Response res = Response.ok(tagList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get address " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
     
-    Response enableCaseSync(RestfulCaseSyncSettingV5 syncSettings);
-    
-    Response getHistory(String id);
-    
-    Response getDocumentTags(String id);
+    /**
+     * Returns all cases for the contact given by its ID
+     *
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/cases")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesForContact(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr = addresses.getAddress(id);
+            if (adr == null) {
+                log.error("contact with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<ArchiveFileAddressesBean> aabList=cases.getArchiveFileAddressesForAddress(id);
+            ArrayList<RestfulCaseOverviewV1> caseList = new ArrayList<>();
+            for (ArchiveFileAddressesBean aab : aabList) {
+                ArchiveFileBean afb=aab.getArchiveFileKey();
+                RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                rco.setId(afb.getId());
+                rco.setName(afb.getName());
+                rco.setFileNumber(afb.getFileNumber());
+                caseList.add(rco);
+            }
+
+            Response res = Response.ok(caseList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get address " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
 }

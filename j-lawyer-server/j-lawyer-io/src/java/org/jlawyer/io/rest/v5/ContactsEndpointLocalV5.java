@@ -665,20 +665,16 @@ package org.jlawyer.io.rest.v5;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
 
 /**
  *
  * @author jens
  */
 @Local
-public interface CasesEndpointLocalV5 {
+public interface ContactsEndpointLocalV5 {
 
-    Response getSynced(String principalId);
+    Response getContactTags(String id);
     
-    Response enableCaseSync(RestfulCaseSyncSettingV5 syncSettings);
+    Response getCasesForContact(String id);
     
-    Response getHistory(String id);
-    
-    Response getDocumentTags(String id);
 }

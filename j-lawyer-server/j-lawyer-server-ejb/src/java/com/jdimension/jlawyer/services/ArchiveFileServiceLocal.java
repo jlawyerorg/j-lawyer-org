@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -726,6 +727,8 @@ public interface ArchiveFileServiceLocal {
 
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
     
+    Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
+    
     public boolean renameDocument(String id, String newName) throws Exception;
     
     public void removeDocument(String id) throws Exception;
@@ -777,5 +780,7 @@ public interface ArchiveFileServiceLocal {
     List<CaseSyncSettings> getCaseSyncs(String caseId);
 
     List<CaseSyncSettings> getCaseSyncsForUser(String principalId) throws Exception;
+    
+    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
     
 }
