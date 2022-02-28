@@ -2519,6 +2519,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 } else {
                     Message clone = (Message) m.clone();
                     clone.getAttachments().clear();
+                    clone.getVhnAttachments().clear();
                     BeaAccess.addSignatureVerification(BeaAccess.getInstance(), clone);
                     export = BeaAccess.exportMessage(clone);
                     data = export.getContent();
@@ -2575,6 +2576,43 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                             if (newName.trim().length() == 0) {
                                 newName = "Anhang";
+                            }
+
+                            ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
+
+                            if (folderId != null) {
+                                ArrayList<String> docList = new ArrayList<>();
+                                docList.add(newlyAddedDocument.getId());
+                                afs.moveDocumentsToFolder(docList, folderId);
+                            }
+
+                            temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
+                            if ("true".equalsIgnoreCase(temp)) {
+                                String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
+                                if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+                                    afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
+                                }
+                            }
+                        }
+                        
+                        for (Attachment att : m.getVhnAttachments()) {
+                            String attachmentName = att.getFileName();
+                            byte[] attachmentData = att.getContent();
+                            String newName = attachmentName;
+                            if (newName == null) {
+                                newName = "";
+                            }
+                            // file names need to be unique across the entire case, so when saving multiple
+                            // beA messages, there are multiple xjustiz sds
+                            if (newName.equalsIgnoreCase("vhn.xml")) {
+                                newName = m.getId() + "_" + newName;
+                            } else if (newName.equalsIgnoreCase("vhn.xml.p7s")) {
+                                newName = m.getId() + "_" + newName;
+                            }
+                            newName = FileUtils.sanitizeFileName(newName);
+
+                            if (newName.trim().length() == 0) {
+                                newName = "VHN-Anhang";
                             }
 
                             ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
@@ -2658,6 +2696,35 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                         if (newName.trim().length() == 0) {
                             newName = "Anhang";
+                        }
+
+                        ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
+
+                        if (folderId != null) {
+                            ArrayList<String> docList = new ArrayList<>();
+                            docList.add(newlyAddedDocument.getId());
+                            afs.moveDocumentsToFolder(docList, folderId);
+                        }
+                    }
+                    
+                    for (Attachment att : m.getVhnAttachments()) {
+                        String attachmentName = att.getFileName();
+                        byte[] attachmentData = att.getContent();
+                        String newName = attachmentName;
+                        if (newName == null) {
+                            newName = "";
+                        }
+                        // file names need to be unique across the entire case, so when saving multiple
+                        // beA messages, there are multiple xjustiz sds
+                        if (newName.equalsIgnoreCase("vhn.xml")) {
+                            newName = m.getId() + "_" + newName;
+                        } else if (newName.equalsIgnoreCase("vhn.xml.p7s")) {
+                                newName = m.getId() + "_" + newName;
+                        }
+                        newName = FileUtils.sanitizeFileName(newName);
+
+                        if (newName.trim().length() == 0) {
+                            newName = "VHN-Anhang";
                         }
 
                         ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");

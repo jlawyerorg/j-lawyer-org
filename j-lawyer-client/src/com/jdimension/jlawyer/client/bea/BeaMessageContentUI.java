@@ -883,6 +883,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         for (Attachment a : attachments) {
             ((DefaultListModel) lstAttachments.getModel()).addElement(a);
         }
+        ArrayList<Attachment> vhnAttachments = msg.getVhnAttachments();
+        for (Attachment a : vhnAttachments) {
+            ((DefaultListModel) lstAttachments.getModel()).addElement(a);
+        }
 
         editBody.setText(msg.getBody());
 
