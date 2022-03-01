@@ -776,17 +776,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.initializing = true;
 
         initComponents();
-        
+
         this.lblTempFilesWarning.setIcon(null);
         this.lblTempFilesWarning.setText("");
-        
+
         try {
-            
+
             new Thread(() -> {
                 try {
-                    int tempFolders=BeaAccess.countTempFolders();
-                    int tempFoldersLimit=ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
-                    if(tempFolders>tempFoldersLimit) {
+                    int tempFolders = BeaAccess.countTempFolders();
+                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
+                    if (tempFolders > tempFoldersLimit) {
                         SwingUtilities.invokeLater(() -> {
                             lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
                             lblTempFilesWarning.setText("Hinweis: temporäre Dateien");
@@ -2594,32 +2594,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 }
                             }
                         }
-                        
+
                         for (Attachment att : m.getVhnAttachments()) {
-                            String attachmentName = att.getFileName();
-                            byte[] attachmentData = att.getContent();
-                            String newName = attachmentName;
-                            if (newName == null) {
-                                newName = "";
-                            }
-                            // file names need to be unique across the entire case, so when saving multiple
-                            // beA messages, there are multiple xjustiz sds
-                            if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
-                                newName = m.getId() + "_" + newName;
-                            }
-                            newName = FileUtils.sanitizeFileName(newName);
-
-                            if (newName.trim().length() == 0) {
-                                newName = "VHN-Anhang";
-                            }
-
-                            ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
-
-                            if (folderId != null) {
-                                ArrayList<String> docList = new ArrayList<>();
-                                docList.add(newlyAddedDocument.getId());
-                                afs.moveDocumentsToFolder(docList, folderId);
-                            }
+                            ArchiveFileDocumentsBean newlyAddedDocument=this.saveVhnAttachmentToCase(m.getId(), att, caseId, folderId, afs);
 
                             temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
                             if ("true".equalsIgnoreCase(temp)) {
@@ -2704,32 +2681,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             afs.moveDocumentsToFolder(docList, folderId);
                         }
                     }
-                    
+
                     for (Attachment att : m.getVhnAttachments()) {
-                        String attachmentName = att.getFileName();
-                        byte[] attachmentData = att.getContent();
-                        String newName = attachmentName;
-                        if (newName == null) {
-                            newName = "";
-                        }
-                        // file names need to be unique across the entire case, so when saving multiple
-                        // beA messages, there are multiple xjustiz sds
-                        if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
-                            newName = m.getId() + "_" + newName;
-                        }
-                        newName = FileUtils.sanitizeFileName(newName);
-
-                        if (newName.trim().length() == 0) {
-                            newName = "VHN-Anhang";
-                        }
-
-                        ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
-
-                        if (folderId != null) {
-                            ArrayList<String> docList = new ArrayList<>();
-                            docList.add(newlyAddedDocument.getId());
-                            afs.moveDocumentsToFolder(docList, folderId);
-                        }
+                        this.saveVhnAttachmentToCase(m.getId(), att, caseId, folderId, afs);
                     }
 
                 }
@@ -2768,6 +2722,35 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         }
         return false;
+    }
+
+    private ArchiveFileDocumentsBean saveVhnAttachmentToCase(String messageId, Attachment att, String caseId, String folderId, ArchiveFileServiceRemote afs) throws Exception {
+        String attachmentName = att.getFileName();
+        byte[] attachmentData = att.getContent();
+        String newName = attachmentName;
+        if (newName == null) {
+            newName = "";
+        }
+        // file names need to be unique across the entire case, so when saving multiple
+        // beA messages, there are multiple xjustiz sds
+        if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
+            newName = messageId + "_" + newName;
+        }
+        newName = FileUtils.sanitizeFileName(newName);
+
+        if (newName.trim().length() == 0) {
+            newName = "VHN-Anhang";
+        }
+
+        ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
+
+        if (folderId != null) {
+            ArrayList<String> docList = new ArrayList<>();
+            docList.add(newlyAddedDocument.getId());
+            afs.moveDocumentsToFolder(docList, folderId);
+        }
+        
+        return newlyAddedDocument;
     }
 
     @Override
@@ -2854,7 +2837,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
                 String senderSafeId = null;
                 for (PostBox inbox : inboxes) {
-                    Recipient r=mh.getRecipient();
+                    Recipient r = mh.getRecipient();
                     if (r.getSafeId().equals(inbox.getSafeId())) {
                         senderSafeId = r.getSafeId();
                         break;
@@ -2897,7 +2880,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
 
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
-                
+
                 Message sentMessage = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, m.getSenderSafeId(), code, comment);
 
                 return true;
