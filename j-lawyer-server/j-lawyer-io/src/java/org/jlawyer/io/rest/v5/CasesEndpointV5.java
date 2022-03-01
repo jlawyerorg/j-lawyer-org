@@ -837,8 +837,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             ArchiveFileDocumentsBean doc=cases.getDocument(id);
             if (doc == null) {
                 log.error("document with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             Collection<DocumentTagsBean> tags = cases.getDocumentTags(id);
@@ -850,12 +849,10 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 tagList.add(t);
             }
 
-            Response res = Response.ok(tagList).build();
-            return res;
+            return Response.ok(tagList).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 

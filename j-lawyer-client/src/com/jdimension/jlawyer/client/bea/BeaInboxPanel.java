@@ -2604,9 +2604,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
                             // file names need to be unique across the entire case, so when saving multiple
                             // beA messages, there are multiple xjustiz sds
-                            if (newName.equalsIgnoreCase("vhn.xml")) {
-                                newName = m.getId() + "_" + newName;
-                            } else if (newName.equalsIgnoreCase("vhn.xml.p7s")) {
+                            if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
                                 newName = m.getId() + "_" + newName;
                             }
                             newName = FileUtils.sanitizeFileName(newName);
@@ -2716,10 +2714,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
                         // file names need to be unique across the entire case, so when saving multiple
                         // beA messages, there are multiple xjustiz sds
-                        if (newName.equalsIgnoreCase("vhn.xml")) {
+                        if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
                             newName = m.getId() + "_" + newName;
-                        } else if (newName.equalsIgnoreCase("vhn.xml.p7s")) {
-                                newName = m.getId() + "_" + newName;
                         }
                         newName = FileUtils.sanitizeFileName(newName);
 
