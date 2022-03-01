@@ -707,7 +707,7 @@ public class BeaAccess {
 
     public static String FOLDER_NAME_JLAWYER_PROCESSED = "in Akte importiert";
 
-    private final String productName = "j-lawyer.org 1.9";
+    private final String productName = "j-lawyer.org " + VersionUtils.getFullClientVersion();
     private final String producer = "j-lawyer.org";
     private final String registrationId = "1012.0001.0001.000224";
 
