@@ -698,6 +698,7 @@ import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
 
     private static final Logger log = Logger.getLogger(ContactsEndpointV5.class.getName());
+    private static final String LOOKUP_ADDRESSSERVICE="java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
 
     /**
      * Returns all tags attached to the contact give by its ID
@@ -715,12 +716,11 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
         try {
 
             InitialContext ic = new InitialContext();
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSSERVICE);
             AddressBean adr = addresses.getAddress(id);
             if (adr == null) {
                 log.error("contact with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             
@@ -733,12 +733,10 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 tagList.add(t);
             }
 
-            Response res = Response.ok(tagList).build();
-            return res;
+            return Response.ok(tagList).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
@@ -759,17 +757,15 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
         try {
 
             InitialContext ic = new InitialContext();
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSSERVICE);
             
             addresses.deleteContactTagById(id);
 
-            Response res = Response.ok().build();
+            return Response.ok().build();
 
-            return res;
         } catch (Exception ex) {
             log.error("can not case tag " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
@@ -792,7 +788,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
         try {
 
             InitialContext ic = new InitialContext();
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSSERVICE);
 
             AddressBean addr=addresses.getAddress(id);
             if(addr!=null) {
@@ -827,12 +823,11 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSSERVICE);
             AddressBean adr = addresses.getAddress(id);
             if (adr == null) {
                 log.error("contact with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             Collection<ArchiveFileAddressesBean> aabList=cases.getArchiveFileAddressesForAddress(id);
@@ -846,12 +841,10 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 caseList.add(rco);
             }
 
-            Response res = Response.ok(caseList).build();
-            return res;
+            return Response.ok(caseList).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
