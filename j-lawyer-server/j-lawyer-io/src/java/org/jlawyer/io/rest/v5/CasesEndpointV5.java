@@ -666,8 +666,11 @@ package org.jlawyer.io.rest.v5;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBeanFacadeLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -676,6 +679,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -854,6 +858,145 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             log.error("can not get document " + id, ex);
             return Response.serverError().build();
         }
+    }
+    
+    /**
+     * Deletes a cases tag given the tags ID.
+     *
+     * @param id tag ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/tags/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteCaseTag(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            ArchiveFileTagsBeanFacadeLocal tags = (ArchiveFileTagsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileTagsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileTagsBeanFacadeLocal");
+            
+            ArchiveFileTagsBean tag=tags.find(id);
+            if(tag!=null) {
+                cases.setTag(tag.getArchiveFileKey().getId(), tag, false);
+            }
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete case tag " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a case tag.
+     *
+     * @param id case ID
+     * @param tag the tag to be added. its id may be empty.
+     * @return 
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/tags")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createCaseTag(@PathParam("id") String id, RestfulTagV1 tag) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            ArchiveFileBean afb=cases.getArchiveFile(id);
+            if(afb!=null) {
+                ArchiveFileTagsBean newTag=new ArchiveFileTagsBean();
+                newTag.setArchiveFileKey(afb);
+                newTag.setTagName(tag.getName());
+                newTag.setId(tag.getId());
+                cases.setTag(afb.getId(), newTag, true);
+            }
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create case tag " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a document tag.
+     *
+     * @param id document ID
+     * @param tag the tag to be added. its id may be empty.
+     * @return 
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/documents/{id}/tags")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createDocumentTag(@PathParam("id") String id, RestfulTagV1 tag) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            ArchiveFileDocumentsBean doc=cases.getDocument(id);
+            if(doc!=null) {
+                DocumentTagsBean newTag=new DocumentTagsBean();
+                newTag.setArchiveFileKey(doc);
+                newTag.setTagName(tag.getName());
+                newTag.setId(tag.getId());
+                cases.setDocumentTag(doc.getId(), newTag, true);
+            }
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create document tag " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Deletes a documents tag given the tags ID.
+     *
+     * @param id tag ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/documents/tags/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteDocumentTag(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            DocumentTagsBeanFacadeLocal tags = (DocumentTagsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/DocumentTagsBeanFacade!com.jdimension.jlawyer.persistence.DocumentTagsBeanFacadeLocal");
+            
+            DocumentTagsBean tag=tags.find(id);
+            if(tag!=null) {
+                cases.setDocumentTag(tag.getDocumentKey().getId(), tag, false);
+            }
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete document tag " + id, ex);
+            return Response.serverError().build();
+        }
+        
     }
 
 }

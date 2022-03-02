@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v5;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
 /**
  *
@@ -676,5 +677,9 @@ public interface ContactsEndpointLocalV5 {
     Response getContactTags(String id);
     
     Response getCasesForContact(String id);
+    
+    Response deleteContactTag(String id);
+    
+    Response createContactTag(String id, RestfulTagV1 tag);
     
 }

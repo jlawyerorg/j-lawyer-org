@@ -783,4 +783,8 @@ public interface ArchiveFileServiceLocal {
     
     Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
     
+    void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
+    
+    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
+    
 }

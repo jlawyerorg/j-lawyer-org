@@ -675,7 +675,9 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -737,6 +739,74 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
             log.error("can not get address " + id, ex);
             Response res = Response.serverError().build();
             return res;
+        }
+    }
+    
+    /**
+     * Deletes a contacts tag given the tags ID.
+     *
+     * @param id tag ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/tags/{id}")
+    @RolesAllowed({"writeAddressRole"})
+    public Response deleteContactTag(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            addresses.deleteContactTagById(id);
+
+            Response res = Response.ok().build();
+
+            return res;
+        } catch (Exception ex) {
+            log.error("can not case tag " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    /**
+     * Creates a contact tag.
+     *
+     * @param id contact ID
+     * @param tag the tag to be added. its id may be empty.
+     * @return 
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/tags")
+    @RolesAllowed({"writeAddressRole"})
+    public Response createContactTag(@PathParam("id") String id, RestfulTagV1 tag) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+
+            AddressBean addr=addresses.getAddress(id);
+            if(addr!=null) {
+                AddressTagsBean newTag=new AddressTagsBean();
+                newTag.setAddressKey(addr);
+                newTag.setTagName(tag.getName());
+                newTag.setId(tag.getId());
+                addresses.setTag(addr.getId(), newTag, true);
+            }
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create contact tag " + id, ex);
+            return Response.serverError().build();
         }
     }
     

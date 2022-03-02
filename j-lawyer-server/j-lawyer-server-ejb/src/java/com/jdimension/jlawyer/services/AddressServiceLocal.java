@@ -689,4 +689,8 @@ public interface AddressServiceLocal {
     
     Collection<AddressTagsBean> getTags(String addressId);
     
+    void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception;
+
+    void deleteContactTagById(String tagId) throws Exception;
+    
 }

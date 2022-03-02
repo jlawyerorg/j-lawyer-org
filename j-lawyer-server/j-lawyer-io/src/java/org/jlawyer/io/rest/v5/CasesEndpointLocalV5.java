@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v5;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
 
 /**
@@ -681,4 +682,12 @@ public interface CasesEndpointLocalV5 {
     Response getHistory(String id);
     
     Response getDocumentTags(String id);
+    
+    Response deleteCaseTag(String id);
+    
+    Response deleteDocumentTag(String id);
+    
+    Response createCaseTag(String id, RestfulTagV1 tag);
+    
+    Response createDocumentTag(String id, RestfulTagV1 tag);
 }

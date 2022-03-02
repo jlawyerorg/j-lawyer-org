@@ -1225,4 +1225,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     public void runFullAddressBookSync() {
         this.contactSync.runFullAddressBookSync();
     }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void deleteContactTagById(String tagId) throws Exception {
+        AddressTagsBean tag=this.addressTagsFacade.find(tagId);
+        if(tag!=null)
+            this.addressTagsFacade.remove(tag);
+    }
 }
