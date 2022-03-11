@@ -694,7 +694,7 @@ import org.apache.log4j.Logger;
 public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(CustomLauncherOptionsDialog.class.getName());
-    private static final String nonExisting="not-there";
+    private static final String NON_EXISTING="not-there";
     
     /**
      * Creates new form CustomLauncherOptionsDialog
@@ -738,12 +738,12 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 String launcher = key.substring(13);
                 launcher = launcher.substring(0, launcher.indexOf('.'));
                 String extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_EXTENSION;
-                if (nonExisting.equals(settings.getConfiguration(extensionKey, nonExisting))) {
+                if (NON_EXISTING.equals(settings.getConfiguration(extensionKey, NON_EXISTING))) {
                     // migrate old setting
                     settings.setConfiguration(extensionKey, launcher);
                 }
                 extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_DEFAULT;
-                if (nonExisting.equals(settings.getConfiguration(extensionKey, nonExisting))) {
+                if (NON_EXISTING.equals(settings.getConfiguration(extensionKey, NON_EXISTING))) {
                     // migrate old setting
                     settings.setConfiguration(extensionKey, "1");
                 }
@@ -1067,7 +1067,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lstLaunchersMousePressed
 
     private void mnuRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveActionPerformed
-        if (this.lstLaunchers.getSelectedValuesList().size() > 0) {
+        if (!this.lstLaunchers.getSelectedValuesList().isEmpty()) {
             ClientSettings settings = ClientSettings.getInstance();
             List selectedValues=this.lstLaunchers.getSelectedValuesList();
             for (Object selVal: selectedValues) {

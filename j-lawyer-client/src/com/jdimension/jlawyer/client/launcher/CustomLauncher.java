@@ -870,6 +870,6 @@ public class CustomLauncher extends Launcher {
     }
 
     public static boolean hasCustomLauncher(String extension) {
-        return (getCustomLauncherNames(extension).size()>0);
+        return (!(getCustomLauncherNames(extension).isEmpty()));
     }
 }
