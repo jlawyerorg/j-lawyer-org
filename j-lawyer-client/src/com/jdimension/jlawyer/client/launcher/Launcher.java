@@ -697,14 +697,6 @@ public abstract class Launcher {
         return observer.isDocumentReadOnly(documentIdentifier);
     }
 
-    protected String getExtension(String url) {
-        int index = url.lastIndexOf('.');
-        if (index > -1 && index < url.length()) {
-            return url.substring(index + 1);
-        }
-        return "url-with-no-extension";
-    }
-
     /**
      * @return the url
      */

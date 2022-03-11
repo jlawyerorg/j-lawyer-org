@@ -728,11 +728,14 @@ public class LauncherFactory {
     }
 
     public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
+        return getLauncher(fileName, content, store, null);
+    }
+    
+    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
-
+        
         ClientSettings set = ClientSettings.getInstance();
         String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-        boolean wordProcessorLibre = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO.equalsIgnoreCase(wordProcessor);
         boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
         // first check for internal launchers
@@ -752,9 +755,14 @@ public class LauncherFactory {
             return new BEAInternalLauncher(url, store);
         }
 
+        // then for forced custom launchers
+        if(customLauncherName!=null) {
+            return new CustomLauncher(url, store, customLauncherName);
+        }
+        
         // then for custom launchers
-        String extension = getExtension(lowerFileName);
-        if (hasCustomLauncher(extension)) {
+        String extension = FileUtils.getExtension(lowerFileName);
+        if (CustomLauncher.hasCustomLauncher(extension)) {
             return new CustomLauncher(url, store);
         }
 
@@ -811,33 +819,9 @@ public class LauncherFactory {
         return FileUtils.createTempFile(fileName, content, readOnly, false, 7l);
     }
 
-    private static String getExtension(String url) {
-        int index = url.lastIndexOf('.');
-        if (index > -1 && index < url.length()) {
-            return url.substring(index + 1);
-        }
-        return "url-with-no-extension";
-    }
-
     public static boolean isMicrosoftOfficeSupported() {
         if (SystemUtils.isWindows() || SystemUtils.isMacOs()) {
             return true;
-        }
-        return false;
-    }
-
-    private static boolean hasCustomLauncher(String extension) {
-        if (extension != null) {
-            if (!"".equals(extension)) {
-                ClientSettings settings = ClientSettings.getInstance();
-                String executable = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".executable", "");
-                String paramsRw = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-rw", "");
-                String paramsRo = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-ro", "");
-                if ("".equals(paramsRo)) {
-                    paramsRo = paramsRw;
-                }
-                return (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0);
-            }
         }
         return false;
     }

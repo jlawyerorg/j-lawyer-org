@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.configuration.CustomLauncherOptionsDialog;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -695,6 +696,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
+import com.jdimension.jlawyer.client.launcher.CustomLauncher;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
@@ -804,6 +806,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+
+        CustomLauncherOptionsDialog.upgradeSettings();
 
         DefaultStyledDocument doc = new DefaultStyledDocument();
         doc.setDocumentFilter(new DocumentSizeFilter(2495));
@@ -939,7 +943,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             });
             this.popCalculations.add(mi);
         }
-        
+
         this.newEventPanel.setNewEventListener(this);
 
         EventBroker b = EventBroker.getInstance();
@@ -1096,12 +1100,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tblGroups.setEnabled(!readOnly && !archived);
         this.cmbSubjectField.setEnabled(!readOnly && !archived);
         this.txtReason.setEnabled(!readOnly && !archived);
-        
+
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
         this.cmdAddNote.setEnabled(!readOnly && !archived);
         this.cmdHeaderAddNote.setEnabled(!readOnly && !archived);
         this.cmdUploadDocument.setEnabled(!readOnly && !archived);
-        
+
         this.cmdSearchClient.setEnabled(!readOnly && !archived);
 
         this.cmdNewRvg.setEnabled(!readOnly && !archived);
@@ -1123,7 +1127,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtFileNumber.setEnabled(false);
         this.txtName.setEnabled(!readOnly && !archived);
         this.txtNotice.setEnabled(!readOnly && !archived);
-        
 
         this.cmdShowHistorySelector.setEnabled(!readOnly && !archived);
         this.txtHistoryDesc.setEnabled(!readOnly && !archived);
@@ -1320,8 +1323,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.tblGroups.setValueAt(false, r, 0);
         }
         this.newEventPanel.setReviewAssignee("");
-        
-        
+
         this.cmbSubjectField.setSelectedItem("");
         this.txtReason.setText("");
         this.chkArchived.setSelected(false);
@@ -1338,7 +1340,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtCustom1.setText("");
         this.txtCustom2.setText("");
         this.taCustom3.setText("");
-        
+
         this.togCaseSync.setEnabled(false);
 
         this.tagPanel.removeAll();
@@ -1516,7 +1518,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.documentSelectionChanged();
         this.caseFolderPanel1.scrollToDocumentByName(fileName);
     }
-    
+
     public void selectEvent(String eventId) {
         this.tabPaneArchiveFile.setSelectedIndex(4);
     }
@@ -3258,6 +3260,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void showDocumentsPopup(MouseEvent evt) {
         this.mnuOpenInExternalMailer.setEnabled(false);
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+
+        // remove all custom launcher menu items
+        for (Component subMenu : this.mnuOpenDocumentWith.getMenuComponents()) {
+            if (((JMenuItem) subMenu).getClientProperty("customlaunchermenuitem") != null) {
+                this.mnuOpenDocumentWith.remove((JMenuItem) subMenu);
+            }
+        }
+
         if (selectedDocs.size() == 1) {
 
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
@@ -3275,6 +3285,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.mnuOpenDocumentMicrosoftOffice.setEnabled(true);
             } else {
                 this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
+            }
+
+            List<String> customLauncherNames = CustomLauncher.getCustomLauncherNames(FileUtils.getExtension(value.getName()));
+            for (String customLauncher : customLauncherNames) {
+                JMenuItem miCustomLauncher = new JMenuItem();
+                FileUtils fu = FileUtils.getInstance();
+                Icon icon = fu.getFileTypeIcon(value.getName());
+                miCustomLauncher.setText(customLauncher);
+                miCustomLauncher.setIcon(icon);
+                miCustomLauncher.putClientProperty("customlaunchermenuitem", "true");
+                ActionListener al = (ActionEvent e) -> {
+                    try {
+
+                        CaseUtils.openDocumentInCustomLauncher(dto, value, this.readOnly, this, customLauncher);
+
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments im externen Programm '" + customLauncher + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                };
+                miCustomLauncher.addActionListener(al);
+                this.mnuOpenDocumentWith.add(miCustomLauncher);
             }
 
         } else {
@@ -3308,8 +3339,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
         model.addRow(row);
-        
-        if(this.chkArchived.isSelected()) {
+
+        if (this.chkArchived.isSelected()) {
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
         }
@@ -3952,19 +3983,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        
+
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
             if (doc.getFolder() != null) {
                 if (!folders.containsKey(doc.getFolder().getId())) {
-                    folders.put(doc.getFolder().getId(), doc.getFolder());  
+                    folders.put(doc.getFolder().getId(), doc.getFolder());
                 }
             }
         }
         // if all of the selected documents are in the same folder, we can send the outgoing mail to the same folder
-        CaseFolder caseFolder=null;
-        if(folders.size()==1)
-            caseFolder=folders.get(folders.keySet().iterator().next());
+        CaseFolder caseFolder = null;
+        if (folders.size() == 1) {
+            caseFolder = folders.get(folders.keySet().iterator().next());
+        }
 
         dlg.setArchiveFile(dto, caseFolder);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
@@ -4009,20 +4041,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
-        
+
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
             if (doc.getFolder() != null) {
                 if (!folders.containsKey(doc.getFolder().getId())) {
-                    folders.put(doc.getFolder().getId(), doc.getFolder());  
+                    folders.put(doc.getFolder().getId(), doc.getFolder());
                 }
             }
         }
         // if all of the selected documents are in the same folder, we can send the outgoing mail to the same folder
-        CaseFolder caseFolder=null;
-        if(folders.size()==1)
-            caseFolder=folders.get(folders.keySet().iterator().next());
-        
+        CaseFolder caseFolder = null;
+        if (folders.size() == 1) {
+            caseFolder = folders.get(folders.keySet().iterator().next());
+        }
+
         dlg.setArchiveFile(dto, caseFolder);
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
             dlg.addParty(aab);
@@ -4996,23 +5029,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 final String curExt = currentExt;
                 ProgressableActionCallback callback = () -> {
                     try {
-                        
+
                         byte[] content = remote.getDocumentContent(doc.getId());
                         String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + "." + targetFormat;
                         if (newName.length() == 0) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                             return;
                         }
-                        
+
                         FileConverter conv = FileConverter.getInstance();
                         String tempPath = FileUtils.createTempFile(doc.getName(), content);
                         String tempTargetPath = conv.convertTo(tempPath, targetFormat);
                         byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
-                        
+
                         ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
-                        
+
                         if (doc.getFolder() != null) {
                             newDoc.setFolder(doc.getFolder());
                             ArrayList<String> documentIds = new ArrayList<>();
@@ -5021,9 +5054,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         } else {
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
-                        
+
                         caseFolderPanel1.addDocument(newDoc);
-                        
+
                     } catch (Exception ioe) {
                         log.error("Error duplicating document", ioe);
                         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -5219,7 +5252,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             a.setDoneBoolean(true);
                             calService.updateReview(this.dto.getId(), a);
                         }
-                        for(int i=0;i<this.tblReviewReasons.getRowCount();i++) {
+                        for (int i = 0; i < this.tblReviewReasons.getRowCount(); i++) {
                             this.tblReviewReasons.setValueAt(true, i, 4);
                         }
                     } catch (Exception ex) {

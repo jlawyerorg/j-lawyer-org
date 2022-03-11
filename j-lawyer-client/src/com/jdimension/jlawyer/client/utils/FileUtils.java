@@ -706,6 +706,14 @@ public class FileUtils extends ServerFileUtils {
 
     }
 
+    public static String getExtension(String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index > -1 && index < fileName.length()) {
+            return fileName.substring(index + 1);
+        }
+        return "url-with-no-extension";
+    }
+
     public Icon getFileTypeIcon(String fileName) {
 
         if (fileName == null) {
@@ -724,70 +732,37 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-//            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
+            if (fileExt.startsWith(".")) {
+                fileExt = fileExt.substring(1, fileExt.length());
+            }
+            fileExt = fileExt.toLowerCase();
+            ImageIcon image = null;
+            try {
+                image = new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
+            } catch (Throwable t) {
+                log.warn("no file type icon for " + fileExt);
+            }
+            if (image != null) {
+                this.iconCache.put(fileExt, image);
+                return image;
+            } else {
+                //Create a temporary file with the specified extension
+                File file = File.createTempFile("icon", fileExt);
 
-                if (fileExt.startsWith(".")) {
-                    fileExt = fileExt.substring(1, fileExt.length());
-                }
-                fileExt = fileExt.toLowerCase();
-                ImageIcon image = null;
-                try {
-                    image = new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
-                } catch (Throwable t) {
-                    log.warn("no file type icon for " + fileExt);
-                }
-                if (image != null) {
-                    this.iconCache.put(fileExt, image);
-                    return image;
-                } else {
-                    //Create a temporary file with the specified extension
-                    File file = File.createTempFile("icon", fileExt);
+                FileSystemView view = FileSystemView.getFileSystemView();
+                Icon icon = view.getSystemIcon(file);
+                this.iconCache.put(fileExt, icon);
 
-                    FileSystemView view = FileSystemView.getFileSystemView();
-                    Icon icon = view.getSystemIcon(file);
-                    this.iconCache.put(fileExt, icon);
-
-                    //Delete the temporary file
-                    file.delete();
-                    return icon;
-                }
-//            } else if (osName.startsWith("mac")) {
-
-// this was not working - maybe macOS needs a "real" file, not just an empty one?
-//
-//                //Create a temporary file with the specified extension
-//                File file = File.createTempFile("icon", fileExt);
-//
-//                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
-//                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
-//                
-//                if (icon != null) {
-//                    this.iconCache.put(fileExt, icon);
-//                }
-//
-//                //Delete the temporary file
-//                file.delete();
-//                return icon;
-//            } else {
-//                // Windows behaviour is default
-//                //Create a temporary file with the specified extension
-//                File file = File.createTempFile("icon", fileExt);
-//
-//                FileSystemView view = FileSystemView.getFileSystemView();
-//                Icon icon = view.getSystemIcon(file);
-//                this.iconCache.put(fileExt, icon);
-//
-//                //Delete the temporary file
-//                file.delete();
-//                return icon;
-//            }
-
+                //Delete the temporary file
+                file.delete();
+                return icon;
+            }
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
             return null;
         }
     }
-    
+
     public Icon getFileTypeIcon32(String fileName) {
 
         if (fileName == null) {
@@ -806,48 +781,31 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-//            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
+            if (fileExt.startsWith(".")) {
+                fileExt = fileExt.substring(1, fileExt.length());
+            }
+            fileExt = fileExt.toLowerCase();
+            ImageIcon image = null;
+            try {
+                image = new ImageIcon(getClass().getResource("/icons32/fileicons/file_type_" + fileExt + "@2x.png"));
+            } catch (Throwable t) {
+                log.warn("no file type icon for " + fileExt);
+            }
+            if (image != null) {
+                this.iconCache32.put(fileExt, image);
+                return image;
+            } else {
+                //Create a temporary file with the specified extension
+                File file = File.createTempFile("icon", fileExt);
 
-                if (fileExt.startsWith(".")) {
-                    fileExt = fileExt.substring(1, fileExt.length());
-                }
-                fileExt = fileExt.toLowerCase();
-                ImageIcon image = null;
-                try {
-                    image = new ImageIcon(getClass().getResource("/icons32/fileicons/file_type_" + fileExt + "@2x.png"));
-                } catch (Throwable t) {
-                    log.warn("no file type icon for " + fileExt);
-                }
-                if (image != null) {
-                    this.iconCache32.put(fileExt, image);
-                    return image;
-                } else {
-                    //Create a temporary file with the specified extension
-                    File file = File.createTempFile("icon", fileExt);
+                FileSystemView view = FileSystemView.getFileSystemView();
+                Icon icon = view.getSystemIcon(file);
+                this.iconCache32.put(fileExt, icon);
 
-                    FileSystemView view = FileSystemView.getFileSystemView();
-                    Icon icon = view.getSystemIcon(file);
-                    this.iconCache32.put(fileExt, icon);
-
-                    //Delete the temporary file
-                    file.delete();
-                    return icon;
-                }
-
-//            } else {
-//                // Windows behaviour is default
-//                //Create a temporary file with the specified extension
-//                File file = File.createTempFile("icon", fileExt);
-//
-//                FileSystemView view = FileSystemView.getFileSystemView();
-//                Icon icon = view.getSystemIcon(file);
-//                this.iconCache32.put(fileExt, icon);
-//
-//                //Delete the temporary file
-//                file.delete();
-//                return icon;
-//            }
-
+                //Delete the temporary file
+                file.delete();
+                return icon;
+            }
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
             return null;
@@ -989,8 +947,8 @@ public class FileUtils extends ServerFileUtils {
         if (deleteAfterDays > -1) {
             tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
         }
-        
-        boolean wordOnMac=false;
+
+        boolean wordOnMac = false;
 
         if (SystemUtils.isMacOs()) {
 
@@ -999,7 +957,7 @@ public class FileUtils extends ServerFileUtils {
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
             if (wordProcessorMicrosoft) {
-                wordOnMac=true;
+                wordOnMac = true;
                 // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
                 tmpDir = "/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
                 if (!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
@@ -1019,11 +977,11 @@ public class FileUtils extends ServerFileUtils {
             tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
         }
         new File(tmpDir).mkdirs();
-        fileName=fileName.replace("\\", "_");
-        fileName=fileName.replace("/", "_");
-        fileName=fileName.replace("\t", "");
+        fileName = fileName.replace("\\", "_");
+        fileName = fileName.replace("/", "_");
+        fileName = fileName.replace("\t", "");
         String tmpFile = tmpDir + fileName;
-        try (FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
+        try ( FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
             fos.write(content);
         }
 
@@ -1038,7 +996,7 @@ public class FileUtils extends ServerFileUtils {
         if (deleteOnExit || wordOnMac) {
             cleanupTempFile(tmpFile);
         }
-        
+
         return tmpFile;
     }
 

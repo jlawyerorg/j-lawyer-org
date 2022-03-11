@@ -684,6 +684,10 @@ public class CaseUtils {
     private static final Logger log=Logger.getLogger(CaseUtils.class.getName());
 
     public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent) throws Exception {
+        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null);
+    }
+    
+    public static void openDocumentInCustomLauncher(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, String customLauncherName) throws Exception {
         if (value != null) {
                 ClientSettings settings = ClientSettings.getInstance();
                 byte[] content = null;
@@ -696,7 +700,13 @@ public class CaseUtils {
                 }
 
                 CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-                Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
+                Launcher launcher = null;
+                if(customLauncherName==null) {
+                    launcher = LauncherFactory.getLauncher(value.getName(), content, store);
+                } else {
+                    launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName);
+                }
+                
                 int response = JOptionPane.NO_OPTION;
                 if (launcher.isDocumentOpen(value.getId())) {
                     response = JOptionPane.showConfirmDialog(parent, "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
