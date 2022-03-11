@@ -679,6 +679,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
@@ -693,6 +694,7 @@ import org.apache.log4j.Logger;
 public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(CustomLauncherOptionsDialog.class.getName());
+    private static final String nonExisting="not-there";
     
     /**
      * Creates new form CustomLauncherOptionsDialog
@@ -708,7 +710,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         Properties all = settings.getAllConfigurations();
         Enumeration keys = all.propertyNames();
         ArrayList<String> launchers = new ArrayList<>();
-        this.lstLaunchers.setModel(new DefaultListModel());
+        this.lstLaunchers.setModel(new DefaultListModel<String>());
         while (keys.hasMoreElements()) {
             String key = keys.nextElement().toString();
             if (key.startsWith(CL_PREFIX + ".")) {
@@ -716,7 +718,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 launcher = launcher.substring(0, launcher.indexOf('.'));
                 if (!launchers.contains(launcher)) {
                     launchers.add(launcher);
-                    ((DefaultListModel) this.lstLaunchers.getModel()).addElement(launcher);
+                    ((DefaultListModel<String>) this.lstLaunchers.getModel()).addElement(launcher);
                 }
             }
         }
@@ -736,12 +738,12 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 String launcher = key.substring(13);
                 launcher = launcher.substring(0, launcher.indexOf('.'));
                 String extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_EXTENSION;
-                if ("not-there".equals(settings.getConfiguration(extensionKey, "not-there"))) {
+                if (nonExisting.equals(settings.getConfiguration(extensionKey, nonExisting))) {
                     // migrate old setting
                     settings.setConfiguration(extensionKey, launcher);
                 }
                 extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_DEFAULT;
-                if ("not-there".equals(settings.getConfiguration(extensionKey, "not-there"))) {
+                if (nonExisting.equals(settings.getConfiguration(extensionKey, nonExisting))) {
                     // migrate old setting
                     settings.setConfiguration(extensionKey, "1");
                 }
@@ -1065,19 +1067,19 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lstLaunchersMousePressed
 
     private void mnuRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveActionPerformed
-        if (this.lstLaunchers.getSelectedValues().length > 0) {
+        if (this.lstLaunchers.getSelectedValuesList().size() > 0) {
             ClientSettings settings = ClientSettings.getInstance();
-            for (int i = 0; i < this.lstLaunchers.getSelectedValues().length; i++) {
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValues()[i] + "." + CL_SUFFIX_RW);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValues()[i] + "." + CL_SUFFIX_RO);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValues()[i] + "." + CL_SUFFIX_EXE);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValues()[i] + "." + CL_SUFFIX_EXTENSION);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValues()[i] + "." + CL_SUFFIX_DEFAULT);
+            List selectedValues=this.lstLaunchers.getSelectedValuesList();
+            for (Object selVal: selectedValues) {
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_RW);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_RO);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_EXE);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_EXTENSION);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_DEFAULT);
             }
 
-            Object[] selectedValues = this.lstLaunchers.getSelectedValues();
-            for (int i = 0; i < selectedValues.length; i++) {
-                ((DefaultListModel) this.lstLaunchers.getModel()).removeElement(selectedValues[i]);
+            for (Object selVal: selectedValues) {
+                ((DefaultListModel) this.lstLaunchers.getModel()).removeElement(selVal);
             }
 
         }

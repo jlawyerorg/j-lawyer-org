@@ -870,33 +870,6 @@ public class CustomLauncher extends Launcher {
     }
 
     public static boolean hasCustomLauncher(String extension) {
-        if (extension != null) {
-            if (!"".equals(extension)) {
-
-                ClientSettings settings = ClientSettings.getInstance();
-                Properties all = settings.getAllConfigurations();
-                Enumeration keys = all.propertyNames();
-                while (keys.hasMoreElements()) {
-                    String key = keys.nextElement().toString();
-                    if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
-                        String ext = settings.getConfiguration(key, "none");
-                        String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
-                        if (extension.equalsIgnoreCase(ext)) {
-                            String executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
-                            String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
-                            String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
-                            if ("".equals(paramsRo)) {
-                                paramsRo = paramsRw;
-                            }
-                            if (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0) {
-                                return true;
-                            }
-                        }
-
-                    }
-                }
-            }
-        }
-        return false;
+        return (getCustomLauncherNames(extension).size()>0);
     }
 }
