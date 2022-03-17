@@ -707,5 +707,7 @@ public interface AddressServiceRemote {
     void renameTag(String fromName, String toName) throws Exception;
 
     void runFullAddressBookSync();
+
+    void setDefaultRole(String addressId, String defaultRole) throws Exception;
     
 }

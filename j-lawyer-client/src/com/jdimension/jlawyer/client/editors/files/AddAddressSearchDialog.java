@@ -678,33 +678,39 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class AddAddressSearchDialog extends javax.swing.JDialog {
+public class AddAddressSearchDialog extends javax.swing.JDialog implements ListSelectionListener {
 
     private static final Logger log = Logger.getLogger(AddAddressSearchDialog.class.getName());
     private PartyTypeBean targetReferenceType = null;
     private AddressBean resultAddress = null;
     private ArchiveFileAddressesBean resultInvolvement = null;
-    private List<PartyTypeBean> partyTypes=null;
+    private List<PartyTypeBean> partyTypes = null;
 
     /**
      * Creates new form AddAddressSearchDialog
+     * @param parent
+     * @param modal
      */
     public AddAddressSearchDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -712,7 +718,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
-        
+
         String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
@@ -720,31 +726,31 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         ClientSettings s = ClientSettings.getInstance();
         try {
-        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes=afRem.getAllPartyTypes();
+            this.partyTypes = afRem.getAllPartyTypes();
         } catch (Throwable t) {
             log.error("Error getting party types", t);
             JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
-        
-        if(this.partyTypes.size()>0) {
-            this.targetReferenceType=this.partyTypes.get(0);
+
+        if (this.partyTypes.size() > 0) {
+            this.targetReferenceType = this.partyTypes.get(0);
         }
-        
-        UserSettings us=UserSettings.getInstance();
-        String lastPartyType=us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
-        
+
+        UserSettings us = UserSettings.getInstance();
+        String lastPartyType = us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
+
         this.cmbRefType.removeAllItems();
-        for(PartyTypeBean ptb: this.partyTypes) {
+        for (PartyTypeBean ptb : this.partyTypes) {
             this.cmbRefType.addItem(ptb.getName());
-            if(ptb.getName().equals(lastPartyType)) {
-                this.targetReferenceType=ptb;
+            if (ptb.getName().equals(lastPartyType)) {
+                this.targetReferenceType = ptb;
             }
         }
         this.cmbRefType.setSelectedItem(this.targetReferenceType.getName());
-        
+
         List<String> tags = s.getAddressTagsInUse();
         TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
 
@@ -757,6 +763,18 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         });
 
         ComponentUtils.restoreDialogSize(this);
+        
+        this.tblResults.getSelectionModel().addListSelectionListener(this);
+    }
+    
+    private void updateTargetReferenceType(String referenceTypeName) {
+        this.cmbRefType.setSelectedItem(referenceTypeName);
+        for (PartyTypeBean ptb : this.partyTypes) {
+            if (ptb.getName().equals(referenceTypeName)) {
+                this.targetReferenceType = ptb;
+                return;
+            }
+        }
     }
 
     /**
@@ -913,7 +931,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
         }
@@ -937,9 +955,19 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         afa.setAddressKey(resultAddress);
         afa.setReferenceType(targetReferenceType);
         this.resultInvolvement = afa;
-        
+
         try {
-            UserSettings us=UserSettings.getInstance();
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressServiceRemote adr = locator.lookupAddressServiceRemote();
+            adr.setDefaultRole(this.resultAddress.getId(), targetReferenceType.getName());
+
+        } catch (Throwable t) {
+            log.error("Unable to update default role", t);
+        }
+
+        try {
+            UserSettings us = UserSettings.getInstance();
             us.setSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, targetReferenceType.getName());
         } catch (Throwable t) {
             log.error("could not store last used party type for user");
@@ -958,7 +986,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     }
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -1003,14 +1031,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
-        
-        for(PartyTypeBean ptb: this.partyTypes) {
-            if (ptb.getName().equals(this.cmbRefType.getSelectedItem())) {
-                this.targetReferenceType=ptb;
-                return;
-            }
-        }
-        
+
+        if(this.cmbRefType.getSelectedItem()!=null)
+            this.updateTargetReferenceType(this.cmbRefType.getSelectedItem().toString());
+
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     /**
@@ -1034,4 +1058,18 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void valueChanged(ListSelectionEvent arg0) {
+        int row = this.tblResults.getSelectedRow();
+        QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
+        this.resultAddress = id.getAddressDTO();
+        if(this.resultAddress.getDefaultRole()!=null && !("".equalsIgnoreCase(this.resultAddress.getDefaultRole()))) {
+            this.updateTargetReferenceType(this.resultAddress.getDefaultRole());
+        } else {
+            UserSettings us = UserSettings.getInstance();
+            String lastPartyType = us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
+            this.updateTargetReferenceType(lastPartyType);
+        }
+    }
 }

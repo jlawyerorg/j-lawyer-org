@@ -767,6 +767,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @RolesAllowed({"writeAddressRole"})
     public void updateAddress(AddressBean dto) {
 
+        // preserve the default role because the client does not provide it
+        // (it is not rendered in the UI and therefore not available in the dto)
+        AddressBean org=this.addressFacade.find(dto.getId());
+        String defaultRole=org.getDefaultRole();
+        dto.setDefaultRole(defaultRole);
+        
         dto.setLastModifier(context.getCallerPrincipal().getName());
         dto.setModificationDate(new Date());
 
@@ -1232,5 +1238,15 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         AddressTagsBean tag=this.addressTagsFacade.find(tagId);
         if(tag!=null)
             this.addressTagsFacade.remove(tag);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public void setDefaultRole(String addressId, String defaultRole) throws Exception {
+        AddressBean ab=this.addressFacade.find(addressId);
+        if(ab!=null) {
+            ab.setDefaultRole(defaultRole);
+            this.addressFacade.edit(ab);
+        }
     }
 }
