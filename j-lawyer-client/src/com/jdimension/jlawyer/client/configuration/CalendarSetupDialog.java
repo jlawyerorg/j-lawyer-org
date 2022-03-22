@@ -1266,8 +1266,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             try {
 
                 NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-                if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
-                    nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
+                if(!StringUtils.isEmpty(cs.getCloudPath()))
+                    nc.setSubpathPrefix(cs.getCloudPath());
                 List<CloudCalendar> cals = nc.getAllCalendars();
                 
                 CloudCalendar selected = null;
