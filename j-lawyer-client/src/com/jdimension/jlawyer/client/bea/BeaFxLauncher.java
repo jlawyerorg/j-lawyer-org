@@ -693,12 +693,10 @@ public class BeaFxLauncher extends javax.swing.JDialog {
         JFXPanel fxPanel = new JFXPanel();
         pnl.add(fxPanel);
         
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                initFX(fxPanel);
-            }
-       });
+        Platform.setImplicitExit(false);
+        Platform.runLater(() -> {
+            initFX(fxPanel);
+        });
         
         try {
                 //lblCardLogin.setText("Verbinde zum beA... Karten-PIN...");
@@ -814,17 +812,15 @@ public class BeaFxLauncher extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                BeaFxLauncher dialog = new BeaFxLauncher(null, true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            BeaFxLauncher dialog = new BeaFxLauncher(null, true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

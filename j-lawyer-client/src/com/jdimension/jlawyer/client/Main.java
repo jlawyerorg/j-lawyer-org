@@ -673,14 +673,13 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
@@ -692,6 +691,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class Main {
 
+    private static Logger log=null;
     private StartupSplashFrame splash = null;
 
     /**
@@ -705,6 +705,11 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
+        new File(userHomeConfLogParent).mkdirs();
+        log = LogManager.getLogger();
+        
 
         String cmdLineSwitch = ArbitraryCache.binaryContent;
         cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
@@ -827,47 +832,47 @@ public class Main {
         }
         this.splash.repaint();
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.logging"), true);
-        String userHomeConfLog = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
+        //String userHomeConfLog = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
         String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
-        File userHomeConfLogFile = new File(userHomeConfLog);
+        //File userHomeConfLogFile = new File(userHomeConfLog);
         new File(userHomeConfLogParent).mkdirs();
-        if (!userHomeConfLogFile.exists()) {
-            // copy from JAR
-            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
-                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);) {
-                
-                byte[] buffer = new byte[256];
-                int len = 0;
-                while ((len = is.read(buffer)) > 0) {
-                    fOut.write(buffer, 0, len);
-                    updateStatus(".", false);
-                }
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                this.updateStatus(ex.getMessage(), true);
-                try {
-                    Thread.sleep(3500);
-                } catch (Throwable t) {
-                }
-            }
-
-        }
+//        if (!userHomeConfLogFile.exists()) {
+//            // copy from JAR
+//            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
+//                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);) {
+//                
+//                byte[] buffer = new byte[256];
+//                int len = 0;
+//                while ((len = is.read(buffer)) > 0) {
+//                    fOut.write(buffer, 0, len);
+//                    updateStatus(".", false);
+//                }
+//
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//                this.updateStatus(ex.getMessage(), true);
+//                try {
+//                    Thread.sleep(3500);
+//                } catch (Throwable t) {
+//                }
+//            }
+//
+//        }
         updateStatus(" ", true);
 
-        org.apache.log4j.xml.DOMConfigurator.configure(userHomeConfLog);
-        Logger log = Logger.getLogger(this.getClass().getName());
+//        org.apache.log4j.xml.DOMConfigurator.configure(userHomeConfLog);
+        //Logger log = LogManager.getLogger(this.getClass().getName());
 
         log.info("Java: " + System.getProperty("java.version"));
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
         ClientSettings settings = ClientSettings.getInstance();
-        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
-        settings.setConfiguration(settings.CONF_THEME, themeName);
+        String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
+        settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.fontsizes"), true);
         FontUtils fontUtils = FontUtils.getInstance();
-        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
             int offset = Integer.parseInt(fontSizeOffset);
             fontUtils.updateDefaults(offset);
@@ -1123,16 +1128,12 @@ public class Main {
     }
 
     private void updateStatus(final String s, final boolean newLine) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-
-                if (newLine) {
-                    splash.addStatus(System.getProperty("line.separator"));
-                }
-
-                splash.addStatus(s);
+        SwingUtilities.invokeLater(() -> {
+            if (newLine) {
+                splash.addStatus(System.getProperty("line.separator"));
             }
+            
+            splash.addStatus(s);
         });
     }
 

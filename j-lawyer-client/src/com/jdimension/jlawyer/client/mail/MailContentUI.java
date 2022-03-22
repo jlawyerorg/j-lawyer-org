@@ -785,6 +785,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //        this.editBody.addHyperlinkListener(this);
         WebViewRegister.getInstance();
 
+        Platform.setImplicitExit(false);
         Platform.runLater(() -> {
             webView = new WebView();
             WebViewRegister register = WebViewRegister.getInstance();
@@ -922,6 +923,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private void setBody(String b, String mimeType) {
         this.body = b;
         this.contentType=mimeType;
+        Platform.setImplicitExit(false);
         Platform.runLater(() -> {
             try {
                 WebViewRegister reg = WebViewRegister.getInstance();
@@ -945,6 +947,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public void setErrorMessage(String errorMessage) {
         //this.editBody.setText(errorMessage);
         this.body = errorMessage;
+        Platform.setImplicitExit(false);
         Platform.runLater(() -> {
             try {
                 WebViewRegister reg = WebViewRegister.getInstance();
@@ -1164,6 +1167,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 String html = sb.toString();
 
                 final String fxHtml = html;
+                Platform.setImplicitExit(false);
                 Platform.runLater(() -> {
                     try {
                         WebViewRegister reg = WebViewRegister.getInstance();
