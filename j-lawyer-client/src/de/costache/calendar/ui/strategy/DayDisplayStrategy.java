@@ -113,6 +113,10 @@ class DayDisplayStrategy implements DisplayStrategy {
 
         this.split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, displayPanel, contentAllDay);
         ComponentUtils.decorateSplitPane(split);
+        
+        this.split.setDividerLocation(200);
+        ComponentUtils.restoreSplitPane(this.split, this.getClass(), "split");
+        ComponentUtils.persistSplitPane(this.split, this.getClass(), "split");
 
     }
 

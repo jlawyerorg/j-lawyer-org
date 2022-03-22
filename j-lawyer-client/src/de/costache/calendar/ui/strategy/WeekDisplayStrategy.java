@@ -30,8 +30,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
 import de.costache.calendar.JCalendar;
@@ -134,6 +132,10 @@ class WeekDisplayStrategy implements DisplayStrategy {
         
         this.split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, displayPanel, contentAllDay);
         ComponentUtils.decorateSplitPane(split);
+        
+        this.split.setDividerLocation(200);
+        ComponentUtils.restoreSplitPane(this.split, this.getClass(), "split");
+        ComponentUtils.persistSplitPane(this.split, this.getClass(), "split");
         
     }
 

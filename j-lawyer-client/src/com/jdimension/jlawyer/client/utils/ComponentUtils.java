@@ -672,7 +672,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.ComboBoxModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -752,16 +751,6 @@ public class ComponentUtils {
     }
 
     public static void autoSizeColumns(JTable table) {
-        //        final TableColumnModel columnModel = table.getColumnModel();
-//    for (int column = 0; column < table.getColumnCount(); column++) {
-//        int width = 50; // Min width
-//        for (int row = 0; row < table.getRowCount(); row++) {
-//            TableCellRenderer renderer = table.getCellRenderer(row, column);
-//            Component comp = table.prepareRenderer(renderer, row, column);
-//            width = Math.max(comp.getPreferredSize().width, width);
-//        }
-//        columnModel.getColumn(column).setPreferredWidth(width);
-//    }
 
         if (table.getRowCount() == 0) {
             return;
@@ -783,8 +772,6 @@ public class ComponentUtils {
 
                         TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
 
-//                    System.out.print("r " + row + ", c " + column + " t: " + table.getRowCount());
-//                    System.out.println(": " + table.getModel().getValueAt(row, column));
                         Component c = table.prepareRenderer(cellRenderer, row, column);
                         int width = c.getPreferredSize().width + table.getIntercellSpacing().width;
                         preferredWidth = Math.max(preferredWidth, width);
@@ -868,7 +855,7 @@ public class ComponentUtils {
     }
 
     public static String[] getSelectedMenuItems(JPopupMenu pop) {
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
@@ -905,17 +892,13 @@ public class ComponentUtils {
     }
     
     public static void persistSplitPane(JSplitPane split, Class container, String componentName) {
-        split.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
-                    if (split.getDividerLocation() > 0) {
-                        ClientSettings s = ClientSettings.getInstance();
-                        s.setConfiguration("split." + container.getName() + "." + componentName, "" + split.getDividerLocation());
-                    }
+        split.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
+                if (split.getDividerLocation() > 0) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    s.setConfiguration("split." + container.getName() + "." + componentName, "" + split.getDividerLocation());
                 }
             }
-
         });
     }
 
@@ -924,18 +907,11 @@ public class ComponentUtils {
         split.setOneTouchExpandable(false);
         divider.setDividerSize(5);
 
-        //divider.setBorder(BorderFactory.createTitledBorder(divider.getBorder(), "Custom border title -- gets rid of the one-touch arrows!"));
-        //divider.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-//        if(dividerColor!=null) {
-//            divider.setBorder(BorderFactory.createLineBorder(dividerColor, 1, false));
-//            divider.setBackground(dividerColor);
-//        } else {
-//            divider.setBorder(BorderFactory.createLineBorder(DefaultColorTheme.COLOR_DARK_GREY, 1, false));
-//            divider.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-//        }
         split.setUI(new BasicSplitPaneUI() {
+            @Override
             public BasicSplitPaneDivider createDefaultDivider() {
                 return new BasicSplitPaneDivider(this) {
+                    @Override
                     public void setBorder(Border b) {
                     }
 
