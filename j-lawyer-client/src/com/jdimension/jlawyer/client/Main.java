@@ -691,6 +691,10 @@ import themes.colors.DefaultColorTheme;
  */
 public class Main {
 
+    private static final String USER_HOME="user.home";
+    private static final String FILE_SEPARATOR="file.separator";
+    private static final String JLAWYERCLIENT_SETTINGDIR=".j-lawyer-client";
+    
     private static Logger log=null;
     private StartupSplashFrame splash = null;
 
@@ -706,7 +710,7 @@ public class Main {
      */
     public static void main(String[] args) {
         
-        String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
@@ -825,43 +829,16 @@ public class Main {
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"), true);
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.checkdir"), true);
-        String userHomeConf = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client";
+        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR;
         File userHomeConfDir = new File(userHomeConf);
         if (!userHomeConfDir.exists()) {
             userHomeConfDir.mkdirs();
         }
         this.splash.repaint();
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.logging"), true);
-        //String userHomeConfLog = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
-        String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
-        //File userHomeConfLogFile = new File(userHomeConfLog);
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
-//        if (!userHomeConfLogFile.exists()) {
-//            // copy from JAR
-//            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
-//                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);) {
-//                
-//                byte[] buffer = new byte[256];
-//                int len = 0;
-//                while ((len = is.read(buffer)) > 0) {
-//                    fOut.write(buffer, 0, len);
-//                    updateStatus(".", false);
-//                }
-//
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//                this.updateStatus(ex.getMessage(), true);
-//                try {
-//                    Thread.sleep(3500);
-//                } catch (Throwable t) {
-//                }
-//            }
-//
-//        }
         updateStatus(" ", true);
-
-//        org.apache.log4j.xml.DOMConfigurator.configure(userHomeConfLog);
-        //Logger log = LogManager.getLogger(this.getClass().getName());
 
         log.info("Java: " + System.getProperty("java.version"));
 
@@ -886,7 +863,6 @@ public class Main {
 
         final String moduleNameCalendar="Kalender";
         
-        //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
         root.setFullName("Mein Desktop");
         root.setEditorName("Desktop");
