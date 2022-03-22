@@ -691,6 +691,8 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
     /**
      * Creates new form PlaintextPanel
+     * @param fileName
+     * @param content
      */
     public PdfImagePanel(String fileName, byte[] content) {
         initComponents();
@@ -825,11 +827,6 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
             if (content != null) {
                 if (content.length > 5000000) {
                     log.info("Rendering large PDF " + this.fileName + " with " + content.length + " bytes.");
-                }
-                if (content.length > 15000000) {
-                    log.info("Skipping rendering of very large PDF " + this.fileName + " with " + content.length + " bytes.");
-                    this.showStatus("PDF-Dokument ist zu groß für eine Vorschau.");
-                    return;
                 }
             } else {
                 log.info("PDF to render has no byte content (null)");
