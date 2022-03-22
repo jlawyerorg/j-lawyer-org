@@ -725,7 +725,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
     private String getEventSummary(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
         StringBuilder summary = new StringBuilder();
-        summary.append(caseContext.getFileNumber()).append(" ").append(event.getSummary());
+        summary.append(event.getSummary()).append(" (").append(caseContext.getFileNumber()).append(" ").append(caseContext.getName()).append(")");
         return summary.toString();
     }
     
