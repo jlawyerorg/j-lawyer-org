@@ -1265,7 +1265,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (archivedOld != archivedNew) {
             // archive flag was changed
-            String historyDescription = "";
+            String historyDescription;
             if (archivedNew) {
                 // archived
                 historyDescription = "Akte abgelegt / archiviert";
@@ -2302,7 +2302,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public List<String> searchDocumentTagsInUse() {
 
         JDBCUtils utils = new JDBCUtils();
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select distinct(tagName) from document_tags order by tagName asc");  ResultSet rs = st.executeQuery();) {
 
             while (rs.next()) {
@@ -2681,8 +2681,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"loginRole"})
     public String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception {
-        ArrayList<String> existing = new ArrayList<String>();
-        ArrayList<String> previews = new ArrayList<String>();
+        ArrayList<String> existing = new ArrayList<>();
+        ArrayList<String> previews = new ArrayList<>();
 
         AppUserBean user = this.sysFacade.getUser(context.getCallerPrincipal().getName());
         String usr = user.getAbbreviation();
@@ -2989,6 +2989,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
 
                     if (returnList.size() == limit) {
+                        log.info("hit limit of " + limit + " tagged cases for user " + context.getCallerPrincipal().getName());
                         break;
                     }
 
@@ -3624,6 +3625,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
+        
+        if(returnList.size()>(limit-1)) {
+            log.info("hit limit of " + limit + " tagged documents for user " + context.getCallerPrincipal().getName());
+        }
 
         return returnList;
     }
@@ -3641,11 +3646,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             rs = st.executeQuery();
             while (rs.next()) {
                 String id = rs.getString(1);
-                ArrayList<String> tags = null;
+                ArrayList<String> tags;
                 if (returnList.containsKey(id)) {
                     tags = returnList.get(id);
                 } else {
-                    tags = new ArrayList<String>();
+                    tags = new ArrayList<>();
                     returnList.put(id, tags);
                 }
 
@@ -3779,40 +3784,36 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getAllPartyTypes() {
         List<PartyTypeBean> all = this.partyTypeFacade.findAll();
-        Collections.sort(all, new Comparator() {
-            @Override
-            public int compare(Object t, Object t1) {
-                Object u1 = t;
-                Object u2 = t1;
-                if (u1 == null) {
-                    return -1;
-                }
-                if (u2 == null) {
-                    return 1;
-                }
-
-                if (!(u1 instanceof PartyTypeBean)) {
-                    return -1;
-                }
-                if (!(u2 instanceof PartyTypeBean)) {
-                    return 1;
-                }
-
-                PartyTypeBean f1 = (PartyTypeBean) u1;
-                PartyTypeBean f2 = (PartyTypeBean) u2;
-
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-
-                return f1name.compareTo(f2name);
+        Collections.sort(all, (Object t, Object t1) -> {
+            Object u1 = t;
+            Object u2 = t1;
+            if (u1 == null) {
+                return -1;
             }
-
+            if (u2 == null) {
+                return 1;
+            }
+            
+            if (!(u1 instanceof PartyTypeBean)) {
+                return -1;
+            }
+            if (!(u2 instanceof PartyTypeBean)) {
+                return 1;
+            }
+            
+            PartyTypeBean f1 = (PartyTypeBean) u1;
+            PartyTypeBean f2 = (PartyTypeBean) u2;
+            
+            String f1name = "";
+            if (f1.getName() != null) {
+                f1name = f1.getName().toLowerCase();
+            }
+            String f2name = "";
+            if (f2.getName() != null) {
+                f2name = f2.getName().toLowerCase();
+            }
+            
+            return f1name.compareTo(f2name);
         });
         return all;
     }
@@ -4063,7 +4064,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public CaseFolder createCaseFolder(String parentId, String name) throws Exception {
 
         List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(parentId);
-        boolean nameCollision = false;
         for (CaseFolder n : neighbours) {
             if (name.equalsIgnoreCase(n.getName())) {
                 throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
@@ -4088,7 +4088,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         CaseFolder cf = this.caseFolderFacade.find(folder.getId());
         if (cf != null) {
             List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(folder.getParentId());
-            boolean nameCollision = false;
             for (CaseFolder n : neighbours) {
                 if (folder.getName().equalsIgnoreCase(n.getName()) && !(folder.getId().equals(n.getId()))) {
                     throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
@@ -4255,7 +4254,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 newChild.setParentId(cf.getId());
                 this.caseFolderFacade.create(newChild);
                 if (cf.getChildren() == null) {
-                    cf.setChildren(new ArrayList<CaseFolder>());
+                    cf.setChildren(new ArrayList<>());
                 }
                 cf.getChildren().add(newChild);
             }
@@ -4489,7 +4488,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Collection<Keyword> extractKeywordsFromText(String text) throws Exception {
 
         ArrayList<Keyword> result = new ArrayList<>();
-        ArrayList<String> numbers = new ArrayList<String>();
+        ArrayList<String> numbers = new ArrayList<>();
         Iterator<PhoneNumberMatch> existsPhone = PhoneNumberUtil.getInstance().findNumbers(text, "DE").iterator();
         while (existsPhone.hasNext()) {
             PhoneNumberMatch match = existsPhone.next();
