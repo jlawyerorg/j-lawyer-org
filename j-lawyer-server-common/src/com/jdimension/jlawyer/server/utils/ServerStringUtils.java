@@ -717,10 +717,7 @@ public class ServerStringUtils {
         if(s==null)
             return true;
         
-        if("".equals(s.trim()))
-            return true;
-        
-        return false;
+        return "".equals(s.trim());
             
     }
     
