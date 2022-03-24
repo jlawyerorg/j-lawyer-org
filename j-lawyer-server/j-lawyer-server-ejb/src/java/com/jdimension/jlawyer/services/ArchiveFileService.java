@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidCaseNumberPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.sql.Connection;
@@ -2881,12 +2882,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<>();
 
+        String principalId=context.getCallerPrincipal().getName();
+        
+        if(log.isInfoEnabled()) {
+            if(tagName==null)
+                tagName=new String[]{"some-non-existing-string"};
+            if(docTagName==null)
+                docTagName=new String[]{"some-non-existing-string"};
+            log.info("getTagged for " + principalId + "; caseTags="+ServerStringUtils.toString(tagName, ",") + "; docTags="+ServerStringUtils.toString(docTagName, ","));
+        }
+        
         ArrayList<String> allowedCases = null;
         try {
-            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+            allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
         } catch (Exception ex) {
-            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
-            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+            log.error("Unable to determine allowed cases for user " + principalId, ex);
+            throw new EJBException("Akten für Nutzer " + principalId + "' konnten nicht ermittelt werden.", ex);
         }
 
         if (tagName == null || tagName.length == 0) {
@@ -2986,15 +2997,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     if (allowedCases.contains(id)) {
                         ArchiveFileBean dto = this.archiveFileFacade.find(id);
                         returnList.add(dto);
+                    } else {
+                        if(log.isInfoEnabled())
+                            log.info("    " + principalId + " is not allowed for case " + id);
                     }
 
                     if (returnList.size() == limit) {
-                        log.info("hit limit of " + limit + " tagged cases for user " + context.getCallerPrincipal().getName());
+                        log.info("    hit limit of " + limit + " tagged cases for user " + principalId);
                         break;
                     }
 
                 }
             }
+            
+            if(log.isInfoEnabled())
+                log.info("    returning " + returnList.size() + " items");
 
             try {
                 rs.close();
@@ -3557,11 +3574,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         PreparedStatement st = null;
         List<ArchiveFileDocumentsBean> returnList = new ArrayList<>();
 
+        String principalId=context.getCallerPrincipal().getName();
+        
+        if(log.isInfoEnabled()) {
+            if(docTagName==null)
+                docTagName=new String[]{"some-non-existing-string"};
+            log.info("getTaggedDocuments for " + principalId + "; docTags="+ServerStringUtils.toString(docTagName, ","));
+        }
+        
         List<Group> userGroups = new ArrayList<>();
         try {
-            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
         } catch (Throwable t) {
-            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+            log.error("Unable to determine groups for user " + principalId, t);
         }
 
         try {
@@ -3599,6 +3624,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
                     if (!docb.isDeleted() && SecurityUtils.checkGroupsForCase(userGroups, docb.getArchiveFileKey(), this.caseGroupsFacade)) {
                         returnList.add(docb);
+                    } else {
+                        if(log.isInfoEnabled())
+                            log.info("    " + principalId + " is not allowed for case " + docb.getArchiveFileKey().getId() + " or doc is deleted");
                     }
 
                 }
@@ -3627,9 +3655,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         
         if(returnList.size()>(limit-1)) {
-            log.info("hit limit of " + limit + " tagged documents for user " + context.getCallerPrincipal().getName());
+            log.info("    hit limit of " + limit + " tagged documents for user " + principalId);
         }
 
+        if(log.isInfoEnabled())
+            log.info("    returning " + returnList.size() + " items");
+        
         return returnList;
     }
 

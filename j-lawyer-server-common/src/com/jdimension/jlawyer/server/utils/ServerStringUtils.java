@@ -741,4 +741,19 @@ public class ServerStringUtils {
         return a;
     }
     
+    public static String toString(String[] stringArray) {
+        return toString(stringArray, " ");
+    }
+    
+    public static String toString(String[] stringArray, String delimiter) {
+        StringBuilder sb=new StringBuilder();
+        if(stringArray!=null) {
+            for(String s: stringArray) {
+                sb.append(s);
+                sb.append(delimiter);
+            }
+        }
+        return sb.toString();
+    }
+    
 }
