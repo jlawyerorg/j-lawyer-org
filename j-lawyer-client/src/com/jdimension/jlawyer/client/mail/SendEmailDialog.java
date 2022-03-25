@@ -2055,6 +2055,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 if (tpl.isText()) {
                     if (ms != null) {
                         this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature()));
+                        this.tp.setCaretPosition(0);
                         this.hp.setText("");
                         this.text.setSelected(true);
                         this.textActionPerformed(null);
@@ -2066,6 +2067,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                             sig = "";
                         }
                         this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
+                        this.hp.setCaretPosition(0);
                         this.tp.setText("");
                         this.html.setSelected(true);
                         this.htmlActionPerformed(null);
