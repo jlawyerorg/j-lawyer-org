@@ -1111,6 +1111,10 @@ public class FormPlugin implements Comparable {
     public ArrayList<FormPluginSetting> getSettings() {
         return settings;
     }
+    
+    public boolean hasSettings() {
+        return !(this.settings.isEmpty());
+    }
 
     /**
      * @param settings the settings to set

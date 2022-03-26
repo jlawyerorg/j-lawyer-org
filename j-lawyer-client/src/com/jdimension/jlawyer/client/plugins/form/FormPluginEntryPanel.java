@@ -729,7 +729,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
                 break;
         }
         if(state==STATE_INSTALLED)
-            this.cmdSettings.setEnabled(plugin.getSettings()!=null && plugin.getSettings().size()>0);
+            this.cmdSettings.setEnabled(plugin.hasSettings());
         else
             this.cmdSettings.setEnabled(false);
 
