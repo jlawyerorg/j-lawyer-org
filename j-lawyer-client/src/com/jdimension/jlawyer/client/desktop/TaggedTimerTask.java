@@ -981,9 +981,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                         resultUI.add(ep);
                         i++;
-                        if (i == 50) {
-                            running = false;
-                            return;
+                        if (i == 500) {
+                            break;
                         }
                     }
 
@@ -1023,16 +1022,15 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                         resultUI.add(ep);
                         i++;
-                        if (i == 50) {
-                            running = false;
-                            return;
+                        if (i == 500) {
+                            break;
                         }
 
                     }
 
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
-
+                    running = false;
                 }
 
                 private void addTagsTab(String tagName) {

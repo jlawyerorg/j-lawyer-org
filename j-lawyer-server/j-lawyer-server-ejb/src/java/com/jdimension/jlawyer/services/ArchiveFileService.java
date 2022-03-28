@@ -2889,7 +2889,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tagName=new String[]{"some-non-existing-string"};
             if(docTagName==null)
                 docTagName=new String[]{"some-non-existing-string"};
-            log.info("getTagged for " + principalId + "; caseTags="+ServerStringUtils.toString(tagName, ",") + "; docTags="+ServerStringUtils.toString(docTagName, ","));
+            //log.info("getTagged for " + principalId + "; caseTags="+ServerStringUtils.toString(tagName, ",") + "; docTags="+ServerStringUtils.toString(docTagName, ","));
         }
         
         ArrayList<String> allowedCases = null;
@@ -2997,9 +2997,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     if (allowedCases.contains(id)) {
                         ArchiveFileBean dto = this.archiveFileFacade.find(id);
                         returnList.add(dto);
-                    } else {
-                        if(log.isInfoEnabled())
-                            log.info("    " + principalId + " is not allowed for case " + id);
                     }
 
                     if (returnList.size() == limit) {
@@ -3010,9 +3007,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
             
-            if(log.isInfoEnabled())
-                log.info("    returning " + returnList.size() + " items");
-
             try {
                 rs.close();
             } catch (Exception ex) {
@@ -3576,12 +3570,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String principalId=context.getCallerPrincipal().getName();
         
-        if(log.isInfoEnabled()) {
-            if(docTagName==null)
-                docTagName=new String[]{"some-non-existing-string"};
-            log.info("getTaggedDocuments for " + principalId + "; docTags="+ServerStringUtils.toString(docTagName, ","));
-        }
-        
         List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(principalId);
@@ -3624,11 +3612,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
                     if (!docb.isDeleted() && SecurityUtils.checkGroupsForCase(userGroups, docb.getArchiveFileKey(), this.caseGroupsFacade)) {
                         returnList.add(docb);
-                    } else {
-                        if(log.isInfoEnabled())
-                            log.info("    " + principalId + " is not allowed for case " + docb.getArchiveFileKey().getId() + " or doc is deleted");
                     }
-
                 }
             }
 
@@ -3658,9 +3642,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.info("    hit limit of " + limit + " tagged documents for user " + principalId);
         }
 
-        if(log.isInfoEnabled())
-            log.info("    returning " + returnList.size() + " items");
-        
         return returnList;
     }
 
