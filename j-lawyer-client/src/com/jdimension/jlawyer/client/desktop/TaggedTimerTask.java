@@ -711,6 +711,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of SystemStateTimerTask
+     * @param owner
+     * @param tagsPane
+     * @param resultPanel
+     * @param split
+     * @param tagMenu
+     * @param popDocumentTags
+     * @param popTags
+     * @param tagDocumentMenu
+     * @param ignoreCurrentEditorParam
+     * @param rebuildPopup
      */
     public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
         super();
