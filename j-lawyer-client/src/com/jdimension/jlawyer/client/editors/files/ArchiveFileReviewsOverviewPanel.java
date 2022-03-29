@@ -917,6 +917,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
+    public void refresh() {
+        this.cmdRefreshActionPerformed(null);
+    }
+    
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
             TableUtils.exportAndLaunch("wiedervorlagen-export.csv", this.tblResults);
