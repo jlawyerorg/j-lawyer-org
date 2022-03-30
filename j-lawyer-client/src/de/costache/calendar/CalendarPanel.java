@@ -909,8 +909,8 @@ public class CalendarPanel extends javax.swing.JPanel {
                 tog.setOpaque(true);
                 tog.setForeground(Color.WHITE);
                 tog.setSelected(false);
-                tog.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_black_48dp.png")));
-                tog.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_off_black_48dp.png")));
+                tog.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_white_48dp.png")));
+                tog.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_off_white_48dp.png")));
                 tog.addActionListener((java.awt.event.ActionEvent evt) -> {
                     // CAUTION: the selection state is reversed
                     if (tog.isSelected()) {
