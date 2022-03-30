@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -688,7 +687,6 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -874,8 +872,6 @@ public class CalendarPanel extends javax.swing.JPanel {
 
         this.cachedEvents=dtos;
         
-//        this.toolBar.removeAll();
-//        this.allCalTypes.clear();
         for (CalendarEvent ce : this.jCalendar.getCalendarEvents()) {
             this.jCalendar.removeCalendarEvent(ce);
         }
@@ -906,13 +902,6 @@ public class CalendarPanel extends javax.swing.JPanel {
                 this.allCalTypes.put(rev.getCalendarSetup().getId(), t);
                 this.selectedCalTypes.add(rev.getCalendarSetup().getId());
 
-//                    JLabel lbl=new JLabel();
-//                    lbl.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
-//                    lbl.setToolTipText(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
-//                    lbl.setBackground(backColor);
-//                    lbl.setOpaque(true);
-//                    lbl.setForeground(Color.WHITE);
-//                    this.toolBar.add(lbl);
                 JToggleButton tog = new JToggleButton();
                 tog.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
                 tog.setToolTipText(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
@@ -936,18 +925,6 @@ public class CalendarPanel extends javax.swing.JPanel {
                     cacheClone.addAll(cachedEvents);
                     setData(cacheClone);
                     
-//                    if (parentClass != null) {
-//                        try {
-//                            Object parent = EditorsRegistry.getInstance().getEditor(parentClass);
-//                            if (parent instanceof ArchiveFileReviewsOverviewPanel) {
-//                                ((ArchiveFileReviewsOverviewPanel) parent).refresh();
-//                            } else {
-//                                log.error("unkown parent class: " + parentClass);
-//                            }
-//                        } catch (Throwable th) {
-//                            log.error("unable to get parent class", th);
-//                        }
-//                    }
                 });
                 this.toolBar.add(tog);
 
