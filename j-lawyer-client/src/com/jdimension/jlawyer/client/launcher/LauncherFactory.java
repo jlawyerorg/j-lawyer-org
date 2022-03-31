@@ -923,17 +923,18 @@ public class LauncherFactory {
                     } else {
                         cmdLine.set(0, "libreoffice");
                     }
-                    
+                    log.info("direct printing (libreoffice) through command line: " + cmdLine.toString());
                     p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-                    
+                    log.info("  direct printing launch via libreoffice succeeded");
                     libreOffice = true;
                 } catch (Throwable ex) {
-                    log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
+                    log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + cmdLine.toString(), ex);
                     libreOffice = false;
                 }
                 
                 if (libreOffice) {
                     int exit = p.waitFor();
+                    log.info("  direct printing exit code via libreoffice: " + exit);
                     if (exit == 0) {
                         libreOffice = true;
                     } else {
@@ -949,6 +950,7 @@ public class LauncherFactory {
                         } else {
                             cmdLine.set(0, "soffice");
                         }
+                        log.info("direct printing (soffice) through command line: " + cmdLine.toString());
                         p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
 
                         int exit = p.waitFor();
@@ -956,8 +958,8 @@ public class LauncherFactory {
                             throw new Exception("LibreOffice / OpenOffice nicht installiert!");
                         }
                     } catch (Throwable ex) {
-                        log.error("error starting soffice" + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
-                        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])));
+                        log.error("error starting soffice" + "; command line was: " + cmdLine.toString(), ex);
+                        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + cmdLine.toString());
                     }
 
                 }
