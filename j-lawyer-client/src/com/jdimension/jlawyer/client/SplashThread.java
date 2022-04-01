@@ -742,6 +742,9 @@ public class SplashThread implements Runnable {
 
     /**
      * Creates a new instance of SplashThread
+     * @param splash
+     * @param settings
+     * @param owner
      */
     public SplashThread(StartupSplashFrame splash, ClientSettings settings, JFrame owner) {
         this.splash = splash;
