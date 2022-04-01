@@ -820,8 +820,12 @@ public class ContactSyncService implements ContactSyncServiceLocal {
         try {
 
             AddressBean attachedContact=this.addressFacade.find(contact.getId());
+            if(attachedContact==null) {
+                log.warn("contact was null when syncing new contact with ID " + contact.getId());
+                return;
+            }
             // only sync contacts that are part of a case
-            if (attachedContact.getArchiveFileAddressesBeanList().isEmpty()) {
+            if (attachedContact.getArchiveFileAddressesBeanList()==null || attachedContact.getArchiveFileAddressesBeanList().isEmpty()) {
                 return;
             }
 
