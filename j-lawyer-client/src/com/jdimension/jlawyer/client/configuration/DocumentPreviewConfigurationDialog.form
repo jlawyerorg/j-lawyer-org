@@ -86,9 +86,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel1">
       <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="com/jdimension/jlawyer/client/configuration/CustomFieldConfigurationDialog.properties" key="customfield1.name" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-        </Property>
+        <Property name="text" type="java.lang.String" value="Dokumentvorschau laden f&#xfc;r Dokumente bis"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="cmbSize">

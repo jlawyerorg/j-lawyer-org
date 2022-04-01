@@ -733,7 +733,7 @@ public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel1.setText(bundle.getString("customfield1.name")); // NOI18N
+        jLabel1.setText("Dokumentvorschau laden für Dokumente bis");
 
         cmbSize.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1 MB", "2 MB", "3 MB", "5 MB", "10 MB", "unbegrenzt" }));
 
