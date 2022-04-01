@@ -665,15 +665,12 @@ package com.jdimension.jlawyer.client.configuration;
 
 //import bsh.This;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author  jens
  */
 public class CustomFieldConfigurationDialog extends javax.swing.JDialog {
-    
-    private static final Logger log=Logger.getLogger(CustomFieldConfigurationDialog.class.getName());
     
     private String categoryKey=null;
     
