@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -724,11 +725,11 @@ import org.w3c.dom.events.EventTarget;
 public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
-    private static final String HTML_WARNING = "<html><head>\n" +
-"    <style>\n" +
-"\n" +
-"\n" +
-"    .myButton {\n"
+    private static final String HTML_WARNING = "<html><head>\n"
+            + "    <style>\n"
+            + "\n"
+            + "\n"
+            + "    .myButton {\n"
             + "	background:linear-gradient(to bottom, #89c403 5%, #98bf0d 100%);\n"
             + "	background-color:#89c403;\n"
             + "	border-radius:6px;\n"
@@ -751,10 +752,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "	top:1px;\n"
             + "}\n"
             + "\n"
-+ "\n" +
-"\n" +
-"    </style>\n" +
-"  </head><body><p>&nbsp;</p><p align=\"center\"><font color=\"#DE313B\"><b>HTML-Inhalte werden zum Schutz vor Spam erst nach Best&auml;tigung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</b></font></p><p>&nbsp;</p><p align=\"center\">"
+            + "\n"
+            + "\n"
+            + "    </style>\n"
+            + "  </head><body><p>&nbsp;</p><p align=\"center\"><font color=\"#DE313B\"><b>HTML-Inhalte werden zum Schutz vor Spam erst nach Best&auml;tigung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</b></font></p><p>&nbsp;</p><p align=\"center\">"
             + ""
             + "<a href=\"jlawyer://addtowhitelist\" class=\"myButton\">Absender ist vertrauenswürdig</a></p>\n"
             + "\n"
@@ -827,15 +828,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                         if (href == null) {
                                             return;
                                         }
-                                        
-                                        final String hrefValue=href;
+
+                                        final String hrefValue = href;
                                         SwingUtilities.invokeLater(() -> {
                                             if (hrefValue.contains("jlawyer://addtowhitelist")) {
-                                                    showHtml();
+                                                showHtml();
                                             } else if (hrefValue.toLowerCase().startsWith("mailto:")) {
                                                 SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
                                                 FrameUtils.centerDialog(dlg, null);
-                                                String mTo=hrefValue;
+                                                String mTo = hrefValue;
                                                 if (mTo.length() > 7) {
                                                     mTo = mTo.substring(7);
                                                 }
@@ -922,7 +923,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     private void setBody(String b, String mimeType) {
         this.body = b;
-        this.contentType=mimeType;
+        this.contentType = mimeType;
         Platform.setImplicitExit(false);
         Platform.runLater(() -> {
             try {
@@ -967,7 +968,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
 
         //this.cmdShowHtml.setEnabled(false);
-
         this.msgContainer = msgC;
         try {
             Message msg = msgC.getMessage();
@@ -1310,6 +1310,24 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 //this.contentType=ContentTypes.TEXT_HTML;
                 //contentUI.setContentType(ContentTypes.TEXT_HTML);
                 String body = copiedMsg.getContent().toString();
+                if (copiedMsg.getContent() instanceof InputStream) {
+                    log.warn("content of mail is of type inputstream!");
+                    BufferedInputStream contentBis = new BufferedInputStream((InputStream) copiedMsg.getContent());
+                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead = -1;
+                    while ((bytesRead = contentBis.read(buffer)) > -1) {
+                        bout.write(buffer, 0, bytesRead);
+                    }
+                    bout.close();
+                    try {
+                    body=new String(bout.toByteArray());
+                    } catch (Throwable t) {
+                        log.error("mail content byte array cannot be converted to string", t);
+                    }
+                    log.warn("bytes represent the following string:");
+                    log.warn(body);
+                }
 
 //                editBody.setContentType(ContentTypes.TEXT_HTML);
                 // do this AFTER setContentType and BEFORE setText!!!
@@ -1336,8 +1354,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //                } catch (Throwable t) {
 //                    log.error("could not set default font for HTML mail", t);
 //                }
-                body = body.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
-
+                //body = body.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
                 ClientSettings s = ClientSettings.getInstance();
                 String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
                 int index = whitelist.indexOf(lblFrom.getText());
@@ -1880,7 +1897,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         s.setConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, whitelist);
         //this.cmdShowHtml.setEnabled(false);
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel fxContainer;
     private javax.swing.JLabel jLabel1;
