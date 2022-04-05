@@ -680,7 +680,6 @@ import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Folder;
-import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageHeader;
 
 /**
@@ -690,11 +689,8 @@ import org.jlawyer.bea.model.MessageHeader;
 public class LoadBeaFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadBeaFolderAction.class.getName());
-    private SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
-
-    private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
-    };
+    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
 
     private org.jlawyer.bea.model.Folder f = null;
     private JTable table = null;
@@ -720,7 +716,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
     @Override
     public int getMax() {
         try {
-            //return f.getMessageCount();
             return this.max;
         } catch (Throwable t) {
             log.error(t);
@@ -739,115 +734,73 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
 
-//            
-//            ClientSettings cs=ClientSettings.getInstance();
-//            String restriction=cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, ""+LoadFolderRestriction.RESTRICTION_50);
-//            LoadFolderRestriction currentRestriction=null;
-//            try {
-//                int restr=Integer.parseInt(restriction);
-//                currentRestriction=new LoadFolderRestriction(restr);
-//            } catch (Throwable t) {
-//                currentRestriction=new LoadFolderRestriction(LoadFolderRestriction.RESTRICTION_50);
-//            }
-//            int fromIndex=1;
-//            int toIndex=f.getMessageCount();
-//            if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_20) {
-//                    fromIndex=Math.max(1, toIndex-20);
-//                }
-//                if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_50) {
-//                    fromIndex=Math.max(1, toIndex-50);
-//                }
-//                if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_100) {
-//                    fromIndex=Math.max(1, toIndex-100);
-//                }
-//                if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_500) {
-//                    fromIndex=Math.max(1, toIndex-500);
-//                }
-            BeaAccess bea = BeaAccess.getInstance();
-
             final int indexMax = headers.size() - 1;
             for (int i = 0; i < headers.size(); i++) {
 
                 if (this.isCancelled()) {
                     break;
-                    //return true;
                 }
 
-                // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 this.progress("Lade Nachrichten... " + (i + 1));
 
-                //System.out.println("*****************************************************************************");
-                //System.out.println("MESSAGE " + (i + 1) + ":");
                 MessageHeader msgh = headers.get(i);
                 EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
-                //final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
 
                 String to = "";
-                if (msgh.getRecipients().size() > 0) {
-                    to = msgh.getRecipients().get(0).getName();
-                    for (int j = 1; j < msgh.getRecipients().size(); j++) {
-                        to = to + ", " + msgh.getRecipients().get(j).getName();
-                    }
+                if (msgh.getRecipient()!=null) {
+                    to = msgh.getRecipient().getName();
                 }
                 final String toString = to;
 
-//                if(msg.isSet(Flags.Flag.SEEN) && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_UNREAD) {
-//                    // only show unread mails
-//                    continue;
-//                }
-//                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
                 final int currentIndex = i;
-                
-                if (f.getType() == Folder.TYPE_TRASH) {
-                    TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(table.getModel());
+
+                if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
+                    TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
                     sorter.setComparator(9, new DateStringComparator());
                     // "dd.MM.yyyy, HH:mm"
                     sorter.setComparator(6, new DateStringComparator("dd.MM.yyyy, HH:mm"));
                     table.setRowSorter(sorter);
                 }
 
-                SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-                    public void run() {
-                        try {
-
-                            if (f.getType() == Folder.TYPE_TRASH) {
-                                // trash folder - show permanent deletion date
-                                if (msgh.getReceptionTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                } else {
-                                    if (msgh.getSentTime() != null) {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                    } else {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                    }
-
-                                }
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        
+                        if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
+                            // trash folder - show permanent deletion date
+                            if (msgh.getReceptionTime() != null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                             } else {
-                                // not the trash folder
-                                if (msgh.getReceptionTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                if (msgh.getSentTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 } else {
-                                    if (msgh.getSentTime() != null) {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                    } else {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                    }
-
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 }
+                                
                             }
-                            if (scrollToRow > 0) {
-                                if (currentIndex == (indexMax)) {
-                                    if (table.getRowCount() > scrollToRow) {
-                                        table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
-                                    }
+                        } else {
+                            // not the trash folder
+                            if (msgh.getReceptionTime() != null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                            } else {
+                                if (msgh.getSentTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                } else {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                                 }
+                                
                             }
-                        } catch (Throwable t) {
-                            log.error(t);
                         }
+                        if (scrollToRow > 0) {
+                            if (currentIndex == (indexMax)) {
+                                if (table.getRowCount() > scrollToRow) {
+                                    table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
+                                }
+                            }
+                        }
+                    } catch (Throwable t) {
+                        log.error(t);
                     }
-                }));
+                });
                 try {
                     if (i == (headers.size() - 1) || i == (headers.size() / 2)) {
                         ComponentUtils.autoSizeColumns(table);
@@ -855,36 +808,19 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 } catch (Throwable t) {
                     log.error(t);
                 }
-//                
-//                if(i==20 && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_20) {
-//                    break;
-//                }
-//                if(i==50 && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_50) {
-//                    break;
-//                }
-//                if(i==100 && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_100) {
-//                    break;
-//                }
-//                if(i==500 && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_500) {
-//                    break;
-//                }
+
             }
 
             try {
                 table.getRowSorter().toggleSortOrder(this.sortCol);
-                
-                
 
             } catch (Throwable t) {
                 log.error("Error sorting mails", t);
             }
 
-            SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-                public void run() {
-                    ComponentUtils.autoSizeColumns(table);
-                }
-            }));
+            SwingUtilities.invokeLater(() -> {
+                ComponentUtils.autoSizeColumns(table);
+            });
 
             //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);

@@ -663,11 +663,6 @@
  */
 package com.jdimension.jlawyer.fax;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-
 /**
  *
  * @author jens
@@ -679,17 +674,16 @@ public class FaxClient {
      */
     public static void main(String[] args) {
         try {
-            SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"), "j-lawyer Client", "1.9");
-            sg.login();
+            SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"));
             //System.out.println(sg.getTypesOfService());
-            System.out.println(sg.getOwnUris());
+            System.out.println(sg.getOwnUris("w0"));
             System.out.println(sg.getBalance());
             //System.out.println(sg.initiateSession("text", "sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate"));
-            System.out.println(sg.initiateSms("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate"));            
+            sg.initiateSms("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate");            
             //System.out.println(sg.initiateFax("sip:1404811@sipgate.de", "sip:493525733880@sipgate.de", new File("/home/jens/temp/agb.pdf")));
             //System.out.println(sg.initiateCall("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de"));
             // session id: FAX1_229b69a7d65a7ad17382e8fcc25a3c40
-            System.out.println("Status: " + sg.getSessionStatus("FAX1_96170c65027d16748ed173c641ce2fe4"));
+            System.out.println("Status: " + sg.getFaxStatus("FAX1_96170c65027d16748ed173c641ce2fe4"));
             // #Sendebericht: https://secure.sipgate.de/user/fax/report.php?sid=41e761ae7b5303cf71032fa805917927
             
 //                        result = client.execute("system.listMethods", new Vector());

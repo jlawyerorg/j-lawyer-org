@@ -676,7 +676,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.WindowConstants;
 import org.apache.log4j.Logger;
 
 /**
@@ -695,37 +697,37 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         initComponents();
 
         ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_BACKUP_MODE, "on");
+        String mode = set.getSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "on");
         if ("on".equalsIgnoreCase(mode)) {
             this.optBackupOn.setSelected(true);
         }
         if ("off".equalsIgnoreCase(mode)) {
             this.optBackupOff.setSelected(true);
         }
-        String hour = set.getSetting(set.SERVERCONF_BACKUP_HOUR, "22");
+        String hour = set.getSetting(ServerSettings.SERVERCONF_BACKUP_HOUR, "22");
         this.cmbHour.setSelectedItem(hour);
-        String dbUser = set.getSetting(set.SERVERCONF_BACKUP_DBUSER, "root");
+        String dbUser = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBUSER, "root");
         this.txtDbUser.setText(dbUser);
-        String encryptPwd = set.getSetting(set.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+        String encryptPwd = set.getSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, "");
         this.txtEncryptionPassword.setText(encryptPwd);
-        String dbPwd = set.getSetting(set.SERVERCONF_BACKUP_DBPWD, "");
+        String dbPwd = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD, "");
         this.txtDbPwd.setText(dbPwd);
-        String dbPort = set.getSetting(set.SERVERCONF_BACKUP_DBPORT, "3306");
+        String dbPort = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBPORT, "3306");
         this.txtDbPort.setText(dbPort);
 
-        boolean mon = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_MONDAY, false);
+        boolean mon = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_MONDAY, false);
         this.chkMon.setSelected(mon);
-        boolean tue = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_TUESDAY, false);
+        boolean tue = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_TUESDAY, false);
         this.chkTue.setSelected(tue);
-        boolean wed = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_WEDNESDAY, false);
+        boolean wed = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_WEDNESDAY, false);
         this.chkWed.setSelected(wed);
-        boolean thu = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_THURSDAY, false);
+        boolean thu = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_THURSDAY, false);
         this.chkThu.setSelected(thu);
-        boolean fri = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_FRIDAY, false);
+        boolean fri = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_FRIDAY, false);
         this.chkFri.setSelected(fri);
-        boolean sat = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_SATURDAY, false);
+        boolean sat = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_SATURDAY, false);
         this.chkSat.setSelected(sat);
-        boolean sun = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_SUNDAY, false);
+        boolean sun = set.getSettingAsBoolean(ServerSettings.SERVERCONF_BACKUP_SUNDAY, false);
         this.chkSun.setSelected(sun);
 
         String syncLoc = set.getSetting(ServerSettings.SERVERCONF_BACKUP_SYNCTARGET, "");
@@ -1199,12 +1201,12 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         }
 
         ServerSettings set = ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_BACKUP_DBPWD, this.txtDbPwd.getText());
-        set.setSetting(set.SERVERCONF_BACKUP_DBUSER, this.txtDbUser.getText());
-        set.setSetting(set.SERVERCONF_BACKUP_DBPORT, this.txtDbPort.getText());
-        set.setSetting(set.SERVERCONF_BACKUP_HOUR, this.cmbHour.getSelectedItem().toString());
-        String oldEncryptionPassword = set.getSetting(set.SERVERCONF_BACKUP_ENCRYPTPWD, "");
-        set.setSetting(set.SERVERCONF_BACKUP_ENCRYPTPWD, new String(this.txtEncryptionPassword.getPassword()));
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD, this.txtDbPwd.getText());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBUSER, this.txtDbUser.getText());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBPORT, this.txtDbPort.getText());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_HOUR, this.cmbHour.getSelectedItem().toString());
+        String oldEncryptionPassword = set.getSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, new String(this.txtEncryptionPassword.getPassword()));
 
         if (!oldEncryptionPassword.equals(new String(this.txtEncryptionPassword.getPassword()))) {
             // encryption password has changed, need to remove current backup
@@ -1216,23 +1218,23 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("error clearing backup directory", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Bereinigen der alten Datensicherung: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler Bereinigen der alten Datensicherung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
         if (this.optBackupOn.isSelected()) {
-            set.setSetting(set.SERVERCONF_BACKUP_MODE, "on");
+            set.setSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "on");
         } else {
-            set.setSetting(set.SERVERCONF_BACKUP_MODE, "off");
+            set.setSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "off");
         }
 
-        set.setSetting(set.SERVERCONF_BACKUP_MONDAY, "" + this.chkMon.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_TUESDAY, "" + this.chkTue.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_WEDNESDAY, "" + this.chkWed.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_THURSDAY, "" + this.chkThu.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_FRIDAY, "" + this.chkFri.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_SATURDAY, "" + this.chkSat.isSelected());
-        set.setSetting(set.SERVERCONF_BACKUP_SUNDAY, "" + this.chkSun.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_MONDAY, "" + this.chkMon.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_TUESDAY, "" + this.chkTue.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_WEDNESDAY, "" + this.chkWed.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_THURSDAY, "" + this.chkThu.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_FRIDAY, "" + this.chkFri.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_SATURDAY, "" + this.chkSat.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_SUNDAY, "" + this.chkSun.isSelected());
 
         this.setVisible(false);
         this.dispose();
@@ -1245,12 +1247,11 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdAdHocBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAdHocBackupActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
-        String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
-        String port = settings.getConfiguration(settings.CONF_LASTPORTDYN, "8080");
-        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
-
+        String server = settings.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost");
+        String port = settings.getConfiguration(ClientSettings.CONF_LASTPORTDYN, "8080");
+        
         String protocol = "http";
-        if ("ssl".equalsIgnoreCase(settings.getConfiguration(settings.CONF_LASTSECMODE, "standard"))) {
+        if ("ssl".equalsIgnoreCase(settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard"))) {
             protocol = "https";
         }
 
@@ -1259,21 +1260,26 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         // this is just the hash, not usable for http basic auth
         //String password = UserSettings.getInstance().getCurrentUser().getPassword();
         
-        String password = JOptionPane.showInputDialog(this, "Start der Datensicherung durch Passworteingabe für Nutzer " + principalId + " bestätigen: ", "");
-                if (password == null || "".equals(password)) {
-                    return;
-                }
+        RequestPasswordOptionPanel p = new RequestPasswordOptionPanel();
+        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
+        JDialog dialog = pane.createDialog(this, "Durch Passwort bestätigen");
+        dialog.doLayout();
+        dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
+        // prevent user from using the 'X' button to close the dialog
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        dialog.setVisible(true);
+        if (p.getPassword() == null || "".equals(p.getPassword())) {
+            return;
+        }
+        String password=p.getPassword();
 
         try {
-            URL backupUrl = new java.net.URL(protocol + "://" + principalId + ":" + password + "@" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc");
-            //InputStream is = backupUrl.openStream();
-
+            URL backupUrl = new java.net.URL(protocol + "://" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc");
+            
             URLConnection urlConnection = backupUrl.openConnection();
-
-            if (backupUrl.getUserInfo() != null) {
-                String basicAuth = "Basic " + new String(java.util.Base64.getEncoder().encode(backupUrl.getUserInfo().getBytes()));
-                urlConnection.setRequestProperty("Authorization", basicAuth);
-            }
+            String userpass = principalId + ":" + password;
+            String basicAuth = "Basic " + new String(java.util.Base64.getEncoder().encode(userpass.getBytes()));
+            urlConnection.setRequestProperty ("Authorization", basicAuth);
 
             InputStream is = urlConnection.getInputStream();
 
@@ -1296,7 +1302,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSyncActionPerformed
         ServerSettings set = ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_BACKUP_SYNCTARGET, this.txtTarget.getText());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_SYNCTARGET, this.txtTarget.getText());
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveSyncActionPerformed
@@ -1320,19 +1326,19 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                 SystemManagementRemote sys = locator.lookupSystemManagementRemote();
                 boolean valid = sys.validateFileOnServer(new File(this.txtExportTarget.getText()), true);
                 if (!valid) {
-                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtExportTarget.getText(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtExportTarget.getText(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
                     return;
                 }
             } catch (Exception ex) {
                 log.error("error validating html export options", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
 
         ServerSettings set = ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_BACKUP_EXPORTTARGET, this.txtExportTarget.getText().trim());
+        set.setSetting(ServerSettings.SERVERCONF_BACKUP_EXPORTTARGET, this.txtExportTarget.getText().trim());
 
         this.setVisible(false);
         this.dispose();
@@ -1389,19 +1395,16 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                BackupConfigurationDialog dialog = new BackupConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            BackupConfigurationDialog dialog = new BackupConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

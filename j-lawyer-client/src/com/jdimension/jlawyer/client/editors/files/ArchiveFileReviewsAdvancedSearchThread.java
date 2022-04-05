@@ -667,13 +667,11 @@ import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Locale;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -684,78 +682,78 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ArchiveFileReviewsAdvancedSearchThread.class.getName());
-    
-    private Component owner;
-    private JTable target;
-    private int statusSearchMode=0;
-    private int typeSearchMode=0;
-    private Date toDate=null;
-    private Date fromDate=null;
-    
+
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewsAdvancedSearchThread.class.getName());
+
+    private final Component owner;
+    private final JTable target;
+    private int statusSearchMode = 0;
+    private int typeSearchMode = 0;
+    private Date toDate = null;
+    private Date fromDate = null;
+
     /**
      * Creates a new instance of ArchiveFileReviewsAdvancedSearchThread
+     *
+     * @param owner
+     * @param target
+     * @param statusSearchMode
+     * @param typeSearchMode
+     * @param fromDate
+     * @param toDate
      */
     public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate) {
-        this.owner=owner;
-        this.target=target;
-        this.statusSearchMode=statusSearchMode;
-        this.typeSearchMode=typeSearchMode;
-        this.toDate=toDate;
-        this.fromDate=fromDate;
+        this.owner = owner;
+        this.target = target;
+        this.statusSearchMode = statusSearchMode;
+        this.typeSearchMode = typeSearchMode;
+        this.toDate = toDate;
+        this.fromDate = fromDate;
     }
 
+    @Override
     public void run() {
-        Collection<ArchiveFileReviewsBean> dtos=null;
+        Collection<ArchiveFileReviewsBean> dtos = null;
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos=fileService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
-            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            dtos = calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
-        
-        String[] colNames=new String[] {"fällig" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "erledigt", "Anwalt", "verantwortlich"};
-        ArchiveFileReviewsFindTableModel model=new ArchiveFileReviewsFindTableModel(colNames, 0);
+
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
+        ArchiveFileReviewsFindTableModel model = new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
-        //this.target.setModel(model);
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
-        for(ArchiveFileReviewsBean b:dtos) {
-            //Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getFileNumber(), dtos[i].getName()};
-            Date reviewDate=b.getReviewDate();
-            String reviewDateString="";
-            if(reviewDate!=null)
-                reviewDateString=df.format(reviewDate);
-            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+        for (ArchiveFileReviewsBean b : dtos) {
+            String reviewDateString = b.toString();
+            String calendar = "";
+            if (b.getCalendarSetup() != null) {
+                calendar = b.getCalendarSetup().getDisplayName();
+            }
+            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
             model.addRow(row);
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        //EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
         // give the EDT some time to process the new table model
         try {
             Thread.sleep(500);
         } catch (Throwable t) {
-            
+
         }
-        ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 6);
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 7);
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
-        
+        ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 8);
+        ThreadUtils.repaintComponent(target);
+
     }
-    
+
 }

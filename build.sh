@@ -24,8 +24,6 @@ else
    ant -buildfile j-lawyer-fax/build.xml default
 fi
 
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default
-
 if [ "$ftpuser" = "" ] || [ "$ftppassword" = "" ] || [ "$ftphome" = "" ] || [ "$ftphost" = "" ]
 then
    echo "VFS ftp / sftp credentials not set, skipping j-lawyer-server-common tests"
@@ -33,6 +31,8 @@ then
 else
    ant -buildfile j-lawyer-server-common/build.xml default
 fi
+
+ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default
 
 ant -buildfile j-lawyer-server-api/build.xml default
 

@@ -1,0 +1,15 @@
+alter table security_users drop column emailAddress;
+alter table security_users drop column emailInType;
+alter table security_users drop column emailInServer;
+alter table security_users drop column emailInUser;
+alter table security_users drop column emailInPwd;
+alter table security_users drop column emailOutServer;
+alter table security_users drop column emailOutUser;
+alter table security_users drop column emailOutPwd;
+alter table security_users drop column emailSenderName;
+alter table security_users drop column emailSignature;
+alter table security_users drop column emailInSsl;
+alter table security_users drop column emailOutSsl;
+alter table security_users drop column emailStartTls;
+insert into server_settings(settingKey, settingValue) values('jlawyer.server.database.version','2.1.0.7') ON DUPLICATE KEY UPDATE settingValue     = '2.1.0.7';
+commit;

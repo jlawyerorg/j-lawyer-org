@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -676,18 +677,17 @@ public class FileConverter {
 
     private static final Logger log = Logger.getLogger(FileConverter.class.getName());
 
-    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
+    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".jpeg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     public static FileConverter getInstance() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1) {
+        if (SystemUtils.isWindows()) {
             WindowsFileConverter wfc = new WindowsFileConverter();
             return wfc;
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (SystemUtils.isLinux()) {
             LinuxFileConverter lfc = new LinuxFileConverter();
             return lfc;
-        } else if (osName.startsWith("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             MacFileConverter mfc = new MacFileConverter();
             return mfc;
         }
@@ -739,9 +739,6 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
-
-            // String clientLocation=System.getProperty("client.location");
             String clientLocation = System.getenv("JLAWYERCLIENTHOME");
             if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
@@ -773,13 +770,64 @@ public class FileConverter {
 
         @Override
         public String convertToPDF(String url) throws Exception {
+            ClientSettings set = ClientSettings.getInstance();
+            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
+            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
+
+            if (wordProcessorMicrosoft) {
+                return convertToPDFMS(url);
+            } else {
+                return convertToPDFLO(url);
+            }
+        }
+
+        private String convertToPDFMS(String url) throws Exception {
             if (!this.validateInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
+            File org = new File(url);
+            String orgName = org.getName();
+            String path = url.substring(0, url.indexOf(orgName));
+            String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
 
-            // String clientLocation=System.getProperty("client.location");
+            boolean isRetry = false;
+            for (int i = 0; i < 2; i++) {
+                Process p = Runtime.getRuntime().exec(new String[]{"office2pdf.bat", url, pdf});
+                int exit = p.waitFor();
+
+                if (exit != 0) {
+                    if (isRetry) {
+                        log.error("PDF conversion failed with exit code " + exit + ", command line was 'office2pdf.bat " + url + " " + pdf);
+                        throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
+                    } else {
+                        isRetry = true;
+                        log.warn("PDF conversion failed with exit code " + exit + " - retrying... (" + url + ")");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Throwable t) {
+
+                        }
+                        continue;
+                    }
+                }
+
+                if (!(new File(pdf).exists())) {
+                    throw new Exception("Konvertierung per office2pdf fehlgeschlagen");
+                }
+
+                return pdf;
+            }
+
+            // should never be reached
+            throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
+        }
+
+        private String convertToPDFLO(String url) throws Exception {
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+
             String clientLocation = System.getenv("JLAWYERCLIENTHOME");
             if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
@@ -792,10 +840,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", "\"" + tempPath + "\"", "\"" + url+ "\""});
-                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", tempPath, url});
                 Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv.bat", url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
@@ -951,23 +996,23 @@ public class FileConverter {
             for (int i = 0; i < 2; i++) {
                 Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
                 int exit = p.waitFor();
-                
+
                 if (exit != 0) {
-                    if(isRetry) {
+                    if (isRetry) {
                         log.error("PDF conversion failed with exit code " + exit);
                         throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
                     } else {
-                        isRetry=true;
+                        isRetry = true;
                         log.warn("PDF conversion failed with exit code " + exit + " - retrying... (" + url + ")");
                         try {
                             Thread.sleep(1000);
                         } catch (Throwable t) {
-                            
+
                         }
                         continue;
                     }
                 }
-                
+
                 File org = new File(url);
                 String orgName = org.getName();
                 String path = url.substring(0, url.indexOf(orgName));

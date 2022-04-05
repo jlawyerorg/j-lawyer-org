@@ -700,7 +700,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 Hashtable<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
-                ArrayList<String> currentFiles = new ArrayList<String>();
+                ArrayList<String> currentFiles = new ArrayList<>();
                 for (File f : files.keySet()) {
                     currentFiles.add(f.getName());
                 }

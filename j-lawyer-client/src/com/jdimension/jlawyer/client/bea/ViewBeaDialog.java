@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.io.File;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
@@ -838,7 +839,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -850,7 +851,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 subject = "Re: " + subject;
             }
             dlg.setSubject(subject);
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, msgC.getSenderName(), msgC.getReceptionTime()));
 
         } catch (Throwable ex) {
             log.error(ex);
@@ -893,7 +894,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -912,7 +913,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 subject = "Re: " + subject;
             }
             dlg.setSubject(subject);
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, msgC.getSenderName(), msgC.getReceptionTime()));
 
         } catch (Throwable ex) {
             log.error(ex);
@@ -963,7 +964,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 subject = "Fw: " + subject;
             }
             dlg.setSubject(subject);
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, msgC.getSenderName(), msgC.getReceptionTime()));
 
             for (Attachment att : msgC.getAttachments()) {
                 byte[] data = att.getContent();

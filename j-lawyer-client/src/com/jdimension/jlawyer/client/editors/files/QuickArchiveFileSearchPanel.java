@@ -673,7 +673,9 @@ import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -682,6 +684,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -711,8 +714,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     public QuickArchiveFileSearchPanel() {
         this.initializing = true;
         initComponents();
+        
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Akten");
+        
         UserSettings userSet = UserSettings.getInstance();
-        //this.detailsEditorClass=detailsEditorClass;
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.userCanEdit=true;
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -722,9 +728,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         }
         
         String temp = userSet.getSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "false");
-        boolean archiveSearch = false;
         if ("true".equalsIgnoreCase(temp)) {
-            archiveSearch = true;
             this.chkIncludeArchive.setSelected(true);
         }
 
@@ -742,8 +746,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
         this.initializing = false;
     }
 
@@ -763,12 +765,14 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         this.tblResults.setOpaque(false);
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -794,10 +798,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuEnableCaseSync = new javax.swing.JMenuItem();
+        mnuDisableCaseSync = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
@@ -841,6 +846,26 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         });
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
 
+        mnuEnableCaseSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_security_update_good_black_48dp.png"))); // NOI18N
+        mnuEnableCaseSync.setText("in App synchronisieren");
+        mnuEnableCaseSync.setToolTipText("gewählte Akten in der App bereitstellen");
+        mnuEnableCaseSync.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEnableCaseSyncActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuEnableCaseSync);
+
+        mnuDisableCaseSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_no_cell_black_48dp.png"))); // NOI18N
+        mnuDisableCaseSync.setText("aus der App entfernen");
+        mnuDisableCaseSync.setToolTipText("gewählte Akten aus der App entfernen");
+        mnuDisableCaseSync.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDisableCaseSyncActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDisableCaseSync);
+
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.setToolTipText("nach Akten-Etiketten filtern");
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -848,9 +873,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 cmdTagFilterMousePressed(evt);
             }
         });
-
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -960,8 +982,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 819, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
@@ -992,9 +1012,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdTagFilter)
                     .add(chkIncludeArchive)
                     .add(cmdDocumentTagFilter))
@@ -1016,7 +1034,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         ThreadUtils.setWaitCursor(this, false);
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
@@ -1025,11 +1043,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         EditorsRegistry.getInstance().updateStatus("Lösche " + ids.size() + " Akte(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //Object object = locator.lookup("SystemManagementBean");
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
                 fileService.removeArchiveFile(ids.get(i));
@@ -1038,14 +1053,12 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
             }
 
-            //fileService.remove();
             EditorsRegistry.getInstance().clearStatus(false);
 
         } catch (Exception ex) {
             log.error("Error deleting archive files", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
-            return;
         } finally {
             ThreadUtils.setDefaultCursor(this, false);
         }
@@ -1070,25 +1083,26 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
             ((ArchiveFilePanel) editor).setArchiveFileDTO(id.getArchiveFileDTO());
             ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
-//            ((ArchiveFilePanel) editor).setReadOnly(!this.userCanEdit);
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
 
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
-            if (this.tblResults.getSelectedRowCount() < 1) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
+            int selectionCount=this.tblResults.getSelectedRowCount();
+            if (selectionCount < 1) {
                 return;
             }
+            this.mnuOpenSelectedArchiveFile.setEnabled(selectionCount==1);
             this.popupArchiveFileActions.show(this.tblResults, evt.getX(), evt.getY());
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
                 int row = this.tblResults.getSelectedRow();
                 QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
@@ -1102,7 +1116,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private String getArchiveFileAsHtml(ArchiveFileBean afb) {
-        StringBuffer html = new StringBuffer();
+        StringBuilder html = new StringBuilder();
         html.append("<html><body>");
         html.append("<table>");
         html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
@@ -1126,7 +1140,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -1141,7 +1155,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
-        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP)) {
             int row = this.tblResults.getSelectedRow();
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
             ArchiveFileBean afb = id.getArchiveFileDTO();
@@ -1156,7 +1170,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             TableUtils.exportAndLaunch("aktensuche-export.csv", this.tblResults);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 
@@ -1173,23 +1187,28 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
-        ThreadUtils.setWaitCursor(this, false);
+        
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
         }
+        
+        if(ids.size() > 1) {
+            int response = JOptionPane.showConfirmDialog(this, "" + ids.size() + " Akten duplizieren?", "Akten duplizieren", JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
 
+        ThreadUtils.setWaitCursor(this, false);
         EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Akte(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //Object object = locator.lookup("SystemManagementBean");
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
                 ArchiveFileBean source=fileService.getArchiveFile(ids.get(i));
@@ -1225,18 +1244,21 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     fileService.setTag(target.getId(), atb, true);
                 }
                 
-                
+                List<ArchiveFileGroupsBean> allowedGroups=fileService.getAllowedGroups(ids.get(i));
+                ArrayList<Group> targetGroups=new ArrayList<>();
+                for(ArchiveFileGroupsBean afgb: allowedGroups) {
+                    targetGroups.add(afgb.getAllowedGroup());
+                }
+                fileService.updateAllowedGroups(target.getId(), targetGroups);
                 
             }
 
-            //fileService.remove();
             EditorsRegistry.getInstance().clearStatus(false);
             this.cmdQuickSearchActionPerformed(null);
         } catch (Exception ex) {
             log.error("Error duplicating cases", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
-            return;
         } finally {
             ThreadUtils.setDefaultCursor(this, false);
         }
@@ -1261,14 +1283,48 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         settings.setSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "" + includeArchive);
     }//GEN-LAST:event_chkIncludeArchiveActionPerformed
 
+    private void mnuEnableCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEnableCaseSyncActionPerformed
+        this.toggleCaseSync(true);
+    }//GEN-LAST:event_mnuEnableCaseSyncActionPerformed
 
+    private void mnuDisableCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisableCaseSyncActionPerformed
+        this.toggleCaseSync(false);
+    }//GEN-LAST:event_mnuDisableCaseSyncActionPerformed
+
+    private void toggleCaseSync(boolean enable) {
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        Arrays.sort(selectedIndices);
+        ArrayList<String> ids = new ArrayList<>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+            ids.add(id.getArchiveFileDTO().getId());
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            fileService.enableCaseSync(ids, UserSettings.getInstance().getCurrentUser().getPrincipalId(), enable);
+            String status="aktiviert";
+            if(!enable)
+                status="deaktiviert";
+            JOptionPane.showMessageDialog(this, "Synchronisation für " + ids.size() + " Akten " + status, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            log.error("Error setting case sync settings", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Konfigurieren der Synchronisation: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+    }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -1276,7 +1332,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuDisableCaseSync;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuEnableCaseSync;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
@@ -1293,6 +1351,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     @Override
     public void reset() {
         this.txtSearchString.requestFocus();
+        this.txtSearchString.selectAll();
     }
 
     @Override

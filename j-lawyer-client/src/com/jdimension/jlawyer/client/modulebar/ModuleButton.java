@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Graphics;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -693,13 +692,10 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     private ModuleMetadata module = null;
 
-    private Color labelForeColor = DefaultColorTheme.COLOR_DARK_GREY.darker();
     private Color defaultBackColor=Color.GRAY;
 
     private String editorClass = null;
 
-//    private Icon icon=new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"));
-//    private Icon rollOverIcon=new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_green_36dp.png"));
     private Icon icon = null;
     private Icon rollOverIcon = null;
     
@@ -727,12 +723,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         this.iconButton.setIcon(this.icon);
 
-//        setText(m.getModuleName());
-//        if(m.getModuleName().length()>0)
-//            setText(m.getModuleName() + ": ");
-//        else
-//            setText("");
-//        setText(getText() + m.getEditorName());
         boolean mod = m.getModuleName().length() > 0;
         boolean ed = m.getEditorName().length() > 0;
 
@@ -756,10 +746,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         this.lblIndicator.setText("");
         this.lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-//        if(m.getEditorName().indexOf("E-Mail")>-1) {
-//            this.lblIndicator.setText("78");
-//            this.lblIndicator.setForeground(new Color(222, 49, 59));
-//        }
 
 
     }
@@ -795,18 +781,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         jLabel2.setText("jLabel2");
 
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                formMouseClicked(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                formMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                formMouseEntered(evt);
-            }
-        });
-
         iconButton.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         iconButton.setForeground(new java.awt.Color(255, 255, 255));
         iconButton.setBorder(null);
@@ -833,11 +807,11 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblModuleNameMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblModuleNameMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblModuleNameMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblModuleNameMouseExited(evt);
             }
         });
 
@@ -848,11 +822,11 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblIndicatorMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblIndicatorMouseExited(evt);
             }
         });
 
@@ -878,36 +852,24 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblModuleNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseEntered
-        //this.lblModuleName.setForeground(Color.black);
         this.setBackground(this.defaultBackColor.brighter().brighter());
         this.iconButton.setIcon(this.getRollOverIcon());
     }//GEN-LAST:event_lblModuleNameMouseEntered
 
     private void lblModuleNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseExited
-        //this.lblModuleName.setForeground(labelForeColor);
         this.setBackground(this.defaultBackColor);
         this.iconButton.setIcon(this.getIcon());
     }//GEN-LAST:event_lblModuleNameMouseExited
 
     private void iconButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseEntered
-        //this.lblModuleName.setForeground(Color.black);
         this.setBackground(this.defaultBackColor.brighter().brighter());
         this.iconButton.setIcon(this.getRollOverIcon());
     }//GEN-LAST:event_iconButtonMouseEntered
 
     private void iconButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseExited
-        //this.lblModuleName.setForeground(labelForeColor);
         this.setBackground(this.defaultBackColor);
         this.iconButton.setIcon(this.getIcon());
     }//GEN-LAST:event_iconButtonMouseExited
-
-    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
-
-    }//GEN-LAST:event_formMouseEntered
-
-    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
-
-    }//GEN-LAST:event_formMouseExited
 
     private void iconButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iconButtonActionPerformed
         actionPerformed();
@@ -920,10 +882,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private void lblIndicatorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseClicked
         actionPerformed();
     }//GEN-LAST:event_lblIndicatorMouseClicked
-
-    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
-        actionPerformed();
-    }//GEN-LAST:event_formMouseClicked
 
     private void lblIndicatorMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseEntered
         this.setBackground(this.defaultBackColor.brighter().brighter());
@@ -940,20 +898,16 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             Object editor = null;
             try {
                 editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                //this.scrollMain.removeAll();
-                //this.scrollMain.add((Component)editor);
                 if (editor instanceof PopulateOptionsEditor) {
                     ((PopulateOptionsEditor) editor).populateOptions();
                 }
 
-                //this.scrollMain.setViewportView((Component) editor);
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + editorClass, ex);
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
             }
-            //this.lblIndicator.setForeground(new Color(102, 102, 102));
             try {
                 this.updateIndicator(Integer.parseInt(this.indicatorValue));
             } catch (Throwable t) {
@@ -962,7 +916,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             
             setForeground(this.defaultBackColor);
         } else {
-            //this.scrollMain.setViewportView(null);
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
         }
     }
@@ -1012,7 +965,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     @Override
     public void onEvent(Event e) {
-        if (!(e.getType() == this.module.getStatusEventType())) {
+        if (e.getType().intValue() != this.module.getStatusEventType()) {
             return;
         }
 
@@ -1031,38 +984,27 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     private void updateIndicator(int incomingValue) {
         
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                String currentValue = indicatorValue;
-                int cVal = 0;
-                try {
-                    cVal = Integer.parseInt(currentValue);
-                } catch (Throwable t) {
-                    //log.error(t);
-                    lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-                    //lblIndicator.setText("" + cVal);
-                    //lblIndicator.setText("<html><table><tr><td>" + cVal +"</td></tr></table></html>");
-                    //<p style="border:3px; border-style:solid; border-color:#FF0000; padding: 1em;">
-                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + cVal +"&nbsp;</p></td></tr></table></html>");
-                }
-                if (incomingValue > cVal) {
-                    lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                    //lblIndicator.setText("" + incomingValue);
-                    //lblIndicator.setText("<html><table><tr><td>" + incomingValue +"</td></tr></table></html>");
-                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#DE313B; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
-                    setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-                } else if (incomingValue==0) {
-                    lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                    lblIndicator.setText("");
-                } else {
-                    lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-                    //lblIndicator.setText("" + incomingValue);
-                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
-                }
-                indicatorValue=""+incomingValue;
+        SwingUtilities.invokeLater(() -> {
+            String currentValue = indicatorValue;
+            int cVal = 0;
+            try {
+                cVal = Integer.parseInt(currentValue);
+            } catch (Throwable t) {
+                lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + cVal +"&nbsp;</p></td></tr></table></html>");
             }
-
+            if (incomingValue > cVal) {
+                lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#DE313B; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
+                setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            } else if (incomingValue==0) {
+                lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                lblIndicator.setText("");
+            } else {
+                lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
+            }
+            indicatorValue=""+incomingValue;
         });
 
     }

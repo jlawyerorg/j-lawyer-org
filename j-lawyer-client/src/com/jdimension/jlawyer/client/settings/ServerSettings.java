@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.settings;
 
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import org.apache.log4j.Logger;
@@ -672,117 +673,10 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class ServerSettings {
+public class ServerSettings extends ServerSettingsKeys {
     
     private static Logger log=Logger.getLogger(ServerSettings.class.getName());
     private static ServerSettings instance=null;
-    
-    public static final String PROFILE_COMPANYNAME="profile.company.name";
-    public static final String PROFILE_COMPANYSTREET="profile.company.street";
-    public static final String PROFILE_COMPANYSTREET2="profile.company.street2";
-    public static final String PROFILE_COMPANYZIP="profile.company.zip";
-    public static final String PROFILE_COMPANYCITY="profile.company.city";
-    public static final String PROFILE_COMPANYCOUNTRY="profile.company.country";
-    
-    public static final String PROFILE_COMPANYPHONE="profile.company.phone";
-    public static final String PROFILE_COMPANYFAX="profile.company.fax";
-    public static final String PROFILE_COMPANYMOBILE="profile.company.mobile";
-    
-    public static final String PROFILE_COMPANYEMAIL="profile.company.email";
-    public static final String PROFILE_COMPANYWWW="profile.company.www";
-    
-    public static final String PROFILE_COMPANYTAXID="profile.company.taxid";
-    public static final String PROFILE_COMPANYUSTID="profile.company.ustid";
-    public static final String PROFILE_COMPANYBANK="profile.company.bank";
-    public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
-    public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";
-    
-    public static final String PROFILE_COMPANYBANK_AK="profile.company.ak.bank";
-    public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
-    public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
-    
-    public static final String SERVERCONF_VOIPENDPOINT="jlawyer.server.voip.voipendpoint";
-    public static final String SERVERCONF_VOIPSIPPREFIX="jlawyer.server.voip.sipprefix";
-    public static final String SERVERCONF_VOIPSIPSUFFIX="jlawyer.server.voip.sipsuffix";
-    
-    public static final String SERVERCONF_DREBISMODE="jlawyer.server.drebis.drebismode";
-    public static final String SERVERCONF_DREBISLOCALUSER="jlawyer.server.drebis.localuser";
-    public static final String SERVERCONF_DREBISLOCALPWD="jlawyer.server.drebis.localpwd";
-    public static final String SERVERCONF_DREBISENDPOINT="jlawyer.server.drebis.drebisendpoint";
-    public static final String SERVERCONF_DREBISTECHUSER="jlawyer.server.drebis.techuser";
-    public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
-    
-    
-    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
-    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
-    public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
-    
-    public static final String SERVERCONF_BACKUP_MODE="jlawyer.server.backup.backupmode";
-    public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";
-    public static final String SERVERCONF_BACKUP_DBPWD="jlawyer.server.backup.dbpassword";
-    public static final String SERVERCONF_BACKUP_DBPORT="jlawyer.server.backup.dbport";
-    public static final String SERVERCONF_BACKUP_HOUR="jlawyer.server.backup.hour";
-    public static final String SERVERCONF_BACKUP_MONDAY="jlawyer.server.backup.monday";
-    public static final String SERVERCONF_BACKUP_TUESDAY="jlawyer.server.backup.tuesday";
-    public static final String SERVERCONF_BACKUP_WEDNESDAY="jlawyer.server.backup.wednesday";
-    public static final String SERVERCONF_BACKUP_THURSDAY="jlawyer.server.backup.thursday";
-    public static final String SERVERCONF_BACKUP_FRIDAY="jlawyer.server.backup.friday";
-    public static final String SERVERCONF_BACKUP_SATURDAY="jlawyer.server.backup.saturday";
-    public static final String SERVERCONF_BACKUP_SUNDAY="jlawyer.server.backup.sunday";
-    public static final String SERVERCONF_BACKUP_ENCRYPTPWD="jlawyer.server.backup.encryptionpwd";
-    
-    public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";
-    public static final String SERVERCONF_BACKUP_EXPORTTARGET="jlawyer.server.backup.exporttarget";
-    
-    public static final String SERVERCONF_REPLICATION_ISTARGET="jlawyer.server.replication.istarget";
-    
-    public static final String SERVERCONF_MONITOR_CPUWARN="jlawyer.server.monitor.cpuwarn";
-    public static final String SERVERCONF_MONITOR_CPUERROR="jlawyer.server.monitor.cpuerror";
-    public static final String SERVERCONF_MONITOR_MEMWARN="jlawyer.server.monitor.memwarn";
-    public static final String SERVERCONF_MONITOR_MEMERROR="jlawyer.server.monitor.memerror";
-    public static final String SERVERCONF_MONITOR_DISKWARN="jlawyer.server.monitor.diskwarn";
-    public static final String SERVERCONF_MONITOR_DISKERROR="jlawyer.server.monitor.diskerror";
-    public static final String SERVERCONF_MONITOR_VMWARN="jlawyer.server.monitor.vmwarn";
-    public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
-    public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
-    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS="jlawyer.server.monitor.notify.backupsuccess";
-    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE="jlawyer.server.monitor.notify.backupfailure";
-    public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
-    public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
-    public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
-    public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
-    public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
-    public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
-    public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
-    public static final String SERVERCONF_MONITOR_SMTPSTARTTLS="jlawyer.server.monitor.smtpstarttls";
-    
-    public static final String SERVERCONF_MONITOR_ENABLED_CPU="jlawyer.server.monitor.enabled.cpu";
-    public static final String SERVERCONF_MONITOR_ENABLED_RAM="jlawyer.server.monitor.enabled.ram";
-    public static final String SERVERCONF_MONITOR_ENABLED_DISK="jlawyer.server.monitor.enabled.disk";
-    public static final String SERVERCONF_MONITOR_ENABLED_JAVA="jlawyer.server.monitor.enabled.java";
-    
-    public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
-    public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
-    
-    public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";
-    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT="jlawyer.server.numbering.ext.divider.ext";
-    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED="jlawyer.server.numbering.ext.prefix.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX="jlawyer.server.numbering.ext.prefix";
-    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED="jlawyer.server.numbering.ext.suffix.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX="jlawyer.server.numbering.ext.suffix";
-    public static final String SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED="jlawyer.server.numbering.ext.group.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
-    
-    public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
-    
-    public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
-    public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";
-    public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX="data.customfields.archivefile.involved.";
-    
-    public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
-    
-    public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
     
     private SystemManagementRemote mgmt=null;
     

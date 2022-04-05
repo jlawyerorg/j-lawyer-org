@@ -849,6 +849,9 @@ public class AddressBean implements Serializable {
     
     @OneToMany(mappedBy = "addressKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
+    
+    @Column(name = "default_role")
+    protected String defaultRole;
 
     public AddressBean() {
     }
@@ -1698,6 +1701,20 @@ public class AddressBean implements Serializable {
      */
     public void setTitleInAddress(String titleInAddress) {
         this.titleInAddress = titleInAddress;
+    }
+
+    /**
+     * @return the defaultRole
+     */
+    public String getDefaultRole() {
+        return defaultRole;
+    }
+
+    /**
+     * @param defaultRole the defaultRole to set
+     */
+    public void setDefaultRole(String defaultRole) {
+        this.defaultRole = defaultRole;
     }
     
 }

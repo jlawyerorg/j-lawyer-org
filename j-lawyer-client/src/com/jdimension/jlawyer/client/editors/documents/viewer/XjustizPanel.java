@@ -666,14 +666,13 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.DownloadDocumentsAction;
-import com.jdimension.jlawyer.client.editors.files.UploadDocumentsAction;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
-import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
@@ -698,18 +697,15 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
 
     /**
      * Creates new form PlaintextPanel
+     * @param docId
+     * @param docName
      */
     public XjustizPanel(String docId, String docName) {
         initComponents();
         this.docId = docId;
         this.docName=docName;
         
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1) {
-            this.cmdOpenXjustizViewer.setEnabled(true);
-        } else {
-            this.cmdOpenXjustizViewer.setEnabled(false);
-        }
+        this.cmdOpenXjustizViewer.setEnabled(SystemUtils.isWindows());
     }
 
     /**
@@ -821,32 +817,24 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
 
         String html = null;
         try {
-            html = BeaAccess.getEebAsHtml(new String(content));
+            html = BeaAccess.getEebAsHtml(new String(content), null);
 
         } catch (Exception ex) {
             html = "<html>XJustiz-Strukturdatensatz kann nicht geladen werden.</html>";
         }
 
         final String htmlContent = html;
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                editorPane.setEditorKit(new StyledEditorKit());
-                editorPane.setContentType("text/html");
-
-                String tdRule = "th { color: #FFFFFF; }";
-
-                ((HTMLDocument) editorPane.getDocument()).getStyleSheet().addRule(tdRule);
-                //html = this.cleanUpHTML(html);
-
-                // do this AFTER setContentType and BEFORE setText!!!
-                editorPane.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-                //this.jEditorPane1.setDocument(doc);
-
-                //html.replaceAll("#DDD", "grey");
-                editorPane.setText(htmlContent);
-            }
-
+        SwingUtilities.invokeLater(() -> {
+            editorPane.setEditorKit(new StyledEditorKit());
+            editorPane.setContentType(ContentTypes.TEXT_HTML);
+            
+            String tdRule = "th { color: #FFFFFF; }";
+            
+            ((HTMLDocument) editorPane.getDocument()).getStyleSheet().addRule(tdRule);
+            
+            // do this AFTER setContentType and BEFORE setText!!!
+            editorPane.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+            editorPane.setText(htmlContent);
         });
 
     }

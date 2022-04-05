@@ -669,10 +669,18 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarAccess;
+import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupFacadeLocal;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.persistence.GroupMembershipFacadeLocal;
+import com.jdimension.jlawyer.persistence.MailboxAccess;
+import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -700,6 +708,18 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
 
     @EJB
     private GroupMembershipFacadeLocal groupMembershipFacade;
+    
+    @EJB
+    private CalendarAccessFacadeLocal calendarAccessFacade;
+    
+    @EJB
+    private CalendarSetupFacadeLocal calendarSetupFacade;
+    
+    @EJB
+    private MailboxAccessFacadeLocal mailboxAccessFacade;
+    
+    @EJB
+    private MailboxSetupFacadeLocal mailboxSetupFacade;
     
     @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
@@ -790,6 +810,21 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         }
         return true;
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean addUserToCalendar(String principalId, String calendarId) throws Exception {
+        CalendarAccess ca = this.calendarAccessFacade.findByUserAndCalendar(principalId, calendarId);
+        if (ca == null) {
+            String id = new StringGenerator().getID().toString();
+            CalendarAccess newCa = new CalendarAccess();
+            newCa.setId(id);
+            newCa.setCalendarId(calendarId);
+            newCa.setPrincipalId(principalId);
+            this.calendarAccessFacade.create(newCa);
+        }
+        return true;
+    }
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -800,11 +835,27 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         }
         return true;
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception {
+        CalendarAccess ca = this.calendarAccessFacade.findByUserAndCalendar(principalId, calendarId);
+        if (ca != null) {
+            this.calendarAccessFacade.remove(ca);
+        }
+        return true;
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception {
         return this.groupMembershipFacade.findByUser(principalId);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception {
+        return this.calendarAccessFacade.findByUser(principalId);
     }
 
     @Override
@@ -818,6 +869,19 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             }
         }
         return groups;
+    }
+    
+    @Override
+    public List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception {
+        List<CalendarAccess> calendarAccesses = this.calendarAccessFacade.findByUser(principalId);
+        ArrayList<CalendarSetup> calendars = new ArrayList<>();
+        for (CalendarAccess ca : calendarAccesses) {
+            CalendarSetup cs = this.calendarSetupFacade.find(ca.getCalendarId());
+            if (cs != null) {
+                calendars.add(cs);
+            }
+        }
+        return calendars;
     }
 
     @Override
@@ -835,6 +899,80 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             }
         }
         return resultList;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean addUserToMailbox(String principalId, String mailboxId) throws Exception {
+        MailboxAccess ma = this.mailboxAccessFacade.findByUserAndMailbox(principalId, mailboxId);
+        if (ma == null) {
+            String id = new StringGenerator().getID().toString();
+            MailboxAccess newMa = new MailboxAccess();
+            newMa.setId(id);
+            newMa.setMailboxId(mailboxId);
+            newMa.setPrincipalId(principalId);
+            this.mailboxAccessFacade.create(newMa);
+        }
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean removeUserFromMailbox(String principalId, String mailboxId) throws Exception {
+        MailboxAccess ma = this.mailboxAccessFacade.findByUserAndMailbox(principalId, mailboxId);
+        if (ma != null) {
+            this.mailboxAccessFacade.remove(ma);
+        }
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailboxAccess> getMailboxAccessForUser(String principalId) throws Exception {
+        return this.mailboxAccessFacade.findByUser(principalId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailboxSetup> getMailboxesForUser(String principalId) throws Exception {
+        List<MailboxAccess> mailboxAccesses = this.mailboxAccessFacade.findByUser(principalId);
+        ArrayList<MailboxSetup> mailboxes = new ArrayList<>();
+        for (MailboxAccess ma : mailboxAccesses) {
+            MailboxSetup ms = this.mailboxSetupFacade.find(ma.getMailboxId());
+            if (ms != null) {
+                mailboxes.add(ms);
+            }
+        }
+        return mailboxes;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailboxSetup> getAllMailboxSetups() {
+        return this.mailboxSetupFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public MailboxSetup addMailboxSetup(MailboxSetup ms) {
+        StringGenerator idGen = new StringGenerator();
+        String msId = idGen.getID().toString();
+        ms.setId(msId);
+        this.mailboxSetupFacade.create(ms);
+        return this.mailboxSetupFacade.find(msId);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public MailboxSetup updateMailboxSetup(MailboxSetup ms) {
+        this.mailboxSetupFacade.edit(ms);
+        return this.mailboxSetupFacade.find(ms.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeMailboxSetup(MailboxSetup ms) {
+        this.mailboxSetupFacade.remove(ms);
     }
 
 }

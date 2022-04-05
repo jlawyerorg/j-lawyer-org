@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -1006,39 +1008,27 @@ public class UserProfileDialog extends javax.swing.JDialog {
             return;
         }
         
-        boolean changed = false;
+        boolean complexPasswords=ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, true);
+        GetPasswordDialog dlg=new GetPasswordDialog(this, true, complexPasswords);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        
+        String newPwd=dlg.getPassword();
 
-        Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
-        if (newPwd == null || "".equals(newPwd)) {
-            // user cancelled
-        } else {
-            // confirm
-            Object confirmPwd = JOptionPane.showInputDialog(this, "Passwort bestätigen: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
-            if (confirmPwd == null || "".equals(confirmPwd)) {
-                // cancelled
-            } else {
-                if (confirmPwd.equals(newPwd)) {
-                    changed = true;
-                }
-            }
-        }
-
-        if (changed) {
+        if (newPwd!=null) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                 AppUserBean u = mgmt.getUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
                 if (u != null) {
-                    mgmt.updatePassword(newPwd.toString());
+                    mgmt.updatePassword(newPwd);
                 }
 
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
         } else {

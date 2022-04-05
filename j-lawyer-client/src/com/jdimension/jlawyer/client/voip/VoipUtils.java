@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.BufferedReader;
@@ -741,65 +742,58 @@ public class VoipUtils {
 //            }
         } else {
             // use protocolhandler
-            String osName = System.getProperty("os.name").toLowerCase();
             String protocol = set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_PROTOCOL_NAME, "tel://");
             phoneNr = SipUtils.E164Number(phoneNr);
             phoneNr = "00" + phoneNr;
             phoneNr = protocol + phoneNr;
             log.debug("launching softphone using protocolhandler");
-            if (osName.indexOf("win") > -1) {
+            if (SystemUtils.isWindows()) {
                 windowsProtocolHandler(phoneNr);
-            } else if (osName.indexOf("linux") > -1) {
+            } else if (SystemUtils.isLinux()) {
                 linuxProtocolHandler(phoneNr);
-            } else if (osName.startsWith("mac")) {
+            } else if (SystemUtils.isMacOs()) {
                 macosProtocolHandler(phoneNr);
             }
         }
     }
 
     private static void executable(String phoneNr) {
-        new Thread(new Runnable() {
-
-            public void run() {
+        new Thread(() -> {
+            try {
+                
                 try {
-
-                    try {
-                        Runtime rt = Runtime.getRuntime();
-                        ClientSettings settings = ClientSettings.getInstance();
-                        String executable = settings.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH, "");
-                        String params = settings.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS, "");
-
-                        ArrayList<String> execParams = new ArrayList<String>();
-                        String[] paramArray = params.split(" ");
-                        execParams.add(executable);
-                        for (String s : paramArray) {
-                            s = s.replace("TELNR", phoneNr);
-                            execParams.add(s);
-
-                        }
-
-                        ProcessBuilder pb = new ProcessBuilder(execParams);
-                        pb.redirectErrorStream(true);
-
-                        Process process = pb.start();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            log.info("softphone process: " + line);
-                        }
-
-                    } catch (Throwable t) {
-                        log.error("error launching softphone executable ", t);
+                    Runtime rt = Runtime.getRuntime();
+                    ClientSettings settings = ClientSettings.getInstance();
+                    String executable = settings.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH, "");
+                    String params = settings.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS, "");
+                    
+                    ArrayList<String> execParams = new ArrayList<String>();
+                    String[] paramArray = params.split(" ");
+                    execParams.add(executable);
+                    for (String s : paramArray) {
+                        s = s.replace("TELNR", phoneNr);
+                        execParams.add(s);
+                        
                     }
-
-                } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
+                    
+                    ProcessBuilder pb = new ProcessBuilder(execParams);
+                    pb.redirectErrorStream(true);
+                    
+                    Process process = pb.start();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.info("softphone process: " + line);
+                    }
+                    
+                } catch (Throwable t) {
+                    log.error("error launching softphone executable ", t);
                 }
+                
+            } catch (final Throwable t) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
             }
         }).start();
     }
@@ -818,10 +812,8 @@ public class VoipUtils {
             Process p = Runtime.getRuntime().exec(new String[]{"xdg-open", phoneNr});
 
         } catch (final Throwable t) {
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                }
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             });
         }
     }
@@ -832,10 +824,8 @@ public class VoipUtils {
             Process p = Runtime.getRuntime().exec(new String[]{"open", phoneNr});
 
         } catch (final Throwable t) {
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                }
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             });
         }
     }
@@ -846,10 +836,8 @@ public class VoipUtils {
             Process p = Runtime.getRuntime().exec("cmd /c start " + phoneNr);
 
         } catch (final Throwable t) {
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                }
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Wählen von " + phoneNr + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             });
         }
     }

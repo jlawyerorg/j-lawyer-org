@@ -800,7 +800,7 @@ public class SearchIndexOptionsDialog extends javax.swing.JDialog {
             
         } catch (Exception ex) {
             log.error("error triggering reindexall", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -826,7 +826,7 @@ public class SearchIndexOptionsDialog extends javax.swing.JDialog {
             
         } catch (Exception ex) {
             log.error("error getting document count", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Ermitteln der Dokumentanzahl: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler Ermitteln der Dokumentanzahl: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
     }//GEN-LAST:event_cmdRefreshActionPerformed

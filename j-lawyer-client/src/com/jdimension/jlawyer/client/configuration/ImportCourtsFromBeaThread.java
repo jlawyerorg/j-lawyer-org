@@ -667,25 +667,14 @@ import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
-import com.jdimension.jlawyer.persistence.CityDataBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.persistence.CityDataDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import java.awt.Component;
-import java.io.*;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
@@ -700,7 +689,6 @@ public class ImportCourtsFromBeaThread implements Runnable {
 
     private Component owner;
     private JProgressBar target;
-//    private String importFile;
     private JButton importButton;
     private JButton closeButton;
 
@@ -715,6 +703,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
         this.importButton = importButton;
     }
 
+    @Override
     public void run() {
 
         ThreadUtils.enableComponent(this.closeButton, false);
@@ -727,7 +716,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
             bea = BeaAccess.getInstance();
         } catch (Exception ex) {
             log.error("Error connecting to beA", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -745,7 +734,6 @@ public class ImportCourtsFromBeaThread implements Runnable {
             adr = locator.lookupAddressServiceRemote();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
@@ -756,15 +744,18 @@ public class ImportCourtsFromBeaThread implements Runnable {
         try {
 
             Collection<Identity> result = null;
-
+            boolean failed=false;
             for (int i = 0; i < 100; i++) {
+                if(failed)
+                    break;
+                
                 try {
                     String zip = String.format("%02d", i);
                     ThreadUtils.updateProgressBar(this.target, "Suche: PLZ " + zip + "*", ((i * 10) - 1), totalCount, false);
                     result = bea.searchIdentity(null, "*gericht*", null, null, zip + "*", null);
                     // there is a search limit of 100. use three-digit search in case of limit reached to download all identities.
                     if (result.size() > 99) {
-                        result = new ArrayList<Identity>();
+                        result = new ArrayList<>();
                         for (int k = 0; k < 10; k++) {
                             result.addAll(bea.searchIdentity(null, "*gericht*", null, null, zip + k + "*", null));
                         }
@@ -783,8 +774,6 @@ public class ImportCourtsFromBeaThread implements Runnable {
                                 }
                             }
                             if (existingAddress != null) {
-                                //adr.removeAddress(zip);
-                                // do not remove - user might have completed / changed this address
                                 ThreadUtils.updateProgressBar(this.target, "Bereits vorhanden: " + id.getZipCode() + " " + id.getSurName(), ((i * 10) - 1), totalCount, false);
                             } else {
                                 ThreadUtils.updateProgressBar(this.target, "Importiere: " + id.getZipCode() + " " + id.getSurName(), ((i * 10) - 1), totalCount, false);
@@ -797,7 +786,8 @@ public class ImportCourtsFromBeaThread implements Runnable {
                                 newCourt.setFax(StringUtils.nonNull(id.getFax()));
                                 newCourt.setPhone(StringUtils.nonNull(id.getPhone()));
                                 newCourt.setBeaSafeId(StringUtils.nonNull(id.getSafeId()));
-                                newCourt.setStreet(StringUtils.nonNull(id.getStreet()) + " " + StringUtils.nonNull(id.getStreetNumber()));
+                                newCourt.setStreet(StringUtils.nonNull(id.getStreet()));
+                                newCourt.setStreetNumber(StringUtils.nonNull(id.getStreetNumber()));
                                 newCourt.setComplimentaryClose("Mit freundlichen Grüßen");
                                 newCourt.setSalutation("Sehr geehrte Damen und Herren");
                                 newCourt = adr.createAddress(newCourt);
@@ -820,6 +810,8 @@ public class ImportCourtsFromBeaThread implements Runnable {
                     }
                 } catch (Throwable t) {
                     log.error("Error searching for beA law courts", t);
+                    ThreadUtils.showErrorDialog(this.owner, "Fehler beim Import: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    failed=true;
                 }
             }
             
@@ -827,7 +819,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error importing court adresses", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);

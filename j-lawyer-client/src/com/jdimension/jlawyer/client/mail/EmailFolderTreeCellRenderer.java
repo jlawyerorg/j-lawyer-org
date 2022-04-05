@@ -667,29 +667,41 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import javax.mail.Folder;
+import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
 public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
-    
+
     private static final Logger log = Logger.getLogger(EmailFolderTreeCellRenderer.class.getName());
     
-    
-    /** Creates a new instance of ModuleTreeCellRenderer */
+    private static final String FOLDER_SENT="sent";
+    private static final String FOLDER_TRASH="trash";
+    private static final String FOLDER_INBOX="inbox";
+
+    private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
+    private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
+    private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
+    private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
+
+    /**
+     * Creates a new instance of EmailFolderTreeCellRenderer
+     */
     public EmailFolderTreeCellRenderer() {
         super();
     }
 
-    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean b, boolean b0, boolean b1, int row, boolean b2) {
-        
-        super.getTreeCellRendererComponent(jTree, object, b, b0, b1, row, b2);
-        
+    @Override
+    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean selected, boolean b0, boolean b1, int row, boolean b2) {
+
+        super.getTreeCellRendererComponent(jTree, object, selected, b0, b1, row, b2);
         JTree.DropLocation dropLocation = jTree.getDropLocation();
         if (dropLocation != null
                 && dropLocation.getChildIndex() == -1
@@ -697,84 +709,75 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             // this row represents the current drop location
             // so render it specially, perhaps with a different color
             this.setForeground(Color.GREEN);
-            
+
         }
 
-        
-        //this.setLeafIcon(leafIcon);
-        
-        if(((DefaultMutableTreeNode)object).getUserObject()==null)
+        if (((DefaultMutableTreeNode) object).getUserObject() == null) {
             return this;
-        
-        if(((DefaultMutableTreeNode)object).isRoot()) {
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
-                this.setFont(this.getFont().deriveFont(Font.BOLD));
-                return this;
         }
-        
-        //new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))
-        
+
         try {
-        if(((DefaultMutableTreeNode)object).getUserObject() instanceof FolderContainer) {
-            FolderContainer fc=(FolderContainer)((DefaultMutableTreeNode)object).getUserObject();
-            Folder f=fc.getFolder();
-//            boolean closed=!f.isOpen();
-//            if(closed) {
-//                f.open(Folder.READ_WRITE);
-//            }
-            
-            if("trash".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
-                if(a.equalsIgnoreCase(f.getName()))
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-            }
-            
-            if("sent".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.SENT)) {
-                if(a.equalsIgnoreCase(f.getName()))
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-            }
-            
-            if("inbox".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
-                if(a.equalsIgnoreCase(f.getName()))
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
-            }
-            
-            
-            
-            int unread=f.getUnreadMessageCount();
-            if(unread>0) {
-                this.setFont(this.getFont().deriveFont(Font.BOLD));
+            if (((DefaultMutableTreeNode) object).getUserObject() instanceof FolderContainer) {
+                FolderContainer fc = (FolderContainer) ((DefaultMutableTreeNode) object).getUserObject();
+                Folder f = fc.getFolder();
+
+                if (FOLDER_TRASH.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(trashIcon);
+                } else if (FOLDER_SENT.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(sentIcon);
+                } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(inboxIcon);
+                } else {
+                    boolean iconIsSet = false;
+                    for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
+                        if (a.equalsIgnoreCase(f.getName())) {
+                            this.setIcon(trashIcon);
+                            iconIsSet = true;
+                            break;
+                        }
+                    }
+                    if (!iconIsSet) {
+                        for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
+                            if (a.equalsIgnoreCase(f.getName())) {
+                                this.setIcon(sentIcon);
+                                iconIsSet = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!iconIsSet) {
+                        for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
+                            if (a.equalsIgnoreCase(f.getName())) {
+                                this.setIcon(inboxIcon);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                int unread = f.getUnreadMessageCount();
+                if (unread > 0) {
+                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                } else {
+                    this.setFont(this.getFont().deriveFont(Font.PLAIN));
+                }
             } else {
-                this.setFont(this.getFont().deriveFont(Font.PLAIN));
+                if (((DefaultMutableTreeNode) object).toString().contains("@")) {
+                    this.setIcon(mailboxIcon);
+                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                    if(selected) {
+                        this.setForeground(Color.WHITE);
+                    } else {
+                        this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                    }
+                }
             }
-            
-//            try {
-//                if(!("inbox".equalsIgnoreCase(f.getName()))) {
-//                    if(closed) {
-//                        f.close(true);
-//                    }
-//                }
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-            
-        }
         } catch (Exception ex) {
             log.error(ex);
             log.error(ex.getMessage());
         }
-        
         return this;
+
     }
-    
-    
-    
+
 }

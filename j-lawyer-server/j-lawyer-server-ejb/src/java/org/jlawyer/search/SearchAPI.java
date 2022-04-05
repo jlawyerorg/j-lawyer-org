@@ -696,7 +696,6 @@ public class SearchAPI {
 
     private static String FIELD_ID = "id";
     private static String FIELD_FILENAME = "dateiname";
-    //private static String FIELD_AUTHOR="autor";
     private static String FIELD_TEXT = "text";
     private static String FIELD_TEXT_TERMVECTOR = "text-tv";
     private static String FIELD_ARCHIVEFILEID = "archivefileid";
@@ -736,11 +735,6 @@ public class SearchAPI {
 
         this.analyzer = new GermanAnalyzer(Version.LUCENE_47);
 
-        //SnowballAnalyzer analyzer =  new SnowballAnalyzer ("German");
-
-        // Store the index in memory:
-        //Directory directory = new RAMDirectory();
-
         try {
 
             // To store an index on disk, use this instead:
@@ -765,8 +759,6 @@ public class SearchAPI {
         Document doc = new Document();
         doc.add(new Field(this.FIELD_ID, docId, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        //doc.add(new Field(this.FIELD_AUTHOR, author, TextField.TYPE_STORED));
-        //doc.add(new Field(this.FIELD_TEXT, text, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
@@ -813,8 +805,6 @@ public class SearchAPI {
         Document doc = new Document();
         doc.add(new Field(this.FIELD_ID, docId, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        //doc.add(new Field(this.FIELD_AUTHOR, author, TextField.TYPE_STORED));
-        //doc.add(new Field(this.FIELD_TEXT, text, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
         doc.add(new Field(this.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
@@ -900,35 +890,19 @@ public class SearchAPI {
         if (!this.initialized) {
             throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
         }
+        
+        queryString=QueryParser.escape(queryString);
 
-//        TokenStream ts = analyzer.tokenStream("field", text);
-//            OffsetAttribute offsetAttribute = ts.addAttribute(OffsetAttribute.class);
-//            CharTermAttribute charTermAttribute = ts.addAttribute(CharTermAttribute.class);
-//
-//            ts.reset();
-//            while (ts.incrementToken()) {
-//                int startOffset = offsetAttribute.startOffset();
-//                int endOffset = offsetAttribute.endOffset();
-//                String term = charTermAttribute.toString();
-//                System.out.println(term);
-//            }
-//            ts.end();
-//            ts.close();
-
-        //Analyzer analyzer = new GermanAnalyzer(Version.LUCENE_47);
-
-        ArrayList<SearchHit> returnList = new ArrayList<SearchHit>();
+        ArrayList<SearchHit> returnList = new ArrayList<>();
 
         try {
             // Now search the index:
-            //DirectoryReader reader = DirectoryReader.open(directory);
             DirectoryReader reader = DirectoryReader.open(writer, true);
             IndexSearcher searcher = new IndexSearcher(reader);
             // Parse a simple query that searches for "text":
             QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, this.FIELD_DEFAULT, this.analyzer);
             parser.setAllowLeadingWildcard(true);
             Query query = parser.parse(queryString);
-            //ScoreDoc[] hits = searcher.search(query, null, maxDocs).scoreDocs;
             TopDocs hits = searcher.search(query, maxDocs);
             SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
             Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(query));
@@ -936,7 +910,6 @@ public class SearchAPI {
 
             // Iterate through the results:
             for (int i = 0; i < hits.scoreDocs.length; i++) {
-                //Document hitDoc = searcher.doc(hits[i].doc);
 
                 int id = hits.scoreDocs[i].doc;
                 Document doc = searcher.doc(id);
@@ -947,10 +920,8 @@ public class SearchAPI {
                 sh.setArchiveFileId(doc.get(FIELD_ARCHIVEFILEID));
                 sh.setArchiveFileName(doc.get(FIELD_ARCHIVEFILENAME));
                 sh.setArchiveFileNumber(doc.get(FIELD_ARCHIVEFILENUMBER));
-                //sh.setAuthor(hitDoc.get(FIELD_AUTHOR));
                 sh.setFileName(doc.get(FIELD_FILENAME));
                 sh.setId(doc.get(FIELD_ID));
-                //sh.setText(doc.get(FIELD_TEXT));
 
                 text = doc.get(this.FIELD_TEXT_TERMVECTOR);
                 TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, this.FIELD_TEXT_TERMVECTOR, analyzer);
@@ -967,17 +938,7 @@ public class SearchAPI {
                 sh.setText(html.toString());
 
                 returnList.add(sh);
-                //System.out.println(hitDoc.get("fieldname") + " " + hits[i].score);
             }
-
-//            parser = new QueryParser(Version.LUCENE_CURRENT, "fieldname", analyzer);
-//            query = parser.parse(queryString);
-//            hits = searcher.search(query, null, 1000).scoreDocs;
-//            // Iterate through the results:
-//            for (int i = 0; i < hits.length; i++) {
-//                Document hitDoc = searcher.doc(hits[i].doc);
-//                System.out.println(hitDoc.get("fieldname") + " " + hits[i].score);
-//            }
 
             reader.close();
             return returnList;

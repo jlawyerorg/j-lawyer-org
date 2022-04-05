@@ -732,7 +732,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
             char[] buffer = new char[1024];
             int len = 0;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while ((len = reader.read(buffer)) > -1) {
                 sb.append(buffer, 0, len);
             }
@@ -753,9 +753,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             inSrc1.setEncoding("UTF-8");
             Document remoteDoc = remoteDb.parse(inSrc1);
 
-            NodeList remoteList = remoteDoc.getElementsByTagName("forms");
-
-            remoteList = remoteDoc.getElementsByTagName("form");
+            NodeList remoteList = remoteDoc.getElementsByTagName("form");
 
             // load from server when not in cache or when version has been updated
             String formsDir = FormPluginUtil.getLocalDirectory();
@@ -764,12 +762,11 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 formDirFile.mkdirs();
             }
 
-            TreeMap<String, FormPluginEntryPanel> formPlugins = new TreeMap<String, FormPluginEntryPanel>();
+            TreeMap<String, FormPluginEntryPanel> formPlugins = new TreeMap<>();
             for (int i = 0; i < remoteList.getLength(); i++) {
                 Node n = remoteList.item(i);
                 String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
                 if (forVersion.contains(VersionUtils.getFullClientVersion())) {
-                    //remoteForms.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
                     FormPlugin fp = new FormPlugin();
                     fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
                     fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
@@ -789,8 +786,21 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                     for (String f : files.split(",")) {
                         fp.getFiles().add(f);
                     }
-                    //formPlugins.add(fp);
-                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+                    if (n.getChildNodes() != null) {
+                        NodeList settingsList = n.getChildNodes();
+                        for (int s = 0; s < settingsList.getLength(); s++) {
+                            Node setting = settingsList.item(s);
+                            if ("setting".equalsIgnoreCase(setting.getNodeName())) {
+                                FormPluginSetting ps = new FormPluginSetting();
+                                ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
+                                ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
+                                ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
+                                ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
+                                fp.getSettings().add(ps);
+                            }
+                        }
+                    }
+                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, fp, this.formPluginsPanel, this);
 
                     FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
 
@@ -806,7 +816,6 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                         }
                     }
                     formPlugins.put(fp.getName(), fpe);
-                    //this.formPluginsPanel.add(fpe);
                 }
             }
             Iterator i = formPlugins.entrySet().iterator();
@@ -828,8 +837,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             }
 
             StringBuilder sb = new StringBuilder();
-            try (InputStream is = new FileInputStream(internalXml);
-                    InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+            try ( InputStream is = new FileInputStream(internalXml);  InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
 
                 char[] buffer = new char[1024];
                 int len = 0;
@@ -852,9 +860,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             inSrc1.setEncoding("UTF-8");
             Document remoteDoc = remoteDb.parse(inSrc1);
 
-            NodeList remoteList = remoteDoc.getElementsByTagName("forms");
-
-            remoteList = remoteDoc.getElementsByTagName("form");
+            NodeList remoteList = remoteDoc.getElementsByTagName("form");
 
             // load from server when not in cache or when version has been updated
             String formsDir = FormPluginUtil.getLocalDirectory();
@@ -863,13 +869,10 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 formDirFile.mkdirs();
             }
 
-            ArrayList<String> remoteForms = new ArrayList<String>();
-            ArrayList<FormPlugin> formPlugins = new ArrayList<FormPlugin>();
             for (int i = 0; i < remoteList.getLength(); i++) {
                 Node n = remoteList.item(i);
                 String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
                 if (forVersion.contains(VersionUtils.getFullClientVersion())) {
-                    remoteForms.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
                     FormPlugin fp = new FormPlugin();
                     fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
                     fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
@@ -889,8 +892,23 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                     for (String f : files.split(",")) {
                         fp.getFiles().add(f);
                     }
-                    formPlugins.add(fp);
-                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+
+                    if (n.getChildNodes() != null) {
+                        NodeList settingsList = n.getChildNodes();
+                        for (int s = 0; s < settingsList.getLength(); s++) {
+                            Node setting = settingsList.item(s);
+                            if ("setting".equalsIgnoreCase(setting.getNodeName())) {
+                                FormPluginSetting ps = new FormPluginSetting();
+                                ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
+                                ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
+                                ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
+                                ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
+                                fp.getSettings().add(ps);
+                            }
+                        }
+                    }
+
+                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, fp, this.formPluginsPanel, this);
 
                     FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
 
@@ -1049,17 +1067,15 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                FormsManagementDialog dialog = new FormsManagementDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            FormsManagementDialog dialog = new FormsManagementDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

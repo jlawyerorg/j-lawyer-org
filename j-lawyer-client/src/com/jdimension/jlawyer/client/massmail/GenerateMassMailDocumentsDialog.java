@@ -966,7 +966,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                         placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<String>());
                         allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                     } catch (Exception ex) {
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), "Fehler");
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                         return;
                     }
 
@@ -1015,7 +1015,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             FileConverter conv = FileConverter.getInstance();
                             conv.convertToPDF(controller.getCampaignFolder(campaign.getName()) + File.separator + fileName);
                         } catch (Throwable t) {
-                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei Dokumenterstellung für " + ad.toDisplayName(), "Fehler");
+                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei Dokumenterstellung für " + ad.toDisplayName(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                         }
                     }
                     ThreadUtils.updateProgressBar(progress, "Fertig.", progress.getMaximum(), progress.getMaximum(), false);
@@ -1028,7 +1028,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
@@ -1135,7 +1135,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("Error loading template names", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 EditorsRegistry.getInstance().clearStatus();
                 return;
             }
@@ -1216,7 +1216,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 //            }
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 
@@ -1249,7 +1249,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 

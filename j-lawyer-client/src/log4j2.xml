@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ===================================================================== -->
+<Configuration status="warn">
+
+    <Appenders>
+    
+        -->
+        <RollingFile name="FILE" fileName="${sys:user.home}/.j-lawyer-client/log/client.log" filePattern="${sys:user.home}/.j-lawyer-client/log/client.%i.log">
+            <PatternLayout pattern="%d %-5p [%c] %m%n"/>
+            <Filters>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" />
+            </Filters>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="5000 KB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>    
+        </RollingFile>
+        
+        <!-- RollingFile name="LogToRollingFile" fileName="logs/app.log"
+                     filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+        </RollingFile -->
+        
+        <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
+       <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
+        -->
+        <Console name="CONSOLE">
+            <PatternLayout pattern="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
+            <!-- Filter type="ThresholdFilter" level="INFO"/ -->
+            <Filters>
+                <ThresholdFilter level="DEBUG" onMatch="ACCEPT" />
+            </Filters>
+        </Console>
+        
+    </Appenders>
+    
+    <Loggers>
+        <!-- ====================== -->
+        <Logger name="org.apache"/>
+        
+        <!-- Limit the org.jboss.serial (jboss-serialization) to INFO as its DEBUG is verbose -->
+        <Logger name="org.jboss.serial"/>
+        
+        <!-- Limit JBoss categories -->
+        <Logger name="org.jboss"/>
+        
+        <!-- ======================= -->
+        <Root level="DEBUG">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+        </Root>      
+    
+    </Loggers>
+    
+</Configuration>

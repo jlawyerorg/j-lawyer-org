@@ -712,7 +712,7 @@ public class LoadOptionGroupThread implements Runnable {
             //mgmt.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
             ThreadUtils.setDefaultCursor(this.owner);
             return;

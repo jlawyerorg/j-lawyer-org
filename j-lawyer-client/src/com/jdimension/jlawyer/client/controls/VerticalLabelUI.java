@@ -776,9 +776,9 @@ public class VerticalLabelUI extends BasicLabelUI {
    public void paint(Graphics g, JComponent c) {
       Graphics2D g2 = (Graphics2D) g.create();
       if (clockwise) {
-         g2.rotate(Math.PI / 2, c.getSize().width / 2, c.getSize().width / 2);
+         g2.rotate(Math.PI / 2d, c.getSize().width / 2d, c.getSize().width / 2d);
       } else {
-         g2.rotate(-Math.PI / 2, c.getSize().height / 2, c.getSize().height / 2);
+         g2.rotate(-Math.PI / 2d, c.getSize().height / 2d, c.getSize().height / 2d);
       }
       super.paint(g2, c);
    }

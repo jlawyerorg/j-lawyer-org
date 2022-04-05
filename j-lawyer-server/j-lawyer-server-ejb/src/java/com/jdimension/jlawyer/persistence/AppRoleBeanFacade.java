@@ -689,8 +689,12 @@ public class AppRoleBeanFacade extends AbstractFacade<AppRoleBean> implements Ap
     @Override
     public List<AppRoleBean> findByPrincipalId(String principalId) {
         List results=em.createNamedQuery("AppRoleBean.findByPrincipalId").setParameter("principalId", principalId).getResultList();
-        
-        
+        return (List<AppRoleBean>)results;
+    }
+    
+    @Override
+    public List<AppRoleBean> findByRole(String role) {
+        List results=em.createNamedQuery("AppRoleBean.findByRole").setParameter("role", role).getResultList();
         return (List<AppRoleBean>)results;
     }
     

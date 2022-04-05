@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
@@ -693,6 +692,7 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -725,12 +725,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
-    private Hashtable<File, Date> lastEventFileNames = new Hashtable<File, Date>();
+    private Hashtable<File, Date> lastEventFileNames = new Hashtable<>();
     
     @Override
     public void notifyStatusBarReady() {
-        int numberOfScans = this.tblDirContent.getModel().getRowCount();
-//        EditorsRegistry.getInstance().updateScanStatus(numberOfScans);
         EventBroker eb = EventBroker.getInstance();
         eb.publishEvent(new ScannerStatusEvent(this.lastEventFileNames));
     }
@@ -744,19 +742,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     public void onEvent(Event e) {
         if (e instanceof ScannerStatusEvent) {
             
-//            EditorsRegistry reg = EditorsRegistry.getInstance();
-//            if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
-//                if (!this.ignoreCurrentEditor) {
-//                    // do not refresh if desktop is active - this might interrupt user interactions
-//                    return;
-//                }
-//            }
-            
             int selectedRow = tblDirContent.getSelectedRow();
             Hashtable<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
             String[] colNames = new String[]{"geändert", "Dateiname"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
+                @Override
                 public boolean isCellEditable(int i, int i0) {
                     return false;
                 }
@@ -769,10 +760,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             }
             
-            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
             sorter.setComparator(0, new DateTimeStringComparator());
             ThreadUtils.setTableModel(tblDirContent, model, sorter);
-            final int rowCount = model.getRowCount();
             
             try {
                 if (selectedRow >= tblDirContent.getRowCount()) {
@@ -790,9 +780,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if (e instanceof AllCaseTagsEvent) {
             DefaultComboBoxModel dm=new DefaultComboBoxModel();
             dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<String>();
+            ArrayList<String> allTags=new ArrayList<>();
             for(AppOptionGroupBean tag: ((AllCaseTagsEvent) e).getTagDtos()) {
-                //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);
@@ -809,7 +798,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if (e instanceof AllDocumentTagsEvent) {
             DefaultComboBoxModel dm=new DefaultComboBoxModel();
             dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<String>();
+            ArrayList<String> allTags=new ArrayList<>();
             for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
                 //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
@@ -831,7 +820,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        //System.out.println("finalize");
 
     }
 
@@ -848,29 +836,21 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ClientSettings settings=ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_TAGGINGENABLED, "false");
-        boolean taggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
-            taggingEnabled = true;
             this.chkCaseTagging.setSelected(true);
         }
         
         temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DOCUMENTTAGGINGENABLED, "false");
-        taggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
-            taggingEnabled = true;
             this.chkDocumentTagging.setSelected(true);
         }
         
         temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "false");
-        boolean deleteEnabled = true;
         if ("false".equalsIgnoreCase(temp)) {
-            deleteEnabled = false;
             this.chkDeleteAfterAction.setSelected(false);
         }
         
         this.displayLocalScanDir();
-        
-        //this.splitMain.setDividerLocation(300);
         
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
@@ -878,6 +858,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
         
         DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
+            @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 
                 JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -897,18 +878,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         };
         this.tblDirContent.setDefaultRenderer(Object.class, r);
         
-        // do not need to get an initial state, will auto-update after 6.5s
-        //this.refreshList();
-        
         String[] colNames = new String[]{"Aktion", "Akte", ""};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblActions, model);
         
         this.splitTop.setDividerLocation(0.5d);
         this.splitMain.setDividerLocation(0.5d);
-        //this.splitMain.setDividerLocation(300);
-        //ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
-        //ThreadUtils.setSplitDividerLocation(this.splitTop, (int) tblDirContent.getPreferredSize().getWidth());
         
         Timer timer = new Timer();
         TimerTask scannerTask = new ScannerDocumentsTimerTask(false);
@@ -927,19 +902,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         if(this.splitMain.getDividerLocation()<100)
             this.splitMain.setDividerLocation(100);
 
-//        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
-//        new Thread(new Runnable() {
-//            public void run() {
-//                            try {
-//                                Thread.sleep(15000);
-//                            } catch (Throwable t) {
-//                                
-//                            }
-//
-//                        
-//                EditorsRegistry.getInstance().updateScanStatus(numberOfScans);
-//            }
-//        }).start();
     }
     
     private void displayLocalScanDir() {
@@ -966,23 +928,23 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         
     }
     
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
 
     }
     
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
             g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
         }
-        //this.pnlPreview.repaint();
     }
 
     /**
@@ -1209,6 +1171,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
             String[] colNames = new String[]{"Aktion", "Akte", ""};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
+                @Override
                 public boolean isCellEditable(int i, int i0) {
                     return false;
                 }
@@ -1220,7 +1183,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     
                     if (column == 2) {
                         JLabel b = new JLabel();
-                        b.setHorizontalAlignment(b.CENTER);
+                        b.setHorizontalAlignment(JLabel.CENTER);
                         b.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
                         return b;
                     } else {
@@ -1248,7 +1211,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 ArrayList proposedAssignmentFiles = new ArrayList();
 
                 // todo: strip extension
-                ArrayList<String> extensions = new ArrayList<String>(LauncherFactory.LO_OFFICEFILETYPES);
+                ArrayList<String> extensions = new ArrayList<>(LauncherFactory.LO_OFFICEFILETYPES);
                 extensions.add(".pdf");
                 String fileNameNoExt = fileName;
                 for (String ext : extensions) {
@@ -1301,7 +1264,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 
             }
             
@@ -1309,44 +1272,34 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             // display document preview
             final String fFileName = fileName;
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        int splitLocation = splitTop.getDividerLocation();
-                        ThreadUtils.setVisible(pnlPreview, false);
-                        ThreadUtils.removeAll(pnlPreview);
-                        ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-                        JProgressBar loading = new JProgressBar();
-                        loading.setIndeterminate(true);
-                        ThreadUtils.addComponent(pnlPreview, loading);
-                        ThreadUtils.setVisible(pnlPreview, true);
-                        ClientSettings settings = ClientSettings.getInstance();
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-                        byte[] data = is.getObservedFile(fFileName);
-                        String previewText = is.getObservedFilePreview(fFileName);
-                        
-                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
-                        ThreadUtils.setVisible(pnlPreview, false);
-                        ThreadUtils.remove(pnlPreview, loading);
-                        ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-                        ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-                        ThreadUtils.setVisible(pnlPreview, true);
-                        ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
-
-                        //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
-                        //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
-                        //this.pnlPreview.revalidate();
-                        //this.pnlPreview.repaint();
-                        //System.out.println(pnlPreview.getBounds());
-                        //System.out.println(preview.getBounds());
-                    } catch (Exception ex) {
-                        log.error(ex);
-                        ThreadUtils.removeAll(pnlPreview);
-                        ThreadUtils.addComponent(pnlPreview, new JLabel("Vorschau nicht verfügbar..."));
-                        //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
-
-                    }
+            new Thread(() -> {
+                try {
+                    int splitLocation = splitTop.getDividerLocation();
+                    ThreadUtils.setVisible(pnlPreview, false);
+                    ThreadUtils.removeAll(pnlPreview);
+                    ThreadUtils.setLayout(pnlPreview, new FlowLayout());
+                    JProgressBar loading = new JProgressBar();
+                    loading.setIndeterminate(true);
+                    ThreadUtils.addComponent(pnlPreview, loading);
+                    ThreadUtils.setVisible(pnlPreview, true);
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
+                    byte[] data = is.getObservedFile(fFileName);
+                    String previewText = is.getObservedFilePreview(fFileName);
+                    
+                    JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
+                    ThreadUtils.setVisible(pnlPreview, false);
+                    ThreadUtils.remove(pnlPreview, loading);
+                    ThreadUtils.setLayout(pnlPreview, new BorderLayout());
+                    ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
+                    ThreadUtils.setVisible(pnlPreview, true);
+                    ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
+                } catch (Exception ex) {
+                    log.error(ex);
+                    ThreadUtils.removeAll(pnlPreview);
+                    ThreadUtils.addComponent(pnlPreview, new JLabel("Vorschau nicht verfügbar..."));
+                    
                 }
             }).start();
 
@@ -1354,7 +1307,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
     
     private void tblDirContentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseClicked
-        if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.selectDirContent();
         } else if (evt.getClickCount() == 2) {
             
@@ -1372,7 +1325,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     launcher.launch(false);
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     
                 }
             }
@@ -1381,7 +1334,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void tblActionsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblActionsMouseClicked
         int row = this.tblActions.rowAtPoint(evt.getPoint());
-        int col = this.tblActions.columnAtPoint(evt.getPoint());
         if (evt.getClickCount() == 2) {
             Object value = this.tblActions.getValueAt(row, 2);
             if (value instanceof ScanAction) {

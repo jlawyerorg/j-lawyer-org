@@ -697,6 +697,7 @@ public class QuickAddressSearchThread implements Runnable {
         this.tag=tag;
     }
 
+    @Override
     public void run() {
         AddressBean[] dtos=null;
         Hashtable<String, ArrayList<String>> tags = null;
@@ -704,22 +705,19 @@ public class QuickAddressSearchThread implements Runnable {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //AddressServiceRemoteHome home = (AddressServiceRemoteHome)locator.getRemoteHome("ejb/AddressServiceBean", AddressServiceRemoteHome.class);
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             dtos=addressService.searchEnhanced(query, tag);
             tags=addressService.searchTagsEnhanced(query, tag);
-            //addressService.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
         
-        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
-            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getDepartment(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getStreet(), dtos[i].getCountry(), TagUtils.getTagList(dtos[i].getId(), tags)};
+            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getDepartment(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getStreet(), dtos[i].getStreetNumber(), dtos[i].getCountry(), TagUtils.getTagList(dtos[i].getId(), tags)};
             model.addRow(row);
         }
         if(dtos.length>0) {

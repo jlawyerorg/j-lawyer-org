@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Component;
 import java.awt.Container;
 import javax.swing.JButton;
@@ -709,7 +710,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
 
     @Override
     public String getContentType() {
-        return "text/html";
+        return ContentTypes.TEXT_HTML;
     }
 
     @Override

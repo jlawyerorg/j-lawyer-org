@@ -814,7 +814,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (Throwable t) {
             //reuse existing date
-            JOptionPane.showMessageDialog(this, "Ungültiges Datumsformat!", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ungültiges Datumsformat!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
     

@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -678,7 +677,7 @@ import java.util.ArrayList;
 public class PrintStubGenerator {
 
     public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList, String criteriaString) {
-        ArrayList<ReviewsDetail> result = new ArrayList<ReviewsDetail>();
+        ArrayList<ReviewsDetail> result = new ArrayList<>();
         for (int i = 0; i < revList.size(); i++) {
             ArchiveFileReviewsBean rev = revList.get(i);
             ArchiveFileBean ar = fileList.get(i);
@@ -696,7 +695,6 @@ public class PrintStubGenerator {
 
         s.setClaimNumber(file.getClaimNumber());
         s.setClaimValue(file.getClaimValue());
-        //s.setDictateSign(file.getDictateSign());
         s.setFileNumber(file.getFileNumber());
         s.setName(file.getName());
         s.setNotice(file.getNotice());
@@ -749,13 +747,9 @@ public class PrintStubGenerator {
         det.setFileName(ar.getName());
         det.setAssignee(rev.getAssignee());
         det.setFileNumber(ar.getFileNumber());
-        det.setReviewTypeName(rev.getReviewTypeName());
-        if(rev.getReviewDate()!=null) {
-            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy");
-            det.setReviewDate(df2.format(rev.getReviewDate()));
-        } else
-            det.setReviewDate("");
-        det.setReviewReason(rev.getReviewReason());
+        det.setReviewTypeName(rev.getEventTypeName());
+        det.setReviewDate(rev.toString());
+        det.setReviewReason(rev.getSummary());
 
         return det;
     }
@@ -788,6 +782,11 @@ public class PrintStubGenerator {
             d.setMobile(b.getMobile());
         }
         d.setStreet(b.getStreet());
+        if(b.getStreetNumber()==null) {
+            d.setStreetNumber("");
+        } else {
+            d.setStreetNumber(b.getStreetNumber());
+        }
         d.setWebsite(b.getWebsite());
         d.setZipCode(b.getZipCode());
         

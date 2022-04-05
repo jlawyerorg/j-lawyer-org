@@ -664,17 +664,7 @@
 package com.jdimension.jlawyer.client.configuration;
 
 //import bsh.This;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -682,11 +672,11 @@ import org.apache.log4j.Logger;
  */
 public class CustomFieldConfigurationDialog extends javax.swing.JDialog {
     
-    private static Logger log=Logger.getLogger(CustomFieldConfigurationDialog.class.getName());
-    
     private String categoryKey=null;
     
-    /** Creates new form OptionGroupConfigurationDialog */
+    /** Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal */
     public CustomFieldConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -817,10 +807,8 @@ public class CustomFieldConfigurationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new CustomFieldConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new CustomFieldConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     

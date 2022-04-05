@@ -665,23 +665,9 @@ package com.jdimension.jlawyer.timer;
 
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.server.constants.MonitoringConstants;
-import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import com.jdimension.jlawyer.sync.FolderSync;
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Properties;
-import javax.jms.*;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -738,8 +724,7 @@ public class BackupSyncTask extends java.util.TimerTask {
 
             InitialContext ic = new InitialContext();
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-            //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
-
+            
             ServerSettingsBean syncSetting = settings.find("jlawyer.server.backup.synctarget");
             String syncLocation = "";
             if (syncSetting != null) {

@@ -718,7 +718,6 @@ public class UploadTemplatesAction extends ProgressableAction {
 
         try {
 
-            //if(this.isCancelled())
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -728,14 +727,11 @@ public class UploadTemplatesAction extends ProgressableAction {
                     if (!f.isDirectory()) {
 
                         byte[] data = FileUtils.readFile(f);
-                        final long dataSize = (long) data.length;
                         final boolean added = locator.lookupSystemManagementRemote().addTemplate(folder,f.getName(), data);
                         if (added) {
-                            SwingUtilities.invokeLater(new Runnable() {
-                                public void run() {
-                                    DefaultListModel m = (DefaultListModel) docTarget.getModel();
-                                    m.addElement(f.getName());
-                                }
+                            SwingUtilities.invokeLater(() -> {
+                                DefaultListModel m = (DefaultListModel) docTarget.getModel();
+                                m.addElement(f.getName());
                             });
                         }
                     }
@@ -744,11 +740,10 @@ public class UploadTemplatesAction extends ProgressableAction {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
 
-            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return true;
         }
 

@@ -720,7 +720,7 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagenordner: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagenordner: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
     }

@@ -670,8 +670,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JSplitPane;
 
@@ -813,14 +812,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
         if (folder.getChildren() != null) {
             List<CaseFolder> allChildren = folder.getChildren();
-            Collections.sort(allChildren, new Comparator() {
-                @Override
-                public int compare(Object t, Object t1) {
-                    CaseFolder f1 = (CaseFolder) t;
-                    CaseFolder f2 = (CaseFolder) t1;
-                    return f1.getName().compareTo(f2.getName());
-                }
-
+            Collections.sort(allChildren, (Object t, Object t1) -> {
+                CaseFolder f1 = (CaseFolder) t;
+                CaseFolder f2 = (CaseFolder) t1;
+                return f1.getName().compareTo(f2.getName());
             });
             for (CaseFolder child : allChildren) {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
@@ -885,7 +880,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
     
     public String getFolderPath(String folderId) {
-        Hashtable<String,String> folderPaths=new Hashtable<String,String>();
+        HashMap<String,String> folderPaths=new HashMap<>();
         this.collectFolderPaths(folderPaths, this.rootFolder, "");
         if(folderPaths.containsKey(folderId)) {
             return folderPaths.get(folderId);
@@ -894,7 +889,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
     }
     
-    private void collectFolderPaths(Hashtable<String,String> items, CaseFolder folder, String path) {
+    private void collectFolderPaths(HashMap<String,String> items, CaseFolder folder, String path) {
         String itemName = path;
         if (path.length() > 0) {
             itemName = itemName + " > ";
@@ -972,6 +967,17 @@ public class FoldersListPanel extends javax.swing.JPanel {
             }
         }
         return ids;
+    }
+    
+    void setSelected(CaseFolder cf) {
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                if (((FolderListCell) c).getFolder().getId().equals(cf.getId())) {
+                    ((FolderListCell) c).setSelected(true);
+                    return;
+                }
+            }
+        }
     }
 
     void folderUpdated(CaseFolder folder) {

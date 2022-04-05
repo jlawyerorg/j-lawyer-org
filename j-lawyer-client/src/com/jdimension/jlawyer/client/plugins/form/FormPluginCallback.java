@@ -723,9 +723,29 @@ public class FormPluginCallback {
 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    
+    public void downloadFilesToCase(String urlList) {
+        // urlList has this format: "[http://legalh.de/20180329.pdf, http://legalh.de/20180329.pdf, http://legalh.de/20180329.pdf]"
+        String[] urls=urlList.split(",");
+        ArrayList<String> downloadUrls=new ArrayList<>();
+        for(String u: urls) {
+            u=u.replace('[', ' ');
+            u=u.replace(']', ' ');
+            u=u.trim();
+            if(!u.isBlank())
+                downloadUrls.add(u);
+        }
+        if(!downloadUrls.isEmpty()) {
+            FormFileDownloadDialog downDia=new FormFileDownloadDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.getCaseId(), downloadUrls);
+            downDia.setSize(800, 650);
+            FrameUtils.centerDialog(downDia, EditorsRegistry.getInstance().getMainWindow());
+            downDia.setVisible(true);
+        }
+        
     }
 
     private static class HtmlSelection implements Transferable {

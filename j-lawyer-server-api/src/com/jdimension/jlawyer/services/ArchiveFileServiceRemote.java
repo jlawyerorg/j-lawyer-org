@@ -686,15 +686,7 @@ public interface ArchiveFileServiceRemote {
 
     void removeArchiveFile(String id) throws Exception;
 
-//    Collection getClients(String archiveFileKey);
-//
-//    Collection getOpponents(String archiveFileKey);
-//
-//    Collection getOpponentAttorneys(String archiveFileKey);
-
     ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
-
-    Collection getReviews(String archiveFileKey) throws Exception;
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
 
@@ -704,8 +696,6 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean getArchiveFile(String id) throws Exception;
 
-    Collection<ArchiveFileReviewsBean> getAllOpenReviews();
-
     Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
 
     boolean archiveFileExists(String id);
@@ -713,8 +703,6 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
 
     ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
-
-    Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate);
 
     int getArchiveFileArchivedCount();
 
@@ -732,12 +720,6 @@ public interface ArchiveFileServiceRemote {
 
     boolean renameDocument(String id, String newName) throws Exception;
 
-    ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
-
-    ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
-    
-    void removeReview(String reviewId) throws Exception;
-
     ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
 
     ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
@@ -748,7 +730,11 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     
+    HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
+    
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
+    
+    HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
 
     List<String> searchTagsInUse();
     
@@ -757,8 +743,6 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     String getDocumentPreview(String id) throws Exception;
-
-    Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit);
 
     Date[] getHistoryInterval(String principalId);
 
@@ -780,7 +764,7 @@ public interface ArchiveFileServiceRemote {
     
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
+    HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 
@@ -812,7 +796,7 @@ public interface ArchiveFileServiceRemote {
 
     List<DocumentFolderTemplate> getAllFolderTemplates();
 
-    void addFolderTemplate(DocumentFolderTemplate template);
+    void addFolderTemplate(DocumentFolderTemplate template) throws Exception;
 
     void removeFolderTemplate(String name);
 
@@ -853,5 +837,9 @@ public interface ArchiveFileServiceRemote {
     void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception;
 
     HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
+
+    void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
+
+    List<CaseSyncSettings> getCaseSyncs(String caseId);
 
 }

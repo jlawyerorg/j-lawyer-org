@@ -709,6 +709,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
 
         int addressCount = 0;
@@ -718,11 +719,9 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //AddressServiceRemoteHome home = (AddressServiceRemoteHome)locator.getRemoteHome("ejb/AddressServiceBean", AddressServiceRemoteHome.class);
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             addressCount = addressService.getAddressCount();
 
-            //ArchiveFileServiceRemoteHome fHome = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             archiveFileCount = fileService.getArchiveFileCount();
 
@@ -743,15 +742,15 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             osVersion = URLEncoder.encode(osVersion, "UTF-8");
 
             ServerSettings set = ServerSettings.getInstance();
-            String company = set.getSetting(set.PROFILE_COMPANYNAME, "x");
-            String zip = set.getSetting(set.PROFILE_COMPANYZIP, "x");
+            String company = set.getSetting(ServerSettings.PROFILE_COMPANYNAME, "x");
+            String zip = set.getSetting(ServerSettings.PROFILE_COMPANYZIP, "x");
 
             String voipmode = "off";
             if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 voipmode = "on";
             }
-            String drebismode = set.getSetting(set.SERVERCONF_DREBISMODE, "off");
-            String backupmode = set.getSetting(set.SERVERCONF_BACKUP_MODE, "off");
+            String drebismode = set.getSetting(ServerSettings.SERVERCONF_DREBISMODE, "off");
+            String backupmode = set.getSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "off");
 
             // anonymous - identify as unique installation, but we don't care about personal details.
             String installationHash = md5(zip + " " + company);
@@ -768,7 +767,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             char[] buffer = new char[1024];
             int len = 0;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while ((len = reader.read(buffer)) > -1) {
                 sb.append(buffer, 0, len);
             }

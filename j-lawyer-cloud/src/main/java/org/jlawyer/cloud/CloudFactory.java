@@ -663,9 +663,9 @@
  */
 package org.jlawyer.cloud;
 
-import java.io.IOException;
 import org.aarboard.nextcloud.api.NextcloudConnector;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -673,10 +673,18 @@ import org.apache.log4j.Logger;
  */
 public class CloudFactory {
     
-    private static final Logger log=Logger.getLogger(CloudFactory.class.getName());
+    private static final Logger log=LogManager.getLogger(CloudFactory.class.getName());
     
     public static NextcloudConnector getCloud(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
         NextcloudConnector con=new NextcloudConnector(serverName, useHTTPS, port, userName, password);
+        if(path!=null && !"".equals(path)) {
+            con.setSubpathPrefix(path);
+        }
+        return con;
+    }
+    
+    public static NextcloudCalendarConnector getCalendarCloud(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
+        NextcloudCalendarConnector con=new NextcloudCalendarConnector(serverName, useHTTPS, port, userName, password);
         if(path!=null && !"".equals(path)) {
             con.setSubpathPrefix(path);
         }

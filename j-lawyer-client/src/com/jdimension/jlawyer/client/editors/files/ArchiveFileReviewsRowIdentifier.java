@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-//import com.jdimension.jkanzlei.server.persistence.ArchiveFileDTO;
-
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 
@@ -676,7 +674,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 public class ArchiveFileReviewsRowIdentifier {
     
     /**
-     * Creates a new instance of QuickArchiveFileSearchRowIdentifier
+     * Creates a new instance of ArchiveFileReviewsRowIdentifier
      */
     public ArchiveFileReviewsRowIdentifier(ArchiveFileBean dto, String caption) {
         this.archiveFileDTO=dto;

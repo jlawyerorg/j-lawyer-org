@@ -44,6 +44,30 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteSelectedArchiveFilesActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuEnableCaseSync">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/outline_security_update_good_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="in App synchronisieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten in der App bereitstellen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuEnableCaseSyncActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuDisableCaseSync">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/outline_no_cell_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="aus der App entfernen"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten aus der App entfernen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDisableCaseSyncActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JPopupMenu" name="popTagFilter">
@@ -79,8 +103,6 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jScrollPane1" alignment="0" pref="819" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtSearchString" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdQuickSearch" min="-2" max="-2" attributes="0"/>
@@ -118,10 +140,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="cmdQuickSearch" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="txtSearchString" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="txtSearchString" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdTagFilter" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="chkIncludeArchive" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
@@ -146,14 +165,6 @@
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdTagFilterMousePressed"/>
       </Events>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel1">
-      <Properties>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
-        <Property name="text" type="java.lang.String" value="Suchanfrage:"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtSearchString">
       <Events>

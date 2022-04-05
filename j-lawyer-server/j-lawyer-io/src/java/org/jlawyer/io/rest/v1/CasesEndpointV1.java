@@ -665,7 +665,6 @@ package org.jlawyer.io.rest.v1;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
@@ -675,13 +674,13 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
@@ -719,9 +718,6 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     // when seeing something like
     //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
     // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
-    
-    @EJB
-    private ArchiveFileServiceLocal archiveFileSvc;
 
     /**
      * Lists all cases
@@ -840,7 +836,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileTagsBean> tags = cases.getTags(id);
-            ArrayList<RestfulTagV1> tagList = new ArrayList<RestfulTagV1>();
+            ArrayList<RestfulTagV1> tagList = new ArrayList<>();
             for (ArchiveFileTagsBean tag : tags) {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
@@ -921,6 +917,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
 
             ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
             if (currentCase == null) {
@@ -928,7 +925,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 Response res = Response.serverError().build();
                 return res;
             }
-            Collection reviews=cases.getReviews(caseData.getId());
+            Collection<ArchiveFileReviewsBean> reviews=cal.getReviews(caseData.getId());
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
             List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
@@ -1076,6 +1073,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
             ArchiveFileBean currentCase = cases.getArchiveFile(id);
             if (currentCase == null) {
                 log.error("case with id " + id + " does not exist");
@@ -1083,18 +1081,20 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
 
-            Collection<ArchiveFileReviewsBean> reviews = cases.getReviews(id);
-            ArrayList<RestfulDueDateV1> ddList = new ArrayList<RestfulDueDateV1>();
+            Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
+            ArrayList<RestfulDueDateV1> ddList = new ArrayList<>();
             for (ArchiveFileReviewsBean rev : reviews) {
                 RestfulDueDateV1 dd = new RestfulDueDateV1();
                 dd.setId(rev.getId());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.getDoneBoolean());
-                dd.setDueDate(rev.getReviewDate());
-                dd.setReason(rev.getReviewReason());
+                dd.setDueDate(rev.getBeginDate());
+                dd.setReason(rev.getSummary());
                 dd.setType(RestfulDueDateV1.TYPE_RESPITE);
-                if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV1.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV1.TYPE_EVENT);
                 }
                 ddList.add(dd);
             }

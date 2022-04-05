@@ -663,15 +663,23 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_PREFIX;
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_SUFFIX_DEFAULT;
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_SUFFIX_EXE;
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_SUFFIX_EXTENSION;
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_SUFFIX_RO;
+import static com.jdimension.jlawyer.client.launcher.CustomLauncher.CL_SUFFIX_RW;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
@@ -685,37 +693,62 @@ import org.apache.log4j.Logger;
  */
 public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(CustomLauncherOptionsDialog.class.getName());
-    private static String CL_PREFIX = "customlaunch";
-    private static String CL_SUFFIX_RO = "params-ro";
-    private static String CL_SUFFIX_RW = "params-rw";
-    private static String CL_SUFFIX_EXE = "executable";
-
+    private static final Logger log = Logger.getLogger(CustomLauncherOptionsDialog.class.getName());
+    private static final String NON_EXISTING="not-there";
+    
     /**
-     * Creates new form ProfileDialog
+     * Creates new form CustomLauncherOptionsDialog
+     *
+     * @param parent
+     * @param modal
      */
     public CustomLauncherOptionsDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        //ServerSettings set=ServerSettings.getInstance();
-        //this.txtServerDir.setText(set.getSetting(set.SERVERCONF_SCANNER_SERVERDIR, ""));
+        this.txtNewLauncher.putClientProperty("JTextField.placeholderText", "Programmbezeichner");
         ClientSettings settings = ClientSettings.getInstance();
         Properties all = settings.getAllConfigurations();
         Enumeration keys = all.propertyNames();
-        ArrayList<String> extensions = new ArrayList<String>();
-        this.lstExtensions.setModel(new DefaultListModel());
+        ArrayList<String> launchers = new ArrayList<>();
+        this.lstLaunchers.setModel(new DefaultListModel<String>());
         while (keys.hasMoreElements()) {
             String key = keys.nextElement().toString();
-            if (key.startsWith(this.CL_PREFIX + ".")) {
-                String ext = key.substring(13);
-                ext = ext.substring(0, ext.indexOf('.'));
-                if (!extensions.contains(ext)) {
-                    extensions.add(ext);
-                    ((DefaultListModel) this.lstExtensions.getModel()).addElement(ext);
+            if (key.startsWith(CL_PREFIX + ".")) {
+                String launcher = key.substring(13);
+                launcher = launcher.substring(0, launcher.indexOf('.'));
+                if (!launchers.contains(launcher)) {
+                    launchers.add(launcher);
+                    ((DefaultListModel<String>) this.lstLaunchers.getModel()).addElement(launcher);
                 }
             }
         }
 
+    }
+
+    /*
+    * Migrates settings from pre 2.1 (one launcher per file type) to 2.1+ (multiple launchers per file type)
+     */
+    public static void upgradeSettings() {
+        ClientSettings settings = ClientSettings.getInstance();
+        Properties all = settings.getAllConfigurations();
+        Enumeration keys = all.propertyNames();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement().toString();
+            if (key.startsWith(CL_PREFIX + ".")) {
+                String launcher = key.substring(13);
+                launcher = launcher.substring(0, launcher.indexOf('.'));
+                String extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_EXTENSION;
+                if (NON_EXISTING.equals(settings.getConfiguration(extensionKey, NON_EXISTING))) {
+                    // migrate old setting
+                    settings.setConfiguration(extensionKey, launcher);
+                }
+                extensionKey = CL_PREFIX + "." + launcher + "." + CL_SUFFIX_DEFAULT;
+                if (NON_EXISTING.equals(settings.getConfiguration(extensionKey, NON_EXISTING))) {
+                    // migrate old setting
+                    settings.setConfiguration(extensionKey, "1");
+                }
+            }
+        }
     }
 
     /**
@@ -731,10 +764,11 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         mnuRemove = new javax.swing.JMenuItem();
         cmdClose = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lstExtensions = new javax.swing.JList();
-        txtNewExtension = new javax.swing.JTextField();
+        txtNewLauncher = new javax.swing.JTextField();
         cmdAddExtension = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstLaunchers = new javax.swing.JList();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         txtExecutable = new javax.swing.JTextField();
@@ -745,6 +779,11 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         txtParamsRo = new javax.swing.JTextField();
         cmdTest = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        txtLauncherName = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        txtExtension = new javax.swing.JTextField();
+        chkDefaultLauncher = new javax.swing.JCheckBox();
 
         mnuRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog"); // NOI18N
@@ -769,29 +808,29 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
         jLabel1.setText(bundle.getString("label.filetypes")); // NOI18N
 
-        lstExtensions.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        lstExtensions.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstExtensionsMousePressed(evt);
-            }
-        });
-        lstExtensions.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                lstExtensionsValueChanged(evt);
-            }
-        });
-        jScrollPane1.setViewportView(lstExtensions);
-
         cmdAddExtension.setText(bundle.getString("button.add")); // NOI18N
         cmdAddExtension.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddExtensionActionPerformed(evt);
             }
         });
+
+        lstLaunchers.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        lstLaunchers.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstLaunchersMousePressed(evt);
+            }
+        });
+        lstLaunchers.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstLaunchersValueChanged(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstLaunchers);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Einstellungen"));
 
@@ -825,59 +864,91 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel5.setText("Programmbezeichnung:");
+
+        jLabel6.setText("Dateiendung:");
+
+        chkDefaultLauncher.setSelected(true);
+        chkDefaultLauncher.setText("Standardprogramm");
+        chkDefaultLauncher.setToolTipText("Standardprogramme werden durch Doppelklick auf ein Dokument geöffnet,\nNicht-Standardprogramme sind über das Kontextmenü des Dokuments aufrufbar.");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(13, Short.MAX_VALUE)
-                .addComponent(cmdTest)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdSave)
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtLauncherName)
+                    .addComponent(txtExtension)
+                    .addComponent(txtParamsRw)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(txtExecutable)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdBrowseBinary))
+                    .addComponent(txtParamsRo)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkDefaultLauncher)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel2)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(cmdTest)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSave)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(txtParamsRw)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addComponent(txtExecutable)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(cmdBrowseBinary))
-                        .addComponent(txtParamsRo)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel3)
-                                .addComponent(jLabel2)
-                                .addComponent(jLabel4))
-                            .addGap(0, 103, Short.MAX_VALUE)))
-                    .addContainerGap()))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtLauncherName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtExtension, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtExecutable, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdBrowseBinary))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtParamsRw, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtParamsRo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkDefaultLauncher)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdTest)
                     .addComponent(cmdSave))
                 .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel2)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txtExecutable, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(cmdBrowseBinary))
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(jLabel3)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(txtParamsRw, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(jLabel4)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(txtParamsRo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(43, Short.MAX_VALUE)))
+        );
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -887,21 +958,18 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtNewExtension, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txtNewLauncher, javax.swing.GroupLayout.PREFERRED_SIZE, 319, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdAddExtension))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdClose)))
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -911,15 +979,13 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtNewExtension, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtNewLauncher, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdAddExtension))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 227, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdClose)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -928,12 +994,35 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
         ClientSettings settings = ClientSettings.getInstance();
-        if (this.lstExtensions.getSelectedIndex() < 0) {
+        if (this.lstLaunchers.getSelectedIndex() < 0) {
             return;
         } else {
-            settings.setConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_EXE, this.txtExecutable.getText());
-            settings.setConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_RO, this.txtParamsRo.getText());
-            settings.setConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_RW, this.txtParamsRw.getText());
+            if (!(this.lstLaunchers.getSelectedValue().equals(this.txtLauncherName.getText()))) {
+                // launcher has been renamed - remove existing configuration
+                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_EXE);
+                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_RO);
+                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_RW);
+                settings.removeConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_EXTENSION);
+                ((DefaultListModel) this.lstLaunchers.getModel()).addElement(this.txtLauncherName.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_EXE, this.txtExecutable.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_RO, this.txtParamsRo.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_RW, this.txtParamsRw.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_EXTENSION, this.txtExtension.getText());
+                if(this.chkDefaultLauncher.isSelected())
+                    settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_DEFAULT, "1");
+                else
+                    settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_DEFAULT, "0");
+                ((DefaultListModel) this.lstLaunchers.getModel()).removeElement(this.lstLaunchers.getSelectedValue());
+            } else {
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_EXE, this.txtExecutable.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_RO, this.txtParamsRo.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_RW, this.txtParamsRw.getText());
+                settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_EXTENSION, this.txtExtension.getText());
+                if(this.chkDefaultLauncher.isSelected())
+                    settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_DEFAULT, "1");
+                else
+                    settings.setConfiguration(CL_PREFIX + "." + this.txtLauncherName.getText() + "." + CL_SUFFIX_DEFAULT, "0");
+            }
 
         }
 
@@ -945,78 +1034,75 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestActionPerformed
-        if (this.lstExtensions.getSelectedIndex() < 0) {
+        if (this.lstLaunchers.getSelectedIndex() < 0) {
             return;
         }
 
         JFileChooser chooser = new JFileChooser();
-        ExtensionFilter filter = new ExtensionFilter(this.lstExtensions.getSelectedValue().toString());
+        ExtensionFilter filter = new ExtensionFilter(this.txtExtension.getText());
         chooser.setFileFilter(filter);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 
             try {
                 String url = chooser.getSelectedFile().getCanonicalPath();
-                File f=new File(url);
-                byte[] content=FileUtils.readFile(f);
-                ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("launchertest-" + f.getName(), f.getName());
-                Launcher launcher=LauncherFactory.getLauncher(new File(url).getName(), content, store);
+                File f = new File(url);
+                byte[] content = FileUtils.readFile(f);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("launchertest-" + f.getName(), f.getName());
+                Launcher launcher = LauncherFactory.getLauncher(new File(url).getName(), content, store);
                 launcher.launch(false);
 
-
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error.opening"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error.opening"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdTestActionPerformed
 
-    private void lstExtensionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstExtensionsMousePressed
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
-            if (this.lstExtensions.getSelectedValues().length > 0) {
-                this.popup.show(this.lstExtensions, evt.getX(), evt.getY());
+    private void lstLaunchersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstLaunchersMousePressed
+        if (evt.getModifiers() == MouseEvent.BUTTON2_MASK || evt.getModifiers() == MouseEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == MouseEvent.BUTTON3_MASK || evt.getModifiers() == MouseEvent.BUTTON3_DOWN_MASK) {
+            if (this.lstLaunchers.getSelectedValues().length > 0) {
+                this.popup.show(this.lstLaunchers, evt.getX(), evt.getY());
             }
         }
-    }//GEN-LAST:event_lstExtensionsMousePressed
+    }//GEN-LAST:event_lstLaunchersMousePressed
 
     private void mnuRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveActionPerformed
-        if (this.lstExtensions.getSelectedValues().length > 0) {
+        if (!this.lstLaunchers.getSelectedValuesList().isEmpty()) {
             ClientSettings settings = ClientSettings.getInstance();
-            for (int i = 0; i < this.lstExtensions.getSelectedValues().length; i++) {
-                //mgmt.removeOptionGroup(((AppOptionGroupBean)this.lstOptions.getSelectedValues()[i]).getId());
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValues()[i] + "." + CL_SUFFIX_RW);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValues()[i] + "." + CL_SUFFIX_RO);
-                settings.removeConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValues()[i] + "." + CL_SUFFIX_EXE);
+            List selectedValues=this.lstLaunchers.getSelectedValuesList();
+            for (Object selVal: selectedValues) {
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_RW);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_RO);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_EXE);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_EXTENSION);
+                settings.removeConfiguration(CL_PREFIX + "." + selVal.toString() + "." + CL_SUFFIX_DEFAULT);
             }
 
-            Object[] selectedValues = this.lstExtensions.getSelectedValues();
-            for (int i = 0; i < selectedValues.length; i++) {
-                ((DefaultListModel) this.lstExtensions.getModel()).removeElement(selectedValues[i]);
+            for (Object selVal: selectedValues) {
+                ((DefaultListModel) this.lstLaunchers.getModel()).removeElement(selVal);
             }
-            //mgmt.remove();
 
         }
     }//GEN-LAST:event_mnuRemoveActionPerformed
 
     private void cmdAddExtensionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddExtensionActionPerformed
-        String val = this.txtNewExtension.getText().trim().toLowerCase();
-        if(val.startsWith(".")) {
-            val=val.substring(1,val.length());
-        }
+        String val = this.txtNewLauncher.getText().trim();
+        val=val.replace('.', ' ');
+        val=val.trim();
         if ("".equals(val)) {
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
+        if (!((DefaultListModel) this.lstLaunchers.getModel()).contains(val)) {
+            ((DefaultListModel) this.lstLaunchers.getModel()).addElement(val);
+        }
 
-        if(!((DefaultListModel) this.lstExtensions.getModel()).contains(val))
-            ((DefaultListModel) this.lstExtensions.getModel()).addElement(val);
-
-        this.txtNewExtension.setText("");
-        this.txtNewExtension.requestFocus();
+        this.txtNewLauncher.setText("");
+        this.txtNewLauncher.requestFocus();
     }//GEN-LAST:event_cmdAddExtensionActionPerformed
 
     private void cmdBrowseBinaryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBrowseBinaryActionPerformed
-        if (this.lstExtensions.getSelectedIndex() < 0) {
+        if (this.lstLaunchers.getSelectedIndex() < 0) {
             return;
         }
 
@@ -1024,36 +1110,40 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-
-
             try {
                 this.txtExecutable.setText(chooser.getSelectedFile().getCanonicalPath());
             } catch (IOException ioe) {
                 log.error("Error getting binary path", ioe);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error.gettingpath"), new Object[] {ioe.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error.gettingpath"), new Object[]{ioe.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdBrowseBinaryActionPerformed
 
-    private void lstExtensionsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstExtensionsValueChanged
-        if (this.lstExtensions.getSelectedIndex() < 0) {
+    private void lstLaunchersValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstLaunchersValueChanged
+        if (this.lstLaunchers.getSelectedIndex() < 0) {
             this.txtExecutable.setText("");
             this.txtParamsRo.setText("");
             this.txtParamsRw.setText("");
+            this.txtExtension.setText("");
+            this.txtLauncherName.setText("");
+            this.chkDefaultLauncher.setSelected(true);
         } else {
             ClientSettings settings = ClientSettings.getInstance();
-            this.txtExecutable.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_EXE, ""));
-            this.txtParamsRo.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_RO, ""));
+            this.txtExecutable.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_EXE, ""));
+            this.txtExtension.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_EXTENSION, ""));
+            this.txtParamsRo.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_RO, ""));
+            this.txtLauncherName.setText(this.lstLaunchers.getSelectedValue().toString());
             if (this.txtParamsRo.getText().length() == 0) {
                 this.txtParamsRo.setText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("text.filename.ro"));
             }
-            this.txtParamsRw.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstExtensions.getSelectedValue() + "." + CL_SUFFIX_RW, ""));
+            this.txtParamsRw.setText(settings.getConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_RW, ""));
             if (this.txtParamsRw.getText().length() == 0) {
                 this.txtParamsRw.setText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("text.filename.rw"));
             }
-
+            String defSetting=settings.getConfiguration(CL_PREFIX + "." + this.lstLaunchers.getSelectedValue() + "." + CL_SUFFIX_DEFAULT, "1");
+            this.chkDefaultLauncher.setSelected("1".equals(defSetting));
         }
-    }//GEN-LAST:event_lstExtensionsValueChanged
+    }//GEN-LAST:event_lstLaunchersValueChanged
 
     /**
      * @param args the command line arguments
@@ -1089,22 +1179,20 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        java.awt.EventQueue.invokeLater(() -> {
+            CustomLauncherOptionsDialog dialog = new CustomLauncherOptionsDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
-            public void run() {
-                CustomLauncherOptionsDialog dialog = new CustomLauncherOptionsDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkDefaultLauncher;
     private javax.swing.JButton cmdAddExtension;
     private javax.swing.JButton cmdBrowseBinary;
     private javax.swing.JButton cmdClose;
@@ -1114,13 +1202,18 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JList lstExtensions;
+    private javax.swing.JList lstLaunchers;
     private javax.swing.JMenuItem mnuRemove;
     private javax.swing.JPopupMenu popup;
     private javax.swing.JTextField txtExecutable;
-    private javax.swing.JTextField txtNewExtension;
+    private javax.swing.JTextField txtExtension;
+    private javax.swing.JTextField txtLauncherName;
+    private javax.swing.JTextField txtNewLauncher;
     private javax.swing.JTextField txtParamsRo;
     private javax.swing.JTextField txtParamsRw;
     // End of variables declaration//GEN-END:variables
@@ -1135,6 +1228,7 @@ final class ExtensionFilter extends FileFilter {
         this.ext = ext;
     }
 
+    @Override
     public boolean accept(File file) {
         if (file.isDirectory()) {
             return true;
@@ -1147,6 +1241,7 @@ final class ExtensionFilter extends FileFilter {
         return false;
     }
 
+    @Override
     public String getDescription() {
         return this.ext + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("description.files");
     }

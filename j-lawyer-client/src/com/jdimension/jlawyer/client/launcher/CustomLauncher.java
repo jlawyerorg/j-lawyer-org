@@ -665,9 +665,13 @@ package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -678,95 +682,151 @@ import org.apache.log4j.Logger;
  */
 public class CustomLauncher extends Launcher {
 
+    public static final String CL_PREFIX = "customlaunch";
+    public static final String CL_SUFFIX_RO = "params-ro";
+    public static final String CL_SUFFIX_RW = "params-rw";
+    public static final String CL_SUFFIX_EXE = "executable";
+    public static final String CL_SUFFIX_EXTENSION = "extension";
+    public static final String CL_SUFFIX_DEFAULT = "default";
+
     private static final Logger log = Logger.getLogger(CustomLauncher.class.getName());
+
+    private String specificLauncherName = null;
 
     public CustomLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
+        this.specificLauncherName = null;
+    }
+
+    public CustomLauncher(String url, ObservedDocumentStore store, String launcherName) {
+        super(url, store);
+        this.specificLauncherName = launcherName;
     }
 
     @Override
     public void launch(boolean autoCloseExistingDocument) throws Exception {
 
         this.autoCloseOpenDocument(autoCloseExistingDocument);
-            
+
         final Launcher thisLauncher = this;
 
-        new Thread(new Runnable() {
+        new Thread(() -> {
+            ObservedCustomDocument odoc = null;
+            try {
 
-            public void run() {
-                ObservedCustomDocument odoc = null;
+                odoc = new ObservedCustomDocument(url, store, thisLauncher);
+                DocumentObserver observer = DocumentObserver.getInstance();
+                odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                odoc.setMonitoringMode(true);
+                observer.addDocument(odoc);
+
+                String extension = "?";
                 try {
+                    ArrayList<String> execParams = new ArrayList<>();
+                    ClientSettings settings = ClientSettings.getInstance();
+                    extension = FileUtils.getExtension(url);
 
-                    odoc = new ObservedCustomDocument(url, store, thisLauncher);
-                    DocumentObserver observer = DocumentObserver.getInstance();
-                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                    odoc.setMonitoringMode(true);
-                    observer.addDocument(odoc);
+                    Properties all = settings.getAllConfigurations();
+                    Enumeration keys = all.propertyNames();
+                    boolean found = false;
+                    String executable = null;
+                    String params = null;
+                    while (keys.hasMoreElements()) {
+                        String key = keys.nextElement().toString();
+                        if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
+                            String ext = settings.getConfiguration(key, "none");
+                            String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
+                            if (extension.equalsIgnoreCase(ext)) {
+                                String defaultLauncher = settings.getConfiguration(launcherKey + CL_SUFFIX_DEFAULT, "");
 
-                    String extension = "?";
-                    try {
-                        Runtime rt = Runtime.getRuntime();
-                        ArrayList<String> execParams = new ArrayList<String>();
-                        ClientSettings settings = ClientSettings.getInstance();
-                        extension = getExtension(url);
-                        String executable = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".executable", "");
-                        String params = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-rw", "");
-                        if (store.isReadOnly()) {
-                            String paramsRo = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-ro", "");
-                            if (paramsRo.length() > 0) {
-                                params = paramsRo;
+                                if (this.specificLauncherName != null) {
+                                    if(launcherKey.endsWith(this.specificLauncherName + ".")) {
+                                        found=true;
+                                        executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
+                                        String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
+                                        String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
+                                        if ("".equals(paramsRo)) {
+                                            paramsRo = paramsRw;
+                                        }
+                                        params = paramsRw;
+                                        if (store.isReadOnly()) {
+                                            params = paramsRo;
+                                        }
+                                        
+                                        break;
+                                    }
+                                } else {
+                                    if (found == false || "1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
+                                        found = true;
+                                        executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
+                                        String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
+                                        String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
+                                        if ("".equals(paramsRo)) {
+                                            paramsRo = paramsRw;
+                                        }
+                                        params = paramsRw;
+                                        if (store.isReadOnly()) {
+                                            params = paramsRo;
+                                        }
+
+                                        // a default launcher was found, skip searching
+                                        if ("1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
+                                            break;
+                                        }
+                                    }
+                                }
+
                             }
-                        }
-
-                        // doing this before split causes issues when url contains spaces!
-                        //params=params.replace("DATEINAME", url);
-                        String[] paramArray = params.split(" ");
-                        execParams.add(executable);
-                        for (String s : paramArray) {
-                            s = s.replace("DATEINAME", url);
-                            execParams.add(s);
 
                         }
-
-                        long launched=System.currentTimeMillis();
-                        ProcessBuilder pb = new ProcessBuilder(execParams);
-                        pb.redirectErrorStream(true);
-
-                        odoc.setStatus(ObservedDocument.STATUS_MONITORING);
-                        Process process = pb.start();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            log.info("customlauncher " + extension + ": " + line);
-                        }
-
-                        process.waitFor();
-                        
-                        long launchDuration=System.currentTimeMillis()-launched;
-
-                        // many applications - mainly under Windows - "share" the same process (MDI applications)
-                        // only set document closed if all documents of that type are closed
-                        int openDocs=observer.countOpenDocumentsWithExtension(extension);
-                        if(openDocs<=1 && launchDuration>30000) {
-                            odoc.setClosed(true);
-                        } else {
-                            log.debug("There are " + openDocs + " open documents with extension " + extension + "; therefore leaving document " + odoc.getName() + " open because it might have just opened in an already existing process.");
-                        }
-
-                    } catch (Throwable t) {
-                        log.error("error in custom launcher for " + extension, t);
                     }
 
-                } catch (final Throwable t) {
-                    if(odoc!=null)
-                        odoc.setClosed(true);
-                    SwingUtilities.invokeLater(new Runnable() {
+                    // doing this before split causes issues when url contains spaces!
+                    //params=params.replace("DATEINAME", url);
+                    String[] paramArray = params.split(" ");
+                    execParams.add(executable);
+                    for (String s : paramArray) {
+                        s = s.replace("DATEINAME", url);
+                        execParams.add(s);
 
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
+                    }
+
+                    long launched = System.currentTimeMillis();
+                    ProcessBuilder pb = new ProcessBuilder(execParams);
+                    pb.redirectErrorStream(true);
+
+                    odoc.setStatus(ObservedDocument.STATUS_MONITORING);
+                    Process process = pb.start();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.info("customlauncher " + extension + ": " + line);
+                    }
+
+                    process.waitFor();
+
+                    long launchDuration = System.currentTimeMillis() - launched;
+
+                    // many applications - mainly under Windows - "share" the same process (MDI applications)
+                    // only set document closed if all documents of that type are closed
+                    int openDocs = observer.countOpenDocumentsWithExtension(extension);
+                    if (openDocs <= 1 && launchDuration > 30000) {
+                        odoc.setClosed(true);
+                    } else {
+                        log.debug("There are " + openDocs + " open documents with extension " + extension + "; therefore leaving document " + odoc.getName() + " open because it might have just opened in an already existing process.");
+                    }
+
+                } catch (Throwable t) {
+                    log.error("error in custom launcher for " + extension, t);
                 }
+
+            } catch (final Throwable t) {
+                if (odoc != null) {
+                    odoc.setClosed(true);
+                }
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
             }
         }).start();
 
@@ -775,5 +835,41 @@ public class CustomLauncher extends Launcher {
     @Override
     public String getType() {
         return "Custom Launcher";
+    }
+
+    public static List<String> getCustomLauncherNames(String extension) {
+        ArrayList<String> launcherNames = new ArrayList<>();
+        if (extension != null) {
+            if (!"".equals(extension)) {
+
+                ClientSettings settings = ClientSettings.getInstance();
+                Properties all = settings.getAllConfigurations();
+                Enumeration keys = all.propertyNames();
+                while (keys.hasMoreElements()) {
+                    String key = keys.nextElement().toString();
+                    if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
+                        String ext = settings.getConfiguration(key, "none");
+                        String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
+                        if (extension.equalsIgnoreCase(ext)) {
+                            String executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
+                            String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
+                            String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
+                            if ("".equals(paramsRo)) {
+                                paramsRo = paramsRw;
+                            }
+                            if (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0) {
+                                launcherNames.add(launcherKey.substring(launcherKey.indexOf('.') + 1, launcherKey.lastIndexOf('.')));
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+        return launcherNames;
+    }
+
+    public static boolean hasCustomLauncher(String extension) {
+        return (!(getCustomLauncherNames(extension).isEmpty()));
     }
 }

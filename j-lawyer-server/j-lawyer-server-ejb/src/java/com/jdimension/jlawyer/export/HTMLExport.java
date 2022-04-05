@@ -682,6 +682,7 @@ import java.util.Collections;
 import static com.jdimension.jlawyer.server.utils.ServerStringUtils.toHtml4;
 import static com.jdimension.jlawyer.server.utils.ServerStringUtils.removeSonderzeichen;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import java.io.FileInputStream;
 import java.nio.file.attribute.FileTime;
 import java.text.NumberFormat;
@@ -707,10 +708,12 @@ public class HTMLExport {
     private File targetDirectory = null;
 
     private ArchiveFileServiceLocal caseFacade;
+    private CalendarServiceLocal calendarFacade;
 
-    public HTMLExport(File targetDirectory, ArchiveFileServiceLocal caseFacade) {
+    public HTMLExport(File targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade) {
         this.targetDirectory = targetDirectory;
         this.caseFacade = caseFacade;
+        this.calendarFacade=calendarFacade;
     }
 
     public File getExportFolderName(ArchiveFileBean dto) {
@@ -734,7 +737,7 @@ public class HTMLExport {
     }
 
     public String exportReviews() throws Exception {
-        Collection<ArchiveFileReviewsBean> reviews = this.caseFacade.getAllOpenReviewsUnrestricted();
+        Collection<ArchiveFileReviewsBean> reviews = this.calendarFacade.getAllOpenReviewsUnrestricted();
 
         if (!this.targetDirectory.exists()) {
             this.targetDirectory.mkdirs();
@@ -761,21 +764,15 @@ public class HTMLExport {
 
         for (ArchiveFileReviewsBean rev : reviews) {
 
-            excelStr.append(toDate(df, rev.getReviewDate()));
+            excelStr.append(toDate(df, rev.getBeginDate()));
             excelStr.append(CELL_BREAK);
-            if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
-                excelStr.append(escape("Wiedervorlage"));
-            } else if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_RESPITE) {
-                excelStr.append(escape("Frist"));
-            } else {
-                excelStr.append(escape("-"));
-            }
+            excelStr.append(escape(rev.getEventTypeName()));
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getArchiveFileKey().getFileNumber()));
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getArchiveFileKey().getName()));
             excelStr.append(CELL_BREAK);
-            excelStr.append(escape(rev.getReviewReason()));
+            excelStr.append(escape(rev.getSummary()));
             excelStr.append(LINE_BREAK);
 
         }
@@ -842,7 +839,7 @@ public class HTMLExport {
         //ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
         history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
         parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
-        reviews = caseFacade.getReviewsUnrestricted(dto.getId());
+        reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
         documents = caseFacade.getDocumentsUnrestricted(dto.getId());
 
         Arrays.sort(history, new HistoryComparator());
@@ -869,21 +866,18 @@ public class HTMLExport {
         for (Object r : reviewsList) {
             if (r instanceof ArchiveFileReviewsBean) {
                 ArchiveFileReviewsBean rb = (ArchiveFileReviewsBean) r;
-                // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(dtf, rb.getReviewDate()));
+                sb.append(toDate(dtf, rb.getBeginDate()));
                 sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append(toHtml4(rb.getReviewReason()));
+                sb.append(toHtml4(rb.getSummary()));
                 sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append("(" + toHtml4(rb.getReviewTypeName()) + ")");
+                sb.append("(" + toHtml4(rb.getEventTypeName()) + ")");
                 sb.append("</p></td></tr>");
             }
         }
         sContent = sContent.replaceAll("\\{\\{reviews\\}\\}", sb.toString());
 
         sContent = sContent.replaceAll("\\{\\{parties\\}\\}", this.getPartiesList(parties));
-//        sContent = sContent.replaceAll("\\{\\{opponents\\}\\}", this.getPartiesList(opponents));
-//        sContent = sContent.replaceAll("\\{\\{opponentattorneys\\}\\}", this.getPartiesList(opponentAttorneys));
 
         ArrayList docList = new ArrayList(documents);
         Collections.sort(docList, new DocumentsComparator());

@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -724,14 +723,8 @@ public class SendFaxDialog extends javax.swing.JDialog {
         this.cmbTo.setSelectedItem(selected);
         this.cmbToActionPerformed(null);
         
-        ServerSettings set = ServerSettings.getInstance();
-        String prefix = set.getSetting(set.SERVERCONF_VOIPSIPPREFIX, "sip:");
-        this.lblPrefix.setText(prefix);
-        String suffix = set.getSetting(set.SERVERCONF_VOIPSIPSUFFIX, "@sipgate.de");
-        this.lblSuffix.setText(suffix);
-
         ClientSettings settings = ClientSettings.getInstance();
-        String lastUsed = settings.getConfiguration(settings.CONF_VOIP_LASTSIPFAX, "");
+        String lastUsed = settings.getConfiguration(ClientSettings.CONF_VOIP_LASTSIPFAX, "");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArrayList<SipUri> list = locator.lookupVoipServiceRemote().getOwnUris();
@@ -750,35 +743,28 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
         this.cmbOwnUrisActionPerformed(null);
         
         ComponentUtils.restoreDialogSize(this);
 
-        new Thread(new Runnable() {
-
-            public void run() {
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                    final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            NumberFormat nf=NumberFormat.getCurrencyInstance();
-                            lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
-                        }
-                    });
-
-
-                } catch (Exception ex) {
-                    log.error(ex);
-                    //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
-                }
+        new Thread(() -> {
+            ClientSettings settings1 = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings1.getLookupProperties());
+                final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
+                SwingUtilities.invokeLater(new Runnable() {
+                    
+                    public void run() {
+                        NumberFormat nf=NumberFormat.getCurrencyInstance();
+                        lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
+                    }
+                });
+            }catch (Exception ex) {
+                log.error(ex);
+                //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }).start();
 
@@ -806,9 +792,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
         lblBalance = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         lblTo = new javax.swing.JLabel();
-        lblPrefix = new javax.swing.JLabel();
         txtE164 = new javax.swing.JTextField();
-        lblSuffix = new javax.swing.JLabel();
         cmbTo = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
         txtFile = new javax.swing.JTextField();
@@ -925,10 +909,6 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
         lblTo.setText("0123");
 
-        lblPrefix.setText("sip:");
-
-        lblSuffix.setText("@sipgate.de");
-
         cmbTo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbTo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -944,13 +924,8 @@ public class SendFaxDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(lblPrefix)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtE164, javax.swing.GroupLayout.DEFAULT_SIZE, 204, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblSuffix))
-                    .addComponent(cmbTo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmbTo, 0, 322, Short.MAX_VALUE)
+                    .addComponent(txtE164))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -960,11 +935,8 @@ public class SendFaxDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTo)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblPrefix)
-                    .addComponent(txtE164, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblSuffix))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(txtE164, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(65, Short.MAX_VALUE))
         );
 
         jLabel1.setText("Datei:");
@@ -1040,12 +1012,12 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
         if (this.file == null) {
-            JOptionPane.showMessageDialog(this, "Es muss eine Datei gewählt werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Es muss eine Datei gewählt werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         if (!(this.file.exists())) {
-            JOptionPane.showMessageDialog(this, "Gewählte Datei kann nicht gefunden werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Gewählte Datei kann nicht gefunden werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1058,7 +1030,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SipUri localUri = (SipUri) this.cmbOwnUris.getSelectedItem();
-            String remoteUri = this.lblPrefix.getText() + this.txtE164.getText() + this.lblSuffix.getText();
+            String remoteUri = this.txtE164.getText();
 
             String pdfName = null;
             byte[] pdfData = null;
@@ -1085,14 +1057,14 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
             } catch (Exception ioe) {
                 log.error("Error converting document", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Konvertieren der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Konvertieren der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             this.progress.setValue(4);
             this.progress.setString("Erstelle Faxauftrag...");
             locator.lookupVoipServiceRemote().initiateFax(localUri.getUri(), remoteUri, this.lblTo.getText(), pdfName, pdfData, this.archiveFileId);
-            settings.setConfiguration(settings.CONF_VOIP_LASTSIPFAX, localUri.getUri());
+            settings.setConfiguration(ClientSettings.CONF_VOIP_LASTSIPFAX, localUri.getUri());
             this.progress.setValue(5);
             this.progress.setString("fertig.");
             
@@ -1108,7 +1080,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
 
@@ -1144,14 +1116,9 @@ public class SendFaxDialog extends javax.swing.JDialog {
         chooser.setMultiSelectionEnabled(false);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            //try {
                 this.file=chooser.getSelectedFile();
                 this.txtFile.setText(this.file.toString());
 
-//            } catch (Exception ioe) {
-//                log.error("Error uploading document", ioe);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//            }
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed
 
@@ -1165,7 +1132,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
             fax = "0";
         }
         this.lblTo.setText(selected.toDisplayName() + " (" + fax + ")");
-        this.txtE164.setText(SipUtils.E164Number(fax));
+        this.txtE164.setText(SipUtils.E164NumberWithPlusSign(fax));
 
     }//GEN-LAST:event_cmbToActionPerformed
 
@@ -1207,19 +1174,16 @@ public class SendFaxDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                SendFaxDialog dialog = new SendFaxDialog(new javax.swing.JFrame(), true, null, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            SendFaxDialog dialog = new SendFaxDialog(new javax.swing.JFrame(), true, null, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1236,8 +1200,6 @@ public class SendFaxDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lblBalance;
     private javax.swing.JLabel lblFax;
-    private javax.swing.JLabel lblPrefix;
-    private javax.swing.JLabel lblSuffix;
     private javax.swing.JLabel lblText;
     private javax.swing.JLabel lblTo;
     private javax.swing.JLabel lblVoice;

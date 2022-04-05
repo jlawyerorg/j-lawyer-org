@@ -726,7 +726,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             }
         } catch (Exception ex) {
             log.error(ex);
-            //JOptionPane.showMessageDialog(this, "Datensicherungsdialog kann nicht gestartet werden: " + ex.getMessage(), "Fehler", JOptionPane.INFORMATION_MESSAGE);
+            //JOptionPane.showMessageDialog(this, "Datensicherungsdialog kann nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.INFORMATION_MESSAGE);
         }
 
         ServerSettings set = ServerSettings.getInstance();
@@ -869,7 +869,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this, "Monitoringwerte können nicht geladen werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Monitoringwerte können nicht geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         }
 
@@ -1455,7 +1455,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             if (ex.getCause() != null) {
                 exMsg = exMsg + "; " + ex.getCause().getMessage();
             }
-            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, "Fehler", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_cmdTestMailActionPerformed
 

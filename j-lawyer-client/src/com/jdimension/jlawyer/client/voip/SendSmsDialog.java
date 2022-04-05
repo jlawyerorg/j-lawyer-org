@@ -664,9 +664,7 @@
 package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
@@ -705,16 +703,10 @@ public class SendSmsDialog extends javax.swing.JDialog {
             mobile="0";
         
         this.lblTo.setText(ab.toDisplayName() + " (" + mobile + ")");
-        this.txtE164.setText(SipUtils.E164Number(mobile));
-        
-        ServerSettings set=ServerSettings.getInstance();
-        String prefix=set.getSetting(set.SERVERCONF_VOIPSIPPREFIX, "sip:");
-        this.lblPrefix.setText(prefix);
-        String suffix=set.getSetting(set.SERVERCONF_VOIPSIPSUFFIX, "@sipgate.de");
-        this.lblSuffix.setText(suffix);
+        this.txtE164.setText(SipUtils.E164NumberWithPlusSign(mobile));
         
         ClientSettings settings = ClientSettings.getInstance();
-        String lastUsed=settings.getConfiguration(settings.CONF_VOIP_LASTSIPSMS, "");
+        String lastUsed=settings.getConfiguration(ClientSettings.CONF_VOIP_LASTSIPSMS, "");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
               ArrayList<SipUri> list=locator.lookupVoipServiceRemote().getOwnUris();
@@ -731,34 +723,27 @@ public class SendSmsDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         
         this.cmbOwnUrisActionPerformed(null);
         
         ComponentUtils.restoreDialogSize(this);
         
-        new Thread(new Runnable() {
-
-            public void run() {
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    
-                    final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-                    
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            NumberFormat nf=NumberFormat.getCurrencyInstance();
-                            lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
-                        }
-                    });
-                    
-
-                } catch (Exception ex) {
-                    log.error(ex);
-                    //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
-                }
+        new Thread(() -> {
+            ClientSettings settings1 = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings1.getLookupProperties());
+                final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        NumberFormat nf=NumberFormat.getCurrencyInstance();
+                        lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
+                    }
+                });
+            }catch (Exception ex) {
+                log.error(ex);
+                //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }).start();
         
@@ -788,9 +773,7 @@ public class SendSmsDialog extends javax.swing.JDialog {
         lblBalance = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         lblTo = new javax.swing.JLabel();
-        lblPrefix = new javax.swing.JLabel();
         txtE164 = new javax.swing.JTextField();
-        lblSuffix = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -912,10 +895,6 @@ public class SendSmsDialog extends javax.swing.JDialog {
 
         lblTo.setText("0123");
 
-        lblPrefix.setText("sip:");
-
-        lblSuffix.setText("@sipgate.de");
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -923,13 +902,8 @@ public class SendSmsDialog extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(lblPrefix)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtE164, javax.swing.GroupLayout.DEFAULT_SIZE, 204, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblSuffix)))
+                    .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
+                    .addComponent(txtE164))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -937,11 +911,8 @@ public class SendSmsDialog extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(lblTo)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblPrefix)
-                    .addComponent(txtE164, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblSuffix))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addComponent(txtE164, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 96, Short.MAX_VALUE))
         );
 
         jLabel1.setText("Mitteilung:");
@@ -1011,15 +982,15 @@ public class SendSmsDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SipUri localUri=(SipUri)this.cmbOwnUris.getSelectedItem();
-            String remoteUri=this.lblPrefix.getText() + this.txtE164.getText() + this.lblSuffix.getText();
+            String remoteUri=this.txtE164.getText();
             
             locator.lookupVoipServiceRemote().initiateSms(localUri.getUri(), remoteUri, this.txtBody.getText());
-            settings.setConfiguration(settings.CONF_VOIP_LASTSIPSMS, localUri.getUri());
+            settings.setConfiguration(ClientSettings.CONF_VOIP_LASTSIPSMS, localUri.getUri());
             this.setVisible(false);
             this.dispose();
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         
         
@@ -1085,19 +1056,16 @@ public class SendSmsDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                SendSmsDialog dialog = new SendSmsDialog(new javax.swing.JFrame(), true, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            SendSmsDialog dialog = new SendSmsDialog(new javax.swing.JFrame(), true, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1113,8 +1081,6 @@ public class SendSmsDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblBalance;
     private javax.swing.JLabel lblFax;
-    private javax.swing.JLabel lblPrefix;
-    private javax.swing.JLabel lblSuffix;
     private javax.swing.JLabel lblText;
     private javax.swing.JLabel lblTo;
     private javax.swing.JLabel lblVoice;

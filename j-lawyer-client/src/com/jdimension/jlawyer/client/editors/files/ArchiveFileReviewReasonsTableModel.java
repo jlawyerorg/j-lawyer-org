@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -671,13 +672,38 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
+    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender"};
+
+    public static String[] getColumnNames() {
+        return columnNames;
+    }
+    
+    public static Object[] eventToRow(ArchiveFileReviewsBean event) {
+        Object[] row = new Object[8];
+        row[0] = event;
+        row[1] = event.getEventTypeName();
+        row[2] = event.getSummary();
+        row[3] = event.getLocation();
+        row[4] = new Boolean(event.getDoneBoolean());
+        row[5] = event.getAssignee();
+        row[6] = event.getDescription();
+        String calendar="";
+        if(event.getCalendarSetup()!=null)
+            calendar=event.getCalendarSetup().getDisplayName();
+        row[7] = calendar;
+        return row;
+    }
+    
     /**
      * Creates a new instance of ArchiveFileReviewReasonsTableModel
+     * @param colNames
+     * @param rowCount
      */
     public ArchiveFileReviewReasonsTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int i, int i0) {
         /*boolean retValue;
         
@@ -686,11 +712,13 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
         return false;
     }
 
+    @Override
     public Class<?> getColumnClass(int index) {
-        if (index == 3) {
-            return Boolean.class;
-        } else {
-            return String.class;
+        switch (index) {
+            case 4:
+                return Boolean.class;
+            default:
+                return String.class;
         }
     }
     

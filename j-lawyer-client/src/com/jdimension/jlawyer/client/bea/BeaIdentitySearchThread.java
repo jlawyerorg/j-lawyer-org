@@ -680,9 +680,9 @@ import org.jlawyer.bea.model.Identity;
  * @author jens
  */
 public class BeaIdentitySearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(BeaIdentitySearchThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(BeaIdentitySearchThread.class.getName());
+
     private String qFirstName;
     private String qName;
     private String qUserName;
@@ -692,65 +692,68 @@ public class BeaIdentitySearchThread implements Runnable {
     private Component owner;
     private JTable target;
     private JLabel errors;
-    
-    /** Creates a new instance of BeaIdentitySearchThread */
+
+    /**
+     * Creates a new instance of BeaIdentitySearchThread
+     */
     public BeaIdentitySearchThread(Component owner, String firstName, String name, String userName, String city, String zipCode, String officeName, JTable target, JLabel errors) {
-        this.qFirstName=firstName;
-        this.qName=name;
-        this.qUserName=userName;
-        this.qCity=city;
-        this.qZipCode=zipCode;
-        this.qOfficeName=officeName;
-        this.owner=owner;
-        this.target=target;
-        this.errors=errors;
+        this.qFirstName = firstName;
+        this.qName = name;
+        this.qUserName = userName;
+        this.qCity = city;
+        this.qZipCode = zipCode;
+        this.qOfficeName = officeName;
+        this.owner = owner;
+        this.target = target;
+        this.errors = errors;
     }
 
     public void run() {
-        Collection<Identity> dtos=null;
-        BeaAccess bea=null;
+        Collection<Identity> dtos = null;
+        BeaAccess bea = null;
         try {
-            bea=BeaAccess.getInstance();
-            dtos=bea.searchIdentity(qFirstName, qName, qUserName, qCity, qZipCode, qOfficeName);
-            //addressService.remove();
+            bea = BeaAccess.getInstance();
+            dtos = bea.searchIdentity(qFirstName, qName, qUserName, qCity, qZipCode, qOfficeName);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             log.error(ex);
             ThreadUtils.setLabel(errors, ex.getMessage());
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        long start=System.currentTimeMillis();
-        // search service does not return emails - let's load the details of all matching identities, but only if it takes less than 5s
-        ArrayList<Identity> fullDtos=new ArrayList<>(dtos);
-        for(int i=0;i<fullDtos.size();i++) {
-            Identity ident=fullDtos.get(i);
-            try {
-                Identity full=bea.getIdentity(ident.getSafeId());
-                fullDtos.set(i, full);
-            } catch (Throwable t) {
-                log.error("Error retrieving full identity information for identity " + ident.getSafeId(), t);
-            }
-            if((System.currentTimeMillis()-start)>3500) {
-                log.info("skipping full identity loading after 3.5s");
-                break;
+
+        long start = System.currentTimeMillis();
+//        // search service does not return emails - let's load the details of all matching identities, but only if it takes less than 5s
+        ArrayList<Identity> fullDtos = new ArrayList<>(dtos);
+        for (int i = 0; i < fullDtos.size(); i++) {
+            Identity ident = fullDtos.get(i);
+            if (ident.getEmail() == null || "".equals(ident.getEmail())) {
+                try {
+                    Identity full = bea.getIdentity(ident.getSafeId());
+                    if(full.getEmail()!=null)
+                        ident.setEmail(full.getEmail());
+                } catch (Throwable t) {
+                    log.error("Error retrieving full identity information for identity " + ident.getSafeId(), t);
+                }
+                if ((System.currentTimeMillis() - start) > 4500) {
+                    log.info("skipping full identity loading after 4.5s");
+                    break;
+                }
             }
         }
-        
-        String[] colNames=new String[] {"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
-        QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
-        for(Identity i: fullDtos) {
-            Object[] row=new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName()), StringUtils.nonEmpty(i.getEmail())};
+
+        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
+        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
+        for (Identity i : fullDtos) {
+            Object[] row = new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName()), StringUtils.nonEmpty(i.getEmail())};
             model.addRow(row);
         }
-        if(fullDtos.size()>0) {
+        if (fullDtos.size() > 0) {
             ThreadUtils.setLabel(errors, fullDtos.size() + " Ergebnisse");
             ThreadUtils.setTableModel(this.target, model, 0, 0);
             ThreadUtils.requestFocus(target);
-            
+
         } else {
             ThreadUtils.setLabel(errors, "keine Ergebnisse");
             ThreadUtils.setTableModel(this.target, model);
@@ -758,5 +761,5 @@ public class BeaIdentitySearchThread implements Runnable {
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
     }
-    
+
 }

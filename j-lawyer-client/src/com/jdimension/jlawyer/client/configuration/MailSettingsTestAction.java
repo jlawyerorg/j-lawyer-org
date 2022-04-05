@@ -807,7 +807,7 @@ public class MailSettingsTestAction extends ProgressableAction {
             if (ex.getCause() != null) {
                 exMsg = exMsg + "; " + ex.getCause().getMessage();
             }
-            ThreadUtils.showErrorDialog(this.owner, "E-Mail-Einstellungen " + process + " nicht korrekt: " + exMsg, "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, "E-Mail-Einstellungen " + process + " nicht korrekt: " + exMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         ThreadUtils.enableComponent(this.cmdTestMail, true);
 

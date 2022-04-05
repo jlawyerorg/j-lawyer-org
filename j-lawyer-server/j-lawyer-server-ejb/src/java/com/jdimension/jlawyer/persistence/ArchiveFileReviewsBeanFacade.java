@@ -653,7 +653,7 @@
  * get its source.  For example, if your program is a web application, its
  * interface could display a "Source" link that leads users to an archive
  * of the code.  There are many ways you could offer source, and different
- * solutions will be better for different programs; see section 13 for the
+ * solutions will be better for different programs; see section 13 for thefindByArchiveFileKey
  * specific requirements.
  *
  *   You should also get your employer (if you work as a programmer) or school,
@@ -674,6 +674,7 @@ import javax.persistence.PersistenceContext;
  */
 @Stateless
 public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileReviewsBean> implements ArchiveFileReviewsBeanFacadeLocal {
+
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
 
@@ -685,12 +686,26 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
     public ArchiveFileReviewsBeanFacade() {
         super(ArchiveFileReviewsBean.class);
     }
-    
+
     @Override
     public List<ArchiveFileReviewsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
-        
-        List<ArchiveFileReviewsBean> list = getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
-        return list;
+
+        return getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
     }
     
+    @Override
+    public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup setup) {
+
+        return getEntityManager().createQuery("from ArchiveFileReviewsBean where calendarSetup = ?1").setParameter(1, setup).getResultList();
+    }
+
+    @Override
+    public List<ArchiveFileReviewsBean> findByDone(boolean done) {
+        short isDone = 0;
+        if (done) {
+            isDone = 1;
+        }
+        return (List<ArchiveFileReviewsBean>) em.createNamedQuery("ArchiveFileReviewsBean.findByDone").setParameter("done", isDone).getResultList();
+    }
+
 }

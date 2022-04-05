@@ -728,7 +728,7 @@ public class ImportZipCodesThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error downloading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -747,7 +747,7 @@ public class ImportZipCodesThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -775,7 +775,7 @@ public class ImportZipCodesThread implements Runnable {
             mgmt.removeAllCityData();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -823,7 +823,7 @@ public class ImportZipCodesThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);

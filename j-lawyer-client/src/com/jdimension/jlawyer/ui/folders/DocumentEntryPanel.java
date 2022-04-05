@@ -682,6 +682,7 @@ import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -695,19 +696,17 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
 
-    private DecimalFormat megaBytes = new DecimalFormat("0");
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
+    private final DecimalFormat megaBytes = new DecimalFormat("0");
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
     private CaseFolderPanel documentsContainer=null;
     private ArchiveFilePanel caseContainer=null;
     private Color defaultBackground=null;
     private boolean readOnly=false;
     protected ArchiveFileDocumentsBean document=null;
-    private Color defaultFilenameColor=null;
     private Color defaultBackColor=null;
     private boolean highlighted=false;
     
     private DragSource dragSource = null;
-    
     
 
     /**
@@ -715,7 +714,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
      */
     public DocumentEntryPanel() {
         initComponents();
-        this.defaultFilenameColor=this.lblFileName.getForeground();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.dragSource = new DragSource();
@@ -729,14 +727,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, boolean readonly) {
         initComponents();
-        this.defaultFilenameColor=this.lblFileName.getForeground();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.documentsContainer=documentsContainer;
         this.caseContainer=caseContainer;
         this.readOnly=readonly;
-        if(!this.readOnly)
-            this.lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR));
+        
         this.setDocument(doc);
         
         this.dragSource = new DragSource();
@@ -755,12 +751,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         
         this.highlighted=highlight;
         if(highlight) {
-            //this.lblFileName.setForeground(Color.WHITE);
-            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
             this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
-            //this.lblFileName.setForeground(this.defaultFilenameColor);
-            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
             this.setBackground(this.defaultBackColor);
             
             // set background to selected
@@ -786,24 +778,18 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         chkSelected = new javax.swing.JCheckBox();
         lblFavorite = new javax.swing.JLabel();
         lblFolder = new javax.swing.JLabel();
-
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                formMouseClicked(evt);
-            }
-        });
+        lblClickableSpace = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
-        lblFileIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileIconMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileIconMouseExited(evt);
             }
         });
 
@@ -813,22 +799,37 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileNameMouseExited(evt);
             }
         });
 
         lblCreationDate.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblCreationDate.setText("10.10.2020");
+        lblCreationDate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblCreationDateMouseClicked(evt);
+            }
+        });
 
         lblDictateSign.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblDictateSign.setText("DZ");
+        lblDictateSign.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDictateSignMouseClicked(evt);
+            }
+        });
 
         lblFileSize.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblFileSize.setText("3,4 MB");
+        lblFileSize.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFileSizeMouseClicked(evt);
+            }
+        });
 
         chkSelected.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
@@ -855,21 +856,35 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
         lblFolder.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblFolder.setText(">");
+        lblFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFolderMouseClicked(evt);
+            }
+        });
+
+        lblClickableSpace.setText(" ");
+        lblClickableSpace.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblClickableSpaceMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkSelected)
-                .addGap(2, 2, 2)
-                .addComponent(lblFavorite)
-                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(chkSelected)
+                        .addGap(2, 2, 2)
+                        .addComponent(lblFavorite))
+                    .addComponent(lblClickableSpace, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblFileIcon)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblFileName)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblCreationDate)
                         .addGap(18, 18, 18)
@@ -877,8 +892,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addGap(18, 18, 18)
                         .addComponent(lblDictateSign)
                         .addGap(18, 18, 18)
-                        .addComponent(lblFolder)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE))
+                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -891,14 +906,14 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             .addComponent(chkSelected, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lblFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                        .addGap(3, 3, 3)
+                        .addGap(0, 0, 0)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblCreationDate)
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
-                            .addComponent(lblFolder))
-                        .addGap(3, 3, 3)))
-                .addGap(3, 3, 3))
+                            .addComponent(lblFolder)
+                            .addComponent(lblClickableSpace))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -919,8 +934,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
-            //if(this.documentsContainer.getSelectedDocuments().isEmpty())
+        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == MouseEvent.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK) {
             if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
@@ -968,7 +982,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
                     } catch (Exception ioe) {
                         log.error("Error setting document as favorite", ioe);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
         }
     }//GEN-LAST:event_lblFavoriteMouseClicked
@@ -1002,19 +1016,53 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_chkSelectedMouseReleased
 
     private void chkSelectedKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chkSelectedKeyReleased
-        System.out.println("case folders key pressed 2 " + this.document.getName());
-        if(evt.getKeyCode()==KeyEvent.VK_DOWN) {
-            this.documentsContainer.selectNextDocument();
-            this.caseContainer.documentSelectionChanged();
-        } else if(evt.getKeyCode()==KeyEvent.VK_UP) {
-            this.documentsContainer.selectPreviousDocument();
-            this.caseContainer.documentSelectionChanged();
+        switch (evt.getKeyCode()) {
+            case KeyEvent.VK_DOWN:
+                this.documentsContainer.selectNextDocument();
+                this.caseContainer.documentSelectionChanged();
+                break;
+            case KeyEvent.VK_UP:
+                this.documentsContainer.selectPreviousDocument();
+                this.caseContainer.documentSelectionChanged();
+                break;
+            case KeyEvent.VK_ENTER:
+                // see lastpopclosed flag comment
+                long sinceLastPopup=System.currentTimeMillis() - this.caseContainer.getLastPopupClosed();
+                if (sinceLastPopup > 100l) {
+                    if (this.documentsContainer != null) {
+                        List<ArchiveFileDocumentsBean> selDocs = this.documentsContainer.getSelectedDocuments();
+                        for (ArchiveFileDocumentsBean openDoc : selDocs) {
+                            this.caseContainer.openSelectedDocument(openDoc);
+                        }
+                    } else {
+                        this.caseContainer.openSelectedDocument(this.document);
+                    }
+                }
+                break;
+            default:
+                break;
         }
     }//GEN-LAST:event_chkSelectedKeyReleased
 
-    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
+    private void lblClickableSpaceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblClickableSpaceMouseClicked
         this.lblFileNameMouseClicked(evt);
-    }//GEN-LAST:event_formMouseClicked
+    }//GEN-LAST:event_lblClickableSpaceMouseClicked
+
+    private void lblCreationDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCreationDateMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblCreationDateMouseClicked
+
+    private void lblFileSizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileSizeMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblFileSizeMouseClicked
+
+    private void lblDictateSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDictateSignMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblDictateSignMouseClicked
+
+    private void lblFolderMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFolderMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblFolderMouseClicked
 
     private void documentUnClicked(MouseEvent evt) {
         this.caseContainer.documentSelectionChanged();
@@ -1066,6 +1114,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkSelected;
+    private javax.swing.JLabel lblClickableSpace;
     private javax.swing.JLabel lblCreationDate;
     private javax.swing.JLabel lblDictateSign;
     private javax.swing.JLabel lblFavorite;

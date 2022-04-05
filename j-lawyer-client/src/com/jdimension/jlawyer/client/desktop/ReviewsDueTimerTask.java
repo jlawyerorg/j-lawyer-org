@@ -666,23 +666,17 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridLayout;
 import java.util.*;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -697,28 +691,28 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
+    private JTabbedPane eventPane = null;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of ReviewsDueTimerTask
      */
-    public ReviewsDueTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
-        this.owner = owner;
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
+        this.eventPane = eventPane;
     }
 
-    public ReviewsDueTimerTask(Component owner, JPanel resultPanel, JSplitPane split) {
-        this(owner, resultPanel, split, false);
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split) {
+        this(owner, eventPane, resultPanel, split, false);
     }
 
+    @Override
     public void run() {
 
-//        ArrayList<String> assignedToMeFileIds=new ArrayList<String>();
-//        ArrayList<String> respiteFileIds=new ArrayList<String>();
-        ArrayList<ReviewDueEntry> entries = new ArrayList<ReviewDueEntry>();
+        ArrayList<ReviewDueEntry> entries = new ArrayList<>();
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
@@ -731,11 +725,10 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String ownUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileReviewsBean> myNewList = fileService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
-
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
             boolean onlyMyReviews = false;
@@ -759,14 +752,15 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setArchiveFileId(afb.getId());
                     e.setArchiveFileName(afb.getName());
                     e.setArchiveFileNumber(afb.getFileNumber());
-                    e.setDue(ar.getReviewDate());
+                    e.setArchiveFileReason(afb.getReason());
+                    e.setDue(ar.getBeginDate());
                     e.setId(ar.getId());
                     e.setResponsible(ar.getAssignee());
-                    e.setReviewReason(ar.getReviewReason());
-                    e.setType(ar.getReviewType());
+                    e.setReviewReason(ar.getSummary());
+                    e.setType(ar.getEventType());
                     e.setReview(ar);
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
-                    ArrayList<String> xTags = new ArrayList<String>();
+                    ArrayList<String> xTags = new ArrayList<>();
                     if (tags != null) {
                         for (ArchiveFileTagsBean aftb : tags) {
                             xTags.add(aftb.getTagName());
@@ -775,70 +769,21 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         e.setTags(xTags);
                     }
                     entries.add(e);
-//                    if(ar.getAssignee()!=null) {
-//                        if(ownUser.equals(ar.getAssignee()))
-//                            assignedToMeFileIds.add(ar.getArchiveFileKey().getFileNumber());
-//                        if(ar.getReviewType()==ar.REVIEWTYPE_RESPITE)
-//                            respiteFileIds.add(ar.getArchiveFileKey().getFileNumber());
-//                    }
-//                    fileList.add(ar.getArchiveFileKey());
-
                 }
             }
 
-//            Comparator c = new Comparator() {
-//
-//                @Override
-//                public int compare(Object t, Object t1) {
-//                    ReviewDueEntry a1 = (ReviewDueEntry) t;
-//                    ReviewDueEntry a2 = (ReviewDueEntry) t1;
-//
-//                    if (a2 == null) {
-//                        return 1;
-//                    }
-//
-//                    if (a1 == null) {
-//                        return -1;
-//                    }
-//
-//                    Date date1 = a1.getDue();
-//                    Date date2 = a2.getDue();
-//
-//                    if (date2 == null) {
-//                        return 1;
-//                    }
-//
-//                    if (date1 == null) {
-//                        return -1;
-//                    }
-//
-//                    return date2.compareTo(date1);
-//
-//                }
-//            };
-//
-//            Collections.sort(entries, c);
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.error"));
             return;
         }
-//        ThreadUtils.updateLabel(this.myLabel, myText);
-//        ThreadUtils.updateLabel(this.othersLabel, othersText);
 
         final ArrayList<ReviewDueEntry> list = entries;
         try {
 
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-                    split.setDividerLocation(split.getDividerLocation() + 1);
-                    split.setDividerLocation(split.getDividerLocation() - 1);
-                }
-
-            }
-            );
+            SwingUtilities.invokeLater(() -> {
+                split.setDividerLocation(split.getDividerLocation() + 1);
+                split.setDividerLocation(split.getDividerLocation() - 1);
+            });
         } catch (Throwable t) {
             log.error(t);
         }
@@ -846,16 +791,17 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         try {
             SwingUtilities.invokeLater(
                     new Runnable() {
+                @Override
                 public void run() {
                     resultUI.removeAll();
 
-//                    split.setDividerLocation(split.getDividerLocation()+1);
-//                    split.setDividerLocation(split.getDividerLocation()-1);
+                    // remove all tabs except for the first one
+                    for (int i = eventPane.getTabCount() - 1; i > 0; i--) {
+                        eventPane.removeTabAt(i);
+                    }
+
                     int i = 0;
                     int maxCount = Math.min(list.size(), 200);
-                    //resultUI.setLayout(new GridLayout(maxCount-1, 1));
-                    //for (ReviewDueEntry e : list) {
-                    //for(int k=list.size()-1;k>=(list.size()-maxCount);k--) {
                     for (int k = 0; k < maxCount; k++) {
                         try {
                             Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
@@ -864,10 +810,14 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                             }
                             ReviewDueEntryPanel ep = new ReviewDueEntryPanel(background);
 
-                            //ep.setEntry(e);
-                            //ep.setSize(resultUI.getWidth(), ep.getHeight());
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
+                            addEventTypeTab(list.get(k).getReview().getEventTypeName());
+
+                            // need new identical child, one child component cannot have two parents
+                            ReviewDueEntryPanel ep2 = new ReviewDueEntryPanel(background);
+                            ep2.setEntry(list.get(k));
+                            addEntryToTab(list.get(k).getReview().getEventTypeName(), ep2);
                             i++;
                         } catch (Throwable t) {
                             log.error("Error adding review entry to desktop", t);
@@ -876,6 +826,42 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     }
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
+                }
+
+                private void addEventTypeTab(String eventTypeName) {
+                    boolean hasTab = false;
+                    for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
+                            hasTab = true;
+                            break;
+                        }
+                    }
+                    if (!hasTab) {
+                        JScrollPane scroll = new JScrollPane();
+                        scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+                        JPanel tPanel = new JPanel();
+                        BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
+                        tPanel.setLayout(layout);
+                        tPanel.setOpaque(false);
+
+                        scroll.getViewport().add(tPanel);
+                        scroll.getViewport().setOpaque(false);
+                        eventPane.addTab(eventTypeName, scroll);
+                    }
+
+                }
+
+                private void addEntryToTab(String eventTypeName, ReviewDueEntryPanel ep) {
+
+                    for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
+                            JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
+                            JViewport p = (JViewport) sp.getComponent(0);
+                            ((JPanel) p.getComponent(0)).add(ep);
+                            break;
+                        }
+                    }
                 }
 
             }

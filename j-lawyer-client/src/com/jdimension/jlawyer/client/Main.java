@@ -673,14 +673,13 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
@@ -692,6 +691,11 @@ import themes.colors.DefaultColorTheme;
  */
 public class Main {
 
+    private static final String USER_HOME="user.home";
+    private static final String FILE_SEPARATOR="file.separator";
+    private static final String JLAWYERCLIENT_SETTINGDIR=".j-lawyer-client";
+    
+    private static Logger log=null;
     private StartupSplashFrame splash = null;
 
     /**
@@ -705,6 +709,11 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
+        new File(userHomeConfLogParent).mkdirs();
+        log = LogManager.getLogger();
+        
 
         String cmdLineSwitch = ArbitraryCache.binaryContent;
         cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
@@ -794,9 +803,13 @@ public class Main {
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
 
-        FlatIntelliJLaf.install();
+        FlatIntelliJLaf.setup();
+        
 
         // https://www.formdev.com/flatlaf/customizing/
+        
+        UIManager.put( "PasswordField.showRevealButton", true );
+        
         UIManager.put("ScrollBar.width", 14);
         UIManager.put("ScrollBar.showButtons", true);
         UIManager.put("ScrollPane.smoothScrolling", true);
@@ -816,54 +829,27 @@ public class Main {
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"), true);
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.checkdir"), true);
-        String userHomeConf = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client";
+        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR;
         File userHomeConfDir = new File(userHomeConf);
         if (!userHomeConfDir.exists()) {
             userHomeConfDir.mkdirs();
         }
         this.splash.repaint();
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.logging"), true);
-        String userHomeConfLog = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
-        String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
-        File userHomeConfLogFile = new File(userHomeConfLog);
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
-        if (!userHomeConfLogFile.exists()) {
-            // copy from JAR
-            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
-                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);) {
-                
-                byte[] buffer = new byte[256];
-                int len = 0;
-                while ((len = is.read(buffer)) > 0) {
-                    fOut.write(buffer, 0, len);
-                    updateStatus(".", false);
-                }
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                this.updateStatus(ex.getMessage(), true);
-                try {
-                    Thread.sleep(3500);
-                } catch (Throwable t) {
-                }
-            }
-
-        }
         updateStatus(" ", true);
-
-        org.apache.log4j.xml.DOMConfigurator.configure(userHomeConfLog);
-        Logger log = Logger.getLogger(this.getClass().getName());
 
         log.info("Java: " + System.getProperty("java.version"));
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
         ClientSettings settings = ClientSettings.getInstance();
-        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
-        settings.setConfiguration(settings.CONF_THEME, themeName);
+        String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
+        settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.fontsizes"), true);
         FontUtils fontUtils = FontUtils.getInstance();
-        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
             int offset = Integer.parseInt(fontSizeOffset);
             fontUtils.updateDefaults(offset);
@@ -875,7 +861,8 @@ public class Main {
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 
-        //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
+        final String moduleNameCalendar="Kalender";
+        
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
         root.setFullName("Mein Desktop");
         root.setEditorName("Desktop");
@@ -940,9 +927,9 @@ public class Main {
         ModuleMetadata reviewsDue = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
         reviewsDue.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel");
         reviewsDue.setBackgroundImage("reviews.jpg");
-        reviewsDue.setFullName("fällige Wiedervorlagen");
-        reviewsDue.setEditorName("fällige");
-        reviewsDue.setModuleName("Wiedervorlagen");
+        reviewsDue.setFullName("Wiedervorlagen, Fristen und Termine in chronologischer Reihenfolge");
+        reviewsDue.setEditorName("chronologisch");
+        reviewsDue.setModuleName(moduleNameCalendar);
         reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
         reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
         reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "F6");
@@ -950,18 +937,18 @@ public class Main {
         ModuleMetadata reviewsSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
         reviewsSearch.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel");
         reviewsSearch.setBackgroundImage("reviews.jpg");
-        reviewsSearch.setFullName("Wiedervorlagensuche");
+        reviewsSearch.setFullName("Suche nach Wiedervorlagen, Fristen und Terminen");
         reviewsSearch.setEditorName("suchen");
-        reviewsSearch.setModuleName("Wiedervorlagen");
+        reviewsSearch.setModuleName(moduleNameCalendar);
         reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-blue.png")));
         reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-green.png")));
         reviews.addChildModule(reviewsSearch);
         ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
         reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
         reviewsMissing.setBackgroundImage("reviews.jpg");
-        reviewsMissing.setFullName("fehlende Wiedervorlagen");
+        reviewsMissing.setFullName("fehlende Wiedervorlagen / Fristen");
         reviewsMissing.setEditorName("fehlende");
-        reviewsMissing.setModuleName("Wiedervorlagen");
+        reviewsMissing.setModuleName(moduleNameCalendar);
         reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
         reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
         reviews.addChildModule(reviewsMissing);
@@ -1117,16 +1104,12 @@ public class Main {
     }
 
     private void updateStatus(final String s, final boolean newLine) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-
-                if (newLine) {
-                    splash.addStatus(System.getProperty("line.separator"));
-                }
-
-                splash.addStatus(s);
+        SwingUtilities.invokeLater(() -> {
+            if (newLine) {
+                splash.addStatus(System.getProperty("line.separator"));
             }
+            
+            splash.addStatus(s);
         });
     }
 

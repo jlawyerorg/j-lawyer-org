@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import com.jdimension.jlawyer.sync.FolderSync;
@@ -679,15 +680,8 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.naming.InitialContext;
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.log4j.Logger;
-import org.apache.tika.parser.txt.CharsetDetector;
 
 /**
  *
@@ -740,7 +734,6 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
 
         try {
             InitialContext ic = new InitialContext();
-            //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             ServerSettingsBean mode = settings.find("jlawyer.server.backup.backupmode");
             if (!this.adHoc) {
@@ -893,14 +886,15 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         
         log.info("initializing backup executor");
         IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbPort, encryptionPassword);
-        String subject = "";
-        StringBuffer body = new StringBuffer();
+        String subject = "Erfolgreich: ";
+        StringBuilder body = new StringBuilder();
         BackupResult backupResult=null;
         try {
             log.info("starting backup");
             backupResult=ibe.execute();
         } catch (Throwable t) {
             backupSuccess=false;
+            backupResult=new BackupResult();
             log.error("backup executor failed", t);
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
@@ -922,8 +916,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 log.info("Starting export to " + exportLocation);
                 InitialContext ic = new InitialContext();
                 ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+                CalendarServiceLocal calendarSvc = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
                 ArrayList<String> caseIds = caseSvc.getAllArchiveFileIds();
-                HTMLExport export = new HTMLExport(exportDir, caseSvc);
+                HTMLExport export = new HTMLExport(exportDir, caseSvc, calendarSvc);
                 for (String id : caseIds) {
                     ArchiveFileBean afb = caseSvc.getArchiveFileUnrestricted(id);
 
@@ -992,7 +987,6 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         Date backupEnd = new Date();
         try {
             InitialContext ic = new InitialContext();
-            //SystemManagementLocal sysMan = (SystemManagementLocal) ic.lookup("j-lawyer-server/SystemManagement/local");
             SystemManagementLocal sysMan = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             subject = subject + "j-lawyer.org Datensicherung vom " + dfMailDate.format(new Date());
             body.append("Informationen zu Ihrer turnusmäßigen Datensicherung:\r\n\r\n");
@@ -1060,12 +1054,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         for (File file : files) {
             fileList.add(file);
             if (file.isDirectory()) {
-                //System.out.println("directory:" + file.getCanonicalPath());
                 if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName()))) {
                     getAllFiles(file, fileList);
                 }
-            } else {
-                //System.out.println("     file:" + file.getCanonicalPath());
             }
         }
 

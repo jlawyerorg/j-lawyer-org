@@ -732,7 +732,7 @@ public class SystrayUtils {
                         settings.saveConfiguration();
                     } catch (Exception ex) {
                         log.error("Error saving client configuration", ex);
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der Einstellungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der Einstellungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                     System.exit(0);
                 }

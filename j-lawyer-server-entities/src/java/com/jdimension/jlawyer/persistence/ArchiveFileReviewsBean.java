@@ -669,38 +669,44 @@ import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  *
  * @author jens
  */
 @Entity
-@Table(name = "case_followups")
+@Table(name = "case_events")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileReviewsBean.findAll", query = "SELECT a FROM ArchiveFileReviewsBean a"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findById", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByReviewReason", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.reviewReason = :reviewReason"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByReviewDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.reviewDate = :reviewDate"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findBySummary", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.summary = :summary"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findByBeginDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.beginDate = :beginDate"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findByCalendarSetup", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.calendarSetup = :calendarSetup"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
-public class ArchiveFileReviewsBean implements Serializable {
+public class ArchiveFileReviewsBean implements Serializable, EventTypes {
+
     private static final long serialVersionUID = 1L;
-    
-    public static final int REVIEWTYPE_FOLLOWUP=10;
-    public static final int REVIEWTYPE_RESPITE=20;
-    
+
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
     @Basic(optional = false)
-    @Column(name = "reviewType")
-    private int reviewType;
-    @Column(name = "reviewReason")
-    private String reviewReason;
-    @Column(name = "reviewDate")
+    @Column(name = "eventType")
+    private int eventType;
+    @Column(name = "summary")
+    private String summary;
+    @Column(name = "description")
+    protected String description;
+    @Column(name = "location")
+    protected String location;
+    @Column(name = "beginDate")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date reviewDate;
+    private Date beginDate;
+    @Column(name = "endDate")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date endDate;
     @Basic(optional = false)
     @Column(name = "done", columnDefinition = "TINYINT NOT NULL")
     private short done;
@@ -709,6 +715,10 @@ public class ArchiveFileReviewsBean implements Serializable {
     private ArchiveFileBean archiveFileKey;
     @Column(name = "assignee")
     private String assignee;
+    
+    @JoinColumn(name = "calendar_setup", referencedColumnName = "id")
+    @ManyToOne
+    private CalendarSetup calendarSetup;
 
     public ArchiveFileReviewsBean() {
     }
@@ -730,20 +740,20 @@ public class ArchiveFileReviewsBean implements Serializable {
         this.id = id;
     }
 
-    public String getReviewReason() {
-        return reviewReason;
+    public String getSummary() {
+        return summary;
     }
 
-    public void setReviewReason(String reviewReason) {
-        this.reviewReason = reviewReason;
+    public void setSummary(String reviewReason) {
+        this.summary = reviewReason;
     }
 
-    public Date getReviewDate() {
-        return reviewDate;
+    public Date getBeginDate() {
+        return beginDate;
     }
 
-    public void setReviewDate(Date reviewDate) {
-        this.reviewDate = reviewDate;
+    public void setBeginDate(Date beginDate) {
+        this.beginDate = beginDate;
     }
 
     public short getDone() {
@@ -753,19 +763,17 @@ public class ArchiveFileReviewsBean implements Serializable {
     public void setDone(short done) {
         this.done = done;
     }
-    
+
     public boolean getDoneBoolean() {
-        if(this.done==1) {
-            return true;
-        }
-        return false;
+        return this.done == 1;
     }
 
     public void setDoneBoolean(boolean done) {
-        if(done)
-            this.done=1;
-        else
-            this.done=0;
+        if (done) {
+            this.done = 1;
+        } else {
+            this.done = 0;
+        }
     }
 
     public ArchiveFileBean getArchiveFileKey() {
@@ -798,13 +806,36 @@ public class ArchiveFileReviewsBean implements Serializable {
 
     @Override
     public String toString() {
-        //return "com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean[ id=" + id + " ]";
-        
-        if(this.reviewDate!=null) {
-            SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-            return df.format(this.reviewDate);
+        String undefined="undefiniert";
+        if (this.hasEndDateAndTime()) {
+            SimpleDateFormat df1 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
+            StringBuilder sb=new StringBuilder();
+            if (this.beginDate != null) {
+                sb.append(df1.format(this.beginDate));
+                if(this.endDate!=null) {
+                    sb.append(" - ");
+                    if(this.beginDate.getDate()==this.endDate.getDate() && this.beginDate.getMonth()==this.endDate.getMonth() && this.beginDate.getYear()==this.endDate.getYear()) {
+                        // same day
+                        sb.append(df2.format(this.endDate));
+                    } else {
+                        // spans multiple days
+                        sb.append(df1.format(this.endDate));
+                    }
+                    return sb.toString();
+                } else {
+                    return undefined;
+                }
+            } else {
+                return undefined;
+            }
         } else {
-            return "undefiniert";
+            if (this.beginDate != null) {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                return df.format(this.beginDate);
+            } else {
+                return undefined;
+            }
         }
     }
 
@@ -823,26 +854,90 @@ public class ArchiveFileReviewsBean implements Serializable {
     }
 
     /**
-     * @return the reviewType
+     * @return the eventType
      */
-    public int getReviewType() {
-        return reviewType;
+    public int getEventType() {
+        return eventType;
     }
-    
-    public String getReviewTypeName() {
-        if(this.getReviewType()==REVIEWTYPE_FOLLOWUP)
-            return "Wiedervorlage";
-        else if(this.getReviewType()==REVIEWTYPE_RESPITE)
-            return "Frist";
-        else
-            return "Wiedervorlage";
+
+    public boolean hasEndDateAndTime() {
+        return (this.eventType == EVENTTYPE_EVENT);
+    }
+
+    public String getEventTypeName() {
+        switch (this.getEventType()) {
+            case EVENTTYPE_FOLLOWUP:
+                return "Wiedervorlage";
+            case EVENTTYPE_RESPITE:
+                return "Frist";
+            case EVENTTYPE_EVENT:
+                return "Termin";
+            default:
+                return "Wiedervorlage";
+        }
     }
 
     /**
-     * @param reviewType the reviewType to set
+     * @param eventType the eventType to set
      */
-    public void setReviewType(int reviewType) {
-        this.reviewType = reviewType;
+    public void setEventType(int eventType) {
+        this.eventType = eventType;
     }
-    
+
+    /**
+     * @return the endDate
+     */
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    /**
+     * @param endDate the endDate to set
+     */
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the location
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * @param location the location to set
+     */
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    /**
+     * @return the calendarSetup
+     */
+    public CalendarSetup getCalendarSetup() {
+        return calendarSetup;
+    }
+
+    /**
+     * @param calendarSetup the calendarSetup to set
+     */
+    public void setCalendarSetup(CalendarSetup calendarSetup) {
+        this.calendarSetup = calendarSetup;
+    }
+
 }

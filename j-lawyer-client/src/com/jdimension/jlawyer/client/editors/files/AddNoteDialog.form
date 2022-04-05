@@ -33,7 +33,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
                   <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
-                  <Component id="htmlEditorPanel1" alignment="1" pref="878" max="32767" attributes="0"/>
+                  <Component id="htmlEditorPanel1" alignment="1" pref="956" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="cmdAddDocument" min="-2" max="-2" attributes="0"/>
@@ -50,12 +50,12 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="htmlEditorPanel1" min="-2" pref="311" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="htmlEditorPanel1" pref="243" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdAddDocument" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -163,6 +163,8 @@
                           <Component id="radioReviewTypeFollowUp" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="radioReviewTypeRespite" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="calendarSelectionButton1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
@@ -191,10 +193,13 @@
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="radioReviewTypeNone" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="radioReviewTypeNone" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="calendarSelectionButton1" alignment="1" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmbReviewReason" min="-2" max="-2" attributes="0"/>
@@ -318,6 +323,8 @@
         </Component>
         <Component class="com.jdimension.jlawyer.client.components.QuickDateSelectionPanel" name="quickDateSelectionPanel">
         </Component>
+        <Component class="com.jdimension.jlawyer.client.calendar.CalendarSelectionButton" name="calendarSelectionButton1">
+        </Component>
       </SubComponents>
     </Container>
     <Component class="com.jdimension.jlawyer.client.mail.HtmlEditorPanel" name="htmlEditorPanel1">
@@ -334,26 +341,33 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
+              <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="chkCaseTagging" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="chkDocumentTagging" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="chkCaseTagging" alignment="0" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="cmbCaseTag" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="cmbCaseTag" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="chkCaseTagging" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmbCaseTag" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="102" attributes="0">
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="chkCaseTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmbCaseTag" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
           </Group>
         </DimensionLayout>

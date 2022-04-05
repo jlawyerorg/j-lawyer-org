@@ -692,7 +692,7 @@ public class ImportBanksThread implements Runnable {
     private JButton closeButton;
 
     /**
-     * Creates a new instance of LoadOptionGroupThread
+     * Creates a new instance of ImportBanksThread
      */
     public ImportBanksThread(Component owner, JProgressBar target, JButton closeButton, JButton importButton) {
         this.owner = owner;
@@ -728,7 +728,7 @@ public class ImportBanksThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error downloading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -746,7 +746,7 @@ public class ImportBanksThread implements Runnable {
             }
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -761,7 +761,7 @@ public class ImportBanksThread implements Runnable {
             locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.dialog.error"));
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
@@ -775,7 +775,7 @@ public class ImportBanksThread implements Runnable {
             mgmt.removeAllBankData();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -788,7 +788,7 @@ public class ImportBanksThread implements Runnable {
             
             String line = null;
             int lineCounter = 0;
-            ArrayList<BankDataBean> newBankData = new ArrayList<BankDataBean>();
+            ArrayList<BankDataBean> newBankData = new ArrayList<>();
             while ((line = br.readLine()) != null) {
                 if (lineCounter == 0) {
                     lineCounter++;
@@ -809,7 +809,7 @@ public class ImportBanksThread implements Runnable {
                     newBankData.add(dto);
                     if (newBankData.size() == 100) {
                         mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
-                        newBankData = new ArrayList<BankDataBean>();
+                        newBankData = new ArrayList<>();
                     }
                 }
 
@@ -825,7 +825,7 @@ public class ImportBanksThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.jlawyerbox;
 
 import com.jcabi.ssh.SSHByPassword;
 import com.jcabi.ssh.Shell;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.io.StringBufferInputStream;
 import java.net.Inet4Address;
@@ -685,6 +686,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class BoxAccess {
 
+    private static String MSG_AUTH_FAIL="Auth fail";
     private String password = null;
 
     public BoxAccess(String password) {
@@ -693,20 +695,16 @@ public class BoxAccess {
 
     public void checkReachable(final JTabbedPane pane, final int index, String lastSuccessfulHost) {
 
-        new Thread(new Runnable() {
-            public void run() {
-
-                //String host = getDefaultHostName();
-                //boolean reachable = isReachableOnHost(host);
-                boolean reachable = NetworkScanner.isReachableOnHost(lastSuccessfulHost);
-                if (!reachable) {
-                    Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
-                    ThreadUtils.setTabbedPaneIcon(pane, index, icon);
-                } else {
-                    Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
-                    ThreadUtils.setTabbedPaneIcon(pane, index, icon);
-                }
-
+        new Thread(() -> {
+            //String host = getDefaultHostName();
+            //boolean reachable = isReachableOnHost(host);
+            boolean reachable = NetworkScanner.isReachableOnHost(lastSuccessfulHost);
+            if (!reachable) {
+                Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
+                ThreadUtils.setTabbedPaneIcon(pane, index, icon);
+            } else {
+                Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
+                ThreadUtils.setTabbedPaneIcon(pane, index, icon);
             }
         }).start();
     }
@@ -714,29 +712,27 @@ public class BoxAccess {
     public void loginCheck(final JLabel output, final JProgressBar progress, String lastSuccessfulHost) {
         //final String host = this.getDefaultHostName();
         final String host = lastSuccessfulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("echo 'Hello World'");
-                    if ("Hello World".equals(stdout.trim())) {
-                        ThreadUtils.setLabel(output, "Ok");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    } else {
-                        ThreadUtils.setLabel(output, "Unerwartete Antwort");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    }
-                    ThreadUtils.setVisible(progress, false);
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
+        new Thread(() -> {
+            try {
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("echo 'Hello World'");
+                if ("Hello World".equals(stdout.trim())) {
+                    ThreadUtils.setLabel(output, "Ok");
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                } else {
+                    ThreadUtils.setLabel(output, "Unerwartete Antwort");
                     ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setVisible(progress, false);
                 }
+                ThreadUtils.setVisible(progress, false);
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
+                }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
@@ -768,91 +764,87 @@ public class BoxAccess {
     }
 
     public void scanNetworkForBox(final JLabel output, final JTextField currentHost, final JProgressBar progress) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setTextField(currentHost, "");
-                    ThreadUtils.setVisible(progress, true);
-                    String host = getDefaultHostName();
-
-                    boolean reachable = false;
+        new Thread(() -> {
+            try {
+                ThreadUtils.setTextField(currentHost, "");
+                ThreadUtils.setVisible(progress, true);
+                String host = getDefaultHostName();
+                
+                boolean reachable = false;
+                reachable = NetworkScanner.isReachableOnHost(host);
+                
+                if (reachable) {
+                    ThreadUtils.setTextField(currentHost, host);
+                } else {
+                    host = getAlternativeHostName();
                     reachable = NetworkScanner.isReachableOnHost(host);
-
                     if (reachable) {
                         ThreadUtils.setTextField(currentHost, host);
                     } else {
-                        host = getAlternativeHostName();
-                        reachable = NetworkScanner.isReachableOnHost(host);
-                        if (reachable) {
-                            ThreadUtils.setTextField(currentHost, host);
+                        String clientIp = getClientIpV4();
+                        NetworkScanner scanner = NetworkScanner.getInstance();
+                        String boxIp = scanner.scanNetwork(clientIp);
+                        if (boxIp != null) {
+                            ThreadUtils.setTextField(currentHost, boxIp);
                         } else {
-                            String clientIp = getClientIpV4();
-                            NetworkScanner scanner = NetworkScanner.getInstance();
-                            String boxIp = scanner.scanNetwork(clientIp);
-                            if (boxIp != null) {
-                                ThreadUtils.setTextField(currentHost, boxIp);
-                            } else {
-                                ThreadUtils.setTextField(currentHost, "Keine j-lawyer.BOX gefunden");
-                            }
+                            ThreadUtils.setTextField(currentHost, "Keine j-lawyer.BOX gefunden");
                         }
-
                     }
 
-                    ThreadUtils.setVisible(progress, false);
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
                 }
+                
+                ThreadUtils.setVisible(progress, false);
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
+                }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
 
     public void restore(final JLabel output, final JProgressBar progress, String lastSuccessFulHost, String dbPassword, String encryptionPassword) {
         final String host = lastSuccessFulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setVisible(progress, true);
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("mysql -u root -p" + dbPassword + " -e \"select 1 from dual;\"");
-                    
-                    if (stdout.trim().toLowerCase().endsWith("\n1")) {
-                        ThreadUtils.setLabel(output, "Datenbankpasswort verifiziert");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    } else {
-                        ThreadUtils.setLabel(output, "Datenbankpasswort ungültig!");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    }
-                    
-                    //shell = new SSHByPassword(host, 22, "root", password);
-                    int returnCode=-1;
-                    try (StringBufferInputStream params = new StringBufferInputStream("/usr/local/j-lawyer-server/samba/restore\n/usr/local/j-lawyer-server/j-lawyer-data\n" + encryptionPassword + "\n" + dbPassword + "\n-force\n\n")) {
-                        returnCode = new Shell.Safe(shell).exec("/usr/local/j-lawyer-server/j-lawyer-backupmgr/backupmgr.sh", params, System.out, System.err);
-                        System.out.println("exit code: " + returnCode);
-                    }
-                    if(returnCode!=0) {
-                        throw new Exception("Fehler - bitte restore.log in der Freigabe der Box prüfen");
-                    }
-                    
-                    ThreadUtils.setVisible(progress, false);
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    } else {
-                        msg= "Fehler - bitte restore.log in der Freigabe der Box prüfen - " + msg;
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
+        new Thread(() -> {
+            try {
+                ThreadUtils.setVisible(progress, true);
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("mysql -u root -p" + dbPassword + " -e \"select 1 from dual;\"");
+                
+                if (stdout.trim().toLowerCase().endsWith("\n1")) {
+                    ThreadUtils.setLabel(output, "Datenbankpasswort verifiziert");
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                } else {
+                    ThreadUtils.setLabel(output, "Datenbankpasswort ungültig!");
                     ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
                 }
+                
+                //shell = new SSHByPassword(host, 22, "root", password);
+                int returnCode=-1;
+                try (StringBufferInputStream params = new StringBufferInputStream("/usr/local/j-lawyer-server/samba/restore\n/usr/local/j-lawyer-server/j-lawyer-data\n" + encryptionPassword + "\n" + dbPassword + "\n-force\n\n")) {
+                    returnCode = new Shell.Safe(shell).exec("/usr/local/j-lawyer-server/j-lawyer-backupmgr/backupmgr.sh", params, System.out, System.err);
+                    System.out.println("exit code: " + returnCode);
+                }
+                if(returnCode!=0) {
+                    throw new Exception("Fehler - bitte restore.log in der Freigabe der Box prüfen");
+                }
+                
+                ThreadUtils.setVisible(progress, false);
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
+                } else {
+                    msg= "Fehler - bitte restore.log in der Freigabe der Box prüfen - " + msg;
+                }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
@@ -860,30 +852,28 @@ public class BoxAccess {
     public void serviceCheck(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
 
         final String host = lastSuccessFulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setVisible(progress, true);
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("service j-lawyer-server status");
-                    if (stdout.toLowerCase().indexOf("active: active") > -1) {
-                        ThreadUtils.setLabel(output, "Erreichbar, Service läuft");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    } else {
-                        ThreadUtils.setLabel(output, "Service läuft nicht!");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    }
-                    ThreadUtils.setVisible(progress, false);
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
+        new Thread(() -> {
+            try {
+                ThreadUtils.setVisible(progress, true);
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("service j-lawyer-server status");
+                if (stdout.toLowerCase().contains("active: active")) {
+                    ThreadUtils.setLabel(output, "Erreichbar, Service läuft");
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                } else {
+                    ThreadUtils.setLabel(output, "Service läuft nicht!");
                     ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
                 }
+                ThreadUtils.setVisible(progress, false);
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
+                }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
@@ -891,34 +881,32 @@ public class BoxAccess {
     public void serviceRestart(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
 
         final String host = lastSuccessFulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setVisible(progress, true);
-                    ThreadUtils.setLabel(output, "Service wird neu gestartet...");
+        new Thread(() -> {
+            try {
+                ThreadUtils.setVisible(progress, true);
+                ThreadUtils.setLabel(output, "Service wird neu gestartet...");
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("service j-lawyer-server restart");
+                if (stdout.trim().length() == 0) {
+                    ThreadUtils.setLabel(output, "Serviceneustart läuft und kann bis zu 3min dauern");
+                    ThreadUtils.setToolTipText(output, "Serviceneustart läuft und kann bis zu 3min dauern");
                     ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("service j-lawyer-server restart");
-                    if (stdout.trim().length() == 0) {
-                        ThreadUtils.setLabel(output, "Serviceneustart läuft und kann bis zu 3min dauern");
-                        ThreadUtils.setToolTipText(output, "Serviceneustart läuft und kann bis zu 3min dauern");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    } else {
-                        ThreadUtils.setLabel(output, "Serviceneustart fehlgeschlagen!");
-                        ThreadUtils.setToolTipText(output, "Serviceneustart fehlgeschlagen!");
-                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    }
-                    ThreadUtils.setVisible(progress, false);
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
+                } else {
+                    ThreadUtils.setLabel(output, "Serviceneustart fehlgeschlagen!");
+                    ThreadUtils.setToolTipText(output, "Serviceneustart fehlgeschlagen!");
                     ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
                 }
+                ThreadUtils.setVisible(progress, false);
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
+                }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
@@ -926,29 +914,27 @@ public class BoxAccess {
     public void boxReboot(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
 
         final String host = lastSuccessFulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setVisible(progress, true);
-                    ThreadUtils.setLabel(output, "Box wird neu gestartet...");
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("reboot");
-                    ThreadUtils.setLabel(output, "Reboot läuft und kann bis zu 3min dauern");
-                    ThreadUtils.setToolTipText(output, "Reboot läuft und kann bis zu 3min dauern");
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    ThreadUtils.setVisible(progress, false);
-
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
+        new Thread(() -> {
+            try {
+                ThreadUtils.setVisible(progress, true);
+                ThreadUtils.setLabel(output, "Box wird neu gestartet...");
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("reboot");
+                ThreadUtils.setLabel(output, "Reboot läuft und kann bis zu 3min dauern");
+                ThreadUtils.setToolTipText(output, "Reboot läuft und kann bis zu 3min dauern");
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                ThreadUtils.setVisible(progress, false);
+                
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
                 }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
@@ -956,44 +942,40 @@ public class BoxAccess {
     public void boxShutdown(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
 
         final String host = lastSuccessFulHost;
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ThreadUtils.setVisible(progress, true);
-                    ThreadUtils.setLabel(output, "Box wird heruntergefahren...");
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    Shell shell = new SSHByPassword(host, 22, "root", password);
-                    String stdout = new Shell.Plain(shell).exec("shutdown now");
-                    ThreadUtils.setLabel(output, "Herunterfahren angefordert");
-                    ThreadUtils.setToolTipText(output, "Sie können die j-lawyer.BOX vom Strom trennen sobald nur noch die rote LED leuchtet");
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
-                    ThreadUtils.setVisible(progress, false);
-
-                } catch (Throwable e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.indexOf("Auth fail") > -1) {
-                        msg = "Falsches Passwort!";
-                    }
-                    ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
-                    ThreadUtils.setVisible(progress, false);
+        new Thread(() -> {
+            try {
+                ThreadUtils.setVisible(progress, true);
+                ThreadUtils.setLabel(output, "Box wird heruntergefahren...");
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                Shell shell = new SSHByPassword(host, 22, "root", password);
+                String stdout = new Shell.Plain(shell).exec("shutdown now");
+                ThreadUtils.setLabel(output, "Herunterfahren angefordert");
+                ThreadUtils.setToolTipText(output, "Sie können die j-lawyer.BOX vom Strom trennen sobald nur noch die rote LED leuchtet");
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
+                ThreadUtils.setVisible(progress, false);
+                
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
+                    msg = "Falsches Passwort!";
                 }
+                ThreadUtils.setLabel(output, msg);
+                ThreadUtils.setToolTipText(output, msg);
+                ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
+                ThreadUtils.setVisible(progress, false);
             }
         }).start();
     }
 
     public static String getDefaultHostName() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.startsWith("mac")) {
+        if (SystemUtils.isMacOs()) {
             return "j-lawyer-box.local";
         }
         return "j-lawyer-box";
     }
 
     private String getAlternativeHostName() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.startsWith("mac")) {
+        if (SystemUtils.isMacOs()) {
             return "j-lawyer-box";
         }
         return "j-lawyer-box.local";

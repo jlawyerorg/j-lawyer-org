@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
-import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -682,8 +681,6 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
@@ -691,17 +688,15 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
 import themes.colors.DefaultColorTheme;
@@ -727,6 +722,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     /**
      * Creates new form HitPanel
+     *
+     * @param caseDto
+     * @param casePanel
+     * @param container
+     * @param openedFromClassName
+     * @param beaEnabled
      */
     public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
         this.initializing = true;
@@ -739,10 +740,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.mnuSendBea.setEnabled(beaEnabled);
 
         ServerSettings sset = ServerSettings.getInstance();
-        this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
-        this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
-        this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
-        
+        this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
+        this.lblCustom2.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
+        this.lblCustom3.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
+
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
@@ -820,7 +821,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblUnderage.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         if (a != null) {
             if (a.getBirthDate() != null) {
-                int age=AddressBean.calculateAge(a.getBirthDate());
+                int age = AddressBean.calculateAge(a.getBirthDate());
                 if (age < 18 && age > -1) {
                     this.lblUnderage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
                     this.lblUnderage.setText("U18");
@@ -828,7 +829,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 }
             }
         }
-        
+
     }
 
     /**
@@ -1116,6 +1117,18 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
         }
 
+        if (!this.initializing && this.a!=null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                AddressServiceRemote adr = locator.lookupAddressServiceRemote();
+                adr.setDefaultRole(this.a.getId(), refType);
+
+            } catch (Throwable t) {
+                log.error("Unable to update default role", t);
+            }
+        }
+
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
@@ -1131,12 +1144,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
 
         if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
             SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setInvolvedInCase(this.container.getInvolvedParties());
-            dlg.setArchiveFile(this.caseDto);
+            dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
             for (ArchiveFileAddressesBean aab : involved) {
@@ -1166,7 +1179,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
 
         if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
             Identity iTo = null;
@@ -1175,7 +1188,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 iTo = bea.getIdentity(this.a.getBeaSafeId());
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -1184,7 +1197,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
             for (ArchiveFileAddressesBean aab : involved) {
-                //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
                 dlg.addParty(aab);
             }
             dlg.setAzRecipient(this.txtReference.getText());
@@ -1226,14 +1238,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.add(ip);
                 dlg.setSize(700, 250);
                 dlg.setTitle("beA Identität zur Safe ID " + iTo.getSafeId());
-                //dlg.setSize(ip.getPreferredSize());
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
 
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
         }
@@ -1242,7 +1252,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendSmsActionPerformed
         if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 
@@ -1261,24 +1271,24 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuCallMobileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallMobileActionPerformed
         if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 
             VoipUtils.placeCall(this.a, this.a.getMobile());
-            
+
         }
 
     }//GEN-LAST:event_mnuCallMobileActionPerformed
 
     private void mnuCallPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallPhoneActionPerformed
         if (this.a.getPhone() == null || "".equals(this.a.getPhone())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 
             VoipUtils.placeCall(this.a, this.a.getPhone());
-            
+
         }
 
     }//GEN-LAST:event_mnuCallPhoneActionPerformed
@@ -1288,8 +1298,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
             faxList.addAll(this.container.getInvolvedPartiesAddress());
-//            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-//            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
 
             SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, this.a, this.caseDto.getId());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());

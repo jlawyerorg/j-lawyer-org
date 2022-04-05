@@ -717,10 +717,7 @@ public class ServerStringUtils {
         if(s==null)
             return true;
         
-        if("".equals(s.trim()))
-            return true;
-        
-        return false;
+        return "".equals(s.trim());
             
     }
     
@@ -739,6 +736,21 @@ public class ServerStringUtils {
         a=a.replaceAll("ß", "ss");
         
         return a;
+    }
+    
+    public static String toString(String[] stringArray) {
+        return toString(stringArray, " ");
+    }
+    
+    public static String toString(String[] stringArray, String delimiter) {
+        StringBuilder sb=new StringBuilder();
+        if(stringArray!=null) {
+            for(String s: stringArray) {
+                sb.append(s);
+                sb.append(delimiter);
+            }
+        }
+        return sb.toString();
     }
     
 }

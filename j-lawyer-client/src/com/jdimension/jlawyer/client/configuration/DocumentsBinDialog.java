@@ -663,8 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.bea.BeaFolderTreeCellRenderer;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -731,6 +729,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             log.info("found " + deletedDocs.size() + " documents in bin");
 
             DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
+                @Override
                 public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
                     JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -753,7 +752,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             DefaultTableModel tm = new DefaultTableModel(new String[]{"gelöscht", "von", "Dateiname", "Akte"}, 0);
             this.tblBinDocuments.setModel(tm);
 
-            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
             sorter.setComparator(0, new DescendingDateTimeStringComparator());
             this.tblBinDocuments.setRowSorter(sorter);
 
@@ -769,7 +768,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not load documents bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -913,8 +912,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
@@ -924,7 +922,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not remove documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
@@ -933,8 +931,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
@@ -946,17 +943,21 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not restore documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Wiederherstellen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Wiederherstellen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdRestoreActionPerformed
 
     private void cmdEmptyBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEmptyBinActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Alle Dokumente im Papierkorb unwiderruflich löschen?", "Papierkorb leeren", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             for (int sel=0;sel<this.tblBinDocuments.getRowCount();sel++) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
                 remote.removeDocumentFromBin(db.getId());
@@ -965,7 +966,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not remove documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdEmptyBinActionPerformed
 
@@ -1001,17 +1002,15 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                DocumentsBinDialog dialog = new DocumentsBinDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            DocumentsBinDialog dialog = new DocumentsBinDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

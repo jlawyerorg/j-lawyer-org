@@ -663,31 +663,23 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v2;
 
-import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import com.jdimension.jlawyer.security.Base64;
-import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
-import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
-import com.jdimension.jlawyer.services.SystemManagementLocal;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -696,15 +688,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
 /**
  *
@@ -721,9 +705,9 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
     // when seeing something like
     //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
     // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
-    
     /**
-     * Returns all case metadata based on its ID. This service supports extended file numbers (including prefix, suffix, group and user).
+     * Returns all case metadata based on its ID. This service supports extended
+     * file numbers (including prefix, suffix, group and user).
      *
      * @param id case ID
      * @response 401 User not authorized
@@ -741,12 +725,12 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileBean afb = cases.getArchiveFile(id);
-            if(afb==null) {
+            if (afb == null) {
                 log.error("There is no case with id " + id);
                 Response res = Response.serverError().build();
                 return res;
             }
-            RestfulCaseV2 c=new RestfulCaseV2();
+            RestfulCaseV2 c = new RestfulCaseV2();
             c.setArchived(afb.getArchived());
             c.setAssistant(afb.getAssistant());
             c.setClaimNumber(afb.getClaimNumber());
@@ -761,11 +745,40 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             c.setNotice(afb.getNotice());
             c.setReason(afb.getReason());
             c.setSubjectField(afb.getSubjectField());
-            
-            if(afb.getGroup()!=null) {
+
+            if (afb.getGroup() != null) {
                 c.setGroup(afb.getGroup().getName());
             }
-            
+
+            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id);
+            Arrays.sort(history, (Object t, Object t1) -> {
+                try {
+
+                    Date d1 = null;
+                    Date d2 = null;
+
+                    if (t instanceof ArchiveFileHistoryBean && t1 instanceof ArchiveFileHistoryBean) {
+                        ArchiveFileHistoryBean i1 = (ArchiveFileHistoryBean) t;
+                        ArchiveFileHistoryBean i2 = (ArchiveFileHistoryBean) t1;
+                        d1 = i1.getChangeDate();
+                        d2 = i2.getChangeDate();
+                    } else {
+                        d1 = new Date();
+                        d2 = new Date();
+                    }
+
+                    return d1.compareTo(d2);
+
+                } catch (Throwable thr) {
+                    log.error("error sorting history entries", thr);
+                    return -1;
+                }
+            });
+            if(history.length>0) {
+                c.setDateCreated(history[0].getChangeDate());
+                c.setDateUpdated(history[history.length-1].getChangeDate());
+            }
+
             Response res = Response.ok(c).build();
             return res;
         } catch (Exception ex) {
@@ -776,7 +789,8 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
     }
 
     /**
-     * Creates a new case. This service supports extended file numbers (including prefix, suffix, group and user).
+     * Creates a new case. This service supports extended file numbers
+     * (including prefix, suffix, group and user).
      *
      * @param caseData case data
      * @response 401 User not authorized
@@ -801,21 +815,21 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
 
-            ArchiveFileBean c=new ArchiveFileBean();
-            c=caseData.toArchiveFileBean(c);
-            if(caseData.getGroup()!=null) {
-                String groupName=caseData.getGroup();
-                for(Group g: security.getAllGroups()) {
-                    if(g.getName().equals(groupName)) {
+            ArchiveFileBean c = new ArchiveFileBean();
+            c = caseData.toArchiveFileBean(c);
+            if (caseData.getGroup() != null) {
+                String groupName = caseData.getGroup();
+                for (Group g : security.getAllGroups()) {
+                    if (g.getName().equals(groupName)) {
                         c.setGroup(g);
                         break;
                     }
                 }
             }
-            
+
             c = cases.createArchiveFile(c);
-            caseData=RestfulCaseV2.fromArchiveFileBean(c);
-            
+            caseData = RestfulCaseV2.fromArchiveFileBean(c);
+
             Response res = Response.ok(caseData).build();
             return res;
         } catch (Exception ex) {
@@ -825,10 +839,10 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
         }
     }
 
-    
-    
     /**
-     * Updates an existing case based on its ID. The file number is immutable. This service supports extended file numbers (including prefix, suffix, group and user).
+     * Updates an existing case based on its ID. The file number is immutable.
+     * This service supports extended file numbers (including prefix, suffix,
+     * group and user).
      *
      * @param caseData case data
      * @response 401 User not authorized
@@ -851,7 +865,8 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+
             SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
 
             ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
@@ -860,9 +875,9 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
                 Response res = Response.serverError().build();
                 return res;
             }
-            Collection reviews=cases.getReviews(caseData.getId());
-            currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
-            List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
+            Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(caseData.getId());
+            currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>) reviews);
+            List<ArchiveFileAddressesBean> adds = cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
             // file number must not be changed
 
@@ -879,20 +894,18 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             currentCase.setReason(caseData.getReason());
             currentCase.setSubjectField(caseData.getSubjectField());
 
-            if(caseData.getGroup()!=null) {
-                String groupName=caseData.getGroup();
-                for(Group g: security.getAllGroups()) {
-                    if(g.getName().equals(groupName)) {
+            if (caseData.getGroup() != null) {
+                String groupName = caseData.getGroup();
+                for (Group g : security.getAllGroups()) {
+                    if (g.getName().equals(groupName)) {
                         currentCase.setGroup(g);
                         break;
                     }
                 }
             }
-            
+
             cases.updateArchiveFile(currentCase);
             currentCase = cases.getArchiveFile(caseData.getId());
-            
-            
 
             Response res = Response.ok(RestfulCaseV2.fromArchiveFileBean(currentCase)).build();
             return res;

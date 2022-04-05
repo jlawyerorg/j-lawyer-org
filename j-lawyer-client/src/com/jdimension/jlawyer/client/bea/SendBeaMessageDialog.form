@@ -271,7 +271,8 @@
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Component id="contentPanel" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="1" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      <Component id="lblVhn2" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblAttachmentSize" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
@@ -318,7 +319,10 @@
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="lblAttachmentSize" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblAttachmentSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblVhn2" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -487,6 +491,11 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAttachmentDownActionPerformed"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JLabel" name="lblVhn2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value=" "/>
+              </Properties>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel3">
@@ -584,6 +593,8 @@
                                   <Component id="radioReviewTypeFollowUp" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="radioReviewTypeRespite" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="calendarSelectionButton1" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
@@ -615,10 +626,13 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="radioReviewTypeNone" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="radioReviewTypeNone" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="calendarSelectionButton1" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmbReviewReason" min="-2" max="-2" attributes="0"/>
@@ -742,6 +756,8 @@
                   </Events>
                 </Component>
                 <Component class="com.jdimension.jlawyer.client.components.QuickDateSelectionPanel" name="quickDateSelectionPanel">
+                </Component>
+                <Component class="com.jdimension.jlawyer.client.calendar.CalendarSelectionButton" name="calendarSelectionButton1">
                 </Component>
               </SubComponents>
             </Container>
@@ -889,7 +905,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmbTemplates" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="pnlParties" pref="128" max="32767" attributes="0"/>
+                          <Component id="pnlParties" pref="122" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>

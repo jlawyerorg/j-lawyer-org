@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.events.CaseFormUpdatedEvent;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
@@ -680,6 +681,7 @@ import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.annotation.Resource;
@@ -687,6 +689,8 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
 
@@ -697,50 +701,51 @@ import org.jboss.ejb3.annotation.SecurityDomain;
 @Stateless
 @SecurityDomain("j-lawyer-security")
 public class FormsService implements FormsServiceRemote, FormsServiceLocal {
-    
-    private static final Logger log=Logger.getLogger(FormsService.class.getName());
+
+    private static final Logger log = Logger.getLogger(FormsService.class.getName());
     @Resource
     private SessionContext context;
     @EJB
     private ArchiveFileFormsBeanFacadeLocal caseFormsFacade;
-    
+
     @EJB
     private ArchiveFileBeanFacadeLocal caseFacade;
-    
+
     @EJB
     private ArchiveFileFormEntriesBeanFacadeLocal caseFormEntriesFacade;
-    
+
     @EJB
     private FormTypeBeanFacadeLocal formTypesFacade;
-    
+
     @EJB
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    
+    // custom hooks support
+    @Inject
+    Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-
     @Override
     @RolesAllowed({"loginRole"})
     public List<FormTypeBean> getAllFormTypes() {
         return this.formTypesFacade.findAll();
     }
-    
-    
 
     @Override
     @RolesAllowed({"adminRole"})
     public FormTypeBean addFormType(FormTypeBean form) {
-        
+
         this.formTypesFacade.create(form);
         return this.formTypesFacade.find(form.getId());
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public FormTypeArtefactBean addFormTypeArtefact(FormTypeArtefactBean file) {
-        
+
         file.setId(file.getFileName());
         this.formArtefactsFacade.create(file);
         return this.formArtefactsFacade.find(file.getId());
@@ -749,10 +754,11 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<FormTypeArtefactBean> getFormTypeArtefacts(String formTypeId) {
-        FormTypeBean formType=this.formTypesFacade.find(formTypeId);
-        if(formType==null)
+        FormTypeBean formType = this.formTypesFacade.find(formTypeId);
+        if (formType == null) {
             return new ArrayList();
-        
+        }
+
         return this.formArtefactsFacade.findByFormType(formType);
     }
 
@@ -765,66 +771,63 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"adminRole"})
     public FormTypeBean updateFormType(FormTypeBean formType) throws Exception {
-        
-        FormTypeBean ftb=this.formTypesFacade.find(formType.getId());
-        if(ftb==null) {
+
+        FormTypeBean ftb = this.formTypesFacade.find(formType.getId());
+        if (ftb == null) {
             log.error("Can not find form type with id " + formType.getId());
             throw new Exception("Falldatenblatt " + formType.getId() + " ist nicht vorhanden!");
         }
-        
+
         ftb.setName(formType.getName());
         ftb.setPlaceHolder(formType.getPlaceHolder());
         ftb.setVersion(formType.getVersion());
-        
+
         this.formTypesFacade.edit(ftb);
-        
+
         return this.formTypesFacade.find(ftb.getId());
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void removeFormTypeArtefacts(String formTypeId) throws Exception {
-        FormTypeBean ftb=this.formTypesFacade.find(formTypeId);
-        if(ftb==null) {
+        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
+        if (ftb == null) {
             log.error("Can not find form type with id " + formTypeId);
             throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
         }
-        List<FormTypeArtefactBean> artefacts=this.formArtefactsFacade.findByFormType(ftb);
-        for(FormTypeArtefactBean arte: artefacts) {
+        List<FormTypeArtefactBean> artefacts = this.formArtefactsFacade.findByFormType(ftb);
+        for (FormTypeArtefactBean arte : artefacts) {
             this.formArtefactsFacade.remove(arte);
         }
     }
-    
-    
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception {
-        
-        ArchiveFileBean afb=this.caseFacade.find(caseId);
-        if(afb==null) {
+
+        ArchiveFileBean afb = this.caseFacade.find(caseId);
+        if (afb == null) {
             throw new Exception("Akte " + caseId + " kann nicht gefunden werden!");
         }
-        
-        if(ServerStringUtils.isEmpty(form.getPlaceHolder())) {
+
+        if (ServerStringUtils.isEmpty(form.getPlaceHolder())) {
             throw new Exception("Platzhalterpräfix darf nicht leer sein!");
         }
-        
-        List<ArchiveFileFormsBean> caseForms=this.caseFormsFacade.findByArchiveFileKey(afb);
-        for(ArchiveFileFormsBean a: caseForms) {
-            if(a.getPlaceHolder().equals(form.getPlaceHolder())) {
+
+        List<ArchiveFileFormsBean> caseForms = this.caseFormsFacade.findByArchiveFileKey(afb);
+        for (ArchiveFileFormsBean a : caseForms) {
+            if (a.getPlaceHolder().equals(form.getPlaceHolder())) {
                 throw new Exception("Platzhalterpräfix " + form.getPlaceHolder() + " ist bereits vergeben!");
             }
         }
-        
-        
+
         StringGenerator idGen = new StringGenerator();
-        String id=idGen.getID().toString();
+        String id = idGen.getID().toString();
         form.setArchiveFileKey(afb);
         form.setCreationDate(new Date());
         form.setId(id);
         this.caseFormsFacade.create(form);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(afb);
@@ -832,7 +835,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return this.caseFormsFacade.find(id);
 
     }
@@ -840,42 +843,45 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileFormsBean> getFormsForCase(String caseId) {
-        ArchiveFileBean afb=this.caseFacade.find(caseId);
-        ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
-        if(afb!=null)
+        ArchiveFileBean afb = this.caseFacade.find(caseId);
+        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
+        if (afb != null) {
             return this.caseFormsFacade.findByArchiveFileKey(afb);
+        }
         return list;
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void removeFormType(String formTypeId) throws Exception {
-        
-        FormTypeBean ftb=this.formTypesFacade.find(formTypeId);
-        if(ftb==null) {
+
+        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
+        if (ftb == null) {
             log.error("Can not find form type with id " + formTypeId);
             throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
         }
-        
-        List<ArchiveFileFormsBean> existing=this.caseFormsFacade.findByFormType(ftb);
-        if(existing.size()>0)
+
+        List<ArchiveFileFormsBean> existing = this.caseFormsFacade.findByFormType(ftb);
+        if (existing.size() > 0) {
             throw new Exception("Falldatenblatt " + formTypeId + " kann nicht gelöscht werden, da es noch in Akten verwendet wird!");
-        
+        }
+
         this.formTypesFacade.remove(ftb);
-        
+
     }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
-        if(afb==null)
+        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
+        if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        
+        }
+
         this.caseFormsFacade.remove(afb);
-        
-        StringGenerator idGen=new StringGenerator();
-        
+
+        StringGenerator idGen = new StringGenerator();
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(afb.getArchiveFileKey());
@@ -888,35 +894,38 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
-        
-        if(formId==null) {
+
+        if (formId == null) {
             log.error("Form id cannot be null when setting form entries");
-            throw new Exception ("Form id cannot be null when setting form entries");
+            throw new Exception("Form id cannot be null when setting form entries");
         }
-        
-        if(formEntries==null) {
+
+        if (formEntries == null) {
             log.error("List of form entries to update for form id " + formId + " is empty. Skipping...");
             throw new Exception("List of form entries to update for form id " + formId + " is empty. Skipping...");
         }
-        
-        for(ArchiveFileFormEntriesBean newEntry: formEntries) {
-            if(newEntry.getPlaceHolder()==null || "".equals(newEntry.getPlaceHolder())) {
+
+        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
+            if (newEntry.getPlaceHolder() == null || "".equals(newEntry.getPlaceHolder())) {
                 log.error("At least one entry has an empty placeholder when updating form entries for form " + formId);
                 throw new Exception("At least one entry has an empty placeholder when updating form entries for form " + formId);
             }
         }
-        
-        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
-        if(afb==null)
+
+        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
+        if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
+        }
+
+        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
+        boolean entriesChanged=entriesChanged(existingEntries, formEntries);
         
-        List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
-        for(ArchiveFileFormEntriesBean existing: existingEntries) {
+        for (ArchiveFileFormEntriesBean existing : existingEntries) {
             this.caseFormEntriesFacade.remove(existing);
         }
-        
-        StringGenerator idGen=new StringGenerator();
-        for(ArchiveFileFormEntriesBean newEntry: formEntries) {
+
+        StringGenerator idGen = new StringGenerator();
+        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
             newEntry.setForm(afb);
             newEntry.setArchiveFileKey(afb.getArchiveFileKey());
             newEntry.setId(idGen.getID().toString());
@@ -924,18 +933,81 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             this.caseFormEntriesFacade.create(newEntry);
         }
         
+        if(entriesChanged) {
+            try {
+                CaseFormUpdatedEvent evt=new CaseFormUpdatedEvent();
+                evt.setCaseId(afb.getArchiveFileKey().getId());
+                evt.setFormId(formId);
+                this.updatedCaseFormEvent.fireAsync(evt);
+            } catch (Throwable t) {
+                log.error("unable fire CaseFormUpdatedEvent", t);
+            }
+        }
+
+    }
+
+    private boolean entriesChanged(List<ArchiveFileFormEntriesBean> first, List<ArchiveFileFormEntriesBean> second) {
+        if (first == null && second == null) {
+            return false;
+        }
+
+        if (first == null && second != null) {
+            return true;
+        }
+
+        if (first != null && second == null) {
+            return true;
+        }
+
+        if (first != null && second != null) {
+            if (first.size() != second.size()) {
+                return true;
+            }
+        }
+
+        HashMap<String, String> firstMap = new HashMap<>();
+        for (ArchiveFileFormEntriesBean fe : first) {
+            firstMap.put(fe.getPlaceHolder(), fe.getStringValue());
+        }
+        HashMap<String, String> secondMap = new HashMap<>();
+        for (ArchiveFileFormEntriesBean fe : second) {
+            secondMap.put(fe.getPlaceHolder(), fe.getStringValue());
+        }
+
+        for (String key : firstMap.keySet()) {
+            String v1 = firstMap.get(key);
+            if (!secondMap.containsKey(key)) {
+                return true;
+            } else {
+                String v2 = secondMap.get(key);
+                if (v1 == null && v2 != null) {
+                    return true;
+                }
+                if (v2 == null && v1 != null) {
+                    return true;
+                }
+                if (v1 != null) {
+                    if (!(v1.equals(v2))) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception {
-        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
-        if(afb==null)
+        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
+        if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        
-        List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
-        if(existingEntries==null) {
-            existingEntries=new ArrayList<ArchiveFileFormEntriesBean>();
+        }
+
+        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
+        if (existingEntries == null) {
+            existingEntries = new ArrayList<ArchiveFileFormEntriesBean>();
         }
         return existingEntries;
     }
@@ -943,67 +1015,72 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileFormsBean getForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
-        if(afb==null)
+        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
+        if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        
+        }
+
         return afb;
-        
+
     }
 
-    
-    
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
-        ArchiveFileBean caseBean=this.caseFacade.find(caseId);
-        if(caseBean==null)
+        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
+        if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        
-        ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
-        List<ArchiveFileFormsBean> forms=this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        ArrayList<String> placeHolders=new ArrayList<>();
-        for(ArchiveFileFormsBean f: forms) {
-            List<ArchiveFileFormEntriesBean> entries=this.getFormEntries(f.getId());
-            for(ArchiveFileFormEntriesBean e: entries) {
-                String ph=e.getPlaceHolder();
-                if(!(ph.startsWith("{{")))
-                    ph="{{"+ph;
-                if(!(ph.endsWith("}}")))
-                    ph=ph+"}}";
-                if(!placeHolders.contains(ph))
+        }
+
+        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
+        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
+        ArrayList<String> placeHolders = new ArrayList<>();
+        for (ArchiveFileFormsBean f : forms) {
+            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
+            for (ArchiveFileFormEntriesBean e : entries) {
+                String ph = e.getPlaceHolder();
+                if (!(ph.startsWith("{{"))) {
+                    ph = "{{" + ph;
+                }
+                if (!(ph.endsWith("}}"))) {
+                    ph = ph + "}}";
+                }
+                if (!placeHolders.contains(ph)) {
                     placeHolders.add(ph);
+                }
             }
         }
         return placeHolders;
-        
+
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception {
-        ArchiveFileBean caseBean=this.caseFacade.find(caseId);
-        if(caseBean==null)
+    public Hashtable<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
+        if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        
-        ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
-        List<ArchiveFileFormsBean> forms=this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        Hashtable<String,String> placeHolders=new Hashtable<String,String>();
-        for(ArchiveFileFormsBean f: forms) {
-            List<ArchiveFileFormEntriesBean> entries=this.getFormEntries(f.getId());
-            for(ArchiveFileFormEntriesBean e: entries) {
-                String ph=e.getPlaceHolder();
-                if(!(ph.startsWith("{{")))
-                    ph="{{"+ph;
-                if(!(ph.endsWith("}}")))
-                    ph=ph+"}}";
-                if(!placeHolders.containsKey(ph))
-                    placeHolders.put(ph,e.getStringValue());
+        }
+
+        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
+        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
+        Hashtable<String, String> placeHolders = new Hashtable<String, String>();
+        for (ArchiveFileFormsBean f : forms) {
+            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
+            for (ArchiveFileFormEntriesBean e : entries) {
+                String ph = e.getPlaceHolder();
+                if (!(ph.startsWith("{{"))) {
+                    ph = "{{" + ph;
+                }
+                if (!(ph.endsWith("}}"))) {
+                    ph = ph + "}}";
+                }
+                if (!placeHolders.containsKey(ph)) {
+                    placeHolders.put(ph, e.getStringValue());
+                }
             }
         }
         return placeHolders;
     }
-    
-    
-    
+
 }

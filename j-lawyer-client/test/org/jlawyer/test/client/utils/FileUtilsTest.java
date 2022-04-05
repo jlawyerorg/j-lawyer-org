@@ -670,7 +670,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -679,41 +678,47 @@ import static org.junit.Assert.*;
 public class FileUtilsTest {
     
     public FileUtilsTest() {
+        // nothing to do here
     }
     
     @BeforeClass
     public static void setUpClass() {
+        // nothing to do here
     }
     
     @AfterClass
     public static void tearDownClass() {
+        // nothing to do here
     }
     
     @Before
     public void setUp() {
+        // nothing to do here
     }
     
     @After
     public void tearDown() {
+        // nothing to do here
     }
 
     
      @Test
      public void testSanitizeFileName() {
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('/')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('\\')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('#')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('&')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('%')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('§')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('{')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('}')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf('[')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf(']')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf(':')>-1);
-         Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf(';')>-1);
+         String fileName="\\/#&%$§{}[]:;.txt";
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('/')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('\\')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('#')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('&')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('%')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('§')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('{')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('}')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf('[')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf(']')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf(':')>-1);
+         Assert.assertFalse(FileUtils.sanitizeFileName(fileName).indexOf(';')>-1);
          
-         System.out.println(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt"));
+         System.out.println(FileUtils.sanitizeFileName(fileName));
          
          System.out.println(FileUtils.sanitizeFileName("2019-09-05_Notiz umbenannt.html"));
      

@@ -667,16 +667,13 @@ import com.jdimension.jlawyer.client.components.FlexibleGridLayout;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -730,12 +727,10 @@ public class HistorySearchThread implements Runnable {
             return;
         }
         
-        Collection<ArchiveFileReviewsBean> dtos = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             List<ArchiveFileHistoryBean> history = null;
             if (this.principalId == null) {
@@ -744,19 +739,17 @@ public class HistorySearchThread implements Runnable {
                 history = fileService.getHistoryByPrincipalAndDateInterval(principalId, fromDate, toDate, maxEntries);
             }
             
-            Collections.sort(history, new Comparator<ArchiveFileHistoryBean>() {
-                public int compare(ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) {
-                    try {
-                        return s2.getChangeDate().compareTo(s1.getChangeDate());
-                    } catch (Throwable t) {
-                        return -1;
-                    }
+            Collections.sort(history, (ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) -> {
+                try {
+                    return s2.getChangeDate().compareTo(s1.getChangeDate());
+                } catch (Throwable t) {
+                    return -1;
                 }
             });
 
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy");
-            Hashtable<String, ArrayList<ArchiveFileHistoryBean>> ht = new Hashtable<String, ArrayList<ArchiveFileHistoryBean>>();
-            ArrayList<String> sortedKeys = new ArrayList<String>();
+            Hashtable<String, ArrayList<ArchiveFileHistoryBean>> ht = new Hashtable<>();
+            ArrayList<String> sortedKeys = new ArrayList<>();
             for (int i = 0; i < history.size(); i++) {
                 ArchiveFileHistoryBean hist = history.get(i);
                 Date cd = hist.getChangeDate();
@@ -765,7 +758,7 @@ public class HistorySearchThread implements Runnable {
                     ArrayList<ArchiveFileHistoryBean> list = ht.get(key);
                     list.add(hist);
                 } else {
-                    ArrayList<ArchiveFileHistoryBean> list = new ArrayList<ArchiveFileHistoryBean>();
+                    ArrayList<ArchiveFileHistoryBean> list = new ArrayList<>();
                     list.add(hist);
                     ht.put(key, list);
                     sortedKeys.add(key);
@@ -776,17 +769,15 @@ public class HistorySearchThread implements Runnable {
             for (int i = 0; i < sortedKeys.size(); i++) {
                 Date d = df.parse(sortedKeys.get(i));
                 ArrayList<ArchiveFileHistoryBean> list = ht.get(sortedKeys.get(i));
-                Collections.sort(list, new Comparator<ArchiveFileHistoryBean>() {
-                    public int compare(ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) {
-                        try {
-                            if (s1.getArchiveFileKey().getFileNumber().equals(s2.getArchiveFileKey().getFileNumber())) {
-                                return s1.getPrincipal().compareTo(s2.getPrincipal());
-                            } else {
-                                return s1.getArchiveFileKey().getFileNumber().compareTo(s2.getArchiveFileKey().getFileNumber());
-                            }
-                        } catch (Throwable t) {
-                            return -1;
+                Collections.sort(list, (ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) -> {
+                    try {
+                        if (s1.getArchiveFileKey().getFileNumber().equals(s2.getArchiveFileKey().getFileNumber())) {
+                            return s1.getPrincipal().compareTo(s2.getPrincipal());
+                        } else {
+                            return s1.getArchiveFileKey().getFileNumber().compareTo(s2.getArchiveFileKey().getFileNumber());
                         }
+                    } catch (Throwable t) {
+                        return -1;
                     }
                 });
             }
@@ -794,32 +785,26 @@ public class HistorySearchThread implements Runnable {
             final ArrayList<String> sortedKeysParam = sortedKeys;
             final Hashtable<String, ArrayList<ArchiveFileHistoryBean>> htParam = ht;
             final SimpleDateFormat dfParam=df;
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    
-                    target.removeAll();
-                    target.setLayout(new FlexibleGridLayout(sortedKeysParam.size(), 1));
-                    //target.setLayout(new FlowLayout());
-                    //target.setMaximumSize(new Dimension(target.getWidth(), Integer.MAX_VALUE));
-                    target.setVisible(false);
-                    for (int i = 0; i < sortedKeysParam.size(); i++) {
-                        try {
-                            DayHistoryPanel p = new DayHistoryPanel(dfParam.parse(sortedKeysParam.get(i)));
-                            p.setEntries(htParam.get(sortedKeysParam.get(i)));
-                            p.setMaximumSize(new Dimension(target.getWidth(), Integer.MAX_VALUE));
-                            target.add(p);
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
+            SwingUtilities.invokeLater(() -> {
+                target.removeAll();
+                target.setLayout(new FlexibleGridLayout(sortedKeysParam.size(), 1));
+                target.setVisible(false);
+                for (int i = 0; i < sortedKeysParam.size(); i++) {
+                    try {
+                        DayHistoryPanel p = new DayHistoryPanel(dfParam.parse(sortedKeysParam.get(i)));
+                        p.setEntries(htParam.get(sortedKeysParam.get(i)));
+                        p.setMaximumSize(new Dimension(target.getWidth(), Integer.MAX_VALUE));
+                        target.add(p);
+                    } catch (Throwable t) {
+                        log.error(t);
                     }
-                    target.setVisible(true);
                 }
+                target.setVisible(true);
             });
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
         ThreadUtils.setDefaultCursor(this.owner);

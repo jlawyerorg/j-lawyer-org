@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import javax.swing.KeyStroke;
 
 /**
@@ -721,7 +722,7 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
 
     @Override
     public String getContentType() {
-        return "text/plain";
+        return ContentTypes.TEXT_PLAIN;
     }
 
     @Override

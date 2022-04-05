@@ -663,18 +663,8 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-//import bsh.This;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.net.URL;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
-import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,7 +677,7 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     
     private String categoryKey=null;
     
-    /** Creates new form OptionGroupConfigurationDialog */
+    /** Creates new form WordProcessorConfigurationDialog */
     public WordProcessorConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -810,18 +800,13 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-//        ServerSettings set=ServerSettings.getInstance();
-//        set.setSetting(this.categoryKey+"1", this.txtCustom1.getText());
-//        set.setSetting(this.categoryKey+"2", this.txtCustom2.getText());
-//        set.setSetting(this.categoryKey+"3", this.txtCustom3.getText());
-
         String wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO;
         if(this.rdMicrosoftOffice.isSelected()) { 
             wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO;
         }
 
         ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, wordProcessor);
-//        
+      
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed

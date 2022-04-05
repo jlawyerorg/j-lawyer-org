@@ -665,8 +665,12 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.calendar.HolidayDescriptor;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
@@ -685,5 +689,35 @@ public interface CalendarServiceRemote {
     ArrayList<CalendarRegion> getRegionCodes(String countryId);
 
     boolean isHolidayForCurrentUser(Date d) throws Exception;
+    
+    ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
+    
+    Collection<ArchiveFileReviewsBean> getAllOpenReviews();
+    
+    void removeReview(String reviewId) throws Exception;
+    
+    Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate);
+    
+    Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit);
+    
+    ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
+    
+    Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
+
+    List<CalendarSetup> getAllCalendarSetups();
+    
+    List<CalendarSetup> getCalendarSetupsForUser(String principalId);
+
+    CalendarSetup addCalendarSetup(CalendarSetup cs);
+
+    CalendarSetup updateCalendarSetup(CalendarSetup cs);
+
+    void removeCalendarSetup(CalendarSetup cs);
+
+    void runFullCalendarSync();
+
+    boolean hasEvents(CalendarSetup calendar) throws Exception;
+
+    void migrateEvents(CalendarSetup fromCalendar, CalendarSetup toCalendar) throws Exception;
     
 }

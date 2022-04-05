@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFact
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
@@ -688,16 +690,18 @@ public class LoadDocumentPreviewThread implements Runnable {
 
     private static boolean running = false;
 
-    private String id = null;
     private JPanel pnlPreview = null;
-    private String fileName = null;
     private boolean readOnly = false;
+    private ArchiveFileBean caseDto=null;
+    ArchiveFileDocumentsBean docDto=null;
+    private boolean forceAnyDocumentSize=false;
 
-    public LoadDocumentPreviewThread(String docId, String fileName, boolean readOnly, JPanel pnlPreview) {
-        this.id = docId;
+    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize) {
+        this.docDto=value;
         this.pnlPreview = pnlPreview;
-        this.fileName = fileName;
         this.readOnly = readOnly;
+        this.caseDto=caseDto;
+        this.forceAnyDocumentSize=forceAnyDocumentSize;
     }
 
     public static boolean isRunning() {
@@ -709,32 +713,43 @@ public class LoadDocumentPreviewThread implements Runnable {
 
         try {
             running = true;
-            //this.pnlPreview.setVisible(false);
             ThreadUtils.setVisible(pnlPreview, false);
-            //this.pnlPreview.removeAll();
             ThreadUtils.removeAll(pnlPreview);
             ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-            //JLabel loading = new JLabel("Lade Vorschau...");
             JProgressBar loading = new JProgressBar();
             loading.setIndeterminate(true);
             ThreadUtils.addComponent(this.pnlPreview, loading);
-            //this.pnlPreview.add(loading);
-            //this.pnlPreview.setVisible(true);
             ThreadUtils.setVisible(pnlPreview, true);
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            String previewText = afs.getDocumentPreview(id);
-            byte[] data = afs.getDocumentContent(id);
+            String previewText = afs.getDocumentPreview(this.docDto.getId());
+            
+            long maxPreviewBytes=2l*1024l*1024l;
+            String maxPreviewBytesString=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
+            try {
+                maxPreviewBytes=Long.parseLong(maxPreviewBytesString);
+            } catch (Throwable t) {
+                log.error("invalid setting for maximum document previes bytes: " +maxPreviewBytesString);
+            }
+            
+            
+            
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(id, fileName, readOnly, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = null;
+            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
+                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
+            } else {
+                byte[] data = afs.getDocumentContent(this.docDto.getId());
+                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            }
+            
+            
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.remove(pnlPreview, loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-            //this.pnlPreview.remove(loading);
             ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-            //this.pnlPreview.add(preview, BorderLayout.CENTER);
             ThreadUtils.setVisible(pnlPreview, true);
 
             if (preview instanceof GifJpegPngImageWithTextPanel) {
@@ -745,62 +760,23 @@ public class LoadDocumentPreviewThread implements Runnable {
                 } catch (Throwable t) {
                     log.error(t);
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ((GifJpegPngImageWithTextPanel) preview).intelligentScrolling();
-                    }
-
+                final JComponent prev=preview;
+                SwingUtilities.invokeLater(() -> {
+                    ((GifJpegPngImageWithTextPanel) prev).intelligentScrolling();
                 });
             }
-
-            //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
-            //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
-            //this.pnlPreview.revalidate();
-            //this.pnlPreview.repaint();
-            //System.out.println(pnlPreview.getBounds());
-            //System.out.println(preview.getBounds());
             running = false;
         } catch (Exception ex) {
             running = false;
             log.error(ex);
-//            ThreadUtils.setVisible(pnlPreview, false);
-//            ThreadUtils.removeAll(pnlPreview);
-//            try {
-//                Thread.sleep(150);
-//            } catch (Throwable t) {}
-//            JLabel status=new JLabel("Vorschau nicht verfügbar...");
-//            ThreadUtils.addComponent(pnlPreview, status);
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                public void run() {
-                    pnlPreview.setVisible(false);
-                    pnlPreview.removeAll();
-                    pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
-                    pnlPreview.setVisible(true);
-                }
+            SwingUtilities.invokeLater(() -> {
+                pnlPreview.setVisible(false);
+                pnlPreview.removeAll();
+                pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
+                pnlPreview.setVisible(true);
             });
-            //ThreadUtils.setVisible(pnlPreview, true);
-            //this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
-            //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
-
+            
         }
 
-//        ThreadUtils.updateTextArea(this.ta, "Vorschau wird geladen...");
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            String content = locator.lookupArchiveFileServiceRemote().getDocumentPreview(this.id);
-//            ThreadUtils.updateTextArea(this.ta, content);
-//        
-//        } catch (Throwable t) {
-//            //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentvorschau: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//            log.error("document preview not available", t);
-//            ThreadUtils.updateTextArea(this.ta, "Vorschau nicht verfügbar");
-//        
-//            //this.ta.setText("Vorschau nicht verfügbar");
-//            return;
-//        }
     }
 }

@@ -664,8 +664,12 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.CalendarAccess;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.MailboxAccess;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.util.Collection;
 import java.util.List;
 import javax.ejb.Remote;
@@ -690,13 +694,32 @@ public interface SecurityServiceRemote {
     Group updateGroup(Group group) throws Exception;
 
     boolean addUserToGroup(String principalId, String groupId) throws Exception;
+    
+    boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
+    boolean addUserToMailbox(String principalId, String mailboxId) throws Exception;
 
     boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
     
+    boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception;
+    boolean removeUserFromMailbox(String principalId, String mailboxId) throws Exception;
+    
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
+    
+    List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception;
+    List<MailboxAccess> getMailboxAccessForUser(String principalId) throws Exception;
 
     List<Group> getGroupsForUser(String principalId) throws Exception;
+    
+    List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception;
+    List<MailboxSetup> getMailboxesForUser(String principalId) throws Exception;
 
     List<AppUserBean> getUsersHavingRole(String role) throws Exception;
     
+    List<MailboxSetup> getAllMailboxSetups();
+    
+    MailboxSetup addMailboxSetup(MailboxSetup cs);
+
+    MailboxSetup updateMailboxSetup(MailboxSetup cs);
+
+    void removeMailboxSetup(MailboxSetup cs);
 }

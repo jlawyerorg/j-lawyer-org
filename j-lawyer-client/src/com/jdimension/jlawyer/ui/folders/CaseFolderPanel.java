@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.persistence.CaseFolderSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -770,15 +769,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.foldersListPanel.repaint();
         this.popMoveToFolder.removeAll();
 
-        ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
+        ArrayList<JMenuItem> items = new ArrayList<>();
         this.buildMoveToFolderMenu(items, rootFolder, "");
-        Collections.sort(items, new Comparator() {
-            @Override
-            public int compare(Object t, Object t1) {
-                JMenuItem m1 = (JMenuItem) t;
-                JMenuItem m2 = (JMenuItem) t1;
-                return m1.getText().compareTo(m2.getText());
-            }
+        Collections.sort(items, (Object t, Object t1) -> {
+            JMenuItem m1 = (JMenuItem) t;
+            JMenuItem m2 = (JMenuItem) t1;
+            return m1.getText().compareTo(m2.getText());
         });
 
         for (JMenuItem m : items) {
@@ -787,11 +783,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     }
 
-    public void setRootFolder(CaseFolder rootFolder, Map<String,CaseFolderSettings> folderSettings) {
-        ArrayList<String> unselectedIds= new ArrayList<>();
-        for(String id: folderSettings.keySet()) {
-            if(folderSettings.get(id).getHiddenBoolean())
+    public void setRootFolder(CaseFolder rootFolder, Map<String, CaseFolderSettings> folderSettings) {
+        ArrayList<String> unselectedIds = new ArrayList<>();
+        for (String id : folderSettings.keySet()) {
+            if (folderSettings.get(id).getHiddenBoolean()) {
                 unselectedIds.add(id);
+            }
         }
         this.setRootFolder(rootFolder, unselectedIds);
 
@@ -824,7 +821,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -957,7 +954,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.setDocuments(documents);
     }
 
-    public void sortByDateDesc() {
+    public final void sortByDateDesc() {
         this.sortDate.setSortState(SortButton.SORT_DESC);
 
     }
@@ -1291,7 +1288,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
-            //this.sortDate.setSortState(SortButton.SORT_DESC);
             if (this.sortDate.getSortState() == SortButton.SORT_NONE) {
                 this.sortDate.setSortState(SortButton.SORT_ASC);
             }
@@ -1365,7 +1361,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_sortFolderMouseClicked
 
     private void cmdActionsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMouseReleased
-        //this.documentsPopup.show(this.cmdActions, evt.getX(), evt.getY());
         this.caseContainer.showDocumentsPopup(evt);
     }//GEN-LAST:event_cmdActionsMouseReleased
 
@@ -1467,22 +1462,41 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         return selectedFolders;
     }
 
+    public void scrollToDocumentByName(String fileName) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+
+                if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
+                    this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
+                }
+            }
+        }
+    }
+    
     public void selectDocumentByName(String fileName) {
+        // begin: if desired document is in a hidden folder, unhide the folder
+        for (ArchiveFileDocumentsBean relevantDoc : this.documents) {
+            if (relevantDoc.getName().equals(fileName)) {
+                CaseFolder cf = relevantDoc.getFolder();
+                if (cf != null) {
+                    List<CaseFolder> selFolders = this.foldersListPanel.getSelectedFolders();
+                    if (!selFolders.contains(cf)) {
+                        this.foldersListPanel.setSelected(cf);
+                        this.folderSelectionChanged();
+                        break;
+                    }
+                }
+            }
+        }
+        // auto-folder unhide
+
         int count = 0;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
 
                 if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
                     ((DocumentEntryPanel) c).setSelected(true);
-                    //this.jScrollPane2.scrollRectToVisible(((DocumentEntryPanel)c).getBounds());
-                    //System.out.println("location: " + (int)((DocumentEntryPanel)c).getY() + location);
-                    //this.jScrollPane2.getVerticalScrollBar().setValue((int)((DocumentEntryPanel)c).getY());
-                    Rectangle bounds = pnlDocumentEntries.getBounds(((DocumentEntryPanel) c).getVisibleRect());
-                    double height = bounds.getHeight();
-                    double perComponent = height / this.pnlDocumentEntries.getComponentCount();
-                    this.jScrollPane2.getVerticalScrollBar().setValue(count * (int) (perComponent));
-                    //System.out.println("calc: " + count*(perComponent));
-
+                    this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
                 }
                 count = count + 1;
             }
@@ -1520,7 +1534,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.pnlDocumentEntries.removeAll();
         BoxLayout boxLayout = new BoxLayout(this.pnlDocumentEntries, BoxLayout.Y_AXIS);
         this.pnlDocumentEntries.setLayout(boxLayout);
-//        this.pnlDocumentEntries.repaint();
         double prefHeight = 0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
@@ -1542,11 +1555,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.pnlDocumentEntries.add(glue);
         }
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
-//        this.pnlDocumentEntries.revalidate();
-//        this.pnlDocumentEntries.repaint();
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 
@@ -1576,7 +1587,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.hideDocument(doc);
         this.foldersListPanel.renderEmptyFullState();
     }
-    
+
     public void hideDocument(ArchiveFileDocumentsBean doc) {
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
@@ -1602,14 +1613,14 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 }
             }
         }
-        
+
         // document might have been dragged onto a different folder
-        for(ArchiveFileDocumentsBean db: this.documents) {
-            if(db.getId().equals(doc.getId())) {
+        for (ArchiveFileDocumentsBean db : this.documents) {
+            if (db.getId().equals(doc.getId())) {
                 db.setFolder(doc.getFolder());
             }
         }
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 
@@ -1621,7 +1632,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 boolean match = false;
                 if (text != null && !("".equals(text))) {
                     if (doc.getName().toLowerCase().contains(text.toLowerCase())) {
-                        //((DocumentEntryPanel) c).highlight(true);
                         match = true;
                     } else {
                         //((DocumentEntryPanel) c).highlight(false);
@@ -1681,7 +1691,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 

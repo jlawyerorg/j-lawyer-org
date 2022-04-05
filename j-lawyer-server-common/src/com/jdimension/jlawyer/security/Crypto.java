@@ -750,7 +750,10 @@ public class Crypto {
     }
 
     public static String decrypt(String property, char[] password) throws GeneralSecurityException, IOException {
-
+        
+        if(property==null)
+            return null;
+        
 //        final byte[] salt = new byte[64];
 //      SecureRandom random = SecureRandom.getInstanceStrong();
 //      random.nextBytes(salt);

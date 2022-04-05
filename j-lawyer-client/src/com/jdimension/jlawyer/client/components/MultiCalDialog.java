@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.components;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.toedter.calendar.JDayChooser;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -803,14 +802,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
         });
 
         c1.setDayBordersVisible(false);
-        c1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                c1MouseClicked(evt);
-            }
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                c1MousePressed(evt);
-            }
-        });
         c1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 c1PropertyChange(evt);
@@ -993,14 +984,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_c3PropertyChange
 
-    private void c1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_c1MouseClicked
-//        selectDate(c1, c1Cal);
-    }//GEN-LAST:event_c1MouseClicked
-
-    private void c1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_c1MousePressed
-//        selectDate(c1, c1Cal);
-    }//GEN-LAST:event_c1MousePressed
-
     public void setMaxDate(Date d) {
         this.c1.setMaxSelectableDate(d);
         this.c2.setMaxSelectableDate(d);
@@ -1020,11 +1003,9 @@ public class MultiCalDialog extends javax.swing.JDialog {
         if (this.holidayWarning) {
             CalendarUtils cu = CalendarUtils.getInstance();
             try {
-                //System.out.println(cu.getCountryCodes());
-                //System.out.println(cu.getRegionCodes("DE"));
 
                 boolean holiday = cu.isHolidayForCurrentUser(d);
-                if (c.get(c.DAY_OF_WEEK) == c.SATURDAY || c.get(c.DAY_OF_WEEK) == c.SUNDAY) {
+                if (c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                     holiday = true;
                 }
 
@@ -1035,8 +1016,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
                     }
                 }
 
-                //cu.getAllHolidays(2012, "DE", "sn");
-                //System.out.println(""+businessDay);
             } catch (Exception ex) {
                 log.error(ex);
             }
@@ -1081,19 +1060,16 @@ public class MultiCalDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                MultiCalDialog dialog = new MultiCalDialog(null, new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            MultiCalDialog dialog = new MultiCalDialog(null, new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

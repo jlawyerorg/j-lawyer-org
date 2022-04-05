@@ -667,13 +667,11 @@ import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import de.costache.calendar.CalendarPanel;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Locale;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -685,78 +683,82 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ArchiveFileReviewsSearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ArchiveFileReviewsSearchThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewsSearchThread.class.getName());
+
     private Component owner;
     private JTable target;
-    
+    private CalendarPanel calendarTarget;
+
     /**
      * Creates a new instance of ArchiveFileReviewsSearchThread
      */
     public ArchiveFileReviewsSearchThread(Component owner, JTable target) {
-        this.owner=owner;
-        this.target=target;
+        this.owner = owner;
+        this.target = target;
+        this.calendarTarget = null;
+    }
+
+    public ArchiveFileReviewsSearchThread(Component owner, JTable target, CalendarPanel calendar) {
+        this.owner = owner;
+        this.target = target;
+        this.calendarTarget = calendar;
     }
 
     public void run() {
-        Collection<ArchiveFileReviewsBean> dtos=null;
+        Collection<ArchiveFileReviewsBean> dtos = null;
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos=fileService.getAllOpenReviews();
-            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            dtos = calService.getAllOpenReviews();
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
-        
-        String[] colNames=new String[] {"fällig", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Anwalt", "verantwortlich"};
-        //QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
+
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
+            @Override
             public boolean isCellEditable(int i, int i0) {
                 return false;
             }
         };
-        //this.target.setModel(model);
         ThreadUtils.setTableModel(this.target, model);
         try {
             Thread.sleep(750);
         } catch (Throwable t) {
             log.error(t);
         }
-        
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
-        this.target.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
+
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        for(ArchiveFileReviewsBean b:dtos) {
+        this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
+        for (ArchiveFileReviewsBean b : dtos) {
             try {
-                Date reviewDate = b.getReviewDate();
-                String reviewDateString = "";
-                if (reviewDate != null) {
-                    reviewDateString = df.format(reviewDate);
+                String reviewDateString = b.toString();
+                String calendar = "";
+                if (b.getCalendarSetup() != null) {
+                    calendar = b.getCalendarSetup().getDisplayName();
                 }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);
             }
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        //this.target.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //EditorsRegistry.getInstance().clearStatus(true);
+        if (this.calendarTarget != null) {
+            ThreadUtils.setCalendarItems(this.calendarTarget, dtos);
+        }
         ThreadUtils.setDefaultCursor(this.owner);
-        
+
     }
-    
+
 }

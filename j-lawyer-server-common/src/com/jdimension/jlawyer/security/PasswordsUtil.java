@@ -670,7 +670,37 @@ import org.jboss.crypto.CryptoUtil;
  * @author jens
  */
 public class PasswordsUtil {
+
+    public static final int COMPLEXITY_WEAK=10;
+    public static final int COMPLEXITY_MEDIUM=20;
+    public static final int COMPLEXITY_STRONG=30;
     
+    public static final String HTML_HINT_PASSWORDCOMPLEXITY="<html>\n" +
+"Komplexe Passw&ouml;rter enthalten\n" +
+"<ul>\n" +
+"<li>mindestens 8 Zeichen</li>\n" +
+"<li>Großbuchstaben</li>\n" +
+"<li>Kleinbuchstaben</li>\n" +
+"<li>Ziffern</li>\n" +
+"<li>mindestens eines der Sonderzeichen: -_@#$%^&amp;+=</li>\n" +
+"</ul>\n" +
+"</html>";
+    
+    public static int validatePasswordComplexity(String inputPassword) {
+        if (inputPassword.matches("\\A(?=\\S*?[0-9])(?=\\S*?[a-z])(?=\\S*?[A-Z])(?=\\S*?[-_@#$%^&+=])\\S{8,}\\z")) {
+            //^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\S+$).{8,}$
+            //^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[-_\\.!@#\\$%\\^&\\*])(?=.{8,})
+            return COMPLEXITY_STRONG;
+        } else if (inputPassword.matches("\\A(?=\\S*?[0-9])(?=\\S*?[a-z])(?=\\S*?[A-Z])\\S{8,}\\z")) {
+            return COMPLEXITY_MEDIUM;
+        } else if (inputPassword.matches("\\A(?=\\S*?[0-9])(?=\\S*?[a-z])\\S{8,}\\z")) {
+            return COMPLEXITY_WEAK;
+        } else if (inputPassword.matches("\\A(?=\\S*?[0-9])(?=\\S*?[A-Z])\\S{8,}\\z")) {
+            return COMPLEXITY_WEAK;
+        }
+        return COMPLEXITY_WEAK;
+    }
+
     public static String createPasswordHash(String clearText) {
         String hashedPassword = CryptoUtil.createPasswordHash("SHA-256",
                 CryptoUtil.BASE64_ENCODING,

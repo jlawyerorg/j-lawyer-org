@@ -755,13 +755,13 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         lblVersion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblVersion.setText("1.0");
         getContentPane().add(lblVersion);
-        lblVersion.setBounds(500, 270, 180, 80);
+        lblVersion.setBounds(490, 270, 180, 80);
 
         lblFullClientVersion.setForeground(new java.awt.Color(102, 102, 102));
         lblFullClientVersion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblFullClientVersion.setText("fullClientVersion");
         getContentPane().add(lblFullClientVersion);
-        lblFullClientVersion.setBounds(520, 60, 160, 20);
+        lblFullClientVersion.setBounds(510, 60, 160, 20);
 
         lblProgress.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         lblProgress.setForeground(new java.awt.Color(255, 255, 255));
@@ -787,7 +787,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         lblDate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblDate.setText("jLabel3");
         getContentPane().add(lblDate);
-        lblDate.setBounds(420, 20, 260, 30);
+        lblDate.setBounds(410, 20, 260, 30);
 
         lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo.png"))); // NOI18N
         getContentPane().add(lblLogo);

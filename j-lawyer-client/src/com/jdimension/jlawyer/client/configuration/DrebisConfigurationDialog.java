@@ -677,21 +677,21 @@ public class DrebisConfigurationDialog extends javax.swing.JDialog {
     public DrebisConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+                
         ServerSettings set=ServerSettings.getInstance();
-        String mode=set.getSetting(set.SERVERCONF_DREBISMODE, "on");
+        String mode=set.getSetting(ServerSettings.SERVERCONF_DREBISMODE, "on");
         if("on".equalsIgnoreCase(mode))
             this.optDrebisOn.setSelected(true);
         if("off".equalsIgnoreCase(mode))
             this.optDrebisOff.setSelected(true);
         
-        String endpoint=set.getSetting(set.SERVERCONF_DREBISENDPOINT, "https://www.drebis.de/KanzleiWebservice/services/KanzleiService");
+        String endpoint=set.getSetting(ServerSettings.SERVERCONF_DREBISENDPOINT, "https://www.drebis.de/KanzleiWebservice/services/KanzleiService");
         this.txtEndpoint.setText(endpoint);
         
-        String user=set.getSetting(set.SERVERCONF_DREBISLOCALUSER, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/DrebisConfigurationDialog").getString("drebis.defaultuser"));
+        String user=set.getSetting(ServerSettings.SERVERCONF_DREBISLOCALUSER, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/DrebisConfigurationDialog").getString("drebis.defaultuser"));
         this.txtUser.setText(user);
         
-        String pwd=set.getSetting(set.SERVERCONF_DREBISLOCALPWD, "");
+        String pwd=set.getSetting(ServerSettings.SERVERCONF_DREBISLOCALPWD, "");
         this.txtPwd.setText(pwd);
         
         
@@ -815,14 +815,14 @@ public class DrebisConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set=ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_DREBISLOCALUSER, this.txtUser.getText());
-        set.setSetting(set.SERVERCONF_DREBISLOCALPWD, this.txtPwd.getText());
-        set.setSetting(set.SERVERCONF_DREBISENDPOINT, this.txtEndpoint.getText());
+        set.setSetting(ServerSettings.SERVERCONF_DREBISLOCALUSER, this.txtUser.getText());
+        set.setSetting(ServerSettings.SERVERCONF_DREBISLOCALPWD, this.txtPwd.getText());
+        set.setSetting(ServerSettings.SERVERCONF_DREBISENDPOINT, this.txtEndpoint.getText());
         
         if(this.optDrebisOn.isSelected())
-            set.setSetting(set.SERVERCONF_DREBISMODE, "on");
+            set.setSetting(ServerSettings.SERVERCONF_DREBISMODE, "on");
         else 
-            set.setSetting(set.SERVERCONF_DREBISMODE, "off");
+            set.setSetting(ServerSettings.SERVERCONF_DREBISMODE, "off");
         
         this.setVisible(false);
         this.dispose();
@@ -867,19 +867,16 @@ public class DrebisConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                DrebisConfigurationDialog dialog = new DrebisConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            DrebisConfigurationDialog dialog = new DrebisConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

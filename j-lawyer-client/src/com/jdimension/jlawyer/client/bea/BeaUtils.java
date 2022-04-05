@@ -663,22 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.sun.mail.imap.IMAPFolder;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Properties;
-import java.util.logging.Level;
-import javax.mail.*;
-import javax.mail.Flags;
-import javax.mail.Folder;
-import javax.mail.internet.*;
-import javax.swing.text.Document;
-import javax.swing.text.html.HTMLEditorKit;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -686,19 +671,13 @@ import org.apache.log4j.Logger;
  */
 public class BeaUtils {
 
-    private static Logger log = Logger.getLogger(BeaUtils.class.getName());
-
     public static boolean hasCertificateConfig(AppUserBean u) {
 
         if (empty(u.getBeaCertificatePassword())) {
             return false;
         }
         
-        if(u.getBeaCertificate()==null)
-            return false;
-
-
-        return true;
+        return u.getBeaCertificate() != null;
     }
     
     private static boolean empty(String s) {
@@ -706,11 +685,7 @@ public class BeaUtils {
             return true;
         }
 
-        if ("".equals(s.trim())) {
-            return true;
-        }
-
-        return false;
+        return "".equals(s.trim());
     }
     
     public static String getQuotedBody(String body, String to) {

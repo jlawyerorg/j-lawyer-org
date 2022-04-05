@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.MouseEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -687,7 +688,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private Image backgroundImage=null;
     
     /**
-     * Creates new form QuickArchiveFileSearchPanel
+     * Creates new form ArchiveFileReviewsOverviewPanel
      */
     public ArchiveFileReviewsOverviewPanel() {
         initComponents();
@@ -696,18 +697,18 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         } else {
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
-        String[] colNames=new String[] {"fällig", "Typ" , "Aktenzeichen", "Kurzrubrum", "Grund", "Anwalt"};
+        this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
+        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
         this.cmdRefreshActionPerformed(null);
         
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
     }
     
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
+        this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
         this.tblResults.setOpaque(false);
         
     }
@@ -728,13 +729,15 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResults = new javax.swing.JTable();
+        calendarPanel1 = new de.costache.calendar.CalendarPanel();
 
         mnuOpenArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenArchiveFile.setText("Akte bearbeiten");
@@ -746,33 +749,11 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         });
         popupArchiveFileActions.add(mnuOpenArchiveFile);
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblResultsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-22.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setText("Wiedervorlagen und Fristen nach Fälligkeit");
+        lblPanelTitle.setText("Kalendereinträge (chronologisch)");
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -814,6 +795,31 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 .addContainerGap())
         );
 
+        tblResults.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResults.getTableHeader().setReorderingAllowed(false);
+        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsMousePressed(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResults);
+
+        jTabbedPane1.addTab("Liste", jScrollPane1);
+        jTabbedPane1.addTab("Kalenderblatt", calendarPanel1);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -821,13 +827,13 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 879, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 879, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -840,7 +846,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -862,15 +868,16 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
+                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==evt.BUTTON1) {
+        if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
@@ -887,13 +894,14 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
+                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
                 
-        } else if(evt.getClickCount()==1 && evt.getButton()==evt.BUTTON3) {
+        } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
             if(this.tblResults.getSelectedRowCount()<1) {
                 return;
             }
@@ -905,17 +913,20 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         // perform search here
         ThreadUtils.setWaitCursor(this);
-        //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
-        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults)).start();
+        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults, this.calendarPanel1)).start();
         
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
+    public void refresh() {
+        this.cmdRefreshActionPerformed(null);
+    }
+    
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
             TableUtils.exportAndLaunch("wiedervorlagen-export.csv", this.tblResults);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 
@@ -925,11 +936,13 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private de.costache.calendar.CalendarPanel calendarPanel1;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTabbedPane jTabbedPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;

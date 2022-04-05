@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -691,17 +692,11 @@ public class LauncherFactory {
     public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
 
-        // first checsk for internal launchers
-        String lowerFileName = fileName.toLowerCase();
-
-        String osName = System.getProperty("os.name").toLowerCase();
-        // then use LibreOffice launcher
-
-        if (osName.indexOf("win") > -1) {
+        if (SystemUtils.isWindows()) {
             log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
             WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
             return wl;
-        } else if (osName.startsWith("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
             MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
             return ml;
@@ -714,36 +709,33 @@ public class LauncherFactory {
     public static Launcher getLibreOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
 
-        // first checsk for internal launchers
-        String lowerFileName = fileName.toLowerCase();
-
-        String osName = System.getProperty("os.name").toLowerCase();
-        // then use LibreOffice launcher
-
-        if (osName.indexOf("win") > -1) {
+        if (SystemUtils.isWindows()) {
             log.debug(new java.util.Date().toString() + " launching LO on Windows");
             WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
             return wl;
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (SystemUtils.isLinux()) {
             log.debug(new java.util.Date().toString() + " launching LO on Linux");
             LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
             return ll;
-        } else if (osName.startsWith("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             log.debug(new java.util.Date().toString() + " launching LO on Mac");
             MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
             return ml;
         } else {
-            throw new Exception("Libre Office Launcher ist auf diesem System nicht verfügbar: " + osName);
+            throw new Exception("Libre Office Launcher ist auf diesem System nicht verfügbar");
         }
 
     }
 
     public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
+        return getLauncher(fileName, content, store, null);
+    }
+    
+    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
-
+        
         ClientSettings set = ClientSettings.getInstance();
         String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-        boolean wordProcessorLibre = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO.equalsIgnoreCase(wordProcessor);
         boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
         // first check for internal launchers
@@ -763,21 +755,24 @@ public class LauncherFactory {
             return new BEAInternalLauncher(url, store);
         }
 
+        // then for forced custom launchers
+        if(customLauncherName!=null) {
+            return new CustomLauncher(url, store, customLauncherName);
+        }
+        
         // then for custom launchers
-        String extension = getExtension(lowerFileName);
-        if (hasCustomLauncher(extension)) {
+        String extension = FileUtils.getExtension(lowerFileName);
+        if (CustomLauncher.hasCustomLauncher(extension)) {
             return new CustomLauncher(url, store);
         }
 
-        String osName = System.getProperty("os.name").toLowerCase();
-
         // first check if MS Office is requested
-        if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (osName.indexOf("win") > -1 || osName.startsWith("mac"))) {
-            if (osName.indexOf("win") > -1) {
+        if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (SystemUtils.isWindows() || SystemUtils.isMacOs())) {
+            if (SystemUtils.isWindows()) {
                 log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
                 WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
                 return wl;
-            } else if (osName.startsWith("mac")) {
+            } else if (SystemUtils.isMacOs()) {
                 log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
                 MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
                 return ml;
@@ -787,15 +782,15 @@ public class LauncherFactory {
         // then use LibreOffice launcher
         if (supportedByLibreOffice(url)) {
 
-            if (osName.indexOf("win") > -1) {
+            if (SystemUtils.isWindows()) {
                 log.debug(new java.util.Date().toString() + " launching LO on Windows");
                 WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
                 return wl;
-            } else if (osName.indexOf("linux") > -1) {
+            } else if (SystemUtils.isLinux()) {
                 log.debug(new java.util.Date().toString() + " launching LO on Linux");
                 LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
                 return ll;
-            } else if (osName.startsWith("mac")) {
+            } else if (SystemUtils.isMacOs()) {
                 log.debug(new java.util.Date().toString() + " launching LO on Mac");
                 MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
                 return ml;
@@ -804,11 +799,11 @@ public class LauncherFactory {
         }
 
         // if all fails, use Desktop API
-        if (osName.indexOf("win") > -1) {
+        if (SystemUtils.isWindows()) {
             return new WindowsNativeLauncher(url, store);
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (SystemUtils.isLinux()) {
             return new LinuxNativeLauncher(url, store);
-        } else if (osName.startsWith("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             return new MacNativeLauncher(url, store);
         } else {
             return new NativeLauncher(url, store);
@@ -824,34 +819,9 @@ public class LauncherFactory {
         return FileUtils.createTempFile(fileName, content, readOnly, false, 7l);
     }
 
-    private static String getExtension(String url) {
-        int index = url.lastIndexOf('.');
-        if (index > -1 && index < url.length()) {
-            return url.substring(index + 1);
-        }
-        return "url-with-no-extension";
-    }
-
     public static boolean isMicrosoftOfficeSupported() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1 || osName.startsWith("mac")) {
+        if (SystemUtils.isWindows() || SystemUtils.isMacOs()) {
             return true;
-        }
-        return false;
-    }
-
-    private static boolean hasCustomLauncher(String extension) {
-        if (extension != null) {
-            if (!"".equals(extension)) {
-                ClientSettings settings = ClientSettings.getInstance();
-                String executable = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".executable", "");
-                String paramsRw = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-rw", "");
-                String paramsRo = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-ro", "");
-                if ("".equals(paramsRo)) {
-                    paramsRo = paramsRw;
-                }
-                return (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0);
-            }
         }
         return false;
     }
@@ -918,20 +888,18 @@ public class LauncherFactory {
 
     public static void cleanupTempFile(String url) throws Exception {
         FileUtils.cleanupTempFile(url);
-        return;
     }
 
     public static void directPrint(List<String> urls) throws Exception {
 
-        final ArrayList<String> cmdLine = new ArrayList<String>();
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.startsWith("mac")) {
+        final ArrayList<String> cmdLine = new ArrayList<>();
+        if (SystemUtils.isMacOs()) {
             cmdLine.add("/Applications/LibreOffice.app/Contents/MacOS/soffice");
         } else {
             cmdLine.add("soffice");
         }
         cmdLine.add("-p");
-        if (osName.startsWith("mac")) {
+        if (SystemUtils.isMacOs()) {
             cmdLine.add("--nologo");
         } else {
             cmdLine.add("-nologo");
@@ -942,69 +910,64 @@ public class LauncherFactory {
             cmdLine.add(u);
         }
 
-        new Thread(new Runnable() {
-
-            public void run() {
-
+        new Thread(() -> {
+            try {
+                
+                Thread.sleep(100);
+                
+                Process p = null;
+                boolean libreOffice = false;
                 try {
-
-                    Thread.sleep(100);
-
-                    Process p = null;
-                    boolean libreOffice = false;
-                    try {
-                        if (osName.startsWith("mac")) {
-                            cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/libreoffice");
-                        } else {
-                            cmdLine.set(0, "libreoffice");
-                        }
-
-                        p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-
+                    if (SystemUtils.isMacOs()) {
+                        cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/libreoffice");
+                    } else {
+                        cmdLine.set(0, "libreoffice");
+                    }
+                    log.info("direct printing (libreoffice) through command line: " + cmdLine.toString());
+                    p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
+                    log.info("  direct printing launch via libreoffice succeeded");
+                    libreOffice = true;
+                } catch (Throwable ex) {
+                    log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + cmdLine.toString(), ex);
+                    libreOffice = false;
+                }
+                
+                if (libreOffice) {
+                    int exit = p.waitFor();
+                    log.info("  direct printing exit code via libreoffice: " + exit);
+                    if (exit == 0) {
                         libreOffice = true;
-                    } catch (Throwable ex) {
-                        log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
+                    } else {
                         libreOffice = false;
                     }
-
-                    if (libreOffice) {
-                        int exit = p.waitFor();
-                        if (exit == 0) {
-                            libreOffice = true;
-                        } else {
-                            libreOffice = false;
-                        }
-                    }
-
-                    if (!libreOffice) {
-                        try {
-
-                            if (osName.startsWith("mac")) {
-                                cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/soffice");
-                            } else {
-                                cmdLine.set(0, "soffice");
-                            }
-                            p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-
-                            int exit = p.waitFor();
-                            if (exit != 0) {
-                                throw new Exception("LibreOffice / OpenOffice nicht installiert!");
-                            }
-                        } catch (Throwable ex) {
-                            log.error("error starting soffice" + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
-                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])));
-                        }
-
-                    }
-
-                } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Drucken des Dokuments: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
                 }
+                
+                if (!libreOffice) {
+                    try {
+                        
+                        if (SystemUtils.isMacOs()) {
+                            cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/soffice");
+                        } else {
+                            cmdLine.set(0, "soffice");
+                        }
+                        log.info("direct printing (soffice) through command line: " + cmdLine.toString());
+                        p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
+
+                        int exit = p.waitFor();
+                        if (exit != 0) {
+                            throw new Exception("LibreOffice / OpenOffice nicht installiert!");
+                        }
+                    } catch (Throwable ex) {
+                        log.error("error starting soffice" + "; command line was: " + cmdLine.toString(), ex);
+                        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + cmdLine.toString());
+                    }
+
+                }
+                
+            } catch (final Throwable t) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Drucken des Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
             }
         }).start();
     }

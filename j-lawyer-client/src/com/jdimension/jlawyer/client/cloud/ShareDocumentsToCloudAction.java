@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Toolkit;
@@ -758,12 +759,10 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                 cloud.createFolder(remotePath);
             }
 
-            final int indexMax = this.shareDocs.size() - 1;
             for (int i = 0; i < this.shareDocs.size(); i++) {
 
                 if (this.isCancelled()) {
                     break;
-                    //return true;
                 }
 
                 long lValue = this.shareDocs.get(i).getSize();
@@ -802,57 +801,42 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                 clipboard.setContents(strSel, null);
                 DesktopUtils.openBrowserFromDialog(this.share.getUrl(), this.indicator);
             } else if (this.postAction == POST_ACTION_EMAIL && this.share.getUrl() != null && !("".equals(this.share.getUrl()))) {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-                        // make share link available for use via placeholder {{CLOUD_LINK}}
-                        dlg.setCloudLink(share.getUrl());
-                        dlg.setBody("Freigabelink: " + share.getUrl(), "text/plain");
-                        if (parties != null) {
-                            dlg.setInvolvedInCase(parties);
+                SwingUtilities.invokeLater(() -> {
+                    SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                    // make share link available for use via placeholder {{CLOUD_LINK}}
+                    dlg.setCloudLink(share.getUrl());
+                    dlg.setBody("Freigabelink: " + share.getUrl(), ContentTypes.TEXT_PLAIN);
+                    if (parties != null) {
+                        dlg.setInvolvedInCase(parties);
+                    }
+                    if (caseDto != null) {
+                        dlg.setArchiveFile(caseDto, null);
+                    }
+                    if (recipient != null) {
+                        dlg.setTo(recipient.getEmail());
+                    }
+                    if (parties != null) {
+                        ArrayList<ArchiveFileAddressesBean> involved = parties;
+                        for (ArchiveFileAddressesBean aab : involved) {
+                            dlg.addParty(aab);
                         }
-                        if (caseDto != null) {
-                            dlg.setArchiveFile(caseDto);
-                        }
-                        if (recipient != null) {
-                            dlg.setTo(recipient.getEmail());
-                        }
-                        if (parties != null) {
-                            ArrayList<ArchiveFileAddressesBean> involved = parties;
-                            for (ArchiveFileAddressesBean aab : involved) {
-                                dlg.addParty(aab);
-                            }
-                        }
-
-                        FrameUtils.centerDialog(dlg, null);
-                        dlg.setVisible(true);
                     }
 
+                    FrameUtils.centerDialog(dlg, null);
+                    dlg.setVisible(true);
                 });
 
             }
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    parent.setVisible(false);
-                    parent.dispose();
-                }
-
+            SwingUtilities.invokeLater(() -> {
+                parent.setVisible(false);
+                parent.dispose();
             });
-//            this.parent.setVisible(false);
-//            this.parent.dispose();
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(parent, "Fehler beim Hochladen der Dateien: " + ex.getMessage(), "Fehler");
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    EditorsRegistry.getInstance().clearStatus();
-                }
-
+            ThreadUtils.showErrorDialog(parent, "Fehler beim Hochladen der Dateien: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            SwingUtilities.invokeLater(() -> {
+                EditorsRegistry.getInstance().clearStatus();
             });
 
             return false;

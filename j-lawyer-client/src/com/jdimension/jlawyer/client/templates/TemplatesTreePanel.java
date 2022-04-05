@@ -804,7 +804,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 //            }
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 
@@ -833,7 +833,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 
@@ -1137,7 +1137,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage.odt", folder);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         this.refreshList();
@@ -1166,7 +1166,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage-Tabelle.ods", folder);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         this.refreshList();
@@ -1202,7 +1202,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdAddExistingActionPerformed
@@ -1228,7 +1228,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_mnuRemoveFolderActionPerformed
@@ -1256,7 +1256,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 dm.insertNodeInto(newTn, tn, 0);
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_mnuNewFolderActionPerformed
@@ -1294,7 +1294,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_mnuRenameFolderActionPerformed
 
@@ -1338,7 +1338,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             content = locator.lookupSystemManagementRemote().getTemplateData(folder, this.lstTemplates.getSelectedValue().toString());
             //tmpUrl=FileUtils.createTempFile(this.lstTemplates.getSelectedValue().toString(), content);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1347,7 +1347,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
             launcher.launch(false);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_mnuEditTemplateActionPerformed
 
@@ -1374,7 +1374,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().renameTemplate(folder, this.lstTemplates.getSelectedValue().toString(), newName);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         this.refreshList();
@@ -1421,7 +1421,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                     locator.lookupSystemManagementRemote().deleteTemplate(folder, delTempl.toString());
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
         }
@@ -1698,7 +1698,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             log.error(ex);
             this.pnlPreview.removeAll();
             this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
-            ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
         }
     }

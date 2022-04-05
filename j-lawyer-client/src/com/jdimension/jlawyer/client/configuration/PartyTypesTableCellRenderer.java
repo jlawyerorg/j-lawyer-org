@@ -663,17 +663,12 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.bea.*;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageHeader;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -681,8 +676,6 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class PartyTypesTableCellRenderer extends DefaultTableCellRenderer {
-
-    private static final Logger log = Logger.getLogger(PartyTypesTableCellRenderer.class.getName());
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -695,7 +688,6 @@ public class PartyTypesTableCellRenderer extends DefaultTableCellRenderer {
         if (column == 0) {
             ((JLabel) ((Component) returnRenderer)).setText(ptb.getName());
         } else if (column == 2) {
-            //((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             ((JLabel) ((Component) returnRenderer)).setBackground(new Color(ptb.getColor()));
             ((JLabel) ((Component) returnRenderer)).setText("");
         }

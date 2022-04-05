@@ -762,6 +762,16 @@ public class EditorsRegistry {
                 return;
             }
         }
+        
+        if (this.pane.getComponentCount() == 1) {
+            Component currentEd = this.pane.getComponent(0);
+            if (currentEd instanceof SelfValidatingEditor) {
+                SelfValidatingEditor se = (SelfValidatingEditor) currentEd;
+                if (!se.isDataValid()) {
+                    return;
+                }
+            }
+        }
 
         boolean saved = true;
         if (this.pane.getComponentCount() == 1) {
@@ -804,11 +814,11 @@ public class EditorsRegistry {
     }
 
     public void clearStatus() {
-        this.updateStatus(this.STATUS_READY);
+        this.updateStatus(EditorsRegistry.STATUS_READY);
     }
 
     public void clearStatus(boolean newThread) {
-        this.updateStatus(this.STATUS_READY, newThread);
+        this.updateStatus(EditorsRegistry.STATUS_READY, newThread);
     }
 
     public void updateStatus(String text, boolean newThread) {
@@ -834,6 +844,7 @@ public class EditorsRegistry {
             this.newText = newText;
         }
 
+        @Override
         public void run() {
             ThreadUtils.updateLabel(statusLabel, this.newText);
         }

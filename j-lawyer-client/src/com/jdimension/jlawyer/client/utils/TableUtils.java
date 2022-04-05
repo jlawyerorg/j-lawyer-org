@@ -832,5 +832,24 @@ public class TableUtils {
             return " ";
         }
     }
+    
+    public static int getRowForObject(JTable table, int column, Object search) {
+        if(search==null)
+            return -1;
+        
+        for (int i = 0; i < table.getRowCount(); i++) {
+            Object value = table.getValueAt(i, column);
+            if(value==null)
+                continue;
+            
+            if (value.getClass().equals(search.getClass())) {
+                if (value.equals(search)) {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
 
 }

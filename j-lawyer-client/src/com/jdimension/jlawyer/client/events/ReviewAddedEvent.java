@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 
 /**

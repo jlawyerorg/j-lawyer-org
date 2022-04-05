@@ -36,6 +36,14 @@
     <class>com.jdimension.jlawyer.persistence.DocumentFolderTemplate</class>
     <class>com.jdimension.jlawyer.persistence.CaseFolder</class>
     <class>com.jdimension.jlawyer.persistence.CaseFolderSettings</class>
+    <class>com.jdimension.jlawyer.persistence.CalendarSetup</class>
+    <class>com.jdimension.jlawyer.persistence.CalendarAccess</class>
+    <class>com.jdimension.jlawyer.persistence.MailboxAccess</class>
+    <class>com.jdimension.jlawyer.persistence.MailboxSetup</class>
+    <class>com.jdimension.jlawyer.persistence.MappingEntry</class>
+    <class>com.jdimension.jlawyer.persistence.MappingTable</class>
+    <class>com.jdimension.jlawyer.persistence.IntegrationHook</class>
+    <class>com.jdimension.jlawyer.persistence.CaseSyncSettings</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->

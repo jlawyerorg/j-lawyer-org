@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -683,7 +685,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -755,6 +756,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private PartyTypeBeanFacadeLocal partyTypesFacade;
     @EJB
     private ArchiveFileAddressesBeanFacadeLocal archiveFileAddressesFacade;
+    @EJB
+    private MappingTableFacadeLocal mappingTableFacade;
+    @EJB
+    private MappingEntryFacadeLocal mappingEntryFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -769,7 +774,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
-        ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
+        ArrayList<BankDataBean> list = new ArrayList<>();
         try (Connection con = utils.getConnection();
                 PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
@@ -895,7 +900,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             }
         }
-        return;
     }
 
     @Override
@@ -923,7 +927,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             }
         }
-        return;
     }
 
     @Override
@@ -1028,9 +1031,38 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return this.roleBeanFacade.findByPrincipalId(principalId);
     }
 
+    private void checkUserLimit() throws Exception {
+        ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
+        int limit=999;
+        if (s == null) {
+            s = new ServerSettingsBean();
+            s.setSettingKey(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
+            s.setSettingValue("999");
+            this.settingsFacade.create(s);
+        } else {
+            try {
+                limit=Integer.parseInt(s.getSettingValue());
+            } catch (Throwable t) {
+                log.error("Invalid value for " + ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS + ": " + s.getSettingValue(), t);
+                limit=1;
+            }
+        }
+        
+        // any users allowed to log in are counted
+        List userList=this.roleBeanFacade.findByRole("loginRole");
+        if(userList!=null) {
+            if(userList.size()>limit) {
+                log.error("Unable to create new user - limit has been reached (" + limit + ").");
+                throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Betreiber.");
+            }
+        }
+    }
+    
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
+        
+        this.checkUserLimit();
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1049,6 +1081,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
 
+        this.checkUserLimit();
+        
         AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
         if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
@@ -1376,7 +1410,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         MimeMessage msg = new MimeMessage(session);
 
         String senderName = "j-lawyer Server Testmail";
-        msg.setFrom(new InternetAddress(smtpUser, senderName));
+        msg.setFrom(new InternetAddress(mailAddress, senderName));
 
         msg.setRecipients(Message.RecipientType.TO, mailAddress);
         msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
@@ -1725,7 +1759,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                     GenericNode gn = new GenericNode(c.getAbsolutePath(), n, c.getName());
                     n.getChildren().add(gn);
                     this.searchForTemplates(c, gn, list, query);
-                } else if (c.getName().toLowerCase().indexOf(query) > -1) {
+                } else if (c.getName().toLowerCase().contains(query)) {
 
                     boolean contains = false;
                     for (GenericNode gn : list) {
@@ -1836,7 +1870,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
         for (File curFile : files) {
-            if (!curFile.isDirectory()) {
+            // filter out hidden files
+            if (!curFile.isDirectory() && !(curFile.getName().startsWith("."))) {
                 list.add(curFile.getName());
             }
         }
@@ -1876,7 +1911,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName;
 
         Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
-        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<String>();
+        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
@@ -1899,7 +1934,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         GenericNode root = new GenericNode(localBaseDir, null, "/");
         File rootFolder = new File(localBaseDir);
-        ArrayList<GenericNode> list = new ArrayList<GenericNode>();
+        ArrayList<GenericNode> list = new ArrayList<>();
         this.searchForTemplates(rootFolder, root, list, query);
         return list;
 
@@ -1966,40 +2001,36 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
         List<PartyTypeBean> all = this.partyTypesFacade.findAll();
-        Collections.sort(all, new Comparator() {
-            @Override
-            public int compare(Object t, Object t1) {
-                Object u1 = t;
-                Object u2 = t1;
-                if (u1 == null) {
-                    return -1;
-                }
-                if (u2 == null) {
-                    return 1;
-                }
-
-                if (!(u1 instanceof PartyTypeBean)) {
-                    return -1;
-                }
-                if (!(u2 instanceof PartyTypeBean)) {
-                    return 1;
-                }
-
-                PartyTypeBean f1 = (PartyTypeBean) u1;
-                PartyTypeBean f2 = (PartyTypeBean) u2;
-
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-
-                return f1name.compareTo(f2name);
+        Collections.sort(all, (Object t, Object t1) -> {
+            Object u1 = t;
+            Object u2 = t1;
+            if (u1 == null) {
+                return -1;
             }
-
+            if (u2 == null) {
+                return 1;
+            }
+            
+            if (!(u1 instanceof PartyTypeBean)) {
+                return -1;
+            }
+            if (!(u2 instanceof PartyTypeBean)) {
+                return 1;
+            }
+            
+            PartyTypeBean f1 = (PartyTypeBean) u1;
+            PartyTypeBean f2 = (PartyTypeBean) u2;
+            
+            String f1name = "";
+            if (f1.getName() != null) {
+                f1name = f1.getName().toLowerCase();
+            }
+            String f2name = "";
+            if (f2.getName() != null) {
+                f2name = f2.getName().toLowerCase();
+            }
+            
+            return f1name.compareTo(f2name);
         });
         return all;
     }
@@ -2014,7 +2045,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public Hashtable<String, PartyTypeBean> getPartyTypesTable() {
         List<PartyTypeBean> allParties = this.partyTypesFacade.findAll();
-        Hashtable<String, PartyTypeBean> result = new Hashtable<String, PartyTypeBean>();
+        Hashtable<String, PartyTypeBean> result = new Hashtable<>();
         for (PartyTypeBean p : allParties) {
             result.put(p.getName(), p);
         }
@@ -2186,6 +2217,88 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.flushUserCache(principalId);
 
         return true;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MappingTable> getMappingTables() {
+        return this.mappingTableFacade.findAll();
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MappingEntry> getMappingEntries(String tableName) {
+        MappingTable mt=this.mappingTableFacade.find(tableName);
+        if(mt!=null) 
+            return this.mappingEntryFacade.findByTable(mt);
+        else
+            return new ArrayList<>();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public MappingTable addMappingTable(MappingTable table) throws Exception {
+        MappingTable mt=this.mappingTableFacade.findByName(table.getTableName());
+        if(mt!=null) {
+            throw new Exception ("Es existiert bereits eine Tabelle mit diesem Namen!");
+        }
+        
+        this.mappingTableFacade.create(table);
+        
+        return this.mappingTableFacade.findByName(table.getTableName());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void deleteMappingTable(String tableName) throws Exception {
+        
+        MappingTable mt=this.mappingTableFacade.findByName(tableName);
+        this.mappingTableFacade.remove(mt);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public MappingTable updateMappingTable(MappingTable mt) throws Exception {
+        MappingTable remTable=this.mappingTableFacade.findByName(mt.getTableName());
+        if (remTable == null) {
+            throw new Exception("No mapping table with name " + mt.getTableName());
+        }
+        remTable.setKey1Name(mt.getKey1Name());
+        remTable.setKey2Name(mt.getKey2Name());
+        remTable.setKey3Name(mt.getKey3Name());
+        remTable.setSystemTable(mt.isSystemTable());
+
+        this.mappingTableFacade.edit(remTable);
+
+        return remTable;
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception {
+        MappingTable table=this.mappingTableFacade.findByName(tableName);
+        if (table == null) {
+            throw new Exception("No mapping table with name " + tableName);
+        }
+        
+        List<MappingEntry> entries=this.mappingEntryFacade.findByTable(table);
+        for(MappingEntry e: entries) {
+            this.mappingEntryFacade.remove(e);
+        }
+        
+        // need to flush the delete because we have a uniqueness constraint spanning all keys that would be violated
+        this.mappingEntryFacade.flush();
+        
+        StringGenerator idGen=new StringGenerator();
+        for(MappingEntry e: newEntries) {
+            if(ServerStringUtils.isEmpty(e.getKey1Value()) && ServerStringUtils.isEmpty(e.getKey2Value()) && ServerStringUtils.isEmpty(e.getKey3Value())) {
+                log.warn("skipping a mapping entry with empty keys");
+                continue;
+            }
+            e.setId(idGen.getID().toString());
+            this.mappingEntryFacade.create(e);
+        }
+        
     }
 
 }

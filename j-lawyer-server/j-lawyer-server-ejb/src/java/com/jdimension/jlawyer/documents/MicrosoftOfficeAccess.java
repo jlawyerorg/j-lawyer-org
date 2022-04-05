@@ -696,13 +696,12 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
  */
 public class MicrosoftOfficeAccess {
 
-    private static Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
+    private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
 
     public static void setPlaceHolders(String file, Hashtable values) throws Exception {
         if (file.toLowerCase().endsWith(".docx")) {
 
             XWPFDocument outputDocx;
-            ArrayList<String> resultList = new ArrayList<String>();
             FileInputStream fileIn = new FileInputStream(file);
             outputDocx = new XWPFDocument(fileIn);
 
@@ -918,7 +917,7 @@ public class MicrosoftOfficeAccess {
         if (file.toLowerCase().endsWith(".docx")) {
 
             XWPFDocument outputDocx;
-            ArrayList<String> resultList = new ArrayList<String>();
+            ArrayList<String> resultList = new ArrayList<>();
             FileInputStream fileIn = new FileInputStream(file);
             outputDocx = new XWPFDocument(fileIn);
 
@@ -964,7 +963,7 @@ public class MicrosoftOfficeAccess {
 
         }
 
-        return new ArrayList<String>();
+        return new ArrayList<>();
 
     }
 
@@ -1007,7 +1006,7 @@ public class MicrosoftOfficeAccess {
 
     private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, String content, java.util.List<String> results) {
         for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
-            if (content.indexOf(r) > -1) {
+            if (content.contains(r)) {
                 if (!results.contains(r)) {
                     results.add(r);
                 }
@@ -1022,7 +1021,7 @@ public class MicrosoftOfficeAccess {
         }
 
         //for (XWPFParagraph paragraph : xwpfParagraphs) {
-        List<XWPFRun> runs = xwpfParagraph.getRuns();
+        //List<XWPFRun> runs = xwpfParagraph.getRuns();
 
         String find = key;
         TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
@@ -1124,7 +1123,7 @@ public class MicrosoftOfficeAccess {
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
         cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
 
-        List<XmlObject> ctrsintxtbx = new ArrayList<XmlObject>();
+        List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
         while (cursor.hasNextSelection()) {
             cursor.toNextSelection();
@@ -1170,7 +1169,7 @@ public class MicrosoftOfficeAccess {
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
         cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
 
-        List<XmlObject> ctrsintxtbx = new ArrayList<XmlObject>();
+        List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
         while (cursor.hasNextSelection()) {
             cursor.toNextSelection();

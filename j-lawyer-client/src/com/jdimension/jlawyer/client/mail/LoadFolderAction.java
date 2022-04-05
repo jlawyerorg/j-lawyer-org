@@ -677,7 +677,7 @@ import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
-import javax.mail.internet.MimeUtility;
+import javax.mail.search.FlagTerm;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -690,10 +690,7 @@ import org.apache.log4j.Logger;
 public class LoadFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadFolderAction.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-
-    private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
-    };
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
     private Folder f = null;
     private JTable table = null;
@@ -725,7 +722,6 @@ public class LoadFolderAction extends ProgressableAction {
 
     @Override
     public boolean execute() throws Exception {
-        long start = System.currentTimeMillis();
         try {
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
 
@@ -752,27 +748,34 @@ public class LoadFolderAction extends ProgressableAction {
 
             int fromIndex = 1;
             int toIndex = f.getMessageCount();
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
-                fromIndex = Math.max(1, toIndex - 20);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
-                fromIndex = Math.max(1, toIndex - 50);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
-                fromIndex = Math.max(1, toIndex - 100);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
-                fromIndex = Math.max(1, toIndex - 500);
+            switch (currentRestriction.getRestriction()) {
+                case LoadFolderRestriction.RESTRICTION_20:
+                    fromIndex = Math.max(1, toIndex - 20);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_50:
+                    fromIndex = Math.max(1, toIndex - 50);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_100:
+                    fromIndex = Math.max(1, toIndex - 100);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_500:
+                    fromIndex = Math.max(1, toIndex - 500);
+                    break;
+                default:
+                    break;
             }
 
             Message[] messages = f.getMessages(fromIndex, toIndex);
-
+            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
+                messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
+            }
+            
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);
             f.fetch(messages, fp);
 
-            HashMap<String, String> decodedMap = new HashMap<String, String>();
+            HashMap<String, String> decodedMap = new HashMap<>();
             final int indexMax = messages.length - 1;
             ArrayList<Object[]> tableRows = new ArrayList<>();
             for (int i = 0; i < messages.length; i++) {
@@ -789,13 +792,9 @@ public class LoadFolderAction extends ProgressableAction {
                 // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 if ((i % 20) == 0 || i == (messages.length - 1)) {
                     this.progress("Lade Nachrichten... " + (i + 1));
-                }
-
-                if ((i % 20) == 0 || i == (messages.length - 1)) {
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
-                //System.out.println("*****************************************************************************");
-                //System.out.println("MESSAGE " + (i + 1) + ":");
+
                 final Message msg = messages[i];
 
                 if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
@@ -805,15 +804,11 @@ public class LoadFolderAction extends ProgressableAction {
                     }
                 }
 
-                //System.out.println(msg.getMessageNumber());
-                //Object String;
-                //System.out.println(folder.getUID(msg)
                 if (msg.isExpunged()) {
                     continue;
                 }
 
                 if (!(f.isOpen())) {
-                    System.out.println("open folder");
                     f.open(Folder.READ_WRITE);
                 }
 
@@ -829,11 +824,6 @@ public class LoadFolderAction extends ProgressableAction {
                             fromCheck = EmailUtils.decodeText(fromKey);
                             decodedMap.put(fromKey, fromCheck);
                         }
-//                        try {
-//                            fromCheck=MimeUtility.decodeText(fromCheck);
-//                        } catch (Throwable t) {
-//                            log.error("can not decode FROM header");
-//                        }
                     }
 
                 }
@@ -853,8 +843,6 @@ public class LoadFolderAction extends ProgressableAction {
                     }
                 }
 
-//                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
-                //final String toString2 = toString;
                 String sentString="";
                 if(msg.getSentDate()!=null) {
                     sentString=df.format(msg.getSentDate());
@@ -868,48 +856,33 @@ public class LoadFolderAction extends ProgressableAction {
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
                     tableRows.clear();
 
-                    SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-                        public void run() {
-                            try {
-                                for (Object[] rowObject : tableRowsClone) {
-                                    //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
-                                    ((DefaultTableModel) table.getModel()).addRow(rowObject);
-
-                                }
-                                if (scrollToRow > 0) {
-                                    if (currentIndex == (indexMax)) {
-                                        if (table.getRowCount() > scrollToRow) {
-                                            table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
-                                        }
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            for (Object[] rowObject : tableRowsClone) {
+                                ((DefaultTableModel) table.getModel()).addRow(rowObject);
+                                
+                            }
+                            if (scrollToRow > 0) {
+                                if (currentIndex == (indexMax)) {
+                                    if (table.getRowCount() > scrollToRow) {
+                                        table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
                                     }
                                 }
-                            } catch (Throwable t) {
-                                log.error(t);
                             }
+                        } catch (Throwable t) {
+                            log.error(t);
                         }
-                    }));
+                    });
 
-                }
-
-                try {
-                    if (i == (messages.length - 1) || i == (messages.length / 2)) {
-                        ComponentUtils.autoSizeColumns(table);
-                    }
-                } catch (Throwable t) {
-                    log.error(t);
                 }
 
                 if (i == 20 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
                     break;
-                }
-                if (i == 50 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
+                } else if (i == 50 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
                     break;
-                }
-                if (i == 100 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
+                } else if (i == 100 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
                     break;
-                }
-                if (i == 500 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
+                } else if (i == 500 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
                     break;
                 }
             }
@@ -921,28 +894,20 @@ public class LoadFolderAction extends ProgressableAction {
                 log.error("Error sorting mails", t);
             }
 
-            SwingUtilities.invokeLater(new Thread(new Runnable() {
+            SwingUtilities.invokeLater(() -> {
+                ComponentUtils.autoSizeColumns(table);
+            });
 
-                public void run() {
-                    ComponentUtils.autoSizeColumns(table);
-                }
-            }));
-
-            //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);
 
-            new Thread(new Runnable() {
-
-                public void run() {
-                    try {
-                        Thread.sleep(5000);
-                        if (f.isOpen()) {
-                            EmailUtils.closeIfIMAP(f);
-                        }
-                        //f.close(true);
-                    } catch (Throwable t) {
-                        log.error(t);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                    if (f.isOpen()) {
+                        EmailUtils.closeIfIMAP(f);
                     }
+                } catch (Throwable t) {
+                    log.error(t);
                 }
             }).start();
 

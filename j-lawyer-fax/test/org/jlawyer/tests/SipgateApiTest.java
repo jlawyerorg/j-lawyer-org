@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.fax.SipgateAPI;
 import com.jdimension.jlawyer.fax.SipgateException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -702,6 +703,7 @@ public class SipgateApiTest {
         this.user=System.getenv("sipuser");
         this.pwd=System.getenv("sippassword");
         System.out.println("using sip account " + this.user + ":" + this.pwd);
+        
     }
     
     @After
@@ -716,10 +718,10 @@ public class SipgateApiTest {
             return;
         }
         
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+        
         try {
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());
-            api.login();
         } catch (SipgateException ex) {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());
@@ -728,17 +730,36 @@ public class SipgateApiTest {
     
     @Test
     public void testGetBalance() {
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
+        
+        
+        try {
+            SipgateAPI api=new SipgateAPI(user,pwd);
+            //api.login();
+            BalanceInformation bi=api.getBalance();
+            System.out.println(bi.getTotal());
+        } catch (SipgateException ex) {
+            ex.printStackTrace();
+            Assert.fail(ex.getMessage());
+        }
+    }
+    
+    @Test
+    public void testGetUsers() {
         
         if(user==null || pwd==null) {
             System.out.println("Sipgate credentials are null, skipping test.");
             return;
         }
         
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+        
         try {
-            api.login();
-            BalanceInformation bi=api.getBalance();
-            System.out.println(bi.getTotal());
+            SipgateAPI api=new SipgateAPI(user,pwd);
+            List users=api.getUsers();
+            Assert.assertTrue(!users.isEmpty());
         } catch (SipgateException ex) {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());
@@ -753,30 +774,13 @@ public class SipgateApiTest {
             return;
         }
         
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+        
         try {
-            api.login();
-            ArrayList<SipUri> uris=api.getOwnUris();
+            SipgateAPI api=new SipgateAPI(user,pwd);
+            //api.login();
+            
+            ArrayList<SipUri> uris=api.getOwnUris(api.getUsers().get(0).getId());
             Assert.assertTrue(uris.size()>0);
-        } catch (SipgateException ex) {
-            ex.printStackTrace();
-            Assert.fail(ex.getMessage());
-        }
-    }
-    
-    @Test
-    public void testGetTypesOfService() {
-        
-        if(user==null || pwd==null) {
-            System.out.println("Sipgate credentials are null, skipping test.");
-            return;
-        }
-        
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
-        try {
-            api.login();
-            ArrayList<String> types=api.getTypesOfService();
-            Assert.assertTrue(types.size()>0);
         } catch (SipgateException ex) {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());
@@ -791,15 +795,15 @@ public class SipgateApiTest {
             return;
         }
         
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+        
         try {
-            api.login();
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());      
             // this will exist, at least for some time
-            String status=api.getSessionStatus("575D6B05051D4A6A495544545659795759475251525F5D5D7F0F55");        
+            //String status=api.getFaxStatus("575D6B05051D4A6A495544545659795759475251525F5D5D7F0F55");        
             
-            status=api.getSessionStatus("somenonexisting");
-            Assert.fail();
+            //status=api.getFaxStatus("somenonexisting");
+            //Assert.fail();
         } catch (SipgateException ex) {
             // this is expected to fail
             ex.printStackTrace();
@@ -816,17 +820,15 @@ public class SipgateApiTest {
             return;
         }
         
-        SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
-        //SipgateAPI api=new SipgateAPI("http://127.0.0.1:8000/RPC2", user,pwd,"j-lawyer Client", "1.8");
-        //SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+        
         try {
-            api.login();
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());
-            String status=api.initiateSms("sip:493524344116@sipgate.de", "sip:49172365491612341234@sipgate.de", "test message");
-            //String status=api.initiateSms("sip:493524344116@sipgate.de", "sip:491723654916@sipgate.de", "test message mit localuri und 44116");
-            //String status=api.initiateSms("sip:1404811s0@sipgate.de", "sip:491723654916@sipgate.de", "test message mit localuri und sip:1404811s0");
-            // sip:1404811s0  
-            //Assert.fail();
+            //String status=api.initiateSms("sip:493524344116@sipgate.de", "sip:49172365491612341234@sipgate.de", "test message");
+            //api.initiateSms("s0", "+491723654916", "test message mit localuri und 44116");
+            
+            //String sessionId=api.initiateCall("blafasel", "+491723654916491723654916");
+            
         } catch (SipgateException ex) {
             // this is expected to fail
             ex.printStackTrace();

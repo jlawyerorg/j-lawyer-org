@@ -674,6 +674,7 @@ public class AddressDetail {
     private String company;
     private String contact;
     private String street;
+    private String streetNumber;
     private String country;
     private String zipCode;
     private String city;
@@ -841,6 +842,21 @@ public class AddressDetail {
     public void setContact(String contact) {
         this.contact = contact;
     }
+
+    /**
+     * @return the streetNumber
+     */
+    public String getStreetNumber() {
+        return streetNumber;
+    }
+
+    /**
+     * @param streetNumber the streetNumber to set
+     */
+    public void setStreetNumber(String streetNumber) {
+        this.streetNumber = streetNumber;
+    }
+
 
     
     

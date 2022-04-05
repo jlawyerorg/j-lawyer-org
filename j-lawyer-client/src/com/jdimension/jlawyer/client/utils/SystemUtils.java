@@ -683,4 +683,19 @@ public class SystemUtils {
         }
         return hasJNLP;
     }
+    
+    public static boolean isLinux() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.contains("linux");        
+    }
+    
+    public static boolean isMacOs() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.startsWith("mac");        
+    }
+    
+    public static boolean isWindows() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.contains("win");        
+    }
 }

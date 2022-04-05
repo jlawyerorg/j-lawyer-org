@@ -664,7 +664,9 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -684,5 +686,11 @@ public interface AddressServiceLocal {
     ArrayList<String> getAllAddressIds();
     
     public void updateAddress(AddressBean dto);
+    
+    Collection<AddressTagsBean> getTags(String addressId);
+    
+    void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception;
+
+    void deleteContactTagById(String tagId) throws Exception;
     
 }

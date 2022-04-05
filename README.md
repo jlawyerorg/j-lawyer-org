@@ -31,7 +31,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Karin Beck** - *urteile-gesetze.de integration* - [karbek](https://github.com/karbek)
 * **Daniel Beck** - *urteile-gesetze.de integration* - [danbeck](https://github.com/danbeck)
 * **Patrick Baumfalk** - *Icons, Document Templates* - [PBaumfalk](https://github.com/PBaumfalk)
-* fortrieb - *Faxeingang - Aktionen auf Mehrfachselektionen* - [fortrieb](https://github.com/fortrieb)
+* **fortrieb** - *Faxeingang - Aktionen auf Mehrfachselektionen* - [fortrieb](https://github.com/fortrieb)
+* **Bentipa** - *Verbesserungen Handaktenbogen* - [Bentipa](https://github.com/Bentipa)
 
 ## License
 

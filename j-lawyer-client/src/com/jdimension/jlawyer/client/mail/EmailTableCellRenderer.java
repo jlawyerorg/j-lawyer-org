@@ -705,9 +705,6 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
         Message msg = msgC.getMessage();
 
         Object returnRenderer = null;
-        //Object returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-        //MessageContainer msgC= (MessageContainer)table.getValueAt(row, 0);
         if (msg.isExpunged()) {
             returnRenderer = super.getTableCellRendererComponent(table, "Nachricht gelöscht", isSelected, hasFocus, row, column);
             ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.ITALIC));

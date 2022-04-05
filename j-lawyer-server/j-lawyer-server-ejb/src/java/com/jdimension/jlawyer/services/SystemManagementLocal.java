@@ -664,9 +664,11 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.Collection;
+import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -690,4 +692,8 @@ public interface SystemManagementLocal {
     PartyTypeBean getPartyType(String id);
     
     AppUserBean getUser(String principalId);
+
+    List<MappingTable> getMappingTables();
+
+    MappingTable addMappingTable(MappingTable table) throws Exception;
 }

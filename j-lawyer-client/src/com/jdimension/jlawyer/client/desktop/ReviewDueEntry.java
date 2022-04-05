@@ -681,6 +681,7 @@ public class ReviewDueEntry {
     private String archiveFileId=null;
     private String archiveFileNumber=null;
     private String archiveFileName=null;
+    protected String archiveFileReason=null;
     private int type=ArchiveFileConstants.REVIEWTYPE_FOLLOWUP;
     private ArrayList<String> tags=null;
     
@@ -828,6 +829,20 @@ public class ReviewDueEntry {
      */
     public void setTags(ArrayList<String> tags) {
         this.tags = tags;
+    }
+
+    /**
+     * @return the archiveFileReason
+     */
+    public String getArchiveFileReason() {
+        return archiveFileReason;
+    }
+
+    /**
+     * @param archiveFileReason the archiveFileReason to set
+     */
+    public void setArchiveFileReason(String archiveFileReason) {
+        this.archiveFileReason = archiveFileReason;
     }
     
     

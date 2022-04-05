@@ -674,10 +674,12 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
@@ -709,7 +711,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private ArchiveFileBean caseDto;
     private ArchiveFilePanel owner;
     private JTable historyTarget;
-    private JTable partiesTarget;
     private InvolvedPartiesPanel contactsForCasePanel;
     private JTable tblReviews;
     private JPanel tagPanel;
@@ -726,13 +727,12 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JComboBox cmbGroups = null;
     private JTable tblGroups = null;
     private CaseFolderPanel caseFolders = null;
+    private JToggleButton togCaseSync=null;
 
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
-        //this.table = table;
-        //this.dlg = dlg;
 
         this.caseFolders = caseFolders;
         this.popDocumentFavorites = popDocumentFavorites;
@@ -740,7 +740,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.caseDto = caseDto;
         this.owner = owner;
         this.historyTarget = historyTarget;
-        this.partiesTarget = partiesTarget;
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
@@ -756,6 +755,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.selectDocumentWithFileName = selectDocumentWithFileName;
         this.cmbGroups = cmbGroups;
         this.tblGroups = tblGroups;
+        this.togCaseSync=togCaseSync;
 
     }
 
@@ -783,7 +783,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Collection documents = null;
         List<AddressBean> addressesForCase = null;
         List<ArchiveFileAddressesBean> involvementForCase = null;
-        Collection reviews = null;
+        Collection events = null;
         Collection tags = null;
 
         this.tagPanel.removeAll();
@@ -831,7 +831,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
                 } catch (Throwable t) {
                     log.error("Error loading form plugin", t);
-                    JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             }
 
@@ -895,48 +895,47 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             addressesForCase = fileService.getAddressesForCase(archiveFileKey);
             involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey);
 
-            this.progress("Lade Akte: Wiedervorlagen und Fristen...");
-            reviews = fileService.getReviews(this.archiveFileKey);
+            this.progress("Lade Akte: Kalender...");
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            events = calService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
-            List<String> folderIds=new ArrayList<>();
-            if(this.caseDto.getRootFolder()!=null) {
-                folderIds=this.caseDto.getRootFolder().getAllFolderIds();
+            List<String> folderIds = new ArrayList<>();
+            if (this.caseDto.getRootFolder() != null) {
+                folderIds = this.caseDto.getRootFolder().getAllFolderIds();
             }
-            HashMap<String,CaseFolderSettings> folderSettings=fileService.getCaseFolderSettings(folderIds);
+            HashMap<String, CaseFolderSettings> folderSettings = fileService.getCaseFolderSettings(folderIds);
             caseFolders.setReadOnly(readOnly || this.caseDto.getArchivedBoolean());
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCaseId(archiveFileKey);
             caseFolders.setDocuments(new ArrayList(documents));
             caseFolders.sortByDateDesc();
             caseFolders.sort();
-            
+
             List<DocumentFolderTemplate> allTemplates = fileService.getAllFolderTemplates();
-            ArrayList<String> allTemplateNames=new ArrayList<>();
-            for(DocumentFolderTemplate t: allTemplates) {
+            ArrayList<String> allTemplateNames = new ArrayList<>();
+            for (DocumentFolderTemplate t : allTemplates) {
                 allTemplateNames.add(t.getName());
             }
             this.caseFolders.setFolderTemplateNames(allTemplateNames);
-            
+
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this.owner, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            JOptionPane.showMessageDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         this.progress("Aktualisiere Dialog...");
 
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-
         this.progress("Aktualisiere Dialog: Historie...");
+        SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
         this.historyTarget.setModel(model2);
-        DateTimeStringComparator dtComparator = new DateTimeStringComparator();
+        DateTimeStringComparator dtComparator = new DateTimeStringComparator(DateUtils.DATEFORMAT_DATETIME_FULL);
         TableRowSorter htrs = new TableRowSorter(model2);
         htrs.setComparator(0, dtComparator);
         this.historyTarget.setRowSorter(htrs);
@@ -944,7 +943,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Date latestHistory = null;
         if (dtos != null) {
             for (int i = 0; i < dtos.length; i++) {
-                Object[] row = new Object[]{df.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
+                Object[] row = new Object[]{dfHistory.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
                 model2.addRow(row);
                 if (latestHistory == null) {
                     latestHistory = dtos[i].getChangeDate();
@@ -968,9 +967,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.progress("Aktualisiere Dialog: Dokumente...");
         if (documents != null && documents.size() > 0) {
-            
-                ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
-            
+
+            ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
+
         }
 
         this.progress("Aktualisiere Dialog: Mandanten...");
@@ -1005,24 +1004,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.progress("Aktualisiere Dialog: Dritte...");
 
-        this.progress("Aktualisiere Dialog: Wiedervorlagen und Fristen...");
-        String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
+        this.progress("Aktualisiere Dialog: Kalender...");
+        String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviews.setModel(model3);
         Comparator reviewsComparator = new ReviewsComparator();
         TableRowSorter rtrs = new TableRowSorter(model3);
         rtrs.setComparator(0, reviewsComparator);
         this.tblReviews.setRowSorter(rtrs);
-        this.tblReviews.getColumnModel().getColumn(4).setCellRenderer(new UserTableCellRenderer());
-        if (reviews != null) {
-            for (Object reviewObject : reviews) {
+        this.tblReviews.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
+        if (events != null) {
+            for (Object reviewObject : events) {
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
-                Object[] row = new Object[5];
-                row[0] = reviewDto;
-                row[1] = reviewDto.getReviewTypeName();
-                row[2] = reviewDto.getReviewReason();
-                row[3] = new Boolean(reviewDto.getDoneBoolean());
-                row[4] = reviewDto.getAssignee();
+                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
                 model3.addRow(row);
             }
         }
@@ -1032,10 +1026,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         rtrs.sort();
 
         this.progress("Aktualisiere Dialog: Etiketten...");
-        ArrayList<String> activeTags = new ArrayList<String>();
+        ArrayList<String> activeTags = new ArrayList<>();
         this.tagPanel.removeAll();
         this.documentTagPanel.removeAll();
-        ArrayList<String> sortedTags = new ArrayList<String>();
+        ArrayList<String> sortedTags = new ArrayList<>();
         for (Object t : tags) {
             ArchiveFileTagsBean tag = (ArchiveFileTagsBean) t;
             activeTags.add(tag.getTagName());
@@ -1070,33 +1064,45 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.owner.updateDocumentTagsOverview();
 
         SwingUtilities.invokeLater(
-                new Thread(new Runnable() {
-                    public void run() {
-                        ComponentUtils.autoSizeColumns(historyTarget);
-                        ComponentUtils.autoSizeColumns(tblReviews);
-                    }
-                }));
+                new Thread(() -> {
+                    ComponentUtils.autoSizeColumns(historyTarget);
+                    ComponentUtils.autoSizeColumns(tblReviews);
+        }));
 
         this.progress("Aktualisiere Dialog: Dokumentselektion...");
         SwingUtilities.invokeLater(
                 new Thread(() -> {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-                
-            }
-                        if (selectDocumentWithFileName != null) {
-                            if (owner instanceof ArchiveFilePanel) {
-                                ((ArchiveFilePanel) owner).selectDocument(selectDocumentWithFileName);
-                            }
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException ex) {
+
+                    }
+                    if (selectDocumentWithFileName != null) {
+                        if (owner instanceof ArchiveFilePanel) {
+                            ((ArchiveFilePanel) owner).selectDocument(selectDocumentWithFileName);
                         }
+                    }
                 }));
 
+        List<CaseSyncSettings> syncSettings=fileService.getCaseSyncs(archiveFileKey);
+        boolean syncEnabled=false;
+        for(CaseSyncSettings syncSet: syncSettings) {
+            if(syncSet.getUser().equals(UserSettings.getInstance().getCurrentUser()))
+                syncEnabled=true;
+        }
+        final boolean syncEnabled2=syncEnabled;
+        SwingUtilities.invokeLater(
+                new Thread(() -> {
+                    togCaseSync.setSelected(!syncEnabled2);
+                    togCaseSync.doClick();
+                }));
+        
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
 
         return true;
 
     }
-    
+
+
 }

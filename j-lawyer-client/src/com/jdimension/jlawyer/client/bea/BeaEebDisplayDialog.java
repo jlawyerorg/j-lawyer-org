@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
 
@@ -682,7 +683,7 @@ public class BeaEebDisplayDialog extends javax.swing.JDialog {
 
     public void setHtml(String html) {
         this.editorPane.setEditorKit(new StyledEditorKit());
-        this.editorPane.setContentType("text/html");
+        this.editorPane.setContentType(ContentTypes.TEXT_HTML);
 
         String tdRule = "th { color: #FFFFFF; }";
 
@@ -783,17 +784,15 @@ public class BeaEebDisplayDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                BeaEebDisplayDialog dialog = new BeaEebDisplayDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            BeaEebDisplayDialog dialog = new BeaEebDisplayDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
