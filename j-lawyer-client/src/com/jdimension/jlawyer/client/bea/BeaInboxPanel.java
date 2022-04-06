@@ -712,6 +712,7 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -750,7 +751,6 @@ import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
 import org.jlawyer.bea.model.Recipient;
-import org.jlawyer.bea.xjustiz.EebResponseAttributes;
 
 /**
  *
@@ -809,9 +809,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         ClientSettings cs = ClientSettings.getInstance();
         String temp = cs.getConfiguration(ClientSettings.CONF_BEA_TAGGINGENABLED, "false");
-        boolean taggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
-            taggingEnabled = true;
             this.chkCaseTagging.setSelected(true);
         }
 
@@ -1036,11 +1034,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1559,9 +1559,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.cmdReplyAll.setEnabled(false);
         }
 
-        if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.displayMessage();
-        } else if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        } else if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             if (this.tblMails.getSelectedRow() < 0) {
                 this.beaMessageContentUI.clear();
                 this.pnlActionsChild.removeAll();
@@ -2689,7 +2689,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
 
                 String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
-                if ("true".equalsIgnoreCase(temp)) {
+                if (caseId != null && "true".equalsIgnoreCase(temp)) {
                     int scrollToRow = tblMails.getSelectedRow();
                     int sortCol = -1;
                     List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
