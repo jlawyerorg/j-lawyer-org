@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -886,11 +885,6 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         });
 
         txtEventEndDateField.setEnabled(false);
-        txtEventEndDateField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtEventEndDateFieldActionPerformed(evt);
-            }
-        });
 
         jLabel6.setText("Ort:");
 
@@ -1099,20 +1093,14 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
     private void cmdEventBeginDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventBeginDateSelectorActionPerformed
         
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, this, true);
-        FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
         this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
     }//GEN-LAST:event_cmdEventBeginDateSelectorActionPerformed
 
     private void cmdEventEndDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventEndDateSelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventEndDateField, this, true);
-        FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdEventEndDateSelectorActionPerformed
-
-    private void txtEventEndDateFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtEventEndDateFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtEventEndDateFieldActionPerformed
 
     /**
      * @param args the command line arguments

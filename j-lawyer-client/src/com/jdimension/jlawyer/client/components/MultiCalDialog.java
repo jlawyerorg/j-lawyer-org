@@ -693,6 +693,10 @@ public class MultiCalDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form MultiCalDialog
+     * @param target
+     * @param parent
+     * @param modal
+     * @param holidayWarning
      */
     public MultiCalDialog(JTextField target, java.awt.Frame parent, boolean modal, boolean holidayWarning) {
         // last param is required so that the dialog inherits some graphics settings from its parent
@@ -702,8 +706,9 @@ public class MultiCalDialog extends javax.swing.JDialog {
         this.target = target;
         this.holidayWarning = holidayWarning;
         initComponents();
+        
+        this.setLocationRelativeTo(null);
 
-        //c1.se
         c1Cal = Calendar.getInstance();
         c1.setCalendar(c1Cal);
         c1.setAlwaysFireDayProperty(true);
@@ -729,6 +734,10 @@ public class MultiCalDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form MultiCalDialog
+     * @param target
+     * @param parent
+     * @param holidayWarning
+     * @param modal
      */
     public MultiCalDialog(JTextField target, java.awt.Dialog parent, boolean modal, boolean holidayWarning) {
         // last param is required so that the dialog inherits some graphics settings from its parent
@@ -738,8 +747,9 @@ public class MultiCalDialog extends javax.swing.JDialog {
         this.target = target;
         this.holidayWarning = holidayWarning;
         initComponents();
+        
+        this.setLocationRelativeTo(null);
 
-        //c1.se
         c1Cal = Calendar.getInstance();
         c1.setCalendar(c1Cal);
         c1.setAlwaysFireDayProperty(true);

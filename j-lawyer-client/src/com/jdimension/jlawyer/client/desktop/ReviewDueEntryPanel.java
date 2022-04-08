@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -705,14 +704,9 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(ReviewDueEntryPanel.class.getName());
 
-    private static final Color lightGreen = new Color(153, 255, 102);
-    private static final Color lightRed = new Color(255, 153, 153);
-
     private static final String HTML_BR = "<br/>";
 
     private ReviewDueEntry e = null;
-
-    private Color defaultColor = Color.BLACK;
 
     private String doneDescription = "";
     private String unDoneDescription = "";
@@ -722,6 +716,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form ReviewDueEntryPanel
+     * @param background
      */
     public ReviewDueEntryPanel(Color background) {
         initComponents();
@@ -733,7 +728,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         this.lblTags.setOpaque(false);
 
         ClientSettings settings = ClientSettings.getInstance();
-        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
             int offset = Integer.parseInt(fontSizeOffset);
             Font currentFont = this.lblTags.getFont();
@@ -853,8 +848,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
             this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         }
-
-        this.defaultColor = this.lblDescription.getForeground();
 
         this.lblTags.setText("");
         if (e.getTags() != null) {
@@ -1096,7 +1089,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
         JTextField hiddenField = new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;
         try {

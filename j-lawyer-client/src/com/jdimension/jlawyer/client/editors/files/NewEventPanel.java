@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.client.controls.CheckboxListItem;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -873,11 +872,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         txtEventEndDateField.setEditable(false);
         txtEventEndDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtEventEndDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
-        txtEventEndDateField.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                txtEventEndDateFieldMouseClicked(evt);
-            }
-        });
 
         cmdEventEndDateSelector.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
         cmdEventEndDateSelector.setMargin(new java.awt.Insets(2, 4, 2, 4));
@@ -1044,7 +1038,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private void cmdEventBeginDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventBeginDateSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, EditorsRegistry.getInstance().getMainWindow(), true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
         if (this.radioEventTypeEvent.isSelected())
@@ -1066,13 +1059,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         }
     }//GEN-LAST:event_cmbEventBeginTimeActionPerformed
 
-    private void txtEventEndDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtEventEndDateFieldMouseClicked
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtEventEndDateFieldMouseClicked
-
     private void cmdEventEndDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventEndDateSelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventEndDateField, EditorsRegistry.getInstance().getMainWindow(), true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdEventEndDateSelectorActionPerformed
 
@@ -1162,7 +1150,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 } else {
                     if (!StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
 
-                        // int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup
                         this.newEventListener.addReview(eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
                     }
                     for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {

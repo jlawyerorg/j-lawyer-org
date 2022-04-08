@@ -265,9 +265,6 @@
         <Property name="horizontalAlignment" type="int" value="4"/>
         <Property name="toolTipText" type="java.lang.String" value="Doppelklick um heutiges Datum zu &#xfc;bernehmen"/>
       </Properties>
-      <Events>
-        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtEventEndDateFieldMouseClicked"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="cmdEventEndDateSelector">
       <Properties>

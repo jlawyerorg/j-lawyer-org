@@ -786,9 +786,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtAdjunct.setDocument(new JTextFieldLimit(249));
 
         ServerSettings sset = ServerSettings.getInstance();
-        this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "1", "Eigenes Feld 1"));
-        this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "2", "Eigenes Feld 2"));
-        this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "3", "Eigenes Feld 3"));
+        this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "1", "Eigenes Feld 1"));
+        this.lblCustom2.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "2", "Eigenes Feld 2"));
+        this.lblCustom3.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "3", "Eigenes Feld 3"));
 
         this.txtBankCode.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.txtBankCode.getActionMap().put("Enter", new AbstractAction() {
@@ -1030,14 +1030,14 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             this.tagPanel.removeAll();
             tags = addressService.getTags(dto.getId());
 
-            ArrayList<String> activeTags = new ArrayList<String>();
-            ArrayList<String> sortedTags = new ArrayList<String>();
+            ArrayList<String> activeTags = new ArrayList<>();
+            ArrayList<String> sortedTags = new ArrayList<>();
             for (Object t : tags) {
                 AddressTagsBean tag = (AddressTagsBean) t;
                 activeTags.add(tag.getTagName());
                 sortedTags.add(tag.getTagName());
             }
-//        
+
             AppOptionGroupBean[] tagOptions = settings.getAddressTagDtos();
             for (AppOptionGroupBean aog : tagOptions) {
                 if (!sortedTags.contains(aog.getValue())) {
@@ -1054,32 +1054,10 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 } else {
                     tb.setSelected(false);
                 }
-                //tb.setEnabled(!readOnly);
                 tb.addActionListener(new AddressTagActionListener(dto.getId(), addressService, this));
                 this.tagPanel.add(tb);
             }
 
-//            ArrayList<String> activeTags = new ArrayList<String>();
-//            for (Object t : tags) {
-//                AddressTagsBean tag = (AddressTagsBean) t;
-//                activeTags.add(tag.getTagName());
-//                TagToggleButton tb = new TagToggleButton(tag.getTagName());
-//                tb.setSelected(true);
-//                tb.addActionListener(new AddressTagActionListener(dto.getId(), addressService));
-//                this.tagPanel.add(tb);
-//                
-//            }
-//
-//            AppOptionGroupBean[] tagOptions = settings.getAddressTagDtos();
-//            for (AppOptionGroupBean aog : tagOptions) {
-//                if (!activeTags.contains(aog.getValue())) {
-//                    TagToggleButton tb = new TagToggleButton(aog.getValue());
-//                    tb.setSelected(false);
-//                    tb.addActionListener(new AddressTagActionListener(dto.getId(), addressService));
-//                    this.tagPanel.add(tb);
-//                }
-//            }
-            //ThreadUtils.repaintComponent(tagPanel);
             tagPanel.repaint();
             tagPanel.updateUI();
         } catch (Exception ex) {
@@ -1107,7 +1085,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             ClientSettings settings = ClientSettings.getInstance();
             EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
             try {
-                //InitialContext context = new InitialContext(settings.getLookupProperties());
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 AddressServiceRemote aService = locator.lookupAddressServiceRemote();
@@ -1124,8 +1101,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 }
 
                 this.setAddressDTO(this.dto);
-                //fileService.remove();
-
+                
                 // we need to update the search tables because they pass their cached DTOs to the editors
                 // without updating, they would still have the old invalid data
                 try {
@@ -1190,7 +1166,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtStreet.setText("");
         this.txtWebsite.setText("");
         this.txtZipCode.setText("");
-        //this.lblArchiveFilesForAddress.setText("");
         this.pnlCasesForContact.removeAll();
 
         this.txtCustom1.setText("");
@@ -1223,7 +1198,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtBeaSafeId.setText("");
 
         this.tagPanel.removeAll();
-        ArrayList<String> sortedTags = new ArrayList<String>();
+        ArrayList<String> sortedTags = new ArrayList<>();
         AppOptionGroupBean[] tagOptions = ClientSettings.getInstance().getAddressTagDtos();
         for (AppOptionGroupBean aog : tagOptions) {
             if (!sortedTags.contains(aog.getValue())) {
@@ -1256,6 +1231,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1263,6 +1239,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
+    @Override
     public void populateOptions() {
         ClientSettings settings = ClientSettings.getInstance();
         AppOptionGroupBean[] salutations = settings.getSalutationDtos();
@@ -1298,7 +1275,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
             items[i + 1] = aogb.getValue();
 
-            //salutationItems[i+1]=salutations[i];
         }
         StringUtils.sortIgnoreCase(items);
         OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
@@ -2796,7 +2772,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 ((PopulateOptionsEditor) editor).populateOptions();
             }
             ((AddressPanel) editor).setAddressDTO(this.dto);
-            //NavigationUtils.getInstance().selectTreeModule(EditAddressDetailsPanel.class.getName());
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.openedFromEditorClass, ex);
@@ -2828,7 +2803,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
         if (this.jTabbedPane1.getSelectedIndex() == 6) {
             if (this.dto == null) {
-                //this.lblArchiveFilesForAddress.setText("");
                 this.pnlCasesForContact.removeAll();
                 return;
             }
@@ -2848,14 +2822,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     casesByPartyType.get(afb.getReferenceType().getName()).add(afb.getArchiveFileKey());
 
                 }
-                //String html = this.getArchiveFilesAsHTML(casesByPartyType);
-                //this.lblArchiveFilesForAddress.setText(html);
                 this.fillCasesForContactPanel(casesByPartyType, partyTypes);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akten zur Adresse: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 EditorsRegistry.getInstance().clearStatus();
-                return;
             }
         }
     }//GEN-LAST:event_jTabbedPane1StateChanged
@@ -2945,7 +2916,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             dlg.add(ip);
             dlg.setSize(700, 250);
             dlg.setTitle("beA Identität zur Safe ID " + this.txtBeaSafeId.getText());
-            //dlg.setSize(ip.getPreferredSize());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -2965,7 +2935,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         try {
             BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, this.txtFirstName.getText(), this.txtName.getText(), this.txtZipCode.getText(), this.txtCity.getText());
-            //dlg.setSize(ip.getPreferredSize());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
             Identity i = dlg.getSelection();
@@ -3117,16 +3086,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void cmdSelectBirthdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectBirthdayActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtBirthDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
-        //dlg.setLocation(this.getX() + this.cmdSelectBirthday.getX(), this.getY() + this.cmdSelectBirthday.getY());
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.updateAge();
     }//GEN-LAST:event_cmdSelectBirthdayActionPerformed
 
     private void cmdSelectDeathdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectDeathdayActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtDeathDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
-        //dlg.setLocation(this.getX() + this.cmdSelectBirthday.getX(), this.getY() + this.cmdSelectBirthday.getY());
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.updateAge();
     }//GEN-LAST:event_cmdSelectDeathdayActionPerformed
@@ -3141,7 +3106,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void cmdCopyAddressToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyAddressToClipboardActionPerformed
         
-                StringBuffer sb=new StringBuffer();
+                StringBuilder sb=new StringBuilder();
                 if(this.txtCompany.getText().length()>0)
                     sb.append(this.txtCompany.getText()).append(System.lineSeparator());
                 
@@ -3260,7 +3225,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
             this.lblAge.setFont(this.lblAge.getFont().deriveFont(Font.BOLD));
         } else if (age > -1) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("<html>");
             sb.append("<b>").append("Alter: " + age).append(" Jahre</b><br/>");
             if (age < 18) {
@@ -3308,7 +3273,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 lce.setRoleForeground(new Color(partyTypes.get(key).getColor()));
                 lce.setFileNumber(aFile.getFileNumber());
                 lce.setId(aFile.getId());
-                //lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.client"));
                 lce.setRole(key);
                 lce.setName(aFile.getName());
                 lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
@@ -3325,56 +3289,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         }
 
-//        for (ArchiveFileBean aFile : opponentFiles) {
-//            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-//            if (i % 2 == 0) {
-//                ep.setBackground(ep.getBackground().brighter());
-//            }
-//            CaseForContactEntry lce = new CaseForContactEntry();
-//            lce.setFileNumber(aFile.getFileNumber());
-//            lce.setId(aFile.getId());
-//            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.opponent"));
-//            lce.setName(aFile.getName());
-//            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-//            lce.setArchived(aFile.getArchivedBoolean());
-//            ep.setEntry(lce);
-//
-//            this.pnlCasesForContact.add(ep);
-//            i++;
-//            if (i == 25) {
-//                layout.setRows(i);
-//                return;
-//            }
-//
-//        }
-//
-//        for (ArchiveFileBean aFile : opponentAttFiles) {
-//            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-//            if (i % 2 == 0) {
-//                ep.setBackground(ep.getBackground().brighter());
-//            }
-//            CaseForContactEntry lce = new CaseForContactEntry();
-//            lce.setFileNumber(aFile.getFileNumber());
-//            lce.setId(aFile.getId());
-//            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.third"));
-//            lce.setName(aFile.getName());
-//            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-//            lce.setArchived(aFile.getArchivedBoolean());
-//            ep.setEntry(lce);
-//
-//            this.pnlCasesForContact.add(ep);
-//            i++;
-//            if (i == 25) {
-//                layout.setRows(i);
-//                return;
-//            }
-//
-//        }
         layout.setRows(i);
     }
 
     public static String getArchiveFilesAsHTML(Collection<ArchiveFileBean> partyFiles) {
-        StringBuffer html = new StringBuffer();
+        StringBuilder html = new StringBuilder();
         html.append("<html><body>");
         if (partyFiles.size() > 0) {
             html.append("Der Kontakt ist Beteiligte(r) in<br/><ul>");
@@ -3883,11 +3802,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            //Object object = locator.lookup("SystemManagementBean");
-            //AddressServiceRemoteHome home = (AddressServiceRemoteHome)locator.getRemoteHome("ejb/AddressServiceBean", AddressServiceRemoteHome.class);
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
 
             String id = null;
@@ -3910,15 +3825,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 eb.publishEvent(new ContactUpdatedEvent(this.dto));
             }
             this.lblHeaderInfo.setText(this.dto.toDisplayName());
-            //addressService.remove();
-
+            
             // we need to update the search tables because they pass their cached DTOs to the editors
             // without updating, they would still have the old invalid data
             try {
                 Object editor = EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName());
                 ((QuickAddressSearchPanel) editor).updateTable();
-//                editor = EditorsRegistry.getInstance().getEditor(ViewAddressPanel.class.getName());
-//                ((QuickAddressSearchPanel) editor).updateTable();
 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.openedFromEditorClass, ex);
