@@ -943,22 +943,18 @@ public class CalendarPanel extends javax.swing.JPanel {
             final int year = rev.getBeginDate().getYear() + 1900;
             final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
 
-            int ehour = 0;
-            int emin = 0;
             int eday = 0;
             int emonth = 0;
             int eyear = 0;
             Date end = null;
             if (rev.getEndDate() != null) {
-                ehour = rev.getEndDate().getHours();
-                emin = rev.getEndDate().getMinutes();
+                int ehour = rev.getEndDate().getHours();
+                int emin = rev.getEndDate().getMinutes();
                 eday = rev.getEndDate().getDate();
                 emonth = rev.getEndDate().getMonth() + 1;
                 eyear = rev.getEndDate().getYear() + 1900;
                 end = CalendarUtil.createDate(eyear, emonth, eday, ehour, emin, 0, 0);
             } else {
-                ehour = hour + 1;
-                emin = min;
                 eday = day;
                 emonth = month;
                 eyear = year;
@@ -1048,7 +1044,6 @@ public class CalendarPanel extends javax.swing.JPanel {
 
         calendarEvent.setAssignee(rev.getAssignee());
 
-        //calendarEvent.setAllDay(!rev.hasEndDateAndTime());
         calendarEvent.setAllDay(allDay);
         jCalendar.addCalendarEvent(calendarEvent);
     }
