@@ -872,7 +872,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.txtTo.getActionMap().put("Enter", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                //if (evt.getKeyCode() == evt.VK_ENTER) {
                 String[] mails = txtTo.getText().split(",");
                 int valids = 0;
                 int invalids = 0;
@@ -897,7 +896,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
 
             }
-            //}
         });
 
         this.txtCc.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
@@ -2403,7 +2401,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
             if (mi.getState()) {
                 if (!currentTo.contains(this.email)) {
-                    currentTo = currentTo + ", " + this.email;
+                    if(this.to.getText().trim().isEmpty()) {
+                        currentTo = this.email;
+                    } else {
+                        currentTo = currentTo + ", " + this.email;
+                    }
                     this.to.setText(currentTo);
                 }
 
@@ -2411,6 +2413,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 int index = currentTo.indexOf(this.email);
                 if (index > -1) {
                     currentTo = currentTo.substring(0, index - 1) + currentTo.substring(index + this.email.length(), currentTo.length());
+                    if(currentTo.endsWith(",")) {
+                        // cut off comma
+                        currentTo=currentTo.substring(0,currentTo.length()-1);
+                    }
                     this.to.setText(currentTo);
                 }
             }
