@@ -710,6 +710,9 @@ public class Main {
      */
     public static void main(String[] args) {
         
+        //System.setProperty("sun.java2d.uiScale", "1.5");  
+        //System.setProperty("flatlaf.uiScale", "1.5");
+        
         String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
@@ -780,6 +783,11 @@ public class Main {
             System.exit(1);
         }
 
+        //System.setProperty("sun.java2d.uiScale", "2.0");
+        ClientSettings cs=ClientSettings.getInstance();
+        String uiScale=cs.getConfiguration(ClientSettings.CONF_UI_SCALING, "1.0");
+        System.setProperty("sun.java2d.uiScale", uiScale);
+        
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
         
@@ -844,6 +852,7 @@ public class Main {
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
         ClientSettings settings = ClientSettings.getInstance();
+        
         String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
         settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
 
