@@ -889,7 +889,8 @@ public class LoginDialog extends javax.swing.JFrame {
                 this.pwdSshPassword.setText(cmdSshPwd);
                 this.txtTargetPort.setText(cmdSshTargetPort);
             }
-            this.cmdLoginActionPerformed(null);
+            // login without saving profile (e.g. changed user name)
+            this.loginPerformed(false);
 
         } else {
             this.setFocusToPasswordField();
@@ -1622,12 +1623,15 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            this.cmdLoginActionPerformed(null);
+            this.loginPerformed(true);
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
+        this.loginPerformed(true);
+    }//GEN-LAST:event_cmdLoginActionPerformed
 
+    private void loginPerformed(boolean saveProfile) {
         if (launching) {
             return;
         }
@@ -1753,8 +1757,10 @@ public class LoginDialog extends javax.swing.JFrame {
 
         settings.setConfiguration(ClientSettings.CONF_LASTCONNECTION, this.cmbCurrentConnection.getSelectedItem().toString());
         
-        // save profile in case user changed the user name
-        this.cmdSaveProfileActionPerformed(null);
+        if(saveProfile) {
+            // save profile in case user changed the user name
+            this.cmdSaveProfileActionPerformed(null);
+        }
 
         String serverVersion = VersionUtils.getServerVersion();
         String clientVersion = VersionUtils.getFullClientVersion();
@@ -1782,8 +1788,8 @@ public class LoginDialog extends javax.swing.JFrame {
         splash.repaint();
 
         new Thread(new SplashThread(splash, settings, this)).start();
-    }//GEN-LAST:event_cmdLoginActionPerformed
-
+    }
+    
     private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
         this.highlightSecuritySelection();
     }//GEN-LAST:event_rdSecNoneActionPerformed
