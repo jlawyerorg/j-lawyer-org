@@ -679,7 +679,6 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -694,7 +693,6 @@ import themes.colors.DefaultColorTheme;
 public class LastChangedEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(LastChangedEntryPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private LastChangedEntry e = null;
     
     private Color normalBackground=null;
@@ -703,27 +701,17 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form HitPanel
+     * @param background
      */
     public LastChangedEntryPanel(Color background) {
         initComponents();
-        //this.lblTags.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.normalBackground=background;
         this.setBackground(background);
         this.setOpaque(false);
-        //this.setBackground(new Color(238,238,238,160));
         this.lblChangedBy.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
         
-        ClientSettings settings=ClientSettings.getInstance();
-        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
-        try {
-            int offset = Integer.parseInt(fontSizeOffset);
-            Font currentFont=this.lblTags.getFont();
-            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
-        } catch (Throwable t) {
-            log.error("Could not set font size", t);
-        }
     }
     
     @Override
@@ -732,24 +720,14 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
-        //g2d.setComposite(AlphaComposite.Src.derive(this.alpha));
         g2d.setColor(getBackground());
         g2d.fillRect(0, 0, getWidth(), getHeight());
         g2d.dispose();
 
     }
 
-//    @Override
-//    public void setBackground(Color color) {
-//        super.setBackground(color); //To change body of generated methods, choose Tools | Templates.
-//        this.normalBackground=color;
-//    }
-//    
-    
-
     public void setEntry(LastChangedEntry entry) {
         this.e = entry;
-        //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
         String name = e.getName();
         if (name == null) {
             name = "";
@@ -771,9 +749,6 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         } else {
             this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b></html>");
         }
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblChangedBy.setText(e.getLastChangedBy());
         if (e.getLastChangedBy() != null && !("".equals(e.getLastChangedBy()))) {
             this.lblChangedBy.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLastChangedBy()));
@@ -785,16 +760,6 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 
         this.lblTags.setText("");
         if (e.getTags() != null) {
-//            StringBuffer sb=new StringBuffer();
-//            sb.append("<html>");
-//            for(String t: e.getTags()) {
-//                //sb.append(t).append(", ");
-//                sb.append(t).append("<br/>");
-//            }
-//            sb.append("</html>");
-//            String tagString=sb.toString();
-//            this.lblTags.setText(tagString);
-
             String tagList = TagUtils.getTagList(e.getTags());
             String shortenedTagList = tagList;
             if (shortenedTagList.length() > 105) {
@@ -805,13 +770,6 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             this.lblTags.setToolTipText(tagList);
         }
 
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
     }
 
     /**
@@ -901,16 +859,12 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        //this.setBackground(new Color(250,250,250,180));
         
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
         this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        //this.lblDescription.setForeground(Color.BLACK);
-        //this.setBackground(new Color(238,238,238,160));
         
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
         this.setBackground(this.normalBackground);
@@ -961,15 +915,11 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
-        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        //this.setBackground(new Color(250,250,250,180));
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
         this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_formMouseEntered
 
     private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
-        //this.lblDescription.setForeground(Color.BLACK);
-        //this.setBackground(new Color(238,238,238,160));
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
         this.setBackground(this.normalBackground);
     }//GEN-LAST:event_formMouseExited

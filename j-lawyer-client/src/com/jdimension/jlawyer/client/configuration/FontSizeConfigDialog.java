@@ -664,12 +664,8 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FontUtils;
-import java.awt.Font;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.plaf.FontUIResource;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -677,19 +673,23 @@ import javax.swing.plaf.FontUIResource;
  */
 public class FontSizeConfigDialog extends javax.swing.JDialog {
 
+    private static final Logger log=Logger.getLogger(FontSizeConfigDialog.class.getName());
+    
     /**
      * Creates new form FontSizeConfigDialog
+     * @param parent
+     * @param modal
      */
     public FontSizeConfigDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         
         ClientSettings settings=ClientSettings.getInstance();
-        String fontSizeOffset=settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        String uiScale=settings.getConfiguration(ClientSettings.CONF_UI_SCALING, "1.0");
         try {
-            int offset=Integer.parseInt(fontSizeOffset);
-            this.sldFontSize.setValue(offset);
-            lblScale.setText("" + offset);
+            float scale=Float.parseFloat(uiScale);
+            this.sldFontSize.setValue((int)(scale*100f));
+            lblScale.setText("" + scale);
         } catch (Throwable t) {
             //log.error("Could not set font size", t);
             lblScale.setText("0");
@@ -712,9 +712,7 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         lblScale = new javax.swing.JLabel();
         cmdOK = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jComboBox1 = new javax.swing.JComboBox();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/FontSizeConfigDialog"); // NOI18N
@@ -723,8 +721,13 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
 
         jLabel1.setText(bundle.getString("label.fontsize.scaleing")); // NOI18N
 
-        sldFontSize.setMaximum(5);
-        sldFontSize.setMinimum(-5);
+        sldFontSize.setMajorTickSpacing(10);
+        sldFontSize.setMaximum(200);
+        sldFontSize.setMinimum(100);
+        sldFontSize.setMinorTickSpacing(5);
+        sldFontSize.setPaintLabels(true);
+        sldFontSize.setPaintTicks(true);
+        sldFontSize.setSnapToTicks(true);
         sldFontSize.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 sldFontSizeStateChanged(evt);
@@ -749,11 +752,8 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel2.setText(bundle.getString("label.samples")); // NOI18N
-
-        jTextField1.setText(bundle.getString("text.sampletext")); // NOI18N
-
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jLabel3.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel3.setText("100% = Normalskalierung");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -762,16 +762,12 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblScale, javax.swing.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE))
+                        .addComponent(lblScale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(sldFontSize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jTextField1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdOK)
@@ -787,14 +783,10 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
                     .addComponent(jLabel1)
                     .addComponent(lblScale))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sldFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdOK))
@@ -819,19 +811,10 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         this.lblScale.setText("" + this.sldFontSize.getValue());
 
 
-        FontUtils.getInstance().updateDefaults(this.sldFontSize.getValue());
-        
         ClientSettings settings=ClientSettings.getInstance();
-        settings.setConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "" + this.sldFontSize.getValue());
+        settings.setConfiguration(ClientSettings.CONF_UI_SCALING, ""+((float)this.sldFontSize.getValue())/100f);
         
-        //this.jTextField1.set
-        
-        SwingUtilities.updateComponentTreeUI(this.jTextField1);
-        SwingUtilities.updateComponentTreeUI(this.cmdOK);
-        SwingUtilities.updateComponentTreeUI(this.cmdCancel);
-        SwingUtilities.updateComponentTreeUI(this.jLabel2);
-        SwingUtilities.updateComponentTreeUI(this.jComboBox1);
-
+        log.info("setting UI scaling factor to " +""+((float)this.sldFontSize.getValue())/100f);
 
     }//GEN-LAST:event_sldFontSizeStateChanged
 
@@ -869,28 +852,23 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                FontSizeConfigDialog dialog = new FontSizeConfigDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            FontSizeConfigDialog dialog = new FontSizeConfigDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdOK;
-    private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JTextField jTextField1;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel lblScale;
     private javax.swing.JSlider sldFontSize;
     // End of variables declaration//GEN-END:variables

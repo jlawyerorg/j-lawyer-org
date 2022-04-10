@@ -679,7 +679,6 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -694,14 +693,14 @@ import themes.colors.DefaultColorTheme;
 public class TaggedEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(TaggedEntryPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private TaggedEntry e = null;
     
     private Color normalBackground=null;
     private float alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
 
     /**
-     * Creates new form HitPanel
+     * Creates new form TaggedEntryPanel
+     * @param background
      */
     public TaggedEntryPanel(Color background) {
         initComponents();
@@ -713,18 +712,6 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
         
-        ClientSettings settings=ClientSettings.getInstance();
-        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
-        try {
-            int offset = Integer.parseInt(fontSizeOffset);
-            Font currentFont=this.lblTags.getFont();
-            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
-            
-            currentFont=this.lblDocument.getFont();
-            this.lblDocument.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
-        } catch (Throwable t) {
-            log.error("Could not set font size", t);
-        }
     }
     
     @Override
@@ -741,7 +728,6 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
 
     public void setEntry(TaggedEntry entry) {
         this.e = entry;
-        //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
         String name = e.getName();
         if (name == null) {
             name = "";
@@ -761,12 +747,8 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         if (reason != null && !("".equals(reason))) {
             this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
         } else {
-            //this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>---</html>");
             this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b></html>");
         }
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblChangedBy.setText(e.getLastChangedBy());
         if (e.getLastChangedBy() != null && !("".equals(e.getLastChangedBy()))) {
             this.lblChangedBy.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLastChangedBy()));
@@ -778,15 +760,6 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
 
         this.lblTags.setText("");
         if (e.getTags() != null) {
-//            StringBuffer sb = new StringBuffer();
-//            sb.append("<html>");
-//            for (String t : e.getTags()) {
-//                //sb.append(t).append(", ");
-//                sb.append(t).append("<br/>");
-//            }
-//            sb.append("</html>");
-//            String tagString = sb.toString();
-//            this.lblTags.setText(tagString);
 
             String tagList=TagUtils.getTagList(e.getTags());
             String shortenedTagList=tagList;
@@ -816,13 +789,6 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
             this.lblDocument.setToolTipText(null);
         }
 
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
     }
 
     /**
@@ -927,13 +893,11 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
         this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        //this.lblDescription.setForeground(Color.BLACK);
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
         this.setBackground(this.normalBackground);
     }//GEN-LAST:event_lblDescriptionMouseExited
