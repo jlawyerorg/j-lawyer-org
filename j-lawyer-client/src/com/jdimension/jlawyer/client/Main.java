@@ -709,9 +709,6 @@ public class Main {
      */
     public static void main(String[] args) {
         
-        //System.setProperty("sun.java2d.uiScale", "1.5");  
-        //System.setProperty("flatlaf.uiScale", "1.5");
-        
         String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
@@ -783,8 +780,20 @@ public class Main {
         }
 
         ClientSettings cs=ClientSettings.getInstance();
-        String uiScale=cs.getConfiguration(ClientSettings.CONF_UI_SCALING, "1.0");
-        System.setProperty("sun.java2d.uiScale", uiScale);
+        String uiScale=cs.getConfiguration(ClientSettings.CONF_UI_SCALING, "none");
+        if(!("none".equalsIgnoreCase(uiScale))) {
+            try {
+                float factor=Float.parseFloat(uiScale);
+                // must be a valid float
+                
+                // only set in case of !=1
+                if(factor!=1f) {
+                    System.setProperty("sun.java2d.uiScale", uiScale);
+                }
+            } catch (Throwable t) {
+                System.out.println("invalid UI scaling factor: " +uiScale);
+            }
+        }
         
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
