@@ -682,6 +682,8 @@ import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -729,7 +731,7 @@ public class SipgateAPI {
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
 
-        ArrayList<SipUser> userList=new ArrayList<>();
+        ArrayList<SipUser> userList = new ArrayList<>();
         try {
 
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
@@ -746,14 +748,14 @@ public class SipgateAPI {
                 Collection items = result.getCollection(itemsKey);
 
                 for (Object itm : items) {
-                    SipUser u=new SipUser();
+                    SipUser u = new SipUser();
                     JsonObject item = (JsonObject) itm;
                     JsonKey idKey = Jsoner.mintJsonKey("id", null);
                     u.setId(item.getString(idKey));
 
                     JsonKey fnKey = Jsoner.mintJsonKey("firstname", null);
                     u.setFirstName(item.getString(fnKey));
-                    
+
                     JsonKey lnKey = Jsoner.mintJsonKey("lastname", null);
                     u.setLastName(item.getString(lnKey));
                     userList.add(u);
@@ -798,12 +800,11 @@ public class SipgateAPI {
 //        }
 //
 //    }
-
     public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
 
         log.info("Requesting own Sipgate URIs");
-        
-        if(internalUserId==null || "".equals(internalUserId)) {
+
+        if (internalUserId == null || "".equals(internalUserId)) {
             throw new SipgateException("Sipgate internal user id must not be null");
         }
 
@@ -979,13 +980,22 @@ public class SipgateAPI {
                     JsonObject item0 = (JsonObject) itemIt.next();
                     JsonKey idKey = Jsoner.mintJsonKey("endpointId", null);
                     String id = item0.getString(idKey);
+
+                    JsonKey numberKey = Jsoner.mintJsonKey("number", null);
+                    String number = item0.getString(numberKey);
+
+                    //  there may be multiple number per id, need tu use id+callerid as key for the hashmap
                     if (!allUris.containsKey(id)) {
                         SipUri uri = new SipUri();
                         uri.setUri(id);
 
-                        allUris.put(id, uri);
+                        allUris.put(id + number, uri);
+                    } else {
+                        SipUri uri = allUris.get(id);
+                        allUris.remove(id);
+                        allUris.put(id + number, uri);
                     }
-                    SipUri uri = allUris.get(id);
+                    SipUri uri = allUris.get(id + number);
 
                     JsonKey aliasKey = Jsoner.mintJsonKey("endpointAlias", null);
                     String alias = item0.getString(aliasKey);
@@ -995,10 +1005,8 @@ public class SipgateAPI {
                     uri.getTypeOfService().add(com.jdimension.jlawyer.sip.SipUtils.TOS_VOICE);
                     //uri.setDefaultUri(true);
                     //uri.setOutgoingNumber(clientName);
-
-                    JsonKey numberKey = Jsoner.mintJsonKey("number", null);
-                    String number = item0.getString(numberKey);
                     uri.setOutgoingNumber(number);
+
                 }
 
             }
@@ -1007,7 +1015,45 @@ public class SipgateAPI {
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        return new ArrayList<>(allUris.values());
+        ArrayList unsorted = new ArrayList<>(allUris.values());
+        Collections.sort(unsorted, new Comparator() {
+            @Override
+            public int compare(Object obj1, Object obj2) {
+                if (obj1 == null) {
+                    return -1;
+                }
+
+                if (obj2 == null) {
+                    return -1;
+                }
+
+                if (!(obj1 instanceof SipUri)) {
+                    return -1;
+                }
+
+                if (!(obj2 instanceof SipUri)) {
+                    return -1;
+                }
+
+                SipUri dto1 = (SipUri) obj1;
+                SipUri dto2 = (SipUri) obj2;
+
+                String d1 = dto1.toString();
+                String d2 = dto2.toString();
+                if (d1 != null) {
+                    if (d2 != null) {
+                        return d1.compareTo(d2);
+                    } else {
+                        return -1;
+                    }
+
+                } else {
+                    return -1;
+                }
+            }
+
+        });
+        return unsorted;
     }
 
     public BalanceInformation getBalance() throws SipgateException {
@@ -1085,7 +1131,7 @@ public class SipgateAPI {
         }
     }
 
-    public String initiateCall(String localUri, String remoteUri) throws SipgateException {
+    public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
         log.info("Initiating call via Sipgate: " + remoteUri);
 
         //   "{\n" +
@@ -1098,13 +1144,25 @@ public class SipgateAPI {
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
 
-        String jsonQuery = "{\n"
-                //+ "  \"deviceId\": \"" + localUri + "\",\n"
-                + "  \"caller\": \"" + localUri + "\",\n"
-                //+ "  \"callee\": \"+4915799912345\",\n"
-                + "  \"callee\": \"" + remoteUri + "\"\n"
-                //+ "  \"callerId\": \"+4915799912345\"\n"
-                + "}";
+        String jsonQuery = null;
+        if (callerId == null || callerId.isEmpty()) {
+            jsonQuery = "{\n"
+                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
+                    + "  \"caller\": \"" + localUri + "\",\n"
+                    //+ "  \"callee\": \"+4915799912345\",\n"
+                    + "  \"callee\": \"" + remoteUri + "\"\n"
+                    //+ "  \"callerId\": \"+4915799912345\"\n"
+                    + "}";
+        } else {
+
+            jsonQuery = "{\n"
+                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
+                    + "  \"caller\": \"" + localUri + "\",\n"
+                    //+ "  \"callee\": \"+4915799912345\",\n"
+                    + "  \"callee\": \"" + remoteUri + "\",\n"
+                    + "  \"callerId\": \"" + callerId + "\"\n"
+                    + "}";
+        }
 
         String sessionId = null;
         try {

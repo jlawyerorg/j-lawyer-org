@@ -732,7 +732,11 @@ public class SipUri implements Serializable {
 
     @Override
     public String toString() {
-        return this.description + " [" + this.uri + "]";
+        if(this.outgoingNumber==null || this.outgoingNumber.isEmpty()) {
+            return this.description + " [" + this.uri + "]";
+        } else {
+            return this.description + " [" + this.uri + " / " + this.outgoingNumber + "]";
+        }
     }
 
     /**

@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -691,6 +690,10 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form CitySearchDialog
+     * @param parent
+     * @param modal
+     * @param docs2local
+     * @param convertToPdf
      */
     public SaveDocumentsLocallyDialog(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> docs2local, boolean convertToPdf) {
         super(parent, modal);
@@ -885,10 +888,8 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new SaveDocumentsLocallyDialog(new javax.swing.JFrame(), true, null, false).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new SaveDocumentsLocallyDialog(new javax.swing.JFrame(), true, null, false).setVisible(true);
         });
     }
 

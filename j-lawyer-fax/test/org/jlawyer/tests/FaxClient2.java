@@ -661,44 +661,79 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.tests;
 
-import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
-import com.jdimension.jlawyer.fax.SipUser;
+import com.jdimension.jlawyer.fax.SipgateAPI;
 import com.jdimension.jlawyer.fax.SipgateException;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface VoipServiceRemote {
+public class FaxClient2 {
 
-    BalanceInformation getBalance() throws SipgateException;
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        try {
+            // lino peters
+            // SipgateAPI sg=new SipgateAPI("token-", "215");
+            
+            // ich
+            SipgateAPI sg=new SipgateAPI("token-", "2e5");
+            //System.out.println(sg.getTypesOfService());
+            List<SipUri> allUris=sg.getOwnUris("w0");
+            //System.out.println(allUris);
+            for(SipUri u : allUris) {
+                System.out.println(u.getUri() + ": " + u.getOutgoingNumber() + " (" +u.getTypeOfService() + ")");
+            }
+            //System.out.println(sg.getBalance());
+            //System.out.println(sg.initiateSession("text", "sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate"));
+            //sg.initiateSms("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate");            
+            //System.out.println(sg.initiateFax("sip:1404811@sipgate.de", "sip:493525733880@sipgate.de", new File("/home/jens/temp/agb.pdf")));
+            //System.out.println(sg.initiateCall("p0", "+491723654916", "+4935243188822"));
+            // session id: FAX1_229b69a7d65a7ad17382e8fcc25a3c40
+            //System.out.println("Status: " + sg.getFaxStatus("FAX1_96170c65027d16748ed173c641ce2fe4"));
+            // #Sendebericht: https://secure.sipgate.de/user/fax/report.php?sid=41e761ae7b5303cf71032fa805917927
+            
+//                        result = client.execute("system.listMethods", new Vector());
+//                        m1=(HashMap)result;
+//			status=m1.get("StatusCode").toString();
+//                        statusMsg=m1.get("StatusString").toString();
+//                        Object[] listMethods=(Object[])m1.get("listMethods");
+//                        
+//                        System.out.println("listMethods: " + status + ", " + statusMsg);
+//                        for(Object o: listMethods) {
+//                            System.out.println(o.toString());
+//                        }
+//                        
+//                        
+//                        
+//                        // send fax
+//                        TreeMap<Object, Object> faxParams = new TreeMap<Object, Object>();
+//			faxParams.put("RemoteUri", "sip:491723654916@sipgate.net");
+//			faxParams.put("TOS", "fax");
+//			faxParams.put("Content", "pdf base64");
+//
+//			Object[] faxParams2 = new Object[] { faxParams };
+//			result = client.execute("samurai.SessionInitiate", faxParams2);
+//                        m1=(HashMap)result;
+//                        status=m1.get("StatusCode").toString();
+//                        statusMsg=m1.get("StatusString").toString();
+//                        String sessionId=m1.get("SessionID").toString();
+                        
+                        // You may use this ID to reference the request in other XMLRPC methods, e.g. 'samurai.SessionStatusGet' to obtain the status of the sending process.\n";
 
-    ArrayList<SipUri> getOwnUris() throws SipgateException;
+                        
+                        
+		} catch (SipgateException e) {
+			e.printStackTrace();
+		}
+        
 
-    void initiateSms(String localUri, String remoteUri, String content) throws SipgateException;
 
-    String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException;
-
-    String initiateFax(String localUri, String remoteUri, String remoteName, String pdfName, byte[] pdfData, String archiveFileId) throws SipgateException;
-
-    ArrayList<FaxQueueBean> queueList() throws Exception;
-
-    String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
-
-    void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
-
-    String reInitiateFax(String id) throws SipgateException;
-
-    void saveFaxReport(String sessionId) throws SipgateException;
-
-    List<SipUser> getUsers(String user, String password) throws SipgateException;
-    
+    }
 }
