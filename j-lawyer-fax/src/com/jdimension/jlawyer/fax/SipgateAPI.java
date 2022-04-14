@@ -1015,43 +1015,39 @@ public class SipgateAPI {
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        ArrayList unsorted = new ArrayList<>(allUris.values());
-        Collections.sort(unsorted, new Comparator() {
-            @Override
-            public int compare(Object obj1, Object obj2) {
-                if (obj1 == null) {
-                    return -1;
-                }
-
-                if (obj2 == null) {
-                    return -1;
-                }
-
-                if (!(obj1 instanceof SipUri)) {
-                    return -1;
-                }
-
-                if (!(obj2 instanceof SipUri)) {
-                    return -1;
-                }
-
-                SipUri dto1 = (SipUri) obj1;
-                SipUri dto2 = (SipUri) obj2;
-
-                String d1 = dto1.toString();
-                String d2 = dto2.toString();
-                if (d1 != null) {
-                    if (d2 != null) {
-                        return d1.compareTo(d2);
-                    } else {
-                        return -1;
-                    }
-
+        ArrayList<SipUri> unsorted = new ArrayList<>(allUris.values());
+        Collections.sort(unsorted, (Object obj1, Object obj2) -> {
+            if (obj1 == null) {
+                return -1;
+            }
+            
+            if (obj2 == null) {
+                return -1;
+            }
+            
+            if (!(obj1 instanceof SipUri)) {
+                return -1;
+            }
+            
+            if (!(obj2 instanceof SipUri)) {
+                return -1;
+            }
+            
+            SipUri dto1 = (SipUri) obj1;
+            SipUri dto2 = (SipUri) obj2;
+            
+            String d1 = dto1.toString();
+            String d2 = dto2.toString();
+            if (d1 != null) {
+                if (d2 != null) {
+                    return d1.compareTo(d2);
                 } else {
                     return -1;
                 }
+                
+            } else {
+                return -1;
             }
-
         });
         return unsorted;
     }
