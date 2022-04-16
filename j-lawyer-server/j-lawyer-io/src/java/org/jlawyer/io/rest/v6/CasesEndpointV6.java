@@ -696,7 +696,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
      * Creates a history entry for a case.
      *
      * @param id case ID
-     * @param history the history entry to be added. its id may be empty. its principalId is discarded when provided by the caller and automatically populated based on the API users authentication.
+     * @param history the history entry to be added. its id and case id may be empty. its principalId is discarded when provided by the caller and automatically populated based on the API users authentication. Provide the date / time in UTC in a format like this: "2022-05-01T13:42:37Z[UTC]"
      * @return 
      * @response 401 User not authorized
      * @response 403 User not authenticated
