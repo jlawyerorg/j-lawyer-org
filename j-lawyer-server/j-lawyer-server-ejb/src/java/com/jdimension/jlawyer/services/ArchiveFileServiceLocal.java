@@ -760,6 +760,8 @@ public interface ArchiveFileServiceLocal {
     DocumentFolderTemplate getFolderTemplate(String name);
 
     DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
+    
+    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
 
     void removeFolderFromTemplate(String folderId) throws Exception;
 

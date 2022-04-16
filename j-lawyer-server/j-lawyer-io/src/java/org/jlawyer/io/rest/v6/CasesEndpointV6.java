@@ -660,41 +660,74 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v6;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
+ */
+@Stateless
+@Path("/v6/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class CasesEndpointV6 implements CasesEndpointLocalV6 {
+
+    private static final Logger log = Logger.getLogger(CasesEndpointV6.class.getName());
+
+    /**
+     * Creates a history entry for a case.
+     *
+     * @param id case ID
+     * @param history the history entry to be added. its id may be empty. its principalId is discarded when provided by the caller and automatically populated based on the API users authentication.
+     * @return 
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        return s;
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/history")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createHistory(@PathParam("id") String id, RestfulCaseHistoryV5 history) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            ArchiveFileBean afb=cases.getArchiveFile(id);
+            if(afb!=null) {
+                ArchiveFileHistoryBean newHistory=new ArchiveFileHistoryBean();
+                newHistory.setArchiveFileKey(afb);
+                newHistory.setId(history.getId());
+                newHistory.setChangeDate(history.getChangeDate());
+                newHistory.setChangeDescription(history.getChangeDescription());
+                cases.addHistory(afb.getId(), newHistory);
+            }
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
     }
+    
 }
