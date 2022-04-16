@@ -660,43 +660,73 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v6;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/security/metadata
+ */
+@Stateless
+@Path("/v6/security")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
+    
+    private static final Logger log = Logger.getLogger(SecurityEndpointV6.class.getName());
+
+    /**
+     * Returns all user available in the system who have at least the permission to log in
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        return s;
+    @Path("/users")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getEnabledUsers() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+            List<AppUserBean> enabledUsers=security.getUsersHavingRole("loginRole");
+            ArrayList<RestfulUserV6> resultList=new ArrayList<>();
+            for(AppUserBean au: enabledUsers) {
+                RestfulUserV6 u=new RestfulUserV6();
+                u.setAbbreviation(au.getAbbreviation());
+                u.setAreaCode(au.getAreaCode());
+                u.setCountryCode(au.getCountryCode());
+                u.setDisplayName(au.getDisplayName());
+                u.setLawyer(u.isLawyer());
+                u.setPrincipalId(au.getPrincipalId());
+                resultList.add(u);
+            }
+
+            Response res = Response.ok(resultList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not determine enabled users", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
     }
+
 }

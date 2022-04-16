@@ -660,43 +660,110 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v6.pojo;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        return s;
+/**
+ *
+ * @author jens
+ */
+public class RestfulUserV6 {
+    
+    protected String principalId;
+    protected boolean lawyer;
+    protected String countryCode;
+    protected String areaCode;
+    
+    protected String abbreviation;
+    
+    protected String displayName;
+    
+    public RestfulUserV6() {
+        
     }
+
+    /**
+     * @return the principalId
+     */
+    public String getPrincipalId() {
+        return principalId;
+    }
+
+    /**
+     * @param principalId the principalId to set
+     */
+    public void setPrincipalId(String principalId) {
+        this.principalId = principalId;
+    }
+
+    /**
+     * @return the lawyer
+     */
+    public boolean isLawyer() {
+        return lawyer;
+    }
+
+    /**
+     * @param lawyer the lawyer to set
+     */
+    public void setLawyer(boolean lawyer) {
+        this.lawyer = lawyer;
+    }
+
+    /**
+     * @return the countryCode
+     */
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    /**
+     * @param countryCode the countryCode to set
+     */
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    /**
+     * @return the areaCode
+     */
+    public String getAreaCode() {
+        return areaCode;
+    }
+
+    /**
+     * @param areaCode the areaCode to set
+     */
+    public void setAreaCode(String areaCode) {
+        this.areaCode = areaCode;
+    }
+
+    /**
+     * @return the abbreviation
+     */
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    /**
+     * @param abbreviation the abbreviation to set
+     */
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+    
 }

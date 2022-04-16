@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -678,6 +679,8 @@ import javax.ejb.Local;
 public interface SecurityServiceLocal {
 
     Collection<Group> getAllGroups();
+    
+    List<AppUserBean> getUsersHavingRole(String role) throws Exception;
 
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
 
