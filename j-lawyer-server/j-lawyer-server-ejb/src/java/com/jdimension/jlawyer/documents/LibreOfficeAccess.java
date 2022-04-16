@@ -703,7 +703,7 @@ public class LibreOfficeAccess {
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
-    public static void setPlaceHolders(String file, Hashtable values) throws Exception {
+    public static void setPlaceHolders(String file, Hashtable values, ArrayList<String> formsPrefixes) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
@@ -1002,10 +1002,16 @@ public class LibreOfficeAccess {
                         scriptPlaceHolderKey=scriptPlaceHolderKey.substring(0,scriptPlaceHolderKey.length()-2);
                         scriptContent=scriptContent.replaceAll(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
                         //scriptContent=scriptContent.replace(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
+                        
+                        
                     }
                 }
                 scriptContent=scriptContent.replace("„", "\"");
                 scriptContent=scriptContent.replace("“", "\"");
+                
+                // required for "WENNVORHANDEN"
+                scriptContent=scriptContent.replace("\"\"", "\"");
+                
 
                 try (InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");
                     InputStreamReader isr = new InputStreamReader(is);
@@ -1020,6 +1026,14 @@ public class LibreOfficeAccess {
 
                     String myclass = sb.toString();
                     myclass = myclass.replace("SMARTTEMPLATESCRIPT", scriptContent);
+                    
+                    StringBuilder allFormPrefixes=new StringBuilder();
+                    if(formsPrefixes!=null) {
+                        for(String fp: formsPrefixes)
+                            allFormPrefixes.append("-").append(fp).append("-");
+                    }
+                    myclass=myclass.replace("ALLFORMPREFIXES", allFormPrefixes.toString());
+                    
                     GroovyClassLoader gcl = new GroovyClassLoader();
                     Class calcClass = gcl.parseClass(myclass);
                     GroovyObject calc = (GroovyObject) calcClass.newInstance();

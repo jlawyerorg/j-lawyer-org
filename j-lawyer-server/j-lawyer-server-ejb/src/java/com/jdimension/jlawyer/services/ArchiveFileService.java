@@ -767,6 +767,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private CalendarServiceLocal calendarFacade;
     @EJB
     private CaseSyncSettingsFacadeLocal caseSyncFacade;
+    @EJB
+    private FormsServiceLocal formsFacade;
 
     // custom hooks support
     @Inject
@@ -3277,6 +3279,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        
+        List<ArchiveFileFormsBean> formTypesForCase=this.formsFacade.getFormsForCase(archiveFileId);
+        ArrayList<String> formsPrefixes=new ArrayList<>();
+        if(formTypesForCase!=null) {
+            for(ArchiveFileFormsBean form: formTypesForCase) {
+                formsPrefixes.add(form.getPlaceHolder());
+            }
+        }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
@@ -3306,7 +3316,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         SystemManagement.copyFile(src, dst);
 
-        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues);
+        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues, formsPrefixes);
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         String docId = idGen.getID().toString();

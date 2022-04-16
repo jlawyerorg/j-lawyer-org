@@ -770,7 +770,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1130,7 +1130,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1184,7 +1184,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-emptyline-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-emptyline-run.odt", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             Assert.fail();
@@ -1250,7 +1250,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph, null);
 //            int count=0;
 //            do {
 //                count=LibreOfficeAccess.setPlaceHoldersOnDedicatedLines("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
@@ -1308,7 +1308,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.ods", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-run.ods", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             t.printStackTrace();
