@@ -54,6 +54,10 @@ class SmartTemplate {
         return WENNLEER(s1, then, "");
     }
     
+    String WENNFALLDATEN(String s1, String then) {
+        return WENNFALLDATEN(s1, then, "");
+    }
+    
     String WENNFALLDATEN(String s1, String then, String otherwise) {
         // this variable value will be replaced by LibreOfficeAccess before execution
         String allFormPrefixes="ALLFORMPREFIXES";
