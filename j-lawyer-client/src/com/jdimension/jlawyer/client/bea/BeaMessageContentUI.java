@@ -855,8 +855,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
             lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
-        lblSubject.setText(msg.getSubject());
-        lblSubject.setToolTipText(lblSubject.getText());
+        String shortened=msg.getSubject();
+        shortened=shortened.substring(0,Math.min(150, shortened.length()));
+        lblSubject.setText(shortened);
+        lblSubject.setToolTipText(msg.getSubject());
         lblFrom.setText(msg.getSenderName());
         lblCaseNumber.setText(msg.getReferenceNumber());
         lblReferenceJustice.setText(msg.getReferenceJustice());
