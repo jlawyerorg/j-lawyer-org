@@ -693,10 +693,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
@@ -711,10 +709,7 @@ import org.jlawyer.data.tree.TreeNodeUtils;
 @SecurityDomain("j-lawyer-security")
 public class CustomerRelationsService implements CustomerRelationsServiceRemote, CustomerRelationsServiceLocal {
     
-    private static Logger log=Logger.getLogger(CustomerRelationsService.class.getName());
-    
-    @Resource
-    private SessionContext context;
+    private static final Logger log=Logger.getLogger(CustomerRelationsService.class.getName());
     
     @EJB
     private CampaignFacadeLocal campaignFacade;
@@ -776,7 +771,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     @RolesAllowed({"readAddressRole"})
     public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception {
         List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign);
-        List<AddressBean> result=new ArrayList<AddressBean>();
+        List<AddressBean> result=new ArrayList<>();
         for(CampaignAddress ca: cas) {
             result.add(ca.getAddressKey());
         }

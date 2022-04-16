@@ -740,12 +740,12 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
 
     @Override
     public void cancelledEvent() {
-
+        // not implemented
     }
 
     @Override
     public void finishedEvent() {
-
+        // not implemented
     }
 
     /**
