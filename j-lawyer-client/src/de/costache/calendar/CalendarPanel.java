@@ -1116,7 +1116,6 @@ public class CalendarPanel extends javax.swing.JPanel {
             } else {
                 //System.out.println("Selection cleared ");
             }
-            //System.out.println("\n");
         });
 
         //jCalendar.a
@@ -1126,8 +1125,6 @@ public class CalendarPanel extends javax.swing.JPanel {
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
-//            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
-//                    + event.getIntervalEnd() + "\n");
 
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
@@ -1139,10 +1136,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
 
             NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), true, sel);
-            dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-            if ((event.getIntervalEnd().getTime() - event.getIntervalStart().getTime()) > (30 * 60 * 1000l)) {
-                dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
-            }
+            dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());
             FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
