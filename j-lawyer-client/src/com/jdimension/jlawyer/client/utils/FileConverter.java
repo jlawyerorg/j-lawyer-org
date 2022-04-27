@@ -677,7 +677,8 @@ public class FileConverter {
 
     private static final Logger log = Logger.getLogger(FileConverter.class.getName());
 
-    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".jpeg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
+    public static final List<String> INPUTTYPES_LIBREOFFICE = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".jpeg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
+    public static final List<String> INPUTTYPES_MSOFFICE = Arrays.asList(".doc", ".dot", ".docx", ".dotx", ".docm", ".dotm", ".rtf", ".wpd", ".xls", ".xlsx", ".xlsm", ".xlsb", ".xlt", ".xltx", ".xltm", ".csv", ".ppt", ".pptx", ".pptm", ".pps", ".ppsx", ".ppsm", ".pot", ".potx", ".potm", ".vsd", ".vsdx", ".vsdm", ".svg", ".pub", ".msg", ".vcf", ".ics", ".mpp", ".odt", ".odp", ".ods");
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     public static FileConverter getInstance() {
@@ -704,9 +705,15 @@ public class FileConverter {
         return null;
     }
 
-    protected boolean validateInputFormat(String url) {
+    public boolean validateInputFormat(String url) {
+        
+        return validateInputFormat(url, INPUTTYPES_LIBREOFFICE);
+        
+    }
+    
+    protected boolean validateInputFormat(String url, List<String> supportedFormats) {
         String lUrl = url.toLowerCase();
-        for (String s : INPUTTYPES) {
+        for (String s : supportedFormats) {
             if (lUrl.endsWith(s)) {
                 return true;
             }
@@ -720,6 +727,20 @@ public class FileConverter {
     public static class WindowsFileConverter extends FileConverter {
 
         private WindowsFileConverter() {
+        }
+
+        @Override
+        public boolean validateInputFormat(String url) {
+
+            ClientSettings set = ClientSettings.getInstance();
+            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
+            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
+
+            if (wordProcessorMicrosoft) {
+                return validateInputFormat(url, INPUTTYPES_MSOFFICE) || validateInputFormat(url, INPUTTYPES_LIBREOFFICE);
+            } else {
+                return super.validateInputFormat(url);
+            }
         }
 
         @Override
@@ -774,9 +795,11 @@ public class FileConverter {
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
-            if (wordProcessorMicrosoft) {
+            if (wordProcessorMicrosoft && super.validateInputFormat(url, INPUTTYPES_MSOFFICE)) {
+                // when using word and word supports the input format
                 return convertToPDFMS(url);
             } else {
+                // otherwise fall back to LO
                 return convertToPDFLO(url);
             }
         }
