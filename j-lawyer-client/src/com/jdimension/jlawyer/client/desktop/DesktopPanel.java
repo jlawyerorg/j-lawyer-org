@@ -700,7 +700,6 @@ import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -711,11 +710,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private static final Logger log = Logger.getLogger(DesktopPanel.class.getName());
 
     private Image backgroundImage = null;
-    private ArrayList<ArchiveFileBean> myChanges = new ArrayList();
-    private ArrayList<ArchiveFileBean> otherChanges = new ArrayList();
-
-    private ArrayList<ArchiveFileBean> reviewsDue = new ArrayList();
-    private ArrayList<ArchiveFileBean> tagged = new ArrayList();
 
     private boolean initializing = false;
 
@@ -762,23 +756,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
         
         
-        //this.frmMyAppointments.setVisible(false);
         Date now = new Date();
         SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
-        //SimpleDateFormat dfWeekday = new SimpleDateFormat("EEE");
-        //this.lblWeekday.setText("(" + dfWeekday.format(now) + ")");
         SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
-        //SimpleDateFormat dfMonth = new SimpleDateFormat("MMM");
-        //this.lblMonth.setText(dfMonth.format(now));
         SimpleDateFormat dfDay = new SimpleDateFormat("dd");
-        //this.lblDay.setText(dfDay.format(now) + ".");
         this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
 
         this.jSplitPane1.setDividerLocation(0.5d);
 
         ClientSettings settings = ClientSettings.getInstance();
-        //String h=settings.getConfiguration(ClientSettings.CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT, "100");
-
+        
         UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
         String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
         if ("true".equalsIgnoreCase(temp)) {
@@ -796,8 +783,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         if ("true".equalsIgnoreCase(temp)) {
             this.chkOnlyMyTagged.setSelected(true);
         }
-
-        //temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, "");
 
         this.initializing = false;
 
@@ -890,15 +875,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 //        this.lblArchiveFileCount.setText(""+count);
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-//        this.desktopMain.setBackgroundImage(image);
     }
 
+    @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1477,7 +1464,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         // TODO add your handling code here:
-        //this.jSplitPane1.setDividerLocation(0.5d);
     }//GEN-LAST:event_formComponentResized
 
     public void updateUserIcon() {
@@ -1487,16 +1473,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void lblUserIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblUserIconMouseClicked
         UserProfileDialog dlg = new UserProfileDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setTitle("Anreden");
-        //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_lblUserIconMouseClicked
 
     private void lblUserNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblUserNameMouseClicked
         UserProfileDialog dlg = new UserProfileDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setTitle("Anreden");
-        //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_lblUserNameMouseClicked
@@ -1638,7 +1620,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     @Override
     public void onEvent(Event e) {
-        //System.out.println("Consumed event with type " + e.getType());
         if (e instanceof AutoUpdateEvent) {
 
             this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getIcon());
@@ -1658,7 +1639,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.revalidate();
             this.repaint();
         } else if (e instanceof ScannerStatusEvent) {
-            //this.lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png")));
             this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
             this.lblScans.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
             if(((ScannerStatusEvent) e).getFileNames().size()>0)
@@ -1673,7 +1653,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if (e instanceof FaxStatusEvent) {
 
             this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
-            //this.lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png")));
             if (((FaxStatusEvent) e).getFailed() > 0) {
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
@@ -1695,7 +1674,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.repaint();
             
         } else if (e instanceof EmailStatusEvent) {
-            //this.lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png")));
             this.lblUnreadMail.setText("" + ((EmailStatusEvent) e).getUnread());
             this.lblUnreadMail.setToolTipText(((EmailStatusEvent) e).getUnread() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.unreadmails"));
             this.lblUnreadMail.setEnabled(true);
