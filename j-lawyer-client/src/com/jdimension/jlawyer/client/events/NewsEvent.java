@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.events;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ShowURLDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
 import java.awt.Desktop;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -692,7 +691,7 @@ public class NewsEvent extends Event {
     }
 
     public String getLongDescriptionHtml() {
-        StringBuffer newsBuff=new StringBuffer();
+        StringBuilder newsBuff=new StringBuilder();
                             newsBuff.append("<html><p align=\"center\">");
                             newsBuff.append(summary);
                             newsBuff.append(" (");
@@ -716,7 +715,6 @@ public class NewsEvent extends Event {
 
                             @Override
                             public void mouseClicked(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
 
                                 ClientSettings settings = ClientSettings.getInstance();
                                 settings.setConfiguration("client.desktop.news.lastconfirmed", published);
@@ -730,7 +728,6 @@ public class NewsEvent extends Event {
                                             uri = new URI(url);
                                             desktop.browse(uri);
                                         } catch (Throwable t) {
-                                            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Information ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                                             ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
                                             dlg.setVisible(true);
                                         }
@@ -743,7 +740,6 @@ public class NewsEvent extends Event {
 
                                 }
                                 if (!browserSupport) {
-                                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Information ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                                     ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
                                     dlg.setVisible(true);
                                 }
