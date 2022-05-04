@@ -702,6 +702,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of SystemStateTimerTask
+     * @param owner
      */
     public AutoUpdateTimerTask(Component owner) {
         super();
@@ -774,7 +775,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             reader.close();
             is.close();
             String updateContent = sb.toString();
-//            System.out.println(updateContent);
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             try {
@@ -789,15 +789,12 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             NodeList nl = doc.getElementsByTagName("version");
             String version = nl.item(0).getTextContent();
-//            System.out.println(version);
 
             nl = doc.getElementsByTagName("changelogurl");
             String changelog = nl.item(0).getTextContent();
-//            System.out.println(changelog);
 
             nl = doc.getElementsByTagName("published");
             String published = nl.item(0).getTextContent();
-//            System.out.println(published);
 
             nl = doc.getElementsByTagName("news-published");
             String newsPublished = nl.item(0).getTextContent();
@@ -806,7 +803,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("news-summary");
             String newsSummary = nl.item(0).getTextContent();
 
-            //if (!VersionUtils.getFullClientVersion().equals(version)) {
             if (VersionUtils.isVersionGreater(version, VersionUtils.getFullClientVersion())) {
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new AutoUpdateEvent(version, published, changelog));
@@ -815,7 +811,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             String lastConfirmed = settings.getConfiguration("client.desktop.news.lastconfirmed", "dummy");
             if (!newsPublished.equals(lastConfirmed)) {
-                //EditorsRegistry.getInstance().newsNotification(newsSummary, newsPublished, newsUrl);
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new NewsEvent(newsSummary, newsPublished, newsUrl));
             }
@@ -858,11 +853,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             String hashtext = bigInt.toString(16);
 
-//            while (hashtext.length() < 32) {
-//
-//                hashtext = "0" + hashtext;
-//
-//            }
             return hashtext;
         } catch (Throwable t) {
             log.error(t);
