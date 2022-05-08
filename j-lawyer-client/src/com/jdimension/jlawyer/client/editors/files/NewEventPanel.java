@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.controls.CheckboxListItem;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -679,6 +680,7 @@ import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -751,10 +753,13 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
         DefaultListModel listMod = new DefaultListModel();
+        ArrayList<String> reasonsAutoComplete=new ArrayList<>();
         for (String entry : reviewReasonItems) {
             listMod.addElement(new CheckboxListItem(entry));
+            reasonsAutoComplete.add(entry);
         }
         this.lstReviewReasons.setModel(listMod);
+        ComponentUtils.addAutoComplete(txtReviewReason, reasonsAutoComplete.toArray(new String[0]));
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
 

@@ -1510,6 +1510,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.newEventPanel.populateOptions();
+        
+        ComponentUtils.addAutoComplete(this.cmbSubjectField);
+        ComponentUtils.addAutoComplete(this.cmbLawyer);
+        ComponentUtils.addAutoComplete(this.cmbAssistant);
     }
 
     public void selectDocument(String fileName) {

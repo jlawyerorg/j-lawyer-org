@@ -878,6 +878,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         StringUtils.sortIgnoreCase(reviewReasonItems);
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
         this.cmbReviewReason.setModel(reviewReasonModel);
+        ComponentUtils.addAutoComplete(this.cmbReviewReason);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
@@ -889,6 +890,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
+        ComponentUtils.addAutoComplete(this.cmbReviewAssignee);
 
         DefaultComboBoxModel dm = new DefaultComboBoxModel();
         dm.addElement("");

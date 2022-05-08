@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
@@ -750,7 +751,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.dto = null;
         initComponents();
         this.lblAge.setText("");
-
+        
         if (this instanceof NewAddressPanel) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
         } else {
@@ -835,6 +836,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         }
         this.cmbInsurance.setSelectedItem(value);
+        ComponentUtils.addAutoComplete(this.cmbInsurance);
     }
 
     public void setMotorInsurances(List<InsuranceInfo> insurances) {
@@ -847,6 +849,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         }
         this.cmbMotorInsurance.setSelectedItem(value);
+        ComponentUtils.addAutoComplete(this.cmbMotorInsurance);
     }
 
     public void setOpenedFromEditorClass(String editorClassName) {
@@ -1265,6 +1268,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         populateOptionsCombobox(degreeSuffixes, this.cmbDegreeSuffix);
         populateOptionsCombobox(professions, this.cmbProfession);
         populateOptionsCombobox(roles, this.cmbRole);
+        
+        ComponentUtils.addAutoComplete(this.cmbSalutation);
+        ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
+        ComponentUtils.addAutoComplete(this.cmbTitle);
+        ComponentUtils.addAutoComplete(this.cmbTitleInAddress);
+        ComponentUtils.addAutoComplete(this.cmbNationality);
+        ComponentUtils.addAutoComplete(this.cmbCountry);
+        ComponentUtils.addAutoComplete(this.cmbLegalForm);
+        ComponentUtils.addAutoComplete(this.cmbDegreePrefix);
+        ComponentUtils.addAutoComplete(this.cmbDegreeSuffix);
+        ComponentUtils.addAutoComplete(this.cmbProfession);
+        ComponentUtils.addAutoComplete(this.cmbRole);
 
     }
 

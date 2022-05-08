@@ -716,6 +716,9 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
+//import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
+//import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
+//import org.jdesktop.swingx.autocomplete.ListAdaptor;
 
 /**
  *
@@ -771,6 +774,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void initialize() {
         initComponents();
+        
+//        String[] data = {"One <dings>", "Two", "three", "four"}; 
+//        JList dataList = new JList(data); 
+//        ListAdaptor listAdaptor=new ListAdaptor(dataList, txtTo);
+//        AutoCompleteDocument autoCompDoc=new AutoCompleteDocument(listAdaptor, false);
+//        AutoCompleteDecorator.decorate(txtTo, autoCompDoc, listAdaptor);
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
@@ -967,6 +976,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         StringUtils.sortIgnoreCase(reviewReasonItems);
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
         this.cmbReviewReason.setModel(reviewReasonModel);
+        ComponentUtils.addAutoComplete(this.cmbReviewReason);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
@@ -978,6 +988,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
+        ComponentUtils.addAutoComplete(this.cmbReviewAssignee);
 
         DefaultComboBoxModel dm = new DefaultComboBoxModel();
         dm.addElement("");

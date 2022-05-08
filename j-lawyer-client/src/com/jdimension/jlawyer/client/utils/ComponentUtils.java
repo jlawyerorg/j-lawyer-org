@@ -680,6 +680,7 @@ import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.MenuElement;
 import javax.swing.border.Border;
@@ -688,6 +689,10 @@ import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Logger;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
+import org.jdesktop.swingx.autocomplete.ComboBoxAdaptor;
+import org.jdesktop.swingx.autocomplete.ListAdaptor;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -930,5 +935,19 @@ public class ComponentUtils {
         });
         split.setBorder(null);
 
+    }
+    
+    public static void addAutoComplete(JComboBox cmb) {
+//        ComboBoxAdaptor cmbAdaptor = new ComboBoxAdaptor(cmb);
+//        AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(cmbAdaptor, false);
+//        AutoCompleteDecorator.decorate(cmb);
+        AutoCompleteDecorator.decorate(cmb);
+    }
+    
+    public static void addAutoComplete(JTextField txt, String[] candidates) {
+        JList dataList = new JList(candidates);
+        ListAdaptor listAdaptor = new ListAdaptor(dataList, txt);
+        AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(listAdaptor, false);
+        AutoCompleteDecorator.decorate(txt, autoCompDoc, listAdaptor);
     }
 }
