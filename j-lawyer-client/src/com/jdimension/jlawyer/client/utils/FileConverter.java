@@ -679,7 +679,7 @@ public class FileConverter {
 
     protected static final List<String> INPUTTYPES_LIBREOFFICE = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".jpeg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
     protected static final List<String> INPUTTYPES_MSOFFICE = Arrays.asList(".doc", ".dot", ".docx", ".dotx", ".docm", ".dotm", ".rtf", ".wpd", ".xls", ".xlsx", ".xlsm", ".xlsb", ".xlt", ".xltx", ".xltm", ".csv", ".ppt", ".pptx", ".pptm", ".pps", ".ppsx", ".ppsm", ".pot", ".potx", ".potm", ".vsd", ".vsdx", ".vsdm", ".svg", ".pub", ".msg", ".vcf", ".ics", ".mpp", ".odt", ".odp", ".ods");
-    protected static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
+    public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     public static FileConverter getInstance() {
         if (SystemUtils.isWindows()) {
