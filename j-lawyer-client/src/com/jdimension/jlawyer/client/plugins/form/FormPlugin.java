@@ -790,6 +790,7 @@ public class FormPlugin implements Comparable {
 
         } catch (Throwable t) {
             log.error("error loading form plugin", t);
+            t.printStackTrace();
         }
         return null;
     }
