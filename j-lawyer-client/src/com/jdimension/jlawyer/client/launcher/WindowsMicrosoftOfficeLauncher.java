@@ -675,9 +675,9 @@ import org.apache.log4j.Logger;
 public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
 
     private static final Logger log = Logger.getLogger(WindowsMicrosoftOfficeLauncher.class.getName());
-    private static String winwordBinary = "winword.exe";
-    private static String powerpointBinary = "powerpnt.exe";
-    private static String excelBinary = "excel.exe";
+    private static final String WINWORD_BINARY = "winword.exe";
+    private static final String POWERPOINT_BINARY = "powerpnt.exe";
+    private static final String EXCEL_BINARY = "excel.exe";
 
     public WindowsMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
@@ -709,13 +709,13 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
 
                     Process p = null;
                     try {
-                        String binary=winwordBinary;
+                        String binary=WINWORD_BINARY;
                         if(LauncherFactory.supportedByMicrosoftOfficeWord(url))
-                            binary=winwordBinary;
+                            binary=WINWORD_BINARY;
                         else if(LauncherFactory.supportedByMicrosoftOfficeExcel(url))
-                            binary=excelBinary;
+                            binary=EXCEL_BINARY;
                         else if(LauncherFactory.supportedByMicrosoftOfficePowerPoint(url))
-                            binary=powerpointBinary;
+                            binary=POWERPOINT_BINARY;
                         
                         p = Runtime.getRuntime().exec(new String[]{binary, url});
                         log.debug("using " + binary + " for " + odoc.getName());
