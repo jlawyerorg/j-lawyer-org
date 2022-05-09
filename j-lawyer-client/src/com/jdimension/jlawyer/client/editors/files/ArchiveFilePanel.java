@@ -4573,17 +4573,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         // To replace document, old one gets removed first, then the new is uploaded
                         if (replaceDocument) {
-                            final String searchName = newName;                            
+                            final String searchName = newName;
+                            // Check documents to find Bean for name
                             ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
                                     .filter(iterDoc -> searchName.equals(iterDoc.getName()))
                                     .findAny()
                                     .orElse(null);
-                            // Check if the document exists (although validated above through #doesDocumentExist)
+                            // Check if the document was found
                             if(document != null){        
                                 // First move document to bin
                                 remote.removeDocument(document.getId());
                                 // Then remove from bin
                                 remote.removeDocumentFromBin(document.getId());
+                                // Then remove from view
                                 caseFolderPanel1.removeDocument(document);
                             }                            
                         }
