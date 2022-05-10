@@ -766,7 +766,7 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
     
     private boolean isBinaryInPathEnv(String binary) {
         String pathEnv=System.getenv("PATH");
-        String paths[]=pathEnv.split(";");
+        String[] paths=pathEnv.split(";");
         for(String p: paths) {
             if(!(p.endsWith(File.separator)))
                 p=p + File.separator;
