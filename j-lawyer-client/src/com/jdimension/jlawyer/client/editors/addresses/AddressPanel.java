@@ -1029,9 +1029,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            Collection tags = null;
             this.tagPanel.removeAll();
-            tags = addressService.getTags(dto.getId());
+            Collection tags = addressService.getTags(dto.getId());
 
             ArrayList<String> activeTags = new ArrayList<>();
             ArrayList<String> sortedTags = new ArrayList<>();
@@ -1222,6 +1221,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         this.jPanel1.setOpaque(false);
@@ -2826,12 +2826,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection col = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
-                Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType = new Hashtable<String, ArrayList<ArchiveFileBean>>();
+                Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType = new Hashtable<>();
                 Hashtable<String, PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypesTable();
                 for (Object o : col) {
                     ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
                     if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
-                        ArrayList<ArchiveFileBean> cases = new ArrayList<ArchiveFileBean>();
+                        ArrayList<ArchiveFileBean> cases = new ArrayList<>();
                         casesByPartyType.put(afb.getReferenceType().getName(), cases);
                     }
                     casesByPartyType.get(afb.getReferenceType().getName()).add(afb.getArchiveFileKey());
@@ -2901,7 +2901,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void cmdNewFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewFaxActionPerformed
         if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-            ArrayList<AddressBean> list = new ArrayList<AddressBean>();
+            ArrayList<AddressBean> list = new ArrayList<>();
             list.add(this.dto);
             SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, list, this.dto, null);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -3296,11 +3296,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
                 this.pnlCasesForContact.add(ep);
                 i++;
-                if (i == 25) {
-                    layout.setRows(i);
-                    return;
-                }
-
             }
         }
 
