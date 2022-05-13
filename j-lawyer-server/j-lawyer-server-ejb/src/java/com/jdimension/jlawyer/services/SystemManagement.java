@@ -775,8 +775,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<BankDataBean> list = new ArrayList<>();
-        try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -798,8 +797,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Bankensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                if(rs!=null)
+                if (rs != null) {
                     rs.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -814,8 +814,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<CityDataBean> list = new ArrayList<>();
-        try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
 
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
@@ -838,8 +837,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Postleitzahlensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                if(rs!=null)
+                if (rs != null) {
                     rs.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -876,8 +876,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllBankData() {
         JDBCUtils utils = new JDBCUtils();
-        try (Connection con = utils.getConnection();
-                Statement st = con.createStatement()) {
+        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
 
             st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
@@ -906,8 +905,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllCityData() {
         JDBCUtils utils = new JDBCUtils();
-        try (Connection con = utils.getConnection();
-                Statement st = con.createStatement()) {
+        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
             st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
@@ -966,7 +964,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static void createFile(String file, byte[] data) throws Exception {
-        try (FileOutputStream fos = new FileOutputStream(file)) {
+        try ( FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(data);
 
         }
@@ -982,8 +980,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        try (InputStream in = new FileInputStream(f1);
-                OutputStream out = new FileOutputStream(f2)) {
+        try ( InputStream in = new FileInputStream(f1);  OutputStream out = new FileOutputStream(f2)) {
 
             byte[] buf = new byte[1024];
             int len;
@@ -995,7 +992,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static byte[] readFile(File file) throws Exception {
-        try (FileInputStream fileInputStream = new FileInputStream(file);) {
+        try ( FileInputStream fileInputStream = new FileInputStream(file);) {
             byte[] data = new byte[(int) file.length()];
             fileInputStream.read(data);
             return data;
@@ -1003,7 +1000,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static String readTextFile(File file) throws Exception {
-        try (FileReader fr = new FileReader(file)) {
+        try ( FileReader fr = new FileReader(file)) {
 
             char[] data = new char[(int) file.length()];
             fr.read(data);
@@ -1012,7 +1009,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static void writeFile(File file, byte[] content) throws Exception {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
+        try ( FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
             fileOutputStream.write(content);
             fileOutputStream.flush();
         }
@@ -1031,9 +1028,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return this.roleBeanFacade.findByPrincipalId(principalId);
     }
 
-    private void checkUserLimit() throws Exception {
+    private void checkUserLimit(boolean updateOnly) throws Exception {
         ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
-        int limit=999;
+        int limit = 999;
         if (s == null) {
             s = new ServerSettingsBean();
             s.setSettingKey(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
@@ -1041,28 +1038,40 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             this.settingsFacade.create(s);
         } else {
             try {
-                limit=Integer.parseInt(s.getSettingValue());
+                limit = Integer.parseInt(s.getSettingValue());
             } catch (Throwable t) {
                 log.error("Invalid value for " + ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS + ": " + s.getSettingValue(), t);
-                limit=1;
+                limit = 1;
             }
         }
-        
+
         // any users allowed to log in are counted
-        List userList=this.roleBeanFacade.findByRole("loginRole");
-        if(userList!=null) {
-            if(userList.size()>limit) {
+        List userList = this.roleBeanFacade.findByRole("loginRole");
+        if (userList != null) {
+            boolean limitViolation = false;
+            if (updateOnly) {
+                // user update
+                if (userList.size() > limit) {
+                    limitViolation = true;
+                }
+            } else {
+                // new user about to be created
+                if (userList.size() >= limit) {
+                    limitViolation = true;
+                }
+            }
+            if (limitViolation) {
                 log.error("Unable to create new user - limit has been reached (" + limit + ").");
                 throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Betreiber.");
             }
         }
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
-        
-        this.checkUserLimit();
+
+        this.checkUserLimit(false);
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1081,11 +1090,33 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
 
-        this.checkUserLimit();
-        
         AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
         if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
+        }
+
+        // in case of upates, we need to check only when loginRole is present - could be a user that is about to be re-activated
+        for (AppRoleBean r : roles) {
+            if ("loginRole".equalsIgnoreCase(r.getRole())) {
+
+                List<AppRoleBean> currentRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
+                boolean currentlyActive=false;
+                for (AppRoleBean cr : currentRoles) {
+                    if("loginRole".equalsIgnoreCase(cr.getRole())) {
+                        currentlyActive=true;
+                        break;
+                    }
+                }
+
+                if(currentlyActive) {
+                    // just a simple user update
+                    this.checkUserLimit(true);
+                } else {
+                    // currently inactive user gets login privilege - treat as if it were an additional user
+                    this.checkUserLimit(false);
+                }
+                break;
+            }
         }
 
         // no password change via updateUser, only by using updatePassword service
@@ -1465,9 +1496,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
-        try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
-                ResultSet rs = st.executeQuery()) {
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");  ResultSet rs = st.executeQuery()) {
 
             if (rs.next()) {
                 version = rs.getString(1);
@@ -1648,7 +1677,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             // only available from JAXP 1.5+, but Wildfly still ships 1.4
             log.warn("Unable to set external entity restrictions in XML parser", iae);
         }
-        
+
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(wildFlyConf);
@@ -1677,7 +1706,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        try (OutputStream out = new FileOutputStream(f2)) {
+        try ( OutputStream out = new FileOutputStream(f2)) {
 
             out.write(data);
 
@@ -2010,17 +2039,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             if (u2 == null) {
                 return 1;
             }
-            
+
             if (!(u1 instanceof PartyTypeBean)) {
                 return -1;
             }
             if (!(u2 instanceof PartyTypeBean)) {
                 return 1;
             }
-            
+
             PartyTypeBean f1 = (PartyTypeBean) u1;
             PartyTypeBean f2 = (PartyTypeBean) u2;
-            
+
             String f1name = "";
             if (f1.getName() != null) {
                 f1name = f1.getName().toLowerCase();
@@ -2029,7 +2058,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             if (f2.getName() != null) {
                 f2name = f2.getName().toLowerCase();
             }
-            
+
             return f1name.compareTo(f2name);
         });
         return all;
@@ -2174,7 +2203,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
 
-        try (FileOutputStream fout = new FileOutputStream(uploadFile)) {
+        try ( FileOutputStream fout = new FileOutputStream(uploadFile)) {
             fout.write(content);
         }
 
@@ -2224,42 +2253,43 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public List<MappingTable> getMappingTables() {
         return this.mappingTableFacade.findAll();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<MappingEntry> getMappingEntries(String tableName) {
-        MappingTable mt=this.mappingTableFacade.find(tableName);
-        if(mt!=null) 
+        MappingTable mt = this.mappingTableFacade.find(tableName);
+        if (mt != null) {
             return this.mappingEntryFacade.findByTable(mt);
-        else
+        } else {
             return new ArrayList<>();
+        }
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public MappingTable addMappingTable(MappingTable table) throws Exception {
-        MappingTable mt=this.mappingTableFacade.findByName(table.getTableName());
-        if(mt!=null) {
-            throw new Exception ("Es existiert bereits eine Tabelle mit diesem Namen!");
+        MappingTable mt = this.mappingTableFacade.findByName(table.getTableName());
+        if (mt != null) {
+            throw new Exception("Es existiert bereits eine Tabelle mit diesem Namen!");
         }
-        
+
         this.mappingTableFacade.create(table);
-        
+
         return this.mappingTableFacade.findByName(table.getTableName());
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void deleteMappingTable(String tableName) throws Exception {
-        
-        MappingTable mt=this.mappingTableFacade.findByName(tableName);
+
+        MappingTable mt = this.mappingTableFacade.findByName(tableName);
         this.mappingTableFacade.remove(mt);
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public MappingTable updateMappingTable(MappingTable mt) throws Exception {
-        MappingTable remTable=this.mappingTableFacade.findByName(mt.getTableName());
+        MappingTable remTable = this.mappingTableFacade.findByName(mt.getTableName());
         if (remTable == null) {
             throw new Exception("No mapping table with name " + mt.getTableName());
         }
@@ -2272,33 +2302,33 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         return remTable;
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception {
-        MappingTable table=this.mappingTableFacade.findByName(tableName);
+        MappingTable table = this.mappingTableFacade.findByName(tableName);
         if (table == null) {
             throw new Exception("No mapping table with name " + tableName);
         }
-        
-        List<MappingEntry> entries=this.mappingEntryFacade.findByTable(table);
-        for(MappingEntry e: entries) {
+
+        List<MappingEntry> entries = this.mappingEntryFacade.findByTable(table);
+        for (MappingEntry e : entries) {
             this.mappingEntryFacade.remove(e);
         }
-        
+
         // need to flush the delete because we have a uniqueness constraint spanning all keys that would be violated
         this.mappingEntryFacade.flush();
-        
-        StringGenerator idGen=new StringGenerator();
-        for(MappingEntry e: newEntries) {
-            if(ServerStringUtils.isEmpty(e.getKey1Value()) && ServerStringUtils.isEmpty(e.getKey2Value()) && ServerStringUtils.isEmpty(e.getKey3Value())) {
+
+        StringGenerator idGen = new StringGenerator();
+        for (MappingEntry e : newEntries) {
+            if (ServerStringUtils.isEmpty(e.getKey1Value()) && ServerStringUtils.isEmpty(e.getKey2Value()) && ServerStringUtils.isEmpty(e.getKey3Value())) {
                 log.warn("skipping a mapping entry with empty keys");
                 continue;
             }
             e.setId(idGen.getID().toString());
             this.mappingEntryFacade.create(e);
         }
-        
+
     }
 
 }

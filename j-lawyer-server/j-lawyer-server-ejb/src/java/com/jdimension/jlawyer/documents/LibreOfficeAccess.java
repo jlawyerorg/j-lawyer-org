@@ -979,74 +979,14 @@ public class LibreOfficeAccess {
             }
 
             // replace script placeholders
-            //String scriptRegExKey = "(?s)\\[\\[SCRIPT\\:[.\\s\\S\\r\\n^\\]]*\\]\\]";
-            String scriptRegExKey =     "\\[\\[SCRIPT:[^\\]]*\\]\\]";
+            String scriptRegExKey = "\\[\\[SCRIPT:[^\\]]*\\]\\]";
             TextNavigation search = new TextNavigation(scriptRegExKey, outputOdt);
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
                 String scriptContent = item.getText();
-                if (scriptContent.startsWith("[[SCRIPT:")) {
-                    scriptContent = scriptContent.substring(9);
-                }
-                if (scriptContent.endsWith("]]")) {
-                    scriptContent = scriptContent.substring(0, scriptContent.length() - 2);
-                }
-                scriptContent = scriptContent.trim();
-                
-                Enumeration valueKeys=values.keys();
-                while(valueKeys.hasMoreElements()) {
-                    String scriptPlaceHolderKey=valueKeys.nextElement().toString();
-                    if(scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
-                        String scriptPlaceHolderValue=values.get(scriptPlaceHolderKey).toString();
-                        scriptPlaceHolderKey=scriptPlaceHolderKey.substring(2);
-                        scriptPlaceHolderKey=scriptPlaceHolderKey.substring(0,scriptPlaceHolderKey.length()-2);
-                        scriptContent=scriptContent.replaceAll(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
-                        //scriptContent=scriptContent.replace(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
-                        
-                        
-                    }
-                }
-                scriptContent=scriptContent.replace("„", "\"");
-                scriptContent=scriptContent.replace("“", "\"");
-                
-                // required for "WENNVORHANDEN"
-                scriptContent=scriptContent.replace("\"\"", "\"");
-                
+                String scriptResult = evaluateScript(scriptContent, values, formsPrefixes);
+                item.replaceWith(scriptResult);
 
-                try (InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");
-                    InputStreamReader isr = new InputStreamReader(is);
-                    BufferedReader br = new BufferedReader(isr);) {
-                    
-                    StringBuilder sb = new StringBuilder();
-                    String line = br.readLine();
-                    while (line != null) {
-                        sb.append(line).append(System.lineSeparator());
-                        line = br.readLine();
-                    }
-
-                    String myclass = sb.toString();
-                    myclass = myclass.replace("SMARTTEMPLATESCRIPT", scriptContent);
-                    
-                    StringBuilder allFormPrefixes=new StringBuilder();
-                    if(formsPrefixes!=null) {
-                        for(String fp: formsPrefixes)
-                            allFormPrefixes.append("-").append(fp).append("-");
-                    }
-                    myclass=myclass.replace("ALLFORMPREFIXES", allFormPrefixes.toString());
-                    
-                    GroovyClassLoader gcl = new GroovyClassLoader();
-                    Class calcClass = gcl.parseClass(myclass);
-                    GroovyObject calc = (GroovyObject) calcClass.newInstance();
-                    String scriptResult = (String) calc.invokeMethod("evaluateScript", new Object[]{});
-
-                    item.replaceWith(scriptResult);
-                } catch (Throwable t) {
-                    log.error("Unable to evaluate smart template script", t);
-                    log.error("****************************************");
-                    log.error(scriptContent);
-                    log.error("****************************************");
-                    item.replaceWith("SCRIPTFEHLER: " + t.getMessage());
-                }
             }
 
             outputOdt.save(new File(file));
@@ -1114,7 +1054,7 @@ public class LibreOfficeAccess {
             outputOds.save(new File(file));
             outputOds.close();
         } else if (file.toLowerCase().endsWith(".docx")) {
-            MicrosoftOfficeAccess.setPlaceHolders(file, values);
+            MicrosoftOfficeAccess.setPlaceHolders(file, values, formsPrefixes);
         }
 
     }
@@ -1166,15 +1106,16 @@ public class LibreOfficeAccess {
             TextNavigation search = new TextNavigation(scriptRegExKey, outputOdt);
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
-                String itemText=item.getText();
+                String itemText = item.getText();
                 resultList.add(itemText);
-                
+
                 // within the script, the placeholders are contianed without {{ }}
                 // need to look up such occurrences and add placeholders for them in the result list
                 for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                     String key = r.substring(2, r.length() - 2);
-                    if(itemText.contains(key) && !resultList.contains(r))
+                    if (itemText.contains(key) && !resultList.contains(r)) {
                         resultList.add(r);
+                    }
                 }
             }
 
@@ -1208,6 +1149,66 @@ public class LibreOfficeAccess {
 
         return new ArrayList<>();
 
+    }
+
+    protected static String evaluateScript(String scriptContent, Hashtable values, ArrayList<String> formsPrefixes) {
+        if (scriptContent.startsWith("[[SCRIPT:")) {
+            scriptContent = scriptContent.substring(9);
+        }
+        if (scriptContent.endsWith("]]")) {
+            scriptContent = scriptContent.substring(0, scriptContent.length() - 2);
+        }
+        scriptContent = scriptContent.trim();
+
+        Enumeration valueKeys = values.keys();
+        while (valueKeys.hasMoreElements()) {
+            String scriptPlaceHolderKey = valueKeys.nextElement().toString();
+            if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
+                String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
+                scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
+                scriptPlaceHolderKey = scriptPlaceHolderKey.substring(0, scriptPlaceHolderKey.length() - 2);
+                scriptContent = scriptContent.replaceAll(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
+            }
+        }
+        scriptContent = scriptContent.replace("„", "\"");
+        scriptContent = scriptContent.replace("“", "\"");
+
+        // required for "WENNVORHANDEN"
+        // scriptContent = scriptContent.replace("\"\"", "\"");
+
+        try ( InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");  InputStreamReader isr = new InputStreamReader(is);  BufferedReader br = new BufferedReader(isr);) {
+
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line).append(System.lineSeparator());
+                line = br.readLine();
+            }
+
+            String myclass = sb.toString();
+            myclass = myclass.replace("SMARTTEMPLATESCRIPT", scriptContent);
+
+            StringBuilder allFormPrefixes = new StringBuilder();
+            if (formsPrefixes != null) {
+                for (String fp : formsPrefixes) {
+                    allFormPrefixes.append("-").append(fp).append("-");
+                }
+            }
+            myclass = myclass.replace("ALLFORMPREFIXES", allFormPrefixes.toString());
+
+            GroovyClassLoader gcl = new GroovyClassLoader();
+            Class calcClass = gcl.parseClass(myclass);
+            GroovyObject calc = (GroovyObject) calcClass.newInstance();
+            String scriptResult = (String) calc.invokeMethod("evaluateScript", new Object[]{});
+
+            return scriptResult;
+        } catch (Throwable t) {
+            log.error("Unable to evaluate smart template script", t);
+            log.error("****************************************");
+            log.error(scriptContent);
+            log.error("****************************************");
+            return "SCRIPTFEHLER: " + t.getMessage();
+        }
     }
 
 //    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, String content, java.util.List<String> results) {

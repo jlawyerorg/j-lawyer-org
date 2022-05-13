@@ -4552,7 +4552,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
                         boolean replaceDocument = false;
                         while (documentExists && !replaceDocument) {
-                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName +  "' existiert bereits, möchtest du diese ersetzen?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName +  "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                             replaceDocument = response == JOptionPane.YES_OPTION;
                             if (!replaceDocument) {
                                 newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
@@ -4580,14 +4580,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     .findAny()
                                     .orElse(null);
                             // Check if the document was found
-                            if(document != null){        
+                            if(document != null){
+                                // document with that name is part of the "active" documents in the case
                                 // First move document to bin
                                 remote.removeDocument(document.getId());
                                 // Then remove from bin
                                 remote.removeDocumentFromBin(document.getId());
                                 // Then remove from view
                                 caseFolderPanel1.removeDocument(document);
-                            }                            
+                            } else {
+                                // document with that name is not present in UI but exists in the trash bin
+                                document=remote.getDocumentsBin().stream()
+                                    .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                    .findAny()
+                                    .orElse(null);
+                                if(document!=null)
+                                    remote.removeDocumentFromBin(document.getId());
+                            }
                         }
 
                         ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
@@ -4610,7 +4620,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 };
 
                 this.waitForOpenDocument(doc, callback);
-                this.lastPopupClosed = System.currentTimeMillis();
+                this.lastPopupClosed =System.currentTimeMillis();
             }
 
         } catch (Exception ioe) {
@@ -5432,8 +5442,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         aFile.setClaimNumber(this.txtClaimNumber.getText());
         float claimValueFloat = 0f;
         try {
-            //claimValueFloat = Float.parseFloat(this.txtClaimValue.getText());
-            //claimValueFloat = ((Double)this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
             claimValueFloat = ((Number) this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
         } catch (Exception ex) {
             if (this.txtClaimValue.getText() == null || "".equals(this.txtClaimValue.getText().trim())) {
