@@ -685,7 +685,6 @@ public class ModuleBar extends javax.swing.JPanel {
      */
     public ModuleBar() {
         initComponents();
-
         this.cmdSettings.setFont(this.cmdSettings.getFont().deriveFont(Font.BOLD));
     }
 
@@ -695,7 +694,6 @@ public class ModuleBar extends javax.swing.JPanel {
     }
 
     public void addModule(ModuleMetadata m) {
-
         if (m.isSettingsEntry()) {
             JMenuItem mi = new JMenuItem("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
             mi.setIcon(m.getDefaultIcon());
@@ -730,12 +728,9 @@ public class ModuleBar extends javax.swing.JPanel {
                 ModuleButton mb = (ModuleButton) buttonPane.getComponent(buttonPane.getComponentCount() - 1);
                 String formerModuleName = mb.getModule().getModuleName();
                 if (!formerModuleName.equals(m.getModuleName())) {
-
                     buttonPane.add(new ModuleGroupLabel(m.getModuleName()));
-
                 }
             }
-
             ModuleButton b = new ModuleButton(m);
             buttonPane.add(b);
             if (m.getHotKey() != null) {
@@ -746,9 +741,7 @@ public class ModuleBar extends javax.swing.JPanel {
                     }
                 });
             }
-
         }
-
     }
 
     /**
