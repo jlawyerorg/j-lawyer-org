@@ -667,8 +667,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -699,17 +698,17 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 public class MicrosoftOfficeAccess {
 
     private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
+    
+    private static final String CURSOR_TEXTFIELD="declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
 
-    public static void setPlaceHolders(String file, Hashtable values, ArrayList<String> formsPrefixes) throws Exception {
+    public static void setPlaceHolders(String file, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
         if (file.toLowerCase().endsWith(".docx")) {
 
             XWPFDocument outputDocx;
             FileInputStream fileIn = new FileInputStream(file);
             outputDocx = new XWPFDocument(fileIn);
 
-            Enumeration en = values.keys();
-            while (en.hasMoreElements()) {
-                String key = (String) en.nextElement();
+            for (String key: values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -928,7 +927,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, Hashtable<Integer, CTR> tfCache) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, HashMap<Integer, CTR> tfCache) throws Exception {
 
         if (file.toLowerCase().endsWith(".docx")) {
 
@@ -998,7 +997,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
+    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache) {
         if (resultList.contains(key)) {
             return;
         }
@@ -1022,7 +1021,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findScriptsInBodyElements(Pattern pattern, List<IBodyElement> bodyElements, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+    private static void findScriptsInBodyElements(Pattern pattern, List<IBodyElement> bodyElements, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
                 findScriptsInParagraph(pattern, (XWPFParagraph) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
@@ -1050,7 +1049,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInBodyElements(Pattern pattern, Hashtable values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements) {
+    private static void replaceScriptsInBodyElements(Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
                 replaceScriptsInParagraph(pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
@@ -1151,7 +1150,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void replaceScriptsInParagraph(Pattern pattern, Hashtable values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+    private static void replaceScriptsInParagraph(Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
 
         ArrayList<String> scriptList=new ArrayList<>();
         
@@ -1257,7 +1256,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInTable(Pattern pattern, Hashtable values, ArrayList<String> formsPrefixes, XWPFTable table) {
+    private static void replaceScriptsInTable(Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFTable table) {
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
                 for (IBodyElement bodyElement : cell.getBodyElements()) {
@@ -1272,14 +1271,14 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
+    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache) {
 
         if (resultList.contains(key)) {
             return;
         }
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1295,8 +1294,6 @@ public class MicrosoftOfficeAccess {
                     CTR ctr = CTR.Factory.parse(xmlText);
                     tfCache.put(xmlText.hashCode(), ctr);
 
-                } else {
-                    //System.out.println("cache hit");
                 }
                 CTR ctr = tfCache.get(xmlText.hashCode());
                 //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
@@ -1322,10 +1319,10 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void findScriptsInTextfield(Pattern pattern, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+    private static void findScriptsInTextfield(Pattern pattern, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1341,8 +1338,6 @@ public class MicrosoftOfficeAccess {
                     CTR ctr = CTR.Factory.parse(xmlText);
                     tfCache.put(xmlText.hashCode(), ctr);
 
-                } else {
-                    //System.out.println("cache hit");
                 }
                 CTR ctr = tfCache.get(xmlText.hashCode());
                 //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
@@ -1377,7 +1372,7 @@ public class MicrosoftOfficeAccess {
     private static void replaceInTextfield(String key, String value, XWPFParagraph xwpfParagraph) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1407,10 +1402,10 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void replaceScriptsInTextfield(Pattern pattern, Hashtable values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+    private static void replaceScriptsInTextfield(Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1445,19 +1440,4 @@ public class MicrosoftOfficeAccess {
         
     }
 
-//    private static String replacePlaceHolders(String content, Hashtable values) {
-//        Enumeration en = values.keys();
-//        while (en.hasMoreElements()) {
-//            String key = (String) en.nextElement();
-//            key = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-//            String value = (String) values.get(key);
-//            if (value == null) {
-//                value = "";
-//            }
-//
-//            content = content.replaceAll(key, value);
-//        }
-//
-//        return content;
-//    }
 }

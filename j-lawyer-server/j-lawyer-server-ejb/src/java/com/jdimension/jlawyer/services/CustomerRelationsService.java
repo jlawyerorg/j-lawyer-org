@@ -691,7 +691,7 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -780,7 +780,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     
     @Override
     @RolesAllowed({"readAddressRole"})
-    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, Hashtable placeHolderValues) throws Exception {
+    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues) throws Exception {
         StringGenerator idGen = new StringGenerator();
         
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");

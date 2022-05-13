@@ -704,7 +704,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
     private static final Logger log = Logger.getLogger(ShareDocumentsToCloudAction.class.getName());
     private int max = 1;
     private ArrayList<ArchiveFileDocumentsBean> shareDocs = null;
-    private DecimalFormat megaBytes = new DecimalFormat("0.0");
+    private final DecimalFormat megaBytes = new DecimalFormat("0.0");
     private String remotePath = null;
     private int postAction = POST_ACTION_NONE;
     private Share share = null;
@@ -806,9 +806,6 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                     // make share link available for use via placeholder {{CLOUD_LINK}}
                     dlg.setCloudLink(share.getUrl());
                     dlg.setBody("Freigabelink: " + share.getUrl(), ContentTypes.TEXT_PLAIN);
-                    if (parties != null) {
-                        dlg.setInvolvedInCase(parties);
-                    }
                     if (caseDto != null) {
                         dlg.setArchiveFile(caseDto, null);
                     }

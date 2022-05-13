@@ -671,9 +671,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
@@ -703,7 +703,7 @@ public class LibreOfficeAccess {
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
-    public static void setPlaceHolders(String file, Hashtable values, ArrayList<String> formsPrefixes) throws Exception {
+    public static void setPlaceHolders(String file, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
@@ -712,9 +712,7 @@ public class LibreOfficeAccess {
             ArrayList<Node> removalParents = new ArrayList<>();
             ArrayList<Node> removalChildren = new ArrayList<>();
 
-            Enumeration en = values.keys();
-            while (en.hasMoreElements()) {
-                String key = (String) en.nextElement();
+            for (String key: values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -996,10 +994,7 @@ public class LibreOfficeAccess {
             SpreadsheetDocument outputOds;
             outputOds = SpreadsheetDocument.loadDocument(file);
 
-            Enumeration en = values.keys();
-            while (en.hasMoreElements()) {
-
-                String key = (String) en.nextElement();
+            for (String key: values.keySet()) {
 
                 // if the placeholder is followed by one of these characters, do not append a space
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
@@ -1142,7 +1137,7 @@ public class LibreOfficeAccess {
             return resultList;
         } else if (file.toLowerCase().endsWith(".docx")) {
 
-            Hashtable<Integer, CTR> tfCache = new Hashtable<>();
+            HashMap<Integer, CTR> tfCache = new HashMap<>();
             return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
 
         }
@@ -1151,7 +1146,7 @@ public class LibreOfficeAccess {
 
     }
 
-    protected static String evaluateScript(String scriptContent, Hashtable values, ArrayList<String> formsPrefixes) {
+    protected static String evaluateScript(String scriptContent, HashMap<String,Object> values, ArrayList<String> formsPrefixes) {
         if (scriptContent.startsWith("[[SCRIPT:")) {
             scriptContent = scriptContent.substring(9);
         }
@@ -1160,9 +1155,8 @@ public class LibreOfficeAccess {
         }
         scriptContent = scriptContent.trim();
 
-        Enumeration valueKeys = values.keys();
-        while (valueKeys.hasMoreElements()) {
-            String scriptPlaceHolderKey = valueKeys.nextElement().toString();
+        Set<String> valueKeys = values.keySet();
+        for (String scriptPlaceHolderKey: valueKeys) {
             if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
                 String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
@@ -1199,9 +1193,7 @@ public class LibreOfficeAccess {
             GroovyClassLoader gcl = new GroovyClassLoader();
             Class calcClass = gcl.parseClass(myclass);
             GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            String scriptResult = (String) calc.invokeMethod("evaluateScript", new Object[]{});
-
-            return scriptResult;
+            return (String) calc.invokeMethod("evaluateScript", new Object[]{});
         } catch (Throwable t) {
             log.error("Unable to evaluate smart template script", t);
             log.error("****************************************");
@@ -1261,13 +1253,11 @@ public class LibreOfficeAccess {
 
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
 
-            Hashtable values = new Hashtable();
+            HashMap<String,Object> values = new HashMap<>();
             values.put("{{PROFIL_EMAIL}}", "jens.kutschke@waat???");
             values.put("{{MANDANT_STRASSE}}", "jens.kutschke strasse");
 
-            Enumeration en = values.keys();
-            while (en.hasMoreElements()) {
-                String key = (String) en.nextElement();
+            for (String key: values.keySet()) {
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}\\.";
                 String value = (String) values.get(key);
                 if (value == null) {

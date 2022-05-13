@@ -675,7 +675,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
 import org.junit.After;
@@ -751,7 +751,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders, new ArrayList<>()));
             Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -769,7 +769,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("DRITTE");
             long start = System.currentTimeMillis();
 
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/many-textfields.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/many-textfields.docx", allPartyTypesPlaceholders, new ArrayList<>()));
             long end = System.currentTimeMillis();
             System.out.println("textfield search took " + (end - start));
             //Assert.assertEquals(13, l.size());
@@ -794,7 +794,7 @@ public class MicrosoftOfficeDocxTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
@@ -842,7 +842,7 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
     
@@ -862,7 +862,7 @@ public class MicrosoftOfficeDocxTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
@@ -918,7 +918,7 @@ public class MicrosoftOfficeDocxTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "Meiser");
         ph.put("{{MANDANT_VORNAME}}", "Hans");
         ph.put("{{MANDANT_ANREDE}}", "Moin Moin");
@@ -965,9 +965,9 @@ public class MicrosoftOfficeDocxTest {
             Assert.fail();
         }
 
-        Assert.assertTrue(content.indexOf("www.kanzlei.com") > -1);
-        Assert.assertTrue(content.indexOf("Brüssel") > -1);
-        Assert.assertTrue(content.indexOf("anwalt@") > -1);
+        Assert.assertTrue(content.contains("www.kanzlei.com"));
+        Assert.assertTrue(content.contains("Brüssel"));
+        Assert.assertTrue(content.contains("anwalt@"));
 
     }
 

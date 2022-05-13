@@ -749,7 +749,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btGrpReviews = new javax.swing.ButtonGroup();
         cmdCancel = new javax.swing.JButton();
         cmdAddDocument = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
@@ -979,7 +978,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                         String[] colNames = new String[]{"Platzhalter", "Wert"};
                         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
                         
-                        Hashtable ht = new Hashtable();
+                        HashMap<String,Object> ht = new HashMap<>();
                         for (String ph : placeHolders) {
                             ht.put(ph, "");
                         }
@@ -992,9 +991,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                         
                         ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
                         
-                        Enumeration htEn = ht.keys();
-                        while (htEn.hasMoreElements()) {
-                            Object key = htEn.nextElement();
+                        for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
                             model.addRow(row);
                         }
@@ -1090,7 +1087,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
                 Collections.sort(placeHolders);
-                Hashtable ht = new Hashtable();
+                HashMap<String,Object> ht = new HashMap<>();
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
@@ -1103,9 +1100,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
                 ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
 
-                Enumeration htEn = ht.keys();
-                while (htEn.hasMoreElements()) {
-                    Object key = htEn.nextElement();
+                for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
                 }
@@ -1209,7 +1204,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             for (Object o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().indexOf(this.txtTemplateFilter.getText().trim().toLowerCase()) > -1) {
+                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }
@@ -1229,7 +1224,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdClearFilter;

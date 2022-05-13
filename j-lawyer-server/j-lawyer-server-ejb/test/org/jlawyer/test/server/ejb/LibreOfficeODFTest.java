@@ -681,7 +681,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
 import org.junit.After;
@@ -763,7 +763,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
@@ -1123,7 +1123,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
@@ -1178,7 +1178,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         // replace with empty value
         ph.put("{{MANDANT_NAME}}", "");
 
@@ -1241,7 +1241,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         // replace with empty value
         ph.put("{{MANDANT_NAME}}", "Kut");
         ph.put("{{MANDANT_VORNAME}}", "Jens");
@@ -1301,7 +1301,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
@@ -1349,7 +1349,7 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(105, content.indexOf("otto test"));
         Assert.assertEquals(117, content.indexOf("hans otto"));
         Assert.assertEquals(130, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
 

@@ -738,6 +738,9 @@ import org.w3c.dom.NodeList;
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static Logger log = Logger.getLogger(SystemManagement.class.getName());
+    
+    private static final String ROLE_LOGIN="loginRole";
+    
     @Resource
     private SessionContext context;
     @EJB
@@ -1046,7 +1049,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         // any users allowed to log in are counted
-        List userList = this.roleBeanFacade.findByRole("loginRole");
+        List userList = this.roleBeanFacade.findByRole(ROLE_LOGIN);
         if (userList != null) {
             boolean limitViolation = false;
             if (updateOnly) {
@@ -1097,12 +1100,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         // in case of upates, we need to check only when loginRole is present - could be a user that is about to be re-activated
         for (AppRoleBean r : roles) {
-            if ("loginRole".equalsIgnoreCase(r.getRole())) {
+            if (ROLE_LOGIN.equalsIgnoreCase(r.getRole())) {
 
                 List<AppRoleBean> currentRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
                 boolean currentlyActive=false;
                 for (AppRoleBean cr : currentRoles) {
-                    if("loginRole".equalsIgnoreCase(cr.getRole())) {
+                    if(ROLE_LOGIN.equalsIgnoreCase(cr.getRole())) {
                         currentlyActive=true;
                         break;
                     }

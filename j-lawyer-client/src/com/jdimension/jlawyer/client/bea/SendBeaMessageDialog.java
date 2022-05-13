@@ -718,6 +718,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.TooManyListenersException;
@@ -746,8 +747,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private TextEditorPanel tp;
 
     private BeaListItem authority = null;
-
-    private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
 
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
@@ -1024,7 +1023,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     public void setInvolvedInCase(ArrayList<ArchiveFileAddressesBean> involved) {
-        this.caseInvolvements = involved;
         for (ArchiveFileAddressesBean entry : involved) {
             if (!StringUtils.isEmpty(entry.getReference())) {
                 this.addToAzRecipient(entry.getReference());
@@ -2039,7 +2037,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
                 ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
-                Hashtable<String, String> ht = new Hashtable<>();
+                HashMap<String,Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
@@ -2060,11 +2058,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     }
                 }
                 
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
+                HashMap<String,Object> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
-                ht = new Hashtable<>();
+                ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }

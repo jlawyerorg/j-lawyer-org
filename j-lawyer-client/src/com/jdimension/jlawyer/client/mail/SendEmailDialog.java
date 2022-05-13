@@ -712,6 +712,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.*;
@@ -740,8 +741,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private String contextDictateSign = null;
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
-
-    private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
 
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
@@ -775,12 +774,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private void initialize() {
         initComponents();
         
-//        String[] data = {"One <dings>", "Two", "three", "four"}; 
-//        JList dataList = new JList(data); 
-//        ListAdaptor listAdaptor=new ListAdaptor(dataList, txtTo);
-//        AutoCompleteDocument autoCompDoc=new AutoCompleteDocument(listAdaptor, false);
-//        AutoCompleteDecorator.decorate(txtTo, autoCompDoc, listAdaptor);
-
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
@@ -800,7 +793,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if (!EmailUtils.hasConfig(cu)) {
             this.cmdSend.setEnabled(false);
             this.cmdAttach.setEnabled(false);
-            //this.taBody.setEnabled(false);
             this.contentPanel.setEnabled(false);
             JOptionPane.showMessageDialog(this, "E-Mail ist für diesen Nutzer nicht konfiguriert!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
 
@@ -1030,10 +1022,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     @Override
     public void selectedPartiesUpdated() {
         this.cmbTemplatesActionPerformed(null);
-    }
-
-    public void setInvolvedInCase(ArrayList<ArchiveFileAddressesBean> involved) {
-        this.caseInvolvements = involved;
     }
 
     @Override
@@ -2025,7 +2013,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
                 ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
-                Hashtable<String, String> ht = new Hashtable<>();
+                HashMap<String,Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
@@ -2047,11 +2035,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
 
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
+                HashMap<String,Object> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
-                ht = new Hashtable<>();
+                ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }

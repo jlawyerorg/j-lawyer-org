@@ -708,7 +708,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private JTable tblReviewReasons = null;
-    private List<ArchiveFileAddressesBean> involved = null;
     private GenericCalculationTable calculationTable = null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
@@ -736,7 +735,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
-        this.involved = involved;
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
@@ -1389,10 +1387,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ArchiveFileDocumentsBean db=null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Hashtable phValues = new Hashtable();
+            HashMap<String,Object> phValues = new HashMap<>();
             TableModel model = this.tblPlaceHolders.getModel();
             for (int r = 0; r < model.getRowCount(); r++) {
-                phValues.put(model.getValueAt(r, 0), model.getValueAt(r, 1));
+                phValues.put(model.getValueAt(r, 0).toString(), model.getValueAt(r, 1));
             }
 
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
@@ -1595,7 +1593,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
                 Collections.sort(placeHolders);
-                Hashtable ht = new Hashtable();
+                HashMap<String,Object> ht = new HashMap<>();
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
@@ -1620,10 +1618,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                 ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
 
-                Enumeration htEn = ht.keys();
-                while (htEn.hasMoreElements()) {
-                    Object key = htEn.nextElement();
-                    if(key.toString().startsWith("[[SCRIPT:"))
+                for (String key: ht.keySet()) {
+                    if(key.startsWith("[[SCRIPT:"))
                         continue;
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);

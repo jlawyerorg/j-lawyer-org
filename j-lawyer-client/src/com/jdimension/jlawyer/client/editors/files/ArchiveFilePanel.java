@@ -4003,7 +4003,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         dlg.setArchiveFile(dto, caseFolder);
-        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
             dlg.addParty(aab);
         }
@@ -4044,7 +4043,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
