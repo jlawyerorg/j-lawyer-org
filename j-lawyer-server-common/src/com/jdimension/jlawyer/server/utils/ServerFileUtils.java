@@ -669,8 +669,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Hashtable;
-import javax.swing.Icon;
 
 /**
  *
@@ -695,6 +693,9 @@ public class ServerFileUtils {
 
     public static byte[] readFile(File file) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file);) {
+            if(file.length()>Integer.MAX_VALUE) {
+                throw new Exception("Cannot read files larger than 2GB into a single array, but " + file.getAbsolutePath() + " has " + file.length() + " bytes!");
+            }
             byte[] data = new byte[(int) file.length()];
             fileInputStream.read(data);
             return data;

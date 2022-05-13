@@ -905,6 +905,7 @@ public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdFindExecutableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFindExecutableActionPerformed
         JFileChooser chooser = new JFileChooser();
+        chooser.setFileHidingEnabled(false);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 

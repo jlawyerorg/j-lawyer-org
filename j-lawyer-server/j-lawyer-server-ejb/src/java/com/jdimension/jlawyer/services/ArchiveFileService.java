@@ -2748,10 +2748,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String zipFile = tmpDir + System.getProperty("file.separator") + new StringGenerator().getID().toString() + ".zip";
         export.zipDirectory(path, zipFile);
         File zip = new File(zipFile);
-        byte[] zipBytes = ServerFileUtils.readFile(zip);
-        zip.delete();
-        File exportPath = new File(path);
-        ServerFileUtils.getInstance().deleteRecursively(exportPath);
+        byte[] zipBytes = null;
+        try {
+            // may fail for files larger than 2GB
+            zipBytes = ServerFileUtils.readFile(zip);
+        } finally {
+            zip.delete();
+            File exportPath = new File(path);
+            ServerFileUtils.getInstance().deleteRecursively(exportPath);
+        }
         return zipBytes;
 
     }

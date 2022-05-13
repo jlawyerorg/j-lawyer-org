@@ -682,6 +682,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -724,6 +725,21 @@ public class MicrosoftOfficeDocxTest {
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
             t.printStackTrace();
+        }
+    }
+    
+    @Test
+    public void getScriptPlaceHolders() {
+        try {
+            //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template-scripts.docx", allPartyTypesPlaceholders, new ArrayList<>()));
+            Assert.assertEquals(6, l.size());
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
         }
     }
 
@@ -827,6 +843,63 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertEquals(98, content.indexOf("hans otto"));
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
         Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+
+    }
+    
+    @Test
+    @Ignore
+    public void setScriptPlaceHoldersDOCX() {
+        try {
+            //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
+            File f = new File("test/data/template-scripts-run.docx");
+            f.delete();
+            //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
+            copyFileUsingStream(new File("test/data/template-scripts.docx"), new File("test/data/template-scripts-run.docx"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+
+        }
+
+        Hashtable ph = new Hashtable();
+        ph.put("{{MANDANT_NAME}}", "otto");
+        ph.put("{{MANDANT_VORNAME}}", "hans");
+        ph.put("{{MANDANT_ANREDE}}", "");
+
+        try {
+            //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.docx", ph, null);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        String content = "";
+        Tika tika = new Tika();
+        try {
+            //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
+            Reader r = tika.parse(new File("test/data/template-scripts-run.docx"));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
+            }
+            bw.close();
+            br.close();
+
+            content = sw.toString();
+            System.out.println(content);
+        } catch (Throwable t) {
+            System.out.println(t.getMessage());
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
 
