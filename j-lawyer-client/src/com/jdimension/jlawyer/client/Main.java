@@ -877,7 +877,7 @@ public class Main {
         root.setModuleName("");
         root.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_blue_36dp.png")));
         root.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_green_36dp.png")));
-        root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "F1");
+        root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.SHIFT_DOWN_MASK), "Shift+F1");
 
         ModuleMetadata files = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases"));
         files.setFullName("Akten");
@@ -891,7 +891,7 @@ public class Main {
         filesNew.setModuleName("Akten");
         filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-blue.png")));
         filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-green.png")));
-        filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "F2");
+        filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.SHIFT_DOWN_MASK), "Shift+F2");
 
         ModuleMetadata filesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
         filesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel");
@@ -901,7 +901,7 @@ public class Main {
         filesEdit.setModuleName("Akten");
         filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-blue.png")));
         filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-green.png")));
-        filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), "F3");
+        filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, KeyEvent.SHIFT_DOWN_MASK), "Shift+F3");
         files.addChildModule(filesEdit);
 
         ModuleMetadata addresses = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts"));
@@ -915,7 +915,7 @@ public class Main {
         addressesNew.setModuleName("Adressen");
         addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-blue.png")));
         addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-green.png")));
-        addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), "F4");
+        addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.SHIFT_DOWN_MASK), "Shift+F4");
         addresses.addChildModule(addressesNew);
 
         ModuleMetadata addressesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.edit"));
@@ -926,7 +926,7 @@ public class Main {
         addressesEdit.setModuleName("Adressen");
         addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-blue.png")));
         addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-green.png")));
-        addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "F5");
+        addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK), "Shift+F5");
         addresses.addChildModule(addressesEdit);
 
         ModuleMetadata reviews = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup"));
@@ -940,7 +940,7 @@ public class Main {
         reviewsDue.setModuleName(moduleNameCalendar);
         reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
         reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
-        reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "F6");
+        reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK), "Shift+F6");
         reviews.addChildModule(reviewsDue);
         ModuleMetadata reviewsSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
         reviewsSearch.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel");
@@ -973,7 +973,7 @@ public class Main {
         mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-blue.png")));
         mailInbox.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-green.png")));
         mailInbox.setStatusEventType(Event.TYPE_MAILSTATUS);
-        mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0), "F7");
+        mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F7, KeyEvent.SHIFT_DOWN_MASK), "Shift+F7");
         mail.addChildModule(mailInbox);
         ModuleMetadata bea = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.bea"));
         bea.setEditorClass("com.jdimension.jlawyer.client.bea.BeaInboxPanel");
@@ -984,7 +984,7 @@ public class Main {
         bea.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-blue.png")));
         bea.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-green.png")));
         bea.setStatusEventType(Event.TYPE_BEASTATUS);
-        bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "F8");
+        bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, KeyEvent.SHIFT_DOWN_MASK), "Shift+F8");
         mail.addChildModule(bea);
         ModuleMetadata drebis = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.drebis"));
         drebis.setEditorClass("com.jdimension.jlawyer.client.drebis.DrebisInboxPanel");
@@ -1035,7 +1035,7 @@ public class Main {
         scans.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_blue_36dp.png")));
         scans.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_green_36dp.png")));
         scans.setStatusEventType(Event.TYPE_SCANNERSTATUS);
-        scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0), "F9");
+        scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F9, KeyEvent.SHIFT_DOWN_MASK), "Shift+F9");
         mail.addChildModule(scans);
 
         ModuleMetadata templates = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
