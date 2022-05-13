@@ -666,24 +666,14 @@ package com.jdimension.jlawyer.client.modulebar;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
-import javax.swing.Action;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 /**
- *
  * @author jens
  */
 public class ModuleBar extends javax.swing.JPanel {
@@ -695,7 +685,6 @@ public class ModuleBar extends javax.swing.JPanel {
      */
     public ModuleBar() {
         initComponents();
-        
         this.cmdSettings.setFont(this.cmdSettings.getFont().deriveFont(Font.BOLD));
     }
 
@@ -705,7 +694,6 @@ public class ModuleBar extends javax.swing.JPanel {
     }
 
     public void addModule(ModuleMetadata m) {
-
         if (m.isSettingsEntry()) {
             JMenuItem mi = new JMenuItem("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
             mi.setIcon(m.getDefaultIcon());
@@ -713,7 +701,7 @@ public class ModuleBar extends javax.swing.JPanel {
             mi.setFont(new java.awt.Font("Dialog", 1, 10));
             mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
-                        
+
             JPanel caller = this;
             mi.addActionListener((ActionEvent ae) -> {
                 if (m.getEditorClass() != null) {
@@ -723,13 +711,13 @@ public class ModuleBar extends javax.swing.JPanel {
                         if (editor instanceof PopulateOptionsEditor) {
                             ((PopulateOptionsEditor) editor).populateOptions();
                         }
-                        
+
                         EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-                        
+
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(caller, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
                     }
-                    
+
                 } else {
                     EditorsRegistry.getInstance().setMainEditorsPaneView(null);
                 }
@@ -740,26 +728,20 @@ public class ModuleBar extends javax.swing.JPanel {
                 ModuleButton mb = (ModuleButton) buttonPane.getComponent(buttonPane.getComponentCount() - 1);
                 String formerModuleName = mb.getModule().getModuleName();
                 if (!formerModuleName.equals(m.getModuleName())) {
-                    
                     buttonPane.add(new ModuleGroupLabel(m.getModuleName()));
-
                 }
             }
-
             ModuleButton b = new ModuleButton(m);
             buttonPane.add(b);
             if (m.getHotKey() != null) {
-                // temporarily disabled because users didn't like a module opening when hitting F2 to rename a document
-//                this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
-//                    @Override
-//                    public void actionPerformed(ActionEvent e) {
-//                        b.actionPerformed();
-//                    }
-//                });
+                this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        b.actionPerformed();
+                    }
+                });
             }
-
         }
-
     }
 
     /**
@@ -823,18 +805,18 @@ public class ModuleBar extends javax.swing.JPanel {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+                        .addGroup(layout.createSequentialGroup()
+                                .addGap(8, 8, 8)
+                                .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdSettings))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(jScrollPane1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSettings))
         );
     }// </editor-fold>//GEN-END:initComponents
 
