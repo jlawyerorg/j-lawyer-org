@@ -1572,16 +1572,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         File dstDir = new File(dst);
         dstDir.mkdirs();
 
-        dst = dst + fileName;
+        String docId = idGen.getID().toString();
+        dst = dst + docId;
 
-        if (new File(dst).exists()) {
+        ArchiveFileDocumentsBean existingDoc=this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, fileName);
+        if(existingDoc!=null)
             throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        
+        if (new File(dst).exists()) {
+            throw new Exception("Datei " + docId+ " existiert bereits im Datenverzeichnis der Akte!");
         }
 
         SystemManagement.createFile(dst, data);
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
-        String docId = idGen.getID().toString();
         db.setId(docId);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
@@ -1613,7 +1617,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            preview = pg.createPreview(archiveFileId, fileName);
+            preview = pg.createPreview(archiveFileId, docId, fileName);
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
@@ -1710,7 +1714,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            pg.deletePreview(aFile.getId(), db.getName());
+            pg.deletePreview(aFile.getId(), id, db.getName());
         } catch (Throwable t) {
             log.warn("Error deleting document preview", t);
         }
@@ -1766,16 +1770,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-
-        File dstDir = new File(dst);
-        dstDir.mkdirs();
-
-        dst = dst + db.getName();
-
-        File dstFile = new File(dst);
+        this.migrateDocument(dst, id, db.getName());
+        
+        String dstId = dst + id;
+        File dstFile = new File(dstId);
 
         if (!(dstFile.exists())) {
-            throw new Exception("Dokument " + dst + " existiert nicht!");
+            throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
         SystemManagement.writeFile(dstFile, content);
@@ -1783,7 +1784,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            preview = pg.updatePreview(aId, db.getName());
+            preview = pg.updatePreview(aId, db.getId(), db.getName());
         } catch (Throwable t) {
             log.error("Error updating document preview", t);
         }
@@ -1845,15 +1846,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
 
-        File dstDir = new File(dst);
-        dstDir.mkdirs();
+        this.migrateDocument(dst, db.getId(), db.getName());
+        
+        String dstId = dst + db.getId();
 
-        dst = dst + db.getName();
-
-        File dstFile = new File(dst);
-
+        File dstFile = new File(dstId);
         if (!(dstFile.exists())) {
-            throw new Exception("Dokument " + dst + " existiert nicht!");
+            throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
         return SystemManagement.readFile(dstFile);
@@ -1870,15 +1869,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
 
-        File dstDir = new File(dst);
-        dstDir.mkdirs();
+        this.migrateDocument(dst, db.getId(), db.getName());
+        String dstId = dst + db.getId();
 
-        dst = dst + db.getName();
-
-        File dstFile = new File(dst);
+        File dstFile = new File(dstId);
 
         if (!(dstFile.exists())) {
-            log.error("Dokument " + dst + " existiert nicht!");
+            log.error("Dokument " + dst + db.getName() + " existiert nicht!");
             return 0;
         }
         return dstFile.length();
@@ -1944,7 +1941,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String preview = "";
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-        if (pg.previewExists(aFile.getId(), db.getName())) {
+        if (pg.previewExists(aFile.getId(), id, db.getName())) {
             String prv = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
             String prvNew = prv + newName;
             prv = prv + db.getName();
@@ -3309,29 +3306,29 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         fileName = fileName + ext;
 
-        File dstDir = new File(dst);
-        dstDir.mkdirs();
+        String docId = idGen.getID().toString();
+        this.migrateDocument(dst, docId, fileName);
+        
+        String dstId = dst + docId;
 
-        dst = dst + fileName;
-
-        if (new File(dst).exists()) {
+        if (new File(dstId).exists()) {
             throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
-        SystemManagement.copyFile(src, dst);
+        SystemManagement.copyFile(src, dstId);
 
-        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues, formsPrefixes);
+        LibreOfficeAccess.setPlaceHolders(dstId, placeHolderValues, formsPrefixes);
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
-        String docId = idGen.getID().toString();
+        
         db.setId(docId);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
         db.setName(fileName);
         db.setFolder(aFile.getRootFolder());
-        if (new File(dst).exists()) {
-            db.setSize(new File(dst).length());
+        if (new File(dstId).exists()) {
+            db.setSize(new File(dstId).length());
         } else {
             db.setSize(-1);
         }
@@ -3352,7 +3349,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            preview = pg.createPreview(archiveFileId, fileName);
+            preview = pg.createPreview(archiveFileId, docId, fileName);
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
@@ -3522,17 +3519,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
 
-        File dstDir = new File(dst);
-        dstDir.mkdirs();
-
-        dst = dst + db.getName();
-
-        File dstFile = new File(dst);
-
-        if (!(dstFile.exists())) {
-            return false;
-        }
-        return true;
+        this.migrateDocument(dst, id, db.getName());
+        
+        String dstId=dst + db.getId();
+        File fDstId = new File(dstId);
+        return fDstId.exists();
     }
 
     @Override
@@ -4388,7 +4379,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            preview = pg.createPreview(aFile.getId(), db.getName());
+            preview = pg.createPreview(aFile.getId(), docId, db.getName());
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
@@ -4596,6 +4587,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ArchiveFileBean afb = s.getArchiveFileKey();
         }
         return resultList;
+    }
+    
+    private void migrateDocument(String dir, String docId, String docName) {
+        
+        if(new File(dir + docId).exists())
+            return;
+        
+        File dstDir = new File(dir);
+        dstDir.mkdirs();
+
+        File oldFile=new File(dir + docName);
+        if(oldFile.exists())
+            oldFile.renameTo(new File(dir + docId));
     }
 
 }

@@ -666,7 +666,10 @@ package com.jdimension.jlawyer.persistence;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -674,6 +677,9 @@ import javax.persistence.PersistenceContext;
  */
 @Stateless
 public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDocumentsBean> implements ArchiveFileDocumentsBeanFacadeLocal {
+    
+    private static final Logger log=Logger.getLogger(ArchiveFileDocumentsBeanFacade.class.getName());
+    
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
 
@@ -705,6 +711,20 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
         
         List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where deleted = true").getResultList();
         return list;
+    }
+
+    @Override
+    public ArchiveFileDocumentsBean findByArchiveFileKey(ArchiveFileBean archiveFileKey, String fileName) throws Exception {
+        ArchiveFileDocumentsBean doc=null;
+        try {
+            doc = (ArchiveFileDocumentsBean)getEntityManager().createQuery("from ArchiveFileDocumentsBean where archiveFileKey = ?1 and name = ?2").setParameter(1, archiveFileKey).setParameter(2, fileName).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        } catch (NonUniqueResultException nure) {
+            log.error("More than one document found for case " + archiveFileKey.getId() + " and file name " + fileName, nure);
+            throw new Exception("More than one document found for case " + archiveFileKey.getId() + " and file name " + fileName, nure);
+        }
+        return doc;
     }
     
 }

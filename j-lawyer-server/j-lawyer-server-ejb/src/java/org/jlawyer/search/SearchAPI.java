@@ -694,14 +694,14 @@ import org.apache.lucene.util.Version;
  */
 public class SearchAPI {
 
-    private static String FIELD_ID = "id";
-    private static String FIELD_FILENAME = "dateiname";
-    private static String FIELD_TEXT = "text";
-    private static String FIELD_TEXT_TERMVECTOR = "text-tv";
-    private static String FIELD_ARCHIVEFILEID = "archivefileid";
-    private static String FIELD_ARCHIVEFILENAME = "akte";
-    private static String FIELD_ARCHIVEFILENUMBER = "az";
-    private static String FIELD_DEFAULT = FIELD_TEXT;
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_FILENAME = "dateiname";
+    private static final String FIELD_TEXT = "text";
+    private static final String FIELD_TEXT_TERMVECTOR = "text-tv";
+    private static final String FIELD_ARCHIVEFILEID = "archivefileid";
+    private static final String FIELD_ARCHIVEFILENAME = "akte";
+    private static final String FIELD_ARCHIVEFILENUMBER = "az";
+    private static final String FIELD_DEFAULT = FIELD_TEXT;
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private IndexWriter writer = null;
     private Directory directory = null;
@@ -713,11 +713,8 @@ public class SearchAPI {
 
         this.openWriterAndDirectory();
 
-        Runnable r = new Runnable() {
-
-            public void run() {
-                close();
-            }
+        Runnable r = () -> {
+            close();
         };
         Runtime.getRuntime().addShutdownHook(new Thread(r));
 
@@ -757,11 +754,11 @@ public class SearchAPI {
         }
 
         Document doc = new Document();
-        doc.add(new Field(this.FIELD_ID, docId, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         FieldType type = new FieldType();
         type.setIndexed(true);
@@ -770,8 +767,8 @@ public class SearchAPI {
         type.setStoreTermVectors(true);
         type.setTokenized(true);
         type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(this.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(this.FIELD_TEXT, text, Field.Store.YES); //without term vector
+        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
+        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
         doc.add(textTv);
         doc.add(textNorm);
 
@@ -803,11 +800,11 @@ public class SearchAPI {
         }
 
         Document doc = new Document();
-        doc.add(new Field(this.FIELD_ID, docId, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
-        doc.add(new Field(this.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
+        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         FieldType type = new FieldType();
         type.setIndexed(true);
@@ -816,13 +813,13 @@ public class SearchAPI {
         type.setStoreTermVectors(true);
         type.setTokenized(true);
         type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(this.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(this.FIELD_TEXT, text, Field.Store.YES); //without term vector
+        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
+        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
         doc.add(textTv);
         doc.add(textNorm);
 
         try {
-            this.writer.updateDocument(new Term(this.FIELD_ID, docId), doc, analyzer);
+            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc, analyzer);
         } catch (IOException ex) {
             log.error("Error updating document in index", ex);
             throw new SearchException(ex.getMessage());
@@ -836,7 +833,7 @@ public class SearchAPI {
         }
 
         try {
-            this.writer.deleteDocuments(new Term(this.FIELD_ID, docId));
+            this.writer.deleteDocuments(new Term(SearchAPI.FIELD_ID, docId));
 
         } catch (IOException ex) {
             log.error("Error deleting document from index", ex);
@@ -913,7 +910,7 @@ public class SearchAPI {
 
                 int id = hits.scoreDocs[i].doc;
                 Document doc = searcher.doc(id);
-                String text = doc.get(this.FIELD_TEXT);
+                String text = doc.get(SearchAPI.FIELD_TEXT);
 
                 SearchHit sh = new SearchHit();
                 sh.setScore(hits.scoreDocs[i].score);
@@ -923,10 +920,10 @@ public class SearchAPI {
                 sh.setFileName(doc.get(FIELD_FILENAME));
                 sh.setId(doc.get(FIELD_ID));
 
-                text = doc.get(this.FIELD_TEXT_TERMVECTOR);
-                TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, this.FIELD_TEXT_TERMVECTOR, analyzer);
+                text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
+                TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, SearchAPI.FIELD_TEXT_TERMVECTOR, analyzer);
                 TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 6);
-                StringBuffer html=new StringBuffer();
+                StringBuilder html=new StringBuilder();
                 html.append("<html>");
                 for (int j = 0; j < frag.length; j++) {
                     if ((frag[j] != null) && (frag[j].getScore() > 0)) {
