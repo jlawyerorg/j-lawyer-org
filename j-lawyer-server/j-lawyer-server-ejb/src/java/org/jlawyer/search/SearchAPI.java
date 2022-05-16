@@ -897,7 +897,7 @@ public class SearchAPI {
             DirectoryReader reader = DirectoryReader.open(writer, true);
             IndexSearcher searcher = new IndexSearcher(reader);
             // Parse a simple query that searches for "text":
-            QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, this.FIELD_DEFAULT, this.analyzer);
+            QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, SearchAPI.FIELD_DEFAULT, this.analyzer);
             parser.setAllowLeadingWildcard(true);
             Query query = parser.parse(queryString);
             TopDocs hits = searcher.search(query, maxDocs);
@@ -910,8 +910,7 @@ public class SearchAPI {
 
                 int id = hits.scoreDocs[i].doc;
                 Document doc = searcher.doc(id);
-                String text = doc.get(SearchAPI.FIELD_TEXT);
-
+                
                 SearchHit sh = new SearchHit();
                 sh.setScore(hits.scoreDocs[i].score);
                 sh.setArchiveFileId(doc.get(FIELD_ARCHIVEFILEID));
@@ -920,7 +919,7 @@ public class SearchAPI {
                 sh.setFileName(doc.get(FIELD_FILENAME));
                 sh.setId(doc.get(FIELD_ID));
 
-                text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
+                String text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
                 TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, SearchAPI.FIELD_TEXT_TERMVECTOR, analyzer);
                 TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 6);
                 StringBuilder html=new StringBuilder();

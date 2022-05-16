@@ -742,8 +742,11 @@ public class PreviewGenerator {
             
             String dstId = dst + docId;
             File fDstId=new File(dstId);
-            if(fDstId.exists())
-                fDstId.delete();
+            if(fDstId.exists()) {
+                if(!fDstId.delete()) {
+                    log.error("Could not delete preview file " + fDstId.getAbsolutePath());
+                }
+            }
         }
 
     }
@@ -810,8 +813,12 @@ public class PreviewGenerator {
         dstDir.mkdirs();
 
         File oldFile=new File(dir + docName);
-        if(oldFile.exists())
-            oldFile.renameTo(new File(dir + docId));
+        if(oldFile.exists()) {
+            File toFile=new File(dir + docId);
+            if(!oldFile.renameTo(toFile)) {
+                log.error("Could not rename file " + oldFile.getAbsolutePath() + " to " + toFile.getAbsolutePath());
+            }
+        }
     }
 
 }
