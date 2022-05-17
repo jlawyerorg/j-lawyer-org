@@ -1,17 +1,17 @@
 /**
  * Copyright 2013 Theodor Costache
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
- * the License. 
+ * the License.
  */
 package de.costache.calendar.ui;
 
@@ -70,10 +70,16 @@ public class DayContentPanel extends JPanel {
                     ml.mouseClicked(e);
                 }
                 if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-                    if(startSelection == null || endSelection == null)
+                    if (startSelection == null || endSelection == null)
                         return;
                     Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
                     Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
+
+                    if(calendar.getDisplayStrategy() == Type.MONTH){
+                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
+                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
+                    }
+
                     EventRepository.get().triggerIntervalSelection(calendar,
                             startDate, endDate);
                 }
@@ -86,13 +92,18 @@ public class DayContentPanel extends JPanel {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
                 } else {
-                
-                if(startSelection == null || endSelection == null)
-                    return;
-                Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
-                Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
-                EventRepository.get().triggerIntervalSelection(calendar,
-                        startDate, endDate);
+
+                    if (startSelection == null || endSelection == null)
+                        return;
+                    Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
+                    Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
+
+                    if(calendar.getDisplayStrategy() == Type.MONTH){
+                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
+                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
+                    }
+                    EventRepository.get().triggerIntervalSelection(calendar,
+                            startDate, endDate);
                 }
                 for (final MouseListener ml : DayContentPanel.this.owner
                         .getOwner().getMouseListeners()) {
@@ -216,13 +227,23 @@ public class DayContentPanel extends JPanel {
                         e.getX(), e.getY()) : getNotMonthEvent(e.getX(),
                         e.getY());
 
-
-
                 if (event != null) {
                     setToolTipText(calendar.getTooltipFormater().format(event));
                 } else {
+                    List holidayEvents = EventCollectionRepository.get(calendar).getHolidayEvents(owner.getDate());
+                    if (holidayEvents.isEmpty()) {
+                        Date startDate = CalendarUtil.pixelToDate(
+                                owner.getDate(), (int) e.getY(),
+                                getHeight());
+                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
+                        Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
+                                (int) e.getY(), getHeight());
+                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
 
-                    setToolTipText(calendar.getTooltipFormater().format(EventCollectionRepository.get(calendar).getHolidayEvents(owner.getDate())));
+                        setToolTipText(sdf.format(startDate) + " - " + sdf.format(endDate));
+                    } else {
+                        setToolTipText(calendar.getTooltipFormater().format(holidayEvents));
+                    }
                 }
 
             }
@@ -359,15 +380,15 @@ public class DayContentPanel extends JPanel {
                         event);
                 int conflictingEventsSize = conflictingEvents.get(event)
                         .size();
-                
+
                 // start jens
-                if(conflictingEventsSize==0)
-                    conflictingEventsSize=1;
+                if (conflictingEventsSize == 0)
+                    conflictingEventsSize = 1;
                 // stop jens
 
                 graphics2d.fillRoundRect(conflictIndex * (getWidth() - 4)
-                        / conflictingEventsSize, eventStart, (getWidth() - 4)
-                        / conflictingEventsSize - 2, eventYEnd - eventStart,
+                                / conflictingEventsSize, eventStart, (getWidth() - 4)
+                                / conflictingEventsSize - 2, eventYEnd - eventStart,
                         12, 12);
                 final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
@@ -377,10 +398,10 @@ public class DayContentPanel extends JPanel {
                         .setColor(!event.isSelected() ? fgColor : Color.white);
 
                 GraphicsUtil.drawString(graphics2d, eventString, conflictIndex
-                        * (getWidth() - 4) / conflictingEventsSize + 3,
+                                * (getWidth() - 4) / conflictingEventsSize + 3,
                         eventStart + 15, (getWidth() - 4)
-                        / conflictingEventsSize - 3, eventYEnd
-                        - eventStart);
+                                / conflictingEventsSize - 3, eventYEnd
+                                - eventStart);
 
             }
         }
@@ -462,11 +483,11 @@ public class DayContentPanel extends JPanel {
                 graphics2d.fillRect(2, pos, getWidth() - 4, 15);
 
                 String eventString;
-                if(event.isAllDay()) {
-                    eventString=event.getSummary();
+                if (event.isAllDay()) {
+                    eventString = event.getSummary();
                 } else {
-                    eventString=sdf.format(event.getStart()) + " "
-                        + sdf.format(event.getEnd()) + " " + event.getSummary();
+                    eventString = sdf.format(event.getStart()) + " "
+                            + sdf.format(event.getEnd()) + " " + event.getSummary();
                 }
                 int fontSize = Math.round(getHeight() * 0.5f);
                 fontSize = fontSize > 9 ? 9 : fontSize;
@@ -496,7 +517,7 @@ public class DayContentPanel extends JPanel {
         if (events.size() > 0) {
             for (final CalendarEvent event : events) {
 
-                if(event.isHoliday())
+                if (event.isHoliday())
                     continue;
 
                 final int rectXStart = 2;
