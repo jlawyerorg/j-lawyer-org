@@ -682,6 +682,7 @@ public interface AddressBeanFacadeLocal {
     AddressBean find(Object id);
 
     List<AddressBean> findAll();
+    List<AddressBean> findAllWithReferences();
 
     List<AddressBean> findRange(int[] range);
 
