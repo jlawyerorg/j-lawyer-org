@@ -712,7 +712,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             return;
         }
 
-        List<AddressBean> contacts = this.addressFacade.findAll();
+        List<AddressBean> contacts = this.addressFacade.findAllWithReferences();
         log.info("found " + contacts.size() + " contacts");
         long updated = 0;
         for (AddressBean contact : contacts) {
