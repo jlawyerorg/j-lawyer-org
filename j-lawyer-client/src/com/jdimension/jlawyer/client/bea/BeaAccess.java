@@ -1038,6 +1038,19 @@ public class BeaAccess {
         }
         return this.identityCache.get(safeId);
     }
+    
+    public Identity getIdentity(String safeId, String zipCode) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        synchronized (this) {
+            if (!this.identityCache.containsKey(safeId+zipCode)) {
+                Identity i = this.wrapper.getIdentity(safeId, zipCode);
+                if (i != null) {
+                    this.identityCache.put(safeId+zipCode, i);
+                }
+            }
+        }
+        return this.identityCache.get(safeId+zipCode);
+    }
 
     public ArrayList<MessageHeader> getFolderOverview(Folder f) throws BeaWrapperException {
         this.checkValidBeaClient();

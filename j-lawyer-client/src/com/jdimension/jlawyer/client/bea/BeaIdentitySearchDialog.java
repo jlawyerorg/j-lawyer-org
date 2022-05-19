@@ -981,7 +981,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         this.selection=identity.getIdentity();
         try {
             BeaAccess bea=BeaAccess.getInstance();
-            this.selection=bea.getIdentity(identity.getIdentity().getSafeId());
+            this.selection=bea.getIdentity(identity.getIdentity().getSafeId(), identity.getIdentity().getZipCode());
         } catch (Throwable t) {
             log.error(t);
             

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -683,6 +684,15 @@ public class AddressBeanFacade extends AbstractFacade<AddressBean> implements Ad
 
     public AddressBeanFacade() {
         super(AddressBean.class);
+    }
+
+    @Override
+    public List<AddressBean> findAllWithReferences() {
+        List<AddressBean> all=findAll();
+        for(AddressBean a: all) {
+            a.getArchiveFileAddressesBeanList();
+        }
+        return all;
     }
     
 }
