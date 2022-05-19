@@ -238,13 +238,6 @@ public class DayContentPanel extends JPanel {
                 } else {
                     List holidayEvents = EventCollectionRepository.get(calendar).getHolidayEvents(owner.getDate());
                     if (holidayEvents.isEmpty()) {
-                        startDate = CalendarUtil.pixelToDate(
-                                owner.getDate(), e.getY(),
-                                getHeight());
-                        endDate = CalendarUtil.pixelToDate(owner.getDate(),
-                                e.getY(), getHeight());
-                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
-                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
                         setToolTipText(sdf.format(startDate) + " - " + sdf.format(endDate));
                     } else {
                         setToolTipText(calendar.getTooltipFormater().format(holidayEvents));
