@@ -239,7 +239,6 @@ public class DayContentPanel extends JPanel {
                         Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
                                 (int) e.getY(), getHeight());
                         endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
-
                         setToolTipText(sdf.format(startDate) + " - " + sdf.format(endDate));
                     } else {
                         setToolTipText(calendar.getTooltipFormater().format(holidayEvents));
