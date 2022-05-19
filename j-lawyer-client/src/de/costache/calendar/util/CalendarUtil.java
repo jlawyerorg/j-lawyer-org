@@ -133,7 +133,7 @@ public class CalendarUtil {
 
     public static long getTotalSeconds(final Date date) {
         final Calendar c = CalendarUtil.getCalendar(date, false);
-        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60l * 60l;
+        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60L * 60L;
         seconds += c.get(Calendar.MINUTE) * 60;
         seconds += c.get(Calendar.SECOND);
         return seconds;
@@ -160,7 +160,7 @@ public class CalendarUtil {
 
         for (int i = 0; i < clonedCollection.size(); i++) {
             final CalendarEvent event1 = clonedCollection.get(i);
-             conflictingEvents.put(event1, new ArrayList<>());
+            conflictingEvents.put(event1, new ArrayList<>());
             for (int j = 0; j < clonedCollection.size(); j++) {
                 final CalendarEvent event2 = clonedCollection.get(j);
                 if (event2.isAllDay() || event2.isHoliday())
@@ -218,13 +218,43 @@ public class CalendarUtil {
 
         if (time <= 30) {
             c.set(Calendar.MINUTE, roundUp ? 30 : 0);
-        } else if (time > 30) {
+        } else {
             c.set(Calendar.MINUTE, roundUp ? 0 : 30);
-            if(roundUp)
+            if (roundUp)
+                c.add(Calendar.HOUR, 1);
+        }
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTime();
+    }
+
+    public static Date roundDateToHalfAnHour2(Date date, boolean roundUp) {
+        Calendar c = getCalendar(date, false);
+        int currentMinutes = c.get(Calendar.MINUTE);
+        int newMinutes;
+
+        if (currentMinutes > 0 && currentMinutes <= 15) {
+            newMinutes = 0;
+        } else if (currentMinutes > 15 && currentMinutes <= 30 || currentMinutes > 30 && currentMinutes <= 45) {
+            newMinutes = 30;
+        } else {
+            newMinutes = 0;
             c.add(Calendar.HOUR, 1);
         }
-        c.set(Calendar.SECOND,0);
-        c.set(Calendar.MILLISECOND,0);
+
+        if (roundUp) {
+            if (newMinutes == 30) {
+                c.set(Calendar.MINUTE, 0);
+                c.add(Calendar.HOUR, 1);
+            } else {
+                c.set(Calendar.MINUTE, 30);
+            }
+        } else {
+            c.set(Calendar.MINUTE, newMinutes);
+        }
+
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
         return c.getTime();
     }
 
