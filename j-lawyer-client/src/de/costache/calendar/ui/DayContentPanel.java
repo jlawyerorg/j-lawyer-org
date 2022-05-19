@@ -27,10 +27,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author theodorcostache
@@ -45,6 +43,8 @@ public class DayContentPanel extends JPanel {
     private final DayPanel owner;
     private Point startSelection;
     private Point endSelection;
+    private Date startDate;
+    private Date endDate;
 
     /**
      * Creates a new instance of {@link DayContentPanel}
@@ -75,11 +75,6 @@ public class DayContentPanel extends JPanel {
                     Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
                     Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
 
-                    if(calendar.getDisplayStrategy() == Type.MONTH){
-                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
-                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
-                    }
-
                     EventRepository.get().triggerIntervalSelection(calendar,
                             startDate, endDate);
                 }
@@ -92,18 +87,9 @@ public class DayContentPanel extends JPanel {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
                 } else {
-
-                    if (startSelection == null || endSelection == null)
-                        return;
-                    Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
-                    Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
-
-                    if(calendar.getDisplayStrategy() == Type.MONTH){
-                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
-                        endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
-                    }
-                    EventRepository.get().triggerIntervalSelection(calendar,
-                            startDate, endDate);
+                    if (startDate != null && endDate != null)
+                        EventRepository.get().triggerIntervalSelection(calendar,
+                                startDate, endDate);
                 }
                 for (final MouseListener ml : DayContentPanel.this.owner
                         .getOwner().getMouseListeners()) {
@@ -181,16 +167,38 @@ public class DayContentPanel extends JPanel {
                     calendar.repaint();
                     return;
                 }
-                Date startDate = CalendarUtil.pixelToDate(
-                        owner.getDate(), (int) e.getY(),
+                startDate = CalendarUtil.pixelToDate(
+                        owner.getDate(), e.getY(),
                         getHeight());
                 startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
-                Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
-                        (int) e.getY(), getHeight());
+                endDate = CalendarUtil.pixelToDate(owner.getDate(),
+                        e.getY(), getHeight());
                 endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
 
                 startSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(startDate, getHeight()));
-                endSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(endDate, getHeight()));
+
+                checkEndSelectionAndRepaintCalendar(e, startDate, endDate);
+            }
+
+            /**
+             * This method checks if the endDate is one day after the startDate
+             * If true, then the full height is used for the endSelection to have the right results in the View
+             * Else the calculated value would be 0 and therefore lead to a wrong painted selection
+             * If false, then the normal calculated value is used
+             * @param e the mouse event to get the clicked position
+             * @param startDate the start date
+             * @param endDate the end date
+             */
+            private void checkEndSelectionAndRepaintCalendar(MouseEvent e, Date startDate, Date endDate) {
+                Calendar startCal = CalendarUtil.getCalendar(startDate, false);
+                Calendar endCal = CalendarUtil.getCalendar(endDate, false);
+                // If endDate's time is 00:00 -> date is theoretically on next day, then use full height
+                if (endCal.get(Calendar.DAY_OF_MONTH) > startCal.get(Calendar.DAY_OF_MONTH)) {
+                    endSelection = new Point(e.getX(), getHeight());
+                } else {
+                    endSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(endDate, getHeight()));
+                }
+
                 calendar.validate();
                 calendar.repaint();
             }
@@ -200,13 +208,11 @@ public class DayContentPanel extends JPanel {
                 if (startSelection == null)
                     return;
                 if (e.getY() > startSelection.getY()) {
-                    Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
-                            (int) e.getY(), getHeight());
+                    endDate = CalendarUtil.pixelToDate(owner.getDate(),
+                            e.getY(), getHeight());
                     endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
-                    endSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(endDate, getHeight()));
 
-                    calendar.validate();
-                    calendar.repaint();
+                    checkEndSelectionAndRepaintCalendar(e, startDate, endDate);
                 }
             }
         });
@@ -233,11 +239,11 @@ public class DayContentPanel extends JPanel {
                     List holidayEvents = EventCollectionRepository.get(calendar).getHolidayEvents(owner.getDate());
                     if (holidayEvents.isEmpty()) {
                         Date startDate = CalendarUtil.pixelToDate(
-                                owner.getDate(), (int) e.getY(),
+                                owner.getDate(), e.getY(),
                                 getHeight());
-                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
                         Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
-                                (int) e.getY(), getHeight());
+                                e.getY(), getHeight());
+                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
                         endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
                         setToolTipText(sdf.format(startDate) + " - " + sdf.format(endDate));
                     } else {
