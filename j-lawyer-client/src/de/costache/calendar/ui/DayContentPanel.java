@@ -72,8 +72,8 @@ public class DayContentPanel extends JPanel {
                 if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
                     if (startSelection == null || endSelection == null)
                         return;
-                    Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
-                    Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
+                    startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
+                    endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
 
                     EventRepository.get().triggerIntervalSelection(calendar,
                             startDate, endDate);
@@ -238,10 +238,10 @@ public class DayContentPanel extends JPanel {
                 } else {
                     List holidayEvents = EventCollectionRepository.get(calendar).getHolidayEvents(owner.getDate());
                     if (holidayEvents.isEmpty()) {
-                        Date startDate = CalendarUtil.pixelToDate(
+                        startDate = CalendarUtil.pixelToDate(
                                 owner.getDate(), e.getY(),
                                 getHeight());
-                        Date endDate = CalendarUtil.pixelToDate(owner.getDate(),
+                        endDate = CalendarUtil.pixelToDate(owner.getDate(),
                                 e.getY(), getHeight());
                         startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
                         endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
