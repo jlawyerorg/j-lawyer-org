@@ -663,11 +663,8 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import java.util.Date;
-import javax.swing.JOptionPane;
+import java.util.ArrayList;
 import javax.swing.JTable;
 
 /**
@@ -676,7 +673,7 @@ import javax.swing.JTable;
  */
 public abstract class ScanAction {
     
-    protected String fileName=null;
+    protected ArrayList<String> fileNames=null;
     protected String archiveFile=null;
     protected String archiveFileId=null;
     protected String description=null;
@@ -686,10 +683,6 @@ public abstract class ScanAction {
     
     public ScanAction(JTable actionsTable) {
         this.actionsTable=actionsTable;
-    }
-    
-    public ScanAction(String fileName, String description, String archiveFileKey) {
-        
     }
     
     public abstract void execute();
@@ -716,12 +709,12 @@ public abstract class ScanAction {
         this.description = description;
     }
 
-    public String getFileName() {
-        return fileName;
+    public ArrayList<String> getFileNames() {
+        return fileNames;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setFileNames(ArrayList<String> fileNames) {
+        this.fileNames = fileNames;
     }
     
     @Override

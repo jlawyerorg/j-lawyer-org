@@ -688,7 +688,7 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
 
     public SearchAndAssignScanAction(JTable actionsTable, boolean delete) {
         super(actionsTable, delete);
-        this.setDescription("Akte suchen, Datei zuordnen");
+        this.setDescription("Akte suchen, Datei(en) zuordnen");
         this.setArchiveFile("");
     }
 
@@ -710,60 +710,67 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
             if (sel != null) {
 
                 Collection<ArchiveFileDocumentsBean> docList = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
-                ArrayList<String> docNames = new ArrayList<String>();
+                ArrayList<String> docNames = new ArrayList<>();
                 for (ArchiveFileDocumentsBean o : docList) {
                     docNames.add(o.getName().toLowerCase());
                 }
-                boolean nameExists = true;
-                String newName = null;
-                while (nameExists) {
-                    newName = this.getNewFileName(this.fileName);
-                    if (newName == null) {
-                        return;
+
+                int addedCount = 0;
+                for (String fileName : this.getFileNames()) {
+                    boolean nameExists = true;
+                    String newName = null;
+                    while (nameExists) {
+                        newName = this.getNewFileName(fileName);
+                        if (newName == null) {
+                            return;
+                        }
+                        if (docNames.contains(newName.toLowerCase())) {
+                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
+                        } else {
+                            nameExists = false;
+                        }
                     }
-                    if (docNames.contains(newName.toLowerCase())) {
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
-                    } else {
-                        nameExists = false;
+
+                    boolean added = is.assignObservedFile(fileName, sel.getId(), newName);
+                    if(added)
+                        addedCount++;
+
+                    if (this.getCaseTag() != null) {
+                        locator.lookupArchiveFileServiceRemote().setTag(sel.getId(), new ArchiveFileTagsBean(null, this.getCaseTag()), true);
                     }
-                }
 
-                boolean added = is.assignObservedFile(this.fileName, sel.getId(), newName);
+                    if (this.getDocumentTag() != null) {
+                        Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                        for (ArchiveFileDocumentsBean d : docs) {
 
-                if (this.getCaseTag() != null) {
-                    locator.lookupArchiveFileServiceRemote().setTag(sel.getId(), new ArchiveFileTagsBean(null, this.getCaseTag()), true);
-                }
+                            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                            if (newName.equals(doc.getName())) {
+                                locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
+                                break;
+                            }
+                        }
+                    }
 
-                if (this.getDocumentTag() != null) {
-                    Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
-                    for (ArchiveFileDocumentsBean d : docs) {
+                    if (folder != null) {
+                        Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                        for (ArchiveFileDocumentsBean d : docs) {
 
-                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                        if (newName.equals(doc.getName())) {
-                            locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
-                            break;
+                            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                            if (newName.equals(doc.getName())) {
+
+                                ArrayList<String> dList = new ArrayList<>();
+                                dList.add(doc.getId());
+                                locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
+
+                                break;
+                            }
+
                         }
                     }
                 }
-
-                if (folder != null) {
-                    Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
-                    for (ArchiveFileDocumentsBean d : docs) {
-
-                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                        if (newName.equals(doc.getName())) {
-
-                            ArrayList<String> dList = new ArrayList<>();
-                            dList.add(doc.getId());
-                            locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
-
-                            break;
-                        }
-
-                    }
+                if (addedCount > 0) {
+                    super.execute();
                 }
-
-                super.execute();
             }
 
         } catch (Exception ex) {

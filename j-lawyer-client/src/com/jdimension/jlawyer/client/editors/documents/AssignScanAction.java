@@ -686,7 +686,7 @@ public class AssignScanAction extends DeleteScanAction {
 
     public AssignScanAction(JTable actionsTable, boolean delete) {
         super(actionsTable, delete);
-        this.setDescription("Datei der Akte zuordnen");
+        this.setDescription("Datei(en) der Akte zuordnen");
         this.setArchiveFile("");
     }
 
@@ -697,59 +697,58 @@ public class AssignScanAction extends DeleteScanAction {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             Collection docList = locator.lookupArchiveFileServiceRemote().getDocuments(this.archiveFileId);
-            ArrayList<String> docNames = new ArrayList<String>();
+            ArrayList<String> docNames = new ArrayList<>();
             for (Object o : docList) {
                 if (o instanceof ArchiveFileDocumentsBean) {
                     docNames.add(((ArchiveFileDocumentsBean) o).getName().toLowerCase());
                 }
             }
-            boolean nameExists = true;
-            String newName = null;
-            while (nameExists) {
-                newName = this.getNewFileName(this.fileName);
-                if (newName == null) {
-                    return;
+
+            int addedCount=0;
+            for (String fileName : this.getFileNames()) {
+
+                boolean nameExists = true;
+                String newName = null;
+                while (nameExists) {
+                    newName = this.getNewFileName(fileName);
+                    if (newName == null) {
+                        // user cancelled
+                        return;
+                    }
+                    if (docNames.contains(newName.toLowerCase())) {
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
+                    } else {
+                        nameExists = false;
+                    }
                 }
-                if (docNames.contains(newName.toLowerCase())) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
-                } else {
-                    nameExists = false;
+
+                IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
+                boolean added = is.assignObservedFile(fileName, this.archiveFileId, newName);
+                if(added)
+                    addedCount++;
+
+                if (this.getCaseTag() != null) {
+                    locator.lookupArchiveFileServiceRemote().setTag(archiveFileId, new ArchiveFileTagsBean(null, this.getCaseTag()), true);
                 }
-            }
 
-            IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-            boolean added = is.assignObservedFile(this.fileName, this.archiveFileId, newName);
-
-            if (this.getCaseTag() != null) {
-                locator.lookupArchiveFileServiceRemote().setTag(archiveFileId, new ArchiveFileTagsBean(null, this.getCaseTag()), true);
-            }
-
-            if (this.getDocumentTag() != null) {
-                Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(archiveFileId);
-                for (Object d : docs) {
-                    if (d instanceof ArchiveFileDocumentsBean) {
-                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                        if (newName.equals(doc.getName())) {
-                            locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
-                            break;
+                if (this.getDocumentTag() != null) {
+                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(archiveFileId);
+                    for (Object d : docs) {
+                        if (d instanceof ArchiveFileDocumentsBean) {
+                            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                            if (newName.equals(doc.getName())) {
+                                locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
+                                break;
+                            }
                         }
                     }
                 }
             }
 
-            if (added) {
+            if (addedCount>0) {
                 super.execute();
             }
 
-//            if (removed) {
-//                String[] colNames = new String[]{"Aktion", "Akte", ""};
-//                DefaultTableModel model = new DefaultTableModel(colNames, 0);
-//                ThreadUtils.setTableModel(this.actionsTable, model);
-//                
-//                DefaultTableModel filesModel=(DefaultTableModel)filesTable.getModel();
-//                filesModel.removeRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow()));
-//                EditorsRegistry.getInstance().updateScanStatus(filesModel.getRowCount());
-//            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
