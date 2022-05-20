@@ -3305,7 +3305,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.warn("Template without file extension: " + templateName);
         }
         fileName = fileName + ext;
-
+        
+        
+        ArchiveFileDocumentsBean existingDoc=this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, fileName);
+        if(existingDoc!=null)
+            throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        
         String docId = idGen.getID().toString();
         this.migrateDocument(dst, docId, fileName);
         
@@ -3317,7 +3322,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         SystemManagement.copyFile(src, dstId);
 
-        LibreOfficeAccess.setPlaceHolders(dstId, placeHolderValues, formsPrefixes);
+        LibreOfficeAccess.setPlaceHolders(archiveFileId, dstId, fileName, placeHolderValues, formsPrefixes);
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         

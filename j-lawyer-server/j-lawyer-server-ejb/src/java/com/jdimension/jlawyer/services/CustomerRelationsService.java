@@ -811,7 +811,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
 
         SystemManagement.copyFile(src, dst);
 
-        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues, null);
+        LibreOfficeAccess.setPlaceHolders("", dst, dst, placeHolderValues, null);
 
         return ServerFileUtils.readFile(new File(dst));
     }

@@ -801,7 +801,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.docx", "test/data/template-run.docx", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -869,7 +869,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-scripts-run.docx", "test/data/template-scripts-run.docx", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -935,7 +935,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/textfield-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/textfield-run.docx", "test/data/textfield-run.docx", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();

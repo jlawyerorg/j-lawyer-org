@@ -1,6 +1,8 @@
 import templates.smart.SmartFunctions;
 
 class SmartTemplate {
+    
+    String caseId="SMARTTEMPLATECASEID";
 	
     double doIt(double d1) {
         System.out.println("ok");
@@ -9,6 +11,19 @@ class SmartTemplate {
     
     String evaluateScript() {
         return SMARTTEMPLATESCRIPT;
+    }
+    
+    String WENNETIKETT(String etikett, String then, String otherwise) {
+        if(etikett==null)
+            return otherwise;
+        if("".equals(etikett))
+            return otherwise;
+        
+        return SmartFunctions.wennEtikett(caseId, etikett, then, otherwise);
+    }
+    
+    String WENNETIKETT(String etikett, String then) {
+        return WENNETIKETT(etikett, then, "");
     }
     
     String WENNGLEICH(String s1, String s2, String then, String otherwise) {
