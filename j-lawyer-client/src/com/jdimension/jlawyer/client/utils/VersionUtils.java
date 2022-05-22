@@ -676,7 +676,7 @@ public class VersionUtils {
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
     public static String getClientVersion() {
-        return "2.1";
+        return "2.2";
     }
 
     public static String getPatchLevel() {
@@ -700,28 +700,28 @@ public class VersionUtils {
         String patch="0";
         String build="0";
         
-        if(v.indexOf(".")>-1) {
+        if(v.contains(".")) {
             major=v.substring(0, v.indexOf("."));
             v=v.substring(v.indexOf(".")+1, v.length());
         } else if (v.length()>0) {
             major=v;
         }
         
-        if(v.indexOf(".")>-1) {
+        if(v.contains(".")) {
             minor=v.substring(0, v.indexOf("."));
             v=v.substring(v.indexOf(".")+1, v.length());
         } else if (v.length()>0) {
             minor=v;
         }
         
-        if(v.indexOf(".")>-1) {
+        if(v.contains(".")) {
             patch=v.substring(0, v.indexOf("."));
             v=v.substring(v.indexOf(".")+1, v.length());
         } else if (v.length()>0) {
             patch=v;
         }
         
-        if(v.indexOf(".")>-1) {
+        if(v.contains(".")) {
             build=v.substring(0, v.indexOf("."));
             v=v.substring(v.indexOf("."), v.length()-1);
         } else if (v.length()>0) {

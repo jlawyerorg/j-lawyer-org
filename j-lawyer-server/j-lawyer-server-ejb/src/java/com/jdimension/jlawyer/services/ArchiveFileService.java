@@ -713,6 +713,7 @@ import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
+import org.jlawyer.databucket.DataBucketUtils;
 import org.jlawyer.search.SearchIndexRequest;
 
 /**
@@ -2730,7 +2731,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return list;
     }
-
+    
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] exportCaseToHtml(String caseId) throws Exception {
@@ -2746,7 +2747,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         File zip = new File(zipFile);
         byte[] zipBytes = null;
         try {
-            // may fail for files larger than 2GB
+            // may fail for files larger than 2GB because arrays may only have Integer.MAXVALUE elements
             zipBytes = ServerFileUtils.readFile(zip);
         } finally {
             zip.delete();
@@ -2754,6 +2755,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ServerFileUtils.getInstance().deleteRecursively(exportPath);
         }
         return zipBytes;
+
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DataBucket loadHtmlCaseExport(String caseId) throws Exception {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+
+        ArchiveFileBean dto = this.archiveFileFacade.find(caseId);
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), dto, this.securityFacade, this.getAllowedGroups(dto));
+        HTMLExport export = new HTMLExport(new File(tmpDir), this, this.calendarFacade);
+        String path = export.export(dto, null);
+
+        DataBucket bucket=DataBucketUtils.newBucket(caseId + ".zip");
+        String zipFile = DataBucketUtils.getLocalFile(bucket);
+        export.zipDirectory(path, zipFile);
+        File zip = new File(zipFile);
+        bucket.setTotalSize(zip.length());
+        DataBucketUtils.fillBucket(bucket);
+        
+        
+        try {
+            
+        } finally {
+            File exportPath = new File(path);
+            ServerFileUtils.getInstance().deleteRecursively(exportPath);
+        }
+        
+        return bucket;
 
     }
 
