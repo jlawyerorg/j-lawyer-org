@@ -709,7 +709,9 @@ public class DataBucketUtils {
         File f=new File(getLocalFile(bucket));
         if(f.exists())  {
             try {
-                f.delete();
+                if(!f.delete()) {
+                    log.error("Could not delete local data bucket " + bucket.getId());
+                }
             } catch (Exception ex) {
                 log.error("Could not delete local data bucket " + bucket.getId());
             }
@@ -724,7 +726,9 @@ public class DataBucketUtils {
                     // delete buckets older than 12hrs
                     if((System.currentTimeMillis()-f.lastModified())>12L*60L*60L*1000L) {
                         try {
-                            f.delete();
+                            if(!f.delete()) {
+                                log.error("Could not delete local data bucket " + f.getName());
+                            }
                         } catch (Exception ex) {
                             log.error("Could not delete local data bucket " + f.getName());
                         }

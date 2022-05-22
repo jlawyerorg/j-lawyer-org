@@ -677,14 +677,14 @@ public class DataBucketLoader implements DataBucketLoaderRemote {
     @Override
     @RolesAllowed({"loginRole"})
     public DataBucket nextBucket(DataBucket bucket) throws Exception {
-        DataBucket next=bucket.next();
-        if(next!=null)
+        DataBucket next = bucket.next();
+        if (next != null) {
             DataBucketUtils.fillBucket(next);
-        
-        if(next.isLast()) {
-            DataBucketUtils.removeLocalFile(next);
+            if (next.isLast()) {
+                DataBucketUtils.removeLocalFile(next);
+            }
         }
-        
+
         return next;
     }
 

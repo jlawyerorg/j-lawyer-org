@@ -677,7 +677,6 @@ import java.awt.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.text.DecimalFormat;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.log4j.Logger;
@@ -785,7 +784,10 @@ public class ExportAsHtmlAction extends ProgressableAction {
             zis.closeEntry();
             zis.close();
             bucketInStream.close();
-            new File(dir.getPath() + File.separator + bucket.getFileName()).delete();
+            String bucketFile=dir.getPath() + File.separator + bucket.getFileName();
+            if(!(new File(bucketFile).delete())) {
+                log.error("Could not delete data bucket file " + bucketFile);
+            }
 
             DesktopUtils.openBrowserFromDialog(browserUrl, this.indicator);
 
