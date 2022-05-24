@@ -74,79 +74,59 @@ public class BackupMgrController implements Initializable {
         RestoreExecutor re = new RestoreExecutor(this.txtDataDir.getText(), this.txtBackupDir.getText(), this.txtEncryptionPwd.getText(), this.txtMysqlPwd.getText());
         BackupProgressUiCallback callback=new BackupProgressUiCallback(lblProgress);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        cmdRestore.disableProperty().set(true);
-                        prgRestore.setProgress(0.0d);
-                        lblProgress.setText("Prüfe Datensicherung...");
-                    }
+        new Thread(() -> {
+            Platform.runLater(() -> {
+                cmdRestore.disableProperty().set(true);
+                prgRestore.setProgress(0.0d);
+                lblProgress.setText("Prüfe Datensicherung...");
+            });
+            System.out.println("validate");
+            boolean failed=false;
+            try {
+                re.validate(callback);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                failed=true;
+                Platform.runLater(() -> {
+                    lblProgress.setText(ex.getMessage());
+                    cmdRestore.disableProperty().set(false);
                 });
-                System.out.println("validate");
-                boolean failed=false;
-                try {
-                    re.validate(callback);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    failed=true;
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            lblProgress.setText(ex.getMessage());
-                            cmdRestore.disableProperty().set(false);
-                        }
-                    });
-
-                }
-                System.out.println("validate: " + failed);
-                if(failed)
-                    return;
-
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        lblProgress.setText("Prüfung erfolgreich...");
-                    }
-                });
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(BackupMgrController.class.getName()).log(Level.SEVERE, null, ex);
-                }
                 
-                System.out.println("restore");
-                try {
-                    re.restore(callback);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    failed=true;
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            lblProgress.setText(ex.getMessage());
-                            cmdRestore.disableProperty().set(false);
-                        }
-                    });
-
-                }
-                if(failed)
-                    return;
-
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        prgRestore.setProgress(1.0d);
-                        lblProgress.setText("Wiederherstellung abgeschlossen.");
-                        cmdRestore.disableProperty().set(false);
-                    }
+            }
+            System.out.println("validate: " + failed);
+            if(failed)
+                return;
+            
+            Platform.runLater(() -> {
+                lblProgress.setText("Prüfung erfolgreich...");
+            });
+            
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(BackupMgrController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            System.out.println("restore");
+            try {
+                re.restore(callback);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                failed=true;
+                Platform.runLater(() -> {
+                    lblProgress.setText(ex.getMessage());
+                    cmdRestore.disableProperty().set(false);
                 });
 
             }
-
+            if(failed)
+                return;
+            
+            Platform.runLater(() -> {
+                prgRestore.setProgress(1.0d);
+                lblProgress.setText("Wiederherstellung abgeschlossen.");
+                cmdRestore.disableProperty().set(false);
+            });
         }).start();
 
     }
