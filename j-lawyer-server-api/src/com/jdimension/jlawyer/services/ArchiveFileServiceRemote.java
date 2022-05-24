@@ -757,6 +757,8 @@ public interface ArchiveFileServiceRemote {
     Collection<ArchiveFileBean> getAllWithMissingReviews();
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
+    
+    DataBucket loadHtmlCaseExport(String caseId) throws Exception;
 
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 

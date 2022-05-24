@@ -703,11 +703,11 @@ public class LibreOfficeAccess {
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
-    public static void setPlaceHolders(String file, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
+    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
 
-        if (file.toLowerCase().endsWith(".odt")) {
+        if (fileName.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
-            outputOdt = TextDocument.loadDocument(file);
+            outputOdt = TextDocument.loadDocument(fileInFileSystem);
 
             ArrayList<Node> removalParents = new ArrayList<>();
             ArrayList<Node> removalChildren = new ArrayList<>();
@@ -742,7 +742,7 @@ public class LibreOfficeAccess {
                                 item.replaceWith(value);
 
                             } catch (Throwable t) {
-                                log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
+                                log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                             }
                         }
                     }
@@ -804,7 +804,7 @@ public class LibreOfficeAccess {
                                 removalChildren.add(item.getElement());
                             }
                         } catch (Throwable t) {
-                            log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
+                            log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                         }
 
                     }
@@ -982,17 +982,17 @@ public class LibreOfficeAccess {
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
                 String scriptContent = item.getText();
-                String scriptResult = evaluateScript(scriptContent, values, formsPrefixes);
+                String scriptResult = evaluateScript(caseId, scriptContent, values, formsPrefixes);
                 item.replaceWith(scriptResult);
 
             }
 
-            outputOdt.save(new File(file));
+            outputOdt.save(new File(fileInFileSystem));
             outputOdt.close();
 
-        } else if (file.toLowerCase().endsWith(".ods")) {
+        } else if (fileName.toLowerCase().endsWith(".ods")) {
             SpreadsheetDocument outputOds;
-            outputOds = SpreadsheetDocument.loadDocument(file);
+            outputOds = SpreadsheetDocument.loadDocument(fileInFileSystem);
 
             for (String key: values.keySet()) {
 
@@ -1018,7 +1018,7 @@ public class LibreOfficeAccess {
 
                             item.replaceWith(value);
                         } catch (Throwable t) {
-                            log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
+                            log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                         }
                     }
                 }
@@ -1040,16 +1040,16 @@ public class LibreOfficeAccess {
 
                         item.replaceWith(value);
                     } catch (Throwable t) {
-                        log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
+                        log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                     }
                 }
 
             }
 
-            outputOds.save(new File(file));
+            outputOds.save(new File(fileInFileSystem));
             outputOds.close();
-        } else if (file.toLowerCase().endsWith(".docx")) {
-            MicrosoftOfficeAccess.setPlaceHolders(file, values, formsPrefixes);
+        } else if (fileName.toLowerCase().endsWith(".docx")) {
+            MicrosoftOfficeAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
     }
@@ -1146,7 +1146,7 @@ public class LibreOfficeAccess {
 
     }
 
-    protected static String evaluateScript(String scriptContent, HashMap<String,Object> values, ArrayList<String> formsPrefixes) {
+    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String,Object> values, ArrayList<String> formsPrefixes) {
         if (scriptContent.startsWith("[[SCRIPT:")) {
             scriptContent = scriptContent.substring(9);
         }
@@ -1181,6 +1181,7 @@ public class LibreOfficeAccess {
 
             String myclass = sb.toString();
             myclass = myclass.replace("SMARTTEMPLATESCRIPT", scriptContent);
+            myclass = myclass.replace("SMARTTEMPLATECASEID", caseId);
 
             StringBuilder allFormPrefixes = new StringBuilder();
             if (formsPrefixes != null) {

@@ -706,6 +706,14 @@ public abstract class ProgressableAction {
             indicator.progress(status);
         }));
     }
+    
+    public void progress(final String status, int max) {
+
+        SwingUtilities.invokeLater(new Thread(() -> {
+            indicator.setMax(max);
+            indicator.progress(status);
+        }));
+    }
 
     public void setProgressString(final String status) {
 

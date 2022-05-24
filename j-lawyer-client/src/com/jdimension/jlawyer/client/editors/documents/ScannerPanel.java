@@ -722,26 +722,26 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, EventConsumer {
-    
+
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
     private Hashtable<File, Date> lastEventFileNames = new Hashtable<>();
-    
+
     @Override
     public void notifyStatusBarReady() {
         EventBroker eb = EventBroker.getInstance();
         eb.publishEvent(new ScannerStatusEvent(this.lastEventFileNames));
     }
-    
+
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
     }
-    
+
     @Override
     public void onEvent(Event e) {
         if (e instanceof ScannerStatusEvent) {
-            
+
             int selectedRow = tblDirContent.getSelectedRow();
             Hashtable<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
@@ -759,11 +759,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     model.addRow(row);
                 }
             }
-            
+
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
             sorter.setComparator(0, new DateTimeStringComparator());
             ThreadUtils.setTableModel(tblDirContent, model, sorter);
-            
+
             try {
                 if (selectedRow >= tblDirContent.getRowCount()) {
                     selectedRow = 0;
@@ -771,52 +771,54 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 // call the sorter twice so we have a sort by date descending
                 sorter.toggleSortOrder(0);
                 sorter.toggleSortOrder(0);
-                
+
                 tblDirContent.changeSelection(selectedRow, 0, false, false);
             } catch (Throwable t) {
                 log.error("Error re-selecting table row", t);
             }
             this.lastEventFileNames = fileNames;
         } else if (e instanceof AllCaseTagsEvent) {
-            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            DefaultComboBoxModel dm = new DefaultComboBoxModel();
             dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<>();
-            for(AppOptionGroupBean tag: ((AllCaseTagsEvent) e).getTagDtos()) {
+            ArrayList<String> allTags = new ArrayList<>();
+            for (AppOptionGroupBean tag : ((AllCaseTagsEvent) e).getTagDtos()) {
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);
-            for(String s: allTags) {
+            for (String s : allTags) {
                 dm.addElement(s);
             }
             this.cmbCaseTag.setModel(dm);
-            ClientSettings settings=ClientSettings.getInstance();
-            String lastTag=settings.getConfiguration(ClientSettings.CONF_SCANS_LASTTAG, "");
-            if(allTags.contains(lastTag))
+            ClientSettings settings = ClientSettings.getInstance();
+            String lastTag = settings.getConfiguration(ClientSettings.CONF_SCANS_LASTTAG, "");
+            if (allTags.contains(lastTag)) {
                 this.cmbCaseTag.setSelectedItem(lastTag);
-            else
+            } else {
                 this.cmbCaseTag.setSelectedItem("");
+            }
         } else if (e instanceof AllDocumentTagsEvent) {
-            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            DefaultComboBoxModel dm = new DefaultComboBoxModel();
             dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<>();
-            for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
+            ArrayList<String> allTags = new ArrayList<>();
+            for (AppOptionGroupBean tag : ((AllDocumentTagsEvent) e).getTagDtos()) {
                 //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);
-            for(String s: allTags) {
+            for (String s : allTags) {
                 dm.addElement(s);
             }
             this.cmbDocumentTag.setModel(dm);
-            ClientSettings settings=ClientSettings.getInstance();
-            String lastTag=settings.getConfiguration(ClientSettings.CONF_SCANS_LASTDOCUMENTTAG, "");
-            if(allTags.contains(lastTag))
+            ClientSettings settings = ClientSettings.getInstance();
+            String lastTag = settings.getConfiguration(ClientSettings.CONF_SCANS_LASTDOCUMENTTAG, "");
+            if (allTags.contains(lastTag)) {
                 this.cmbDocumentTag.setSelectedItem(lastTag);
-            else
+            } else {
                 this.cmbDocumentTag.setSelectedItem("");
+            }
         }
     }
-    
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -827,49 +829,49 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Creates new form ScannerPanel
      */
     public ScannerPanel() {
-        
+
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(this.splitMain);
         ComponentUtils.decorateSplitPane(this.splitTop);
         ComponentUtils.decorateSplitPane(this.splitTop);
-        
-        ClientSettings settings=ClientSettings.getInstance();
+
+        ClientSettings settings = ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_TAGGINGENABLED, "false");
         if ("true".equalsIgnoreCase(temp)) {
             this.chkCaseTagging.setSelected(true);
         }
-        
+
         temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DOCUMENTTAGGINGENABLED, "false");
         if ("true".equalsIgnoreCase(temp)) {
             this.chkDocumentTagging.setSelected(true);
         }
-        
+
         temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "false");
         if ("false".equalsIgnoreCase(temp)) {
             this.chkDeleteAfterAction.setSelected(false);
         }
-        
+
         this.displayLocalScanDir();
-        
+
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
         eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
-        
+
         DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                
+
                 JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
+
                 if (column == 1) {
                     String sValue = (String) value;
                     FileUtils fu = FileUtils.getInstance();
                     Icon icon = fu.getFileTypeIcon(sValue);
                     label.setText(sValue);
                     label.setIcon(icon);
-                    
+
                 } else {
                     label.setIcon(null);
                 }
@@ -877,68 +879,69 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         };
         this.tblDirContent.setDefaultRenderer(Object.class, r);
-        
+
         String[] colNames = new String[]{"Aktion", "Akte", ""};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblActions, model);
-        
+
         this.splitTop.setDividerLocation(0.5d);
         this.splitMain.setDividerLocation(0.5d);
-        
+
         Timer timer = new Timer();
         TimerTask scannerTask = new ScannerDocumentsTimerTask(false);
         timer.schedule(scannerTask, 6500, 15000);
-        
+
         Timer timer2 = new Timer();
         TimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
         timer2.schedule(scannerUploadsTask, 9500, 15000);
-        
+
         ComponentUtils.restoreSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
-        
+
         ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
-        
-        if(this.splitMain.getDividerLocation()<100)
+
+        if (this.splitMain.getDividerLocation() < 100) {
             this.splitMain.setDividerLocation(100);
+        }
 
     }
-    
+
     private void displayLocalScanDir() {
-        ClientSettings settings=ClientSettings.getInstance();
+        ClientSettings settings = ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-        if("".equalsIgnoreCase(temp)) {
+        if ("".equalsIgnoreCase(temp)) {
             this.lblLocalDir.setText("kein Eingangsordner auf diesem Gerät");
         } else {
             this.lblLocalDir.setText("Eingangsordner auf diesem Gerät: " + temp);
         }
     }
-    
+
     public void refreshList() {
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
             Hashtable<File, Date> observedDirContent = is.getObservedDirectoryContent();
-            
+
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ScannerStatusEvent(observedDirContent));
-            
+
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
-        
+
     }
-    
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
 
     }
-    
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -1164,11 +1167,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         this.refreshList();
     }//GEN-LAST:event_cmdRefreshActionPerformed
-    
+
     private void selectDirContent() {
-        int selRow = this.tblDirContent.getSelectedRow();
-        if (selRow > -1) {
-            String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
+        int[] selRow = this.tblDirContent.getSelectedRows();
+        if (selRow.length > 0) {
+
             String[] colNames = new String[]{"Aktion", "Akte", ""};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 @Override
@@ -1177,10 +1180,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             };
             DefaultTableCellRenderer r2 = new DefaultTableCellRenderer() {
-                
+
                 @Override
                 public Component getTableCellRendererComponent(JTable table, final Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                    
+
                     if (column == 2) {
                         JLabel b = new JLabel();
                         b.setHorizontalAlignment(JLabel.CENTER);
@@ -1192,129 +1195,118 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             };
             this.tblActions.setDefaultRenderer(Object.class, r2);
+
+            ArrayList<String> fileNames = new ArrayList<>();
+            for (int r : selRow) {
+                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                fileNames.add(fileName);
+            }
+
             // prepare proposed actions
             DeleteScanAction da = new DeleteScanAction(this.tblActions, true);
-            da.setFileName(fileName);
+            da.setFileNames(fileNames);
             model.addRow(new Object[]{da.getDescription(), da.getArchiveFile(), da});
-            
+
             SearchAndAssignScanAction aa = new SearchAndAssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
-            aa.setFileName(fileName);
+            aa.setFileNames(fileNames);
             model.addRow(new Object[]{aa.getDescription(), aa.getArchiveFile(), aa});
-            
+
             try {
                 ClientSettings settings = ClientSettings.getInstance();
-                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                ArrayList proposedAssignmentFiles = new ArrayList();
 
-                // todo: strip extension
-                ArrayList<String> extensions = new ArrayList<>(LauncherFactory.LO_OFFICEFILETYPES);
-                extensions.add(".pdf");
-                String fileNameNoExt = fileName;
-                for (String ext : extensions) {
-                    if (fileName.toLowerCase().endsWith(ext.toLowerCase())) {
-                        fileNameNoExt = fileName.substring(0, fileName.length() - ext.length());
-                        break;
-                    }
-                }
-                ArchiveFileBean[] similarNames = fileService.searchSimple(fileNameNoExt);
-                for (int i = 0; i < similarNames.length; i++) {
-                    if (i == 20) {
-                        break;
-                    }
-                    
-                    ArchiveFileBean af = similarNames[i];
-                    if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
-                        proposedAssignmentFiles.add(af.getFileNumber());
-                        
-                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
-                        asa.setFileName(fileName);
-                        asa.setArchiveFileId(af.getId());
-                        asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
-                        model.addRow(new Object[]{asa.getDescription(), asa.getArchiveFile(), asa});
-                    }
-                }
-                
+                ArrayList<String> caseCandidates = new ArrayList<>();
                 List<ArchiveFileBean> myNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), true, 10);
                 List<ArchiveFileBean> othersNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), false, 10);
                 for (ArchiveFileBean af : myNewList) {
-                    if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
-                        proposedAssignmentFiles.add(af.getFileNumber());
+                    if (!caseCandidates.contains(af.getFileNumber())) {
+                        caseCandidates.add(af.getFileNumber());
                         AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
-                        asa.setFileName(fileName);
+                        asa.setFileNames(fileNames);
                         asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
                         asa.setArchiveFileId(af.getId());
                         model.addRow(new Object[]{asa.getDescription(), asa.getArchiveFile(), asa});
-                        
+
                     }
                 }
                 for (ArchiveFileBean af : othersNewList) {
-                    if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
-                        proposedAssignmentFiles.add(af.getFileNumber());
+                    if (!caseCandidates.contains(af.getFileNumber())) {
+                        caseCandidates.add(af.getFileNumber());
                         AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
-                        asa.setFileName(fileName);
+                        asa.setFileNames(fileNames);
                         asa.setArchiveFileId(af.getId());
                         asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
                         model.addRow(new Object[]{asa.getDescription(), asa.getArchiveFile(), asa});
-                        
+
                     }
                 }
             } catch (Exception ex) {
                 log.error(ex);
                 ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                
+
             }
-            
+
             ThreadUtils.setTableModel(this.tblActions, model);
 
             // display document preview
-            final String fFileName = fileName;
-            new Thread(() -> {
-                try {
-                    int splitLocation = splitTop.getDividerLocation();
-                    ThreadUtils.setVisible(pnlPreview, false);
-                    ThreadUtils.removeAll(pnlPreview);
-                    ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-                    JProgressBar loading = new JProgressBar();
-                    loading.setIndeterminate(true);
-                    ThreadUtils.addComponent(pnlPreview, loading);
-                    ThreadUtils.setVisible(pnlPreview, true);
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-                    byte[] data = is.getObservedFile(fFileName);
-                    String previewText = is.getObservedFilePreview(fFileName);
-                    
-                    JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
-                    ThreadUtils.setVisible(pnlPreview, false);
-                    ThreadUtils.remove(pnlPreview, loading);
-                    ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-                    ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-                    ThreadUtils.setVisible(pnlPreview, true);
-                    ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
-                } catch (Exception ex) {
-                    log.error(ex);
-                    ThreadUtils.removeAll(pnlPreview);
-                    ThreadUtils.addComponent(pnlPreview, new JLabel("Vorschau nicht verfügbar..."));
-                    
-                }
-            }).start();
+            if (fileNames.size() == 1) {
+                final String fFileName = fileNames.get(0);
+                new Thread(() -> {
+                    try {
+                        int splitLocation = splitTop.getDividerLocation();
+                        ThreadUtils.setVisible(pnlPreview, false);
+                        ThreadUtils.removeAll(pnlPreview);
+                        ThreadUtils.setLayout(pnlPreview, new FlowLayout());
+                        JProgressBar loading = new JProgressBar();
+                        loading.setIndeterminate(true);
+                        ThreadUtils.addComponent(pnlPreview, loading);
+                        ThreadUtils.setVisible(pnlPreview, true);
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
+                        byte[] data = is.getObservedFile(fFileName);
+                        String previewText = is.getObservedFilePreview(fFileName);
 
+                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
+                        ThreadUtils.setVisible(pnlPreview, false);
+                        ThreadUtils.remove(pnlPreview, loading);
+                        ThreadUtils.setLayout(pnlPreview, new BorderLayout());
+                        ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
+                        ThreadUtils.setVisible(pnlPreview, true);
+                        ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
+                    } catch (Exception ex) {
+                        log.error(ex);
+                        clearPreview();
+                    }
+                }).start();
+            } else {
+                clearPreview();
+            }
+
+        } else {
+            clearPreview();
         }
     }
-    
+
+    private void clearPreview() {
+        ThreadUtils.removeAll(pnlPreview);
+        JLabel noPreview=new JLabel("Vorschau nicht verfügbar...");
+        noPreview.setHorizontalAlignment(JLabel.CENTER);
+        ThreadUtils.addComponent(pnlPreview, noPreview);
+        ThreadUtils.setVisible(pnlPreview, true);
+        ThreadUtils.repaintComponent(pnlPreview);
+    }
+
     private void tblDirContentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseClicked
         if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.selectDirContent();
         } else if (evt.getClickCount() == 2) {
-            
+
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
                 String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
-                
+
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1326,7 +1318,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 } catch (Exception ex) {
                     log.error(ex);
                     ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    
+
                 }
             }
         }
@@ -1352,12 +1344,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 // select first row in table, but only when delete is enabled
                 if (this.tblDirContent.getRowCount() > 0 && this.chkDeleteAfterAction.isSelected()) {
-                    
+
                     this.tblDirContent.changeSelection(0, 0, false, false);
                     this.selectDirContent();
                 }
             }
-            
+
         }
     }//GEN-LAST:event_tblActionsMouseClicked
 
@@ -1403,32 +1395,32 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
     private void cmdLocalUploadDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirActionPerformed
-        
+
         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
-        
-        ClientSettings cs=ClientSettings.getInstance();
-        String observedDir=cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-        
-        String current=cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
+
+        ClientSettings cs = ClientSettings.getInstance();
+        String observedDir = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+
+        String current = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
         JFileChooser chooser = new JFileChooser(current);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
-        
-        if(!("".equals(observedDir))) {
-            File observedDirFile=new File(observedDir);
-            if(observedDirFile.exists() && observedDirFile.isDirectory()) {
+
+        if (!("".equals(observedDir))) {
+            File observedDirFile = new File(observedDir);
+            if (observedDirFile.exists() && observedDirFile.isDirectory()) {
                 chooser.setSelectedFile(observedDirFile);
             }
-        } 
-        
+        }
+
         chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            
+
             cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
             this.displayLocalScanDir();
-           
-        } else  {
+
+        } else {
             cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
             this.displayLocalScanDir();
         }

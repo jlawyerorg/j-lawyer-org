@@ -788,7 +788,10 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
             // remove anything that is done
             if (event.getDoneBoolean()) {
-                this.eventDeleted(event);
+                CalendarSetup cs = event.getCalendarSetup();
+                if(cs.isDeleteDone()) {
+                    this.eventDeleted(event);
+                }
             } else {
 
                 try {

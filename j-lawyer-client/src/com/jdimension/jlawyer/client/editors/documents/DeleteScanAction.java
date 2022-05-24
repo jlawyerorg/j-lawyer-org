@@ -694,35 +694,35 @@ public class DeleteScanAction extends ScanAction {
     @Override
     public void execute() {
 
+        
         if (this.delete) {
-
+            int removedCount=0;
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-                boolean removed = is.removeObservedFile(this.getFileName());
-                if (removed) {
+                
+                for(String fileName: this.getFileNames()) {
+                    boolean removed = is.removeObservedFile(fileName);
+                    if(removed)
+                        removedCount++;
+                }
+                
+            } catch (Throwable ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            } finally {
+                if (removedCount>0) {
                     String[] colNames = new String[]{"Aktion", "Akte", ""};
                     DefaultTableModel model = new DefaultTableModel(colNames, 0);
                     ThreadUtils.setTableModel(this.actionsTable, model);
 
-//                    DefaultTableModel filesModel = (DefaultTableModel) filesTable.getModel();
-//                    int selectedRow=filesTable.getSelectedRow();
-//                    if(selectedRow<0) {
-//                        // nothing selected - table probably already refreshed by a message from the server
-//                    } else {
-//                        filesModel.removeRow(filesTable.convertRowIndexToModel(selectedRow));
-//                    }
                     Timer timer = new Timer();
                     TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
                     timer.schedule(scannerTask, 1);
 
                 }
-
-            } catch (Throwable ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
 
         }

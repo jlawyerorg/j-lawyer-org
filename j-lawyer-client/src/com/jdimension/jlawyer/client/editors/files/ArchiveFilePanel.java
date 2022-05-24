@@ -4299,12 +4299,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-            dlg.setShowCancelButton(false);
-            dlg.setInfinite(true);
+            dlg.setShowCancelButton(true);
+            dlg.setInfinite(false);
             dlg.progress("Lade Export vom Server...");
             ExportAsHtmlAction exact = new ExportAsHtmlAction(dlg, this, dir, this.dto.getId());
             exact.start();
-            return;
 
         }
 

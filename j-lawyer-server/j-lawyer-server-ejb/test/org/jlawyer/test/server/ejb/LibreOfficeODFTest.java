@@ -770,7 +770,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.odt", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.odt", "test/data/template-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -869,6 +869,7 @@ public class LibreOfficeODFTest {
             
             String myclass = sb.toString();
             myclass=myclass.replace("SMARTTEMPLATESCRIPT", "\"schnuffel\"");
+            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
             GroovyClassLoader gcl = new GroovyClassLoader();
             Class calcClass = gcl.parseClass(myclass);
             GroovyObject calc = (GroovyObject) calcClass.newInstance();
@@ -1099,6 +1100,7 @@ public class LibreOfficeODFTest {
             
             String myclass = sb.toString();
             myclass=myclass.replace("SMARTTEMPLATESCRIPT", script);
+            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
             GroovyClassLoader gcl = new GroovyClassLoader();
             Class calcClass = gcl.parseClass(myclass);
             GroovyObject calc = (GroovyObject) calcClass.newInstance();
@@ -1130,7 +1132,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.odt", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-scripts-run.odt", "test/data/template-scripts-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1184,7 +1186,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-emptyline-run.odt", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-emptyline-run.odt", "test/data/template-emptyline-run.odt", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             Assert.fail();
@@ -1250,7 +1252,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", "test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph, null);
 //            int count=0;
 //            do {
 //                count=LibreOfficeAccess.setPlaceHoldersOnDedicatedLines("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
@@ -1308,7 +1310,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.ods", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.ods", "test/data/template-run.ods", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             t.printStackTrace();

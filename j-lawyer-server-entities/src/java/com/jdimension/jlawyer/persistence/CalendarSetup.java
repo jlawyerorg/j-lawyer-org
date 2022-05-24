@@ -722,6 +722,10 @@ public class CalendarSetup implements Serializable, EventTypes {
     @Column(name = "event_type")
     protected int eventType=EventTypes.EVENTTYPE_FOLLOWUP;
     
+    // if true, events that are marked as done are deleted from Nextcloud
+    @Column(name = "delete_done", columnDefinition = "TINYINT")
+    protected boolean deleteDone=false;
+    
     
 
     public String getId() {
@@ -909,6 +913,20 @@ public class CalendarSetup implements Serializable, EventTypes {
      */
     public void setEventType(int eventType) {
         this.eventType = eventType;
+    }
+
+    /**
+     * @return the deleteDone
+     */
+    public boolean isDeleteDone() {
+        return deleteDone;
+    }
+
+    /**
+     * @param deleteDone the deleteDone to set
+     */
+    public void setDeleteDone(boolean deleteDone) {
+        this.deleteDone = deleteDone;
     }
     
 }
