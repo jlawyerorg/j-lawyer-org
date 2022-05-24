@@ -134,7 +134,7 @@
                       <Component id="cmdActions" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jXTaskPane1" alignment="0" max="32767" attributes="0"/>
-                  <Component id="jXTaskPane2" alignment="0" max="32767" attributes="0"/>
+                  <Component id="detailsContentTaskPane" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -157,7 +157,7 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jXTaskPane2" max="-2" attributes="0"/>
+              <Component id="detailsContentTaskPane" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jXTaskPane1" min="-2" max="-2" attributes="0"/>
               <EmptySpace pref="21" max="32767" attributes="0"/>
@@ -239,7 +239,7 @@
         <Property name="opaque" type="boolean" value="true"/>
       </Properties>
     </Component>
-    <Container class="org.jdesktop.swingx.JXTaskPane" name="jXTaskPane2">
+    <Container class="org.jdesktop.swingx.JXTaskPane" name="detailsContentTaskPane">
       <Properties>
         <Property name="expanded" type="boolean" value="false"/>
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">

@@ -831,9 +831,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
 
             // Set important information to content panel
+            StringBuilder wrapper = new StringBuilder();
+            wrapper.append("<html>");
+            wrapper.append("<table>");
             StringBuilder content = new StringBuilder();
-            content.append("<html>");
-            content.append("<table>");
             if (!this.a.getPhone().isEmpty()) {
                 content.append(getContentRow("Festnetz:", this.a.getPhone()));
             }
@@ -866,11 +867,15 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             if (!address.isEmpty()) {
                 content.append(getContentRow("Adresse:", address));
             }
-            content.append("</table>");
-            content.append("</html>");
+            wrapper.append(content.toString());
+            wrapper.append("</table>");
+            wrapper.append("</html>");
             this.detailsContent.setBorder(null);
             this.detailsContent.setContentType("text/html");
             this.detailsContent.setText(content.toString());
+            if (content.toString().isEmpty()) {
+                detailsContentTaskPane.setVisible(false);
+            }
         }
 
     }
@@ -907,7 +912,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         cmdActions = new javax.swing.JButton();
         cmdToAddress = new javax.swing.JButton();
         lblType = new javax.swing.JLabel();
-        jXTaskPane2 = new org.jdesktop.swingx.JXTaskPane();
+        detailsContentTaskPane = new org.jdesktop.swingx.JXTaskPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         detailsContent = new javax.swing.JTextPane();
         jXTaskPane1 = new org.jdesktop.swingx.JXTaskPane();
@@ -1041,25 +1046,25 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         lblType.setText("  ");
         lblType.setOpaque(true);
 
-        jXTaskPane2.setExpanded(false);
-        jXTaskPane2.setForeground(new java.awt.Color(255, 255, 255));
-        jXTaskPane2.setTitle("Details");
-        jXTaskPane2.setAnimated(false);
+        detailsContentTaskPane.setExpanded(false);
+        detailsContentTaskPane.setForeground(new java.awt.Color(255, 255, 255));
+        detailsContentTaskPane.setTitle("Details");
+        detailsContentTaskPane.setAnimated(false);
 
         jScrollPane1.setBorder(null);
 
         detailsContent.setBorder(null);
         jScrollPane1.setViewportView(detailsContent);
 
-        javax.swing.GroupLayout jXTaskPane2Layout = new javax.swing.GroupLayout(jXTaskPane2.getContentPane());
-        jXTaskPane2.getContentPane().setLayout(jXTaskPane2Layout);
-        jXTaskPane2Layout.setHorizontalGroup(
-            jXTaskPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout detailsContentTaskPaneLayout = new javax.swing.GroupLayout(detailsContentTaskPane.getContentPane());
+        detailsContentTaskPane.getContentPane().setLayout(detailsContentTaskPaneLayout);
+        detailsContentTaskPaneLayout.setHorizontalGroup(
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
-        jXTaskPane2Layout.setVerticalGroup(
-            jXTaskPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jXTaskPane2Layout.createSequentialGroup()
+        detailsContentTaskPaneLayout.setVerticalGroup(
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsContentTaskPaneLayout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
@@ -1149,7 +1154,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdActions))
                     .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jXTaskPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1167,7 +1172,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addComponent(jLabel3)
                         .addComponent(lblUnderage)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jXTaskPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(21, Short.MAX_VALUE))
@@ -1421,11 +1426,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JButton cmdActions;
     private javax.swing.JButton cmdToAddress;
     private javax.swing.JTextPane detailsContent;
+    private org.jdesktop.swingx.JXTaskPane detailsContentTaskPane;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private org.jdesktop.swingx.JXTaskPane jXTaskPane1;
-    private org.jdesktop.swingx.JXTaskPane jXTaskPane2;
     private javax.swing.JLabel lblAddress;
     private javax.swing.JLabel lblCustom1;
     private javax.swing.JLabel lblCustom2;
