@@ -343,6 +343,8 @@ public class DayContentPanel extends JPanel {
                 return -1;
             if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() != null)
                 return 1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() == null)
+                return 0;
             if (o1.getType().getUniqueKey().equals(o2.getType().getUniqueKey())) {
                 return 0;
             } else if ("Termin".equals(o1.getType().getUniqueKey())) {
