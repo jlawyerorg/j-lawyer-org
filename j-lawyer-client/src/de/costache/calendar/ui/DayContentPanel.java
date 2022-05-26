@@ -339,12 +339,18 @@ public class DayContentPanel extends JPanel {
 
     private List<CalendarEvent> sortEvents(List<CalendarEvent> events) {
         events.sort((o1, o2) -> {
+            if (o1.getType().getUniqueKey() != null && o2.getType().getUniqueKey() == null)
+                return -1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() != null)
+                return 1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() == null)
+                return 0;
             if (o1.getType().getUniqueKey().equals(o2.getType().getUniqueKey())) {
                 return 0;
-            } else if (o1.getType().getUniqueKey().equals("Termin")) {
+            } else if ("Termin".equals(o1.getType().getUniqueKey())) {
                 return -1;
-            } else if (o1.getType().getUniqueKey().equals("Frist")
-                    && !o2.getType().getUniqueKey().equals("Termin")) {
+            } else if ("Frist".equals(o1.getType().getUniqueKey())
+                    && !"Termin".equals(o2.getType().getUniqueKey())) {
                 return -1;
             } else {
                 return 1;
