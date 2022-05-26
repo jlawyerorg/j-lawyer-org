@@ -850,7 +850,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             StringBuilder address = new StringBuilder();
             // Add street + street number
             if (!this.a.getStreet().isEmpty() && this.a.getStreetNumber().isEmpty()) {
-                address.append(this.a.getStreet()).append("<br>");
+                address.append(this.a.getStreet())
+                        .append("<br>");
             } else if (!this.a.getStreet().isEmpty() && !this.a.getStreetNumber().isEmpty()) {
                 address.append(this.a.getStreet())
                         .append(" ")
@@ -863,7 +864,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .append("<br>");
             } else if (!this.a.getZipCode().isEmpty() && !this.a.getCity().isEmpty()) {
                 address.append(this.a.getZipCode())
-                        .append(" ").append(this.a.getCity()).append("<br>");
+                        .append(" ")
+                        .append(this.a.getCity())
+                        .append("<br>");
             }
             // Add country
             if (!this.a.getCountry().isEmpty()) {
