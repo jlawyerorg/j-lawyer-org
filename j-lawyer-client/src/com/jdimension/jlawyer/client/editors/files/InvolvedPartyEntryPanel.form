@@ -173,7 +173,7 @@
         </Property>
         <Property name="text" type="java.lang.String" value="Kutschke, Jens"/>
         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-          <Color id="Default Cursor"/>
+          <Color id="Standardcursor"/>
         </Property>
       </Properties>
       <Events>

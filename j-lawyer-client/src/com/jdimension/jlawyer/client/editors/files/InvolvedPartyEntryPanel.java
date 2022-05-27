@@ -1396,7 +1396,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
         if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-            ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
+            ArrayList<AddressBean> faxList = new ArrayList<>();
 
             faxList.addAll(this.container.getInvolvedPartiesAddress());
 
