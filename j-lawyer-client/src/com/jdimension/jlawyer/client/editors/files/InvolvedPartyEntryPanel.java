@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
@@ -835,44 +836,44 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             wrapper.append("<html>");
             wrapper.append("<table>");
             StringBuilder content = new StringBuilder();
-            if (!this.a.getPhone().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getPhone())) {
                 content.append(getContentRow("Festnetz:", this.a.getPhone()));
             }
-            if (!this.a.getMobile().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getMobile())) {
                 content.append(getContentRow("Mobil:", this.a.getMobile()));
             }
-            if (!this.a.getEmail().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getEmail())) {
                 content.append(getContentRow("E-Mail:", this.a.getEmail()));
             }
-            if (!this.a.getWebsite().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getWebsite())) {
                 content.append(getContentRow("Website:", this.a.getWebsite()));
             }
             StringBuilder address = new StringBuilder();
             // Add street + street number
-            if (!this.a.getStreet().isEmpty() && this.a.getStreetNumber().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getStreet()) && StringUtils.isEmpty(this.a.getStreetNumber())) {
                 address.append(this.a.getStreet())
                         .append("<br>");
-            } else if (!this.a.getStreet().isEmpty() && !this.a.getStreetNumber().isEmpty()) {
+            } else if (!StringUtils.isEmpty(this.a.getStreet()) && !StringUtils.isEmpty(this.a.getStreetNumber())) {
                 address.append(this.a.getStreet())
                         .append(" ")
                         .append(this.a.getStreetNumber())
                         .append("<br>");
             }
             // Add zipcode + city
-            if (!this.a.getZipCode().isEmpty() && this.a.getCity().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getZipCode()) && StringUtils.isEmpty(this.a.getCity())) {
                 address.append(this.a.getZipCode())
                         .append("<br>");
-            } else if (!this.a.getZipCode().isEmpty() && !this.a.getCity().isEmpty()) {
+            } else if (!StringUtils.isEmpty(this.a.getZipCode()) && !StringUtils.isEmpty(this.a.getCity())) {
                 address.append(this.a.getZipCode())
                         .append(" ")
                         .append(this.a.getCity())
                         .append("<br>");
             }
             // Add country
-            if (!this.a.getCountry().isEmpty()) {
+            if (!StringUtils.isEmpty(this.a.getCountry())) {
                 address.append(this.a.getCountry());
             }
-            if (!address.toString().isEmpty()) {
+            if (!StringUtils.isEmpty(address.toString())) {
                 content.append(getContentRow("Adresse:", address.toString()));
             }
             wrapper.append(content.toString());
