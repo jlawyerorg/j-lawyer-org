@@ -33,9 +33,11 @@ import javax.swing.JPanel;
 import de.costache.calendar.ui.strategy.Config;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.model.CalendarEvent;
+import de.costache.calendar.util.CalendarUtil;
 import de.costache.calendar.util.EventCollection;
 import de.costache.calendar.util.EventCollectionRepository;
 import de.costache.calendar.util.GraphicsUtil;
+import java.util.ArrayList;
 
 /**
  * 
@@ -142,7 +144,7 @@ public class DayCompleteContentPanel extends JPanel {
 
 			final Config config = owner.getOwner().getConfig();
 
-			for (final CalendarEvent event : events) {
+			for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
 				if (!event.isAllDay())
 					continue;
 				Color bgColor = event.getType().getBackgroundColor();
@@ -177,7 +179,7 @@ public class DayCompleteContentPanel extends JPanel {
 
 		int pos = 2;
 		if (events.size() > 0) {
-			for (final CalendarEvent event : events) {
+			for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
 				if (!event.isAllDay())
 					continue;
 				final int rectXStart = 2;

@@ -43,9 +43,9 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
     public IndexedEventCollection(final JCalendar parent) {
         this.parent = parent;
         this.indexedEvents = new MultiHashMap();
-        this.collectionChangedListeners = new ArrayList<ModelChangedListener>();
-        this.selectionChangedListeners = new ArrayList<SelectionChangedListener>();
-        this.selectedEvents = new HashSet<CalendarEvent>();
+        this.collectionChangedListeners = new ArrayList<>();
+        this.selectionChangedListeners = new ArrayList<>();
+        this.selectedEvents = new HashSet<>();
     }
 
     @Override
@@ -72,7 +72,7 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
         calendarEvent.deleteObserver(this);
         selectedEvents.remove(calendarEvent);
 
-        for (final Object key : new HashSet<Object>(indexedEvents.keySet())) {
+        for (final Object key : new HashSet<>(indexedEvents.keySet())) {
             final Collection<CalendarEvent> events = indexedEvents.getCollection(key);
             if (events.contains(calendarEvent))
                 indexedEvents.remove(key, calendarEvent);
@@ -134,7 +134,7 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
 
     @Override
     public Collection<CalendarEvent> getSelectedEvents() {
-        return Collections.unmodifiableSet(new HashSet<CalendarEvent>(selectedEvents));
+        return Collections.unmodifiableSet(new HashSet<>(selectedEvents));
     }
 
     @Override
@@ -142,9 +142,9 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
         @SuppressWarnings("rawtypes")
         final Collection events = indexedEvents.getCollection(CalendarUtil.stripTime(date));
         if (events == null)
-            return new ArrayList<CalendarEvent>();
+            return new ArrayList<>();
         @SuppressWarnings("unchecked")
-        final List<CalendarEvent> result = new ArrayList<CalendarEvent>(events);
+        final List<CalendarEvent> result = new ArrayList<>(events);
         Collections.sort(result);
         return result;
     }
@@ -153,7 +153,7 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
     public Collection<CalendarEvent> getAllEvents() {
 
         Collection<CalendarEvent> values = indexedEvents.values();
-        Set<CalendarEvent> result = new HashSet<CalendarEvent>();
+        Set<CalendarEvent> result = new HashSet<>();
 
         for (CalendarEvent event : values) {
             result.add(event);
@@ -165,7 +165,7 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
     public List<CalendarEvent> getHolidayEvents(Date date) {
         Collection<CalendarEvent> events = getEvents(date);
 
-        List<CalendarEvent> result = new ArrayList<CalendarEvent>();
+        List<CalendarEvent> result = new ArrayList<>();
         for(CalendarEvent event : events){
             if(event.isHoliday()) {
                 result.add(event);
@@ -185,7 +185,7 @@ class IndexedEventCollection extends Observable implements Observer, EventCollec
                 case START:
                 case END:
 
-                    for (final Object key : new HashSet<Object>(indexedEvents.keySet())) {
+                    for (final Object key : new HashSet<>(indexedEvents.keySet())) {
                         indexedEvents.remove(key, calendarEvent);
                     }
 

@@ -708,6 +708,7 @@ public class BeaIdentitySearchThread implements Runnable {
         this.errors = errors;
     }
 
+    @Override
     public void run() {
         Collection<Identity> dtos = null;
         BeaAccess bea = null;

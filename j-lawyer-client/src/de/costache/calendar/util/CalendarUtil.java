@@ -49,6 +49,28 @@ public class CalendarUtil {
 
         return calendar.getTime().equals(now.getTime());
     }
+    
+    public static List<CalendarEvent> sortEvents(List<CalendarEvent> events) {
+        events.sort((o1, o2) -> {
+            if (o1.getType().getUniqueKey() != null && o2.getType().getUniqueKey() == null)
+                return -1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() != null)
+                return 1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() == null)
+                return 0;
+            if (o1.getType().getUniqueKey().equals(o2.getType().getUniqueKey())) {
+                return 0;
+            } else if ("Termin".equals(o1.getType().getUniqueKey())) {
+                return -1;
+            } else if ("Frist".equals(o1.getType().getUniqueKey())
+                    && !"Termin".equals(o2.getType().getUniqueKey())) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+        return events;
+    }
 
     public static Calendar copyCalendar(final Calendar calendar, final boolean stripTime) {
         final Calendar c = Calendar.getInstance();
