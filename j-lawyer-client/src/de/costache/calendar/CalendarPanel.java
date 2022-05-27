@@ -900,6 +900,7 @@ public class CalendarPanel extends javax.swing.JPanel {
                 t.setBackgroundColor(backColor);
                 t.setForegroundColor(Color.WHITE);
                 t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                t.setUniqueKey(rev.getEventTypeName());
                 this.allCalTypes.put(rev.getCalendarSetup().getId(), t);
                 this.selectedCalTypes.add(rev.getCalendarSetup().getId());
 

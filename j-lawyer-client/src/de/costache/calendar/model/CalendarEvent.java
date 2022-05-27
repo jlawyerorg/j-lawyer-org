@@ -45,6 +45,7 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public CalendarEvent() {
         type = new EventType();
         type.setName("default");
+        type.setUniqueKey("default");
     }
 
     public CalendarEvent(final Date start, final Date end) {

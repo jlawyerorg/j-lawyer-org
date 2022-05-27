@@ -25,6 +25,7 @@ import java.awt.Color;
 public class EventType {
 
 	private String name;
+	private String uniqueKey;
 	private Color backgroundColor;
 	private Color foregroundColor;
 
@@ -116,4 +117,11 @@ public class EventType {
 		return true;
 	}
 
+	public void setUniqueKey(String uniqueKey) {
+		this.uniqueKey = uniqueKey;
+	}
+
+	public String getUniqueKey() {
+		return uniqueKey;
+	}
 }

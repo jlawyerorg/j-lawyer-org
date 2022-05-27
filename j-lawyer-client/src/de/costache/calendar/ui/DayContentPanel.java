@@ -15,6 +15,7 @@
  */
 package de.costache.calendar.ui;
 
+import de.costache.calendar.model.EventType;
 import de.costache.calendar.ui.strategy.Config;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.model.CalendarEvent;
@@ -335,6 +336,29 @@ public class DayContentPanel extends JPanel {
 
     }
 
+
+    private List<CalendarEvent> sortEvents(List<CalendarEvent> events) {
+        events.sort((o1, o2) -> {
+            if (o1.getType().getUniqueKey() != null && o2.getType().getUniqueKey() == null)
+                return -1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() != null)
+                return 1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() == null)
+                return 0;
+            if (o1.getType().getUniqueKey().equals(o2.getType().getUniqueKey())) {
+                return 0;
+            } else if ("Termin".equals(o1.getType().getUniqueKey())) {
+                return -1;
+            } else if ("Frist".equals(o1.getType().getUniqueKey())
+                    && !"Termin".equals(o2.getType().getUniqueKey())) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+        return events;
+    }
+
     private void drawCalendarEvents(final Graphics2D graphics2d) {
 
         final EventCollection eventsCollection = EventCollectionRepository
@@ -467,7 +491,7 @@ public class DayContentPanel extends JPanel {
         int pos = 2;
         if (events.size() > 0) {
             final Config config = owner.getOwner().getConfig();
-            for (final CalendarEvent event : events) {
+            for (final CalendarEvent event : sortEvents(new ArrayList<>(events))) {
                 if (event.isHoliday())
                     continue;
                 Color bgColor = event.getType().getBackgroundColor();
