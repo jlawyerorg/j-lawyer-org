@@ -1021,7 +1021,6 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     public Response getDocumentContent(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/document/0c6f1f867f00010173b54cfcd4cce056/content
         try {
-
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileDocumentsBean doc = cases.getDocument(id);
@@ -1134,7 +1133,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileAddressesBean> involvements = cases.getInvolvementDetailsForCase(id);
-            ArrayList<RestfulPartyV1> invList = new ArrayList<RestfulPartyV1>();
+            ArrayList<RestfulPartyV1> invList = new ArrayList<>();
             for (ArchiveFileAddressesBean inv : involvements) {
                 RestfulPartyV1 i = new RestfulPartyV1();
                 i.setId(inv.getId());
@@ -1559,7 +1558,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileFormsBean> caseForms = forms.getFormsForCase(id);
-            ArrayList<RestfulFormV1> formList = new ArrayList<RestfulFormV1>();
+            ArrayList<RestfulFormV1> formList = new ArrayList<>();
             for (ArchiveFileFormsBean form : caseForms) {
                 RestfulFormV1 f = new RestfulFormV1();
                 f.setId(form.getId());
