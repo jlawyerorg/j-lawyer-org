@@ -695,7 +695,6 @@ public class CaseUtils {
             byte[] content = null;
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                //content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
                 DataBucket contentBucket = locator.lookupArchiveFileServiceRemote().getDocumentContentBucket(value.getId());
                 ByteArrayOutputStream bout=new ByteArrayOutputStream();
                 bout.write(contentBucket.getPayload());

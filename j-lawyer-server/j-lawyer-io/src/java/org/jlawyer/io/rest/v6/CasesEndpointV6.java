@@ -735,10 +735,11 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     }
     
     /**
-     * Returns a a documents content in the form of a data bucket, given its ID. The return value is Base64
-     * encoded.
+     * Returns a a documents content in the form of a data bucket, given its ID.The return value is Base64
+ encoded.
      *
      * @param id document ID
+     * @return initial bucket of type RestfulDataBucketV6
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
@@ -754,15 +755,13 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             ArchiveFileDocumentsBean doc = cases.getDocument(id);
             if (doc == null) {
                 log.error("can not get document " + id);
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             DataBucket bucket = cases.getDocumentContentBucket(id);
             if (bucket == null) {
                 log.error("can not get content of document " + id);
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             String base64 = new Base64().encode(bucket.getPayload());
@@ -775,12 +774,10 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             db.setPayload(base64);
             db.setSize(bucket.getSize());
             db.setTotalSize(bucket.getTotalSize());
-            Response res = Response.ok(db).build();
-            return res;
+            return Response.ok(db).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
