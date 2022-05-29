@@ -676,4 +676,6 @@ public interface CasesEndpointLocalV6 {
 
     Response createHistory(String id, RestfulCaseHistoryV5 history);
     
+    public Response getDocumentContentBucket(String id);
+    
 }

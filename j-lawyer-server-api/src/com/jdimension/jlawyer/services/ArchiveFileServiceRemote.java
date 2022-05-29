@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -843,5 +844,7 @@ public interface ArchiveFileServiceRemote {
     void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
 
     List<CaseSyncSettings> getCaseSyncs(String caseId);
+
+    DataBucket getDocumentContentBucket(String id) throws Exception;
 
 }

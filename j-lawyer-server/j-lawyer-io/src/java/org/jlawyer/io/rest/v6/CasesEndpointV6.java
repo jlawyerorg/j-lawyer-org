@@ -664,13 +664,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v6;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.pojo.DataBucket;
+import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -679,6 +682,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
+import org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6;
 
 /**
  *
@@ -727,6 +731,56 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
             return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a a documents content in the form of a data bucket, given its ID. The return value is Base64
+     * encoded.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/document/{id}/contentbucket")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentContentBucket(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileDocumentsBean doc = cases.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            DataBucket bucket = cases.getDocumentContentBucket(id);
+            if (bucket == null) {
+                log.error("can not get content of document " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            String base64 = new Base64().encode(bucket.getPayload());
+            RestfulDataBucketV6 db = new RestfulDataBucketV6();
+            db.setBeginOffset(bucket.getBeginOffset());
+            db.setCapacity(bucket.getCapacity());
+            db.setFileName(bucket.getFileName());
+            db.setHasNext(bucket.hasNext());
+            db.setId(bucket.getId());
+            db.setPayload(base64);
+            db.setSize(bucket.getSize());
+            db.setTotalSize(bucket.getTotalSize());
+            Response res = Response.ok(db).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
         }
     }
     

@@ -669,8 +669,8 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.DataBucket;
 import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
@@ -732,6 +732,7 @@ public class ExportAsHtmlAction extends ProgressableAction {
                     return true;
                 double percentage=bucket.getPercentage();
                 this.progress("Lade Export vom Server... " + (int)percentage + "%", max);
+                bucket.resetPayload();
                 bucket = bucketLoader.nextBucket(bucket);
                 try ( FileOutputStream output = new FileOutputStream(dir.getPath() + File.separator + bucket.getFileName(), true)) {
                     output.write(bucket.getPayload());

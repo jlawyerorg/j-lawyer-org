@@ -679,12 +679,17 @@ import com.jdimension.jlawyer.export.HTMLExport;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidCaseNumberPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -4639,6 +4644,47 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error("Could not rename file " + oldFile.getAbsolutePath() + " to " + toFile.getAbsolutePath());
             }
         }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DataBucket getDocumentContentBucket(String id) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        String aId = db.getArchiveFileKey().getId();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
+
+        this.migrateDocument(dst, db.getId(), db.getName());
+        
+        String dstId = dst + db.getId();
+
+        File dstFile = new File(dstId);
+        if (!(dstFile.exists())) {
+            throw new Exception("Dokument " + db.getName() + " existiert nicht!");
+        }
+
+        DataBucket bucket=DataBucketUtils.newBucket(db.getName());
+        String bucketFile = DataBucketUtils.getLocalFile(bucket);
+        
+        Path srcPath = Paths.get(dstId);
+        Path bucketPath = Paths.get(bucketFile);
+        Files.copy(srcPath, bucketPath, StandardCopyOption.REPLACE_EXISTING);
+        
+        bucket.setTotalSize(new File(bucketFile).length());
+        DataBucketUtils.fillBucket(bucket);
+        
+        return bucket;
     }
 
 }

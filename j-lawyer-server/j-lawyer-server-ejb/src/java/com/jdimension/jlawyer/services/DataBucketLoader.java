@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.pojo.DataBucket;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import org.jlawyer.databucket.DataBucketUtils;
@@ -672,7 +673,7 @@ import org.jlawyer.databucket.DataBucketUtils;
  * @author jens
  */
 @Stateless
-public class DataBucketLoader implements DataBucketLoaderRemote {
+public class DataBucketLoader implements DataBucketLoaderRemote, DataBucketLoaderLocal {
 
     @Override
     @RolesAllowed({"loginRole"})

@@ -1054,19 +1054,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     if (value != null) {
 
                         ClientSettings settings = ClientSettings.getInstance();
-                        String tmpUrl = null;
                         byte[] content = null;
                         try {
                             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                             content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                            //tmpUrl = appLauncher.createTempFile(value.getName(), content);
 
                             CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
                             Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
                             launcher.launch(false);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                            return;
                         }
                     }
                 };

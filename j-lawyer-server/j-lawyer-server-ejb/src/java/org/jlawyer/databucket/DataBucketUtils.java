@@ -664,7 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.databucket;
 
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.services.DataBucket;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import java.io.File;
 import java.io.RandomAccessFile;
 import org.apache.log4j.Logger;

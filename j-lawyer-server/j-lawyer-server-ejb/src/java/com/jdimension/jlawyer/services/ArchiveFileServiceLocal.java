@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -702,6 +703,7 @@ public interface ArchiveFileServiceLocal {
     public int getDocumentCount();
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public byte[] getDocumentContent(String id) throws Exception;
+    public DataBucket getDocumentContentBucket(String id) throws Exception;
     
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
     
