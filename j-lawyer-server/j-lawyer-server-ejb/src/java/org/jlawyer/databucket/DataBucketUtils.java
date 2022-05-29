@@ -723,8 +723,8 @@ public class DataBucketUtils {
         if(bucketDir.exists()) {
             for(File f: bucketDir.listFiles()) {
                 if(!f.isDirectory()) {
-                    // delete buckets older than 12hrs
-                    if((System.currentTimeMillis()-f.lastModified())>12L*60L*60L*1000L) {
+                    // delete buckets older than 4hrs
+                    if((System.currentTimeMillis()-f.lastModified())>4L*60L*60L*1000L) {
                         try {
                             if(!f.delete()) {
                                 log.error("Could not delete local data bucket " + f.getName());
