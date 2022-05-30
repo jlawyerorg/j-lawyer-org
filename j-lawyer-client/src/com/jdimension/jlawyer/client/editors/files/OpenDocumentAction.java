@@ -661,88 +661,70 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
-import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.pojo.DataBucket;
-import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.io.ByteArrayOutputStream;
-import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class CaseUtils {
+public class OpenDocumentAction extends ProgressableAction {
 
-    private static final Logger log = Logger.getLogger(CaseUtils.class.getName());
+    private static final Logger log = Logger.getLogger(OpenDocumentAction.class.getName());
+    
+    private Component owner;
+    private int max=0;
+    
+    private ArchiveFileBean caseDto=null;
+    private ArchiveFileDocumentsBean doc=null;
+    private boolean readOnly=false;
 
-    public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, OpenDocumentAction action) throws Exception {
-        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null, action);
+    public OpenDocumentAction(ProgressIndicator i, ArchiveFileBean caseDto, ArchiveFileDocumentsBean doc, boolean readOnly, Component owner) {
+        super(i, false);
+
+        this.owner = owner;
+        this.caseDto=caseDto;
+        this.doc=doc;
+        this.readOnly=readOnly;
+
     }
 
-    public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent) throws Exception {
-        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null, null);
+    @Override
+    public int getMax() {
+        return max;
     }
 
-    public static void openDocumentInCustomLauncher(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, String customLauncherName, OpenDocumentAction action) throws Exception {
-        if (value != null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            byte[] content = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                DataBucket contentBucket = locator.lookupArchiveFileServiceRemote().getDocumentContentBucket(value.getId());
-                if (action != null) {
-                    action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
-                }
-                ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                bout.write(contentBucket.getPayload());
-                DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
-                while (contentBucket.hasNext()) {
-                    if (action != null) {
-                        if(action.isCancelled())
-                            return;
-                    }
-                    contentBucket.resetPayload();
-                    contentBucket = bucketLoader.nextBucket(contentBucket);
-                    if (action != null) {
-                        action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
-                    }
-                    bout.write(contentBucket.getPayload());
-                }
-                content = bout.toByteArray();
-            } catch (Exception ex) {
-                log.error("Error loading document [" + value.getId() + " " + value.getName() + "]", ex);
-                throw ex;
-            }
+    @Override
+    public int getMin() {
+        return 0;
+    }
 
-            CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-            Launcher launcher = null;
-            if (customLauncherName == null) {
-                launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-            } else {
-                launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName);
-            }
+    @Override
+    public boolean execute() throws Exception {
 
-            int response = JOptionPane.NO_OPTION;
-            if (launcher.isDocumentOpen(value.getId())) {
-                response = JOptionPane.showConfirmDialog(parent, "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-            }
-            launcher.launch(response == JOptionPane.YES_OPTION);
+        try {
+            
+            CaseUtils.openDocument(this.caseDto, this.doc, this.readOnly, this.owner, this);
 
+        } catch (Throwable t) {
+            log.error("Could not open document", t);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument kann nicht geöffnet werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            EditorsRegistry.getInstance().clearStatus(true);
+            ThreadUtils.setDefaultCursor(this.owner);
         }
-    }
+        EditorsRegistry.getInstance().clearStatus(true);
+        ThreadUtils.setDefaultCursor(this.owner);
 
+        return true;
+
+    }
 }

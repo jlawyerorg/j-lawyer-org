@@ -3299,7 +3299,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ActionListener al = (ActionEvent e) -> {
                     try {
 
-                        CaseUtils.openDocumentInCustomLauncher(dto, value, this.readOnly, this, customLauncher);
+                        CaseUtils.openDocumentInCustomLauncher(dto, value, this.readOnly, this, customLauncher, null);
 
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments im externen Programm '" + customLauncher + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -3643,7 +3643,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
 
-            CaseUtils.openDocument(dto, value, this.readOnly, this);
+            //CaseUtils.openDocument(dto, value, this.readOnly, this);
+            
+            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setShowCancelButton(true);
+            dlg.setInfinite(false);
+            dlg.progress("Lade Dokument vom Server...");
+            OpenDocumentAction openDoc = new OpenDocumentAction(dlg, this.dto, value, this.readOnly, this);
+            openDoc.start();
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

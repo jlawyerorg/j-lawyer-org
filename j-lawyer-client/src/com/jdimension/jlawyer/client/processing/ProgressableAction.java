@@ -737,7 +737,7 @@ public abstract class ProgressableAction {
     }
 
     public abstract int getMax();
-
+    
     public abstract int getMin();
 
     public String getErrorMessageAndHints(String rootCause) {
