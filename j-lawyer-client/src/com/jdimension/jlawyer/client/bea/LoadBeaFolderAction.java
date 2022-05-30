@@ -829,7 +829,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 ComponentUtils.autoSizeColumns(table);
             });
             
-            //this.mainSplitter.setDividerLocation(mainSplitterPosition);
             ThreadUtils.setSplitDividerLocation(mainSplitter, mainSplitterPosition);
 
             //ComponentUtils.autoSizeColumns(table);
