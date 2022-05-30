@@ -669,9 +669,11 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -696,12 +698,14 @@ public class LoadBeaFolderAction extends ProgressableAction {
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
+    
+    private JSplitPane mainSplitter=null;
 
     private ArrayList<MessageHeader> headers = null;
 
     private int max = 1;
 
-    public LoadBeaFolderAction(ProgressIndicator i, org.jlawyer.bea.model.Folder f, JTable table, int sortCol, int scrollToRow) throws BeaWrapperException {
+    public LoadBeaFolderAction(ProgressIndicator i, org.jlawyer.bea.model.Folder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws BeaWrapperException {
         super(i, false);
         this.f = f;
         this.table = table;
@@ -711,6 +715,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         BeaAccess bea = BeaAccess.getInstance();
         headers = bea.getFolderOverview(f);
         this.max = headers.size();
+        this.mainSplitter=mainSplitter;
     }
 
     @Override
@@ -733,6 +738,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
         try {
 
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
+            
+            int mainSplitterPosition=this.mainSplitter.getDividerLocation();
 
             final int indexMax = headers.size() - 1;
             for (int i = 0; i < headers.size(); i++) {
@@ -821,6 +828,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
             SwingUtilities.invokeLater(() -> {
                 ComponentUtils.autoSizeColumns(table);
             });
+            
+            //this.mainSplitter.setDividerLocation(mainSplitterPosition);
+            ThreadUtils.setSplitDividerLocation(mainSplitter, mainSplitterPosition);
 
             //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);

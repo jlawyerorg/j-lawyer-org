@@ -1522,7 +1522,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 this.tblMails.setDefaultRenderer(Object.class, new BeaMessageTableCellRenderer());
 
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                LoadBeaFolderAction a = new LoadBeaFolderAction(dlg, folder, tblMails, sortCol, scrollToRow);
+                LoadBeaFolderAction a = new LoadBeaFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, this.mainSplitter);
                 a.start();
 
             } catch (Exception ex) {
