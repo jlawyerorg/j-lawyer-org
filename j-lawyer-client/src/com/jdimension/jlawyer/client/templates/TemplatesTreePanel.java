@@ -700,7 +700,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TooManyListenersException;
 import javax.swing.DefaultListModel;
@@ -827,7 +827,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         ArrayList<GenericNode> children = current.getChildren();
 
-        Hashtable<String, GenericNode> childHt = new Hashtable<>();
+        HashMap<String, GenericNode> childHt = new HashMap<>();
         ArrayList<String> htKeys = new ArrayList<>();
         for (GenericNode child : children) {
 
