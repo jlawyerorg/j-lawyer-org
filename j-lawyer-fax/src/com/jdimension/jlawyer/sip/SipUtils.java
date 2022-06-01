@@ -704,6 +704,8 @@ public class SipUtils {
             // für alle: evtl. existierende ortsvorwahl-null entfernen, länderkennzeichen vorn ansetzen
         } else if (phone.startsWith("+31")) {
             phone=normCountry(phone, "+31", "31");
+        } else if (phone.startsWith("+33")) {
+            phone=normCountry(phone, "+33", "33");
         } else if (phone.startsWith("+34")) {
             phone=normCountry(phone, "+34", "34");
         } else if (phone.startsWith("+39")) {
@@ -730,6 +732,8 @@ public class SipUtils {
             phone=normCountry(phone, "001", "1");
         } else if (phone.startsWith("0031")) {
             phone=normCountry(phone, "0031", "31");
+        } else if (phone.startsWith("0033")) {
+            phone=normCountry(phone, "0033", "33");
         } else if (phone.startsWith("0034")) {
             phone=normCountry(phone, "0034", "34");
         } else if (phone.startsWith("0039")) {
