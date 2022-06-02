@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.desktop;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -959,7 +958,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                             List<String> allTags = new ArrayList<>();
                             ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
-                            //Map<String, List<TaggedEntryPanel>> tagToTep = new HashMap<>();
                             for (ArchiveFileBean aFile : l1) {
                                 Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                                 if (i % 2 == 0) {
