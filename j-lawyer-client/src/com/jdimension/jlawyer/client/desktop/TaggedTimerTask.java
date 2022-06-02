@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -679,12 +682,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TimerTask;
+import java.util.*;
 import javax.ejb.EJBException;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -892,7 +890,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
                 myNewList = filteredList;
             }
-            
+
             ArrayList<String> myNewListIds=new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
                 myNewListIds.add(a.getId());
@@ -910,7 +908,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
                 myNewDocumentList = filteredDocumentList;
             }
-            
+
             ArrayList<String> myNewDocumentListIds=new ArrayList<>();
             for (ArchiveFileDocumentsBean d : myNewDocumentList) {
                 myNewDocumentListIds.add(d.getId());
@@ -956,6 +954,10 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                     resultUI.setLayout(layout);
                     int i = 0;
+
+                    List<String> allTags = new ArrayList<>();
+                    ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
+                    //Map<String, List<TaggedEntryPanel>> tagToTep = new HashMap<>();
                     for (ArchiveFileBean aFile : l1) {
                         Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                         if (i % 2 == 0) {
@@ -973,7 +975,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             ArrayList<String> xTags = new ArrayList<>();
                             for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                 xTags.add(aftb.getTagName());
-                                addTagsTab(aftb.getTagName());
+                                if(!allTags.contains(aftb.getTagName())){
+                                    allTags.add(aftb.getTagName());
+                                }
                             }
                             Collections.sort(xTags);
                             lce.setTags(xTags);
@@ -984,7 +988,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                 TaggedEntryPanel tep = new TaggedEntryPanel(background);
                                 tep.setEntry(lce);
-                                addEntryToTab(aftb.getTagName(), tep);
+                                tagToTep.put(aftb.getTagName(), tep);
                             }
 
                         }
@@ -1014,7 +1018,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             ArrayList<String> xTags = new ArrayList<>();
                             for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                 xTags.add(dtb.getTagName());
-                                addTagsTab(dtb.getTagName());
+                                if(!allTags.contains(dtb.getTagName())){
+                                    allTags.add(dtb.getTagName());
+                                }
                             }
                             Collections.sort(xTags);
                             lce.setTags(xTags);
@@ -1025,7 +1031,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                 TaggedEntryPanel tep = new TaggedEntryPanel(background);
                                 tep.setEntry(lce);
-                                addEntryToTab(dtb.getTagName(), tep);
+                                tagToTep.put(dtb.getTagName(), tep);
                             }
 
                         }
@@ -1035,8 +1041,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         if (i == 500) {
                             break;
                         }
-
                     }
+                    StringUtils.sortIgnoreCase(allTags);
+                    allTags.forEach(s -> {
+                        addTagsTab(s);
+                        tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
+                    });
 
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
