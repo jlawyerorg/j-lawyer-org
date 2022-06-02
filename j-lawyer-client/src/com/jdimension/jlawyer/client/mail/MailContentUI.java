@@ -1169,7 +1169,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 ClientSettings s = ClientSettings.getInstance();
                 String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(lblFrom.getText());
+                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
                 if (index > -1) {
                     contentUI.setBody(html, ContentTypes.TEXT_HTML);
                 } else {
@@ -1714,23 +1714,29 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
+    private static String getFromAddress(String from, Message msg) {
+        String whiteListEntry = from;
+        try {
+            if (msg != null) {
+                Address whiteListAddress = msg.getFrom()[0];
+                if (whiteListAddress instanceof InternetAddress) {
+                    whiteListEntry = ((InternetAddress) whiteListAddress).getAddress();
+                }
+            }
+        } catch (Throwable t) {
+            log.warn("Cannot determine address for from header: " + from);
+        }
+        return whiteListEntry;
+    }
+    
     private void showHtml() {
         this.setBody(this.cachedHtml, ContentTypes.TEXT_HTML);
         ClientSettings s = ClientSettings.getInstance();
         String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
 
         String whiteListEntry = this.lblFrom.getText();
-        try {
-            if (this.msgContainer != null) {
-                Address whiteListAddress = this.msgContainer.getMessage().getFrom()[0];
-                if (whiteListAddress instanceof InternetAddress) {
-                    whiteListEntry = ((InternetAddress) whiteListAddress).getAddress();
-                }
-            }
-        } catch (Throwable t) {
-            log.warn("Cannot determine address for from header: " + this.lblFrom.getText());
-        }
-
+        if(this.msgContainer!=null)
+            whiteListEntry = this.getFromAddress(this.lblFrom.getText(), this.msgContainer.getMessage());
         whitelist = whitelist + ",{" + whiteListEntry + "}";
         s.setConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, whitelist);
         //this.cmdShowHtml.setEnabled(false);
