@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -685,11 +686,11 @@ import java.nio.channels.ClosedChannelException;
 import java.util.*;
 import javax.ejb.EJBException;
 import javax.swing.*;
+
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
- *
  * @author jens
  */
 public class TaggedTimerTask extends java.util.TimerTask {
@@ -709,6 +710,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of SystemStateTimerTask
+     *
      * @param owner
      * @param tagsPane
      * @param resultPanel
@@ -891,11 +893,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 myNewList = filteredList;
             }
 
-            ArrayList<String> myNewListIds=new ArrayList<>();
+            ArrayList<String> myNewListIds = new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
                 myNewListIds.add(a.getId());
             }
-            tags=fileService.getTags(myNewListIds);
+            tags = fileService.getTags(myNewListIds);
 
             myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 200);
             if ("true".equalsIgnoreCase(temp)) {
@@ -909,11 +911,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 myNewDocumentList = filteredDocumentList;
             }
 
-            ArrayList<String> myNewDocumentListIds=new ArrayList<>();
+            ArrayList<String> myNewDocumentListIds = new ArrayList<>();
             for (ArchiveFileDocumentsBean d : myNewDocumentList) {
                 myNewDocumentListIds.add(d.getId());
             }
-            documentTags=fileService.getDocumentTags(myNewDocumentListIds);
+            documentTags = fileService.getDocumentTags(myNewDocumentListIds);
 
         } catch (EJBException | ClosedChannelException ex) {
             log.error("Error connecting to server", ex);
@@ -941,156 +943,156 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final String[] docTags = lastFilterDocumentTags.clone();
             SwingUtilities.invokeAndWait(
                     new Runnable() {
-                @Override
-                public void run() {
+                        @Override
+                        public void run() {
 
-                    resultUI.removeAll();
+                            resultUI.removeAll();
 
-                    // remove all tabs except for the first one
-                    for (int i = tagsPane.getTabCount() - 1; i > 0; i--) {
-                        tagsPane.removeTabAt(i);
-                    }
+                            // remove all tabs except for the first one
+                            for (int i = tagsPane.getTabCount() - 1; i > 0; i--) {
+                                tagsPane.removeTabAt(i);
+                            }
 
-                    BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
-                    resultUI.setLayout(layout);
-                    int i = 0;
+                            BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
+                            resultUI.setLayout(layout);
+                            int i = 0;
 
-                    List<String> allTags = new ArrayList<>();
-                    ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
-                    //Map<String, List<TaggedEntryPanel>> tagToTep = new HashMap<>();
-                    for (ArchiveFileBean aFile : l1) {
-                        Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                        if (i % 2 == 0) {
-                            background = background.brighter();
-                        }
-                        TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                            List<String> allTags = new ArrayList<>();
+                            ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
+                            //Map<String, List<TaggedEntryPanel>> tagToTep = new HashMap<>();
+                            for (ArchiveFileBean aFile : l1) {
+                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
+                                if (i % 2 == 0) {
+                                    background = background.brighter();
+                                }
+                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
 
-                        TaggedEntry lce = new TaggedEntry();
-                        lce.setFileNumber(aFile.getFileNumber());
-                        lce.setCaseId(aFile.getId());
-                        lce.setLastChangedBy(aFile.getLawyer());
-                        lce.setName(aFile.getName());
-                        lce.setReason(aFile.getReason());
-                        if (tags.get(aFile.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<>();
-                            for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                xTags.add(aftb.getTagName());
-                                if(!allTags.contains(aftb.getTagName())){
-                                    allTags.add(aftb.getTagName());
+                                TaggedEntry lce = new TaggedEntry();
+                                lce.setFileNumber(aFile.getFileNumber());
+                                lce.setCaseId(aFile.getId());
+                                lce.setLastChangedBy(aFile.getLawyer());
+                                lce.setName(aFile.getName());
+                                lce.setReason(aFile.getReason());
+                                if (tags.get(aFile.getId()) != null) {
+                                    ArrayList<String> xTags = new ArrayList<>();
+                                    for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                                        xTags.add(aftb.getTagName());
+                                        if (!allTags.contains(aftb.getTagName())) {
+                                            allTags.add(aftb.getTagName());
+                                        }
+                                    }
+                                    Collections.sort(xTags);
+                                    lce.setTags(xTags);
+                                }
+                                ep.setEntry(lce);
+
+                                if (tags.get(aFile.getId()) != null) {
+                                    for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                        tep.setEntry(lce);
+                                        tagToTep.put(aftb.getTagName(), tep);
+                                    }
+
+                                }
+
+                                resultUI.add(ep);
+                                i++;
+                                if (i == 500) {
+                                    break;
                                 }
                             }
-                            Collections.sort(xTags);
-                            lce.setTags(xTags);
-                        }
-                        ep.setEntry(lce);
 
-                        if (tags.get(aFile.getId()) != null) {
-                            for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                TaggedEntryPanel tep = new TaggedEntryPanel(background);
-                                tep.setEntry(lce);
-                                tagToTep.put(aftb.getTagName(), tep);
-                            }
+                            for (ArchiveFileDocumentsBean aDoc : l2) {
+                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
+                                if (i % 2 == 0) {
+                                    background = background.brighter();
+                                }
+                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                                TaggedEntry lce = new TaggedEntry();
+                                lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
+                                lce.setCaseId(aDoc.getArchiveFileKey().getId());
+                                lce.setDocumentId(aDoc.getId());
+                                lce.setDocumentName(aDoc.getName());
+                                lce.setLastChangedBy(aDoc.getArchiveFileKey().getLawyer());
+                                lce.setName(aDoc.getArchiveFileKey().getName());
+                                lce.setReason(aDoc.getArchiveFileKey().getReason());
+                                if (documentTags.get(aDoc.getId()) != null) {
+                                    ArrayList<String> xTags = new ArrayList<>();
+                                    for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                                        xTags.add(dtb.getTagName());
+                                        if (!allTags.contains(dtb.getTagName())) {
+                                            allTags.add(dtb.getTagName());
+                                        }
+                                    }
+                                    Collections.sort(xTags);
+                                    lce.setTags(xTags);
+                                }
+                                ep.setEntry(lce);
 
-                        }
+                                if (documentTags.get(aDoc.getId()) != null) {
+                                    for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                        tep.setEntry(lce);
+                                        tagToTep.put(dtb.getTagName(), tep);
+                                    }
 
-                        resultUI.add(ep);
-                        i++;
-                        if (i == 500) {
-                            break;
-                        }
-                    }
+                                }
 
-                    for (ArchiveFileDocumentsBean aDoc : l2) {
-                        Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                        if (i % 2 == 0) {
-                            background = background.brighter();
-                        }
-                        TaggedEntryPanel ep = new TaggedEntryPanel(background);
-                        TaggedEntry lce = new TaggedEntry();
-                        lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
-                        lce.setCaseId(aDoc.getArchiveFileKey().getId());
-                        lce.setDocumentId(aDoc.getId());
-                        lce.setDocumentName(aDoc.getName());
-                        lce.setLastChangedBy(aDoc.getArchiveFileKey().getLawyer());
-                        lce.setName(aDoc.getArchiveFileKey().getName());
-                        lce.setReason(aDoc.getArchiveFileKey().getReason());
-                        if (documentTags.get(aDoc.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<>();
-                            for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
-                                xTags.add(dtb.getTagName());
-                                if(!allTags.contains(dtb.getTagName())){
-                                    allTags.add(dtb.getTagName());
+                                resultUI.add(ep);
+                                i++;
+                                if (i == 500) {
+                                    break;
                                 }
                             }
-                            Collections.sort(xTags);
-                            lce.setTags(xTags);
-                        }
-                        ep.setEntry(lce);
+                            StringUtils.sortIgnoreCase(allTags);
+                            allTags.forEach(s -> {
+                                addTagsTab(s);
+                                tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
+                            });
 
-                        if (documentTags.get(aDoc.getId()) != null) {
-                            for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
-                                TaggedEntryPanel tep = new TaggedEntryPanel(background);
-                                tep.setEntry(lce);
-                                tagToTep.put(dtb.getTagName(), tep);
+                            split.setDividerLocation(split.getDividerLocation() + 1);
+                            split.setDividerLocation(split.getDividerLocation() - 1);
+                            running = false;
+                        }
+
+                        private void addTagsTab(String tagName) {
+                            if (Arrays.asList(caseTags).indexOf(tagName) > -1 || Arrays.asList(docTags).indexOf(tagName) > -1) {
+
+                                boolean hasTab = false;
+                                for (int i = 0; i < tagsPane.getTabCount(); i++) {
+                                    if (tagsPane.getTitleAt(i).equals(tagName)) {
+                                        hasTab = true;
+                                        break;
+                                    }
+                                }
+                                if (!hasTab) {
+                                    JScrollPane scroll = new JScrollPane();
+                                    scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+                                    JPanel tPanel = new JPanel();
+                                    BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
+                                    tPanel.setLayout(layout);
+                                    tPanel.setOpaque(false);
+
+                                    scroll.getViewport().add(tPanel);
+                                    scroll.getViewport().setOpaque(false);
+                                    tagsPane.addTab(tagName, scroll);
+                                }
                             }
-
                         }
 
-                        resultUI.add(ep);
-                        i++;
-                        if (i == 500) {
-                            break;
+                        private void addEntryToTab(String tagName, TaggedEntryPanel tep) {
+
+                            for (int i = 0; i < tagsPane.getTabCount(); i++) {
+                                if (tagsPane.getTitleAt(i).equals(tagName)) {
+                                    JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
+                                    JViewport p = (JViewport) sp.getComponent(0);
+                                    ((JPanel) p.getComponent(0)).add(tep);
+                                    break;
+                                }
+                            }
                         }
-                    }
-                    StringUtils.sortIgnoreCase(allTags);
-                    allTags.forEach(s -> {
-                        addTagsTab(s);
-                        tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
                     });
-
-                    split.setDividerLocation(split.getDividerLocation() + 1);
-                    split.setDividerLocation(split.getDividerLocation() - 1);
-                    running = false;
-                }
-
-                private void addTagsTab(String tagName) {
-                    if (Arrays.asList(caseTags).indexOf(tagName) > -1 || Arrays.asList(docTags).indexOf(tagName) > -1) {
-
-                        boolean hasTab = false;
-                        for (int i = 0; i < tagsPane.getTabCount(); i++) {
-                            if (tagsPane.getTitleAt(i).equals(tagName)) {
-                                hasTab = true;
-                                break;
-                            }
-                        }
-                        if (!hasTab) {
-                            JScrollPane scroll = new JScrollPane();
-                            scroll.getVerticalScrollBar().setUnitIncrement(16);
-
-                            JPanel tPanel = new JPanel();
-                            BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
-                            tPanel.setLayout(layout);
-                            tPanel.setOpaque(false);
-
-                            scroll.getViewport().add(tPanel);
-                            scroll.getViewport().setOpaque(false);
-                            tagsPane.addTab(tagName, scroll);
-                        }
-                    }
-                }
-
-                private void addEntryToTab(String tagName, TaggedEntryPanel tep) {
-
-                    for (int i = 0; i < tagsPane.getTabCount(); i++) {
-                        if (tagsPane.getTitleAt(i).equals(tagName)) {
-                            JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
-                            JViewport p = (JViewport) sp.getComponent(0);
-                            ((JPanel) p.getComponent(0)).add(tep);
-                            break;
-                        }
-                    }
-                }
-            });
             running = false;
         } catch (Throwable t) {
             log.error(t);
