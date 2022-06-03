@@ -3604,13 +3604,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } else {
             // when called from a plugin, the plugin loads the case async, and the parties might not be fully loaded when calling the AddDocument dialog
             ClientSettings settings = null;
-            List<AddressBean> addressesForCase = null;
-            //List<ArchiveFileAddressesBean> involvementForCase = null;
             try {
                 settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                addressesForCase = fileService.getAddressesForCase(this.dto.getId());
                 involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
 
             } catch (Throwable t) {
@@ -3623,15 +3620,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-    }
-
-    private AddressBean getAddressById(List<AddressBean> list, String id) {
-        for (AddressBean a : list) {
-            if (a.getId().equals(id)) {
-                return a;
-            }
-        }
-        return null;
     }
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed

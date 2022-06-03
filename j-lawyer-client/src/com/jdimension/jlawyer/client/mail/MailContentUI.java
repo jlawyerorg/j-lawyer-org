@@ -1736,7 +1736,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String whiteListEntry = this.lblFrom.getText();
         if(this.msgContainer!=null)
-            whiteListEntry = this.getFromAddress(this.lblFrom.getText(), this.msgContainer.getMessage());
+            whiteListEntry = getFromAddress(this.lblFrom.getText(), this.msgContainer.getMessage());
         whitelist = whitelist + ",{" + whiteListEntry + "}";
         s.setConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, whitelist);
         //this.cmdShowHtml.setEnabled(false);

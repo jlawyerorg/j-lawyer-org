@@ -678,7 +678,8 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     private boolean lineBorder=false;
     private Color borderColor=Color.BLACK;
     private Hashtable<Integer,Integer> columnWidths=new Hashtable<Integer, Integer>();
-    private String fontFamily="";
+    private String fontFamily="Arial";
+    
     
     public StyledCalculationTable() {
     }
@@ -696,7 +697,7 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
 
     public void addHeaders(String... labels) {
 
-        ArrayList<Cell> row = new ArrayList<Cell>();
+        ArrayList<Cell> row = new ArrayList<>();
         for (String l : labels) {
             row.add(new HeaderCell(l));
         }
@@ -705,7 +706,7 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     }
 
     public int addRow(ArrayList<String> values) {
-        ArrayList<Cell> row = new ArrayList<Cell>();
+        ArrayList<Cell> row = new ArrayList<>();
         for (String v : values) {
             row.add(new Cell(v));
         }
@@ -715,7 +716,7 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     
     public int addRow(String... values) {
 
-        ArrayList<Cell> row = new ArrayList<Cell>();
+        ArrayList<Cell> row = new ArrayList<>();
         for (String v : values) {
             row.add(new Cell(v));
         }
@@ -820,6 +821,12 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
             }
         }
     }
+    
+    public void setFontSize(int size) {
+        for(int i=0;i<this.getRowCount();i++) {
+            this.setRowFontSize(i, size);
+        }
+    }
 
     /**
      * @return the lineBorder
@@ -850,10 +857,10 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     }
     
     public String toHtml() {
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         String borderCol=String.format("#%02x%02x%02x", this.borderColor.getRed(), this.borderColor.getGreen(), this.borderColor.getBlue());
         if(this.isLineBorder()) {
-            sb.append("<html><table border=\"1\" bordercolor=\"" + borderCol + "\" cellspacing=\"0\" width=\"85%\">");
+            sb.append("<html><table border=\"1\" bordercolor=\"").append(borderCol).append("\" cellspacing=\"0\" width=\"85%\">");
         } else {
             sb.append("<html><table border=\"0\" width=\"85%\">");
         }
@@ -870,7 +877,9 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
                 } else {
                     sb.append("<td align=\"left\" bgcolor=\"").append(bgColor).append("\">");
                 }
-                sb.append("<font color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\">");
+                int fontSize=c.getFontSize();
+                fontSize=pixelFontSizeToHtmlSize(fontSize);
+                sb.append("<font size=\"").append(fontSize).append("\" color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\" face=\"").append(this.getFontFamily()).append("\">");
                 if(c.isBold())
                     sb.append("<b>");
                 if(c.isItalic())
@@ -913,5 +922,28 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     public void setFontFamily(String fontFamily) {
         this.fontFamily = fontFamily;
     }
+
+    private int pixelFontSizeToHtmlSize(int fontSize) {
+        // 1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px
+        
+        if(fontSize<=0)
+            return 2;
+        
+        if(fontSize>=48)
+            return 7;
+        else if(fontSize>=32)
+            return 6;
+        else if(fontSize>=24)
+            return 5;
+        else if(fontSize>=18)
+            return 4;
+        else if(fontSize>=16)
+            return 3;
+        else if(fontSize>=13)
+            return 2;
+        else
+            return 1;
+    }
+    
     
 }
