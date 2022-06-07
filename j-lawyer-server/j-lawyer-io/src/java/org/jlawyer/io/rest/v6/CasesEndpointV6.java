@@ -672,8 +672,6 @@ import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
-import java.util.ArrayList;
-import java.util.Collection;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -686,7 +684,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
 import org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
@@ -702,6 +699,7 @@ import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 public class CasesEndpointV6 implements CasesEndpointLocalV6 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV6.class.getName());
+    private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
      * Creates a history entry for a case.
@@ -725,7 +723,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
         try {
 
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
 
             ArchiveFileBean afb = cases.getArchiveFile(id);
             if (afb != null) {
@@ -761,7 +759,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     public Response getDocumentContentBucket(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             ArchiveFileDocumentsBean doc = cases.getDocument(id);
             if (doc == null) {
                 log.error("can not get document " + id);
@@ -809,13 +807,12 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
         try {
 
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
             ArchiveFileBean currentCase = cases.getArchiveFile(dueDate.getCaseId());
             if (currentCase == null) {
                 log.error("case with id " + dueDate.getCaseId() + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             CalendarSetup calSetup=null;
@@ -827,8 +824,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             }
             if (calSetup == null) {
                 log.error("calendar setup with id " + dueDate.getCalendar() + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             ArchiveFileReviewsBean rev = new ArchiveFileReviewsBean();
@@ -870,8 +866,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             return Response.ok(dd).build();
         } catch (Exception ex) {
             log.error("can not create due date for case " + dueDate.getCaseId(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
@@ -892,13 +887,12 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
         try {
 
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
             ArchiveFileBean currentCase = cases.getArchiveFile(dueDate.getCaseId());
             if (currentCase == null) {
                 log.error("case with id " + dueDate.getCaseId() + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             CalendarSetup calSetup=null;
@@ -910,14 +904,12 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             }
             if (calSetup == null) {
                 log.error("calendar setup with id " + dueDate.getCalendar() + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             if(dueDate.getId()==null) {
                 log.error("id of due date to be updated must not be empty");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             ArchiveFileReviewsBean rev=null;
@@ -929,8 +921,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             }
             if(rev==null) {
                 log.error("there is no due date with id " + dueDate.getId() + " in case " + dueDate.getCaseId());
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             rev.setAssignee(dueDate.getAssignee());
@@ -964,8 +955,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             return Response.ok(dd).build();
         } catch (Exception ex) {
             log.error("can not create due date for case " + dueDate.getCaseId(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
