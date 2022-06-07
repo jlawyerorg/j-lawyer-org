@@ -666,6 +666,7 @@ package org.jlawyer.io.rest.v6;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
+import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 
 /**
  *
@@ -677,5 +678,9 @@ public interface CasesEndpointLocalV6 {
     Response createHistory(String id, RestfulCaseHistoryV5 history);
     
     public Response getDocumentContentBucket(String id);
+    
+    Response createDueDate(RestfulDueDateV6 dueDate);
+    
+    Response updateDueDate(RestfulDueDateV6 dueDate);
     
 }

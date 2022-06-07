@@ -684,4 +684,8 @@ public interface CalendarServiceLocal {
     
     public List<CalendarSetup> getAllCalendarSetups();
     
+    ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
+    
+    ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
+    
 }
