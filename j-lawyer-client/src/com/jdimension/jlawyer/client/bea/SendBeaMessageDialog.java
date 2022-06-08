@@ -740,6 +740,9 @@ import themes.colors.DefaultColorTheme;
 public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageDialog.class.getName());
+    
+    private static final String PLACEHOLDER_CURSOR="{{CURSOR}}";
+    
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
     private ArchiveFileBean contextArchiveFile = null;
@@ -838,6 +841,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
+            String lastUsedTemplate=UserSettings.getInstance().getSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, null);
             for (Object t : templates) {
                 EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
                 if (etpl != null) {
@@ -848,7 +852,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             }
             if (this.cmbTemplates.getItemCount() > 0) {
-                this.cmbTemplates.setSelectedIndex(0);
+                if (lastUsedTemplate != null) {
+                    this.cmbTemplates.setSelectedItem(lastUsedTemplate);
+                } else {
+                    this.cmbTemplates.setSelectedIndex(0);
+                }
             }
         } catch (Exception ex) {
             log.error(ex);
@@ -1912,6 +1920,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         }
         a.start();
+        
+        UserSettings uset=UserSettings.getInstance();
+        if(this.cmbTemplates.getSelectedItem()!=null)
+            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
 
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {
@@ -2072,9 +2084,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
 
                 String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator");
-                int cursorIndex = t.indexOf("{{CURSOR}}");
+                int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
                 if (cursorIndex > -1) {
-                    t = t.replace("{{CURSOR}}", "");
+                    t = t.replace(PLACEHOLDER_CURSOR, "");
                 }
                 this.tp.setText(t);
                 this.tp.setCaretPosition(Math.max(0, cursorIndex));

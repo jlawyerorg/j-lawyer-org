@@ -722,6 +722,9 @@ public class UserSettings {
     public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
     
     public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
+    
+    public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
+    public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
 
@@ -764,7 +767,6 @@ public class UserSettings {
             mgmt = locator.lookupSystemManagementRemote();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            return;
         }
     }
 
@@ -885,7 +887,7 @@ public class UserSettings {
     }
 
     public void setSettingArray(String key, String[] value) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (value == null) {
             value = new String[]{""};
         }
