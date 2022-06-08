@@ -731,18 +731,22 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         this.htmlPane.getInsertMenu().setEnabled(enabled);
         //this.htmlPane.setToolBarVisible(false);
         this.setEnabledRecursive(this.htmlPane, enabled);
-        
+
     }
-    
+
     private void setEnabledRecursive(Container c, boolean enabled) {
-        if(c instanceof JButton || c instanceof JComboBox)
+        if (c instanceof JButton || c instanceof JComboBox) {
             c.setEnabled(enabled);
-        for(Component child: c.getComponents()) {
-            if(child instanceof Container)
-                setEnabledRecursive((Container)child, enabled);
+        }
+        if (c.getComponents() != null) {
+            for (Component child : c.getComponents()) {
+                if (child instanceof Container) {
+                    setEnabledRecursive((Container) child, enabled);
+                }
+            }
         }
     }
-    
+
     @Override
     public void setCaretPosition(int pos) {
         this.htmlPane.setCaretPosition(pos);
@@ -751,5 +755,11 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public int getCaretPosition() {
         return 0;
+    }
+
+    @Override
+    public void requestFocus() {
+        super.requestFocus();
+        this.htmlPane.requestFocus();
     }
 }

@@ -683,6 +683,14 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "none");
     }
 
+    @Override
+    public void requestFocus() {
+        super.requestFocus();
+        this.taText.requestFocus();
+    }
+
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -733,13 +741,11 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public void setText(String t) {
         this.taText.setText(t);
-//        this.tpText.setText(t);
     }
 
     @Override
     public void setCaretPosition(int pos) {
         this.taText.setCaretPosition(pos);
-//        this.tpText.setCaretPosition(pos);
     }
 
     @Override

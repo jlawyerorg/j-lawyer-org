@@ -2051,11 +2051,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature()));
-                        this.tp.setCaretPosition(0);
+                        String t=EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature());
+                        int cursorIndex=t.indexOf("{{CURSOR}}");
+                        if(cursorIndex>-1) {
+                            t=t.replace("{{CURSOR}}", "");
+                        }
+                        this.tp.setText(t);
+                        this.tp.setCaretPosition(Math.max(0, cursorIndex));
                         this.hp.setText("");
                         this.text.setSelected(true);
                         this.textActionPerformed(null);
+                        this.tp.requestFocus();
                     }
                 } else {
                     if (ms != null) {
@@ -2063,11 +2069,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         if (sig == null) {
                             sig = "";
                         }
-                        this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
-                        this.hp.setCaretPosition(0);
+                        String t=EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
+                        int cursorIndex=t.indexOf("{{CURSOR}}");
+                        if(cursorIndex>-1) {
+                            t=t.replace("{{CURSOR}}", "");
+                        }
+                        this.hp.setText(t);
+                        this.hp.setCaretPosition(Math.max(0, cursorIndex));
                         this.tp.setText("");
                         this.html.setSelected(true);
                         this.htmlActionPerformed(null);
+                        this.hp.requestFocus();
                     }
                 }
 
