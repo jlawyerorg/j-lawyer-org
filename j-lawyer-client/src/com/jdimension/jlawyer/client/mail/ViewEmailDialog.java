@@ -681,6 +681,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
 
@@ -843,24 +844,14 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
             try {
                 Address[] to = m.getRecipients(RecipientType.TO);
-                String toString = "";
-                for (Address a : to) {
-                    toString = toString + MimeUtility.decodeText(a.toString()) + ", ";
-                }
+                String toString = EmailUtils.getAddressesAsList(to);
+                
                 Address[] cc = m.getRecipients(RecipientType.CC);
-                String ccString = "";
-                if (cc != null) {
-                    for (Address a : cc) {
-                        ccString = ccString + MimeUtility.decodeText(a.toString()) + ", ";
-                    }
-                }
+                String ccString = EmailUtils.getAddressesAsList(cc);
+                
                 Address[] bcc = m.getRecipients(RecipientType.BCC);
-                String bccString = "";
-                if (bcc != null) {
-                    for (Address a : bcc) {
-                        bccString = bccString + MimeUtility.decodeText(a.toString()) + ", ";
-                    }
-                }
+                String bccString = EmailUtils.getAddressesAsList(bcc);
+                
                 dlg.setTo(toString);
                 dlg.setCC(ccString);
                 dlg.setBCC(bccString);
