@@ -807,9 +807,9 @@ public class EmailUtils {
             return null;
 
         } catch (Exception ex) {
-            String subject="";
+            String subject = "";
             try {
-                subject=msg.getSubject();
+                subject = msg.getSubject();
             } catch (Throwable t) {
                 log.warn("cannot determine message subject", t);
             }
@@ -913,19 +913,19 @@ public class EmailUtils {
         }
         return null;
     }
-    
+
     private static void openFolder(Folder f) throws Exception {
         boolean closed = false;
         if (f != null) {
             closed = !f.isOpen();
         }
-        if (closed) {
+        if (closed && f != null) {
             f.open(Folder.READ_WRITE);
         }
     }
 
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
-        
+
         openFolder(msgContainer.getMessage().getFolder());
         Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
@@ -1177,7 +1177,6 @@ public class EmailUtils {
 
     public static ArrayList<String> getAllMailAddressesFromString(String s) {
         ArrayList<String> mails = new ArrayList<>();
-        //Pattern pattern = Pattern.compile("[\\w.]+@[\\w.]+");
         Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
         Matcher matcher = pattern.matcher(s);
         while (matcher.find()) {
@@ -1203,8 +1202,6 @@ public class EmailUtils {
                 receiptHeader = true;
             }
 
-            //msg.setHeader("Disposition-Notification-To", cu.getEmailAddress());
-//                msg.setHeader("Return-Receipt-To", cu.getEmailAddress());
             return (unread && receiptHeader);
         } catch (Exception ex) {
             log.error(ex);
@@ -1318,38 +1315,38 @@ public class EmailUtils {
             return html;
         }
     }
-    
+
     public static SendEmailDialog reply(Message m, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         try {
             // figure out if the message was sent from one of the users accounts
-            boolean sentByCurrentUser=false;
+            boolean sentByCurrentUser = false;
             UserSettings usettings = UserSettings.getInstance();
             AppUserBean cu = usettings.getCurrentUser();
-            List<MailboxSetup> allInboxes=usettings.getMailboxes(cu.getPrincipalId());
+            List<MailboxSetup> allInboxes = usettings.getMailboxes(cu.getPrincipalId());
             Address[] allFrom = m.getFrom();
             for (Address toa : allFrom) {
-                for(MailboxSetup mbx: allInboxes) {
-                    if(toa.toString().toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
-                        sentByCurrentUser=true;
+                for (MailboxSetup mbx : allInboxes) {
+                    if (toa.toString().toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
+                        sentByCurrentUser = true;
                         break;
                     }
                 }
-                if(sentByCurrentUser)
+                if (sentByCurrentUser) {
                     break;
+                }
             }
-            
-            
-            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
-            if(ms!=null) {
+
+            MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+            if (ms != null) {
                 dlg.setFrom(ms);
             }
             Address[] replyTos = m.getReplyTo();
-            
+
             StringBuilder toString = new StringBuilder();
-            if(sentByCurrentUser) {
+            if (sentByCurrentUser) {
                 // sent by the current user - reply to the recipient of the message
-                Address[] recs=m.getRecipients(Message.RecipientType.TO);
+                Address[] recs = m.getRecipients(Message.RecipientType.TO);
                 for (Address a : recs) {
                     toString.append(MimeUtility.decodeText(a.toString())).append(", ");
                 }
@@ -1391,5 +1388,27 @@ public class EmailUtils {
         }
 
         return dlg;
+    }
+
+    public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
+        StringBuilder listString = new StringBuilder();
+        if (a != null) {
+            for (Address adr : a) {
+                if (adr == null) {
+                    continue;
+                }
+                if (adr instanceof InternetAddress) {
+                    listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                } else {
+                    listString.append(MimeUtility.decodeText(adr.toString())).append(", ");
+                }
+            }
+        }
+
+        String s=listString.toString();
+        if(s.endsWith(", "))
+            s=s.substring(0, s.length()-2);
+        
+        return s;
     }
 }
