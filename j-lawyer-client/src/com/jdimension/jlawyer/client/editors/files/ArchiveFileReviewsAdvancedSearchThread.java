@@ -691,6 +691,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
     private int typeSearchMode = 0;
     private Date toDate = null;
     private Date fromDate = null;
+    private String fileNumber = null;
 
     /**
      * Creates a new instance of ArchiveFileReviewsAdvancedSearchThread
@@ -702,13 +703,14 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
      * @param fromDate
      * @param toDate
      */
-    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate) {
+    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String fileNumber) {
         this.owner = owner;
         this.target = target;
         this.statusSearchMode = statusSearchMode;
         this.typeSearchMode = typeSearchMode;
         this.toDate = toDate;
         this.fromDate = fromDate;
+        this.fileNumber = fileNumber;
     }
 
     @Override
@@ -720,6 +722,10 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
 
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             dtos = calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
+
+            if (fileNumber != null && !fileNumber.isEmpty()) {
+                dtos.removeIf(bean -> !bean.getArchiveFileKey().getFileNumber().contains(fileNumber));
+            }
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
