@@ -1067,8 +1067,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
-        mnuUsers = new javax.swing.JMenuItem();
-        mnuGroups = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuMailboxSettings = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
@@ -1076,6 +1074,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDrebisSettings = new javax.swing.JMenuItem();
         mnuCalculations = new javax.swing.JMenu();
         mnuAdministration = new javax.swing.JMenu();
+        mnuUsers = new javax.swing.JMenuItem();
+        mnuGroups = new javax.swing.JMenuItem();
+        jSeparator5 = new javax.swing.JPopupMenu.Separator();
         mnuBackupConfiguration = new javax.swing.JMenuItem();
         mnuServerMonitor = new javax.swing.JMenuItem();
         mnuSecurity = new javax.swing.JMenuItem();
@@ -1626,24 +1627,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuOptions.add(mnuProfileInfo);
-
-        mnuUsers.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
-        mnuUsers.setText("Nutzer");
-        mnuUsers.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuUsersActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuUsers);
-
-        mnuGroups.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
-        mnuGroups.setText("Gruppen");
-        mnuGroups.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuGroupsActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuGroups);
         mnuOptions.add(jSeparator4);
 
         mnuMailboxSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_eml.png"))); // NOI18N
@@ -1688,6 +1671,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jMenuBar1.add(mnuCalculations);
 
         mnuAdministration.setText("Administration");
+
+        mnuUsers.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
+        mnuUsers.setText("Nutzer");
+        mnuUsers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuUsersActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuUsers);
+
+        mnuGroups.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
+        mnuGroups.setText("Gruppen");
+        mnuGroups.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuGroupsActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuGroups);
+        mnuAdministration.add(jSeparator5);
 
         mnuBackupConfiguration.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/database.png"))); // NOI18N
         mnuBackupConfiguration.setText(bundle.getString("menu.settings.backup")); // NOI18N
@@ -2515,6 +2517,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
+    private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JLabel lblBeaStatus;
     private javax.swing.JLabel lblDrebisStatus;
     private javax.swing.JLabel lblFaxStatus;
