@@ -701,7 +701,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     
     private String detailsEditorClass;
     private Image backgroundImage=null;
-    private String currentAZValue = null;
     
     /**
      * Creates new form ArchiveFileReviewsFindPanel
@@ -768,6 +767,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         rdTypeEvent = new javax.swing.JRadioButton();
         labelSearchAZ = new javax.swing.JLabel();
         inputSearchAZ = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
@@ -908,11 +908,15 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
 
         labelSearchAZ.setText("nach Aktenzeichen:");
 
-        inputSearchAZ.addCaretListener(new javax.swing.event.CaretListener() {
-            public void caretUpdate(javax.swing.event.CaretEvent evt) {
-                inputSearchAZCaretUpdate(evt);
+        inputSearchAZ.setToolTipText("");
+        inputSearchAZ.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                inputSearchAZKeyPressed(evt);
             }
         });
+
+        jLabel6.setText("↵");
+        jLabel6.setToolTipText("Zum Suchen <Enter> drücken");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -959,7 +963,9 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                         .addContainerGap()
                         .add(labelSearchAZ)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel6)))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -994,7 +1000,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(labelSearchAZ)
-                    .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel6))
                 .addContainerGap())
         );
 
@@ -1070,7 +1077,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 566, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1085,7 +1092,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1264,13 +1271,11 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         this.cmdRefreshActionPerformed(null);
     }//GEN-LAST:event_rdTypeEventActionPerformed
 
-    private void inputSearchAZCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_inputSearchAZCaretUpdate
-        String newValue = inputSearchAZ.getText();
-        if(!newValue.equals(currentAZValue)){
-            currentAZValue = newValue;
+    private void inputSearchAZKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inputSearchAZKeyPressed
+        if(evt.getKeyCode() == KeyEvent.VK_ENTER){            
             this.cmdRefreshActionPerformed(null);            
         }
-    }//GEN-LAST:event_inputSearchAZCaretUpdate
+    }//GEN-LAST:event_inputSearchAZKeyPressed
     
     private ReviewsStub getPrintValues() {
         ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<>();
@@ -1336,6 +1341,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
