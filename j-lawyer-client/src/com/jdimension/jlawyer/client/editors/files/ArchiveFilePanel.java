@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.addresses.ViewAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.documents.*;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -3661,7 +3662,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             } catch (Throwable t) {
             }
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, new FixedStringPreviewProvider(newText), null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
             this.pnlPreview.remove(loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());

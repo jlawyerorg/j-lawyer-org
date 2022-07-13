@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.templates;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
@@ -1648,7 +1649,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             this.pnlPreview.setVisible(false);
             this.pnlPreview.removeAll();
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, new FixedStringPreviewProvider(newText), null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
             this.pnlPreview.add(preview, BorderLayout.CENTER);

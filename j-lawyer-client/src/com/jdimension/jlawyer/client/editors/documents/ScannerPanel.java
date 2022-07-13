@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.ScanPreviewProvider;
 import com.jdimension.jlawyer.client.editors.files.DateTimeStringComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
@@ -1266,9 +1267,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                         IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
                         byte[] data = is.getObservedFile(fFileName);
-                        String previewText = is.getObservedFilePreview(fFileName);
-
-                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
+                        
+                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, new ScanPreviewProvider(is, fFileName), data, pnlPreview.getWidth(), pnlPreview.getHeight());
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.remove(pnlPreview, loading);
                         ThreadUtils.setLayout(pnlPreview, new BorderLayout());

@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.templates;
 
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.TemplatePreviewProvider;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -711,32 +712,24 @@ public class LoadTemplatePreviewThread implements Runnable {
         try {
             running=true;
             int divLoc=this.split.getDividerLocation();
-            //this.pnlPreview.setVisible(false);
             ThreadUtils.setVisible(pnlPreview, false);
-            //this.pnlPreview.removeAll();
             ThreadUtils.removeAll(pnlPreview);
             ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-            //JLabel loading = new JLabel("Lade Vorschau...");
             JProgressBar loading = new JProgressBar();
             loading.setIndeterminate(true);
             ThreadUtils.addComponent(this.pnlPreview, loading);
-            //this.pnlPreview.add(loading);
-            //this.pnlPreview.setVisible(true);
             ThreadUtils.setVisible(pnlPreview, true);
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SystemManagementRemote afs = locator.lookupSystemManagementRemote();
 
-            String previewText = afs.getTemplatePreview(f, fileName);
             byte[] data = afs.getTemplateData(f, fileName);
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, new TemplatePreviewProvider(afs, f, fileName), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.remove(pnlPreview, loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-            //this.pnlPreview.remove(loading);
             ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-            //this.pnlPreview.add(preview, BorderLayout.CENTER);
             ThreadUtils.setVisible(pnlPreview, true);
             ThreadUtils.setSplitDividerLocation(split, divLoc);
 
@@ -745,16 +738,12 @@ public class LoadTemplatePreviewThread implements Runnable {
             running=false;
             log.error(ex);
 
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                        public void run() {
-                            pnlPreview.setVisible(false);
-                            pnlPreview.removeAll();
-                            pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
-                            pnlPreview.setVisible(true);
-                        }
-                    });
+            SwingUtilities.invokeLater(() -> {
+                pnlPreview.setVisible(false);
+                pnlPreview.removeAll();
+                pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
+                pnlPreview.setVisible(true);
+            });
 
         }
 
