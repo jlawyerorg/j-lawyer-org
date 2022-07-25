@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.SendCommunicationDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
@@ -679,9 +678,7 @@ import java.io.File;
 import java.util.ArrayList;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -725,14 +722,15 @@ public class SendPDFAction extends ProgressableAction {
                 }
 
                 this.progress("Konvertiere zu PDF: " + doc.getName());
-                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                byte[] content = remote.getDocumentContent(doc.getId());
+                
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
-                if (doc.getName().toLowerCase().endsWith(".pdf")) {
+                if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {
                     dlg.addAttachment(tmpUrl, doc.getDictateSign());
                 } else {
                     String pdfUrl = conv.convertToPDF(tmpUrl);
                     try {
-                        // give some more time to LibreOfficed to shut down
+                        // give some more time to LibreOffice to shut down
                         Thread.sleep(2500);
                     } catch (Throwable t) {
                         log.error(t);
@@ -750,15 +748,12 @@ public class SendPDFAction extends ProgressableAction {
 
 
 
-        SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-            public void run() {
-                try {
-                    FrameUtils.centerDialog((JDialog)dlg, null);
-                    ((JDialog)dlg).setVisible(true);
-                } catch (Throwable t) {
-                    log.error(t);
-                }
+        SwingUtilities.invokeLater(new Thread(() -> {
+            try {
+                FrameUtils.centerDialog((JDialog)dlg, null);
+                ((JDialog)dlg).setVisible(true);
+            } catch (Throwable t) {
+                log.error(t);
             }
         }));
 

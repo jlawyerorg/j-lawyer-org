@@ -705,13 +705,13 @@ public class FileConverter {
         return null;
     }
 
-    public boolean validateInputFormat(String url) {
+    public boolean supportsInputFormat(String url) {
         
-        return validateInputFormat(url, INPUTTYPES_LIBREOFFICE);
+        return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
         
     }
     
-    protected boolean validateInputFormat(String url, List<String> supportedFormats) {
+    protected boolean supportsInputFormat(String url, List<String> supportedFormats) {
         String lUrl = url.toLowerCase();
         for (String s : supportedFormats) {
             if (lUrl.endsWith(s)) {
@@ -730,22 +730,22 @@ public class FileConverter {
         }
 
         @Override
-        public boolean validateInputFormat(String url) {
+        public boolean supportsInputFormat(String url) {
 
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
             if (wordProcessorMicrosoft) {
-                return validateInputFormat(url, INPUTTYPES_MSOFFICE) || validateInputFormat(url, INPUTTYPES_LIBREOFFICE);
+                return supportsInputFormat(url, INPUTTYPES_MSOFFICE) || supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
             } else {
-                return super.validateInputFormat(url);
+                return super.supportsInputFormat(url);
             }
         }
 
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -795,7 +795,7 @@ public class FileConverter {
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
 
-            if (wordProcessorMicrosoft && super.validateInputFormat(url, INPUTTYPES_MSOFFICE)) {
+            if (wordProcessorMicrosoft && super.supportsInputFormat(url, INPUTTYPES_MSOFFICE)) {
                 // when using word and word supports the input format
                 return convertToPDFMS(url);
             } else {
@@ -805,7 +805,7 @@ public class FileConverter {
         }
 
         private String convertToPDFMS(String url) throws Exception {
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -847,7 +847,7 @@ public class FileConverter {
         }
 
         private String convertToPDFLO(String url) throws Exception {
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -905,7 +905,7 @@ public class FileConverter {
 
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -937,7 +937,7 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -979,7 +979,7 @@ public class FileConverter {
 
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
@@ -1011,7 +1011,7 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
-            if (!this.validateInputFormat(url)) {
+            if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
