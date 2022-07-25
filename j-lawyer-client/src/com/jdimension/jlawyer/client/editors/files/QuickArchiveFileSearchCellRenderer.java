@@ -683,7 +683,6 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
         if (boolObject != null) {
             Boolean b = (Boolean) table.getValueAt(row, 3);
             if (b) {
-                //setForeground(Color.GRAY);
                 if (isSelected) {
                     ((Component) returnRenderer).setForeground(Color.GRAY.brighter());
                 } else {
@@ -694,7 +693,7 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
                 ((Component) returnRenderer).setForeground(Color.WHITE);
             } else {
                 ((Component) returnRenderer).setForeground(Color.BLACK);
-            } //setForeground(Color.BLACK);
+            }
         }
 
         return (Component) returnRenderer;

@@ -672,7 +672,8 @@ import com.jdimension.jlawyer.persistence.AddressBean;
  */
 public class QuickAddressSearchRowIdentifier {
     
-    /** Creates a new instance of QuickAddressSearchRowIdentifier */
+    /** Creates a new instance of QuickAddressSearchRowIdentifier
+     * @param dto */
     public QuickAddressSearchRowIdentifier(AddressBean dto) {
         this.addressDTO=dto;
     }
@@ -687,6 +688,7 @@ public class QuickAddressSearchRowIdentifier {
         this.addressDTO = addressDTO;
     }
 
+    @Override
     public String toString() {
         return addressDTO.getName();
     }

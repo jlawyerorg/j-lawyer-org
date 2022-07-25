@@ -710,6 +710,12 @@ public class QuickArchiveFileSearchThread implements Runnable {
     
     /**
      * Creates a new instance of QuickArchiveFileSearchThread
+     * @param owner
+     * @param query
+     * @param withArchive
+     * @param tag
+     * @param documentTag
+     * @param target
      */
     public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target) {
         this.query = query;
@@ -737,11 +743,11 @@ public class QuickArchiveFileSearchThread implements Runnable {
             return;
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
         for (int i = 0; i < dtos.length; i++) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getLawyer(), TagUtils.getTagList(dtos[i].getId(), tags)};
+            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
             model.addRow(row);
         }
         if (dtos.length > 0) {

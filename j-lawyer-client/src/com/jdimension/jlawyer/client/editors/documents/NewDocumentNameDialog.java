@@ -664,28 +664,15 @@
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchCellRenderer;
-import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchRowIdentifier;
-import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchTableModel;
-import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchThread;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
@@ -707,6 +694,10 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form NewDocumentNameDialog
+     * @param parent
+     * @param modal
+     * @param caseSelection
+     * @param documentName
      */
     public NewDocumentNameDialog(java.awt.Dialog parent, boolean modal, ArchiveFileBean caseSelection, String documentName) {
         super(parent, modal);
@@ -718,6 +709,10 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form NewDocumentNameDialog
+     * @param parent
+     * @param modal
+     * @param caseSelection
+     * @param documentName
      */
     public NewDocumentNameDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean caseSelection, String documentName) {
         super(parent, modal);
@@ -732,8 +727,8 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
         ClientSettings s = ClientSettings.getInstance();
-        List<String> tags = s.getArchiveFileTagsInUse();
-        List<String> documentTags = s.getDocumentTagsInUse();
+//        List<String> tags = s.getArchiveFileTagsInUse();
+//        List<String> documentTags = s.getDocumentTagsInUse();
         ComponentUtils.restoreDialogSize(this);
 
         try {
@@ -1049,27 +1044,23 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
          * Create and display the dialog
          */
         java.awt.EventQueue
-                .invokeLater(new Runnable() {
-
-                    public void run() {
-                        NewDocumentNameDialog dialog
-                                = new NewDocumentNameDialog(new javax.swing.JFrame(), true, null, null);
-                        dialog
-                                .addWindowListener(new java.awt.event.WindowAdapter() {
-
-                                    @Override
-                                    public void windowClosing(java.awt.event.WindowEvent e
-                                    ) {
-                                        System
-                                                .exit(0);
-
-                                    }
-                                });
-                        dialog
-                                .setVisible(true);
-
-                    }
-                });
+                .invokeLater(() -> {
+                    NewDocumentNameDialog dialog
+                            = new NewDocumentNameDialog(new javax.swing.JFrame(), true, null, null);
+                    dialog
+                            .addWindowListener(new java.awt.event.WindowAdapter() {
+                                
+                                @Override
+                                public void windowClosing(java.awt.event.WindowEvent e
+                                ) {
+                                    System
+                                            .exit(0);
+                                    
+                                }
+                            });
+                    dialog
+                            .setVisible(true);
+        });
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

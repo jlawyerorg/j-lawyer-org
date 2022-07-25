@@ -673,26 +673,27 @@ public class QuickArchiveFileSearchTableModel extends DefaultTableModel {
     
     /**
      * Creates a new instance of QuickArchiveFileSearchTableModel
+     * @param colNames
+     * @param rowCount
      */
     public QuickArchiveFileSearchTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int i, int i0) {
-        /*boolean retValue;
-        
-        retValue = super.isCellEditable(i, i0);
-        return retValue;*/
         return false;
     }
     
+    @Override
     public Class<?> getColumnClass(int index) {
-        if (index == 3) {
-            return Boolean.class;
-        } else if(index==0) {
-            return QuickArchiveFileSearchRowIdentifier.class;
-        } else {
-            return String.class;
+        switch (index) {
+            case 3:
+                return Boolean.class;
+            case 0:
+                return QuickArchiveFileSearchRowIdentifier.class;
+            default:
+                return String.class;
         }
     }
     
