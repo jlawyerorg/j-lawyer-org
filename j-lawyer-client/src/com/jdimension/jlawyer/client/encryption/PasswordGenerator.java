@@ -677,10 +677,12 @@ public final class PasswordGenerator {
     private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String DIGITS = "0123456789";
     private static final String PUNCTUATION = "!@#$%&*()_+-=[]|,./?><";
+    private static final String SIMPLE_PUNCTUATION = "_-.";
     private boolean useLower;
     private boolean useUpper;
     private boolean useDigits;
     private boolean usePunctuation;
+    private boolean useSimplePunctuation;
     
     
     /* 
@@ -702,6 +704,7 @@ public final class PasswordGenerator {
         this.useUpper = builder.useUpper;
         this.useDigits = builder.useDigits;
         this.usePunctuation = builder.usePunctuation;
+        this.useSimplePunctuation = builder.useSimplePunctuation;
     }
 
     public static class PasswordGeneratorBuilder {
@@ -710,12 +713,14 @@ public final class PasswordGenerator {
         private boolean useUpper;
         private boolean useDigits;
         private boolean usePunctuation;
+        private boolean useSimplePunctuation;
 
         public PasswordGeneratorBuilder() {
             this.useLower = false;
             this.useUpper = false;
             this.useDigits = false;
             this.usePunctuation = false;
+            this.useSimplePunctuation = false;
         }
 
         /**
@@ -769,6 +774,19 @@ public final class PasswordGenerator {
             this.usePunctuation = usePunctuation;
             return this;
         }
+        
+        /**
+         * Set true in case you would like to include basic punctuation characters
+         * (!@#..). Default false.
+         *
+         * @param useSimplePunctuation true in case you would like to include
+         * basic punctuation characters (.-_). Default false.
+         * @return the builder for chaining.
+         */
+        public PasswordGeneratorBuilder useSimplePunctuation(boolean useSimplePunctuation) {
+            this.useSimplePunctuation = useSimplePunctuation;
+            return this;
+        }
 
         /**
          * Get an object to use.
@@ -812,6 +830,9 @@ public final class PasswordGenerator {
         }
         if (usePunctuation) {
             charCategories.add(PUNCTUATION);
+        }
+        if (useSimplePunctuation) {
+            charCategories.add(SIMPLE_PUNCTUATION);
         }
 
         // Build the password.

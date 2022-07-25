@@ -3050,8 +3050,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .useDigits(true)
                     .useLower(true)
                     .useUpper(true)
+                    .useSimplePunctuation(true)
                     .build();
-            defaultValue = passwordGenerator.generate(8);
+            defaultValue = passwordGenerator.generate(10);
         } else {
             defaultValue = this.encryptionPwd;
         }
