@@ -907,7 +907,6 @@ public class CalendarPanel extends javax.swing.JPanel {
         if (rev.getCalendarSetup() != null) {
             if (!this.allCalTypes.containsKey(rev.getCalendarSetup().getId())) {
                 EventType t = new EventType();
-                //Color backColor = new Color(rev.getCalendarSetup().getBackground());
                 Color opaque=new Color(rev.getCalendarSetup().getBackground());
                 Color backColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), this.eventAlpha);
                 t.setBackgroundColor(backColor);
