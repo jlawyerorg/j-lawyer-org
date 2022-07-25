@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -740,9 +741,9 @@ import themes.colors.DefaultColorTheme;
 public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageDialog.class.getName());
-    
-    private static final String PLACEHOLDER_CURSOR="{{CURSOR}}";
-    
+
+    private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
+
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
     private ArchiveFileBean contextArchiveFile = null;
@@ -841,7 +842,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
-            String lastUsedTemplate=UserSettings.getInstance().getSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, null);
+            String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, null);
             for (Object t : templates) {
                 EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
                 if (etpl != null) {
@@ -1920,10 +1921,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         }
         a.start();
-        
-        UserSettings uset=UserSettings.getInstance();
-        if(this.cmbTemplates.getSelectedItem()!=null)
+
+        UserSettings uset = UserSettings.getInstance();
+        if (this.cmbTemplates.getSelectedItem() != null) {
             uset.setSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
+        }
 
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {
@@ -1950,23 +1952,25 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            } catch (Exception ex) {
-                log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new ReviewAddedEvent(reviewDto));
             }
-
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
         }
 
@@ -2327,23 +2331,25 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            } catch (Exception ex) {
-                log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new ReviewAddedEvent(reviewDto));
             }
-
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
         }
     }//GEN-LAST:event_cmdSaveDraftActionPerformed

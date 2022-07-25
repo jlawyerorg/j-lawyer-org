@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -728,10 +729,10 @@ import org.apache.log4j.Logger;
 public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
-    
-    private static final String LABEL_SEND_UNENCRYPTED="unverschlüsselt senden";
-    private static final String PLACEHOLDER_CURSOR="{{CURSOR}}";
-    
+
+    private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
+    private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
+
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
@@ -774,7 +775,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void initialize() {
         initComponents();
-        
+
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
@@ -789,7 +790,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
 
         ClientSettings settings = ClientSettings.getInstance();
-        UserSettings usettings=UserSettings.getInstance();
+        UserSettings usettings = UserSettings.getInstance();
         this.cu = usettings.getCurrentUser();
         if (!EmailUtils.hasConfig(cu)) {
             this.cmdSend.setEnabled(false);
@@ -815,15 +816,15 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             if (this.cmbFrom.getItemCount() > 0) {
                 this.cmbFrom.setSelectedIndex(0);
             }
-            
+
             if (!mailboxes.isEmpty()) {
                 MailboxSetup ms = mailboxes.iterator().next();
                 this.tp.setText(EmailUtils.Html2Text(ms.getEmailSignature()));
                 this.hp.setText(ms.getEmailSignature());
             }
-            
-            String lastSetup=usettings.getSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, null);
-            if(lastSetup != null) {
+
+            String lastSetup = usettings.getSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, null);
+            if (lastSetup != null) {
                 this.cmbFrom.setSelectedItem(lastSetup);
                 for (MailboxSetup t : mailboxes) {
                     if (t.getDisplayName().equals(lastSetup)) {
@@ -833,8 +834,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     }
                 }
             }
-            
-            
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -848,11 +847,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
-            String lastUsedTemplate=UserSettings.getInstance().getSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, null);
+            String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, null);
             for (Object t : templates) {
                 this.cmbTemplates.addItem(t.toString());
             }
-            if(lastUsedTemplate!=null) {
+            if (lastUsedTemplate != null) {
                 this.cmbTemplates.setSelectedItem(lastUsedTemplate);
             } else {
                 this.cmbTemplates.setSelectedIndex(0);
@@ -1050,9 +1049,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     public void setSubject(String s) {
         this.txtSubject.setText(s);
     }
-    
+
     public void setFrom(MailboxSetup ms) {
-        if(ms!= null) {
+        if (ms != null) {
             for (int i = 0; i < this.cmbFrom.getItemCount(); i++) {
                 String item = this.cmbFrom.getItemAt(i);
                 if (item.equals(ms.getDisplayName())) {
@@ -1087,9 +1086,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     public void setArchiveFile(ArchiveFileBean af, CaseFolder cf) {
         this.contextArchiveFile = af;
-        this.contextArchiveFileFolder=cf;
-        if(this.contextArchiveFile==null)
-            this.contextArchiveFileFolder=null;
+        this.contextArchiveFileFolder = cf;
+        if (this.contextArchiveFile == null) {
+            this.contextArchiveFileFolder = null;
+        }
         if (af != null && af.getFileNumber() != null) {
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern in " + af.getFileNumber());
@@ -1156,10 +1156,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
 
     }
-    
+
     private void enableEncryption(boolean enable) {
         if (enable) {
-            if(!this.chkEncryption.isEnabled()) {
+            if (!this.chkEncryption.isEnabled()) {
                 this.lblEncryption.setText(LABEL_SEND_UNENCRYPTED);
                 this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
                 this.chkEncryption.setEnabled(true);
@@ -1769,14 +1769,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
-        if(StringUtils.isEmpty(this.txtSubject.getText())) {
+        if (StringUtils.isEmpty(this.txtSubject.getText())) {
             int response = JOptionPane.showConfirmDialog(this, "Nachricht ohne Betreff senden?", "leerer Betreff", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 this.txtSubject.requestFocus();
                 return;
             }
         }
-        
+
         MailboxSetup ms = this.getSelectedMailbox();
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -1867,13 +1867,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         }
         a.start();
-        
-        UserSettings uset=UserSettings.getInstance();
-        if(ms!=null) {
+
+        UserSettings uset = UserSettings.getInstance();
+        if (ms != null) {
             uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
         }
-        if(this.cmbTemplates.getSelectedItem()!=null)
+        if (this.cmbTemplates.getSelectedItem() != null) {
             uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
+        }
 
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {
@@ -1900,23 +1901,25 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            } catch (Exception ex) {
-                log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new ReviewAddedEvent(reviewDto));
             }
-
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
         }
 
@@ -2021,7 +2024,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
                 ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
-                HashMap<String,Object> ht = new HashMap<>();
+                HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
@@ -2043,7 +2046,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
 
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                HashMap<String,Object> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
+                HashMap<String, Object> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
@@ -2059,10 +2062,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t=EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature());
-                        int cursorIndex=t.indexOf(PLACEHOLDER_CURSOR);
-                        if(cursorIndex>-1) {
-                            t=t.replace(PLACEHOLDER_CURSOR, "");
+                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature());
+                        int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
+                        if (cursorIndex > -1) {
+                            t = t.replace(PLACEHOLDER_CURSOR, "");
                         }
                         this.tp.setText(t);
                         this.tp.setCaretPosition(Math.max(0, cursorIndex));
@@ -2077,10 +2080,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         if (sig == null) {
                             sig = "";
                         }
-                        String t=EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
-                        int cursorIndex=t.indexOf(PLACEHOLDER_CURSOR);
-                        if(cursorIndex>-1) {
-                            t=t.replace(PLACEHOLDER_CURSOR, "");
+                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
+                        int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
+                        if (cursorIndex > -1) {
+                            t = t.replace(PLACEHOLDER_CURSOR, "");
                         }
                         this.hp.setText(t);
                         this.hp.setCaretPosition(Math.max(0, cursorIndex));
@@ -2254,17 +2257,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 this.attachments.remove(o);
             }
         }
-        
-        Object[] allEntries=((DefaultListModel) this.lstAttachments.getModel()).toArray();
-        boolean pdfOnly=true;
-        for(Object e: allEntries) {
-            if(!(e.toString().toLowerCase().endsWith(".pdf"))) {
-                pdfOnly=false;
+
+        Object[] allEntries = ((DefaultListModel) this.lstAttachments.getModel()).toArray();
+        boolean pdfOnly = true;
+        for (Object e : allEntries) {
+            if (!(e.toString().toLowerCase().endsWith(".pdf"))) {
+                pdfOnly = false;
                 break;
             }
         }
         this.enableEncryption(pdfOnly);
-        
+
     }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
 
     private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
@@ -2418,7 +2421,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
             if (mi.getState()) {
                 if (!currentTo.contains(this.email)) {
-                    if(this.to.getText().trim().isEmpty()) {
+                    if (this.to.getText().trim().isEmpty()) {
                         currentTo = this.email;
                     } else {
                         currentTo = currentTo + ", " + this.email;
@@ -2430,9 +2433,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 int index = currentTo.indexOf(this.email);
                 if (index > -1) {
                     currentTo = currentTo.substring(0, index - 1) + currentTo.substring(index + this.email.length(), currentTo.length());
-                    if(currentTo.endsWith(",")) {
+                    if (currentTo.endsWith(",")) {
                         // cut off comma
-                        currentTo=currentTo.substring(0,currentTo.length()-1);
+                        currentTo = currentTo.substring(0, currentTo.length() - 1);
                     }
                     this.to.setText(currentTo);
                 }

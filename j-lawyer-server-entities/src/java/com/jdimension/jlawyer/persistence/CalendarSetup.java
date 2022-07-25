@@ -725,6 +725,23 @@ public class CalendarSetup implements Serializable, EventTypes {
     // if true, events that are marked as done are deleted from Nextcloud
     @Column(name = "delete_done", columnDefinition = "TINYINT")
     protected boolean deleteDone=false;
+
+    public Object getClone() {
+        CalendarSetup cs= new CalendarSetup();
+        cs.background=this.background;
+        cs.cloudHost=this.cloudHost;
+        cs.cloudPassword=this.cloudPassword;
+        cs.cloudPath=this.cloudPath;
+        cs.cloudPort=this.cloudPort;
+        cs.cloudSsl=this.cloudSsl;
+        cs.cloudUser=this.cloudUser;
+        cs.deleteDone=this.deleteDone;
+        cs.displayName=this.displayName;
+        cs.eventType=this.eventType;
+        cs.href=this.href;
+        cs.id=this.id;
+        return cs;
+    }
     
     
 

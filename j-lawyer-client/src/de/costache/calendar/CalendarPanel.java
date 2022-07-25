@@ -678,6 +678,7 @@ import de.costache.calendar.events.ModelChangedListener;
 import de.costache.calendar.events.SelectionChangedEvent;
 import de.costache.calendar.model.CalendarEvent;
 import de.costache.calendar.model.EventType;
+import de.costache.calendar.ui.strategy.DisplayStrategy;
 import de.costache.calendar.util.CalendarUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -728,6 +729,8 @@ public class CalendarPanel extends javax.swing.JPanel {
     private String detailsEditorClass;
     private transient Image backgroundImage = null;
     private String parentClass = null;
+    
+    protected int eventAlpha=255;
 
     private Collection<ArchiveFileReviewsBean> cachedEvents = null;
 
@@ -882,6 +885,14 @@ public class CalendarPanel extends javax.swing.JPanel {
         }
 
     }
+    
+    public void setSelectedDay(Date selDate) {
+        this.jCalendar.setSelectedDay(selDate);
+    }
+    
+    public void setSelectedDayInDayView(Date selDate) {
+        this.jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, selDate);
+    }
 
     public void addCalendarEvent(ArchiveFileReviewsBean rev) {
 
@@ -896,7 +907,9 @@ public class CalendarPanel extends javax.swing.JPanel {
         if (rev.getCalendarSetup() != null) {
             if (!this.allCalTypes.containsKey(rev.getCalendarSetup().getId())) {
                 EventType t = new EventType();
-                Color backColor = new Color(rev.getCalendarSetup().getBackground());
+                //Color backColor = new Color(rev.getCalendarSetup().getBackground());
+                Color opaque=new Color(rev.getCalendarSetup().getBackground());
+                Color backColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), this.eventAlpha);
                 t.setBackgroundColor(backColor);
                 t.setForegroundColor(Color.WHITE);
                 t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
@@ -1031,7 +1044,12 @@ public class CalendarPanel extends javax.swing.JPanel {
 
     private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
 
-        CalendarEvent calendarEvent = new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+        CalendarEvent calendarEvent = null;
+        if(rev.getArchiveFileKey()!=null) {
+            calendarEvent=new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+        } else {
+            calendarEvent=new CalendarEvent(rev.getSummary(), start, end);
+        }
         calendarEvent.setDescription(rev.getDescription());
         calendarEvent.setLocation(rev.getLocation());
 
@@ -1186,6 +1204,20 @@ public class CalendarPanel extends javax.swing.JPanel {
             .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * @return the eventAlpha
+     */
+    public int getEventAlpha() {
+        return eventAlpha;
+    }
+
+    /**
+     * @param eventAlpha the eventAlpha to set
+     */
+    public void setEventAlpha(int eventAlpha) {
+        this.eventAlpha = eventAlpha;
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
@@ -688,12 +689,14 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import org.apache.log4j.Logger;
+import org.jdesktop.swingx.util.WindowUtils;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -716,6 +719,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form ReviewDueEntryPanel
+     *
      * @param background
      */
     public ReviewDueEntryPanel(Color background) {
@@ -1093,12 +1097,12 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         // update data
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
         ArchiveFileReviewsBean arb = e.getReview();
-        
+
         if (arb.getEventType() == EventTypes.EVENTTYPE_EVENT) {
-            Calendar evCal=Calendar.getInstance();
+            Calendar evCal = Calendar.getInstance();
             evCal.setTime(arb.getBeginDate());
-            int hour=evCal.get(Calendar.HOUR_OF_DAY);
-            int minute=evCal.get(Calendar.MINUTE);
+            int hour = evCal.get(Calendar.HOUR_OF_DAY);
+            int minute = evCal.get(Calendar.MINUTE);
             evCal.setTime(d);
             evCal.set(Calendar.HOUR_OF_DAY, hour);
             evCal.set(Calendar.MINUTE, minute);
@@ -1112,22 +1116,27 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         }
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = null;
-        try {
-            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            calService.updateReview(arb.getArchiveFileKey().getId(), arb);
-        } catch (Exception ex) {
-            log.error("Error updating review", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
+        Window parentWindow = WindowUtils.findWindow(this);
+        if (CalendarUtils.checkForConflicts(parentWindow, arb)) {
+            try {
+                locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                calService.updateReview(arb.getArchiveFileKey().getId(), arb);
+            } catch (Exception ex) {
+                log.error("Error updating review", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
+
+            boolean postPonedDone = this.chkDescription.isSelected();
+            // update UI
+            this.setEntry(e);
+            this.chkDescription.setSelected(postPonedDone);
         }
         EditorsRegistry.getInstance().clearStatus();
 
-        boolean postPonedDone = this.chkDescription.isSelected();
-        // update UI
-        this.setEntry(e);
-        this.chkDescription.setSelected(postPonedDone);
+
     }//GEN-LAST:event_cmdPostponeActionPerformed
 
     private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered

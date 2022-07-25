@@ -720,6 +720,24 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @ManyToOne
     private CalendarSetup calendarSetup;
 
+    public Object getClone() {
+        ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
+        a.archiveFileKey=this.archiveFileKey;
+        a.assignee=this.assignee;
+        a.beginDate=this.beginDate;
+        a.endDate=this.endDate;
+        a.calendarSetup=this.calendarSetup;
+        a.description=this.description;
+        a.done=this.done;
+        a.eventType=this.eventType;
+        a.id=this.id;
+        a.location=this.location;
+        a.summary=this.summary;
+        return a;
+    }
+
+    
+    
     public ArchiveFileReviewsBean() {
     }
 

@@ -667,10 +667,8 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import javax.swing.JFrame;
 import org.apache.log4j.Logger;
 
 /**
@@ -683,6 +681,9 @@ public class ShowURLDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ShowURLDialog
+     * @param parent
+     * @param modal
+     * @param url
      */
     public ShowURLDialog(Dialog parent, boolean modal, String url) {
         super(parent, modal);
@@ -841,17 +842,15 @@ public class ShowURLDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ShowURLDialog dialog = new ShowURLDialog(new javax.swing.JFrame(), true, "https://www.j-lawyer.org");
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ShowURLDialog dialog = new ShowURLDialog(new javax.swing.JFrame(), true, "https://www.j-lawyer.org");
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

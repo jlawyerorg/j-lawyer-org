@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import de.jollyday.CalendarHierarchy;
 import de.jollyday.Holiday;
 import de.jollyday.HolidayCalendar;
@@ -1290,6 +1291,119 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             }
         }
 
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<ArchiveFileReviewsBean> getConflictingEvents(int eventType, Date fromDate, Date toDate, String assignee) throws Exception {
+        Date from=fromDate;
+        Date to=toDate;
+        if(eventType==ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || eventType==ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
+            
+            fromDate.setHours(0);
+            fromDate.setMinutes(0);
+            fromDate.setSeconds(0);
+            from=new Date(fromDate.getTime());
+            
+            toDate=new Date(from.getTime());
+            toDate.setHours(23);
+            toDate.setMinutes(59);
+            toDate.setSeconds(59);
+            to=new Date(toDate.getTime());
+        }
+        
+        String principalId=this.context.getCallerPrincipal().getName();
+        ArrayList<String> allowedCases = new ArrayList<>();
+        if (principalId != null) {
+            try {
+                allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
+            } catch (Exception ex) {
+                log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+                throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+            }
+        }
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<>();
+        try {
+            con = utils.getConnection();
+            if(ServerStringUtils.isEmpty(assignee)) {
+                // a.starttime <= b.endtime and a.endtime >= b.starttime
+                // select * from case_events where beginDate < '2022-05-28 11:05:00.000' and endDate > '2022-05-28 10:30:00.000' and done=0; 
+                st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate < ? and endDate > ? and done=0 order by beginDate asc");
+                Instant fromInstant=from.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant toInstant=to.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                st.setTimestamp(1, new java.sql.Timestamp(toInstant.toEpochMilli()));
+                //st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
+                st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
+                rs = st.executeQuery();
+            } else {
+                // a.starttime <= b.endtime and a.endtime >= b.starttime
+                // select * from case_events where beginDate < '2022-05-28 11:05:00.000' and endDate > '2022-05-28 10:30:00.000' and done=0; 
+                st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate < ? and endDate > ? and done=0 and assignee=? order by beginDate asc");
+                Instant fromInstant=from.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant toInstant=to.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                st.setTimestamp(1, new java.sql.Timestamp(toInstant.toEpochMilli()));
+                //st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
+                st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
+                st.setString(3, assignee);
+                rs = st.executeQuery();
+            }
+            
+
+            while (rs.next()) {
+                String archiveFileKey = rs.getString(2);
+                ArchiveFileBean dto = null;
+
+                boolean allowed = false;
+                if (principalId != null) {
+                    if (allowedCases.contains(archiveFileKey)) {
+                        allowed = true;
+                        dto = this.archiveFileFacade.find(archiveFileKey);
+                    }
+                } else {
+                    allowed = true;
+                    dto = this.archiveFileFacade.find(archiveFileKey);
+                }
+
+                if (allowed) {
+                    String id = rs.getString(1);
+                    ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
+                    rev.setArchiveFileKey(dto);
+                    list.add(rev);
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files / reviews", sqle);
+            throw new EJBException("Kalendersuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                if (st != null) {
+                    st.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
     }
 
 }

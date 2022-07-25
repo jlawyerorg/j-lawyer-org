@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
@@ -3185,26 +3186,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         for (int i = 0; i < selectedRows.length; i++) {
 
-            try {
-                ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-                review.setDoneBoolean(false);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            review.setDoneBoolean(false);
+            if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
+                try {
+                    calService.updateReview(this.dto.getId(), review);
 
-                calService.updateReview(this.dto.getId(), review);
+                } catch (Exception ex) {
+                    log.error("Error removing review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
 
-            } catch (Exception ex) {
-                log.error("Error removing review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
             }
-
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
-            this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
         }
+        EditorsRegistry.getInstance().clearStatus();
 
     }//GEN-LAST:event_mnuSetReviewOpenActionPerformed
 
@@ -3633,7 +3634,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
 
             //CaseUtils.openDocument(dto, value, this.readOnly, this);
-            
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setShowCancelButton(true);
             dlg.setInfinite(false);
@@ -4542,7 +4542,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
                         boolean replaceDocument = false;
                         while (documentExists && !replaceDocument) {
-                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName +  "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                             replaceDocument = response == JOptionPane.YES_OPTION;
                             if (!replaceDocument) {
                                 newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
@@ -4570,7 +4570,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     .findAny()
                                     .orElse(null);
                             // Check if the document was found
-                            if(document != null){
+                            if (document != null) {
                                 // document with that name is part of the "active" documents in the case
                                 // First move document to bin
                                 remote.removeDocument(document.getId());
@@ -4580,13 +4580,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 caseFolderPanel1.removeDocument(document);
                             } else {
                                 // document with that name is not present in UI but exists in the trash bin
-                                document=remote.getDocumentsBin().stream()
-                                    .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                    .findAny()
-                                    .orElse(null);
-                                if(document!=null)
+                                document = remote.getDocumentsBin().stream()
+                                        .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                        .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                        .findAny()
+                                        .orElse(null);
+                                if (document != null) {
                                     remote.removeDocumentFromBin(document.getId());
+                                }
                             }
                         }
 
@@ -4610,7 +4611,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 };
 
                 this.waitForOpenDocument(doc, callback);
-                this.lastPopupClosed =System.currentTimeMillis();
+                this.lastPopupClosed = System.currentTimeMillis();
             }
 
         } catch (Exception ioe) {
@@ -4655,7 +4656,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         for (int i = 0; i < selectedRows.length; i++) {
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
             try {
@@ -4672,7 +4672,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 review.setBeginDate(d);
 
-                calService.updateReview(this.dto.getId(), review);
+                if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
+                    calService.updateReview(this.dto.getId(), review);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    this.tblReviewReasons.setValueAt(review, selectedRows[i], 0);
+                }
 
             } catch (Exception ex) {
                 log.error("Error removing review", ex);
@@ -4681,9 +4685,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
-            this.tblReviewReasons.setValueAt(review, selectedRows[i], 0);
         }
     }//GEN-LAST:event_mnuPostponeReviewActionPerformed
 

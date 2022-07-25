@@ -719,5 +719,7 @@ public interface CalendarServiceRemote {
     boolean hasEvents(CalendarSetup calendar) throws Exception;
 
     void migrateEvents(CalendarSetup fromCalendar, CalendarSetup toCalendar) throws Exception;
+
+    List<ArchiveFileReviewsBean> getConflictingEvents(int eventType, Date fromDate, Date toDate, String assignee) throws Exception;
     
 }
