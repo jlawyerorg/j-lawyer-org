@@ -692,7 +692,7 @@ public class EventBroker {
 
     public void subscribeConsumer(EventConsumer consumer, Integer eventType) {
         if (!consumerMap.containsKey(eventType)) {
-            consumerMap.put(eventType, new ArrayList<EventConsumer>());
+            consumerMap.put(eventType, new ArrayList<>());
         }
         ArrayList<EventConsumer> consumers = consumerMap.get(eventType);
         consumers.add(consumer);
@@ -704,12 +704,8 @@ public class EventBroker {
             ArrayList<EventConsumer> consumers = consumerMap.get(e.getType());
             for (EventConsumer c : consumers) {
                 if (e.isUiUpdateTrigger()) {
-                    SwingUtilities.invokeLater(
-                        new Runnable() {
-
-                        public void run() {
-                            c.onEvent(e);
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        c.onEvent(e);
                     });
                 } else {
                     c.onEvent(e);

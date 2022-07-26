@@ -671,6 +671,7 @@ public abstract class Event {
     
     public static final Integer TYPE_DEFAULT=0;
     public static final Integer TYPE_AUTOUPDATE=10;
+    public static final Integer TYPE_SERVICES=11;
     public static final Integer TYPE_NEWS=20;
     public static final Integer TYPE_SYSTEMSTATUS=30;
     public static final Integer TYPE_SCANNERSTATUS=40;

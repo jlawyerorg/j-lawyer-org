@@ -727,14 +727,9 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
         ClientSettings s = ClientSettings.getInstance();
-//        List<String> tags = s.getArchiveFileTagsInUse();
-//        List<String> documentTags = s.getDocumentTagsInUse();
         ComponentUtils.restoreDialogSize(this);
 
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
-
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             
             this.updateCaseFolderStructure();
 

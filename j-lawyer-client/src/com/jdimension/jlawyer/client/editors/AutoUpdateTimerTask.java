@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -683,11 +684,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
@@ -830,6 +834,25 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("bea-enabled-versions");
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
+            
+            
+            NodeList services = doc.getElementsByTagName("serviceitem");
+            TreeMap<String, ServiceMenuItem> serviceMap=new TreeMap<>();
+            for(int s=0;s<services.getLength();s++) {
+                NamedNodeMap attributes=services.item(s).getAttributes();
+                String serviceName=attributes.getNamedItem("name").getTextContent();
+                String serviceTooltip=attributes.getNamedItem("tooltip").getTextContent();
+                String serviceOrder=attributes.getNamedItem("order").getTextContent();
+                String serviceUrl=attributes.getNamedItem("url").getTextContent();
+                ServiceMenuItem mi=new ServiceMenuItem();
+                mi.setName(serviceName);
+                mi.setTooltip(serviceTooltip);
+                mi.setOrder(serviceOrder);
+                mi.setUrl(serviceUrl);
+                serviceMap.put(mi.getOrder(), mi);
+            }
+            EventBroker b = EventBroker.getInstance();
+            b.publishEvent(new ServicesEvent(serviceMap));
 
         } catch (Throwable t) {
             log.error("Error checking for updates on j-lawyer.org", t);

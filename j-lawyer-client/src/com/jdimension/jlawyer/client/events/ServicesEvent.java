@@ -663,127 +663,41 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.awt.Desktop;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URI;
-import javax.swing.ImageIcon;
+import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
+import java.util.TreeMap;
 
 /**
  *
  * @author jens
  */
-public class AutoUpdateEvent extends Event {
+public class ServicesEvent extends Event {
 
-    private String newVersion;
-    private String published;
-    private String changeLog;
+    protected TreeMap<String, ServiceMenuItem> services=null;
     
-    
-    public AutoUpdateEvent(String newVersion, String published, String changeLog) {
-        super(Event.TYPE_AUTOUPDATE);
-        this.newVersion=newVersion;
-        this.published=published;
-        this.changeLog=changeLog;
-    }
-
-    public String getLongDescriptionHtml() {
-        StringBuilder updBuff = new StringBuilder();
-        updBuff.append("<html><p align=\"center\">");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.text"));
-        updBuff.append("<br/> ");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.newversion"));
-        updBuff.append(" ");
-        updBuff.append(newVersion);
-        updBuff.append(" ");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.fromdate"));
-        updBuff.append(" ");
-        updBuff.append(published);
-        updBuff.append("<br>");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.installed"));
-        updBuff.append(": ");
-        updBuff.append(VersionUtils.getFullClientVersion());
-        updBuff.append("<br>");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.moreinfo"));
-        updBuff.append("</p></html>");
-        return updBuff.toString();
-    }
-    
-    public ImageIcon getIcon() {
-        return new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_system_update_alt_white_48dp.png"));
-    }
-    
-    public ImageIcon getSmallIcon() {
-        return new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"));
-    }
-    
-    public MouseListener getMouseListener() {
-        MouseListener actionListener = new MouseListener() {
-
-                            @Override
-                            public void mouseClicked(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
-                                boolean browserSupport = true;
-                                if (Desktop.isDesktopSupported()) {
-                                    Desktop desktop = Desktop.getDesktop();
-                                    if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                                        URI uri = null;
-                                        try {
-                                            uri = new URI(changeLog);
-                                            desktop.browse(uri);
-                                        } catch (Throwable t) {
-                                            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Information ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                                            ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
-                                            dlg.setVisible(true);
-                                        }
-
-                                    } else {
-                                        browserSupport = false;
-                                    }
-                                } else {
-                                    browserSupport = false;
-
-                                }
-                                if (!browserSupport) {
-                                    ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
-                                    dlg.setVisible(true);
-                                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("launch.browser.error"), new Object[] {url}), "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                                }
-                            }
-
-                            @Override
-                            public void mousePressed(MouseEvent me) {
-                                //throw new UnsupportedOperationException("Not supported yet.");
-                            }
-
-                            @Override
-                            public void mouseReleased(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
-
-                            @Override
-                            public void mouseEntered(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
-
-                            @Override
-                            public void mouseExited(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
-                        };
-        return actionListener;
-    }
-    
-    public String getDescription() {
-        return java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound");
+    public ServicesEvent(TreeMap<String, ServiceMenuItem> services) {
+        super(Event.TYPE_SERVICES);
+        this.services=services;
     }
 
     @Override
     public boolean isUiUpdateTrigger() {
         return true;
     }
+
+    /**
+     * @return the services
+     */
+    public TreeMap<String, ServiceMenuItem> getServices() {
+        return services;
+    }
+
+    /**
+     * @param services the services to set
+     */
+    public void setServices(TreeMap<String, ServiceMenuItem> services) {
+        this.services = services;
+    }
+
+    
 
 }

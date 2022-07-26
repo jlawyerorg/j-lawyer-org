@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateArchiveFileTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateDocumentTagsTask;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
@@ -682,6 +683,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
+import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentMonitorDialog;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
@@ -719,6 +721,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultTreeModel;
 import org.apache.log4j.Logger;
@@ -746,6 +749,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_AUTOUPDATE);
+        b.subscribeConsumer(this, Event.TYPE_SERVICES);
         b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SYSTEMSTATUS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
@@ -892,6 +896,26 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.lblUpdateStatus.setToolTipText(((AutoUpdateEvent) e).getLongDescriptionHtml());
             this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
             this.lblUpdateStatus.setText(((AutoUpdateEvent) e).getDescription());
+        } else if(e instanceof ServicesEvent) {
+            for (ServiceMenuItem si : ((ServicesEvent) e).getServices().values()) {
+                if ("---".equals(si.getName())) {
+                    this.mnuServices.add(new JSeparator());
+                } else {
+                    JMenuItem mi = new JMenuItem();
+                    mi.setText(si.getName());
+                    mi.setToolTipText(si.getTooltip());
+                    mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/web.png")));
+                    mi.addActionListener((ActionEvent ae) -> {
+                        try {
+                            DesktopUtils.openBrowser(si.getUrl());
+                        } catch (Exception ex) {
+                            log.error("Error opening service url", ex);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+                    this.mnuServices.add(mi);
+                }
+            }
         } else if (e instanceof NewsEvent) {
             this.lblNewsStatus.setIcon(((NewsEvent) e).getSmallIcon());
             this.lblNewsStatus.setToolTipText(((NewsEvent) e).getLongDescriptionHtml());
@@ -1082,6 +1106,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuWebHooks = new javax.swing.JMenuItem();
+        mnuServices = new javax.swing.JMenu();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
@@ -1737,6 +1762,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAdministration.add(mnuWebHooks);
 
         jMenuBar1.add(mnuAdministration);
+
+        mnuServices.setText("Services");
+        jMenuBar1.add(mnuServices);
 
         mnuHelp.setText(bundle.getString("menu.?")); // NOI18N
 
@@ -2589,6 +2617,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuSearchIndex;
     private javax.swing.JMenuItem mnuSecurity;
     private javax.swing.JMenuItem mnuServerMonitor;
+    private javax.swing.JMenu mnuServices;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;
