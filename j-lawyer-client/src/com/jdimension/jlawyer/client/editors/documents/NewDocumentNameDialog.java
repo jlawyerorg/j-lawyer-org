@@ -726,7 +726,6 @@ public class NewDocumentNameDialog extends javax.swing.JDialog {
     private void initialize() {
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
-        ClientSettings s = ClientSettings.getInstance();
         ComponentUtils.restoreDialogSize(this);
 
         try {
