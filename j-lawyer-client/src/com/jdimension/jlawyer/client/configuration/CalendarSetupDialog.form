@@ -138,7 +138,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkDeleteDone" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="10" max="32767" attributes="0"/>
                       <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
@@ -170,18 +170,24 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <Component id="chkFullSync" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      </Group>
-                      <Group type="102" attributes="0">
                           <Component id="jScrollPane1" pref="441" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdRemove" min="-2" max="-2" attributes="0"/>
                           </Group>
+                      </Group>
+                      <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="chkFullSync" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkConflictCheck" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
@@ -199,7 +205,12 @@
                           <Component id="cmdRemove" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="jScrollPane1" pref="501" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" max="32767" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="chkConflictCheck" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel8" alignment="1" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -293,6 +304,20 @@
               <Image iconType="3" name="/icons/help.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Sofern ein Kalender mit einer Nextcloud synchronisiert wird, geschieht dies automatisch.&#xa;Eine zus&#xe4;tzliche Synchronisation in Intervallen ist nur in Ausnahmef&#xe4;llen sinnvoll, bspw. &#xa;wenn die Nextcloud nicht durchgehend erreichbar ist.&#xa;Auf Ger&#xe4;te mit iOS / macOS kann die Intervallsynchronisation zur doppelten Anzeige von&#xa;Terminen in den Kalender-Apps f&#xfc;hren."/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="chkConflictCheck">
+          <Properties>
+            <Property name="selected" type="boolean" value="true"/>
+            <Property name="text" type="java.lang.String" value="auf Terminkonflikte pr&#xfc;fen"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel8">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/help.png"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" value="Bei Erstellen und Bearbeiten von Kalendereintr&#xe4;gen wird auf &#xa;m&#xf6;gliche Terminkonflikte gepr&#xfc;ft und eine Warnung angezeigt."/>
           </Properties>
         </Component>
       </SubComponents>

@@ -708,6 +708,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         
         ServerSettings s = ServerSettings.getInstance();
         this.chkFullSync.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, false));
+        this.chkConflictCheck.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true));
 
         this.tblCalendars.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
@@ -765,6 +766,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         cmdRemove = new javax.swing.JButton();
         chkFullSync = new javax.swing.JCheckBox();
         jLabel7 = new javax.swing.JLabel();
+        chkConflictCheck = new javax.swing.JCheckBox();
+        jLabel8 = new javax.swing.JLabel();
         cmdClose = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         txtDisplayName = new javax.swing.JTextField();
@@ -848,6 +851,12 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
         jLabel7.setToolTipText("Sofern ein Kalender mit einer Nextcloud synchronisiert wird, geschieht dies automatisch.\nEine zusätzliche Synchronisation in Intervallen ist nur in Ausnahmefällen sinnvoll, bspw. \nwenn die Nextcloud nicht durchgehend erreichbar ist.\nAuf Geräte mit iOS / macOS kann die Intervallsynchronisation zur doppelten Anzeige von\nTerminen in den Kalender-Apps führen.");
 
+        chkConflictCheck.setSelected(true);
+        chkConflictCheck.setText("auf Terminkonflikte prüfen");
+
+        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
+        jLabel8.setToolTipText("Bei Erstellen und Bearbeiten von Kalendereinträgen wird auf \nmögliche Terminkonflikte geprüft und eine Warnung angezeigt.");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -856,16 +865,20 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(chkFullSync)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel7)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdAdd)
-                            .addComponent(cmdRemove))))
+                            .addComponent(cmdRemove)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkFullSync)
+                            .addComponent(chkConflictCheck))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel7))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -878,7 +891,11 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRemove)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 501, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkConflictCheck)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkFullSync)
@@ -1035,7 +1052,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                             .addComponent(cmbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(chkDeleteDone)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addGap(18, 18, 18)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1049,13 +1066,14 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void saveFullSyncFlag() {
+    private void saveGlobalFlags() {
         ServerSettings s = ServerSettings.getInstance();
         s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, this.chkFullSync.isSelected());
+        s.setSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, this.chkConflictCheck.isSelected());
     }
     
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.saveFullSyncFlag();
+        this.saveGlobalFlags();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
@@ -1269,7 +1287,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        this.saveFullSyncFlag();
+        this.saveGlobalFlags();
     }//GEN-LAST:event_formWindowClosing
 
     private void updatedUI(CalendarSetup cs) {
@@ -1367,6 +1385,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkConflictCheck;
     private javax.swing.JCheckBox chkDeleteDone;
     private javax.swing.JCheckBox chkFullSync;
     private javax.swing.JComboBox<String> cmbName;
@@ -1383,6 +1402,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;

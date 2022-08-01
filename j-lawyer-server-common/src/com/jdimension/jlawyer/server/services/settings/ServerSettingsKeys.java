@@ -785,6 +785,8 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC="jlawyer.server.cloudsync.calendar.fullsync";
     
+    public static final String SERVERCONF_CALENDAR_CONFLICTCHECK="jlawyer.server.calendar.conflictcheck";
+    
     public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
     
 }

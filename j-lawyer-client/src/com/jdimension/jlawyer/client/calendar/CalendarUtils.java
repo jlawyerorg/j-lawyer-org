@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.calendar.HolidayDescriptor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ConflictingEventsDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -749,6 +750,11 @@ public class CalendarUtils {
 
     public static boolean checkForConflicts(java.awt.Window parent, ArchiveFileReviewsBean newOrChangedEvent) {
 
+        ServerSettings s = ServerSettings.getInstance();
+        boolean performCheck=s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true);
+        if(!performCheck)
+            return true;
+        
         Date from=newOrChangedEvent.getBeginDate();
         Date to=newOrChangedEvent.getEndDate();
         int eventType=newOrChangedEvent.getCalendarSetup().getEventType();
