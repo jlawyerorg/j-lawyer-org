@@ -667,8 +667,8 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -870,7 +870,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdAddActionPerformed
 
     private void lstOptionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOptionsMousePressed
-        if (evt.getModifiers() == MouseEvent.BUTTON2_MASK || evt.getModifiers() == MouseEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == MouseEvent.BUTTON3_MASK || evt.getModifiers() == MouseEvent.BUTTON3_DOWN_MASK) {
+        if (evt.getModifiers() == InputEvent.BUTTON2_MASK || evt.getModifiers() == InputEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == InputEvent.BUTTON3_MASK || evt.getModifiers() == InputEvent.BUTTON3_DOWN_MASK) {
             if (this.lstOptions.getSelectedValues().length > 0) {
                 if (this.lstOptions.getSelectedValues().length == 1) {
                     this.mnuRename.setEnabled(true);
