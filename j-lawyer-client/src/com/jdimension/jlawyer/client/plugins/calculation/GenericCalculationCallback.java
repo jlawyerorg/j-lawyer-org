@@ -676,6 +676,7 @@ import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
@@ -707,9 +708,23 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
 
     @Override
     public void processResultToClipboard(Object r) {
+        this.processResultToClipboardAsHtml(r);
+    }
+    
+    @Override
+    public void processResultToClipboardAsHtml(Object r) {
         System.out.println("received result: " + r.toString());
 
         HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }
+    
+    @Override
+    public void processResultToClipboardAsText(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        StringSelection stsel = new StringSelection(r.toString());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
         system.setContents(stsel, null);
     }

@@ -666,12 +666,14 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.plugins.calculation.GenericCalculationCallback;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
@@ -702,9 +704,21 @@ public class FormPluginCallback {
     }
     
     public void processResultToClipboard(Object r) {
+        this.processResultToClipboardAsHtml(r);
+    }
+    
+    public void processResultToClipboardAsHtml(Object r) {
         System.out.println("received result: " + r.toString());
 
         HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }
+    
+    public void processResultToClipboardAsText(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        StringSelection stsel = new StringSelection(r.toString());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
         system.setContents(stsel, null);
     }
