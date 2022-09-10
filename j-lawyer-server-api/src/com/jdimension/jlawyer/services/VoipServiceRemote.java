@@ -697,8 +697,10 @@ public interface VoipServiceRemote {
 
     String reInitiateFax(String id) throws SipgateException;
 
-    void saveFaxReport(String sessionId) throws SipgateException;
+    void saveFaxReport(String sessionId, String fileName) throws SipgateException;
 
     List<SipUser> getUsers(String user, String password) throws SipgateException;
+
+    String getNewFaxReportFileName(String sessionId) throws Exception;
     
 }

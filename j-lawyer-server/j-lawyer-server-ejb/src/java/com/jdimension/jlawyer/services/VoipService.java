@@ -969,7 +969,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void saveFaxReport(String sessionId) throws SipgateException {
+    public void saveFaxReport(String sessionId, String fileName) throws SipgateException {
         if (sessionId == null) {
             return;
         }
@@ -998,8 +998,6 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         
         try {
-            SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-            String fileName = "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".pdf";
             byte[] reportData=sip.getFaxReport(sessionId);
             if(reportData!=null)
                 this.fileSvc.addDocument(afb.getId(), fileName, reportData, "");
@@ -1017,6 +1015,12 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     public List<SipUser> getUsers(String user, String password) throws SipgateException {
         SipgateInstance sip = SipgateInstance.getInstance(user, password);
         return sip.getUsers();
+    }
+
+    @Override
+    public String getNewFaxReportFileName(String sessionId) throws Exception {
+        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+        return "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".pdf";
     }
 
 }
