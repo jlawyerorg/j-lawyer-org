@@ -1133,7 +1133,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             HashMap<String,ArchiveFileBean> ids = this.getSelectedEntriesIDs();
-            locator.lookupVoipServiceRemote().deleteQueueEntries(new ArrayList(ids.keySet()));
+            locator.lookupVoipServiceRemote().deleteQueueEntries(new ArrayList<>(ids.keySet()));
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Löschen des Eintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
