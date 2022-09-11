@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -678,6 +679,7 @@ import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import org.apache.log4j.Logger;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.cloud.NextcloudContactsConnector;
 import org.jlawyer.cloud.contacts.CloudContact;
 
@@ -699,6 +701,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
 
     @Override
     @Schedule(dayOfWeek = "*", hour = "7,12,19", minute = "31", second = "0", persistent = false)
+    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
     public void fullAddressBookSync() {
         this.fullAddressBookSyncImpl();
 
