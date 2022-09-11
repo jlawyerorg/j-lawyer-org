@@ -793,8 +793,14 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
+        
+        
         this.initializing = false;
 
+    }
+    
+    public void setFocusToBody() {
+        this.htmlEditorPanel1.requestFocus();
     }
 
     /**
