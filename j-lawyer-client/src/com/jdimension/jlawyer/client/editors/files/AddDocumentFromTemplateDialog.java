@@ -712,7 +712,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private GenericCalculationTable calculationTable = null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
-    private Hashtable<String, String> formPlaceHolderValues = new Hashtable<>();
+    private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);

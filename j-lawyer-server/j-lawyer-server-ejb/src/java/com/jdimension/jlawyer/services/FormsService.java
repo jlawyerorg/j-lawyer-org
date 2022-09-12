@@ -682,7 +682,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -1007,7 +1006,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
         List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
         if (existingEntries == null) {
-            existingEntries = new ArrayList<ArchiveFileFormEntriesBean>();
+            existingEntries = new ArrayList<>();
         }
         return existingEntries;
     }
@@ -1032,7 +1031,6 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
         }
 
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
         ArrayList<String> placeHolders = new ArrayList<>();
         for (ArchiveFileFormsBean f : forms) {
@@ -1056,15 +1054,14 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+    public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
         }
 
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        Hashtable<String, String> placeHolders = new Hashtable<String, String>();
+        HashMap<String, String> placeHolders = new HashMap<>();
         for (ArchiveFileFormsBean f : forms) {
             List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
             for (ArchiveFileFormEntriesBean e : entries) {

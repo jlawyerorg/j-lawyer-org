@@ -747,7 +747,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
     private Collection<String> formPlaceHolders = new ArrayList<>();
-    private Hashtable<String, String> formPlaceHolderValues = new Hashtable<>();
+    private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
 
     // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder

@@ -989,7 +989,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             ht2.add(new PartiesPanelEntry(ad, ptb));
                         }
                         
-                        ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
+                        ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new HashMap<>(), null, null, null);
                         
                         for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
@@ -1098,7 +1098,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new HashMap<>(), null, null, null);
 
                 for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
