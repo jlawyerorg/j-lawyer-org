@@ -4833,6 +4833,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setTitle("Notiz hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        
     }//GEN-LAST:event_cmdAddNoteActionPerformed
 
     private void mnuEditReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReviewActionPerformed

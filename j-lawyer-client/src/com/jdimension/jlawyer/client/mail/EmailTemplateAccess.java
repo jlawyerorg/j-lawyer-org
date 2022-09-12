@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -674,11 +675,11 @@ import java.util.List;
  */
 public class EmailTemplateAccess {
     
-    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders) {
+    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders, Collection<String> formPlaceHolders) {
         ArrayList<String> result=new ArrayList<>();
         if(templateText==null)
             templateText="";
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, new ArrayList<>())) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formPlaceHolders)) {
             if(templateText.contains(r))
                 result.add(r);
             
