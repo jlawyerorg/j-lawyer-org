@@ -751,7 +751,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.dto = null;
         initComponents();
         this.lblAge.setText("");
-        
+
         if (this instanceof NewAddressPanel) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
         } else {
@@ -1103,7 +1103,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 }
 
                 this.setAddressDTO(this.dto);
-                
+
                 // we need to update the search tables because they pass their cached DTOs to the editors
                 // without updating, they would still have the old invalid data
                 try {
@@ -1268,7 +1268,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         populateOptionsCombobox(degreeSuffixes, this.cmbDegreeSuffix);
         populateOptionsCombobox(professions, this.cmbProfession);
         populateOptionsCombobox(roles, this.cmbRole);
-        
+
         ComponentUtils.addAutoComplete(this.cmbSalutation);
         ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
         ComponentUtils.addAutoComplete(this.cmbTitle);
@@ -2797,7 +2797,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void cmdBackToSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBackToSearchActionPerformed
         try {
             Object editor = EditorsRegistry.getInstance().getEditor(this.openedFromEditorClass);
-            if(this.openedFromEditorClass.equals(NewArchiveFilePanel.class.getName())) {
+            if (this.openedFromEditorClass.equals(NewArchiveFilePanel.class.getName())) {
                 // do not reset the editor, use has just created new case and wants to refine an adress
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor, true);
             } else {
@@ -2888,15 +2888,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdShowWebsiteActionPerformed
 
     private void cmdNewCall2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCall2ActionPerformed
-        
+
         VoipUtils.placeCall(dto, this.txtMobile.getText());
-        
+
     }//GEN-LAST:event_cmdNewCall2ActionPerformed
 
     private void cmdNewCall1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCall1ActionPerformed
-        
+
         VoipUtils.placeCall(dto, this.txtPhone.getText());
-        
+
     }//GEN-LAST:event_cmdNewCall1ActionPerformed
 
     private void cmdNewFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewFaxActionPerformed
@@ -2954,51 +2954,59 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             dlg.setVisible(true);
             Identity i = dlg.getSelection();
             if (i != null) {
-                if (!StringUtils.isEmpty(i.getCity())) {
-                    this.txtCity.setText(StringUtils.nonEmpty(i.getCity()));
+                Object[] options = {"alle verfügbaren","nur Safe-ID"};
+                int response = JOptionPane.showOptionDialog(this, "Sollen alle Daten oder nur die Safe-ID übernommen werden?", "Daten aus beA übernehmen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+                if (response == JOptionPane.NO_OPTION) {
+                    // use just the SafeID
+                    this.txtBeaSafeId.setText(StringUtils.nonEmpty(i.getSafeId()));
+                } else {
+                    // accept any data provided by the beA API
+                    if (!StringUtils.isEmpty(i.getCity())) {
+                        this.txtCity.setText(StringUtils.nonEmpty(i.getCity()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getCountry())) {
+                        this.cmbCountry.setSelectedItem(StringUtils.nonEmpty(i.getCountry()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getEmail())) {
+                        this.txtEmail.setText(StringUtils.nonEmpty(i.getEmail()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getFax())) {
+                        this.txtFax.setText(StringUtils.nonEmpty(i.getFax()));
+                    }
+
+                    this.txtFirstName.setText(StringUtils.nonEmpty(i.getFirstName()));
+
+                    if (!StringUtils.isEmpty(i.getMobile())) {
+                        this.txtMobile.setText(StringUtils.nonEmpty(i.getMobile()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getOrganization())) {
+                        this.txtCompany.setText(StringUtils.nonEmpty(i.getOrganization()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getPhone())) {
+                        this.txtPhone.setText(StringUtils.nonEmpty(i.getPhone()));
+                    }
+                    this.txtBeaSafeId.setText(StringUtils.nonEmpty(i.getSafeId()));
+
+                    if (!StringUtils.isEmpty(i.getStreet())) {
+                        this.txtStreet.setText(StringUtils.nonEmpty(i.getStreet()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getStreetNumber())) {
+                        this.txtStreetNr.setText(StringUtils.nonEmpty(i.getStreetNumber()));
+                    }
+
+                    if (!StringUtils.isEmpty(i.getOfficeName())) {
+                        this.txtCompany.setText(StringUtils.nonEmpty(i.getOfficeName()));
+                    }
+
+                    this.txtName.setText(StringUtils.nonEmpty(i.getSurName()));
+                    this.txtZipCode.setText(StringUtils.nonEmpty(i.getZipCode()));
                 }
-
-                if (!StringUtils.isEmpty(i.getCountry())) {
-                    this.cmbCountry.setSelectedItem(StringUtils.nonEmpty(i.getCountry()));
-                }
-
-                if (!StringUtils.isEmpty(i.getEmail())) {
-                    this.txtEmail.setText(StringUtils.nonEmpty(i.getEmail()));
-                }
-
-                if (!StringUtils.isEmpty(i.getFax())) {
-                    this.txtFax.setText(StringUtils.nonEmpty(i.getFax()));
-                }
-
-                this.txtFirstName.setText(StringUtils.nonEmpty(i.getFirstName()));
-
-                if (!StringUtils.isEmpty(i.getMobile())) {
-                    this.txtMobile.setText(StringUtils.nonEmpty(i.getMobile()));
-                }
-
-                if (!StringUtils.isEmpty(i.getOrganization())) {
-                    this.txtCompany.setText(StringUtils.nonEmpty(i.getOrganization()));
-                }
-
-                if (!StringUtils.isEmpty(i.getPhone())) {
-                    this.txtPhone.setText(StringUtils.nonEmpty(i.getPhone()));
-                }
-                this.txtBeaSafeId.setText(StringUtils.nonEmpty(i.getSafeId()));
-
-                if (!StringUtils.isEmpty(i.getStreet())) {
-                    this.txtStreet.setText(StringUtils.nonEmpty(i.getStreet()));
-                }
-
-                if (!StringUtils.isEmpty(i.getStreetNumber())) {
-                    this.txtStreetNr.setText(StringUtils.nonEmpty(i.getStreetNumber()));
-                }
-
-                if (!StringUtils.isEmpty(i.getOfficeName())) {
-                    this.txtCompany.setText(StringUtils.nonEmpty(i.getOfficeName()));
-                }
-
-                this.txtName.setText(StringUtils.nonEmpty(i.getSurName()));
-                this.txtZipCode.setText(StringUtils.nonEmpty(i.getZipCode()));
 
             }
 
@@ -3121,60 +3129,74 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_txtDeathDateFocusLost
 
     private void cmdCopyAddressToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyAddressToClipboardActionPerformed
-        
-                StringBuilder sb=new StringBuilder();
-                if(this.txtCompany.getText().length()>0)
-                    sb.append(this.txtCompany.getText()).append(System.lineSeparator());
-                
-                if(this.txtDepartment.getText().length()>0)
-                    sb.append(this.txtDepartment.getText()).append(System.lineSeparator());
-                
-                if(this.cmbTitleInAddress.getEditor().getItem().toString().length()>0)
-                    sb.append(this.cmbTitleInAddress.getEditor().getItem().toString()).append(" ");
-                
-                if(this.cmbDegreePrefix.getEditor().getItem().toString().length()>0)
-                    sb.append(this.cmbDegreePrefix.getEditor().getItem().toString()).append(" ");
-                
-                if(this.txtFirstName.getText().length()>0)
-                    sb.append(this.txtFirstName.getText()).append(" ");
-                
-                if(this.txtName.getText().length()>0)
-                    sb.append(this.txtName.getText());
-                
-                if(this.cmbDegreeSuffix.getEditor().getItem().toString().length()>0)
-                    sb.append(" ").append(this.cmbDegreeSuffix.getEditor().getItem().toString()).append(" ");
-                
-                sb.append(System.lineSeparator());
-                
-                if(this.txtStreet.getText().length()>0)
-                    sb.append(this.txtStreet.getText()).append(" ");
-                
-                if(this.txtStreetNr.getText().length()>0)
-                    sb.append(this.txtStreetNr.getText());
-                
-                sb.append(System.lineSeparator());
-                
-                if(this.txtAdjunct.getText().length()>0)
-                    sb.append(this.txtAdjunct.getText()).append(System.lineSeparator());
-                
-                if(this.txtZipCode.getText().length()>0)
-                    sb.append(this.txtZipCode.getText()).append(" ");
-                
-                if(this.txtCity.getText().length()>0)
-                    sb.append(this.txtCity.getText());
-                
-                if(this.txtDistrict.getText().length()>0)
-                    sb.append(" (").append(this.txtDistrict.getText()).append(")");
-                
-                sb.append(System.lineSeparator());
-                
-                if(this.cmbCountry.getEditor().getItem().toString().length()>0)
-                    sb.append(this.cmbCountry.getEditor().getItem().toString());
-                
-                Toolkit toolkit = Toolkit.getDefaultToolkit();
-                Clipboard clipboard = toolkit.getSystemClipboard();
-                StringSelection strSel = new StringSelection(sb.toString());
-                clipboard.setContents(strSel, null);
+
+        StringBuilder sb = new StringBuilder();
+        if (this.txtCompany.getText().length() > 0) {
+            sb.append(this.txtCompany.getText()).append(System.lineSeparator());
+        }
+
+        if (this.txtDepartment.getText().length() > 0) {
+            sb.append(this.txtDepartment.getText()).append(System.lineSeparator());
+        }
+
+        if (this.cmbTitleInAddress.getEditor().getItem().toString().length() > 0) {
+            sb.append(this.cmbTitleInAddress.getEditor().getItem().toString()).append(" ");
+        }
+
+        if (this.cmbDegreePrefix.getEditor().getItem().toString().length() > 0) {
+            sb.append(this.cmbDegreePrefix.getEditor().getItem().toString()).append(" ");
+        }
+
+        if (this.txtFirstName.getText().length() > 0) {
+            sb.append(this.txtFirstName.getText()).append(" ");
+        }
+
+        if (this.txtName.getText().length() > 0) {
+            sb.append(this.txtName.getText());
+        }
+
+        if (this.cmbDegreeSuffix.getEditor().getItem().toString().length() > 0) {
+            sb.append(" ").append(this.cmbDegreeSuffix.getEditor().getItem().toString()).append(" ");
+        }
+
+        sb.append(System.lineSeparator());
+
+        if (this.txtStreet.getText().length() > 0) {
+            sb.append(this.txtStreet.getText()).append(" ");
+        }
+
+        if (this.txtStreetNr.getText().length() > 0) {
+            sb.append(this.txtStreetNr.getText());
+        }
+
+        sb.append(System.lineSeparator());
+
+        if (this.txtAdjunct.getText().length() > 0) {
+            sb.append(this.txtAdjunct.getText()).append(System.lineSeparator());
+        }
+
+        if (this.txtZipCode.getText().length() > 0) {
+            sb.append(this.txtZipCode.getText()).append(" ");
+        }
+
+        if (this.txtCity.getText().length() > 0) {
+            sb.append(this.txtCity.getText());
+        }
+
+        if (this.txtDistrict.getText().length() > 0) {
+            sb.append(" (").append(this.txtDistrict.getText()).append(")");
+        }
+
+        sb.append(System.lineSeparator());
+
+        if (this.cmbCountry.getEditor().getItem().toString().length() > 0) {
+            sb.append(this.cmbCountry.getEditor().getItem().toString());
+        }
+
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(sb.toString());
+        clipboard.setContents(strSel, null);
     }//GEN-LAST:event_cmdCopyAddressToClipboardActionPerformed
 
     private void updateAge() {
@@ -3232,9 +3254,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
 
         if (dead) {
-            if (age > -1 && age >=18) {
+            if (age > -1 && age >= 18) {
                 this.lblAge.setText("<html><b>verstorben (" + age + " J.)</b></html>");
-            } else if(age > -1 && age <18) {
+            } else if (age > -1 && age < 18) {
                 this.lblAge.setText("<html><b>minderjährig verstorben (" + age + " J.)</b></html>");
             } else {
                 this.lblAge.setText("<html><b>verstorben</b></html>");
@@ -3836,7 +3858,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 eb.publishEvent(new ContactUpdatedEvent(this.dto));
             }
             this.lblHeaderInfo.setText(this.dto.toDisplayName());
-            
+
             // we need to update the search tables because they pass their cached DTOs to the editors
             // without updating, they would still have the old invalid data
             try {
