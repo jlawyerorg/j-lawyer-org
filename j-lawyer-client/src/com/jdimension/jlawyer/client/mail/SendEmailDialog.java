@@ -2278,7 +2278,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
-        // TODO add your handling code here:
+        this.cmbTemplatesActionPerformed(evt);
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void enableReviewElements(boolean enable) {
