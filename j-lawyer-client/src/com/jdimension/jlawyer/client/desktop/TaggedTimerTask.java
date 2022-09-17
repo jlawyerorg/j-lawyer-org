@@ -878,7 +878,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTags, null, 200);
+            myNewList = fileService.getTagged(lastFilterTags, null, 1000);
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
@@ -898,7 +898,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             tags = fileService.getTags(myNewListIds);
 
-            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 200);
+            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
