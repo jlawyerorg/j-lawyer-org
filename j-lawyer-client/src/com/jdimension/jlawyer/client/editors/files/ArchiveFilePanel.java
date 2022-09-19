@@ -1632,9 +1632,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdDocumentTagFilter = new javax.swing.JButton();
         cmdDrebis = new javax.swing.JButton();
         splitDocumentsMain = new javax.swing.JSplitPane();
-        splitDocuments = new javax.swing.JSplitPane();
         jScrollPane7 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
+        splitDocuments = new javax.swing.JSplitPane();
         caseFolderPanel1 = new com.jdimension.jlawyer.ui.folders.CaseFolderPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -2422,15 +2422,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        splitDocumentsMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-
-        splitDocuments.setDividerLocation(400);
-        splitDocuments.setOneTouchExpandable(true);
-        splitDocuments.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                splitDocumentsPropertyChange(evt);
-            }
-        });
+        splitDocumentsMain.setDividerLocation(500);
 
         jScrollPane7.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane7.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -2442,10 +2434,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlPreview.setLayout(new java.awt.BorderLayout());
         jScrollPane7.setViewportView(pnlPreview);
 
-        splitDocuments.setRightComponent(jScrollPane7);
-        splitDocuments.setLeftComponent(caseFolderPanel1);
+        splitDocumentsMain.setRightComponent(jScrollPane7);
 
-        splitDocumentsMain.setLeftComponent(splitDocuments);
+        splitDocuments.setDividerLocation(400);
+        splitDocuments.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitDocuments.setOneTouchExpandable(true);
+        splitDocuments.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                splitDocumentsPropertyChange(evt);
+            }
+        });
+        splitDocuments.setLeftComponent(caseFolderPanel1);
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Etiketten"));
         jPanel4.setLayout(new java.awt.BorderLayout());
@@ -2467,7 +2466,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jPanel4.add(jScrollPane2, java.awt.BorderLayout.CENTER);
 
-        splitDocumentsMain.setRightComponent(jPanel4);
+        splitDocuments.setRightComponent(jPanel4);
+
+        splitDocumentsMain.setLeftComponent(splitDocuments);
 
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
