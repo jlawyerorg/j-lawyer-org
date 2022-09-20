@@ -2084,7 +2084,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_tblMailsKeyReleased
 
     private void mnuSearchSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveActionPerformed
-        this.saveToCase(null, true, false, false);
+        this.saveToCaseCallback(null, true, false, false);
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void tblMailsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseReleased
@@ -2279,7 +2279,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_mnuOpenInExternalMailerActionPerformed
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
-        this.saveToCase(null, false, false, false);
+        this.saveToCaseCallback(null, false, false, false);
     }//GEN-LAST:event_mnuSearchSaveNoAttachmentsActionPerformed
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
@@ -2336,11 +2336,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
     private void mnuSearchSaveOnlyAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
-        this.saveToCase(null, false, false, true);
+        this.saveToCaseCallback(null, false, false, true);
     }//GEN-LAST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
 
     private void mnuSearchSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveSeparateActionPerformed
-        this.saveToCase(null, true, true, false);
+        this.saveToCaseCallback(null, true, true, false);
     }//GEN-LAST:event_mnuSearchSaveSeparateActionPerformed
 
     private void treeFoldersTreeCollapsed(javax.swing.event.TreeExpansionEvent evt) {//GEN-FIRST:event_treeFoldersTreeCollapsed
@@ -2804,7 +2804,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
     
     @Override
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
+    public boolean saveToCaseCallback(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -3058,6 +3058,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean renameCallback() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean removeCallback() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public static class EmailObjectsCleanUp implements Runnable {

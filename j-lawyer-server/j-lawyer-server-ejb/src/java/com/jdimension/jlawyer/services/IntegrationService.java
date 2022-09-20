@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
 import com.jdimension.jlawyer.events.HookType;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -812,7 +813,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
-    public boolean assignObservedFile(String fileName, String archiveFileId) throws Exception {
+    public String assignObservedFile(String fileName, String archiveFileId) throws Exception {
         return assignObservedFile(fileName, archiveFileId, fileName);
     }
 
@@ -853,17 +854,17 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
-    public boolean assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
+    public String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.error("directory observation is switched off");
-            return false;
+            return null;
         }
 
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
-            return false;
+            return null;
         }
 
         if (renameTo == null || "".equalsIgnoreCase(renameTo)) {
@@ -873,7 +874,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         File scanDirectory = new File(scanDir);
         if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
-            return false;
+            return null;
         }
 
         File files[] = scanDirectory.listFiles();
@@ -882,12 +883,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     byte[] data = SystemManagement.readFile(f);
-                    this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
-                    return true;
+                    ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
+                    return d.getId();
                 }
             }
         }
-        return false;
+        return null;
     }
 
     @Override
@@ -1074,6 +1075,51 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     public void removeIntegrationHook(IntegrationHook hook) throws Exception {
         this.hookFacade.remove(hook);
         this.hookService.resetCache();
+    }
+
+    @Override
+    @RolesAllowed(value = {"readArchiveFileRole"})
+    public boolean renameObservedFile(String fromName, String toName) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.info("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(toName)) {
+                    throw new Exception("Datei '" + toName + "' existiert bereits!");
+                }
+            }
+        }
+        files= scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fromName)) {
+                    if(!scanDir.endsWith(File.separator))
+                        scanDir=scanDir+File.separator;
+                    File toFile=new File(scanDir + toName);
+                    return f.renameTo(toFile);
+                }
+            }
+        }
+        return false;
     }
 
 }

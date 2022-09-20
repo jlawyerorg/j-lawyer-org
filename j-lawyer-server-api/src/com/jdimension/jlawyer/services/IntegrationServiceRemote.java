@@ -683,11 +683,11 @@ public interface IntegrationServiceRemote {
 
     boolean removeObservedFile(String fileName);
 
-    boolean assignObservedFile(String fileName, String archiveFileId) throws Exception;
+    String assignObservedFile(String fileName, String archiveFileId) throws Exception;
 
     byte[] getObservedFile(String fileName) throws Exception;
 
-    boolean assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
+    String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
 
     Collection getAllEmailTemplateNames();
 
@@ -710,5 +710,7 @@ public interface IntegrationServiceRemote {
     IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
 
     void removeIntegrationHook(IntegrationHook hook) throws Exception;
+
+    boolean renameObservedFile(String fromName, String toName) throws Exception;
     
 }

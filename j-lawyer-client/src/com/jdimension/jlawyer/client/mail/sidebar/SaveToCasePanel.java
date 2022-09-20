@@ -688,10 +688,7 @@ import org.apache.log4j.Logger;
  */
 public class SaveToCasePanel extends javax.swing.JPanel {
     
-    //public static String 
-
     private static final Logger log = Logger.getLogger(SaveToCasePanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private CaseForContactEntry e = null;
     private SaveToCaseExecutor executor=null;
     
@@ -705,11 +702,17 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         this.openedFromEditorClass=openedFromClassName;
             
     }
+    
+    public void disableSplitButtons() {
+        this.cmdSaveFullMessage.setEnabled(false);
+        this.cmdSaveMessageWithoutAttachments.setEnabled(false);
+        this.cmdSaveSeparate.setEnabled(false);
+    }
 
     public void setEntry(CaseForContactEntry entry, SaveToCaseExecutor executor) {
         this.e = entry;
         this.executor=executor;
-        //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
+        
         String name=e.getName();
         if(name==null)
             name="";
@@ -730,24 +733,12 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             this.lblDescription.setForeground(Color.BLACK);
             this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
         }
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblRole.setText(e.getRole());
         
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
         String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
         this.lblDescription.setToolTipText(tooltip);
         
-        
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
-
     }
 
     /**
@@ -922,7 +913,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, false, false);
+        boolean saved=this.executor.saveToCaseCallback(this.e.getId(), true, false, false);
         if(saved) {
             this.cmdSaveFullMessage.setEnabled(false);
             this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
@@ -932,7 +923,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
 
     private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, false);
+        boolean saved=this.executor.saveToCaseCallback(this.e.getId(), false, false, false);
         if(saved) {
             this.cmdSaveMessageWithoutAttachments.setEnabled(false);
             this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
@@ -942,7 +933,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
 
     private void cmdSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSeparateActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, true, false);
+        boolean saved=this.executor.saveToCaseCallback(this.e.getId(), true, true, false);
         if(saved) {
             this.cmdSaveSeparate.setEnabled(false);
             this.cmdSaveSeparate.setBackground(Color.green.darker().darker());
@@ -952,7 +943,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveSeparateActionPerformed
 
     private void cmdSaveMessageAttachmentsOnlyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageAttachmentsOnlyActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, true);
+        boolean saved=this.executor.saveToCaseCallback(this.e.getId(), false, false, true);
         if(saved) {
             this.cmdSaveMessageAttachmentsOnly.setEnabled(false);
             this.cmdSaveMessageAttachmentsOnly.setBackground(Color.green.darker().darker());
