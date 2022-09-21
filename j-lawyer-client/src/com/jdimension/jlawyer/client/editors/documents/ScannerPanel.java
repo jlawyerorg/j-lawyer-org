@@ -1204,7 +1204,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             int i = 0;
 
             EditScanPanel dsp = new EditScanPanel(this.getClass().getName());
-            //dsp.setBackground(dsp.getBackground().brighter());
             dsp.setDetails(selRow.length, this);
             actionPanelEntries.add(dsp);
 
@@ -1431,7 +1430,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmdLocalUploadDirActionPerformed
 
     private void tblDirContentMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseReleased
-        
+
     }//GEN-LAST:event_tblDirContentMouseReleased
 
     private void tblDirContentMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMousePressed
@@ -1524,12 +1523,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-                    Collection docList = afs.getDocuments(caseId);
+                    Collection<ArchiveFileDocumentsBean> docList = afs.getDocuments(caseId);
                     ArrayList<String> docNames = new ArrayList<>();
-                    for (Object o : docList) {
-                        if (o instanceof ArchiveFileDocumentsBean) {
-                            docNames.add(((ArchiveFileDocumentsBean) o).getName().toLowerCase());
-                        }
+                    for (ArchiveFileDocumentsBean o : docList) {
+                        docNames.add(o.getName().toLowerCase());
                     }
 
                     int addedCount = 0;
@@ -1574,21 +1571,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         }
                     }
 
-                    if (addedCount > 0) {
-                        if (this.chkDeleteAfterAction.isSelected()) {
+                    if (addedCount > 0 && this.chkDeleteAfterAction.isSelected()) {
+                        try {
 
-                            try {
-
-                                boolean removed = is.removeObservedFile(fileName);
-                                if (removed) {
-                                    removedCount++;
-                                }
-
-                            } catch (Throwable ex) {
-                                log.error(ex);
-                                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                            boolean removed = is.removeObservedFile(fileName);
+                            if (removed) {
+                                removedCount++;
                             }
 
+                        } catch (Throwable ex) {
+                            log.error(ex);
+                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                         }
                     }
 
@@ -1659,39 +1652,43 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length > 0) {
 
-            int removedCount = 0;
-            IntegrationServiceRemote is = null;
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                is = locator.lookupIntegrationServiceRemote();
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                return false;
-            }
+            int response = JOptionPane.showConfirmDialog(this, "" + selRow.length + " Scan(s) löschen?", "Scans löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
 
-            for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
-
+                int removedCount = 0;
+                IntegrationServiceRemote is = null;
                 try {
-
-                    boolean removed = is.removeObservedFile(fileName);
-
-                    if (removed) {
-                        removedCount++;
-                    }
-
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    is = locator.lookupIntegrationServiceRemote();
                 } catch (Exception ex) {
                     log.error(ex);
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    return false;
                 }
-            }
-            if (removedCount > 0) {
-                Timer timer = new Timer();
-                TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
-                timer.schedule(scannerTask, 1);
 
+                for (int r : selRow) {
+                    String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+
+                    try {
+
+                        boolean removed = is.removeObservedFile(fileName);
+
+                        if (removed) {
+                            removedCount++;
+                        }
+
+                    } catch (Exception ex) {
+                        log.error(ex);
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    }
+                }
+                if (removedCount > 0) {
+                    Timer timer = new Timer();
+                    TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
+                    timer.schedule(scannerTask, 1);
+
+                }
             }
         }
         return true;

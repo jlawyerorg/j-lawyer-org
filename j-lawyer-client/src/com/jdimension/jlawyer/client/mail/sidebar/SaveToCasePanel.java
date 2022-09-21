@@ -703,12 +703,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             
     }
     
-    public void disableSplitButtons() {
-        this.cmdSaveFullMessage.setEnabled(false);
-        this.cmdSaveMessageWithoutAttachments.setEnabled(false);
-        this.cmdSaveSeparate.setEnabled(false);
-    }
-
     public void setEntry(CaseForContactEntry entry, SaveToCaseExecutor executor) {
         this.e = entry;
         this.executor=executor;

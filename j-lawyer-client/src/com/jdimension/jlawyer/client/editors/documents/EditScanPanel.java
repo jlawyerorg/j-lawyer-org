@@ -673,7 +673,6 @@ import org.apache.log4j.Logger;
  */
 public class EditScanPanel extends javax.swing.JPanel {
     
-    private static final Logger log = Logger.getLogger(EditScanPanel.class.getName());
     private SaveToCaseExecutor executor=null;
     
     private String openedFromEditorClass=null;
