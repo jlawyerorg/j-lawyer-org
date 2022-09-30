@@ -789,8 +789,7 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
                 }
 
-                // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
-                if ((i % 20) == 0 || i == (messages.length - 1)) {
+                if ((i % 100) == 0 || i == (messages.length - 1)) {
                     this.progress("Lade Nachrichten... " + (i + 1));
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
@@ -850,7 +849,7 @@ public class LoadFolderAction extends ProgressableAction {
                 Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
                 tableRows.add(newRow);
 
-                if (((i % 25) == 0 && i > 0) || i == (messages.length - 1)) {
+                if (((i % 100) == 0 && i > 0) || i == (messages.length - 1)) {
 
                     final int currentIndex = i;
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();

@@ -754,8 +754,8 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                         }
                     }
                 }
-
-                int unread = f.getUnreadMessageCount();
+                
+                int unread = fc.getUnreadMessageCount();
                 if (unread > 0) {
                     this.setFont(this.getFont().deriveFont(Font.BOLD));
                 } else {
