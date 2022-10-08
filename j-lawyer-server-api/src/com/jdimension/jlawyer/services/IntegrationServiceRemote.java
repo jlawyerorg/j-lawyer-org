@@ -712,5 +712,7 @@ public interface IntegrationServiceRemote {
     void removeIntegrationHook(IntegrationHook hook) throws Exception;
 
     boolean renameObservedFile(String fromName, String toName) throws Exception;
+
+    boolean addObservedFile(String fileName, byte[] data) throws Exception;
     
 }

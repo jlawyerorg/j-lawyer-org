@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import javax.swing.Icon;
@@ -809,6 +810,20 @@ public class FileUtils extends ServerFileUtils {
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
             return null;
+        }
+    }
+    
+    public static String getFileSizeHumanReadable(long size) {
+        DecimalFormat megaBytes = new DecimalFormat("0");
+        
+        if (size < 1024) {
+            size = 1024l;
+        }
+
+        if (size > (1024 * 1024)) {
+            return megaBytes.format(size / 1024l / 1024l) + " MB";
+        } else {
+            return megaBytes.format(size / 1024l) + " KB";
         }
     }
 

@@ -675,4 +675,6 @@ public interface SaveToCaseExecutor {
     
     public boolean removeCallback();
     
+    public boolean splitPdfCallback();
+    
 }

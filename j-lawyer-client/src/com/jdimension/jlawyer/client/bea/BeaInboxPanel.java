@@ -2956,6 +2956,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public boolean splitPdfCallback() {
+        return true;
+    }
+
     public static class BeaObjectsCleanUp implements Runnable {
 
         public BeaObjectsCleanUp() {

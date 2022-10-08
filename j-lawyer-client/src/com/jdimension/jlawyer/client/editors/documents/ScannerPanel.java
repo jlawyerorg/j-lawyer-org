@@ -680,9 +680,11 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -960,6 +962,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void initComponents() {
 
         popActions = new javax.swing.JPopupMenu();
+        mnuSplitPdf = new javax.swing.JMenuItem();
         mnuDelete = new javax.swing.JMenuItem();
         mnuRename = new javax.swing.JMenuItem();
         mnuSaveToCase = new javax.swing.JMenuItem();
@@ -981,6 +984,15 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkCaseTagging = new javax.swing.JCheckBox();
         chkDeleteAfterAction = new javax.swing.JCheckBox();
+
+        mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
+        mnuSplitPdf.setText("PDF splitten");
+        mnuSplitPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSplitPdfActionPerformed(evt);
+            }
+        });
+        popActions.add(mnuSplitPdf);
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("aus dem Scaneingang löschen");
@@ -1204,7 +1216,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             int i = 0;
 
             EditScanPanel dsp = new EditScanPanel(this.getClass().getName());
-            dsp.setDetails(selRow.length, this);
+            dsp.setDetails(fileNames, this);
             actionPanelEntries.add(dsp);
 
             // empty case reference - will trigger a search
@@ -1451,6 +1463,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.saveToCaseCallback(null, false, false, true);
     }//GEN-LAST:event_mnuSaveToCaseActionPerformed
 
+    private void mnuSplitPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSplitPdfActionPerformed
+        this.splitPdfCallback();
+    }//GEN-LAST:event_mnuSplitPdfActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDeleteAfterAction;
@@ -1467,6 +1483,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuRename;
     private javax.swing.JMenuItem mnuSaveToCase;
+    private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPanel pnlPreview;
@@ -1690,6 +1707,60 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 }
             }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean splitPdfCallback() {
+        int[] selRow = this.tblDirContent.getSelectedRows();
+        if (selRow.length == 1) {
+
+            int removedCount = 0;
+            IntegrationServiceRemote is = null;
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                is = locator.lookupIntegrationServiceRemote();
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                return false;
+            }
+
+            String fileName = this.tblDirContent.getValueAt(selRow[0], 1).toString();
+            if(!fileName.toLowerCase().endsWith(".pdf"))
+                return false;
+
+            try {
+
+                PDFSplitDialog dlg = new PDFSplitDialog(EditorsRegistry.getInstance().getMainWindow(), true, fileName);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                ArrayList<PDFSplitRequest> splitRequests=new ArrayList<>();
+                if(dlg.getSplitRequest()!=null) {
+                    splitRequests.add(dlg.getSplitRequest());
+                }
+                
+                ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                pi.setShowCancelButton(true);
+                pi.setMax(3);
+                PDFSplitAction a = new PDFSplitAction(pi, this, splitRequests);
+
+                a.start();
+
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            }
+
+            if (removedCount > 0) {
+                Timer timer = new Timer();
+                TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
+                timer.schedule(scannerTask, 1);
+
+            }
+
         }
         return true;
     }

@@ -665,36 +665,48 @@ package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
 import java.awt.Color;
-import org.apache.log4j.Logger;
+import java.util.List;
 
 /**
  *
  * @author jens
  */
 public class EditScanPanel extends javax.swing.JPanel {
-    
-    private SaveToCaseExecutor executor=null;
-    
-    private String openedFromEditorClass=null;
-    
+
+    private SaveToCaseExecutor executor = null;
+
+    private String openedFromEditorClass = null;
+
     /**
      * Creates new form EditScanPanel
+     *
      * @param openedFromClassName
      */
     public EditScanPanel(String openedFromClassName) {
         initComponents();
-        this.openedFromEditorClass=openedFromClassName;
-            
+        this.openedFromEditorClass = openedFromClassName;
+
     }
-    public void setDetails(int selectedDocuments, SaveToCaseExecutor executor) {
-        this.executor=executor;
-        
-        String scans="Scan";
-        if(selectedDocuments>1)
-            scans="Scans";
-        this.lblDescription.setText("<html><b>" + selectedDocuments + " " + scans + "</b></html>");
-        this.lblDescription.setToolTipText("" + selectedDocuments + " " + scans + " umbenennen oder aus dem Scaneingang löschen");
-        
+
+    public void setDetails(List<String> selectedDocuments, SaveToCaseExecutor executor) {
+        this.executor = executor;
+
+        String scans = "Scan";
+        if (selectedDocuments.size() > 1) {
+            scans = "Scans";
+        }
+        this.lblDescription.setText("<html><b>" + selectedDocuments.size() + " " + scans + "</b></html>");
+        this.lblDescription.setToolTipText("" + selectedDocuments.size() + " " + scans + " umbenennen oder aus dem Scaneingang löschen");
+
+        this.cmdSplitPdf.setEnabled(false);
+        if (selectedDocuments.size() == 1) {
+            for (String f : selectedDocuments) {
+                if (f.toLowerCase().endsWith(".pdf")) {
+                    this.cmdSplitPdf.setEnabled(true);
+                }
+            }
+        }
+
     }
 
     /**
@@ -709,6 +721,7 @@ public class EditScanPanel extends javax.swing.JPanel {
         lblDescription = new javax.swing.JLabel();
         cmdDeleteScan = new javax.swing.JButton();
         cmdRenameScan = new javax.swing.JButton();
+        cmdSplitPdf = new javax.swing.JButton();
 
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
@@ -733,6 +746,16 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdSplitPdf.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
+        cmdSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
+        cmdSplitPdf.setToolTipText("PDF teilen");
+        cmdSplitPdf.setEnabled(false);
+        cmdSplitPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSplitPdfActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -744,8 +767,10 @@ public class EditScanPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdDeleteScan)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdRenameScan)))
-                .addContainerGap(147, Short.MAX_VALUE))
+                        .addComponent(cmdRenameScan)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSplitPdf)))
+                .addContainerGap(115, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -755,14 +780,15 @@ public class EditScanPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdDeleteScan)
-                    .addComponent(cmdRenameScan))
+                    .addComponent(cmdRenameScan)
+                    .addComponent(cmdSplitPdf))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdDeleteScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteScanActionPerformed
-        boolean removed=this.executor.removeCallback();
-        if(removed) {
+        boolean removed = this.executor.removeCallback();
+        if (removed) {
             this.cmdDeleteScan.setEnabled(false);
             this.cmdDeleteScan.setBackground(Color.green.darker().darker());
         } else {
@@ -771,8 +797,8 @@ public class EditScanPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdDeleteScanActionPerformed
 
     private void cmdRenameScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRenameScanActionPerformed
-        boolean renamed=this.executor.renameCallback();
-        if(renamed) {
+        boolean renamed = this.executor.renameCallback();
+        if (renamed) {
             this.cmdRenameScan.setEnabled(false);
             this.cmdRenameScan.setBackground(Color.green.darker().darker());
         } else {
@@ -780,9 +806,14 @@ public class EditScanPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdRenameScanActionPerformed
 
+    private void cmdSplitPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSplitPdfActionPerformed
+        this.executor.splitPdfCallback();
+    }//GEN-LAST:event_cmdSplitPdfActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDeleteScan;
     private javax.swing.JButton cmdRenameScan;
+    private javax.swing.JButton cmdSplitPdf;
     private javax.swing.JLabel lblDescription;
     // End of variables declaration//GEN-END:variables
 }

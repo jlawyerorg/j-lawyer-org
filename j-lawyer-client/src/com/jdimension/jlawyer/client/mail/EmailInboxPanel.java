@@ -3091,6 +3091,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public boolean splitPdfCallback() {
+        return true;
+    }
+
     public static class EmailObjectsCleanUp implements Runnable {
 
         private HashMap<MailboxSetup, Store> s;

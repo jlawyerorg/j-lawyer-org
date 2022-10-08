@@ -676,10 +676,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1120,6 +1122,45 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             }
         }
         return false;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public boolean addObservedFile(String fileName, byte[] data) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.info("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+
+        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd_HH-mm");
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fileName)) {
+                    fileName=df.format(new Date())+"_"+name;
+                }
+            }
+        }
+        if(!scanDir.endsWith(File.separator))
+            scanDir=scanDir+File.separator;
+        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+            fout.write(data);
+        }
+        return true;
     }
 
 }

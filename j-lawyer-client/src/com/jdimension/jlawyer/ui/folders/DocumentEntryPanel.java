@@ -1154,16 +1154,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         //this.lblFileIcon.setText(sValue);
         this.lblFileIcon.setIcon(icon);
 
-        long lValue = doc.getSize();
-        if (lValue < 1024) {
-            lValue = 1024l;
-        }
-
-        if (lValue > (1024 * 1024)) {
-            this.lblFileSize.setText(megaBytes.format(lValue / 1024l / 1024l) + " MB");
-        } else {
-            this.lblFileSize.setText(megaBytes.format(lValue / 1024l) + " KB");
-        }
+        this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(doc.getSize()));
     }
 
     private void documentRangeClicked(MouseEvent evt) {
