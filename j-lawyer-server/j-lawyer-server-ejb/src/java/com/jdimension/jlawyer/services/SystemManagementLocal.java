@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.Collection;
 import java.util.List;
 import javax.ejb.Local;
+import org.jlawyer.data.tree.GenericNode;
 
 /**
  *
@@ -696,4 +697,10 @@ public interface SystemManagementLocal {
     List<MappingTable> getMappingTables();
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
+    
+    GenericNode getAllTemplatesTree() throws Exception;
+
+    String getTemplatesBaseDir() throws Exception;
+
+    List<String> getTemplatesByPath(String folder) throws Exception;
 }
