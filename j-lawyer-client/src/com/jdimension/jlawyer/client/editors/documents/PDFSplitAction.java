@@ -694,6 +694,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 public class PDFSplitAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(PDFSplitAction.class.getName());
+    private static final String MSG_CHECKPAGE="Ermittle leere Seiten... prüfe Seite ";
 
     ArrayList<PDFSplitRequest> splitRequests = null;
     private final ScannerPanel owner;
@@ -790,7 +791,7 @@ public class PDFSplitAction extends ProgressableAction {
                 this.indicator.setMax(this.max);
                 Integer pageNumber = 1;
                 for (PDPage page : allPages) {
-                    this.progress("Ermittle leere Seiten... prüfe Seite " + pageNumber);
+                    this.progress(MSG_CHECKPAGE + pageNumber);
                     Iterable<COSName> xObjects = page.getResources().getXObjectNames();
                     Iterable<COSName> fonts = page.getResources().getFontNames();
                     
@@ -837,7 +838,7 @@ public class PDFSplitAction extends ProgressableAction {
                 
                 
                 for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); pageNumber++) {
-                    this.progress("Ermittle leere Seiten... prüfe Seite " + (pageNumber+1));
+                    this.progress(MSG_CHECKPAGE + (pageNumber+1));
                     PDFTextStripper reader = new PDFTextStripper();
                     reader.setStartPage(pageNumber+1);
                     reader.setEndPage(pageNumber+1);
@@ -900,7 +901,7 @@ public class PDFSplitAction extends ProgressableAction {
                 
                 PDFRenderer renderedDoc = new PDFRenderer(document);
                 for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); pageNumber++) {
-                    this.progress("Ermittle leere Seiten... prüfe Seite " + (pageNumber+1));
+                    this.progress(MSG_CHECKPAGE + (pageNumber+1));
                     if (isBlank(renderedDoc.renderImage(pageNumber))) {
                         splitPageIndices.add(pageNumber);
                         if (this.isCancelled()) {
