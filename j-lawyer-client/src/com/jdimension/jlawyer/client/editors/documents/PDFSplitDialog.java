@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -689,6 +691,8 @@ public class PDFSplitDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.fileName=splitFile;
+        UserSettings uset=UserSettings.getInstance();
+        this.txtKeyword.setText(uset.getSetting(UserSettings.CONF_SCAN_DIVIDERKEYWORD, "JLAWYERTRENNSEITE"));
         ((JLabel) cmbPageCount.getRenderer()).setHorizontalAlignment(JLabel.RIGHT);
         if (splitFile != null) {
             try {
@@ -733,6 +737,9 @@ public class PDFSplitDialog extends javax.swing.JDialog {
         cmdCancel = new javax.swing.JButton();
         cmdExecute = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
+        rdKeyword = new javax.swing.JRadioButton();
+        jLabel8 = new javax.swing.JLabel();
+        txtKeyword = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PDF-Dokument aufteilen");
@@ -784,6 +791,12 @@ public class PDFSplitDialog extends javax.swing.JDialog {
         jLabel7.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         jLabel7.setText("Das Aufteilen kann einige Zeit in Anspruch nehmen.");
 
+        buttonGroup1.add(rdKeyword);
+        rdKeyword.setText("an Seiten mit Schlüsselwort");
+
+        jLabel8.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel8.setText("Seiten mit dem angegebenen Schlüsselwert werden als Trennseiten erkannt. Erfordert PDF mit OCR-Informationen.");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -816,14 +829,25 @@ public class PDFSplitDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
-                                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE))))))
+                                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(cmdExecute)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdCancel))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(rdKeyword)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtKeyword, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(cmdExecute)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdCancel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -851,11 +875,17 @@ public class PDFSplitDialog extends javax.swing.JDialog {
                 .addComponent(rdEmpty)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(rdKeyword)
+                    .addComponent(txtKeyword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel8)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdExecute))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -868,6 +898,8 @@ public class PDFSplitDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExecuteActionPerformed
+        UserSettings uset=UserSettings.getInstance();
+        uset.setSetting(UserSettings.CONF_SCAN_DIVIDERKEYWORD, this.txtKeyword.getText());
         this.splitRequest=new PDFSplitRequest();
         if(this.rdByPageCount.isSelected()) {
             this.splitRequest.setSplitType(PDFSplitRequest.SPLITTYPE_PAGECOUNT);
@@ -876,6 +908,10 @@ public class PDFSplitDialog extends javax.swing.JDialog {
         } else if(this.rdEmpty.isSelected()) {
             this.splitRequest.setFileName(this.fileName);
             this.splitRequest.setSplitType(PDFSplitRequest.SPLITTYPE_BLANKPAGES);
+        } else if(this.rdKeyword.isSelected()) {
+            this.splitRequest.setFileName(this.fileName);
+            this.splitRequest.setSplitKeyword(this.txtKeyword.getText());
+            this.splitRequest.setSplitType(PDFSplitRequest.SPLITTYPE_KEYWORD);
         } else {
             this.splitRequest.setFileName(this.fileName);
             this.splitRequest.setSplitType(PDFSplitRequest.SPLITTYPE_BLANKPAGESFUZZY);
@@ -937,11 +973,14 @@ public class PDFSplitDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblFileProperties;
     private javax.swing.JRadioButton rdByPageCount;
     private javax.swing.JRadioButton rdEmpty;
     private javax.swing.JRadioButton rdEmptyAlmost;
+    private javax.swing.JRadioButton rdKeyword;
+    private javax.swing.JTextField txtKeyword;
     // End of variables declaration//GEN-END:variables
 
     /**

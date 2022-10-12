@@ -672,10 +672,12 @@ public class PDFSplitRequest {
     public static final short SPLITTYPE_PAGECOUNT=10;
     public static final short SPLITTYPE_BLANKPAGES=20;
     public static final short SPLITTYPE_BLANKPAGESFUZZY=30;
+    public static final short SPLITTYPE_KEYWORD=40;
     
     protected String fileName=null;
     protected short splitType=SPLITTYPE_BLANKPAGES;
     protected int splitAfterPages=100;
+    protected String splitKeyword="JLAWYERTRENNSEITE";
 
     public PDFSplitRequest() {
     }
@@ -720,6 +722,20 @@ public class PDFSplitRequest {
      */
     public void setSplitAfterPages(int splitAfterPages) {
         this.splitAfterPages = splitAfterPages;
+    }
+
+    /**
+     * @return the splitKeyword
+     */
+    public String getSplitKeyword() {
+        return splitKeyword;
+    }
+
+    /**
+     * @param splitKeyword the splitKeyword to set
+     */
+    public void setSplitKeyword(String splitKeyword) {
+        this.splitKeyword = splitKeyword;
     }
     
     

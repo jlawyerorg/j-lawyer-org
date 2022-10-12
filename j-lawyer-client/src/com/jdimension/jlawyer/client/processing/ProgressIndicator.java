@@ -682,7 +682,6 @@ public class ProgressIndicator extends javax.swing.JDialog {
     private JDialog dParent=null;
     private GlassPane glass=null;
     private ProgressableAction action=null;
-//    private boolean clearParent=false;
     
     /**
      * Creates new form ProgressIndicator

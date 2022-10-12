@@ -685,6 +685,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 /**
  *
@@ -803,7 +804,6 @@ public class PDFSplitAction extends ProgressableAction {
                 }
 
                 PDFBlankPageSplitter splitter = new PDFBlankPageSplitter(splitPageIndices);
-                splitter.setSplitAtPage(req.getSplitAfterPages());
                 List<PDDocument> splittedList = splitter.split(document);
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
@@ -818,6 +818,67 @@ public class PDFSplitAction extends ProgressableAction {
                         if (this.isCancelled()) {
                             break;
                         }
+                        String splitFileName = fileNameNoExt + "-" + df.format(counter) + ".pdf";
+                        this.progress("Speichere " + splitFileName);
+                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                        doc.save(bout);
+                        svc.addObservedFile(splitFileName, bout.toByteArray());
+
+                        doc.close();
+                        counter++;
+                    }
+                } else {
+                    doRefresh = false;
+                }
+            } else if(req.getSplitType() == PDFSplitRequest.SPLITTYPE_KEYWORD) {
+                ArrayList<Integer> splitPageIndices = new ArrayList<>();
+                this.max = this.max + document.getNumberOfPages();
+                this.indicator.setMax(this.max);
+                
+                
+                for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); pageNumber++) {
+                    this.progress("Ermittle leere Seiten... prüfe Seite " + (pageNumber+1));
+                    PDFTextStripper reader = new PDFTextStripper();
+                    reader.setStartPage(pageNumber+1);
+                    reader.setEndPage(pageNumber+1);
+                    String pageText = reader.getText(document);
+                    if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
+                        splitPageIndices.add(pageNumber);
+                        if (this.isCancelled()) {
+                            break;
+                        }
+                    }
+                }
+                
+                PDFBlankPageSplitter splitter = new PDFBlankPageSplitter(splitPageIndices);
+                List<PDDocument> splittedList = splitter.split(document);
+                this.max = this.max + splittedList.size();
+                this.indicator.setMax(this.max + splittedList.size());
+                String fileNameNoExt = req.getFileName();
+                if (fileNameNoExt.toLowerCase().endsWith(".pdf")) {
+                    fileNameNoExt = fileNameNoExt.substring(0, fileNameNoExt.length() - 4);
+                }
+                DecimalFormat df = new DecimalFormat("000");
+                int counter = 1;
+                if (splittedList.size() > 1) {
+                    for (PDDocument doc : splittedList) {
+                        if (this.isCancelled()) {
+                            break;
+                        }
+                        
+                        // find the split document with just the blank page, and skip it
+                        if (doc.getNumberOfPages() == 1) {
+                            PDFTextStripper reader = new PDFTextStripper();
+                            reader.setStartPage(1);
+                            reader.setEndPage(1);
+                            String pageText = reader.getText(doc);
+
+                            if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
+                                continue;
+                            }
+
+                        }
+                        
                         String splitFileName = fileNameNoExt + "-" + df.format(counter) + ".pdf";
                         this.progress("Speichere " + splitFileName);
                         ByteArrayOutputStream bout = new ByteArrayOutputStream();
