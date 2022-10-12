@@ -6,6 +6,8 @@ cp ../j-lawyer-server/dist/j-lawyer-server.ear ./wildfly/
 
 jlversion=`bash getversion.sh`
 
+echo "j-lawyer docker version tag: $jlversion"
+
 docker build -t="jlawyerorg/jlawyer-db:latest" -t="jlawyerorg/jlawyer-db:$jlversion" mysql/.
 docker build -t="jlawyerorg/jlawyer-srv:latest" -t="jlawyerorg/jlawyer-srv:$jlversion" wildfly/.
 # docker run --name mysql -v /var/docker_data/mysql/data/:/var/lib/mysql -d -p 3307:3306 j-dimension/jlawyerdb
