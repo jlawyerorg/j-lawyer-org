@@ -1926,41 +1926,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-        String dstNew = dst + newName;
-        dst = dst + db.getName();
-
-        File dbFile = new File(dst);
-        if (!(dbFile.exists())) {
-            throw new Exception("Dokument " + dst + " existiert nicht und kann nicht umbenannt werden!");
-        }
-        File dbFileNew = new File(dstNew);
-
-        if (dbFileNew.exists()) {
-            throw new Exception("Ein Dokument mit dem Namen " + newName + " existiert bereits in der Akte oder deren Papierkorb!");
-        }
-
-        boolean renamed = dbFile.renameTo(dbFileNew);
-        if (!renamed) {
-            throw new Exception("Dokument " + dst + " konnte nicht umbenannt werden!");
-        }
-
         String preview = "";
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
         if (pg.previewExists(aFile.getId(), id, db.getName())) {
             String prv = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-            String prvNew = prv + newName;
-            prv = prv + db.getName();
+            String prvName = prv + db.getName();
+            String prvId = prv + id;
+            
 
-            File prvFile = new File(prv);
-            File prvFileNew = new File(prvNew);
-
-            renamed = prvFile.renameTo(prvFileNew);
-            if (!renamed) {
-                throw new Exception("Dokumentvorschau " + prv + " konnte nicht umbenannt werden!");
+            File prvFile = new File(prvName);
+            File prvFileId = new File(prvId);
+            if(prvFile.exists())
+                prvFile.renameTo(prvFileId);
+            
+            if (!prvFileId.exists()) {
+                throw new Exception("Dokumentvorschau " + db.getName() + " konnte nicht gefunden werden!");
             }
 
-            preview = ServerFileUtils.readFileAsString(prvFileNew);
+            preview = ServerFileUtils.readFileAsString(prvFileId);
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
