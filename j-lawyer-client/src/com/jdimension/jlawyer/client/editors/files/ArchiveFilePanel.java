@@ -3980,7 +3980,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
@@ -4036,7 +4036,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {

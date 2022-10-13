@@ -1317,7 +1317,7 @@ public class EmailUtils {
     }
 
     public static SendEmailDialog reply(Message m, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
             // figure out if the message was sent from one of the users accounts
             boolean sentByCurrentUser = false;

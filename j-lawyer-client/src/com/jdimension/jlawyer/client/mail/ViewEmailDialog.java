@@ -681,7 +681,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
 
@@ -699,6 +698,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ViewEmailDialog
+     * @param parent
+     * @param modal
+     * @param contextArchiveFile
+     * @param contextFolder
      */
     public ViewEmailDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder) {
         this(parent, modal, contextArchiveFile, contextFolder, null);
@@ -829,7 +832,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
 
         MessageContainer msgC = this.msgContainer;
@@ -901,7 +904,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         if(this.contextArchiveFile != null) {
             try {

@@ -831,7 +831,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                         if (hrefValue.contains("jlawyer://addtowhitelist")) {
                                             showHtml();
                                         } else if (hrefValue.toLowerCase().startsWith("mailto:")) {
-                                            SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                                            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
                                             FrameUtils.centerDialog(dlg, null);
                                             String mTo = hrefValue;
                                             if (mTo.length() > 7) {
@@ -1776,7 +1776,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {
-                SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
                 FrameUtils.centerDialog(dlg, null);
                 if (url.length() > 7) {
                     url = url.substring(7);

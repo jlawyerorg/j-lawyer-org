@@ -2078,7 +2078,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_mnuEmptyTrashActionPerformed
 
     private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
 
@@ -2112,7 +2112,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_tblMailsMouseReleased
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
 
         int[] selected = this.tblMails.getSelectedRows();
 
@@ -2186,7 +2186,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
 
         int[] selected = this.tblMails.getSelectedRows();
 

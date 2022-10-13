@@ -1518,7 +1518,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
-                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
@@ -1568,7 +1567,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
-                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
@@ -1698,7 +1696,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {
-                SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
                 FrameUtils.centerDialog(dlg, null);
                 if (url.length() > 7) {
                     url = url.substring(7);

@@ -710,7 +710,6 @@ import themes.colors.DefaultColorTheme;
 public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private AddressBean a = null;
     private ArchiveFileAddressesBean afa = null;
     private ArchiveFileBean caseDto = null;
@@ -1249,7 +1248,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();

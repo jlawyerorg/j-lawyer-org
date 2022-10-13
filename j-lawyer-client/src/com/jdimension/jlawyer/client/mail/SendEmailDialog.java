@@ -748,6 +748,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
+    
+    private boolean replyOrForward=false;
 
     // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder
@@ -756,22 +758,26 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     /**
      * Creates new form SendEmailDialog
      *
+     * @param replyOrForward
      * @param parent
      * @param modal
      */
-    public SendEmailDialog(JDialog parent, boolean modal) {
+    public SendEmailDialog(boolean replyOrForward, JDialog parent, boolean modal) {
         super(parent, modal);
+        this.replyOrForward=replyOrForward;
         this.initialize();
     }
 
     /**
      * Creates new form SendEmailDialog
      *
+     * @param replyOrForward
      * @param parent
      * @param modal
      */
-    public SendEmailDialog(JFrame parent, boolean modal) {
+    public SendEmailDialog(boolean replyOrForward, JFrame parent, boolean modal) {
         super(parent, modal);
+        this.replyOrForward=replyOrForward;
         this.initialize();
     }
 
@@ -2289,7 +2295,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
-        this.cmbTemplatesActionPerformed(evt);
+        // when replying or forwarding, to not apply mail template but leave the quoted content
+        if(!this.replyOrForward)
+            this.cmbTemplatesActionPerformed(evt);
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void enableReviewElements(boolean enable) {
@@ -2340,7 +2348,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
          * Create and display the dialog
          */
         java.awt.EventQueue.invokeLater(() -> {
-            SendEmailDialog dialog = new SendEmailDialog(new javax.swing.JFrame(), true);
+            SendEmailDialog dialog = new SendEmailDialog(false, new javax.swing.JFrame(), true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
                 @Override

@@ -2847,7 +2847,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_jTabbedPane1StateChanged
 
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setTo(this.txtEmail.getText());
 
         try {
