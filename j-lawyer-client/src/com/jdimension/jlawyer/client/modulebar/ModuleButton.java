@@ -703,6 +703,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     /**
      * Creates new form ModuleButton
+     * @param m
      */
     public ModuleButton(ModuleMetadata m) {
         initComponents();
@@ -727,9 +728,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         boolean ed = m.getEditorName().length() > 0;
 
         if (mod && ed) {
-            //setText("<html><b>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</b></html>");
             setText("<html><b>" + m.getEditorName() + "</b></html>");
-            //setText("<html><table><tr><td>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</td><td>56</td></tr></table></html>");
         } else if (mod) {
             setText("<html><b>" + m.getModuleName() + "</b></html>");
         } else if (ed) {

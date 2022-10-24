@@ -754,11 +754,8 @@ public class ModuleBar extends javax.swing.JPanel {
             if (hotKeyActions.containsKey(keyStroke)) {
                 final Action a = hotKeyActions.get(keyStroke);
                 final ActionEvent ae = new ActionEvent(e.getSource(), e.getID(), null);
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        a.actionPerformed(ae);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    a.actionPerformed(ae);
                 });
                 return true;
             }
