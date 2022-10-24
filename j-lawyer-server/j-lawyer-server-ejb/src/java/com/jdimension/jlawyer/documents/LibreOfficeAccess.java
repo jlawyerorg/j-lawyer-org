@@ -1167,7 +1167,7 @@ public class LibreOfficeAccess {
                 arg0="";
             if(arg1==null)
                 arg1="";
-            return new Integer(arg1.toString().length()).compareTo(arg0.toString().length());
+            return Integer.compare(arg1.toString().length(), arg0.toString().length());
         });
         
         for (String scriptPlaceHolderKey: lengthSortedValueKeys) {
