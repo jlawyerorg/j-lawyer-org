@@ -1074,6 +1074,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                     scroll.getViewport().add(tPanel);
                                     scroll.getViewport().setOpaque(false);
+                                    scroll.setBorder(null);
+                                    scroll.setOpaque(false);
                                     tagsPane.addTab(tagName, scroll);
                                 }
                             }

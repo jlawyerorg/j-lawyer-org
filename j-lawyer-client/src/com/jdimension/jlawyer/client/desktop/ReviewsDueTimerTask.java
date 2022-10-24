@@ -695,6 +695,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of ReviewsDueTimerTask
+     * @param owner
+     * @param eventPane
+     * @param resultPanel
+     * @param split
+     * @param ignoreCurrentEditor
      */
     public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
@@ -847,6 +852,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                         scroll.getViewport().add(tPanel);
                         scroll.getViewport().setOpaque(false);
+                        scroll.setBorder(null);
+                        scroll.setOpaque(false);
                         eventPane.addTab(eventTypeName, scroll);
                     }
 
