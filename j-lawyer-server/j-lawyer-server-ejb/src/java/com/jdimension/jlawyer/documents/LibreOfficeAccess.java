@@ -671,6 +671,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -1156,7 +1158,19 @@ public class LibreOfficeAccess {
         scriptContent = scriptContent.trim();
 
         Set<String> valueKeys = values.keySet();
-        for (String scriptPlaceHolderKey: valueKeys) {
+        
+        // need to sort by key length descending
+        // e.g. to prevent MANDANT_ORT from replacing the value for MANDANT_ORTSTEIL
+        List<String> lengthSortedValueKeys=new ArrayList<>(valueKeys);
+        Collections.sort(lengthSortedValueKeys, (Object arg0, Object arg1) -> {
+            if(arg0==null)
+                arg0="";
+            if(arg1==null)
+                arg1="";
+            return new Integer(arg1.toString().length()).compareTo(arg0.toString().length());
+        });
+        
+        for (String scriptPlaceHolderKey: lengthSortedValueKeys) {
             if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
                 String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
