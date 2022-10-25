@@ -729,7 +729,10 @@ public class ProgressIndicator extends javax.swing.JDialog {
     
     public void setMax(int max) {
         try {
-            SwingUtilities.invokeAndWait(()->progress.setMaximum(max));
+            if(!SwingUtilities.isEventDispatchThread())
+                SwingUtilities.invokeAndWait(()->progress.setMaximum(max));
+            else
+                progress.setMaximum(max);
         } catch (Throwable t) {
             log.error("Unable to update max of progress indicator", t);
         }
