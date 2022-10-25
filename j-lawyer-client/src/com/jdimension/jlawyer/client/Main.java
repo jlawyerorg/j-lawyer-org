@@ -792,6 +792,7 @@ public class Main {
                 // only set in case of !=1
                 if(factor!=1f) {
                     System.setProperty("sun.java2d.uiScale", uiScale);
+                    //System.setProperty("sun.java2d.uiScale.enabled", "true");
                 }
             } catch (Throwable t) {
                 System.out.println("invalid UI scaling factor: " +uiScale);
