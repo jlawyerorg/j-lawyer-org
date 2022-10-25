@@ -692,7 +692,7 @@ public class DocumentViewerFactory {
     }
     
     public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-
+        
         if (fileName.toLowerCase().endsWith(".pdf")) {
             PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
             pdfP.setSize(new Dimension(width, height));
