@@ -1169,13 +1169,13 @@ public class CalendarPanel extends javax.swing.JPanel {
 //
 //            @Override
 //            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
-//                // TODO Auto-generated method stub
+//
 //
 //            }
 //
 //            @Override
 //            public void popupMenuCanceled(PopupMenuEvent arg0) {
-//                // TODO Auto-generated method stub
+//
 //
 //            }
 //        });

@@ -36,8 +36,6 @@ import org.apache.log4j.Logger;
  */
 public class DayContentPanel extends JPanel {
     
-    private static final Logger log=Logger.getLogger(DayContentPanel.class.getName());
-
     /**
      *
      */
