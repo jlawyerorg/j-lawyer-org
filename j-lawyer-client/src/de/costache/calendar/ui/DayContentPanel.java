@@ -15,7 +15,6 @@
  */
 package de.costache.calendar.ui;
 
-import de.costache.calendar.model.EventType;
 import de.costache.calendar.ui.strategy.Config;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.model.CalendarEvent;
@@ -30,11 +29,14 @@ import java.awt.event.MouseListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  * @author theodorcostache
  */
 public class DayContentPanel extends JPanel {
+    
+    private static final Logger log=Logger.getLogger(DayContentPanel.class.getName());
 
     /**
      *
@@ -49,6 +51,7 @@ public class DayContentPanel extends JPanel {
 
     /**
      * Creates a new instance of {@link DayContentPanel}
+     * @param owner
      */
     public DayContentPanel(final DayPanel owner) {
         super(true);
@@ -83,19 +86,28 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseReleased(final MouseEvent e) {
-
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
                 } else {
+                    final boolean isSelectedStrategyMonth = calendar
+                        .getDisplayStrategy() == Type.MONTH;
+                    final CalendarEvent event = isSelectedStrategyMonth ? getEventForMonth(
+                        e.getX(), e.getY()) : getNotMonthEvent(e.getX(),
+                        e.getY());
+                    
+                    if(event==null) {
+                    
                     if (startDate != null && endDate != null)
                         EventRepository.get().triggerIntervalSelection(calendar,
                                 startDate, endDate);
+                    
+                    }
                 }
-                for (final MouseListener ml : DayContentPanel.this.owner
-                        .getOwner().getMouseListeners()) {
-                    ml.mouseReleased(e);
-                }
+//                for (final MouseListener ml : DayContentPanel.this.owner
+//                        .getOwner().getMouseListeners()) {
+//                    ml.mouseReleased(e);
+//                }
             }
 
             @Override
@@ -131,10 +143,11 @@ public class DayContentPanel extends JPanel {
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
-                }
-                for (final MouseListener ml : DayContentPanel.this.owner
-                        .getOwner().getMouseListeners()) {
-                    ml.mousePressed(e);
+                } else {
+//                for (final MouseListener ml : DayContentPanel.this.owner
+//                        .getOwner().getMouseListeners()) {
+//                    ml.mousePressed(e);
+//                }
                 }
             }
 

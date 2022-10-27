@@ -700,8 +700,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import org.apache.log4j.Logger;
 
 /**
@@ -1162,25 +1160,25 @@ public class CalendarPanel extends javax.swing.JPanel {
 
         });
 
-        popup.addPopupMenuListener(new PopupMenuListener() {
-
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
-//				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent arg0) {
-                // TODO Auto-generated method stub
-
-            }
-        });
+//        popup.addPopupMenuListener(new PopupMenuListener() {
+//
+//            @Override
+//            public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
+////				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
+//            }
+//
+//            @Override
+//            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
+//                // TODO Auto-generated method stub
+//
+//            }
+//
+//            @Override
+//            public void popupMenuCanceled(PopupMenuEvent arg0) {
+//                // TODO Auto-generated method stub
+//
+//            }
+//        });
     }
 
     /**
