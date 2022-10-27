@@ -908,7 +908,7 @@ public class IterativeBackupExecutor {
         }
     }
 
-    private static File dumpDatabase(String user, String password, String port, String backupDir) {
+    private static File dumpDatabase(String user, String password, String port, String backupDir) throws Exception {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
@@ -950,6 +950,7 @@ public class IterativeBackupExecutor {
         Process process = null;
 
         File f = new File(backupFilePath);
+        int exitCode=0;
         try {
 
             if (f.exists()) {
@@ -957,7 +958,7 @@ public class IterativeBackupExecutor {
             }
 
             process = shell.exec(cmd);
-            process.waitFor();
+            exitCode=process.waitFor();
 
             f.setLastModified(System.currentTimeMillis());
             
@@ -966,6 +967,12 @@ public class IterativeBackupExecutor {
             log.error(ex);
             
         }
+        
+        if(exitCode!=0) {
+            log.error("mysqldump returned with exit code " + exitCode);
+            throw new Exception("Datenbank-Dump fehlgeschlagen - Rückgabewert " + exitCode);
+        }
+        
         return f;
     }
 
