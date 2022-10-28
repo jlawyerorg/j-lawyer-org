@@ -682,6 +682,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -1126,7 +1127,15 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     private MutableTreeNode buildTree(CaseFolder cf) {
         if (cf != null) {
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(cf);
-            for (CaseFolder child : cf.getChildren()) {
+            
+            List<CaseFolder> allChildren = cf.getChildren();
+            Collections.sort(allChildren, (Object t, Object t1) -> {
+                CaseFolder f1 = (CaseFolder) t;
+                CaseFolder f2 = (CaseFolder) t1;
+                return f1.getName().toLowerCase().compareTo(f2.getName().toLowerCase());
+            });
+            
+            for (CaseFolder child : allChildren) {
                 node.add(buildTree(child));
             }
             return node;
