@@ -973,10 +973,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblLocalDir = new javax.swing.JLabel();
         splitContainer = new javax.swing.JSplitPane();
         splitTop = new javax.swing.JSplitPane();
-        pnlActions = new javax.swing.JPanel();
-        pnlActionsChild = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblDirContent = new javax.swing.JTable();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        pnlActions = new javax.swing.JPanel();
+        pnlActionsChild = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
         cmbDocumentTag = new javax.swing.JComboBox<>();
@@ -1046,22 +1047,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblLocalDir.setForeground(new java.awt.Color(255, 255, 255));
         lblLocalDir.setText("jLabel1");
 
-        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
-
-        org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
-        pnlActionsChild.setLayout(pnlActionsChildLayout);
-        pnlActionsChildLayout.setHorizontalGroup(
-            pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 124, Short.MAX_VALUE)
-        );
-        pnlActionsChildLayout.setVerticalGroup(
-            pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 321, Short.MAX_VALUE)
-        );
-
-        pnlActions.add(pnlActionsChild);
-
-        splitTop.setRightComponent(pnlActions);
+        splitTop.setMaximumSize(new java.awt.Dimension(2148, 2147483647));
 
         tblDirContent.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1094,6 +1080,27 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jScrollPane2.setViewportView(tblDirContent);
 
         splitTop.setLeftComponent(jScrollPane2);
+
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+
+        org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
+        pnlActionsChild.setLayout(pnlActionsChildLayout);
+        pnlActionsChildLayout.setHorizontalGroup(
+            pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 124, Short.MAX_VALUE)
+        );
+        pnlActionsChildLayout.setVerticalGroup(
+            pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 321, Short.MAX_VALUE)
+        );
+
+        pnlActions.add(pnlActionsChild);
+
+        jScrollPane1.setViewportView(pnlActions);
+
+        splitTop.setRightComponent(jScrollPane1);
 
         splitContainer.setLeftComponent(splitTop);
 
@@ -1476,6 +1483,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdLocalUploadDir;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblLocalDir;
