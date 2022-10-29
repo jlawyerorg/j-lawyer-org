@@ -4058,7 +4058,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(true);
+        pi.setShowCancelButton(selectedDocs.size()>1);
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
 
         a.start();
@@ -4786,7 +4786,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(true);
+        pi.setShowCancelButton(selectedDocs.size()>1);
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
 
         a.start();
