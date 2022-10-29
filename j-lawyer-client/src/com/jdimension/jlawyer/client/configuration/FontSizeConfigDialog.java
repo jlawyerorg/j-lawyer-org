@@ -693,7 +693,6 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             this.sldGlobalScale.setValue((int)(scale*100f));
             lblScale.setText("" + scale);
         } catch (Throwable t) {
-            //log.error("Could not set font size", t);
             lblScale.setText("0");
         }
         
@@ -703,7 +702,6 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             this.sldFontScale.setValue(offset);
             lblFontScale.setText("" + offset);
         } catch (Throwable t) {
-            //log.error("Could not set font size", t);
             lblScale.setText("0");
         }
         
