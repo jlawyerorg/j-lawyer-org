@@ -708,6 +708,7 @@ public class ClientSettings {
     public static final String CONF_WIDTH="client.width";
     
     public static final String CONF_UI_SCALING="client.ui.scaling";
+    public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT="client.desktop.myappointments.height";
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_WIDTH="client.desktop.myappointments.width";

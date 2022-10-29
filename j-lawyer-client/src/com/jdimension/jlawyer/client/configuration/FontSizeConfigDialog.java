@@ -664,7 +664,9 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FontUtils;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -688,13 +690,22 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         String uiScale=settings.getConfiguration(ClientSettings.CONF_UI_SCALING, "1.0");
         try {
             float scale=Float.parseFloat(uiScale);
-            this.sldFontSize.setValue((int)(scale*100f));
+            this.sldGlobalScale.setValue((int)(scale*100f));
             lblScale.setText("" + scale);
         } catch (Throwable t) {
             //log.error("Could not set font size", t);
             lblScale.setText("0");
         }
         
+        String fontSizeOffset=settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset=Integer.parseInt(fontSizeOffset);
+            this.sldFontScale.setValue(offset);
+            lblFontScale.setText("" + offset);
+        } catch (Throwable t) {
+            //log.error("Could not set font size", t);
+            lblScale.setText("0");
+        }
         
     }
 
@@ -707,34 +718,25 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        sldFontSize = new javax.swing.JSlider();
-        lblScale = new javax.swing.JLabel();
         cmdOK = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        sldGlobalScale = new javax.swing.JSlider();
+        lblScale = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        lblFontScale = new javax.swing.JLabel();
+        sldFontScale = new javax.swing.JSlider();
+        jLabel2 = new javax.swing.JLabel();
+        jTextField1 = new javax.swing.JTextField();
+        jComboBox1 = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/FontSizeConfigDialog"); // NOI18N
         setTitle(bundle.getString("window.title")); // NOI18N
         setModal(true);
-
-        jLabel1.setText(bundle.getString("label.fontsize.scaleing")); // NOI18N
-
-        sldFontSize.setMajorTickSpacing(10);
-        sldFontSize.setMaximum(200);
-        sldFontSize.setMinimum(100);
-        sldFontSize.setMinorTickSpacing(5);
-        sldFontSize.setPaintLabels(true);
-        sldFontSize.setPaintTicks(true);
-        sldFontSize.setSnapToTicks(true);
-        sldFontSize.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                sldFontSizeStateChanged(evt);
-            }
-        });
-
-        lblScale.setText("jLabel2");
 
         cmdOK.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdOK.setText(bundle.getString("button.ok")); // NOI18N
@@ -752,8 +754,116 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             }
         });
 
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Globale Skalierung (Icons und Schriften)"));
+
+        jLabel1.setText(bundle.getString("label.fontsize.scaleing")); // NOI18N
+
         jLabel3.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jLabel3.setText("100% = Normalskalierung");
+
+        sldGlobalScale.setMajorTickSpacing(10);
+        sldGlobalScale.setMaximum(200);
+        sldGlobalScale.setMinimum(100);
+        sldGlobalScale.setMinorTickSpacing(5);
+        sldGlobalScale.setPaintLabels(true);
+        sldGlobalScale.setPaintTicks(true);
+        sldGlobalScale.setSnapToTicks(true);
+        sldGlobalScale.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sldGlobalScaleStateChanged(evt);
+            }
+        });
+
+        lblScale.setText("jLabel2");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblScale, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE))
+                    .addComponent(sldGlobalScale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(lblScale))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sldGlobalScale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Schriftenskalierung"));
+
+        jLabel4.setText("Schriftgrößenanpassung:");
+
+        lblFontScale.setText("lblFontScale");
+
+        sldFontScale.setMaximum(10);
+        sldFontScale.setMinimum(-5);
+        sldFontScale.setMinorTickSpacing(1);
+        sldFontScale.setPaintLabels(true);
+        sldFontScale.setPaintTicks(true);
+        sldFontScale.setSnapToTicks(true);
+        sldFontScale.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sldFontScaleStateChanged(evt);
+            }
+        });
+
+        jLabel2.setText("Beispiele:");
+
+        jTextField1.setText("Beispieltext");
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Eintrag 1", "Eintrag 2", "Eintrag 3", "Eintrag 4" }));
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(sldFontScale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jTextField1)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblFontScale)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(lblFontScale))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sldFontScale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -762,35 +872,27 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblScale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(sldFontSize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdOK)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addComponent(cmdCancel))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(lblScale))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(sldFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 133, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdOK))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -807,16 +909,31 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private void sldFontSizeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldFontSizeStateChanged
-        this.lblScale.setText("" + this.sldFontSize.getValue());
+    private void sldGlobalScaleStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldGlobalScaleStateChanged
+        this.lblScale.setText("" + this.sldGlobalScale.getValue());
 
 
         ClientSettings settings=ClientSettings.getInstance();
-        settings.setConfiguration(ClientSettings.CONF_UI_SCALING, ""+((float)this.sldFontSize.getValue())/100f);
+        settings.setConfiguration(ClientSettings.CONF_UI_SCALING, ""+((float)this.sldGlobalScale.getValue())/100f);
         
-        log.info("setting UI scaling factor to " +""+((float)this.sldFontSize.getValue())/100f);
+        log.info("setting UI scaling factor to " +""+((float)this.sldGlobalScale.getValue())/100f);
 
-    }//GEN-LAST:event_sldFontSizeStateChanged
+    }//GEN-LAST:event_sldGlobalScaleStateChanged
+
+    private void sldFontScaleStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldFontScaleStateChanged
+        this.lblFontScale.setText("" + this.sldFontScale.getValue());
+
+        FontUtils.getInstance().updateDefaults(this.sldFontScale.getValue());
+
+        ClientSettings settings=ClientSettings.getInstance();
+        settings.setConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "" + this.sldFontScale.getValue());
+
+        SwingUtilities.updateComponentTreeUI(this.jTextField1);
+        SwingUtilities.updateComponentTreeUI(this.cmdOK);
+        SwingUtilities.updateComponentTreeUI(this.cmdCancel);
+        SwingUtilities.updateComponentTreeUI(this.jLabel2);
+        SwingUtilities.updateComponentTreeUI(this.jComboBox1);
+    }//GEN-LAST:event_sldFontScaleStateChanged
 
     /**
      * @param args the command line arguments
@@ -867,9 +984,17 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdOK;
+    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JLabel lblFontScale;
     private javax.swing.JLabel lblScale;
-    private javax.swing.JSlider sldFontSize;
+    private javax.swing.JSlider sldFontScale;
+    private javax.swing.JSlider sldGlobalScale;
     // End of variables declaration//GEN-END:variables
 }

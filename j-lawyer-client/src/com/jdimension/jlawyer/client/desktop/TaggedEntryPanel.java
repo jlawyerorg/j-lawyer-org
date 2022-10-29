@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -711,6 +712,19 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         this.lblChangedBy.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
+        
+        ClientSettings settings=ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont=this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+
+            currentFont=this.lblDocument.getFont();
+            this.lblDocument.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
         
     }
     

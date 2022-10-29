@@ -730,6 +730,16 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         this.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont = this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float) currentFont.getSize() + (float) offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
 
     }
 

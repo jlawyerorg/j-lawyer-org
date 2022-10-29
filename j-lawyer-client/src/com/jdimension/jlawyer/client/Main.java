@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FontUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -868,6 +869,14 @@ public class Main {
         settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
 
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.fontsizes"), true);
+        FontUtils fontUtils = FontUtils.getInstance();
+        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            fontUtils.updateDefaults(offset);
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
         
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.modules.available"), true);
         // todo: load this from the server
