@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -690,6 +691,7 @@ import javax.ejb.Local;
 public interface ArchiveFileServiceLocal {
 
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
     public void updateArchiveFile(ArchiveFileBean dto) throws Exception;

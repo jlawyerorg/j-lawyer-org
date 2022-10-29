@@ -661,26 +661,47 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v6;
-
-import java.util.List;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulPlaceholderV6;
+package org.jlawyer.io.rest.v6.pojo;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface TemplatesEndpointLocalV6 {
+public class RestfulPlaceholderV6 {
+    
+    protected String placeHolderKey;
+    protected String placeHolderValue;
+    
+    public RestfulPlaceholderV6() {
+        
+    }
 
-    Response getTemplateFolders();
-    
-    Response getTemplatesInFolder(String folder);
-    
-    Response getPlaceHoldersForTemplate(String folder, String template, String caseId);
-    
-    Response addDocumentFromTemplate(String caseId, String fileName, String templateFolder, String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception;
+    /**
+     * @return the placeHolderKey
+     */
+    public String getPlaceHolderKey() {
+        return placeHolderKey;
+    }
+
+    /**
+     * @param placeHolderKey the placeHolderKey to set
+     */
+    public void setPlaceHolderKey(String placeHolderKey) {
+        this.placeHolderKey = placeHolderKey;
+    }
+
+    /**
+     * @return the placeHolderValue
+     */
+    public String getPlaceHolderValue() {
+        return placeHolderValue;
+    }
+
+    /**
+     * @param placeHolderValue the placeHolderValue to set
+     */
+    public void setPlaceHolderValue(String placeHolderValue) {
+        this.placeHolderValue = placeHolderValue;
+    }
     
 }

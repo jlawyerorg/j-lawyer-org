@@ -703,4 +703,6 @@ public interface SystemManagementLocal {
     String getTemplatesBaseDir() throws Exception;
 
     List<String> getTemplatesByPath(String folder) throws Exception;
+    
+    List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception;
 }

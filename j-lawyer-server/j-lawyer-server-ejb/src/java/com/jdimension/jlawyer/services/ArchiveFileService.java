@@ -3294,7 +3294,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception {
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
@@ -3313,7 +3313,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(templateFolder) + System.getProperty("file.separator") + templateName;
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
 
         String ext = "";
@@ -3398,6 +3398,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.newDocumentEvent.fireAsync(evt);
 
         return this.archiveFileDocumentsFacade.find(docId);
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception {
+        return this.addDocumentFromTemplate(archiveFileId, fileName, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
     }
 
     @Override

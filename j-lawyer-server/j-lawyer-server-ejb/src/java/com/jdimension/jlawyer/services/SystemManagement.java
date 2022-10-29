@@ -763,6 +763,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private MappingTableFacadeLocal mappingTableFacade;
     @EJB
     private MappingEntryFacadeLocal mappingEntryFacade;
+    @EJB
+    private FormsServiceLocal formsService;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -1879,6 +1881,27 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return true;
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception {
+        
+        if(!templatePath.startsWith(File.separator))
+            templatePath=File.separator + templatePath;
+        String localBaseDir = this.getTemplatesBaseDir(templatePath);
+        
+        String tpl = localBaseDir + File.separator + templateName;
+        
+        Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
+        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
+        for (PartyTypeBean ptb : partyTypes) {
+            allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+        }
+        
+        Collection<String> formsPlaceHolders=this.formsService.getPlaceHoldersForCase(caseId);
+
+        return LibreOfficeAccess.getPlaceHolders(tpl, allPartyTypesPlaceholders, formsPlaceHolders);
+    }
+    
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {

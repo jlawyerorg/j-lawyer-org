@@ -663,15 +663,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -679,6 +683,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v6.pojo.RestfulPlaceholderV6;
 
 /**
  *
@@ -692,6 +698,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
 
     private static final Logger log = Logger.getLogger(TemplatesEndpointV6.class.getName());
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+    private static final String LOOKUP_CASESVC="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
      * Returns the folder structure holding document templates.
@@ -754,6 +761,79 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get document templates for folder " + folder, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all placeholders keys for a given template in a given folder, using the given case. Case is needed to resolve potential forms placeholders (AKA Falldaten).
+     *
+     * @param folder the folder hierarchy starting with /
+     * @param template the file name of the template
+     * @param caseId the id of the case
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/documents/{folder}/{template}/{caseId}")
+    @RolesAllowed({"loginRole"})
+    public Response getPlaceHoldersForTemplate(@PathParam("folder") String folder, @PathParam("template") String template, @PathParam("caseId") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            
+            List<String> resultList=system.getPlaceHoldersForTemplate(folder, template, caseId);
+            Collections.sort(resultList, String.CASE_INSENSITIVE_ORDER);
+            return Response.ok(resultList.stream().filter(ph -> !ph.startsWith("[[")).toArray()).build();
+        } catch (Exception ex) {
+            log.error("can not get placeholders for template " + template + "in folder " + folder + " using case " + caseId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new document based on a template. When scripts are used, the call must make sure to provide all required variable values.
+     *
+     * @param caseId the id of the case
+     * @param fileName file name of the document to be created, without file extension (server will enforce same extension as template)
+     * @param folder the template folder hierarchy starting with /
+     * @param template the file name of the template
+     * @param placeHolderValues key-value pairs holding placeholder values
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/documents/{folder}/{template}/{caseId}/{fileName}")
+    @RolesAllowed({"loginRole"})
+    public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal casesvc = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
+            HashMap<String,Object> placeHolderMap=new HashMap();
+            for(RestfulPlaceholderV6 rph: placeHolderValues) {
+                String key=rph.getPlaceHolderKey();
+                if(!key.startsWith("{{"))
+                    key="{{"+key;
+                if(!key.endsWith("}}"))
+                    key=key+"}}";
+                placeHolderMap.put(key, rph.getPlaceHolderValue());
+            }
+            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, folder, template, placeHolderMap, "");
+            RestfulDocumentV1 rdoc=new RestfulDocumentV1();
+            rdoc.setCreationDate(newDoc.getCreationDate());
+            rdoc.setFavorite(rdoc.isFavorite());
+            rdoc.setFolderId(newDoc.getFolder().getId());
+            rdoc.setId(newDoc.getId());
+            rdoc.setName(newDoc.getName());
+            rdoc.setSize(newDoc.getSize());
+            
+            return Response.ok(rdoc).build();
+        } catch (Exception ex) {
+            log.error("can not create document with template " + template + " in folder " + folder + " for case " + caseId, ex);
             return Response.serverError().build();
         }
     }
