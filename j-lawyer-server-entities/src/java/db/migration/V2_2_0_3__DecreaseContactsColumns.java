@@ -786,6 +786,9 @@ public class V2_2_0_3__DecreaseContactsColumns extends BaseJavaMigration {
 
             statement.close();
         }
+        
+        if(newLength<length)
+            newLength=length;
 
         PreparedStatement st2
                 = context.getConnection().prepareStatement("alter table contacts modify " + columnName + " VARCHAR(" + newLength + ") BINARY");
