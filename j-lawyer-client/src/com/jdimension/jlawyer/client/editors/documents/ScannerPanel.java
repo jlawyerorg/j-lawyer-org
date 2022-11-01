@@ -907,6 +907,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.persistSplitPane(this.splitContainer, this.getClass(), "splitContainer");
+        
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
     }
 
@@ -1449,7 +1451,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmdLocalUploadDirActionPerformed
 
     private void tblDirContentMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseReleased
-
+        if (evt.isPopupTrigger()) {
+            this.popActions.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
     }//GEN-LAST:event_tblDirContentMouseReleased
 
     private void tblDirContentMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMousePressed
