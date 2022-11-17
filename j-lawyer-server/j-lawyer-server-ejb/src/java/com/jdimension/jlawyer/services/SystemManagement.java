@@ -2103,6 +2103,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public void addObservedFile(String fileName, byte[] content) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         ServerSettingsBean mode = settingsFacade.find("jlawyer.server.observe.directory");
         if (mode == null || "".equals(mode.getSettingValue())) {
             log.error("No server directory configured for scans");

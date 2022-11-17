@@ -857,6 +857,10 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
     public String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.error("directory observation is switched off");
@@ -1127,6 +1131,10 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     public boolean addObservedFile(String fileName, byte[] data) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.info("directory observation is switched off");

@@ -686,12 +686,6 @@ public class ArchiveFileAddressesBeanFacade extends AbstractFacade<ArchiveFileAd
         super(ArchiveFileAddressesBean.class);
     }
     
-//    @Override
-//    public List<ArchiveFileAddressesBean> findByArchiveFileKeyAndReferenceType(ArchiveFileBean archiveFileKey, int referenceType) {
-//        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1 and referenceType = ?2").setParameter(1, archiveFileKey).setParameter(2, referenceType).getResultList();
-//        return list;
-//    }
-    
     @Override
     public List<ArchiveFileAddressesBean> findByReferenceType(PartyTypeBean partyType) {
         List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where referenceType = ?1").setParameter(1, partyType).getResultList();

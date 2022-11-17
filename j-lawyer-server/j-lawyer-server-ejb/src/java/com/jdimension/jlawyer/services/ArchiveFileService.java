@@ -1563,6 +1563,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
@@ -1915,6 +1919,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean renameDocument(String id, String newName) throws Exception {
+        
+        if(newName==null || "".equals(newName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         ArchiveFileBean aFile = db.getArchiveFileKey();
@@ -3295,6 +3303,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
@@ -3440,20 +3452,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (resultList != null) {
             if (resultList.size() > 0) {
                 try {
-                    Collections.sort(resultList, new Comparator() {
-                        @Override
-                        public int compare(Object o1, Object o2) {
-                            if (o1 != null && o2 != null) {
-                                if (o1 instanceof ArchiveFileAddressesBean && o2 instanceof ArchiveFileAddressesBean) {
-                                    //return ((ArchiveFileAddressesBean) o1).getReferenceTypeAsString().compareTo(((ArchiveFileAddressesBean) o2).getReferenceTypeAsString());
-                                    return getSortString((ArchiveFileAddressesBean) o1).compareTo(getSortString((ArchiveFileAddressesBean) o2));
-                                    // sort by reference type, followed by display name
-
-                                }
+                    Collections.sort(resultList, (Object o1, Object o2) -> {
+                        if (o1 != null && o2 != null) {
+                            if (o1 instanceof ArchiveFileAddressesBean && o2 instanceof ArchiveFileAddressesBean) {
+                                return getSortString((ArchiveFileAddressesBean) o1).compareTo(getSortString((ArchiveFileAddressesBean) o2));
                             }
-                            return -1;
                         }
-
+                        return -1;
                     });
                 } catch (Throwable t) {
                     // log, but do not fail
@@ -3523,8 +3528,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         for (Object d : resultList) {
             if (d instanceof ArchiveFileDocumentsBean) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                if (doc.getName().equalsIgnoreCase(documentName)) {
-                    return true;
+                if (doc.getName() != null) {
+                    if (doc.getName().equalsIgnoreCase(documentName)) {
+                        return true;
+                    }
                 }
             }
         }
