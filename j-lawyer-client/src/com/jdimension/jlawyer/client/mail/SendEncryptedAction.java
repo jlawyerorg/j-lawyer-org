@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.encryption.PDFEncryptor;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -787,9 +788,26 @@ public class SendEncryptedAction extends ProgressableAction {
         props.put("mail.password", Crypto.decrypt(ms.getEmailOutPwd()));
 
         // add outbox properties for storing in "sent"
-        props.setProperty("mail.store.protocol", ms.getEmailInType());
-        if (ms.isEmailInSsl()) {
-            props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+        if (ms.isMsExchange()) {
+            String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+            props.put("mail.imaps.sasl.enable", "true");
+            props.put("mail.imaps.port", "993");
+
+            props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+            props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+            props.put("mail.imaps.auth.login.disable", "true");
+            props.put("mail.imaps.auth.plain.disable", "true");
+
+            props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+            props.setProperty("mail.imaps.socketFactory.fallback", "false");
+            props.setProperty("mail.imaps.socketFactory.port", "993");
+            props.setProperty("mail.imaps.starttls.enable", "true");
+        } else {
+            props.setProperty("mail.store.protocol", ms.getEmailInType());
+            if (ms.isEmailInSsl()) {
+                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
         }
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -955,8 +973,18 @@ public class SendEncryptedAction extends ProgressableAction {
                 bus.close();
 
                 this.progress("Suche Ordner 'Gesendet'...");
-                Store store = session.getStore(ms.getEmailInType());
-                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                Store store = null;
+                if (ms.isMsExchange()) {
+                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+
+                    session = Session.getInstance(props);
+                    store = session.getStore("imaps");
+                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
+
+                } else {
+                    session.getStore(ms.getEmailInType());
+                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                }
 
                 Folder folder = EmailUtils.getInboxFolder(store);
                 if (!folder.isOpen()) {

@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
+import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
@@ -889,6 +890,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (!this.connected) {
             String server = null;
             try {
+                String emailInPwd=Crypto.decrypt(ms.getEmailInPwd());
+                
                 Properties props = System.getProperties();
                 props.setProperty("mail.imap.partialfetch", "false");
                 props.setProperty("mail.imaps.partialfetch", "false");
@@ -896,13 +899,45 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 if (ms.isEmailInSsl()) {
                     props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
                 }
-
-                Session session = Session.getDefaultInstance(props, null);
-
-                Store store = session.getStore(ms.getEmailInType());
-                this.stores.put(ms, store);
+                
+                Session session=null;
+                Store store=null;
                 server = ms.getEmailInServer();
-                store.connect(server, ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                
+                if(ms.isMsExchange()) {
+                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                    String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+                    props.put("mail.imaps.sasl.enable", "true");
+                    props.put("mail.imaps.port", "993");
+
+                    props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+                    props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+                    props.put("mail.imaps.auth.login.disable", "true");
+                    props.put("mail.imaps.auth.plain.disable", "true");
+
+                    props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                    props.setProperty("mail.imaps.socketFactory.fallback", "false");
+                    props.setProperty("mail.imaps.socketFactory.port", "993");
+                    props.setProperty("mail.imaps.starttls.enable", "true");
+                    
+                    session = Session.getInstance(props);
+                    
+                    // should be imaps for Office 365
+                    store = session.getStore("imaps");
+                    // server should be outlook.office365.com
+                    this.stores.put(ms, store);
+                    store.connect(server, ms.getEmailInUser(), authToken);
+                    
+                } else {
+                    session = Session.getDefaultInstance(props, null);
+                    store = session.getStore(ms.getEmailInType());
+                    this.stores.put(ms, store);
+                    store.connect(server, ms.getEmailInUser(), emailInPwd);
+                }
+
+                
+                
             } catch (Exception ex) {
                 log.error("Error connecting to server " + server, ex);
                 if (showErrorDialogOnFailure) {
@@ -1063,9 +1098,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         
         SwingUtilities.invokeLater(r);
         
-    // already called by splashthread
-//        notifyStatusBarReady();
-
     }
     
     private void restoreExpansionState() {
@@ -1095,11 +1127,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 return;
             }
 
-            FolderContainer childContainer = new FolderContainer(child);
+             if ((child.getType() & Folder.HOLDS_MESSAGES) != 0) {
 
-            String key = childContainer.toString().toLowerCase();
-            childHt.put(key, childContainer);
-            htKeys.add(key);
+                FolderContainer childContainer = new FolderContainer(child);
+
+                String key = childContainer.toString().toLowerCase();
+                childHt.put(key, childContainer);
+                htKeys.add(key);
+            } else {
+                log.info("Folder " + child.getName() + " may not contain messages - skipping...");
+            }
         }
 
         String[] htKeysSorted = htKeys.toArray(new String[0]);

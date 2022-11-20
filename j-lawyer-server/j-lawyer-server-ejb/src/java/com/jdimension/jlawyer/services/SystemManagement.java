@@ -1461,8 +1461,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd) throws Exception {
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception {
         Properties props = System.getProperties();
+        //Properties props = new Properties();
         props.setProperty("mail.imap.partialfetch", "false");
         props.setProperty("mail.imaps.partialfetch", "false");
         props.setProperty("mail.store.protocol", protocol);
@@ -1470,10 +1471,34 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             props.setProperty("mail." + protocol + ".ssl.enable", "true");
         }
 
-        Session session = Session.getDefaultInstance(props, null);
+        Session session = null;
+        Store store = null;
+        if(isMsExchange) {
+            String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+            props.put("mail.imaps.sasl.enable", "true");
+            props.put("mail.imaps.port", "993");
 
-        Store store = session.getStore(protocol);
-        store.connect(host, user, pwd);
+            props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+            props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+            props.put("mail.imaps.auth.login.disable", "true");
+            props.put("mail.imaps.auth.plain.disable", "true");
+
+            props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+            props.setProperty("mail.imaps.socketFactory.fallback", "false");
+            props.setProperty("mail.imaps.socketFactory.port", "993");
+            props.setProperty("mail.imaps.starttls.enable", "true");
+
+            session = Session.getInstance(props);
+            session.setDebug(true);
+            store = session.getStore("imaps");
+            store.connect(host, user, authToken);
+
+        } else {
+            session = Session.getDefaultInstance(props, null);
+            store = session.getStore(protocol);
+            store.connect(host, user, pwd);
+        }
 
         Folder folder = (Folder) store.getFolder("INBOX"); //This works for both email account
         folder.open(Folder.READ_ONLY);
