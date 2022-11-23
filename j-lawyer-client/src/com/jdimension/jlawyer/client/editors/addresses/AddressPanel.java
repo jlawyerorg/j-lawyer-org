@@ -3130,73 +3130,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void cmdCopyAddressToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyAddressToClipboardActionPerformed
 
-        StringBuilder sb = new StringBuilder();
-        if (this.txtCompany.getText().length() > 0) {
-            sb.append(this.txtCompany.getText()).append(System.lineSeparator());
-        }
-
-        if (this.txtDepartment.getText().length() > 0) {
-            sb.append(this.txtDepartment.getText()).append(System.lineSeparator());
-        }
-
-        if (this.cmbTitleInAddress.getEditor().getItem().toString().length() > 0) {
-            sb.append(this.cmbTitleInAddress.getEditor().getItem().toString()).append(" ");
-        }
-
-        if (this.cmbDegreePrefix.getEditor().getItem().toString().length() > 0) {
-            sb.append(this.cmbDegreePrefix.getEditor().getItem().toString()).append(" ");
-        }
-
-        if (this.txtFirstName.getText().length() > 0) {
-            sb.append(this.txtFirstName.getText()).append(" ");
-        }
-
-        if (this.txtName.getText().length() > 0) {
-            sb.append(this.txtName.getText());
-        }
-
-        if (this.cmbDegreeSuffix.getEditor().getItem().toString().length() > 0) {
-            sb.append(" ").append(this.cmbDegreeSuffix.getEditor().getItem().toString()).append(" ");
-        }
-
-        sb.append(System.lineSeparator());
-
-        if (this.txtStreet.getText().length() > 0) {
-            sb.append(this.txtStreet.getText()).append(" ");
-        }
-
-        if (this.txtStreetNr.getText().length() > 0) {
-            sb.append(this.txtStreetNr.getText());
-        }
-
-        sb.append(System.lineSeparator());
-
-        if (this.txtAdjunct.getText().length() > 0) {
-            sb.append(this.txtAdjunct.getText()).append(System.lineSeparator());
-        }
-
-        if (this.txtZipCode.getText().length() > 0) {
-            sb.append(this.txtZipCode.getText()).append(" ");
-        }
-
-        if (this.txtCity.getText().length() > 0) {
-            sb.append(this.txtCity.getText());
-        }
-
-        if (this.txtDistrict.getText().length() > 0) {
-            sb.append(" (").append(this.txtDistrict.getText()).append(")");
-        }
-
-        sb.append(System.lineSeparator());
-
-        if (this.cmbCountry.getEditor().getItem().toString().length() > 0) {
-            sb.append(this.cmbCountry.getEditor().getItem().toString());
-        }
-
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Clipboard clipboard = toolkit.getSystemClipboard();
-        StringSelection strSel = new StringSelection(sb.toString());
-        clipboard.setContents(strSel, null);
+        AddressUtils.copyToClipboard(this.txtCompany.getText(), txtDepartment.getText(), this.cmbTitleInAddress.getEditor().getItem().toString(), this.cmbDegreePrefix.getEditor().getItem().toString(), this.txtFirstName.getText(), this.txtName.getText(), this.cmbDegreeSuffix.getEditor().getItem().toString(), this.txtStreet.getText(), this.txtStreetNr.getText(), this.txtAdjunct.getText(), this.txtZipCode.getText(), this.txtCity.getText(), this.txtDistrict.getText(), this.cmbCountry.getEditor().getItem().toString());
+        
     }//GEN-LAST:event_cmdCopyAddressToClipboardActionPerformed
 
     private void updateAge() {
