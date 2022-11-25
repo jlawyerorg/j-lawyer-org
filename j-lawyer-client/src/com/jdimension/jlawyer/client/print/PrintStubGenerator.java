@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -675,6 +676,10 @@ import java.util.ArrayList;
  * @author jens
  */
 public class PrintStubGenerator {
+    
+    private static final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yy HH:mm");
+    private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yy");
 
     public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList, String criteriaString) {
         ArrayList<ReviewsDetail> result = new ArrayList<>();
@@ -748,7 +753,7 @@ public class PrintStubGenerator {
         det.setAssignee(rev.getAssignee());
         det.setFileNumber(ar.getFileNumber());
         det.setReviewTypeName(rev.getEventTypeName());
-        det.setReviewDate(rev.toString());
+        det.setReviewDate(rev.toString(dateTimeFormat, dateFormat, timeFormat));
         det.setReviewReason(rev.getSummary());
 
         return det;

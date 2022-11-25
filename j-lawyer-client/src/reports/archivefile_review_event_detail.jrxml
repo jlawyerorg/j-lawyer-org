@@ -18,7 +18,7 @@
             <textField>
                 <reportElement x="0" y="0" width="120" height="15"/>
                 <textElement>
-                    <font size="10" isBold="true"/>
+                    <font size="10" isBold="false"/>
                 </textElement>
                 <textFieldExpression class="java.util.Date"><![CDATA[$F{reviewDate}]]></textFieldExpression>
             </textField>
