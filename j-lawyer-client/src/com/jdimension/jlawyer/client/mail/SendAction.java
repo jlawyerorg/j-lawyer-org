@@ -953,7 +953,7 @@ public class SendAction extends ProgressableAction {
                 store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
 
             } else {
-                session.getStore(ms.getEmailInType());
+                store = session.getStore(ms.getEmailInType());
                 store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
             }
 
