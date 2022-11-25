@@ -762,6 +762,8 @@ import org.apache.log4j.Logger;
 public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, MessageChangedListener, MessageCountListener, DropTargetListener, DragGestureListener, EventConsumer {
 
     private static final Logger log = Logger.getLogger(EmailInboxPanel.class.getName());
+    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    
     private Image backgroundImage = null;
     private EmailFolderTreeCellRenderer renderer = null;
     private HashMap<MailboxSetup, Store> stores = new HashMap<>();
@@ -906,7 +908,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 
                 if(ms.isMsExchange()) {
                     String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
-                    String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
                     props.put("mail.imaps.sasl.enable", "true");
                     props.put("mail.imaps.port", "993");
 
