@@ -704,6 +704,8 @@ import org.apache.log4j.Logger;
 public class SendEncryptedAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
+    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private List<String> attachments = null;
     private MailboxSetup ms = null;
@@ -789,7 +791,6 @@ public class SendEncryptedAction extends ProgressableAction {
 
         // add outbox properties for storing in "sent"
         if (ms.isMsExchange()) {
-            String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
             props.put("mail.imaps.sasl.enable", "true");
             props.put("mail.imaps.port", "993");
 

@@ -738,6 +738,7 @@ import org.w3c.dom.NodeList;
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static final Logger log = Logger.getLogger(SystemManagement.class.getName());
+    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     
     private static final String ROLE_LOGIN="loginRole";
     
@@ -1474,7 +1475,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Session session = null;
         Store store = null;
         if(isMsExchange) {
-            String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
             props.put("mail.imaps.sasl.enable", "true");
             props.put("mail.imaps.port", "993");
 
