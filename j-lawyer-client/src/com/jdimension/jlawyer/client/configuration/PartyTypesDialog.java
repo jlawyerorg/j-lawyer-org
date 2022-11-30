@@ -665,12 +665,11 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Matcher;
@@ -683,7 +682,6 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-import javax.swing.text.NavigationFilter.FilterBypass;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -697,6 +695,8 @@ public class PartyTypesDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form PartyTypesDialog
+     * @param parent
+     * @param modal
      */
     public PartyTypesDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -723,7 +723,6 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
             Collection<PartyTypeBean> partyTypes = mgmt.getPartyTypes();
@@ -731,15 +730,12 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             this.tblPartyTypes.setDefaultRenderer(Object.class, new PartyTypesTableCellRenderer());
 
             for (PartyTypeBean pt : partyTypes) {
-                //mgmt.removeOptionGroup(((AppOptionGroupBean) this.lstOptions.getSelectedValues()[i]).getId());
-
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).addRow(new Object[]{pt, pt.getPlaceHolder(), pt.getColor()});
 
             }
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1014,8 +1010,6 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
             PartyTypeBean newParty = new PartyTypeBean();
@@ -1029,7 +1023,6 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Error creating new party type", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
 
     }//GEN-LAST:event_cmdAddActionPerformed
@@ -1064,7 +1057,6 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 log.error("Error creating new party type", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
 
@@ -1082,7 +1074,6 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
                 mgmt.removePartyType(ptb);
@@ -1093,14 +1084,12 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 log.error("Error creating new party type", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
 
     private void cmdColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdColorActionPerformed
-        JColorChooser lineColorChooser2 = new JColorChooser();
-        Color currentColor = lineColorChooser2.showDialog(this, "Farbe wählen", cmdColor.getBackground());
+        Color currentColor = JColorChooser.showDialog(this, "Farbe wählen", cmdColor.getBackground());
         if (currentColor != null) {
             cmdColor.setBackground(currentColor);
 
@@ -1120,9 +1109,9 @@ public class PartyTypesDialog extends javax.swing.JDialog {
 
             this.taPlaceHolders.setText("");
             PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
-            ArrayList<String> phList=new ArrayList<String>();
+            ArrayList<String> phList=new ArrayList<>();
             phList.add(ptb.getPlaceHolder());
-            ArrayList<String> placeHolders=PlaceHolderUtils.getAllPlaceHolders(phList, new ArrayList<String>());
+            ArrayList<String> placeHolders=PlaceHolders.getAllPlaceHolders(phList, new ArrayList<>());
             for(String ph: placeHolders) {
                 this.taPlaceHolders.append(ph);
                 this.taPlaceHolders.append(System.lineSeparator());
@@ -1173,17 +1162,15 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                PartyTypesDialog dialog = new PartyTypesDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            PartyTypesDialog dialog = new PartyTypesDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

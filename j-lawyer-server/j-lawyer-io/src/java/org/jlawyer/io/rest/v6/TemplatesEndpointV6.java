@@ -663,8 +663,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -699,7 +703,8 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     private static final Logger log = Logger.getLogger(TemplatesEndpointV6.class.getName());
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
     private static final String LOOKUP_CASESVC="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
-
+    private static final String LOOKUP_FORMSSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
+    
     /**
      * Returns the folder structure holding document templates.
      * 
@@ -794,13 +799,13 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-     * Creates a new document based on a template. When scripts are used, the call must make sure to provide all required variable values.
+     * Creates a new document based on a template. Any place holders are automaticall populated, but a client may override them.
      *
      * @param caseId the id of the case
      * @param fileName file name of the document to be created, without file extension (server will enforce same extension as template)
      * @param folder the template folder hierarchy starting with /
      * @param template the file name of the template
-     * @param placeHolderValues key-value pairs holding placeholder values
+     * @param placeHolderValues key-value pairs holding placeholder values, used for overriding defaults / existing values
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
@@ -813,16 +818,44 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal casesvc = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
-            HashMap<String,Object> placeHolderMap=new HashMap();
+            
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            List<String> placeHoldersInTemplate=system.getPlaceHoldersForTemplate(folder, template, caseId);
+            Collections.sort(placeHoldersInTemplate, String.CASE_INSENSITIVE_ORDER);
+            Object[] placeHoldersInTemplateArray=placeHoldersInTemplate.stream().filter(ph -> !ph.startsWith("[[")).toArray();
+            HashMap<String,Object> placeHoldersInTemplateMap=new HashMap<>();
+            for(Object o: placeHoldersInTemplateArray) {
+                placeHoldersInTemplateMap.put(o.toString(), "");
+            }
+            
+            ArchiveFileBean aFile=casesvc.getArchiveFile(caseId);
+            if(aFile==null) {
+                log.error("can not create document with template " + template + " in folder " + folder + " for case " + caseId + " - case does not exist");
+                return Response.serverError().build();
+            }
+            
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup(LOOKUP_FORMSSVC);
+            HashMap<String,String> formsPlaceHolders=forms.getPlaceHolderValuesForCase(caseId);
+            
+            List<PartiesTriplet> parties=new ArrayList<>();
+            List<ArchiveFileAddressesBean> aabList=casesvc.getInvolvementDetailsForCase(caseId);
+            for(ArchiveFileAddressesBean aab: aabList) {
+                PartiesTriplet pt=new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab);
+                parties.add(pt);
+            }
+            //placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, system.getUser(aFile.getLawyer()), system.getUser(aFile.getAssistant()), system.getUser(context.getCallerPrincipal().getName()));
+            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, system.getUser(aFile.getLawyer()), system.getUser(aFile.getAssistant()), null);
+                        
+            
             for(RestfulPlaceholderV6 rph: placeHolderValues) {
                 String key=rph.getPlaceHolderKey();
                 if(!key.startsWith("{{"))
                     key="{{"+key;
                 if(!key.endsWith("}}"))
                     key=key+"}}";
-                placeHolderMap.put(key, rph.getPlaceHolderValue());
+                placeHoldersInTemplateMap.put(key, rph.getPlaceHolderValue());
             }
-            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, folder, template, placeHolderMap, "");
+            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, folder, template, placeHoldersInTemplateMap, "");
             RestfulDocumentV1 rdoc=new RestfulDocumentV1();
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setFavorite(rdoc.isFavorite());

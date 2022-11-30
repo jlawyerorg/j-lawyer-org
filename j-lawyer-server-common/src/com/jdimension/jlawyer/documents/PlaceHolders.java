@@ -781,6 +781,20 @@ public class PlaceHolders {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
     }
     
+    public static String insertAt(String origin, String insert, int position) {
+        String origin1 = origin.substring(0, position);
+        String origin2 = origin.substring(position, origin.length());
+        return origin1 + insert + origin2;
+
+    }
+    
+    protected static String val(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s;
+    }
+    
     public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
         return genericPlaceHolder.replaceAll("###", typeSpecificPrefix);
     }

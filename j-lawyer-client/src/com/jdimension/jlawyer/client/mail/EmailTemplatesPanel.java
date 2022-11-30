@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -786,8 +785,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
-
 
     }
 
@@ -1182,9 +1179,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         
         EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
         if(EmailTemplatesPanel.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
-            this.txtSubject.setText(PlaceHolderUtils.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
+            this.txtSubject.setText(PlaceHolders.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
         } else if(EmailTemplatesPanel.PLACEHOLDERTARGET_BODY.equals(target)) {
-            ed.setText(PlaceHolderUtils.insertAt(ed.getText(), insert, ed.getCaretPosition()));
+            ed.setText(PlaceHolders.insertAt(ed.getText(), insert, ed.getCaretPosition()));
         }
     }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
 

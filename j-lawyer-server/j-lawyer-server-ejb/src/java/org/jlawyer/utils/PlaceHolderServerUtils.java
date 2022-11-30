@@ -661,38 +661,34 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package org.jlawyer.utils;
 
-import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import javax.naming.InitialContext;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
  * @author jens
  */
-public class PlaceHolderUtils extends PlaceHolders {
+public class PlaceHolderServerUtils extends PlaceHolders  {
 
-    public static String insertAt(String origin, String insert, int position) {
-        String origin1 = origin.substring(0, position);
-        String origin2 = origin.substring(position, origin.length());
-        return origin1 + insert + origin2;
-
-    }
-
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesPanelEntry> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) {
+    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -717,64 +713,66 @@ public class PlaceHolderUtils extends PlaceHolders {
             placeHolders.put(DOK_DZ, dictateSign);
         }
 
-        ServerSettings set = ServerSettings.getInstance();
+        InitialContext ic = new InitialContext();
+        ServerSettingsBeanFacadeLocal set = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+        
         if (placeHolders.containsKey(PROFIL_FIRMA)) {
-            placeHolders.put(PROFIL_FIRMA, set.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
+            placeHolders.put(PROFIL_FIRMA, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYNAME, ""));
         }
         if (placeHolders.containsKey(PROFIL_STRASSE)) {
-            placeHolders.put(PROFIL_STRASSE, set.getSetting(ServerSettings.PROFILE_COMPANYSTREET, ""));
+            placeHolders.put(PROFIL_STRASSE, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYSTREET, ""));
         }
         if (placeHolders.containsKey(PROFIL_STRASSE2)) {
-            placeHolders.put(PROFIL_STRASSE2, set.getSetting(ServerSettings.PROFILE_COMPANYSTREET2, ""));
+            placeHolders.put(PROFIL_STRASSE2, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYSTREET2, ""));
         }
         if (placeHolders.containsKey(PROFIL_PLZ)) {
-            placeHolders.put(PROFIL_PLZ, set.getSetting(ServerSettings.PROFILE_COMPANYZIP, ""));
+            placeHolders.put(PROFIL_PLZ, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYZIP, ""));
         }
         if (placeHolders.containsKey(PROFIL_ORT)) {
-            placeHolders.put(PROFIL_ORT, set.getSetting(ServerSettings.PROFILE_COMPANYCITY, ""));
+            placeHolders.put(PROFIL_ORT, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYCITY, ""));
         }
         if (placeHolders.containsKey(PROFIL_TEL)) {
-            placeHolders.put(PROFIL_TEL, set.getSetting(ServerSettings.PROFILE_COMPANYPHONE, ""));
+            placeHolders.put(PROFIL_TEL, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYPHONE, ""));
         }
         if (placeHolders.containsKey(PROFIL_FAX)) {
-            placeHolders.put(PROFIL_FAX, set.getSetting(ServerSettings.PROFILE_COMPANYFAX, ""));
+            placeHolders.put(PROFIL_FAX, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYFAX, ""));
         }
         if (placeHolders.containsKey(PROFIL_MOBIL)) {
-            placeHolders.put(PROFIL_MOBIL, set.getSetting(ServerSettings.PROFILE_COMPANYMOBILE, ""));
+            placeHolders.put(PROFIL_MOBIL, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYMOBILE, ""));
         }
         if (placeHolders.containsKey(PROFIL_LAND)) {
-            placeHolders.put(PROFIL_LAND, set.getSetting(ServerSettings.PROFILE_COMPANYCOUNTRY, ""));
+            placeHolders.put(PROFIL_LAND, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYCOUNTRY, ""));
         }
         if (placeHolders.containsKey(PROFIL_EMAIL)) {
-            placeHolders.put(PROFIL_EMAIL, set.getSetting(ServerSettings.PROFILE_COMPANYEMAIL, ""));
+            placeHolders.put(PROFIL_EMAIL, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYEMAIL, ""));
         }
         if (placeHolders.containsKey(PROFIL_WWW)) {
-            placeHolders.put(PROFIL_WWW, set.getSetting(ServerSettings.PROFILE_COMPANYWWW, ""));
+            placeHolders.put(PROFIL_WWW, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYWWW, ""));
         }
 
         if (placeHolders.containsKey(PROFIL_STEUERNR)) {
-            placeHolders.put(PROFIL_STEUERNR, set.getSetting(ServerSettings.PROFILE_COMPANYTAXID, ""));
+            placeHolders.put(PROFIL_STEUERNR, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYTAXID, ""));
         }
         if (placeHolders.containsKey(PROFIL_USTIDNR)) {
-            placeHolders.put(PROFIL_USTIDNR, set.getSetting(ServerSettings.PROFILE_COMPANYUSTID, ""));
+            placeHolders.put(PROFIL_USTIDNR, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYUSTID, ""));
         }
         if (placeHolders.containsKey(PROFIL_BANK)) {
-            placeHolders.put(PROFIL_BANK, set.getSetting(ServerSettings.PROFILE_COMPANYBANK, ""));
+            placeHolders.put(PROFIL_BANK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYBANK, ""));
         }
         if (placeHolders.containsKey(PROFIL_BLZ)) {
-            placeHolders.put(PROFIL_BLZ, set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE, ""));
+            placeHolders.put(PROFIL_BLZ, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYBANKCODE, ""));
         }
         if (placeHolders.containsKey(PROFIL_KONTONR)) {
-            placeHolders.put(PROFIL_KONTONR, set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
+            placeHolders.put(PROFIL_KONTONR, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO, ""));
         }
         if (placeHolders.containsKey(PROFIL_BANK_AK)) {
-            placeHolders.put(PROFIL_BANK_AK, set.getSetting(ServerSettings.PROFILE_COMPANYBANK_AK, ""));
+            placeHolders.put(PROFIL_BANK_AK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYBANK_AK, ""));
         }
         if (placeHolders.containsKey(PROFIL_BLZ_AK)) {
-            placeHolders.put(PROFIL_BLZ_AK, set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE_AK, ""));
+            placeHolders.put(PROFIL_BLZ_AK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYBANKCODE_AK, ""));
         }
         if (placeHolders.containsKey(PROFIL_KONTONR_AK)) {
-            placeHolders.put(PROFIL_KONTONR_AK, set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO_AK, ""));
+            placeHolders.put(PROFIL_KONTONR_AK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO_AK, ""));
         }
         
         for(String formPh: formsPlaceHolderValues.keySet()) {
@@ -784,9 +782,9 @@ public class PlaceHolderUtils extends PlaceHolders {
         }
         
 
-        for(PartiesPanelEntry ppe: selectedParties) {
+        for(PartiesTriplet ppe: selectedParties) {
             AddressBean selected=ppe.getAddress();
-            PartyTypeBean ptb=ppe.getReferenceType();
+            PartyTypeBean ptb=ppe.getPartyType();
             
             if (placeHolders.containsKey(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()), val(selected.getName()));
@@ -1033,11 +1031,12 @@ public class PlaceHolderUtils extends PlaceHolders {
         return placeHolders;
     }
 
-    private static String val(String s) {
-        if (s == null) {
-            return "";
-        }
-        return s;
+    public static String getSetting(ServerSettingsBeanFacadeLocal set, String key, String defaultValue) {
+        ServerSettingsBean b=set.find(key);
+        if(b==null)
+            return defaultValue;
+        else
+            return b.getSettingValue();
     }
 
 }

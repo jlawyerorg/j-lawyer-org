@@ -673,10 +673,10 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -988,8 +988,14 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                         for (PartyTypeBean ptb : allPartyTypes) {
                             ht2.add(new PartiesPanelEntry(ad, ptb));
                         }
-                        
-                        ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new HashMap<>(), null, null, null);
+
+                        List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                        for (PartiesPanelEntry pe : ht2) {
+                            PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                            partiesTriplets.add(triplet);
+                        }
+
+                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
                         
                         for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
@@ -1098,7 +1104,12 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new HashMap<>(), null, null, null);
+                List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                for (PartiesPanelEntry pe : ht2) {
+                    PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                    partiesTriplets.add(triplet);
+                }
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
 
                 for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};

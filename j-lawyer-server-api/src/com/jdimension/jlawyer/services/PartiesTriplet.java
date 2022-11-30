@@ -663,42 +663,67 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
-import com.jdimension.jlawyer.persistence.FormTypeBean;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import javax.ejb.Local;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import java.io.Serializable;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface FormsServiceLocal {
+public class PartiesTriplet implements Serializable {
 
-    List<FormTypeBean> getAllFormTypes();
+    private AddressBean address = null;
+    private PartyTypeBean partyType = null;
+    protected ArchiveFileAddressesBean involvement = null;
 
-    List<FormTypeArtefactBean> getFormTypeArtefacts(String formTypeId);
+    public PartiesTriplet(AddressBean a, PartyTypeBean pt, ArchiveFileAddressesBean i) {
+        this.address=a;
+        this.partyType=pt;
+        this.involvement=i;
+    }
 
-    ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception;
+    /**
+     * @return the address
+     */
+    public AddressBean getAddress() {
+        return address;
+    }
 
-    List<ArchiveFileFormsBean> getFormsForCase(String caseId);
+    /**
+     * @param address the address to set
+     */
+    public void setAddress(AddressBean address) {
+        this.address = address;
+    }
 
-    void removeFormType(String formTypeId) throws Exception;
+    /**
+     * @return the partyType
+     */
+    public PartyTypeBean getPartyType() {
+        return partyType;
+    }
 
-    void removeForm(String formId) throws Exception;
+    /**
+     * @param partyType the partyType to set
+     */
+    public void setPartyType(PartyTypeBean partyType) {
+        this.partyType = partyType;
+    }
 
-    void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception;
+    /**
+     * @return the involvement
+     */
+    public ArchiveFileAddressesBean getInvolvement() {
+        return involvement;
+    }
 
-    List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception;
+    /**
+     * @param involvement the involvement to set
+     */
+    public void setInvolvement(ArchiveFileAddressesBean involvement) {
+        this.involvement = involvement;
+    }
 
-    ArchiveFileFormsBean getForm(String id) throws Exception;
-
-    Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
-    
-    HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception;
-    
 }
