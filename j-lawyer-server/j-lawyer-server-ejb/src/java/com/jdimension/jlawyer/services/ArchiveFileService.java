@@ -1597,6 +1597,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         db.setId(docId);
+        db.setVersion(1);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
@@ -1750,6 +1751,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletionDate(new Date());
         db.setDeletedBy(context.getCallerPrincipal().getName());
         db.setFolder(aFile.getRootFolder());
+        db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
         DocumentRemovedEvent evt = new DocumentRemovedEvent();
@@ -1770,6 +1772,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (content != null) {
             db.setSize(content.length);
+            db.bumpVersion();
             this.archiveFileDocumentsFacade.edit(db);
         }
 
@@ -1963,6 +1966,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         db.setName(newName);
+        db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
         try {
@@ -3032,6 +3036,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         db.setCreationDate(date);
+        db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
         StringGenerator idGen = new StringGenerator();
@@ -3060,6 +3065,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
 
         db.setFavorite(favorite);
+        db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
         return true;
@@ -3357,6 +3363,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         
         db.setId(docId);
+        db.setVersion(1);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
@@ -4196,6 +4203,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         for (ArchiveFileDocumentsBean doc : documents) {
             doc.setFolder(target);
+            doc.bumpVersion();
             this.archiveFileDocumentsFacade.edit(doc);
 
             ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -4402,6 +4410,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeleted(false);
         db.setDeletedBy(null);
         db.setDeletionDate(null);
+        db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();

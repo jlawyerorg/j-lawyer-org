@@ -861,6 +861,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             rdoc.setFavorite(rdoc.isFavorite());
             rdoc.setFolderId(newDoc.getFolder().getId());
             rdoc.setId(newDoc.getId());
+            rdoc.setVersion(newDoc.getVersion());
             rdoc.setName(newDoc.getName());
             rdoc.setSize(newDoc.getSize());
             

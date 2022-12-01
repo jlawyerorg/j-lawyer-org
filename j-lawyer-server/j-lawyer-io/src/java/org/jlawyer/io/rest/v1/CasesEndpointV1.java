@@ -737,7 +737,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArrayList<String> ids = cases.getAllArchiveFileIds();
-            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<RestfulCaseOverviewV1>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
             for (String id : ids) {
                 ArchiveFileBean afb=null;
                 try {
@@ -983,10 +983,11 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(id);
-            ArrayList<RestfulDocumentV1> docList = new ArrayList<RestfulDocumentV1>();
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : documents) {
                 RestfulDocumentV1 d = new RestfulDocumentV1();
                 d.setId(doc.getId());
+                d.setVersion(doc.getVersion());
                 d.setName(doc.getName());
                 d.setCreationDate(doc.getCreationDate());
                 d.setFavorite(doc.isFavorite());
@@ -1040,6 +1041,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             String base64 = new Base64().encode(content);
             RestfulDocumentContentV1 rdc = new RestfulDocumentContentV1();
             rdc.setId(id);
+            rdc.setVersion(doc.getVersion());
             rdc.setFileName(doc.getName());
             rdc.setCaseId(doc.getArchiveFileKey().getId());
             rdc.setBase64content(base64);
@@ -1187,6 +1189,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             doc.setCaseId(document.getCaseId());
             doc.setFileName(newDoc.getName());
             doc.setId(newDoc.getId());
+            doc.setVersion(newDoc.getVersion());
             if(newDoc.getFolder()!=null)
                 doc.setFolderId(newDoc.getFolder().getId());
 
@@ -1251,6 +1254,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             doc.setCaseId(document.getCaseId());
             doc.setFileName(updated.getName());
             doc.setId(updated.getId());
+            doc.setVersion(updated.getVersion());
             if(updated.getFolder()!=null)
                 doc.setFolderId(updated.getFolder().getId());
 

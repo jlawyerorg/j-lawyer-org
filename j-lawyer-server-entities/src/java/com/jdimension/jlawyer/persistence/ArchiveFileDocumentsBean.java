@@ -717,6 +717,8 @@ public class ArchiveFileDocumentsBean implements Serializable {
     protected Date deletionDate;
     @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
     protected boolean deleted;
+    @Column(name = "version", columnDefinition = "INTEGER DEFAULT 1")
+    protected long version=1;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -894,6 +896,24 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    /**
+     * @return the version
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(long version) {
+        this.version = version;
+    }
+    
+    public void bumpVersion() {
+        this.setVersion(this.version+1);
     }
     
 }

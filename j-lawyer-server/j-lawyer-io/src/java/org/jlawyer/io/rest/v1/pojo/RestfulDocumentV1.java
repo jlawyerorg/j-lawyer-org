@@ -677,6 +677,7 @@ public class RestfulDocumentV1 {
     private long size=0l;
     private boolean favorite=false;
     protected String folderId=null;
+    protected long version=1l;
 
     public RestfulDocumentV1() {
     }
@@ -763,6 +764,20 @@ public class RestfulDocumentV1 {
      */
     public void setFolderId(String folderId) {
         this.folderId = folderId;
+    }
+
+    /**
+     * @return the version
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(long version) {
+        this.version = version;
     }
     
     
