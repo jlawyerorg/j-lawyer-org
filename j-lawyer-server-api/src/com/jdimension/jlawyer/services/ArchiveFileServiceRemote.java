@@ -847,4 +847,6 @@ public interface ArchiveFileServiceRemote {
 
     DataBucket getDocumentContentBucket(String id) throws Exception;
 
+    boolean setDocumentHighlights(String id, int highlight1, int highlight2) throws Exception;
+
 }

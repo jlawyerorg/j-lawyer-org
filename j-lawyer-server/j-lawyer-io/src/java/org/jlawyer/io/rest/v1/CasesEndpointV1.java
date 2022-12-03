@@ -992,6 +992,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 d.setCreationDate(doc.getCreationDate());
                 d.setFavorite(doc.isFavorite());
                 d.setSize(doc.getSize());
+                d.setHighlight1(doc.getHighlight1());
+                d.setHighlight2(doc.getHighlight2());
                 if(doc.getFolder()!=null)
                     d.setFolderId(doc.getFolder().getId());
                 docList.add(d);

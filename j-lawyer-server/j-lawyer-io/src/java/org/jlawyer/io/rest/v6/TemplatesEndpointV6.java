@@ -864,6 +864,8 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             rdoc.setVersion(newDoc.getVersion());
             rdoc.setName(newDoc.getName());
             rdoc.setSize(newDoc.getSize());
+            rdoc.setHighlight1(newDoc.getHighlight1());
+            rdoc.setHighlight2(newDoc.getHighlight2());
             
             return Response.ok(rdoc).build();
         } catch (Exception ex) {

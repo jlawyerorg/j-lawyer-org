@@ -3064,9 +3064,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String aId = db.getArchiveFileKey().getId();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
 
-        db.setFavorite(favorite);
-        db.bumpVersion();
-        this.archiveFileDocumentsFacade.edit(db);
+        if(db.isFavorite()!=favorite) {
+            db.setFavorite(favorite);
+            db.bumpVersion();
+            this.archiveFileDocumentsFacade.edit(db);
+        }
 
         return true;
     }
@@ -4690,6 +4692,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         DataBucketUtils.fillBucket(bucket);
         
         return bucket;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean setDocumentHighlights(String id, int highlight1, int highlight2) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        String aId = db.getArchiveFileKey().getId();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+
+        if(db.getHighlight1()!=highlight1 && db.getHighlight2()!=highlight2) {
+            db.setHighlight1(highlight1);
+            db.setHighlight2(highlight2);
+            db.bumpVersion();
+            this.archiveFileDocumentsFacade.edit(db);
+        }
+
+        return true;
     }
 
 }
