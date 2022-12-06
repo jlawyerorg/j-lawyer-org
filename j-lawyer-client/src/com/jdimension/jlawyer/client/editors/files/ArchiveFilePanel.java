@@ -5415,14 +5415,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
     private void mnuDocumentHighlight1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1MousePressed
-        updateDocumentHighlights(evt, 1);
+        updateDocumentHighlights(1);
     }//GEN-LAST:event_mnuDocumentHighlight1MousePressed
 
     private void mnuDocumentHighlight2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2MousePressed
-        updateDocumentHighlights(evt, 2);
+        updateDocumentHighlights(2);
     }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
 
-    private void updateDocumentHighlights(java.awt.event.MouseEvent evt, int highlightIndex) {
+    private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
             hp.setLocationRelativeTo(this.mnuDocumentHighlights);
@@ -5438,8 +5438,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
                 for (ArchiveFileDocumentsBean doc : selectedDocs) {
-                    Boolean favorite = doc.isFavorite();
-                    boolean newValue = !favorite.booleanValue();
                     if(highlightIndex==1) {
                         remote.setDocumentHighlights(doc.getId(), highlightColor, doc.getHighlight2());
                         doc.setHighlight1(highlightColor);
