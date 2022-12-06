@@ -719,10 +719,10 @@ public class ArchiveFileDocumentsBean implements Serializable {
     protected boolean deleted;
     @Column(name = "version", columnDefinition = "INTEGER DEFAULT 1")
     protected long version=1;
-    @Column(name = "highlight1", columnDefinition = "INTEGER DEFAULT -1")
-    protected int highlight1=-1;
-    @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -1")
-    protected int highlight2=-1;
+    @Column(name = "highlight1", columnDefinition = "INTEGER DEFAULT -2147483648")
+    protected int highlight1=Integer.MIN_VALUE;
+    @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -2147483648")
+    protected int highlight2=Integer.MIN_VALUE;
 
     public ArchiveFileDocumentsBean() {
     }

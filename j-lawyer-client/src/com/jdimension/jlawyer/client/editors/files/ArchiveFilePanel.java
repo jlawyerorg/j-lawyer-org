@@ -771,6 +771,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import themes.colors.HighlightPicker;
 
 /**
  *
@@ -1554,6 +1555,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuCopyDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuRenameDocument = new javax.swing.JMenuItem();
         mnuSetDocumentDate = new javax.swing.JMenuItem();
+        mnuDocumentHighlights = new javax.swing.JMenu();
+        mnuDocumentHighlight1 = new javax.swing.JMenuItem();
+        mnuDocumentHighlight2 = new javax.swing.JMenuItem();
         mnuToggleFavorite = new javax.swing.JMenuItem();
         mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
@@ -1854,6 +1858,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuSetDocumentDate);
+
+        mnuDocumentHighlights.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_palette_black_48dp.png"))); // NOI18N
+        mnuDocumentHighlights.setText("farblich hervorheben");
+
+        mnuDocumentHighlight1.setText("erste Farbe");
+        mnuDocumentHighlight1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                mnuDocumentHighlight1MousePressed(evt);
+            }
+        });
+        mnuDocumentHighlights.add(mnuDocumentHighlight1);
+
+        mnuDocumentHighlight2.setText("zweite Farbe");
+        mnuDocumentHighlight2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                mnuDocumentHighlight2MousePressed(evt);
+            }
+        });
+        mnuDocumentHighlights.add(mnuDocumentHighlight2);
+
+        documentsPopup.add(mnuDocumentHighlights);
 
         mnuToggleFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite.png"))); // NOI18N
         mnuToggleFavorite.setText("Favoritendokument an/aus");
@@ -5389,6 +5414,50 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
+    private void mnuDocumentHighlight1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1MousePressed
+        updateDocumentHighlights(evt, 1);
+    }//GEN-LAST:event_mnuDocumentHighlight1MousePressed
+
+    private void mnuDocumentHighlight2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2MousePressed
+        updateDocumentHighlights(evt, 2);
+    }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
+
+    private void updateDocumentHighlights(java.awt.event.MouseEvent evt, int highlightIndex) {
+        if(!this.readOnly) {
+            HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
+            hp.setLocationRelativeTo(this.mnuDocumentHighlights);
+            hp.setVisible(true);
+            int highlightColor=Integer.MIN_VALUE;
+            if (hp.getSelectedColor() != null) {
+                highlightColor=hp.getSelectedColor().getRGB();
+            }
+            
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+                for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                    Boolean favorite = doc.isFavorite();
+                    boolean newValue = !favorite.booleanValue();
+                    if(highlightIndex==1) {
+                        remote.setDocumentHighlights(doc.getId(), highlightColor, doc.getHighlight2());
+                        doc.setHighlight1(highlightColor);
+                    } else {
+                        remote.setDocumentHighlights(doc.getId(), doc.getHighlight1(), highlightColor);
+                        doc.setHighlight2(highlightColor);
+                    }
+                    this.caseFolderPanel1.updateDocument(doc);
+                }
+
+            } catch (Exception ioe) {
+                log.error("Error highlighting documents", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Hervorheben von Dokumenten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            
+        }
+    }
+    
     public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
@@ -5803,6 +5872,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
+    private javax.swing.JMenuItem mnuDocumentHighlight1;
+    private javax.swing.JMenuItem mnuDocumentHighlight2;
+    private javax.swing.JMenu mnuDocumentHighlights;
     private javax.swing.JMenu mnuDrebis;
     private javax.swing.JMenuItem mnuDuplicateDocument;
     private javax.swing.JMenuItem mnuDuplicateDocumentAs;

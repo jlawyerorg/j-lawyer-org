@@ -689,18 +689,20 @@ public class DefaultColorTheme {
     static {
         
         highlightColors.add(COLOR_LOGO_RED);
-        highlightColors.add(COLOR_LOGO_GREEN);
-        highlightColors.add(COLOR_LOGO_BLUE);
-        highlightColors.add(new Color(49,222,213));
-        highlightColors.add(new Color(51,13,191));
-        
         highlightColors.add(new Color(170,30,202));
         highlightColors.add(new Color(191,13,152));
-        //highlightColors.add(new Color(20,186,14));
+        
+        highlightColors.add(COLOR_LOGO_GREEN);
         highlightColors.add(new Color(14,186,68));
         highlightColors.add(new Color(57,222,49));
+        
+        highlightColors.add(new Color(51,13,191));
+        highlightColors.add(COLOR_LOGO_BLUE);
+        highlightColors.add(new Color(49,222,213));
+        
         highlightColors.add(new Color(207,133,30));
         highlightColors.add(new Color(181,81,14));
+        
         highlightColors.add(Color.WHITE);
         highlightColors.add(COLOR_LIGHT_GREY);
         highlightColors.add(COLOR_DARK_GREY);

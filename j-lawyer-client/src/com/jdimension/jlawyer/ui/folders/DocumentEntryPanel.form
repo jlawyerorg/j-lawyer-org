@@ -17,16 +17,14 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="chkSelected" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
-                      <Component id="lblFavorite" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="lblClickableSpace" pref="63" max="32767" attributes="0"/>
-              </Group>
+              <Component id="cmdHighlight1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <Component id="cmdHighlight2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="chkSelected" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+              <Component id="lblFavorite" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Component id="lblFileIcon" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -37,7 +35,7 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblDictateSign" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="lblFolder" pref="72" max="32767" attributes="0"/>
+                      <Component id="lblFolder" pref="117" max="32767" attributes="0"/>
                   </Group>
                   <Component id="lblFileName" max="32767" attributes="0"/>
               </Group>
@@ -46,28 +44,27 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="lblFileIcon" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="chkSelected" pref="0" max="32767" attributes="0"/>
-                          <Component id="lblFileName" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblFavorite" alignment="0" pref="0" max="32767" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                      <Component id="lblFileName" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="2" pref="2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblCreationDate" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblDictateSign" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFileSize" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFolder" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblClickableSpace" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
+          <Component id="chkSelected" max="32767" attributes="0"/>
+          <Component id="lblFavorite" alignment="1" max="32767" attributes="0"/>
+          <Component id="cmdHighlight1" max="32767" attributes="0"/>
+          <Component id="cmdHighlight2" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -158,13 +155,15 @@
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblFolderMouseClicked"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="lblClickableSpace">
+    <Component class="javax.swing.JButton" name="cmdHighlight1">
       <Properties>
         <Property name="text" type="java.lang.String" value=" "/>
       </Properties>
-      <Events>
-        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblClickableSpaceMouseClicked"/>
-      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdHighlight2">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=" "/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

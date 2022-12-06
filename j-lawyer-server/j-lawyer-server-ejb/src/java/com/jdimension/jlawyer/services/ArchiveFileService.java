@@ -4701,7 +4701,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String aId = db.getArchiveFileKey().getId();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
 
-        if(db.getHighlight1()!=highlight1 && db.getHighlight2()!=highlight2) {
+        if(db.getHighlight1()!=highlight1 || db.getHighlight2()!=highlight2) {
             db.setHighlight1(highlight1);
             db.setHighlight2(highlight2);
             db.bumpVersion();
