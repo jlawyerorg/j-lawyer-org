@@ -688,23 +688,36 @@ public class DefaultColorTheme {
     
     static {
         
-        highlightColors.add(COLOR_LOGO_RED);
-        highlightColors.add(new Color(170,30,202));
-        highlightColors.add(new Color(191,13,152));
         
+        highlightColors.add(new Color(-3407821));
+        highlightColors.add(new Color(-13312));
         highlightColors.add(COLOR_LOGO_GREEN);
-        highlightColors.add(new Color(14,186,68));
-        highlightColors.add(new Color(57,222,49));
         
-        highlightColors.add(new Color(51,13,191));
-        highlightColors.add(COLOR_LOGO_BLUE);
-        highlightColors.add(new Color(49,222,213));
+        // red-ish
+        //highlightColors.add(COLOR_LOGO_RED);
+        //highlightColors.add(new Color(-3407821));
+        highlightColors.add(new Color(170,30,202));
+        //highlightColors.add(new Color(191,13,152));
         
-        highlightColors.add(new Color(207,133,30));
+        // yellow-ish
+        //highlightColors.add(new Color(-13312));
+        //highlightColors.add(new Color(207,133,30));
         highlightColors.add(new Color(181,81,14));
         
+        // green-ish
+        //highlightColors.add(COLOR_LOGO_GREEN);
+//        highlightColors.add(new Color(14,186,68));
+//        highlightColors.add(new Color(57,222,49));
+        
+        // blue-ish
+        highlightColors.add(new Color(51,13,191));
+        //highlightColors.add(COLOR_LOGO_BLUE);
+        highlightColors.add(new Color(49,222,213));
+        
+        
+        
         highlightColors.add(Color.WHITE);
-        highlightColors.add(COLOR_LIGHT_GREY);
+        //highlightColors.add(COLOR_LIGHT_GREY);
         highlightColors.add(COLOR_DARK_GREY);
         highlightColors.add(Color.BLACK);
     }
