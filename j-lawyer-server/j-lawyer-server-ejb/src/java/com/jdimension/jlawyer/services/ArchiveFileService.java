@@ -2168,15 +2168,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
-        return resultList;
+        return this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
     }
     
     @Override
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
-        return resultList;
+        return this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
     }
     
     @Override
