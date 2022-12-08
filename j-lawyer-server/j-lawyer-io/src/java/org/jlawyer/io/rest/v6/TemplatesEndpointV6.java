@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -815,6 +816,13 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Path("/documents/{folder}/{template}/{caseId}/{fileName}")
     @RolesAllowed({"loginRole"})
     public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception {
+        
+        if(folder==null || "".equals(folder))
+            folder="/";
+        
+        if(!folder.startsWith("/"))
+            folder="/" + folder;
+        
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal casesvc = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
@@ -844,7 +852,22 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
                 parties.add(pt);
             }
             //placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, system.getUser(aFile.getLawyer()), system.getUser(aFile.getAssistant()), system.getUser(context.getCallerPrincipal().getName()));
-            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, system.getUser(aFile.getLawyer()), system.getUser(aFile.getAssistant()), null);
+            
+            AppUserBean userLawyer=null;
+            try {
+                userLawyer=system.getUser(aFile.getLawyer());
+            } catch (Throwable t) {
+                log.warn("Unable to find lawyer " + aFile.getLawyer(), t);
+            }
+            AppUserBean userAssistant=null;
+            try {
+                userAssistant=system.getUser(aFile.getAssistant());
+            } catch (Throwable t) {
+                log.warn("Unable to find assistant " + aFile.getLawyer(), t);
+            }
+            
+            
+            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null);
                         
             
             for(RestfulPlaceholderV6 rph: placeHolderValues) {
