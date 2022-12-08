@@ -716,6 +716,7 @@ public interface ArchiveFileServiceLocal {
     ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception;
 
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
+    public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 

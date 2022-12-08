@@ -2171,7 +2171,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
         return resultList;
     }
-
+    
+    @Override
+    public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
+        List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
+        return resultList;
+    }
+    
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception {
