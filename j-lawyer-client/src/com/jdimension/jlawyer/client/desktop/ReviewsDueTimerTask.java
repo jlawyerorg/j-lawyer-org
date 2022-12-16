@@ -776,6 +776,36 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     entries.add(e);
                 }
             }
+            
+            Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
+                Date d1=arg1.getDue();
+                Date d2=arg2.getDue();
+                
+                if(d1==null)
+                    return -1;
+                
+                if(d2==null)
+                    return 1;
+                
+                if(arg1.getType()==ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    if(arg2.getType()==ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        return d1.compareTo(d2);
+                    } else {
+                        return -1;
+                    }
+                }
+                
+                if(arg2.getType()==ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    if(arg1.getType()==ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        return d1.compareTo(d2);
+                    } else {
+                        return 1;
+                    }
+                }
+                
+                
+                return d1.compareTo(d2);
+            });
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
