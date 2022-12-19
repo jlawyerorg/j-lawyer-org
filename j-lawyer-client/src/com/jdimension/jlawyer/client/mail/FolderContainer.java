@@ -679,6 +679,7 @@ public class FolderContainer {
     public static final String INBOX = "INBOX";
     public static final String SENT = "Sent";
     public static final String TRASH = "Trash";
+    public static final String DRAFTS = "Drafts";
 
     private long cachedToStringUpdated = -1;
     private String cachedToString = null;
@@ -687,12 +688,13 @@ public class FolderContainer {
     private int cachedUnread = -1;
 
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
-    private static Hashtable<String, String> folderNameMapping = new Hashtable<String, String>();
+    private static Hashtable<String, String> folderNameMapping = new Hashtable<>();
 
     static {
         folderNameMapping.put(INBOX, "Posteingang");
         folderNameMapping.put(SENT, "Gesendet");
         folderNameMapping.put(TRASH, "Papierkorb");
+        folderNameMapping.put(DRAFTS, "Entwürfe");
     }
 
     private Folder folder;

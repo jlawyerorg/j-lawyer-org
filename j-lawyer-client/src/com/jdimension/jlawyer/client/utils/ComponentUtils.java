@@ -668,6 +668,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -688,6 +690,7 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
@@ -708,6 +711,38 @@ public class ComponentUtils {
         for (int i = 0; i < tree.getRowCount(); i++) {
             tree.expandRow(i);
         }
+    }
+    
+    public static void addDropRenderer(JTree tree) {
+        tree.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int x = (int) e.getPoint().getX();
+                int y = (int) e.getPoint().getY();
+                int row=tree.getRowForLocation(x, y);
+                
+                JTree.DropLocation dropLocation = tree.getDropLocation();
+                if (dropLocation != null
+                        && dropLocation.getChildIndex() == -1
+                        && tree.getRowForPath(dropLocation.getPath()) == row) {
+                    // this row represents the current drop location
+                    // so render it specially, perhaps with a different color
+                    tree.getComponentAt(x, y).setForeground(Color.GREEN);
+
+                }
+                
+//                int x = (int) e.getPoint().getX();
+//                int y = (int) e.getPoint().getY();
+//                //TreePath path = tree.getPathForLocation(x, y);
+//                int row=tree.getRowForLocation(x, y);
+//////                if (path == null) {
+//////                    tree.setCursor(Cursor.getDefaultCursor());
+//////                } else {
+//////                    tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+//////                }
+//            }
+            }
+        });
     }
 
     public static Object[] getAllListElements(JList list) {

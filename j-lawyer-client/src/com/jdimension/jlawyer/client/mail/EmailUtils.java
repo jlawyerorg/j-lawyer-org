@@ -698,6 +698,7 @@ public class EmailUtils {
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
 
     private static ArrayList<String> trashAliases;
+    private static ArrayList<String> draftAliases;
     private static ArrayList<String> sentAliases;
     private static ArrayList<String> inboxAliases;
     private static ArrayList<String> defaultAliases;
@@ -715,6 +716,11 @@ public class EmailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
+        
+        draftAliases = new ArrayList<>();
+        draftAliases.add("Entwürfe");
+        draftAliases.add("Drafts");
+        draftAliases.add("Entwuerfe");
 
         defaultAliases = new ArrayList<>();
 
@@ -1012,6 +1018,18 @@ public class EmailUtils {
         }
         return getSentFolder(accountFolders);
     }
+    
+    public static Folder getDraftsFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
+        }
+        return getDraftsFolder(accountFolders);
+    }
 
     public static Folder getInboxFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
@@ -1039,6 +1057,14 @@ public class EmailUtils {
 
     public static Folder getInboxFolder(Folder[] folders) throws Exception {
         return getFolderByName(folders, FolderContainer.INBOX);
+    }
+    
+    public static Folder getDraftsFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, FolderContainer.DRAFTS);
+    }
+
+    public static Folder getDraftsFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, FolderContainer.DRAFTS);
     }
 
     public static Folder getFolderByName(Folder inbox, String name) throws Exception {
@@ -1078,6 +1104,8 @@ public class EmailUtils {
             return sentAliases;
         } else if (FolderContainer.INBOX.equalsIgnoreCase(folderName)) {
             return inboxAliases;
+        } else if (FolderContainer.DRAFTS.equalsIgnoreCase(folderName)) {
+            return draftAliases;
         } else {
             return defaultAliases;
         }

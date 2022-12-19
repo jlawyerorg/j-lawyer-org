@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -735,7 +736,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
-    private Hashtable<String, String> attachments = new Hashtable<String, String>();
+    private Hashtable<String, String> attachments = new Hashtable<>();
 
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextArchiveFileFolder = null;
@@ -744,8 +745,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
 
-    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
-    private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
+    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<>();
+    private List<String> allPartyTypesPlaceholders = new ArrayList<>();
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
     
@@ -847,6 +848,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
+        this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
         try {
@@ -1229,6 +1231,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         cmdSend = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdAttach = new javax.swing.JButton();
+        jSeparator5 = new javax.swing.JToolBar.Separator();
+        cmdSaveDraft = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
@@ -1407,6 +1411,19 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
         jToolBar1.add(cmdAttach);
+        jToolBar1.add(jSeparator5);
+
+        cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
+        cmdSaveDraft.setToolTipText("Datei anhängen");
+        cmdSaveDraft.setFocusable(false);
+        cmdSaveDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdSaveDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdSaveDraft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveDraftActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdSaveDraft);
 
         jLabel9.setText("BCC:");
 
@@ -1424,9 +1441,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -1448,7 +1462,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                     .addComponent(cmdRecipientsCc)
                                     .addComponent(cmdRecipientsBcc)))
                             .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1709,7 +1726,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         jLabel4.setText("Vorlage:");
 
-        cmbTemplates.setMaximumRowCount(15);
         cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTemplatesActionPerformed(evt);
@@ -2305,6 +2321,101 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.cmbTemplatesActionPerformed(evt);
     }//GEN-LAST:event_cmbFromActionPerformed
 
+    private void cmdSaveDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveDraftActionPerformed
+//        if (StringUtils.isEmpty(this.txtSubject.getText())) {
+//            int response = JOptionPane.showConfirmDialog(this, "Nachricht ohne Betreff speichern?", "leerer Betreff", JOptionPane.YES_NO_OPTION);
+//            if (response == JOptionPane.NO_OPTION) {
+//                this.txtSubject.requestFocus();
+//                return;
+//            }
+//        }
+//
+//        MailboxSetup ms = this.getSelectedMailbox();
+//
+//        ClientSettings settings = ClientSettings.getInstance();
+//        if (this.chkSaveAsDocument.isSelected()) {
+//            JOptionPane.showMessageDialog(this, "Nachricht wird erst bei Versand zur Akte gespeichert.", "zur Akte speichern", JOptionPane.INFORMATION_MESSAGE);
+//        }
+//        if (this.chkEncryption.isSelected()) {
+//            JOptionPane.showMessageDialog(this, "Entwurf kann erst bei Versand verschlüsselt werden.", "Nachricht verschlüsseln", JOptionPane.INFORMATION_MESSAGE);
+//        }
+//
+//        ProgressIndicator dlg = new ProgressIndicator(this, true);
+//        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+//        String contentType = ed.getContentType();
+//        ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
+//        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
+//        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
+//
+//        String editorContent = ed.getText();
+//        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
+//        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
+//        ed.setText(editorContent);
+//
+//        if (mails.isEmpty()) {
+//            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+//            return;
+//        }
+//
+//        ProgressableAction a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
+//        a.start();
+//
+//        UserSettings uset = UserSettings.getInstance();
+//        if (ms != null) {
+//            uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
+//        }
+//        if (this.cmbTemplates.getSelectedItem() != null) {
+//            uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
+//        }
+//
+//        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
+//            if (this.txtReviewDateField.getText().length() != 10) {
+//                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+//                return;
+//            }
+//            Date d = null;
+//            try {
+//                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+//                d = df.parse(this.txtReviewDateField.getText());
+//            } catch (Throwable t) {
+//                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+//                return;
+//            }
+//
+//            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+//            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+//            if (this.radioReviewTypeRespite.isSelected()) {
+//                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
+//            }
+//            reviewDto.setDoneBoolean(false);
+//            reviewDto.setBeginDate(d);
+//            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+//            reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
+//            reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
+//
+//            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+//                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+//                try {
+//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+//
+//                    reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
+//                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+//
+//                } catch (Exception ex) {
+//                    log.error("Error adding review", ex);
+//                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//                    EditorsRegistry.getInstance().clearStatus();
+//                    return;
+//                }
+//
+//                EventBroker eb = EventBroker.getInstance();
+//                eb.publishEvent(new ReviewAddedEvent(reviewDto));
+//            }
+//
+//        }
+    }//GEN-LAST:event_cmdSaveDraftActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2381,6 +2492,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JButton cmdRecipients;
     private javax.swing.JButton cmdRecipientsBcc;
     private javax.swing.JButton cmdRecipientsCc;
+    private javax.swing.JButton cmdSaveDraft;
     private javax.swing.JButton cmdSend;
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JPanel contentPanel;
@@ -2404,6 +2516,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
+    private javax.swing.JToolBar.Separator jSeparator5;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel lblEncryption;
