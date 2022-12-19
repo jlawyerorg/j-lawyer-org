@@ -1194,7 +1194,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtClaimValue.setText(this.currencyFormat.format(dto.getClaimValue()));
         this.txtFileNumber.setText(dto.getFileNumber());
         this.txtName.setText(dto.getName());
-        this.txtNotice.setText(dto.getNotice());
+        // this field has a special handling to avoid overlengthy input, cannot handle null values
+        this.txtNotice.setText(StringUtils.nonNull(dto.getNotice()));
         this.chkArchived.setSelected(dto.getArchivedBoolean());
 
         if (!ComponentUtils.containsItem(cmbLawyer, dto.getLawyer())) {
