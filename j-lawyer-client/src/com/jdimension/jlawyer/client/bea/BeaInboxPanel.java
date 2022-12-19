@@ -1589,8 +1589,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
 
             if (msg.getProcessCard() == null) {
-                // check whether it is a message sent from any local postbox
-                String senderSafeId = msg.getSenderSafeId();
                 ProcessCard pc = null;
                 try {
                     pc = BeaAccess.getInstance().getProcessCards(Long.parseLong(msgC.getId()));
@@ -2127,8 +2125,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
 
         if (msg.getProcessCard() == null) {
-            // check whether it is a message sent from any local postbox
-            String senderSafeId = msg.getSenderSafeId();
             ProcessCard pc = null;
             try {
                 pc = BeaAccess.getInstance().getProcessCards(Long.parseLong(msg.getId()));

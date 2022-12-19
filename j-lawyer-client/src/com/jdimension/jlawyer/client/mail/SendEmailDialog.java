@@ -715,13 +715,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
-//import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
-//import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
-//import org.jdesktop.swingx.autocomplete.ListAdaptor;
 
 /**
  *
@@ -736,7 +732,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
-    private Hashtable<String, String> attachments = new Hashtable<>();
+    private HashMap<String, String> attachments = new HashMap<>();
 
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextArchiveFileFolder = null;

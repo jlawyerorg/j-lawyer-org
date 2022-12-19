@@ -1138,7 +1138,7 @@ public class BeaAccess {
             this.folderOverviewCache.remove(msg.getFolderId());
         Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
         if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()));
+            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
                 this.folderOverviewCache.remove(trashFolder.getId());
         }
         return this.wrapper.moveMessageToTrash(msg.getId());
@@ -1148,12 +1148,12 @@ public class BeaAccess {
         this.checkValidBeaClient();
         Folder inboxFolder = this.wrapper.getInboxFolder(msg.getPostBoxSafeId());
         if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()));
+            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
                 this.folderOverviewCache.remove(inboxFolder.getId());
         }
         Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
         if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()));
+            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
                 this.folderOverviewCache.remove(trashFolder.getId());
         }
         return this.wrapper.restoreMessageFromTrash(msg.getId());
@@ -1186,7 +1186,7 @@ public class BeaAccess {
             this.folderOverviewCache.remove(msg.getFolderId());
         Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
         if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()));
+            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
                 this.folderOverviewCache.remove(trashFolder.getId());
         }
 
@@ -1222,18 +1222,18 @@ public class BeaAccess {
         
         Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
         if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()));
+            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
                 this.folderOverviewCache.remove(sentFolder.getId());
         }
         
         Folder outboxFolder = this.wrapper.getOutboxFolder(senderSafeId);
         if (outboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(outboxFolder.getId()));
+            if (this.folderOverviewCache.containsKey(outboxFolder.getId()))
                 this.folderOverviewCache.remove(outboxFolder.getId());
         }
         Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
         if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()));
+            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
                 this.folderOverviewCache.remove(inboxFolder.getId());
         }
         
@@ -1244,7 +1244,7 @@ public class BeaAccess {
         this.checkValidBeaClient();
         Folder draftsFolder = this.wrapper.getDraftsFolder(senderSafeId);
         if (draftsFolder != null) {
-            if (this.folderOverviewCache.containsKey(draftsFolder.getId()));
+            if (this.folderOverviewCache.containsKey(draftsFolder.getId()))
                 this.folderOverviewCache.remove(draftsFolder.getId());
         }
         return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority);
@@ -1254,12 +1254,12 @@ public class BeaAccess {
         this.checkValidBeaClient();
         Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
         if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()));
+            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
                 this.folderOverviewCache.remove(sentFolder.getId());
         }
         Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
         if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()));
+            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
                 this.folderOverviewCache.remove(inboxFolder.getId());
         }
         return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeId, abgabeDate);
@@ -1269,12 +1269,12 @@ public class BeaAccess {
         this.checkValidBeaClient();
         Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
         if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()));
+            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
                 this.folderOverviewCache.remove(sentFolder.getId());
         }
         Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
         if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()));
+            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
                 this.folderOverviewCache.remove(inboxFolder.getId());
         }
         return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeId, code, comment);

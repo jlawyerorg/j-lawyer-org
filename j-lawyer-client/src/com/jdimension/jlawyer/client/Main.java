@@ -830,14 +830,8 @@ public class Main {
         FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
         FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
         FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
-        
-//        FlatRobotoFont.install();
-//        FlatLaf.setPreferredFontFamily(FlatRobotoFont.FAMILY);
-//        FlatLaf.setPreferredLightFontFamily(FlatRobotoFont.FAMILY_LIGHT);
-//        FlatLaf.setPreferredSemiboldFontFamily(FlatRobotoFont.FAMILY_SEMIBOLD);
 
         FlatIntelliJLaf.setup();
-        //FlatDarkLaf.setup();
         
         
         
@@ -861,14 +855,14 @@ public class Main {
         // rounded selection
         UIManager.put("@menuItemMargin", "3,9,3,9");
 
-UIManager.put("MenuBar.selectionBackground", "darken(@menuBackground,15%,derived)");
-UIManager.put("MenuBar.selectionForeground", "@foreground");
+        UIManager.put("MenuBar.selectionBackground", "darken(@menuBackground,15%,derived)");
+        UIManager.put("MenuBar.selectionForeground", "@foreground");
 
-UIManager.put("MenuBar.selectionInsets", "1,0,1,0");
-UIManager.put("MenuBar.selectionEmbeddedInsets", "3,0,3,0");
+        UIManager.put("MenuBar.selectionInsets", "1,0,1,0");
+        UIManager.put("MenuBar.selectionEmbeddedInsets", "3,0,3,0");
 
-UIManager.put("MenuItem.selectionInsets", "0,3,0,3");
-UIManager.put("MenuItem.selectionArc", "8");
+        UIManager.put("MenuItem.selectionInsets", "0,3,0,3");
+        UIManager.put("MenuItem.selectionArc", "8");
         
 
         splash = new StartupSplashFrame();
