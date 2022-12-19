@@ -664,6 +664,9 @@
 package com.jdimension.jlawyer.client;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.inter.FlatInterFont;
+import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
@@ -823,7 +826,20 @@ public class Main {
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
 
+        FlatInterFont.install();
+        FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
+        FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
+        FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
+        
+//        FlatRobotoFont.install();
+//        FlatLaf.setPreferredFontFamily(FlatRobotoFont.FAMILY);
+//        FlatLaf.setPreferredLightFontFamily(FlatRobotoFont.FAMILY_LIGHT);
+//        FlatLaf.setPreferredSemiboldFontFamily(FlatRobotoFont.FAMILY_SEMIBOLD);
+
         FlatIntelliJLaf.setup();
+        //FlatDarkLaf.setup();
+        
+        
         
 
         // https://www.formdev.com/flatlaf/customizing/
@@ -841,6 +857,19 @@ public class Main {
         // table customizations
         UIManager.put("Table.selectionBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
         UIManager.put("Table.selectionInactiveBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
+        
+        // rounded selection
+        UIManager.put("@menuItemMargin", "3,9,3,9");
+
+UIManager.put("MenuBar.selectionBackground", "darken(@menuBackground,15%,derived)");
+UIManager.put("MenuBar.selectionForeground", "@foreground");
+
+UIManager.put("MenuBar.selectionInsets", "1,0,1,0");
+UIManager.put("MenuBar.selectionEmbeddedInsets", "3,0,3,0");
+
+UIManager.put("MenuItem.selectionInsets", "0,3,0,3");
+UIManager.put("MenuItem.selectionArc", "8");
+        
 
         splash = new StartupSplashFrame();
 
