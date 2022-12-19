@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Folder;
@@ -707,7 +708,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
                     for (PostBox box : this.postboxes) {
                         Folder inbox = this.getInbox(bea, box);
 
-                        ArrayList<MessageHeader> messages = bea.getFolderOverview(inbox);
+                        List<MessageHeader> messages = bea.getFolderOverview(inbox);
                         for (MessageHeader mh : messages) {
                             Message m = bea.getMessage(mh.getId(), mh.getPostBoxSafeId());
                             if (!m.isRead()) {

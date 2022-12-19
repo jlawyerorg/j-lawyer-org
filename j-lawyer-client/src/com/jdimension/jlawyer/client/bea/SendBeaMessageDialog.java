@@ -794,22 +794,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             log.error(t);
         }
 
-        try {
-            BeaAccess bea = BeaAccess.getInstance();
-            if (bea.isVhn2Active()) {
-                this.lblVhn2.setText("Hinweis: VHN2 aktiv!");
-                this.lblVhn2.setToolTipText("Betreff und Nachrichtentext werden ignoriert");
-                this.lblVhn2.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-            } else {
-                this.lblVhn2.setText("VHN2 inaktiv");
-                this.lblVhn2.setToolTipText("Versand mit Betreff und Nachrichtentext möglich");
-                this.lblVhn2.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-            }
-
-        } catch (Throwable t) {
-            // assume vhn2 is active
-            log.error(t);
-        }
+        this.lblVhn2.setText("Hinweis: VHN2 aktiv!");
+        this.lblVhn2.setToolTipText("Betreff und Nachrichtentext werden ignoriert");
+        this.lblVhn2.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
         tp = new TextEditorPanel();
 
@@ -1296,7 +1283,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         });
         jScrollPane3.setViewportView(lstTo);
 
-        jSplitPane1.setBorder(null);
         jSplitPane1.setResizeWeight(0.75);
 
         cmbAzRecipient.setEditable(true);
@@ -1411,7 +1397,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jToolBar1.add(cmdAttach);
         jToolBar1.add(jSeparator3);
 
-        cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/kate.png"))); // NOI18N
+        cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
         cmdSaveDraft.setToolTipText("in \"Entwürfe\" speichern und später signieren/senden");
         cmdSaveDraft.setFocusable(false);
         cmdSaveDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);

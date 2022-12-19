@@ -687,7 +687,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -700,10 +699,10 @@ import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageJournalEntry;
-import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
 import org.jlawyer.bea.model.ProcessCardEntry;
 import org.jlawyer.bea.model.VerificationResult;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -727,6 +726,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
      */
     public BeaMessageContentUI() {
         initComponents();
+        
+        this.jLabel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.jLabel2.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.jLabel3.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.jLabel7.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
         
@@ -739,6 +743,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.lblCaseNumber.setText(" ");
         this.lblReferenceJustice.setText(" ");
 
+        this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
         this.editBody.setEditorKit(new StyledEditorKit());
@@ -909,11 +914,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         processCardTable.setModel(tm2);
         tabs.setIconAt(2, null);
         if (msg.getProcessCard() != null) {
-            if (msg.getProcessCard().getEntries().size() > 0) {
+            if (msg.getProcessCard().getEntries().size() > 0 || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
                 tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
             }
+            if(!StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
+                ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{"", msg.getProcessCard().getExceptionMessage()});
+            }
             for (ProcessCardEntry e : msg.getProcessCard().getEntries()) {
-                ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{e.getCode(), e.getText()});
+                ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{StringUtils.nonEmpty(e.getCode()), e.getText()});
 
             }
         }
@@ -975,6 +983,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblTo = new javax.swing.JLabel();
         lblCaseNumber = new javax.swing.JLabel();
         lblReferenceJustice = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         editBody = new javax.swing.JEditorPane();
@@ -1019,7 +1028,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         popAttachments.add(mnuSave);
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(java.awt.SystemColor.controlDkShadow, 1, true));
+        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+
+        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel1.setText("Betreff:");
 
@@ -1060,10 +1071,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCaseNumber))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
+                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblReferenceJustice)))
                 .addContainerGap())
+            .addComponent(jSeparator1)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1082,12 +1094,17 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(jLabel3)
                     .addComponent(lblTo)
                     .addComponent(lblReferenceJustice))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
+        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(300);
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
+        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setBorder(null);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         editBody.setEditable(false);
@@ -1100,10 +1117,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jSplitPane1.setLeftComponent(jScrollPane1);
 
-        jPanel2.setBorder(new javax.swing.border.LineBorder(java.awt.SystemColor.controlDkShadow, 1, true));
+        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel7.setText("Anhänge:");
 
+        jScrollPane2.setBorder(null);
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         lstAttachments.setModel(new javax.swing.AbstractListModel() {
@@ -1134,14 +1152,17 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 760, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jLabel7)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addContainerGap(44, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)))
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -1175,7 +1196,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
+                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 837, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(cmdToPdf)
@@ -1199,7 +1220,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1548,19 +1569,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     return;
                 }
             }
-            Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
-            for (PostBox pb : inboxes) {
-                if (msgContainer.getSenderSafeId().equals(pb.getSafeId())) {
-                    ProcessCard pc = BeaAccess.getInstance().getProcessCards(msgContainer.getSenderSafeId(), Long.parseLong(msgContainer.getId()));
-                    // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
-                    if (pc != null) {
-                        if (pc.getEntries().size() > 0) {
-                            msgContainer.setProcessCard(pc);
-                        }
-                    }
-
+            
+            ProcessCard pc = BeaAccess.getInstance().getProcessCards(Long.parseLong(msgContainer.getId()));
+            // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
+            if (pc != null) {
+                if (pc.getEntries().size() > 0) {
+                    msgContainer.setProcessCard(pc);
                 }
             }
+
             if (this.documentId != null) {
                 BeaAccess.addSignatureVerification(BeaAccess.getInstance(), msgContainer);
                 MessageExport mex = BeaAccess.exportMessage(msgContainer);
@@ -1668,6 +1685,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblCaseNumber;

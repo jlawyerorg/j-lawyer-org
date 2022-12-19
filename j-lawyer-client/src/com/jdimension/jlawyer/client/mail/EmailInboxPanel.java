@@ -744,6 +744,7 @@ import javax.mail.util.SharedByteArrayInputStream;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
 import javax.swing.JOptionPane;
+import javax.swing.JTree;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
@@ -853,7 +854,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         ComponentUtils.restoreSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
         ComponentUtils.persistSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
-
+        
         // cancel constructur if there is no email configuration
         if (!EmailUtils.hasConfig(cu)) {
             this.treeFolders.setEnabled(false);
@@ -2734,13 +2735,24 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
 //        Point p=dtde.getLocation();
-//        TreePath tp=this.treeFolders.getPathForLocation(p.x, p.y);
-//        treeFolders.getR
+//        //TreePath tp=this.treeFolders.getPathForLocation(p.x, p.y);
+//
+//        int row = treeFolders.getRowForLocation(p.x, p.y);
+//        JTree.DropLocation dropLocation = treeFolders.getDropLocation();
+//        if (dropLocation != null
+//                && dropLocation.getChildIndex() == -1
+//                && treeFolders.getRowForPath(dropLocation.getPath()) == row) {
+//            // this row represents the current drop location
+//            // so render it specially, perhaps with a different color
+//            treeFolders.getComponentAt(p.x, p.y).setForeground(Color.GREEN);
+//
+//        }
+
     }
 
     @Override
     public void dragOver(DropTargetDragEvent dtde) {
-        //System.out.println("Drag Over");
+        
     }
 
     @Override

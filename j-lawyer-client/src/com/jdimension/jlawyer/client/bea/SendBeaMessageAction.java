@@ -839,7 +839,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                         if (this.isCancelled()) {
                             break;
                         }
-                        p = bea.getProcessCards(fromSafeId, Long.parseLong(sentMessage.getId()));
+                        p = bea.getProcessCards(Long.parseLong(sentMessage.getId()));
                         if (p != null) {
                             msgEx.setProcessCard(p);
                             break;

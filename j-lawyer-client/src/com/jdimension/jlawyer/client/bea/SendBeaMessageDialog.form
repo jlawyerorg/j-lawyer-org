@@ -233,9 +233,6 @@
     </Container>
     <Container class="javax.swing.JSplitPane" name="jSplitPane1">
       <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="null"/>
-        </Property>
         <Property name="resizeWeight" type="double" value="0.75"/>
       </Properties>
 
@@ -468,7 +465,7 @@
                 <Component class="javax.swing.JButton" name="cmdSaveDraft">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons32/kate.png"/>
+                      <Image iconType="3" name="/icons32/baseline_edit_square_black_48dp.png"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="in &quot;Entw&#xfc;rfe&quot; speichern und sp&#xe4;ter signieren/senden"/>
                     <Property name="focusable" type="boolean" value="false"/>
