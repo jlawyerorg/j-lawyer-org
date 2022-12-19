@@ -826,6 +826,8 @@ public class Main {
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
 
+        FlatLaf.registerCustomDefaultsSource( "themes" );
+        
         FlatInterFont.install();
         FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
         FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
@@ -833,38 +835,6 @@ public class Main {
 
         FlatIntelliJLaf.setup();
         
-        
-        
-
-        // https://www.formdev.com/flatlaf/customizing/
-        
-        UIManager.put( "PasswordField.showRevealButton", true );
-        
-        UIManager.put("ScrollBar.width", 14);
-        UIManager.put("ScrollBar.showButtons", true);
-        UIManager.put("ScrollPane.smoothScrolling", true);
-        UIManager.put("Table.showHorizontalLines", true);
-
-        UIManager.put("TabbedPane.selectedBackground", Color.WHITE);
-        UIManager.put("TabbedPane.showTabSeparators", true);
-
-        // table customizations
-        UIManager.put("Table.selectionBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
-        UIManager.put("Table.selectionInactiveBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
-        
-        // rounded selection
-        UIManager.put("@menuItemMargin", "3,9,3,9");
-
-        UIManager.put("MenuBar.selectionBackground", "darken(@menuBackground,15%,derived)");
-        UIManager.put("MenuBar.selectionForeground", "@foreground");
-
-        UIManager.put("MenuBar.selectionInsets", "1,0,1,0");
-        UIManager.put("MenuBar.selectionEmbeddedInsets", "3,0,3,0");
-
-        UIManager.put("MenuItem.selectionInsets", "0,3,0,3");
-        UIManager.put("MenuItem.selectionArc", "8");
-        
-
         splash = new StartupSplashFrame();
 
         FrameUtils.centerFrame(splash, null);

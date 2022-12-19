@@ -743,7 +743,7 @@ public class ExtractedPhoneNumbersPanel extends javax.swing.JPanel {
         lblExtractedNumbers = new javax.swing.JLabel();
         cmdPhone = new javax.swing.JButton();
 
-        lblExtractedNumbers.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblExtractedNumbers.setFont(lblExtractedNumbers.getFont().deriveFont(lblExtractedNumbers.getFont().getSize()+2f));
         lblExtractedNumbers.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
         lblExtractedNumbers.setText("gefundene Tel.-Nr.");
         lblExtractedNumbers.setVerticalAlignment(javax.swing.SwingConstants.TOP);

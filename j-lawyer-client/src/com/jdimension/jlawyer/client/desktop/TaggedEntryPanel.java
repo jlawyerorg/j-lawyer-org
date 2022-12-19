@@ -829,6 +829,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblDescription.setFont(lblDescription.getFont());
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -844,11 +845,11 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblChangedBy.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        lblChangedBy.setFont(lblChangedBy.getFont().deriveFont((lblChangedBy.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
         lblChangedBy.setForeground(new java.awt.Color(14, 114, 181));
         lblChangedBy.setText("user");
 
-        lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        lblTags.setFont(lblTags.getFont().deriveFont(lblTags.getFont().getStyle() & ~java.awt.Font.BOLD, lblTags.getFont().getSize()-2));
         lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
         lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -862,7 +863,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
-        lblDocument.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        lblDocument.setFont(lblDocument.getFont().deriveFont(lblDocument.getFont().getStyle() & ~java.awt.Font.BOLD, lblDocument.getFont().getSize()-2));
         lblDocument.setForeground(new java.awt.Color(0, 153, 255));
         lblDocument.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseExited(java.awt.event.MouseEvent evt) {

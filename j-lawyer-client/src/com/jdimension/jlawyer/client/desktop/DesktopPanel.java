@@ -994,7 +994,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         tabPaneDue.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         tabPaneDue.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        tabPaneDue.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        tabPaneDue.setFont(tabPaneDue.getFont().deriveFont(tabPaneDue.getFont().getStyle() & ~java.awt.Font.BOLD, tabPaneDue.getFont().getSize()-2));
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setOpaque(false);
@@ -1184,7 +1184,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         tabPaneTagged.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         tabPaneTagged.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        tabPaneTagged.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        tabPaneTagged.setFont(tabPaneTagged.getFont().deriveFont(tabPaneTagged.getFont().getStyle() & ~java.awt.Font.BOLD, tabPaneTagged.getFont().getSize()-2));
 
         jScrollPane4.setBorder(null);
         jScrollPane4.setOpaque(false);

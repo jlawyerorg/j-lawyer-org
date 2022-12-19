@@ -751,6 +751,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveSeparate = new javax.swing.JButton();
         cmdSaveMessageAttachmentsOnly = new javax.swing.JButton();
 
+        lblDescription.setFont(lblDescription.getFont());
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
@@ -767,7 +768,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        lblRole.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        lblRole.setFont(lblRole.getFont().deriveFont((lblRole.getFont().getStyle() | java.awt.Font.ITALIC)));
         lblRole.setForeground(new java.awt.Color(0, 0, 255));
         lblRole.setText("user");
 

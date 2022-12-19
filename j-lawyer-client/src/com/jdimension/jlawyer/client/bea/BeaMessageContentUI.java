@@ -1032,12 +1032,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Betreff:");
 
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Von:");
 
+        jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("An:");
 
+        lblSentDate.setFont(lblSentDate.getFont());
         lblSentDate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSentDate.setText("Datum");
 
@@ -1047,8 +1051,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         lblTo.setText(" ");
 
+        lblCaseNumber.setFont(lblCaseNumber.getFont());
         lblCaseNumber.setText("<AZ>");
 
+        lblReferenceJustice.setFont(lblReferenceJustice.getFont());
         lblReferenceJustice.setText("<AZ Justiz>");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -1119,6 +1125,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
+        jLabel7.setFont(jLabel7.getFont());
         jLabel7.setText("Anhänge:");
 
         jScrollPane2.setBorder(null);
@@ -1161,8 +1168,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel7)
-                        .addContainerGap(44, Short.MAX_VALUE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -1183,6 +1190,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             }
         });
 
+        lblSendStatus.setFont(lblSendStatus.getFont());
         lblSendStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"))); // NOI18N
         lblSendStatus.setText("Sendestatus");
 

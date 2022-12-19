@@ -179,8 +179,10 @@
               <Properties>
                 <Property name="tabLayoutPolicy" type="int" value="1"/>
                 <Property name="tabPlacement" type="int" value="3"/>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="10" style="0"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="tabPaneDue" property="font" relativeSize="true" size="-2"/>
+                  </FontInfo>
                 </Property>
               </Properties>
 
@@ -533,8 +535,10 @@
                   <Properties>
                     <Property name="tabLayoutPolicy" type="int" value="1"/>
                     <Property name="tabPlacement" type="int" value="3"/>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Dialog" size="10" style="0"/>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="false" component="tabPaneTagged" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
                     </Property>
                   </Properties>
 

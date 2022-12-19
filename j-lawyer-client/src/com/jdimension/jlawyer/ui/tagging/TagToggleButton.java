@@ -674,11 +674,10 @@ import themes.colors.DefaultColorTheme;
  */
 public class TagToggleButton extends JToggleButton {
     
-    private Color foreGround=Color.DARK_GRAY.brighter().brighter().brighter();
+    private final Color foreGround=Color.DARK_GRAY.brighter().brighter().brighter();
     
-    private Color selectedBackColor=new Color(0,153,255);
-    //private Color selectedForeColor=new Color(0,0,0,0);
-    private Color selectedForeColor=DefaultColorTheme.COLOR_LOGO_GREEN;
+    private final Color selectedBackColor=new Color(0,153,255);
+    private final Color selectedForeColor=DefaultColorTheme.COLOR_LOGO_GREEN;
     
     private GradientPaint gpSelected=null;
     private GradientPaint gpUnselected=null;
@@ -689,7 +688,6 @@ public class TagToggleButton extends JToggleButton {
     }
 
     public TagToggleButton(String text) {
-        //this.setMargin(new Insets(0,0,0,0));
         setText(text);
         setBorderPainted(false);
         setContentAreaFilled(false);
@@ -823,7 +821,6 @@ public class TagToggleButton extends JToggleButton {
         
         gd.fillPolygon(l1);
 
-        //gd.fill
         gd.dispose();
         super.paintComponent(g);
     }

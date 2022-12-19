@@ -1417,12 +1417,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Betreff:");
 
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Von:");
 
+        jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("An:");
 
+        lblSentDate.setFont(lblSentDate.getFont());
         lblSentDate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSentDate.setText("Datum");
 
@@ -1432,10 +1436,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         lblTo.setText(" ");
 
+        jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("CC:");
 
         lblCC.setText(" ");
 
+        jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
         lblBCC.setText(" ");
@@ -1502,6 +1508,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
+        jLabel7.setFont(jLabel7.getFont());
         jLabel7.setText("Anhänge:");
 
         jScrollPane2.setBorder(null);

@@ -894,7 +894,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblResponsible.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
+        lblResponsible.setFont(lblResponsible.getFont().deriveFont((lblResponsible.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         lblResponsible.setForeground(new java.awt.Color(14, 114, 181));
         lblResponsible.setText("user");
 
@@ -913,6 +913,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblDescription.setFont(lblDescription.getFont());
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.followup")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -936,7 +937,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        lblTags.setFont(lblTags.getFont().deriveFont(lblTags.getFont().getStyle() & ~java.awt.Font.BOLD, lblTags.getFont().getSize()-2));
         lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
         lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
