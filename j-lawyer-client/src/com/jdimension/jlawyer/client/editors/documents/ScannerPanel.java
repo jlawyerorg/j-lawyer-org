@@ -998,7 +998,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         popActions.add(mnuSplitPdf);
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuDelete.setText("aus dem Scaneingang löschen");
+        mnuDelete.setText("löschen");
         mnuDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDeleteActionPerformed(evt);
@@ -1007,7 +1007,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         popActions.add(mnuDelete);
 
         mnuRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        mnuRename.setText("im Scaneingang umbenennen");
+        mnuRename.setText("umbenennen");
         mnuRename.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuRenameActionPerformed(evt);

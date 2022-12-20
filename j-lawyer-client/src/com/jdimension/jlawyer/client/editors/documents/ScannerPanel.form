@@ -24,7 +24,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/editdelete.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="aus dem Scaneingang l&#xf6;schen"/>
+            <Property name="text" type="java.lang.String" value="l&#xf6;schen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteActionPerformed"/>
@@ -35,7 +35,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/kate.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="im Scaneingang umbenennen"/>
+            <Property name="text" type="java.lang.String" value="umbenennen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuRenameActionPerformed"/>
