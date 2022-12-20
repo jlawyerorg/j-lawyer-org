@@ -1812,7 +1812,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         try {
             BeaAccess bea = BeaAccess.getInstance();
-            ArrayList<MessageHeader> all = new ArrayList(bea.getFolderOverview(tf, BeaAccess.getFilter()));
+            ArrayList<MessageHeader> all = new ArrayList<>(bea.getFolderOverview(tf, BeaAccess.getFilter()));
             int failed = 0;
             String lastFailure = "";
             for (int i = 0; i < all.size(); i++) {
@@ -2133,7 +2133,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             int sortCol = -1;
             List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
             if (sortKeys != null) {
-                if (sortKeys.size() > 0) {
+                if (!sortKeys.isEmpty()) {
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }

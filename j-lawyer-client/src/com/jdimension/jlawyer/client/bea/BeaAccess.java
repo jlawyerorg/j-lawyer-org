@@ -1109,9 +1109,7 @@ public class BeaAccess {
     public List<MessageHeader> getFolderOverview(Folder f, MessageSorterFilter filter) throws BeaWrapperException {
         this.checkValidBeaClient();
         
-        if(this.lastFilter==null)
-            this.folderOverviewCache.clear();
-        else if(!(this.lastFilter.toString().equals(filter.toString())))
+        if(this.lastFilter==null || !(this.lastFilter.toString().equals(filter.toString())))
             this.folderOverviewCache.clear();
         
         if (!this.folderOverviewCache.containsKey(f.getId())) {
