@@ -665,14 +665,15 @@ package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.DateStringComparator;
+import com.jdimension.jlawyer.client.mail.LoadFolderRestriction;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -682,6 +683,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
+import org.jlawyer.bea.MessageSorterFilter;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.MessageHeader;
 
@@ -714,7 +716,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         this.scrollToRow = scrollToRow;
 
         BeaAccess bea = BeaAccess.getInstance();
-        headers = bea.getFolderOverview(f);
+        headers = bea.getFolderOverview(f, BeaAccess.getFilter());
         this.max = headers.size();
         this.mainSplitter=mainSplitter;
     }
@@ -741,7 +743,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
             
             int mainSplitterPosition=this.mainSplitter.getDividerLocation();
-
+            
             final int indexMax = headers.size() - 1;
             for (int i = 0; i < headers.size(); i++) {
 
@@ -823,7 +825,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 table.getRowSorter().toggleSortOrder(this.sortCol);
 
             } catch (Throwable t) {
-                log.error("Error sorting mails", t);
+                log.error("Error sorting beA messages", t);
             }
 
             SwingUtilities.invokeLater(() -> {

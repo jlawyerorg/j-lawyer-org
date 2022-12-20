@@ -727,7 +727,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DropMode;
+import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.RowSorter.SortKey;
@@ -741,6 +744,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
+import org.jlawyer.bea.MessageSorterFilter;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.EebLists;
 import org.jlawyer.bea.model.Folder;
@@ -830,6 +834,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.emptyView();
 
         this.treeFolders.setDropMode(DropMode.ON);
+        
+        this.cmbDownloadMails.removeAllItems();
+        this.cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel(LoadFolderRestriction.ALL_RESTRICTIONS.toArray()));
+        String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+        for (int i = 0; i < this.cmbDownloadMails.getItemCount(); i++) {
+            LoadFolderRestriction r = (LoadFolderRestriction) ((DefaultComboBoxModel) this.cmbDownloadMails.getModel()).getElementAt(i);
+            if (restriction.equals("" + r.getRestriction())) {
+                this.cmbDownloadMails.setSelectedIndex(i);
+                break;
+            }
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(new BeaObjectsCleanUp()));
         DropTarget dt = new DropTarget(this.treeFolders, this);
@@ -999,7 +1014,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             Folder inbox = inboxFolders.get(safeId);
                             if (inbox != null) {
                                 EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
-                                List<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox);
+                                List<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox, BeaAccess.getFilter());
                                 EditorsRegistry.getInstance().clearStatus();
                                 int unread = 0;
                                 for (MessageHeader mh : messages) {
@@ -1099,6 +1114,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkCaseTagging = new javax.swing.JCheckBox();
         lblTempFilesWarning = new javax.swing.JLabel();
+        cmbDownloadMails = new javax.swing.JComboBox<>();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1409,6 +1425,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbDownloadMails.setToolTipText("Menge der angezeigten Nachrichten beschränken");
+        cmbDownloadMails.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDownloadMailsActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1439,7 +1463,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1448,9 +1473,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbDownloadMails))
                     .add(cmdRefresh)
                     .add(cmdLogout))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1786,7 +1812,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         try {
             BeaAccess bea = BeaAccess.getInstance();
-            ArrayList<MessageHeader> all = new ArrayList(bea.getFolderOverview(tf));
+            ArrayList<MessageHeader> all = new ArrayList(bea.getFolderOverview(tf, BeaAccess.getFilter()));
             int failed = 0;
             String lastFailure = "";
             for (int i = 0; i < all.size(); i++) {
@@ -2097,6 +2123,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
     }//GEN-LAST:event_mnuMarkReadActionPerformed
 
+    private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
+        if (!this.initializing) {
+
+            ClientSettings cs = ClientSettings.getInstance();
+            cs.setConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + ((LoadFolderRestriction) this.cmbDownloadMails.getSelectedItem()).getRestriction());
+
+            int scrollToRow = tblMails.getSelectedRow();
+            int sortCol = -1;
+            List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+            if (sortKeys != null) {
+                if (sortKeys.size() > 0) {
+                    sortCol = sortKeys.get(0).getColumn();
+                }
+            }
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+        }
+    }//GEN-LAST:event_cmbDownloadMailsActionPerformed
+
     private void displayMessage() {
 
         this.beaMessageContentUI.clear();
@@ -2272,7 +2316,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             log.error(t);
         }
 
-        this.tblMails.setValueAt(msgh, selectionIndex, 3);
+        this.tblMails.setValueAt(msgh, selectionIndex, 1);
         for (int i = 1; i < this.tblMails.getColumnCount(); i++) {
             this.tblMails.setValueAt(this.tblMails.getValueAt(selectionIndex, i), selectionIndex, i);
         }
@@ -3002,6 +3046,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JCheckBox chkMoveToImported;
     private javax.swing.JComboBox<String> cmbCaseTag;
     private javax.swing.JComboBox<String> cmbDocumentTag;
+    private javax.swing.JComboBox<String> cmbDownloadMails;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdForward;
     private javax.swing.JButton cmdLogout;

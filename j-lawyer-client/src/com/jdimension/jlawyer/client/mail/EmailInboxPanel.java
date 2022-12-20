@@ -1430,6 +1430,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         jSplitPane2.setRightComponent(jSplitPane1);
 
+        cmbDownloadMails.setFont(cmbDownloadMails.getFont());
         cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDownloadMails.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

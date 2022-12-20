@@ -160,7 +160,8 @@
                       <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmbDownloadMails" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -173,9 +174,10 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabel18" alignment="0" max="32767" attributes="0"/>
                       <Component id="jToolBar1" max="32767" attributes="0"/>
+                      <Component id="lblPanelTitle" alignment="1" max="32767" attributes="0"/>
+                      <Component id="cmbDownloadMails" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdLogout" min="-2" max="-2" attributes="0"/>
@@ -560,6 +562,25 @@
       <Events>
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTempFilesWarningMouseClicked"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbDownloadMails">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Item 1"/>
+            <StringItem index="1" value="Item 2"/>
+            <StringItem index="2" value="Item 3"/>
+            <StringItem index="3" value="Item 4"/>
+          </StringArray>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Menge der angezeigten Nachrichten beschr&#xe4;nken"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbDownloadMailsActionPerformed"/>
+      </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

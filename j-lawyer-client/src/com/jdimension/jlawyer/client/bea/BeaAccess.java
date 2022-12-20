@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.mail.LoadFolderRestriction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -725,6 +727,8 @@ public class BeaAccess {
     private Cache<Long, ArrayList> folderOverviewCache = null;
     
     private String cachePrefix="";
+    
+    private MessageSorterFilter lastFilter=null;
 
     private BeaAccess(byte[] certificate, String password) throws BeaWrapperException {
 //        byte[] certificate = null;
@@ -779,6 +783,44 @@ public class BeaAccess {
 
     public static String getBeaWrapperVersion() {
         return BeaWrapper.getVersion();
+    }
+    
+    public static MessageSorterFilter getFilter() {
+        ClientSettings cs = ClientSettings.getInstance();
+        String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+        LoadFolderRestriction currentRestriction = null;
+        try {
+            int restr = Integer.parseInt(restriction);
+            currentRestriction = new LoadFolderRestriction(restr);
+        } catch (Throwable t) {
+            currentRestriction = new LoadFolderRestriction(LoadFolderRestriction.RESTRICTION_50);
+        }
+
+        MessageSorterFilter filter=new MessageSorterFilter();
+        switch (currentRestriction.getRestriction()) {
+            case LoadFolderRestriction.RESTRICTION_20:
+                filter.setLimit(20);
+                break;
+            case LoadFolderRestriction.RESTRICTION_50:
+                filter.setLimit(50);
+                break;
+            case LoadFolderRestriction.RESTRICTION_100:
+                filter.setLimit(100);
+                break;
+            case LoadFolderRestriction.RESTRICTION_500:
+                filter.setLimit(500);
+                break;
+            case LoadFolderRestriction.RESTRICTION_UNREAD:
+                filter.setOnlyNew(true);
+                break;
+            case LoadFolderRestriction.RESTRICTION_NONE:
+                filter.setLimit(1000);
+                break;
+            default:
+                break;
+        }
+        filter.setSorting(MessageSorterFilter.MESSAGE_ID, MessageSorterFilter.SORT_DESCENDING);
+        return filter;
     }
 
     private void checkValidBeaClient() throws BeaWrapperException {
@@ -1051,12 +1093,34 @@ public class BeaAccess {
 
     public List<MessageHeader> getFolderOverview(Folder f) throws BeaWrapperException {
         this.checkValidBeaClient();
+        
+        if(this.lastFilter!=null)
+            this.folderOverviewCache.clear();
+        
         if (!this.folderOverviewCache.containsKey(f.getId())) {
             ArrayList<MessageHeader> result = new ArrayList<>(this.wrapper.getFolderOverview(f).getMessageHeaders());
             this.folderOverviewCache.put(f.getId(), result);
 
         }
+        this.lastFilter=null;
+        return this.folderOverviewCache.get(f.getId());
+    }
+    
+    public List<MessageHeader> getFolderOverview(Folder f, MessageSorterFilter filter) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        
+        if(this.lastFilter==null)
+            this.folderOverviewCache.clear();
+        else if(!(this.lastFilter.toString().equals(filter.toString())))
+            this.folderOverviewCache.clear();
+        
+        if (!this.folderOverviewCache.containsKey(f.getId())) {
+            ArrayList<MessageHeader> result = new ArrayList<>(this.wrapper.getFolderOverview(f, filter).getMessageHeaders());
+            this.folderOverviewCache.put(f.getId(), result);
 
+        }
+
+        this.lastFilter=filter;
         return this.folderOverviewCache.get(f.getId());
     }
     
