@@ -689,18 +689,14 @@ public class TagToggleButton extends JToggleButton {
 
         putClientProperty("FlatLaf.style", "borderWidth: 2; pressedBackground: rgb(102, 102, 102); selectedBackground: rgb(151, 191, 13); selectedForeground: rgb(0, 0, 0); foreground: rgb(102, 102, 102)");
 
-        this.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                if (isSelected()) {
-                    setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png")));
-                    setFont(getFont().deriveFont(Font.BOLD));
-                } else {
-                    setIcon(null);
-                    setFont(getFont().deriveFont(Font.PLAIN));
-                }
+        this.addItemListener((ItemEvent arg0) -> {
+            if (isSelected()) {
+                setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png")));
+                setFont(getFont().deriveFont(Font.BOLD));
+            } else {
+                setIcon(null);
+                setFont(getFont().deriveFont(Font.PLAIN));
             }
-
         });
 
     }
