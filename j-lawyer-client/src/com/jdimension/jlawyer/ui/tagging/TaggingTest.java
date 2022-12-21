@@ -663,6 +663,11 @@
  */
 package com.jdimension.jlawyer.ui.tagging;
 
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.inter.FlatInterFont;
+import themes.colors.DefaultColorTheme;
+
 /**
  *
  * @author jens
@@ -675,20 +680,30 @@ public class TaggingTest extends javax.swing.JFrame {
     public TaggingTest() {
         initComponents();
         
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
-        this.tagPanel1.add(new TagToggleButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
+        this.tagPanel1.add(new TagToggleRectButton("text blalb"));
         
-        TagToggleButton ttb=new TagToggleButton("customStyle");
+        
+        TagToggleButton tt2=new TagToggleButton("text blubb");
+        
+        this.tagPanel1.add(tt2);
+        
+        this.tagPanel1.add(new TagToggleButton("text blubb"));
+        this.tagPanel1.add(new TagToggleButton("text blubb"));
+        this.tagPanel1.add(new TagToggleButton("text blubb"));
+        this.tagPanel1.add(new TagToggleButton("text blubb"));
+        
+        TagToggleRectButton ttb=new TagToggleRectButton("customStyle");
         ttb.setFont(ttb.getFont().deriveFont(10f));
         ttb.setSize(ttb.getWidth(), ttb.getHeight()-18);
         this.tagPanel1.add(ttb);
@@ -705,10 +720,11 @@ public class TaggingTest extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        tagToggleButton1 = new com.jdimension.jlawyer.ui.tagging.TagToggleButton();
-        tagToggleButton2 = new com.jdimension.jlawyer.ui.tagging.TagToggleButton();
+        tagToggleButton1 = new com.jdimension.jlawyer.ui.tagging.TagToggleRectButton();
+        tagToggleButton2 = new com.jdimension.jlawyer.ui.tagging.TagToggleRectButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagPanel1 = new com.jdimension.jlawyer.ui.tagging.TagPanel();
+        jToggleButton1 = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -728,6 +744,10 @@ public class TaggingTest extends javax.swing.JFrame {
         tagPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jScrollPane1.setViewportView(tagPanel1);
 
+        jToggleButton1.setText("jToggleButton1");
+        jToggleButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 3));
+        jToggleButton1.setMargin(new java.awt.Insets(3, 14, 3, 14));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -739,7 +759,8 @@ public class TaggingTest extends javax.swing.JFrame {
                         .addComponent(tagToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 142, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 121, Short.MAX_VALUE)
+                        .addComponent(jToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane1))
                 .addContainerGap())
         );
@@ -749,9 +770,10 @@ public class TaggingTest extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tagToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jToggleButton1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 120, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 431, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -774,27 +796,14 @@ public class TaggingTest extends javax.swing.JFrame {
          * Set the Nimbus look and feel
          */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /*
-         * If Nimbus (introduced in Java SE 6) is not available, stay with the
-         * default look and feel. For details see
-         * http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(TaggingTest.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(TaggingTest.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(TaggingTest.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(TaggingTest.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
+        FlatLaf.registerCustomDefaultsSource( "themes" );
+        
+        FlatInterFont.install();
+        FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
+        FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
+        FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
+
+        FlatIntelliJLaf.setup();
         //</editor-fold>
 
         /*
@@ -809,8 +818,9 @@ public class TaggingTest extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JToggleButton jToggleButton1;
     private com.jdimension.jlawyer.ui.tagging.TagPanel tagPanel1;
-    private com.jdimension.jlawyer.ui.tagging.TagToggleButton tagToggleButton1;
-    private com.jdimension.jlawyer.ui.tagging.TagToggleButton tagToggleButton2;
+    private com.jdimension.jlawyer.ui.tagging.TagToggleRectButton tagToggleButton1;
+    private com.jdimension.jlawyer.ui.tagging.TagToggleRectButton tagToggleButton2;
     // End of variables declaration//GEN-END:variables
 }

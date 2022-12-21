@@ -679,10 +679,12 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -729,16 +731,27 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
     }
     
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g); 
+     protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Dimension arcs = new Dimension(15,15);
+        int width = getWidth();
+        int height = getHeight();
+        Graphics2D graphics = (Graphics2D) g;
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
-        g2d.setColor(getBackground());
-        g2d.fillRect(0, 0, getWidth(), getHeight());
-        g2d.dispose();
-
-    }
+        
+        graphics.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
+        graphics.setColor(getBackground());
+        
+        graphics.setColor(getBackground());
+        graphics.fillRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint background
+        graphics.setColor(getForeground());
+        
+        graphics.setColor(DefaultColorTheme.COLOR_DARK_GREY);
+        graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
+        graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
+        graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
+     }
 
     public void setEntry(TaggedEntry entry) {
         this.e = entry;
@@ -783,6 +796,9 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
             
             this.lblTags.setText(shortenedTagList);
             this.lblTags.setToolTipText(tagList);
+            
+            if(this.lblTags.getText().length()>0)
+                this.lblTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_grey_36dp.png")));
 
         }
 
@@ -853,11 +869,11 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
         lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblTagsMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblTagsMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblTagsMouseExited(evt);
             }
         });
 
@@ -903,7 +919,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
                 .addComponent(lblDocument)
                 .addGap(3, 3, 3)
                 .addComponent(lblTags)
-                .addGap(3, 3, 3))
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 

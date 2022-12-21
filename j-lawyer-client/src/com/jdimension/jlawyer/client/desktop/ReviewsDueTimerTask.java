@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -847,6 +848,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
+                            resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                             addEventTypeTab(list.get(k).getReview().getEventTypeName());
 
                             // need new identical child, one child component cannot have two parents
@@ -896,6 +898,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                             JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
                             JViewport p = (JViewport) sp.getComponent(0);
                             ((JPanel) p.getComponent(0)).add(ep);
+                            ((JPanel) p.getComponent(0)).add(Box.createRigidArea(new Dimension(5, 5)));
                             break;
                         }
                     }

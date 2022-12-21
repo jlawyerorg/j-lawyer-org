@@ -685,10 +685,12 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -716,6 +718,9 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private Color normalBackground = null;
     private float alpha = DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+    
+    private Color customBorderColor=DefaultColorTheme.COLOR_DARK_GREY;
+    private static Color OVERDUE_COLOR=new Color(-3407821);
 
     /**
      * Creates new form ReviewDueEntryPanel
@@ -744,16 +749,27 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        Dimension arcs = new Dimension(15,15);
+        int width = getWidth();
+        int height = getHeight();
+        Graphics2D graphics = (Graphics2D) g;
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
-        g2d.setColor(getBackground());
-        g2d.fillRect(0, 0, getWidth(), getHeight());
-        g2d.dispose();
+        
+        graphics.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
+        graphics.setColor(getBackground());
 
-    }
+        //Draws the rounded opaque panel with borders.
+        graphics.setColor(getBackground());
+        graphics.fillRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint background
+        graphics.setColor(getForeground());
+        graphics.setColor(this.customBorderColor);
+        graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
+        graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
+        graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
+     }
 
     public void setEntry(ReviewDueEntry entry) {
         this.e = entry;
@@ -808,7 +824,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
         if (!sameDay) {
             // not today, must be overdue
-            this.lblDescription.setForeground(Color.RED.darker());
+            this.lblDescription.setForeground(OVERDUE_COLOR);
+            this.customBorderColor=new Color(-3407821);
+        } else {
+            this.lblDescription.setForeground(Color.BLACK);
+            this.customBorderColor=DefaultColorTheme.COLOR_DARK_GREY;
         }
 
         StringBuilder tooltip = new StringBuilder();
@@ -865,7 +885,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
             this.lblTags.setText(shortenedTagList);
             this.lblTags.setToolTipText(tagList);
+            
+            if(this.lblTags.getText().length()>0)
+                this.lblTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_grey_36dp.png")));
         }
+        this.repaint();
 
     }
 
@@ -886,11 +910,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         lblTags = new javax.swing.JLabel();
 
         addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                formMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 formMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                formMouseExited(evt);
             }
         });
 
@@ -969,7 +993,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdPostpone)))
-                .addContainerGap())
+                .addGap(17, 17, 17))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -988,7 +1012,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
                         .addComponent(lblDescription)
                         .addGap(3, 3, 3)
                         .addComponent(lblTags)))
-                .addGap(3, 3, 3))
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -693,7 +694,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
     private boolean ignoreCurrentEditor = false;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of LastChangedTimerTask
      */
     public LastChangedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
@@ -753,23 +754,19 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
         try {
             final List<ArchiveFileBean> l1 = myNewList;
-            //final List<ArchiveFileBean> l2 = othersNewList;
             SwingUtilities.invokeLater(() -> {
-                //split.setDividerLocation(0.5d);
-                
+
                 resultUI.removeAll();
                 resultUI.repaint();
                 resultUI.revalidate();
-                //GridLayout layout = new GridLayout(l1.size(), 1);
-                BoxLayout layout=new BoxLayout(resultUI, BoxLayout.Y_AXIS);
+                BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                 resultUI.setLayout(layout);
                 int i = 0;
-                //ArrayList containedIds = new ArrayList();
                 for (ArchiveFileBean aFile : l1) {
-                    
-                    Color background=DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
+
+                    Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                     if (i % 2 == 0) {
-                        background=background.brighter();
+                        background = background.brighter();
                     }
                     LastChangedEntryPanel ep = new LastChangedEntryPanel(background);
                     LastChangedEntry lce = new LastChangedEntry();
@@ -787,62 +784,18 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                         lce.setTags(xTags);
                     }
                     ep.setEntry(lce);
-                    
-                    //if (!containedIds.contains(lce.getId())) {
+
                     resultUI.add(ep);
+                    resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                     i++;
                     if (i == 25) {
-                        //layout.setRows(i);
                         return;
                     }
-                    //    containedIds.add(lce.getId());
-                    //}
                 }
-                
-//                        for (ArchiveFileBean aFile : l2) {
-//                            LastChangedEntryPanel ep = new LastChangedEntryPanel();
-//                            if (i % 2 == 0) {
-//                                ep.setBackground(ep.getBackground().brighter());
-//                            }
-//                            LastChangedEntry lce = new LastChangedEntry();
-//                            lce.setFileNumber(aFile.getFileNumber());
-//                            lce.setId(aFile.getId());
-//                            lce.setLastChangedBy(aFile.getLawyer());
-//                            lce.setName(aFile.getName());
-//                            lce.setReason(aFile.getReason());
-//                            ep.setEntry(lce);
-//
-//                            if (!containedIds.contains(lce.getId())) {
-//                                resultUI.add(ep);
-//                                i++;
-//                                if (i == 25) {
-//                                    layout.setRows(i);
-//                                    return;
-//                                }
-//                                containedIds.add(lce.getId());
-//                            }
-//                        }
-//layout.setRows(i);
-//split.setDividerLocation(0.5d);
-                    
-//                    resultUI.revalidate();
-//                    resultUI.repaint();
-//                    resultUI.updateUI();
-split.setDividerLocation(split.getDividerLocation()+1);
-//                    split.revalidate();
-//                    split.repaint();
-split.setDividerLocation(split.getDividerLocation()-1);
-//                    split.revalidate();
-//                    split.repaint();
 
-//                        SwingUtilities.invokeLater(
-//                                new Runnable() {
-//                                    public void run() {
-//                                        split.setDividerLocation(0.5d);
-//                                    }
-//
-//                                }
-//                        );
+                split.setDividerLocation(split.getDividerLocation() + 1);
+                split.setDividerLocation(split.getDividerLocation() - 1);
+
             });
         } catch (Throwable t) {
             log.error(t);

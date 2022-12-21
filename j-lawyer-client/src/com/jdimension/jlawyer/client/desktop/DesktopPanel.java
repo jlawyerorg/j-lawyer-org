@@ -685,7 +685,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.awt.Color;
 import java.awt.Font;
@@ -693,7 +692,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -719,11 +717,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     public DesktopPanel() {
         this.initializing = true;
         initComponents();
-        
-        // semi transparent grey background
-//        this.messagesWidget.setOpaque(true);
-//        Color barColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-//        this.messagesWidget.setBackground(barColor);
         
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
@@ -983,7 +976,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshRevDue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshRevDue.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshRevDue.setBorder(null);
         cmdRefreshRevDue.setContentAreaFilled(false);
         cmdRefreshRevDue.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshRevDue.addActionListener(new java.awt.event.ActionListener() {
@@ -1086,7 +1079,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshLastChanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshLastChanged.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshLastChanged.setBorder(null);
         cmdRefreshLastChanged.setContentAreaFilled(false);
         cmdRefreshLastChanged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshLastChanged.addActionListener(new java.awt.event.ActionListener() {
@@ -1120,7 +1113,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1141,7 +1134,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshTagged.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshTagged.setBorder(null);
         cmdRefreshTagged.setContentAreaFilled(false);
         cmdRefreshTagged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshTagged.addActionListener(new java.awt.event.ActionListener() {
@@ -1152,7 +1145,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
         cmdTagFilter.setToolTipText("Akten-Etiketten");
-        cmdTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdTagFilter.setBorder(null);
         cmdTagFilter.setContentAreaFilled(false);
         cmdTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1168,7 +1161,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
         cmdDocumentTagFilter.setToolTipText("Dokument-Etiketten");
-        cmdDocumentTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdDocumentTagFilter.setBorder(null);
         cmdDocumentTagFilter.setContentAreaFilled(false);
         cmdDocumentTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1229,7 +1222,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 248, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 230, Short.MAX_VALUE)
                         .add(chkOnlyMyTagged))
                     .add(tabPaneTagged))
                 .addContainerGap())
@@ -1683,8 +1676,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if(e instanceof BeaStatusEvent) {
             this.lblUnreadBea.setEnabled(true);
             if(((BeaStatusEvent) e).getUnread()>0) {
-                this.lblUnreadBea.setText("!");
-                this.lblUnreadBea.setToolTipText("es gibt ungelesene beA-Nachrichten");
+                this.lblUnreadBea.setText("" + ((BeaStatusEvent) e).getUnread());
+                this.lblUnreadBea.setToolTipText("" + ((BeaStatusEvent) e).getUnread() + " ungelesene beA-Nachricht(en)");
             } else {
                 this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");

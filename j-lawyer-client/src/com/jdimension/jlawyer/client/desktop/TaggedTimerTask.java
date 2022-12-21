@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.nio.channels.ClosedChannelException;
 import java.util.*;
@@ -994,6 +995,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 }
 
                                 resultUI.add(ep);
+                                resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                                 i++;
                                 if (i == 500) {
                                     break;
@@ -1037,6 +1039,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 }
 
                                 resultUI.add(ep);
+                                resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                                 i++;
                                 if (i == 500) {
                                     break;
@@ -1088,6 +1091,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                     JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
                                     JViewport p = (JViewport) sp.getComponent(0);
                                     ((JPanel) p.getComponent(0)).add(tep);
+                                    ((JPanel) p.getComponent(0)).add(Box.createRigidArea(new Dimension(5, 5)));
                                     break;
                                 }
                             }
