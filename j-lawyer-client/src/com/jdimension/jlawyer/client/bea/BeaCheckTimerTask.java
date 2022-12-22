@@ -736,7 +736,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
                         SwingUtilities.invokeLater(() -> {
                             try {
                                 Object editor = EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-                                if (editor != null && editor instanceof BeaInboxPanel) {
+                                if (editor instanceof BeaInboxPanel) {
                                     ((BeaInboxPanel) editor).logout();
                                     ((BeaInboxPanel) editor).reset(true);
                                 }
