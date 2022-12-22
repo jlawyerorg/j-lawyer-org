@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.addresses;
 
-import com.jdimension.jlawyer.client.desktop.*;
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import java.awt.Color;
 import themes.colors.DefaultColorTheme;
 
@@ -737,6 +735,7 @@ public class CaseForContactEntry {
     }
 
     /**
+     * @param role
      */
     public void setRole(String role) {
         this.role = role;
