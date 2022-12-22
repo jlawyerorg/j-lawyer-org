@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
-import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
@@ -675,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -689,7 +689,6 @@ import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -825,7 +824,7 @@ public class Main {
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
-
+        
         FlatLaf.registerCustomDefaultsSource( "themes" );
         
         FlatInterFont.install();

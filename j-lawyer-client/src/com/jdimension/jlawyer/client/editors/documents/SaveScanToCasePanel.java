@@ -820,8 +820,11 @@ public class SaveScanToCasePanel extends javax.swing.JPanel {
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
         
-        if(this.e==null || this.e.getId()==null)
+        if(this.e==null || this.e.getId()==null) {
+            // invoke the "find case and assign"
+            this.cmdSaveMessageAttachmentsOnlyActionPerformed(null);
             return;
+        }
         
         try {
             Object editor=null;

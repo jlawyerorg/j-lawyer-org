@@ -1016,7 +1016,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         popActions.add(mnuRename);
 
         mnuSaveToCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        mnuSaveToCase.setText("zur Akte speichern");
+        mnuSaveToCase.setText("Akte suchen und zuordnen");
         mnuSaveToCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuSaveToCaseActionPerformed(evt);
