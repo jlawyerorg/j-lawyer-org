@@ -690,6 +690,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Insets;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -747,7 +748,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
         ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
-        
         
         Date now = new Date();
         SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");

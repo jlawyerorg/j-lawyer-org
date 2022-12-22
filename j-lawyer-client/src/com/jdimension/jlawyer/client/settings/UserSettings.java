@@ -732,12 +732,18 @@ public class UserSettings {
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
+    
+    
+    // for new bulk save dialog
+    public static String CONF_BULKSAVE_LASTCASETAGS="user.bulksave.lastcasetags";
+    public static String CONF_BULKSAVE_LASTDOCTAGS="user.bulksave.lastdoctags";
+    
 
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
-
+    
     private AppUserBean currentUser = null;
 
     private AppUserBean[] lawyerUsers = null;

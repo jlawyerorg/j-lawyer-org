@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
+import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
@@ -2876,7 +2878,263 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     @Override
     public boolean saveToCaseCallback(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
         if (this.tblMails.getSelectedRowCount() == 1) {
+            
+            BulkSaveDialog bulkSaveDlg=new BulkSaveDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            
             ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
+                Message m = msgC.getMessage();
+                MailboxSetup ms = this.getSelectedMailbox();
+                if(ms==null)
+                    ms=EmailUtils.getMailboxSetup(m);
+                Properties props = System.getProperties();
+                props.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                }
+
+                Date sentDate = m.getSentDate();
+                Folder f = m.getFolder();
+                boolean closed = !f.isOpen();
+                if (closed) {
+                    f.open(Folder.READ_WRITE);
+                }
+                byte[] data = null;
+
+                if (withAttachments) {
+                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                    m.writeTo(bOut);
+                    bOut.close();
+                    data = bOut.toByteArray();
+                } else {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    m.writeTo(bos);
+                    bos.close();
+                    SharedByteArrayInputStream bis
+                            = new SharedByteArrayInputStream(bos.toByteArray());
+                    Session session = Session.getDefaultInstance(props, null);
+                    MimeMessage copiedMsg = new MimeMessage(session, bis);
+                    bis.close();
+                    if (copiedMsg.isMimeType("multipart/*")) {
+                        MimeMultipart mmp = (MimeMultipart) copiedMsg.getContent();
+                        for (int i = 0; i < mmp.getCount(); i++) {
+                            BodyPart part = mmp.getBodyPart(i);
+                            if (!StringUtils.isEmpty(part.getFileName())) {
+                                mmp.removeBodyPart(i);
+
+                                i--;
+                            } // +++++ end of if (hasToBeRemoved(part))
+                        } // +++++ end of for (int i = 0; i < mmp.getCount(); i++)
+                        copiedMsg.setContent(mmp);
+                        copiedMsg.saveChanges();
+                    }
+                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                    copiedMsg.writeTo(bOut);
+                    bOut.close();
+                    data = bOut.toByteArray();
+                }
+
+                CaseFolder targetFolder = null;
+                ArchiveFileBean targetCase=null;
+                if (caseId == null) {
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), null);
+                    dlg.setVisible(true);
+                    targetCase = dlg.getCaseSelection();
+                    targetFolder = dlg.getFolderSelection();
+                    dlg.dispose();
+                    
+                } else {
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), caseId);
+                    dlg.setVisible(true);
+                    dlg.dispose();
+                    targetFolder = dlg.getFolderSelection();
+                    targetCase = dlg.getCaseSelection();
+                }
+                
+                bulkSaveDlg.setCaseFolder(targetFolder);
+                bulkSaveDlg.setSelectedCase(targetCase);
+
+                if (attachmentsOnly) {
+                    if (targetCase != null) {
+
+//                        String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
+//                        if ("true".equalsIgnoreCase(temp)) {
+//                            String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
+//                            if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
+//                                afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
+//                            }
+//                        }
+
+                        ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                        for (String attachmentName : attachmentNames) {
+                            
+                            BulkSaveEntry bulkEntry=new BulkSaveEntry();
+                            bulkEntry.setDocumentDate(sentDate);
+                            
+                            byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);
+                            
+                            bulkEntry.setDocumentBytes(attachmentData);
+                            
+                            String newName = attachmentName;
+                            if (newName == null) {
+                                newName = "";
+                            }
+                            newName = FileUtils.sanitizeFileName(newName);
+                            java.util.Date receivedPrefix = m.getReceivedDate();
+                            if (receivedPrefix == null) {
+                                receivedPrefix = new java.util.Date();
+                            }
+                            String formerName = newName;
+                            
+                            bulkEntry.setDocumentFilename(attachmentName);
+                            bulkEntry.setDocumentFilenameNew(newName);
+                            
+                            bulkSaveDlg.addEntry(bulkEntry);
+                            
+//                            newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+//                            if (newName == null) {
+//                                // user may have decided to skip this attachment - continue with next
+//                                continue;
+//                            }
+//                            newName = FileUtils.preserveExtension(formerName, newName);
+//                            newName = FileUtils.sanitizeFileName(newName);
+//
+//                            if (newName.trim().length() == 0) {
+//                                newName = "Anhang";
+//                            }
+
+//                            ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
+//                            if (sentDate != null) {
+//                                afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
+//                            }
+//                            if (folderId != null) {
+//                                ArrayList<String> docList = new ArrayList<>();
+//                                docList.add(newlyAddedDocument.getId());
+//                                afs.moveDocumentsToFolder(docList, folderId);
+//                            }
+//
+//                            temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
+//                            if ("true".equalsIgnoreCase(temp)) {
+//                                String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+//                                if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+//                                    afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
+//                                }
+//                            }
+                        }
+
+                    }
+                }
+
+                if (targetCase != null && !attachmentsOnly) {
+
+                    String newName = m.getSubject();
+                    if (newName == null) {
+                        newName = "";
+                    }
+                    newName = newName + ".eml";
+                    newName = FileUtils.sanitizeFileName(newName);
+                    java.util.Date receivedPrefix = m.getReceivedDate();
+                    if (receivedPrefix == null) {
+                        receivedPrefix = new java.util.Date();
+                    }
+//                    newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+//                    if (newName == null) {
+//                        return false;
+//                    }
+//
+//                    if (newName.trim().length() == 0) {
+//                        newName = "E-Mail";
+//                    }
+//
+//                    if (!newName.toLowerCase().endsWith(".eml")) {
+//                        newName = newName + ".eml";
+//                    }
+
+                    BulkSaveEntry bulkEntry=new BulkSaveEntry();
+                    bulkEntry.setDocumentDate(sentDate);
+                    bulkEntry.setDocumentBytes(data);
+                    bulkEntry.setDocumentFilename(newName);
+                    bulkEntry.setDocumentFilenameNew(newName);
+                    bulkSaveDlg.addEntry(bulkEntry);
+
+                }
+
+                if (targetCase != null && separateAttachments && !attachmentsOnly) {
+                    ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                    for (String attachmentName : attachmentNames) {
+                        
+                        BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                        bulkEntry.setDocumentDate(sentDate);
+                        
+                        byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);
+                        String newName = attachmentName;
+                        if (newName == null) {
+                            newName = "";
+                        }
+                        newName = FileUtils.sanitizeFileName(newName);
+                        java.util.Date receivedPrefix = m.getReceivedDate();
+                        if (receivedPrefix == null) {
+                            receivedPrefix = new java.util.Date();
+                        }
+                        String formerName = newName;
+//                        newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+//                        if (newName == null) {
+//                            // user may have decided to skip this attachment - continue with next
+//                            continue;
+//                        }
+                        newName = FileUtils.preserveExtension(formerName, newName);
+                        newName = FileUtils.sanitizeFileName(newName);
+
+                        if (newName.trim().length() == 0) {
+                            newName = "Anhang";
+                        }
+                        
+                        bulkEntry.setDocumentBytes(data);
+                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilenameNew(newName);
+                        bulkSaveDlg.addEntry(bulkEntry);
+
+                    }
+
+                }
+                
+                this.resetCacheForSelectedFolder();
+
+                if (closed) {
+                    EmailUtils.closeIfIMAP(f);
+                }
+                
+                FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
+                bulkSaveDlg.setVisible(true);
+                if (true)
+                    return true;
+
+                if (targetCase != null) {
+                    String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
+                    if ("true".equalsIgnoreCase(temp)) {
+                        this.cmdDeleteActionPerformed(null);
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            }
+            
+            
+            
+            
+            
+            
+            
+            // LEGACY solution
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();

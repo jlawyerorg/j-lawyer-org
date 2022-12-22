@@ -915,6 +915,53 @@ public class ComponentUtils {
             }
         }
     }
+    
+    public static List<String> getPopupMenuItems(JPopupMenu pop) {
+        ArrayList<String> items=new ArrayList<>();
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                items.add(mi.getText());
+            }
+        }
+        return items;
+    }
+    
+    public static List<String> getSelectedPopupMenuItems(JPopupMenu pop) {
+        ArrayList<String> items=new ArrayList<>();
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                if(mi.isSelected())
+                    items.add(mi.getText());
+            }
+        }
+        return items;
+    }
+    
+    public static String getSelectedPopupMenuItemsAsString(JPopupMenu pop) {
+        List<String> items=getSelectedPopupMenuItems(pop);
+        StringBuilder sb=new StringBuilder();
+        for (String i: items) {
+            sb.append(i).append(", ");
+        }
+        String result=sb.toString();
+        if(result.endsWith(", "))
+            result=result.substring(0, result.length()-2);
+        return result;
+    }
+    
+    public static void selectPopupMenuItems(JPopupMenu pop, List<String> selectedItems) {
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                if(selectedItems.contains(mi.getText()))
+                    mi.setSelected(true);
+                else
+                    mi.setSelected(false);
+            }
+        }
+    }
 
     public static void decorateSplitPane(JSplitPane split) {
         decorateSplitPane(split, null);

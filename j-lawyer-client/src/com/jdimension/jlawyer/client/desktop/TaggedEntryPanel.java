@@ -837,11 +837,11 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         lblDocument = new javax.swing.JLabel();
 
         addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                formMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 formMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                formMouseExited(evt);
             }
         });
 
@@ -905,7 +905,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
                         .addComponent(lblDescription)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblChangedBy)))
-                .addContainerGap())
+                .addGap(15, 15, 15))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -919,7 +919,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
                 .addComponent(lblDocument)
                 .addGap(3, 3, 3)
                 .addComponent(lblTags)
-                .addGap(6, 6, 6))
+                .addGap(9, 9, 9))
         );
     }// </editor-fold>//GEN-END:initComponents
 

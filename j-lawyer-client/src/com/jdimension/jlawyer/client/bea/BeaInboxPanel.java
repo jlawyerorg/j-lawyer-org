@@ -2125,6 +2125,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
         if (!this.initializing) {
+            
+            if(this.cmbDownloadMails.getSelectedItem()==null)
+                return;
 
             ClientSettings cs = ClientSettings.getInstance();
             cs.setConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + ((LoadFolderRestriction) this.cmbDownloadMails.getSelectedItem()).getRestriction());
