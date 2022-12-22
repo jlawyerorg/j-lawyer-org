@@ -1500,7 +1500,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             log.error(ex);
         }
     }//GEN-LAST:event_cmdRefreshActionPerformed
-
+    
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
         this.treeFoldersValueChangedImpl(evt, 4, -1);
     }//GEN-LAST:event_treeFoldersValueChanged
@@ -2023,7 +2023,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         settings.setConfiguration(ClientSettings.CONF_BEA_LASTTAG, lastTag);
     }//GEN-LAST:event_cmbCaseTagActionPerformed
 
-    private void cmdLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLogoutActionPerformed
+    public void logout() {
         try {
             BeaAccess.getInstance().logout();
             this.emptyView();
@@ -2031,6 +2031,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         } catch (BeaWrapperException ex) {
             log.error("beA logout failed", ex);
         }
+    }
+    
+    private void cmdLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLogoutActionPerformed
+        this.logout();
     }//GEN-LAST:event_cmdLogoutActionPerformed
 
     private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed

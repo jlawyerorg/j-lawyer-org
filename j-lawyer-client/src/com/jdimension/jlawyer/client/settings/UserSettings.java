@@ -735,8 +735,8 @@ public class UserSettings {
     
     
     // for new bulk save dialog
-    public static String CONF_BULKSAVE_LASTCASETAGS="user.bulksave.lastcasetags";
-    public static String CONF_BULKSAVE_LASTDOCTAGS="user.bulksave.lastdoctags";
+    public static final String CONF_BULKSAVE_LASTCASETAGS="user.bulksave.lastcasetags";
+    public static final String CONF_BULKSAVE_LASTDOCTAGS="user.bulksave.lastdoctags";
     
 
     private static final String ARRAY_DELIMITER = "#####";

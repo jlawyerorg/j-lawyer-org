@@ -717,6 +717,7 @@ public class BeaAccess {
     private BeaWrapper wrapper = null;
 
     private static BeaAccess instance = null;
+    private String beaEnabledVersions=null;
 
     private Collection<PostBox> inboxes = null;
     private Hashtable<String, Identity> identityCache = new Hashtable<String, Identity>();
@@ -824,9 +825,11 @@ public class BeaAccess {
     }
 
     private void checkValidBeaClient() throws BeaWrapperException {
-        ServerSettings set = ServerSettings.getInstance();
-        String enabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
-        boolean valid = (enabledVersions.contains(VersionUtils.getFullClientVersion()));
+        if(this.beaEnabledVersions == null) {
+            ServerSettings set = ServerSettings.getInstance();
+            this.beaEnabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
+        }
+        boolean valid = (this.beaEnabledVersions.contains(VersionUtils.getFullClientVersion()));
         if (!valid) {
             throw new BeaWrapperException("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert." + System.lineSeparator() + "Bitte prüfen Sie unter www.j-lawyer.org ob ein Update verfügbar ist oder beA-bezogene Informationen des Herstellers vorliegen.");
         }
@@ -1120,6 +1123,12 @@ public class BeaAccess {
 
         this.lastFilter=filter;
         return this.folderOverviewCache.get(f.getId());
+    }
+    
+    public List<String> getFolderOverviewMessageIdsWithoutCache(Folder f, MessageSorterFilter filter) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        
+        return this.wrapper.getFolderOverviewMessageIds(f, filter).getMessageIds();
     }
     
     public boolean setMessageReadByUser(MessageHeader msg) throws BeaWrapperException {
