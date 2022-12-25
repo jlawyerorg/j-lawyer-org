@@ -717,7 +717,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list/synced/{principalId}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getSynced(@PathParam("principalId") String principalId) {
@@ -753,7 +753,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/syncsettings")
     @RolesAllowed({"readArchiveFileRole"})
@@ -783,7 +783,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/history")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getHistory(@PathParam("id") String id) {
@@ -830,7 +830,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDocumentTags(@PathParam("id") String id) {
@@ -869,7 +869,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -903,7 +903,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -940,7 +940,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -975,7 +975,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})

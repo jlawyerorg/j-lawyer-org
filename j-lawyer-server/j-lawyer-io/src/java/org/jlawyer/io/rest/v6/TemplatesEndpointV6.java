@@ -715,7 +715,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/documents/folders")
     @RolesAllowed({"loginRole"})
     public Response getTemplateFolders() {
@@ -754,7 +754,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/documents/{folder}")
     @RolesAllowed({"loginRole"})
     public Response getTemplatesInFolder(@PathParam("folder") String folder) {
@@ -782,7 +782,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}")
     @RolesAllowed({"loginRole"})
     public Response getPlaceHoldersForTemplate(@PathParam("folder") String folder, @PathParam("template") String template, @PathParam("caseId") String caseId) {
@@ -812,7 +812,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}/{fileName}")
     @RolesAllowed({"loginRole"})
     public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception {

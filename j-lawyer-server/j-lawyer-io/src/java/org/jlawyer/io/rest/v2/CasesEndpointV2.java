@@ -714,7 +714,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCase(@PathParam("id") String id) {
@@ -797,7 +797,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
     public Response createCase(RestfulCaseV2 caseData) {
@@ -849,7 +849,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response updateCase(RestfulCaseV2 caseData) {

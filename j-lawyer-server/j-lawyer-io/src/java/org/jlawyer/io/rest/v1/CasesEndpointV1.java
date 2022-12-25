@@ -727,7 +727,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"readArchiveFileRole"})
     public Response listCases() {
@@ -771,7 +771,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCase(@PathParam("id") String id) {
@@ -819,7 +819,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseTags(@PathParam("id") String id) {
@@ -863,7 +863,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
     public Response createCase(RestfulCaseV1 caseData) {
@@ -902,7 +902,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response updateCase(RestfulCaseV1 caseData) {
@@ -965,7 +965,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/documents")
     @RolesAllowed({"readArchiveFileRole"})
@@ -1018,7 +1018,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/content")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDocumentContent(@PathParam("id") String id) {
@@ -1067,7 +1067,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/duedates")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDueDates(@PathParam("id") String id) {
@@ -1120,7 +1120,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/parties")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseParties(@PathParam("id") String id) {
@@ -1171,7 +1171,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/create")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1216,7 +1216,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/update")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1282,7 +1282,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1314,7 +1314,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/create")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1401,7 +1401,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/update")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1481,7 +1481,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1511,7 +1511,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/party/types")
     @RolesAllowed({"loginRole"})
     public Response getPartyTypes() {
@@ -1545,7 +1545,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/forms")
     @RolesAllowed({"readArchiveFileRole"})
