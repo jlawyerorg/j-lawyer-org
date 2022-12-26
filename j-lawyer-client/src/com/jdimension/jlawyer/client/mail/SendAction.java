@@ -852,6 +852,8 @@ public class SendAction extends ProgressableAction {
                 FileDataSource attFile = new FileDataSource(url);
 
                 att.attachFile(url);
+                att.setDisposition(Part.ATTACHMENT);
+                att.setFileName(attFile.getName());
 
                 attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
