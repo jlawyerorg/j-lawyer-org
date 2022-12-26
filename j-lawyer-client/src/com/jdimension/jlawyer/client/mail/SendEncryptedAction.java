@@ -706,7 +706,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private List<String> attachments = null;
     private MailboxSetup ms = null;
     private boolean readReceipt = false;
