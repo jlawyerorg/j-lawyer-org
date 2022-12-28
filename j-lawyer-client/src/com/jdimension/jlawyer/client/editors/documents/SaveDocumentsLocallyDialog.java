@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
@@ -838,15 +839,44 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             if (!path.endsWith(File.separator)) {
                 path = path + File.separator;
             }
+            
             FileConverter conv = FileConverter.getInstance();
+            // check whether all documents can be converted
+            if(this.convertToPdf) {
+                ArrayList<String> unsupported=new ArrayList<>();
+                for (ArchiveFileDocumentsBean doc : this.docs2local) {
+                    if(!conv.supportsInputFormat(doc.getName()) && !doc.getName().toLowerCase().endsWith(".pdf")) {
+                        unsupported.add(doc.getName());
+                    }
+                }
+                if(!unsupported.isEmpty()) {
+                    StringBuilder msg=new StringBuilder();
+                    msg.append("<html><body>");
+                    msg.append("Die PDF-Konvertierung f&uuml;r folgende Dokumente wird aufgrund ihres Formats nicht unterst&uuml;tzt:<br/><ul>");
+                    for(String unsupportedName: unsupported) {
+                        msg.append("<li>");
+                        msg.append(StringUtils.toHtml4(unsupportedName));
+                        msg.append("</li>");
+                    }
+                    msg.append("</ul><br/>Die Dokumente werden nicht konvertiert. Fortfahren?</body></html>");
+                    int response = JOptionPane.showConfirmDialog(this, msg.toString(), "PDF-Konvertierung", JOptionPane.YES_NO_OPTION);
+                    if (response != JOptionPane.YES_OPTION) {
+                        this.setVisible(false);
+                        this.dispose();
+                        return;
+                    }
+                }
+            }
+            
             for (ArchiveFileDocumentsBean doc : this.docs2local) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                if (this.convertToPdf) {
+                if (this.convertToPdf && conv.supportsInputFormat(doc.getName())) {
                     String tempPath = FileUtils.createTempFile(doc.getName(), content);
                     String tempPdfPath = conv.convertToPDF(tempPath);
-                    byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                    FileUtils.cleanupTempFile(tempPath);
+                    byte[] fileContent = FileUtils.readFile(new File(tempPdfPath));
                     FileUtils.cleanupTempFile(tempPdfPath);
+                    FileUtils.cleanupTempFile(tempPath);
+                    
 
                     String currentExt = "";
                     for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
@@ -862,7 +892,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
                         return;
                     }
                     try ( FileOutputStream fout = new FileOutputStream(new File(path + newName))) {
-                        fout.write(pdfContent);
+                        fout.write(fileContent);
                     }
                 } else {
                     try ( FileOutputStream fout = new FileOutputStream(new File(path + doc.getName()))) {
