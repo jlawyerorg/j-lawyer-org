@@ -2938,6 +2938,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     data = bOut.toByteArray();
                 }
 
+                CaseFolder rootFolder = null;
                 CaseFolder targetFolder = null;
                 ArchiveFileBean targetCase=null;
                 if (caseId == null) {
@@ -2945,6 +2946,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     dlg.setVisible(true);
                     targetCase = dlg.getCaseSelection();
                     targetFolder = dlg.getFolderSelection();
+                    rootFolder=dlg.getRootFolder();
                     dlg.dispose();
                     
                 } else {
@@ -2953,9 +2955,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     dlg.dispose();
                     targetFolder = dlg.getFolderSelection();
                     targetCase = dlg.getCaseSelection();
+                    rootFolder=dlg.getRootFolder();
+                    
                 }
                 
-                bulkSaveDlg.setCaseFolder(targetFolder);
+                bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
                 bulkSaveDlg.setSelectedCase(targetCase);
 
                 if (attachmentsOnly) {
@@ -2991,7 +2995,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             String formerName = newName;
                             
                             bulkEntry.setDocumentFilename(attachmentName);
-                            bulkEntry.setDocumentFilenameNew(newName);
+                            bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
                             
                             bulkSaveDlg.addEntry(bulkEntry);
                             
@@ -3058,7 +3062,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     bulkEntry.setDocumentDate(sentDate);
                     bulkEntry.setDocumentBytes(data);
                     bulkEntry.setDocumentFilename(newName);
-                    bulkEntry.setDocumentFilenameNew(newName);
+                    bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 }
@@ -3095,7 +3099,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         
                         bulkEntry.setDocumentBytes(data);
                         bulkEntry.setDocumentFilename(attachmentName);
-                        bulkEntry.setDocumentFilenameNew(newName);
+                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
                         bulkSaveDlg.addEntry(bulkEntry);
 
                     }

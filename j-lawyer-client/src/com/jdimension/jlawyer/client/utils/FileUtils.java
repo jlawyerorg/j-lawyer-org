@@ -672,6 +672,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -1026,12 +1027,16 @@ public class FileUtils extends ServerFileUtils {
 
     }
 
+    public static String getNewFileNamePrefix(Date d) {
+        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
+        return datePrefix.format(d);
+    }
+    
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
 
         String dtPrefix = "";
         if (datetimePrefix) {
-            SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-            dtPrefix = datePrefix.format(d);
+            dtPrefix = getNewFileNamePrefix(d);
         }
 
         if (parent == null) {

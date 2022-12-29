@@ -38,20 +38,20 @@
                       <Component id="togSave" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <Component id="lblFileNameOrg" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="lblFileSize" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="txtFileNameNew" alignment="0" max="32767" attributes="0"/>
-                          <Group type="102" alignment="1" attributes="0">
+                          <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jToggleButton1" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdDocTags" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdFolder" min="-2" max="-2" attributes="0"/>
+                                  <Component id="togFavorite" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="txtFileNameNew" max="32767" attributes="0"/>
                                   <Component id="lblSelectedTags" max="32767" attributes="0"/>
                                   <Component id="lblFolder" pref="401" max="32767" attributes="0"/>
                               </Group>
@@ -67,27 +67,30 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="togSave" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblFileNameOrg" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblFileSize" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="togSave" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblFileNameOrg" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblFileSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="txtFileNameNew" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="togFavorite" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="txtFileNameNew" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="cmdDocTags" max="32767" attributes="0"/>
                   <Component id="lblSelectedTags" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblFolder" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="cmdFolder" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblFolder" min="-2" pref="30" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jToggleButton1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="sepBottom" min="-2" pref="10" max="-2" attributes="0"/>
+              <Component id="sepBottom" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -100,6 +103,7 @@
           <Image iconType="3" name="/icons16/material/baseline_file_download_off_black_48dp.png"/>
         </Property>
         <Property name="selected" type="boolean" value="true"/>
+        <Property name="toolTipText" type="java.lang.String" value="Speichern aktivieren / deaktivieren"/>
         <Property name="selectedIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_file_download_black_48dp.png"/>
         </Property>
@@ -122,6 +126,9 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="2022-12-11 xyz.pdf"/>
       </Properties>
+      <Events>
+        <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtFileNameNewKeyReleased"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblFileSize">
       <Properties>
@@ -138,7 +145,7 @@
         <Property name="text" type="java.lang.String" value="Dokumente &gt; Finanzen"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JToggleButton" name="jToggleButton1">
+    <Component class="javax.swing.JToggleButton" name="togFavorite">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/package_favorite_grey.png"/>
@@ -155,6 +162,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_label_green_36dp.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Dokumentetikett ausw&#xe4;hlen"/>
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDocTagsMousePressed"/>
@@ -165,7 +173,11 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_account_tree_black_48dp.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Ordner ausw&#xe4;hlen"/>
       </Properties>
+      <Events>
+        <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdFolderMousePressed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

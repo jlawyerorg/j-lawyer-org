@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
@@ -676,19 +677,26 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
+import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
+import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimerTask;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
 import org.apache.log4j.Logger;
@@ -703,8 +711,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
     protected ArchiveFileBean selectedCase = null;
     protected CaseFolder caseFolder = null;
+    protected CaseFolder rootFolder = null;
 
     private ArrayList<BulkSaveEntry> entryList = new ArrayList<>();
+    
+    private ArrayList<String> existingFileNames=new ArrayList<>();
 
     /**
      * Creates new form BulkSaveDialog
@@ -716,8 +727,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         pnlEntries.setLayout(new javax.swing.BoxLayout(pnlEntries, javax.swing.BoxLayout.Y_AXIS));
 
         ComponentUtils.restoreDialogSize(this);
-        
+
         this.initializeTags();
+
+        this.extensionsPanel.setLayout(new WrapLayout());
+        
     }
 
     private void initializeTags() {
@@ -744,7 +758,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
             this.buildPopup(this.cmdCommonTags, this.popCommonDocumentTags, allDocTagsAsString, lastBulkSaveDocumentTags, UserSettings.CONF_BULKSAVE_LASTDOCTAGS, this.lblCommonTags);
             lblCommonTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCommonDocumentTags));
-            
+
 //            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
 //            lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
 //            List<String> docTagsInUse = settings.getDocumentTagsInUse();
@@ -854,7 +868,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 public void itemStateChanged(ItemEvent arg0) {
                     allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
                 }
-                
+
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
                 boolean selected = false;
@@ -905,6 +919,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         cmdCommonTags = new javax.swing.JButton();
         cmdCommonFolder = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        extensionsPanel = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dateien zur Akte speichern");
@@ -964,7 +980,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         );
         pnlEntriesLayout.setVerticalGroup(
             pnlEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 366, Short.MAX_VALUE)
+            .addGap(0, 458, Short.MAX_VALUE)
         );
 
         jScrollPane1.setViewportView(pnlEntries);
@@ -993,6 +1009,26 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
         cmdCommonFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
         cmdCommonFolder.setToolTipText("Ordner auswählen");
+        cmdCommonFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCommonFolderMousePressed(evt);
+            }
+        });
+
+        jScrollPane2.setBorder(null);
+
+        javax.swing.GroupLayout extensionsPanelLayout = new javax.swing.GroupLayout(extensionsPanel);
+        extensionsPanel.setLayout(extensionsPanelLayout);
+        extensionsPanelLayout.setHorizontalGroup(
+            extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 776, Short.MAX_VALUE)
+        );
+        extensionsPanelLayout.setVerticalGroup(
+            extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
+        jScrollPane2.setViewportView(extensionsPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1001,6 +1037,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
                     .addComponent(jSeparator1)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -1055,8 +1092,10 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                     .addComponent(cmdCommonFolder)
                     .addComponent(lblCommonFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdFolderAll))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblTotalSize)
@@ -1077,7 +1116,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdFolderAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFolderAllActionPerformed
-        // TODO add your handling code here:
+        for (BulkSaveEntry e : this.entryList) {
+            e.setSelectedCaseFolder(this.caseFolder);
+        }
     }//GEN-LAST:event_cmdFolderAllActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
@@ -1098,19 +1139,52 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCommonTagsMousePressed
 
     private void cmdTagAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTagAllActionPerformed
-        List<String> docTags=ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags);
+        List<String> docTags = ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags);
         for (BulkSaveEntry e : this.entryList) {
             e.selectDocumentTags(docTags);
         }
     }//GEN-LAST:event_cmdTagAllActionPerformed
 
+    private void cmdCommonFolderMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonFolderMousePressed
+        this.popCommonFolder.show(this.cmdCommonFolder, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdCommonFolderMousePressed
+
+    private void rebuildExtensionsPanel() {
+        this.extensionsPanel.removeAll();
+        ArrayList<String> extensions=new ArrayList<>();
+        for (BulkSaveEntry e : this.entryList) {
+            String ext=FileUtils.getExtension(e.getDocumentFilename());
+            ext=ext.toLowerCase();
+            if(!extensions.contains(ext))
+                extensions.add(ext);
+        }
+        StringUtils.sortIgnoreCase(extensions);
+        for (String extString : extensions) {
+            TagToggleButton tb = new TagToggleButton(extString);
+            tb.setSelected(true);
+            tb.addActionListener((ActionEvent arg0) -> {
+                // todo
+                for (BulkSaveEntry e : this.entryList) {
+                    if(e.getDocumentFilename().toLowerCase().endsWith(extString)) {
+                        e.setSelected(tb.isSelected());
+                    }
+                }
+            });
+            extensionsPanel.add(tb);
+        }
+    }
+
     public void addEntry(BulkSaveEntry e) {
         e.setSaveDialog(this);
         this.entryList.add(e);
         this.pnlEntries.add(e);
-        e.addDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags));
+        e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags));
         e.selectDocumentTags(ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags));
+        e.setCaseFolder(this.rootFolder, caseFolder);
+
         this.updateTotals();
+        this.rebuildExtensionsPanel();
+        this.checkForDuplicateFileNames();
     }
 
     public void updateTotals() {
@@ -1191,7 +1265,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdFolderAll;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdTagAll;
+    private javax.swing.JPanel extensionsPanel;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
@@ -1218,6 +1294,51 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     public void setSelectedCase(ArchiveFileBean selectedCase) {
         this.selectedCase = selectedCase;
         this.lblCase.setText(selectedCase.getFileNumber() + " " + selectedCase.getName());
+        
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            Collection<ArchiveFileDocumentsBean> docs=locator.lookupArchiveFileServiceRemote().getDocuments(selectedCase.getId());
+            for(ArchiveFileDocumentsBean d: docs) {
+                existingFileNames.add(d.getName().toLowerCase());
+            }
+            
+        } catch (Exception ex) {
+            log.error("Error getting docments for case " + selectedCase.getId(), ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dokumente der Akte", "Dokumente speichern");
+        }
+    }
+    
+    public void checkForDuplicateFileNames() {
+        ArrayList<String> checkedNames=new ArrayList<String>();
+        ArrayList<String> conflictNames=new ArrayList<String>();
+        checkedNames.addAll(this.existingFileNames);
+        for (BulkSaveEntry e : this.entryList) {
+            String newName=e.getDocumentFilenameNew().toLowerCase();
+            if(!checkedNames.contains(newName)) {
+                checkedNames.add(newName);
+            } else {
+                conflictNames.add(newName);
+            }
+        }
+        
+        // there may be conflicts, but the user decided not to save them
+        boolean activeConflicts=false;
+        
+        for (BulkSaveEntry e : this.entryList) {
+            String newName=e.getDocumentFilenameNew().toLowerCase();
+            if(conflictNames.contains(newName)) {
+                e.setDocumentFilenameNewOutline(FlatClientProperties.OUTLINE_ERROR);
+                if(e.isSelected())
+                    activeConflicts=true;
+            } else {
+                e.setDocumentFilenameNewOutline(null);
+            }
+        }
+        
+        this.cmdSave.setEnabled(!activeConflicts);
+        
     }
 
     /**
@@ -1230,12 +1351,60 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     /**
      * @param caseFolder the caseFolder to set
      */
-    public void setCaseFolder(CaseFolder caseFolder) {
+    public void setCaseFolder(CaseFolder rootFolder, CaseFolder caseFolder) {
+        this.rootFolder = rootFolder;
         this.caseFolder = caseFolder;
-        if (caseFolder != null) {
-            this.lblCommonFolder.setText(StringUtils.nonNull(caseFolder.getName()));
-        } else {
-            this.lblCommonFolder.setText("");
+//        if (caseFolder != null) {
+//            this.lblCommonFolder.setText(StringUtils.nonNull(caseFolder.getName()));
+//        } else {
+//            this.lblCommonFolder.setText("");
+//        }
+
+        this.popCommonFolder.removeAll();
+
+        ArrayList<JMenuItemWithFolder> items = new ArrayList<>();
+        this.buildMoveToFolderMenu(items, rootFolder, "");
+        Collections.sort(items, (Object t, Object t1) -> {
+            JMenuItem m1 = (JMenuItem) t;
+            JMenuItem m2 = (JMenuItem) t1;
+            return m1.getText().compareTo(m2.getText());
+        });
+
+        for (JMenuItemWithFolder m : items) {
+            this.popCommonFolder.add(m);
+            if (m.getFolder().equals(caseFolder)) {
+                this.lblCommonFolder.setText(m.getText());
+            }
+        }
+    }
+
+    private void buildMoveToFolderMenu(ArrayList<JMenuItemWithFolder> items, CaseFolder folder, String path) {
+        JMenuItemWithFolder menu = new JMenuItemWithFolder();
+        menu.setFolder(folder);
+        String itemName = path;
+        if (path.length() > 0) {
+            itemName = itemName + " > ";
+        }
+        itemName = itemName + folder.getName();
+        final String fItemName = itemName;
+
+        menu.setText(itemName);
+        menu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+
+        menu.addActionListener((ActionEvent ae) -> {
+            this.caseFolder = folder;
+            this.lblCommonFolder.setText(fItemName);
+            //ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
+            //moveDocumentsToFolder(selectedDocs, folder);
+
+        });
+
+        items.add(menu);
+
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                buildMoveToFolderMenu(items, child, itemName);
+            }
         }
     }
 }

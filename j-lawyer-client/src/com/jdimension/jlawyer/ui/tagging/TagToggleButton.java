@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.ui.tagging;
 
 import java.awt.Font;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import javax.swing.JToggleButton;
 import themes.colors.DefaultColorTheme;
 

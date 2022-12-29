@@ -704,8 +704,11 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
     // holds the selected case, e.g. when user double clicks an entry or uses the button
     private ArchiveFileBean caseSelection = null;
-    // nolds the last selected folder
+    // holds the last selected folder
     private CaseFolder folderSelection = null;
+    
+    // holds the root folder of the last selected case
+    private CaseFolder rootFolder = null;
 
     // holds the last selected case, required to determine whether or not caseSelection actually changed
     // only when changed, the folder structure is to be reloaded, otherwise selected folder needs to be retained
@@ -1104,7 +1107,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
             if (this.lastSelection == null || !selectedCase.equals(this.lastSelection)) {
 
-                CaseFolder rootFolder = selectedCase.getRootFolder();
+                this.rootFolder = selectedCase.getRootFolder();
 
                 DefaultTreeModel tm = new DefaultTreeModel(buildTree(rootFolder));
                 this.treeFolders.setModel(tm);
@@ -1339,5 +1342,12 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     @Override
     public void actionFinished() {
         this.updateCaseFolderStructure();
+    }
+
+    /**
+     * @return the rootFolder
+     */
+    public CaseFolder getRootFolder() {
+        return rootFolder;
     }
 }
