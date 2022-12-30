@@ -854,7 +854,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.lblSelectedTags.setForeground(labelColor);
         
         // re-trigger check for duplicates, e.g. a conflicting file was selected / unselected
-        this.saveDialog.checkForDuplicateFileNames();
+        if(this.saveDialog!=null)
+            this.saveDialog.checkForDuplicateFileNames();
         
     }//GEN-LAST:event_togSaveItemStateChanged
 
@@ -1046,13 +1047,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      * @param caseFolder the caseFolder to set
      */
     public void setCaseFolder(CaseFolder rootFolder, CaseFolder caseFolder) {
-        this.caseFolder = caseFolder;
-//        if (caseFolder != null) {
-//            this.lblFolder.setText(StringUtils.nonNull(caseFolder.getName()));
-//        } else {
-//            this.lblFolder.setText("");
-//        }
-        
+        this.caseFolder = caseFolder;       
         this.popFolder.removeAll();
 
         ArrayList<JMenuItemWithFolder> items = new ArrayList<>();
@@ -1088,8 +1083,6 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
             this.caseFolder=folder;
             this.lblFolder.setText(fItemName);
-            //ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
-            //moveDocumentsToFolder(selectedDocs, folder);
 
         });
 

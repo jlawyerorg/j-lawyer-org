@@ -1163,7 +1163,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             TagToggleButton tb = new TagToggleButton(extString);
             tb.setSelected(true);
             tb.addActionListener((ActionEvent arg0) -> {
-                // todo
                 for (BulkSaveEntry e : this.entryList) {
                     if(e.getDocumentFilename().toLowerCase().endsWith(extString)) {
                         e.setSelected(tb.isSelected());
@@ -1311,8 +1310,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }
     
     public void checkForDuplicateFileNames() {
-        ArrayList<String> checkedNames=new ArrayList<String>();
-        ArrayList<String> conflictNames=new ArrayList<String>();
+        ArrayList<String> checkedNames=new ArrayList<>();
+        ArrayList<String> conflictNames=new ArrayList<>();
         checkedNames.addAll(this.existingFileNames);
         for (BulkSaveEntry e : this.entryList) {
             String newName=e.getDocumentFilenameNew().toLowerCase();
@@ -1354,12 +1353,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     public void setCaseFolder(CaseFolder rootFolder, CaseFolder caseFolder) {
         this.rootFolder = rootFolder;
         this.caseFolder = caseFolder;
-//        if (caseFolder != null) {
-//            this.lblCommonFolder.setText(StringUtils.nonNull(caseFolder.getName()));
-//        } else {
-//            this.lblCommonFolder.setText("");
-//        }
-
         this.popCommonFolder.removeAll();
 
         ArrayList<JMenuItemWithFolder> items = new ArrayList<>();
@@ -1394,8 +1387,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         menu.addActionListener((ActionEvent ae) -> {
             this.caseFolder = folder;
             this.lblCommonFolder.setText(fItemName);
-            //ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
-            //moveDocumentsToFolder(selectedDocs, folder);
 
         });
 
