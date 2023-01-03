@@ -663,8 +663,7 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.awt.Window;
 
 /**
  *
@@ -672,8 +671,11 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
  */
 public abstract class InternalLauncher extends Launcher {
     
-    public InternalLauncher(String url, ObservedDocumentStore store) {
+    protected Window parent=null;
+    
+    public InternalLauncher(String url, ObservedDocumentStore store, Window parent) {
         super(url, store);
+        this.parent=parent;
     }
     
     

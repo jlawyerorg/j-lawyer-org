@@ -708,11 +708,13 @@ public class EmailUtils {
         trashAliases.add("Papierkorb");
         trashAliases.add("Gelöscht");
         trashAliases.add("Trash");
+        trashAliases.add("Gelöschte Elemente");
 
         sentAliases = new ArrayList<>();
         sentAliases.add("Gesendet");
         sentAliases.add("Sent");
         sentAliases.add("Sent Items");
+        sentAliases.add("Gesendete Elemente");
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");

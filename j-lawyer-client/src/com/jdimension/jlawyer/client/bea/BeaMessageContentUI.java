@@ -1630,7 +1630,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 byte[] pdf = this.msgContainer.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
                 String fileName = "beA-Nachricht-" + this.msgContainer.getId() + ".pdf";
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beacontentui-" + fileName, fileName);
-                Launcher launcher = LauncherFactory.getLauncher(fileName, pdf, store);
+                Launcher launcher = LauncherFactory.getLauncher(fileName, pdf, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
 
             } catch (Exception ex) {
@@ -1719,7 +1719,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 byte[] data = ((Attachment) attList.getSelectedValue()).getContent();
                 String fileName = ((Attachment) attList.getSelectedValue()).getFileName();
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
-                Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
+                Launcher launcher = LauncherFactory.getLauncher(fileName, data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

@@ -2354,7 +2354,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 }
                 byte[] data = FileUtils.readFile(new File(requestedAttachmentUrl));
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + selectedFileName, selectedFileName);
-                Launcher launcher = LauncherFactory.getLauncher(selectedFileName, data, store);
+                Launcher launcher = LauncherFactory.getLauncher(selectedFileName, data, store, this);
                 launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

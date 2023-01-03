@@ -706,7 +706,7 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         taText.setColumns(20);
-        taText.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        taText.setFont(taText.getFont().deriveFont(taText.getFont().getSize()+2f));
         taText.setLineWrap(true);
         taText.setRows(5);
         taText.setWrapStyleWord(true);

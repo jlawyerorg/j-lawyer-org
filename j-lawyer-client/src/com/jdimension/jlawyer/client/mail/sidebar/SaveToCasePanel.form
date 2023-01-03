@@ -99,9 +99,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdSaveFullMessage">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/filesave.png"/>
         </Property>
@@ -113,9 +110,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdSaveMessageWithoutAttachments">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/filesave-noattachment.png"/>
         </Property>
@@ -127,9 +121,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdSaveSeparate">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/filesave-separate.png"/>
         </Property>
@@ -141,9 +132,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdSaveMessageAttachmentsOnly">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/attach.png"/>
         </Property>

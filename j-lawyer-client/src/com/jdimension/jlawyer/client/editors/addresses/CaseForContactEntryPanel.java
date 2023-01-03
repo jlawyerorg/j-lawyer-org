@@ -758,7 +758,7 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
         lblRole = new javax.swing.JLabel();
         lblArchived = new javax.swing.JLabel();
 
-        lblDescription.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblDescription.setFont(lblDescription.getFont().deriveFont(lblDescription.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
@@ -775,11 +775,11 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblRole.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        lblRole.setFont(lblRole.getFont().deriveFont((lblRole.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
         lblRole.setForeground(new java.awt.Color(0, 0, 255));
         lblRole.setText("user");
 
-        lblArchived.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblArchived.setFont(lblArchived.getFont().deriveFont((lblArchived.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblArchived.getFont().getSize()-2));
         lblArchived.setText("archiviert");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

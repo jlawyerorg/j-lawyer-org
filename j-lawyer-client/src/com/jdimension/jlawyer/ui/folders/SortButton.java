@@ -684,8 +684,8 @@ public class SortButton extends JButton {
     public static int SORT_ASC = 20;
     public static int SORT_DESC = 30;
     
-    private static ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
-    private static ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
+    private static final ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
+    private static final ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
     private ImageIcon ICON_NONE=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/empty_20_1px.png"));
 
     private int sortState = SORT_NONE;
@@ -696,17 +696,21 @@ public class SortButton extends JButton {
         super();
         this.putClientProperty("JButton.buttonType", "roundRect");
 
-        try {
-            InputStream is = SortButton.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
-            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-
-            this.setFont(font.deriveFont(Font.BOLD, 12));
-        } catch (Throwable t) {
-            log.error("Unable to load font for SortButton", t);
-        }
+//        try {
+//            InputStream is = SortButton.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
+//            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+//
+//            this.setFont(font.deriveFont(Font.BOLD, 12));
+//        } catch (Throwable t) {
+//            log.error("Unable to load font for SortButton", t);
+//        }
 
 //        Font deriveFont=this.getFont().deriveFont((float)this.getFont().getSize() + 2f);
 //        this.setFont(deriveFont);
+
+        Font deriveFont=getFont().deriveFont(getFont().getStyle() | java.awt.Font.BOLD, getFont().getSize()-2);
+        setFont(deriveFont);
+
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 buttonClicked(evt);

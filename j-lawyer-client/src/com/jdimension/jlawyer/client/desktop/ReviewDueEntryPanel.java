@@ -690,6 +690,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
@@ -715,6 +716,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private String doneDescription = "";
     private String unDoneDescription = "";
+    
+    private boolean overDue=false;
 
     private Color normalBackground = null;
     private float alpha = DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
@@ -765,10 +768,20 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         graphics.setColor(getBackground());
         graphics.fillRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint background
         graphics.setColor(getForeground());
-        graphics.setColor(this.customBorderColor);
+        
+        graphics.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
         graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
         graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
+        
+        if(this.overDue) {
+            graphics.setColor(this.customBorderColor);
+            Polygon plgn = new Polygon();
+            plgn.addPoint(3, 3);
+            plgn.addPoint(17, 3);
+            plgn.addPoint(3, 17);
+            graphics.fillPolygon(plgn);
+        }
      }
 
     public void setEntry(ReviewDueEntry entry) {
@@ -826,9 +839,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             // not today, must be overdue
             this.lblDescription.setForeground(OVERDUE_COLOR);
             this.customBorderColor=new Color(-3407821);
+            this.overDue=true;
         } else {
             this.lblDescription.setForeground(Color.BLACK);
             this.customBorderColor=DefaultColorTheme.COLOR_DARK_GREY;
+            this.overDue=false;
         }
 
         StringBuilder tooltip = new StringBuilder();
@@ -849,8 +864,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         tooltip.append("<html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
-        this.unDoneDescription = "<html><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + HTML_BR + caseReason + "</html>";
-        this.doneDescription = "<html><s><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + HTML_BR + caseReason + "</s></html>";
+        this.unDoneDescription = "<html><b>" + dueDate + reason + "</b><br/><font color=\"black\">" + caseNumber + " " + caseName + HTML_BR + caseReason + "</font></html>";
+        this.doneDescription = "<html><s><b>" + dueDate + reason + "</b><br/><font color=\"black\">" + caseNumber + " " + caseName + HTML_BR + caseReason + "</font></s></html>";
         this.lblDescription.setText(unDoneDescription);
         this.lblResponsible.setText(e.getResponsible());
         if (e.getResponsible() != null && !("".equalsIgnoreCase(e.getResponsible()))) {

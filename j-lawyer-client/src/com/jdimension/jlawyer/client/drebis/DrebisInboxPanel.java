@@ -696,7 +696,6 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -767,7 +766,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }).start();
 
-//        this.refreshList();
     }
 
     private void refreshList() {
@@ -895,7 +893,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("- Nachrichten");
 
@@ -1057,7 +1055,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE)
+                            .add(jScrollPane2)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(jLabel3)
@@ -1070,7 +1068,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                                     .add(txtFileName)
                                     .add(txtFileNumber))))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE))
+                        .add(jScrollPane3))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(chkCaseTagging)
@@ -1184,7 +1182,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtFreeText.setText(me.getFreeText());
         this.txtClaimNumber.setText("" + me.getClaimNumber());
 
-        //((DefaultTableModel)this.tblAttachments.getModel()).re
         for (DrebisAttachment da : me.getAttachments()) {
             Vector aRow = new Vector();
             aRow.add(da);
@@ -1204,7 +1201,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 DrebisAttachment da = (DrebisAttachment) this.tblAttachments.getValueAt(this.tblAttachments.getSelectedRow(), 0);
                 byte[] data = da.getContent();
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("drebis-attachment-" + da.getName() + "." + da.getSuffix(), da.getName() + "." + da.getSuffix());
-                Launcher launcher = LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store);
+                Launcher launcher = LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
 
             } catch (Exception ex) {
@@ -1235,7 +1232,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Exception ex) {
             log.error("Error confirming drebis message", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Bestätigen der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().
         }
 
         this.cmdRefreshActionPerformed(null);
@@ -1256,7 +1252,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            //byte[] data = this.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString());
             String archiveFileNumber = this.txtFileNumber.getText();
 
             // just in case the Drebis request was started in the portal without the leading zeroes
@@ -1400,7 +1395,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             dm.addElement("");
             ArrayList<String> allTags = new ArrayList<>();
             for (AppOptionGroupBean tag : ((AllCaseTagsEvent) e).getTagDtos()) {
-                //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);
@@ -1420,7 +1414,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             dm.addElement("");
             ArrayList<String> allTags = new ArrayList<>();
             for (AppOptionGroupBean tag : ((AllDocumentTagsEvent) e).getTagDtos()) {
-                //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);

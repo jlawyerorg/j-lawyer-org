@@ -763,7 +763,6 @@ public class GenericScanActionsPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdRename.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
         cmdRename.setToolTipText("Scan zur Akte speichern");
         cmdRename.addActionListener(new java.awt.event.ActionListener() {
@@ -772,7 +771,6 @@ public class GenericScanActionsPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdDelete.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdDelete.setToolTipText("Scan zur Akte speichern");
         cmdDelete.addActionListener(new java.awt.event.ActionListener() {

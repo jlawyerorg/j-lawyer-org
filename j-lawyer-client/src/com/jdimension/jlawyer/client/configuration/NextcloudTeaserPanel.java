@@ -697,10 +697,10 @@ public class NextcloudTeaserPanel extends javax.swing.JPanel {
         txtNextcloudOrder = new javax.swing.JTextField();
         cmdShowWebsite = new javax.swing.JButton();
 
-        lblNextcloudOrder.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblNextcloudOrder.setFont(lblNextcloudOrder.getFont().deriveFont(lblNextcloudOrder.getFont().getStyle() | java.awt.Font.BOLD, lblNextcloudOrder.getFont().getSize()+2));
         lblNextcloudOrder.setText("Keine Lust auf Betrieb, Datensicherung und Updates?");
 
-        lblNextcloudOrder1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblNextcloudOrder1.setFont(lblNextcloudOrder1.getFont().deriveFont(lblNextcloudOrder1.getFont().getStyle() | java.awt.Font.BOLD, lblNextcloudOrder1.getFont().getSize()+2));
         lblNextcloudOrder1.setText("Hier Nextcloud-Nutzer anfordern:");
 
         txtNextcloudOrder.setEditable(false);
@@ -734,9 +734,7 @@ public class NextcloudTeaserPanel extends javax.swing.JPanel {
                 .addComponent(lblNextcloudOrder1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(9, 9, 9)
-                        .addComponent(txtNextcloudOrder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtNextcloudOrder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdShowWebsite)))
         );
     }// </editor-fold>//GEN-END:initComponents

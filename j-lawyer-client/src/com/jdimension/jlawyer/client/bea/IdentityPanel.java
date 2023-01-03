@@ -727,11 +727,11 @@ public class IdentityPanel extends javax.swing.JPanel {
         lblEmail = new javax.swing.JLabel();
         lblOrganisation = new javax.swing.JLabel();
 
-        lblNames.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblNames.setFont(lblNames.getFont().deriveFont(lblNames.getFont().getStyle() | java.awt.Font.BOLD, lblNames.getFont().getSize()+2));
         lblNames.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         lblNames.setText("Nachname, Vorname (Username)");
 
-        lblSafeId.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
+        lblSafeId.setFont(lblSafeId.getFont().deriveFont((lblSafeId.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         lblSafeId.setForeground(new java.awt.Color(0, 153, 153));
         lblSafeId.setText("SafeId");
 

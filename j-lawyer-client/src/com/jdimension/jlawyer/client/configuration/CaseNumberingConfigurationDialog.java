@@ -1038,7 +1038,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        lblHint.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblHint.setFont(lblHint.getFont().deriveFont(lblHint.getFont().getStyle() | java.awt.Font.BOLD, lblHint.getFont().getSize()+2));
         lblHint.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblHint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/info.png"))); // NOI18N
         lblHint.setText("Hinweise");

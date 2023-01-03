@@ -746,7 +746,7 @@ public class PDFSplitDialog extends javax.swing.JDialog {
 
         lblFileName.setText("Dateiname.pdf");
 
-        lblFileProperties.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblFileProperties.setFont(lblFileProperties.getFont().deriveFont(lblFileProperties.getFont().getSize()-2f));
         lblFileProperties.setText("23 Seiten, 45MB");
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/fileicons/file_type_pdf@2x.png"))); // NOI18N
@@ -757,19 +757,19 @@ public class PDFSplitDialog extends javax.swing.JDialog {
 
         cmbPageCount.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "5", "10", "20", "25", "30", "50", "100", "200", "300", "400", "500", "1000" }));
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setText("In Teildokumente mit maximal ... Seiten aufteilen.");
 
         buttonGroup1.add(rdEmpty);
         rdEmpty.setText("an leeren Seiten");
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setText("Nur vollständig leere Seiten werden als Trennseiten erkannt.");
 
         buttonGroup1.add(rdEmptyAlmost);
         rdEmptyAlmost.setText("an leeren Seiten (hohe Kompatibilität)");
 
-        jLabel6.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel6.getFont().getSize()-2));
         jLabel6.setText("Leere werden als Trennseiten erkannt. Seiten nur mit Kopf-/Fußzeile oder wenig Inhalt werden als leer gewertet.");
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
@@ -788,13 +788,13 @@ public class PDFSplitDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel7.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel7.getFont().getSize()-2));
         jLabel7.setText("Das Aufteilen kann einige Zeit in Anspruch nehmen.");
 
         buttonGroup1.add(rdKeyword);
         rdKeyword.setText("an Seiten mit Schlüsselwort");
 
-        jLabel8.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel8.getFont().getSize()-2));
         jLabel8.setText("Seiten mit dem angegebenen Schlüsselwert werden als Trennseiten erkannt. Erfordert PDF mit OCR-Informationen.");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

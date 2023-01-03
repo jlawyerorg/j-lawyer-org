@@ -2605,7 +2605,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jTabbedPane1.addTab("Akten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), jPanel10); // NOI18N
 
-        lblHeaderInfo.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblHeaderInfo.setFont(lblHeaderInfo.getFont().deriveFont(lblHeaderInfo.getFont().getStyle() | java.awt.Font.BOLD, lblHeaderInfo.getFont().getSize()+2));
         lblHeaderInfo.setForeground(new java.awt.Color(255, 255, 255));
         lblHeaderInfo.setText("jLabel26");
 
@@ -2613,7 +2613,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("jLabel19");
 
@@ -2694,7 +2694,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         });
 
-        lblEncryption.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblEncryption.setFont(lblEncryption.getFont().deriveFont(lblEncryption.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblEncryption.setForeground(new java.awt.Color(255, 255, 255));
         lblEncryption.setText("unverschlüsselt");
 

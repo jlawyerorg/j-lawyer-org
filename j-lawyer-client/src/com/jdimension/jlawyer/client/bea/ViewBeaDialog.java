@@ -666,8 +666,6 @@ package com.jdimension.jlawyer.client.bea;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -695,14 +693,17 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ViewEmailDialog
+     * @param parent
+     * @param modal
+     * @param contextArchiveFile
      */
-    public ViewBeaDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean contextArchiveFile) {
-        this(parent, modal, contextArchiveFile, null);
+    public ViewBeaDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile) {
+        this(parent, contextArchiveFile, null);
 
     }
 
-    public ViewBeaDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean contextArchiveFile, ObservedDocument odoc) {
-        super(parent, modal);
+    public ViewBeaDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile, ObservedDocument odoc) {
+        super(parent);
         initComponents();
         this.contextArchiveFile = contextArchiveFile;
         this.odoc = odoc;
@@ -1035,19 +1036,16 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                ViewBeaDialog dialog = new ViewBeaDialog(new javax.swing.JFrame(), true, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ViewBeaDialog dialog = new ViewBeaDialog(new javax.swing.JFrame(), null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

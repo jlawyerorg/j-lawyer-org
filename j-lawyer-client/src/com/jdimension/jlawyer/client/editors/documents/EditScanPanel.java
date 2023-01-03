@@ -728,7 +728,6 @@ public class EditScanPanel extends javax.swing.JPanel {
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
-        cmdDeleteScan.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdDeleteScan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
         cmdDeleteScan.setToolTipText("aus dem Scaneingang löschen");
         cmdDeleteScan.addActionListener(new java.awt.event.ActionListener() {
@@ -737,7 +736,6 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdRenameScan.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdRenameScan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
         cmdRenameScan.setToolTipText("im Scaneingang umbenennen");
         cmdRenameScan.addActionListener(new java.awt.event.ActionListener() {
@@ -746,7 +744,6 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdSplitPdf.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
         cmdSplitPdf.setToolTipText("PDF teilen");
         cmdSplitPdf.setEnabled(false);

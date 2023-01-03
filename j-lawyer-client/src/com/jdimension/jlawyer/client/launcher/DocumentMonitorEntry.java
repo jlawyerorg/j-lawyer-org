@@ -725,43 +725,43 @@ public class DocumentMonitorEntry extends javax.swing.JPanel {
         setBackground(javax.swing.UIManager.getDefaults().getColor("List.background"));
         setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        lblName.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getSize()+2f));
         lblName.setForeground(new java.awt.Color(0, 51, 153));
         lblName.setText("document.odt");
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont((jLabel1.getFont().getStyle() | java.awt.Font.ITALIC), jLabel1.getFont().getSize()-2));
         jLabel1.setText("geöffnet:");
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont((jLabel2.getFont().getStyle() | java.awt.Font.ITALIC), jLabel2.getFont().getSize()-2));
         jLabel2.setText("geändert:");
 
-        jLabel3.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        jLabel3.setFont(jLabel3.getFont().deriveFont((jLabel3.getFont().getStyle() | java.awt.Font.ITALIC), jLabel3.getFont().getSize()-2));
         jLabel3.setText("Starter:");
 
-        lblOpened.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblOpened.setFont(lblOpened.getFont().deriveFont((lblOpened.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblOpened.getFont().getSize()-2));
         lblOpened.setText("<Datum>");
 
-        lblLastChanged.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblLastChanged.setFont(lblLastChanged.getFont().deriveFont((lblLastChanged.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblLastChanged.getFont().getSize()-2));
         lblLastChanged.setText("<Datum>");
 
-        chkReadOnly.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        chkReadOnly.setFont(chkReadOnly.getFont().deriveFont((chkReadOnly.getFont().getStyle() | java.awt.Font.ITALIC), chkReadOnly.getFont().getSize()-2));
         chkReadOnly.setText("schreibgeschützt");
         chkReadOnly.setEnabled(false);
         chkReadOnly.setOpaque(false);
 
-        lblLauncher.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblLauncher.setFont(lblLauncher.getFont().deriveFont((lblLauncher.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblLauncher.getFont().getSize()-2));
         lblLauncher.setText("<launcher>");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont((jLabel4.getFont().getStyle() | java.awt.Font.ITALIC), jLabel4.getFont().getSize()-2));
         jLabel4.setText("Status:");
 
-        lblStatus.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblStatus.setFont(lblStatus.getFont().deriveFont((lblStatus.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblStatus.getFont().getSize()-2));
         lblStatus.setText("<status>");
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 3, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont((jLabel5.getFont().getStyle() | java.awt.Font.ITALIC), jLabel5.getFont().getSize()-2));
         jLabel5.setText("Store:");
 
-        lblStore.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblStore.setFont(lblStore.getFont().deriveFont((lblStore.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblStore.getFont().getSize()-2));
         lblStore.setText("<store>");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

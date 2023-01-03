@@ -976,7 +976,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             }
         });
 
-        prgVMMemory.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        prgVMMemory.setFont(prgVMMemory.getFont().deriveFont(prgVMMemory.getFont().getStyle() | java.awt.Font.BOLD, prgVMMemory.getFont().getSize()+2));
         prgVMMemory.setValue(50);
         prgVMMemory.setString("blubb");
         prgVMMemory.setStringPainted(true);
@@ -989,13 +989,13 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel4.setText("Disk:");
 
-        prgDisk.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        prgDisk.setFont(prgDisk.getFont().deriveFont(prgDisk.getFont().getStyle() | java.awt.Font.BOLD, prgDisk.getFont().getSize()+2));
         prgDisk.setStringPainted(true);
 
-        prgMemory.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        prgMemory.setFont(prgMemory.getFont().deriveFont(prgMemory.getFont().getStyle() | java.awt.Font.BOLD, prgMemory.getFont().getSize()+2));
         prgMemory.setStringPainted(true);
 
-        prgCpu.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        prgCpu.setFont(prgCpu.getFont().deriveFont(prgCpu.getFont().getStyle() | java.awt.Font.BOLD, prgCpu.getFont().getSize()+2));
         prgCpu.setStringPainted(true);
 
         jLabel5.setText("letzter Status:");

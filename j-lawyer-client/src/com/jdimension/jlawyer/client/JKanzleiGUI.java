@@ -1134,10 +1134,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         statusPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        statusLabel.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        statusLabel.setFont(statusLabel.getFont().deriveFont(statusLabel.getFont().getStyle() & ~java.awt.Font.BOLD));
         statusLabel.setText(bundle.getString("status.ready")); // NOI18N
 
-        lblUpdateStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblUpdateStatus.setFont(lblUpdateStatus.getFont().deriveFont(lblUpdateStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblUpdateStatus.setForeground(new java.awt.Color(0, 153, 0));
         lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblUpdateStatus.setText(" ");
@@ -1162,7 +1162,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblFaxStatus.setText("?");
         lblFaxStatus.setEnabled(false);
 
-        lblNewsStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblNewsStatus.setFont(lblNewsStatus.getFont().deriveFont(lblNewsStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblNewsStatus.setForeground(new java.awt.Color(255, 153, 0));
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNewsStatus.setText(" ");

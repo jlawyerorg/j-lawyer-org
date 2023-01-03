@@ -744,8 +744,6 @@ public class ClientSettings {
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     public static final String CONF_SCANS_OBSERVELOCALDIR="client.scans.observelocaldir";
     
-    public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
-    public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
     
     public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
@@ -770,8 +768,6 @@ public class ClientSettings {
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
-    public static final String CONF_MAIL_LASTTAG="client.mail.lasttag";
-    public static final String CONF_MAIL_LASTDOCUMENTTAG="client.mail.lastdocumenttag";
     public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
     
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";

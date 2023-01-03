@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -728,9 +729,9 @@ public class CaseUtils {
             CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
             Launcher launcher = null;
             if (customLauncherName == null) {
-                launcher = LauncherFactory.getLauncher(value.getName(), content, store);
+                launcher = LauncherFactory.getLauncher(value.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
             } else {
-                launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName);
+                launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName, EditorsRegistry.getInstance().getMainWindow());
             }
 
             int response = JOptionPane.NO_OPTION;

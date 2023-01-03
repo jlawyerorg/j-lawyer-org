@@ -772,7 +772,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         lblRole.setForeground(new java.awt.Color(0, 0, 255));
         lblRole.setText("user");
 
-        cmdSaveFullMessage.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveFullMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         cmdSaveFullMessage.setToolTipText("vollständige Nachricht in Akte speichern");
         cmdSaveFullMessage.addActionListener(new java.awt.event.ActionListener() {
@@ -781,7 +780,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        cmdSaveMessageWithoutAttachments.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageWithoutAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-noattachment.png"))); // NOI18N
         cmdSaveMessageWithoutAttachments.setToolTipText("Nachricht ohne Anhänge in Akte speichern");
         cmdSaveMessageWithoutAttachments.addActionListener(new java.awt.event.ActionListener() {
@@ -790,7 +788,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        cmdSaveSeparate.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveSeparate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
         cmdSaveSeparate.setToolTipText("Nachricht und Anhänge werden beide separat in die Akte übernommen");
         cmdSaveSeparate.addActionListener(new java.awt.event.ActionListener() {
@@ -799,7 +796,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        cmdSaveMessageAttachmentsOnly.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageAttachmentsOnly.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
         cmdSaveMessageAttachmentsOnly.setToolTipText("nur Anhänge in Akte speichern");
         cmdSaveMessageAttachmentsOnly.addActionListener(new java.awt.event.ActionListener() {

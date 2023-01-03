@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.bea.ViewBeaDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.awt.Window;
 import java.io.File;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Message;
@@ -681,8 +682,8 @@ public class BEAInternalLauncher extends InternalLauncher {
 
     private static final Logger log = Logger.getLogger(BEAInternalLauncher.class.getName());
 
-    public BEAInternalLauncher(String url, ObservedDocumentStore store) {
-        super(url, store);
+    public BEAInternalLauncher(String url, ObservedDocumentStore store, Window parent) {
+        super(url, store, parent);
     }
     
     @Override
@@ -699,22 +700,24 @@ public class BEAInternalLauncher extends InternalLauncher {
         try {
             
             
-            ObservedDocument odoc=null;
-//                    if (!readOnly) {
-                        odoc = new ObservedDocument(url, store, this);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
-                        
-                        MessageExport mex=new MessageExport();
-                        byte[] content=FileUtils.readFile(new File(url));
-                        mex.setContent(content);
-            Message msg=BeaAccess.getMessageFromExport(mex);
-            ArchiveFileBean archiveFile=null;
+            ObservedDocument odoc = new ObservedDocument(url, store, this);
+            DocumentObserver observer = DocumentObserver.getInstance();
+            odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+            observer.addDocument(odoc);
+
+            MessageExport mex = new MessageExport();
+            byte[] content = FileUtils.readFile(new File(url));
+            mex.setContent(content);
+            Message msg = BeaAccess.getMessageFromExport(mex);
+            ArchiveFileBean archiveFile = null;
             if(this.store instanceof CaseDocumentStore) {
                 archiveFile=((CaseDocumentStore)store).getCase();
             }
-            ViewBeaDialog view = new ViewBeaDialog(EditorsRegistry.getInstance().getMainWindow(), false, archiveFile, odoc);
+            ViewBeaDialog view = null;
+            if(this.parent==null)
+                view=new ViewBeaDialog(EditorsRegistry.getInstance().getMainWindow(), archiveFile, odoc);
+            else
+                view=new ViewBeaDialog(parent, archiveFile, odoc);
             view.setMessage(msg);
             try {
                 view.setTitle(msg.getSubject());

@@ -736,7 +736,6 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setResizable(false);
 
         cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdOk.setText("OK");
@@ -748,6 +747,7 @@ public class AboutDialog extends javax.swing.JDialog {
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/agpl-v3.png"))); // NOI18N
 
+        lblInfos.setFont(lblInfos.getFont().deriveFont(lblInfos.getFont().getStyle() | java.awt.Font.BOLD));
         lblInfos.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblInfos.setText("jLabel2");
         lblInfos.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -755,7 +755,7 @@ public class AboutDialog extends javax.swing.JDialog {
         txtLicenses.setEditable(false);
         jScrollPane1.setViewportView(txtLicenses);
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 1, 7)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getSize()-5f));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Logo CC-BY Christian Cadena");
 

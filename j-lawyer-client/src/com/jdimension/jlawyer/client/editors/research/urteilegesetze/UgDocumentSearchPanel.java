@@ -755,7 +755,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
             }
         });
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/urteile-gesetze.png"))); // NOI18N
 

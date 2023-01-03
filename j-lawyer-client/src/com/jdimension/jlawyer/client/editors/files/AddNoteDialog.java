@@ -864,7 +864,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Notiz:");
 

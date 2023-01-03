@@ -754,7 +754,7 @@ public class DayHistoryPanel extends javax.swing.JPanel {
         setMaximumSize(new java.awt.Dimension(32767, 327670));
         setOpaque(false);
 
-        lblDate.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblDate.setFont(lblDate.getFont().deriveFont(lblDate.getFont().getSize()+2f));
         lblDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule_big.png"))); // NOI18N
         lblDate.setText("Mon, 24.12.2000");
         lblDate.setVerticalAlignment(javax.swing.SwingConstants.TOP);

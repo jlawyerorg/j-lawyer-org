@@ -703,13 +703,24 @@ public class ViewEmailDialog extends javax.swing.JDialog {
      * @param contextArchiveFile
      * @param contextFolder
      */
-    public ViewEmailDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder) {
-        this(parent, modal, contextArchiveFile, contextFolder, null);
+    public ViewEmailDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder) {
+        this(parent, contextArchiveFile, contextFolder, null);
 
     }
 
-    public ViewEmailDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, ObservedDocument odoc) {
-        super(parent, modal);
+    public ViewEmailDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, ObservedDocument odoc) {
+        super(parent);
+        initComponents();
+        this.contextArchiveFile = contextArchiveFile;
+        this.contextFolder=contextFolder;
+        this.odoc = odoc;
+
+        ComponentUtils.restoreDialogSize(this);
+
+    }
+    
+    public ViewEmailDialog(ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, ObservedDocument odoc) {
+        super();
         initComponents();
         this.contextArchiveFile = contextArchiveFile;
         this.contextFolder=contextFolder;
@@ -1040,7 +1051,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
          * Create and display the dialog
          */
         java.awt.EventQueue.invokeLater(() -> {
-            ViewEmailDialog dialog = new ViewEmailDialog(new javax.swing.JFrame(), true, null, null);
+            ViewEmailDialog dialog = new ViewEmailDialog(new javax.swing.JFrame(), null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 
                 @Override

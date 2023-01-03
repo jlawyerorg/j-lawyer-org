@@ -2227,7 +2227,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         File f = new File(this.attachments.get(this.lstAttachments.getModel().getElementAt(idx)));
                         ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("sendmaildialog-" + f.getName(), f.getName());
                         byte[] content = FileUtils.readFile(f);
-                        Launcher launcher = LauncherFactory.getLauncher(f.getName(), content, store);
+                        Launcher launcher = LauncherFactory.getLauncher(f.getName(), content, store, this);
                         launcher.launch(false);
                     } catch (Exception ex) {
                         log.error(ex);

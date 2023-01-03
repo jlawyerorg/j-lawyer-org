@@ -714,7 +714,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
         lblDescription.setText("Pluginbeschreibung");
 
-        lblUpdated.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblUpdated.setFont(lblUpdated.getFont().deriveFont(lblUpdated.getFont().getSize()-2f));
         lblUpdated.setText("aktualisiert am");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

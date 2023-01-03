@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import de.costache.calendar.ui.strategy.Config;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.util.CalendarUtil;
+import javax.swing.JLabel;
 
 /**
  * 
@@ -86,9 +87,14 @@ public class DayHeaderPanel extends JPanel {
 //		int fontSize = Math.round(height * 0.75f);
 //		fontSize = fontSize > 12 ? 12 : fontSize;
 
-                int fontSize=12;
+                //int fontSize=12;
+                JLabel dummyLabel=new JLabel();
+                int fontSize = dummyLabel.getFont().getSize();
 
-		final Font font = new Font("Verdana", Font.BOLD, fontSize);
+                //final Font font = new Font("Verdana", Font.BOLD, fontSize);
+                final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
+
+		//final Font font = new Font("Verdana", Font.BOLD, fontSize);
 		final FontMetrics metrics = g2d.getFontMetrics(font);
 		g2d.setFont(font);
                 

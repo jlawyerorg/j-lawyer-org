@@ -756,7 +756,7 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
 
         jLabel1.setText(bundle.getString("label.fontsize.scaleing")); // NOI18N
 
-        jLabel3.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("100% = Normalskalierung");
 
         sldGlobalScale.setMajorTickSpacing(10);

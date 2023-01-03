@@ -1024,7 +1024,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuCopy);
 
-        lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
         lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         lblAddress.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1039,6 +1039,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
 
+        cmbRefType.setFont(cmbRefType.getFont().deriveFont(cmbRefType.getFont().getStyle() | java.awt.Font.BOLD));
         cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mandant", "Gegner", "Dritte" }));
         cmbRefType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1046,6 +1047,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
 
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel3.setText("Zeichen:");
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
@@ -1076,6 +1078,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         detailsContentTaskPane.setForeground(new java.awt.Color(255, 255, 255));
         detailsContentTaskPane.setTitle("Details");
         detailsContentTaskPane.setAnimated(false);
+        detailsContentTaskPane.setFont(detailsContentTaskPane.getFont().deriveFont(detailsContentTaskPane.getFont().getStyle() | java.awt.Font.BOLD));
 
         jScrollPane1.setBorder(null);
 
@@ -1099,6 +1102,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         jXTaskPane1.setForeground(new java.awt.Color(255, 255, 255));
         jXTaskPane1.setTitle("Zusätzliche Angaben");
         jXTaskPane1.setAnimated(false);
+        jXTaskPane1.setFont(jXTaskPane1.getFont().deriveFont(jXTaskPane1.getFont().getStyle() | java.awt.Font.BOLD));
 
         jLabel2.setText("Ansprechpartner:");
 
@@ -1155,6 +1159,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        lblUnderage.setFont(lblUnderage.getFont().deriveFont(lblUnderage.getFont().getStyle() | java.awt.Font.BOLD));
         lblUnderage.setText("jLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

@@ -932,7 +932,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         jLabel2.setText("Zielkalender:");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setForeground(new java.awt.Color(153, 153, 153));
         jLabel4.setText("Synchronisation zu Nextcloud (optional)");
 
@@ -943,7 +943,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Kalenderdaten");
 

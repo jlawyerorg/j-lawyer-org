@@ -764,11 +764,10 @@ public class SaveScanToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        lblRole.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        lblRole.setFont(lblRole.getFont().deriveFont((lblRole.getFont().getStyle() | java.awt.Font.ITALIC)));
         lblRole.setForeground(new java.awt.Color(0, 0, 255));
         lblRole.setText("user");
 
-        cmdSaveMessageAttachmentsOnly.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageAttachmentsOnly.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
         cmdSaveMessageAttachmentsOnly.setToolTipText("Scan zur Akte speichern");
         cmdSaveMessageAttachmentsOnly.addActionListener(new java.awt.event.ActionListener() {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -50,14 +50,14 @@
                   <Component id="lblFileIcon" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Component id="lblFileName" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="2" pref="2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblCreationDate" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblDictateSign" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFileSize" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="4" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -83,8 +83,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblFileName">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="13" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblFileName" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="document.odt"/>
       </Properties>
@@ -96,8 +98,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblCreationDate">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblCreationDate" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="10.10.2020"/>
       </Properties>
@@ -107,8 +111,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblDictateSign">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblDictateSign" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="DZ"/>
       </Properties>
@@ -118,8 +124,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblFileSize">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblFileSize" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="3,4 MB"/>
       </Properties>
@@ -146,8 +154,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblFolder">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblFolder" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="&gt;"/>
       </Properties>

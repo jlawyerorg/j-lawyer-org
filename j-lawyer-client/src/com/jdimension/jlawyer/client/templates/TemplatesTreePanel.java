@@ -957,7 +957,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Vorlagen");
 
@@ -1325,7 +1325,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         try {
             TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
-            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
+            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store, EditorsRegistry.getInstance().getMainWindow());
             launcher.launch(false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

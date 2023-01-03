@@ -1063,7 +1063,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
 
                             CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-                            Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
+                            Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
                             launcher.launch(false);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -2087,7 +2087,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jSeparator7.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         tabPrivileges.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        tabPrivileges.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        tabPrivileges.setFont(tabPrivileges.getFont().deriveFont(tabPrivileges.getFont().getSize()-2f));
 
         cmbGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -2781,7 +2781,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jLabel16.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel16.setFont(jLabel16.getFont().deriveFont(jLabel16.getFont().getSize()+2f));
         jLabel16.setText("Falldaten hinzufügen");
 
         cmbFormType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Value 1", "Value 2" }));
@@ -2998,14 +2998,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Historie", new javax.swing.ImageIcon(getClass().getResource("/icons/history.png")), tabHistory); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblPanelTitle.setText("check");
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
 
-        lblHeaderInfo.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblHeaderInfo.setFont(lblHeaderInfo.getFont().deriveFont(lblHeaderInfo.getFont().getStyle() | java.awt.Font.BOLD, lblHeaderInfo.getFont().getSize()+2));
         lblHeaderInfo.setForeground(new java.awt.Color(255, 255, 255));
         lblHeaderInfo.setText("jLabel15");
 
@@ -4114,7 +4114,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 try {
                     ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("externalmaillaunch-" + value.getName(), value.getName());
-                    Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
+                    Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
                     launcher.launch(false);
 
                 } catch (Exception ex) {

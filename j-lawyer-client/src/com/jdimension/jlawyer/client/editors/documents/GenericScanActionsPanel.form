@@ -66,9 +66,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdRename">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/folder_documents.png"/>
         </Property>
@@ -80,9 +77,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="cmdDelete">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="8" style="1"/>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/editdelete.png"/>
         </Property>

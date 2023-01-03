@@ -814,7 +814,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             }
         });
 
-        lblPath.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblPath.setFont(lblPath.getFont().deriveFont(lblPath.getFont().getStyle() | java.awt.Font.BOLD, lblPath.getFont().getSize()+2));
         lblPath.setText("/shared/dings/bla");
         lblPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblPath.setOpaque(true);
@@ -824,25 +824,25 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             }
         });
 
-        lblShareType.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblShareType.setFont(lblShareType.getFont().deriveFont(lblShareType.getFont().getStyle() | java.awt.Font.BOLD, lblShareType.getFont().getSize()-2));
         lblShareType.setText("Geteilter Link");
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD, jLabel2.getFont().getSize()-2));
         jLabel2.setText("von");
 
-        lblOwner.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblOwner.setFont(lblOwner.getFont().deriveFont(lblOwner.getFont().getStyle() | java.awt.Font.BOLD, lblOwner.getFont().getSize()-2));
         lblOwner.setText("Eigentümer");
 
-        jLabel3.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD, jLabel3.getFont().getSize()-2));
         jLabel3.setText("vom");
 
-        lblShareTime.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblShareTime.setFont(lblShareTime.getFont().deriveFont(lblShareTime.getFont().getStyle() | java.awt.Font.BOLD, lblShareTime.getFont().getSize()-2));
         lblShareTime.setText("01.01.2020");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setText("Gültig bis");
 
-        lblExpiration.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblExpiration.setFont(lblExpiration.getFont().deriveFont(lblExpiration.getFont().getStyle() | java.awt.Font.BOLD, lblExpiration.getFont().getSize()-2));
         lblExpiration.setText("unbegrenzt");
 
         cmdCopyLinkToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N

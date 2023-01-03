@@ -960,11 +960,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel2.setOpaque(false);
 
-        jLabel6.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() | java.awt.Font.BOLD, jLabel6.getFont().getSize()+2));
         jLabel6.setForeground(java.awt.Color.white);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
         jLabel6.setText(bundle.getString("label.due")); // NOI18N
 
+        chkOnlyMyReviews.setFont(chkOnlyMyReviews.getFont().deriveFont(chkOnlyMyReviews.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyReviews.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyReviews.setText("nur meine anzeigen");
         chkOnlyMyReviews.setOpaque(false);
@@ -1039,7 +1040,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel1.setOpaque(false);
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()+2));
         jLabel5.setForeground(java.awt.Color.white);
         jLabel5.setText(bundle.getString("label.lastchanged")); // NOI18N
 
@@ -1069,6 +1070,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jScrollPane3.setViewportView(pnlLastChanged);
 
+        chkOnlyMyCases.setFont(chkOnlyMyCases.getFont().deriveFont(chkOnlyMyCases.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyCases.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyCases.setText("nur meine anzeigen");
         chkOnlyMyCases.addActionListener(new java.awt.event.ActionListener() {
@@ -1120,10 +1122,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel3.setOpaque(false);
 
-        jLabel9.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD, jLabel9.getFont().getSize()+2));
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
+        chkOnlyMyTagged.setFont(chkOnlyMyTagged.getFont().deriveFont(chkOnlyMyTagged.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyTagged.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyTagged.setText("nur meine anzeigen");
         chkOnlyMyTagged.addActionListener(new java.awt.event.ActionListener() {
@@ -1246,14 +1249,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jSplitPane1.setLeftComponent(jSplitPane2);
 
-        lblUnreadMail.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadMail.setFont(lblUnreadMail.getFont().deriveFont(lblUnreadMail.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadMail.getFont().getSize()+2));
         lblUnreadMail.setForeground(java.awt.Color.white);
         lblUnreadMail.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png"))); // NOI18N
         lblUnreadMail.setText("0");
         lblUnreadMail.setEnabled(false);
 
-        lblUnreadBea.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadBea.setFont(lblUnreadBea.getFont().deriveFont(lblUnreadBea.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadBea.getFont().getSize()+2));
         lblUnreadBea.setForeground(java.awt.Color.white);
         lblUnreadBea.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-16.png"))); // NOI18N
@@ -1261,31 +1264,31 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea.setToolTipText("noch nicht eingeloggt");
         lblUnreadBea.setEnabled(false);
 
-        lblScans.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblScans.setFont(lblScans.getFont().deriveFont(lblScans.getFont().getStyle() | java.awt.Font.BOLD, lblScans.getFont().getSize()+2));
         lblScans.setForeground(java.awt.Color.white);
         lblScans.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblScans.setText("0");
         lblScans.setEnabled(false);
 
-        lblUnreadDrebis.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadDrebis.setFont(lblUnreadDrebis.getFont().deriveFont(lblUnreadDrebis.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadDrebis.getFont().getSize()+2));
         lblUnreadDrebis.setForeground(java.awt.Color.white);
         lblUnreadDrebis.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
         lblUnreadDrebis.setText("?");
         lblUnreadDrebis.setEnabled(false);
 
-        lblUpdateStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblUpdateStatus.setFont(lblUpdateStatus.getFont().deriveFont(lblUpdateStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblUpdateStatus.setForeground(java.awt.Color.white);
         lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblUpdateStatus.setText("???");
 
-        lblNewsStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblNewsStatus.setFont(lblNewsStatus.getFont().deriveFont(lblNewsStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblNewsStatus.setForeground(java.awt.Color.white);
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblNewsStatus.setText("???");
 
-        lblFaxStatus.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblFaxStatus.setFont(lblFaxStatus.getFont().deriveFont(lblFaxStatus.getFont().getStyle() | java.awt.Font.BOLD, lblFaxStatus.getFont().getSize()+2));
         lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
         lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
         lblFaxStatus.setText("?");
@@ -1323,22 +1326,27 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
+        lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileCount.setForeground(java.awt.Color.white);
         lblArchiveFileCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
         lblArchiveFileCount.setText(bundle.getString("totals.cases")); // NOI18N
 
+        lblArchiveFileArchivedCount.setFont(lblArchiveFileArchivedCount.getFont().deriveFont(lblArchiveFileArchivedCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileArchivedCount.setForeground(java.awt.Color.white);
         lblArchiveFileArchivedCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
         lblArchiveFileArchivedCount.setText(bundle.getString("totals.cases.archive")); // NOI18N
 
+        lblAddressCount.setFont(lblAddressCount.getFont().deriveFont(lblAddressCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblAddressCount.setForeground(java.awt.Color.white);
         lblAddressCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_perm_contact_calendar_white_36dp.png"))); // NOI18N
         lblAddressCount.setText(bundle.getString("totals.addresses")); // NOI18N
 
+        lblDocumentCount.setFont(lblDocumentCount.getFont().deriveFont(lblDocumentCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblDocumentCount.setForeground(java.awt.Color.white);
         lblDocumentCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_insert_drive_file_white_36dp.png"))); // NOI18N
         lblDocumentCount.setText(bundle.getString("totals.documents")); // NOI18N
 
+        lblVoipBalance.setFont(lblVoipBalance.getFont().deriveFont(lblVoipBalance.getFont().getStyle() | java.awt.Font.BOLD));
         lblVoipBalance.setForeground(java.awt.Color.white);
         lblVoipBalance.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_print_white_36dp.png"))); // NOI18N
         lblVoipBalance.setText(bundle.getString("voip.balance")); // NOI18N
@@ -1381,7 +1389,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        lblUserName.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUserName.setFont(lblUserName.getFont().deriveFont(lblUserName.getFont().getStyle() | java.awt.Font.BOLD, lblUserName.getFont().getSize()+2));
         lblUserName.setForeground(new java.awt.Color(255, 255, 255));
         lblUserName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUserName.setText("My User Name");
@@ -1411,7 +1419,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        lblDay.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblDay.setFont(lblDay.getFont().deriveFont(lblDay.getFont().getStyle() | java.awt.Font.BOLD, lblDay.getFont().getSize()+2));
         lblDay.setForeground(new java.awt.Color(255, 255, 255));
         lblDay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblDay.setText("28");

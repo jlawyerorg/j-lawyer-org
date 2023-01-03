@@ -854,15 +854,15 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Faxstatus");
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Guthaben:");
 
-        lblBalance.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblBalance.setFont(lblBalance.getFont().deriveFont(lblBalance.getFont().getSize()+2f));
         lblBalance.setForeground(new java.awt.Color(255, 255, 255));
         lblBalance.setText("0,00 EUR");
 

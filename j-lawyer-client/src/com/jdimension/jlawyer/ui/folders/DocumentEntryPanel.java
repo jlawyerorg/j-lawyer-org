@@ -726,6 +726,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         this.lblFileName,
                         DnDConstants.ACTION_MOVE,
                         this);
+        
+        this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }
     
 
@@ -746,6 +750,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         this.lblFileName,
                         DnDConstants.ACTION_MOVE,
                         this);
+        
+        this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }
 
     @Override
@@ -857,7 +865,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblFileName.setFont(new java.awt.Font("Dialog", 1, 13)); // NOI18N
+        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() | java.awt.Font.BOLD));
         lblFileName.setText("document.odt");
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -871,7 +879,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblCreationDate.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblCreationDate.setFont(lblCreationDate.getFont().deriveFont(lblCreationDate.getFont().getStyle() | java.awt.Font.BOLD, lblCreationDate.getFont().getSize()-2));
         lblCreationDate.setText("10.10.2020");
         lblCreationDate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -879,7 +887,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblDictateSign.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblDictateSign.setFont(lblDictateSign.getFont().deriveFont(lblDictateSign.getFont().getStyle() | java.awt.Font.BOLD, lblDictateSign.getFont().getSize()-2));
         lblDictateSign.setText("DZ");
         lblDictateSign.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -887,7 +895,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblFileSize.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblFileSize.setFont(lblFileSize.getFont().deriveFont(lblFileSize.getFont().getStyle() | java.awt.Font.BOLD, lblFileSize.getFont().getSize()-2));
         lblFileSize.setText("3,4 MB");
         lblFileSize.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -918,7 +926,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblFolder.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblFolder.setFont(lblFolder.getFont().deriveFont(lblFolder.getFont().getStyle() | java.awt.Font.BOLD, lblFolder.getFont().getSize()-2));
         lblFolder.setText(">");
         lblFolder.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -970,7 +978,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
                             .addComponent(lblFolder))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGap(0, 4, Short.MAX_VALUE))))
             .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblFavorite, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(cmdHighlight1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)

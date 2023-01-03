@@ -832,15 +832,15 @@ public class MultiCalDialog extends javax.swing.JDialog {
             }
         });
 
-        lblC1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblC1.setFont(lblC1.getFont().deriveFont(lblC1.getFont().getStyle() | java.awt.Font.BOLD, lblC1.getFont().getSize()+2));
         lblC1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC1.setText("jLabel1");
 
-        lblC2.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblC2.setFont(lblC2.getFont().deriveFont(lblC2.getFont().getStyle() | java.awt.Font.BOLD, lblC2.getFont().getSize()+2));
         lblC2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC2.setText("jLabel1");
 
-        lblC3.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblC3.setFont(lblC3.getFont().deriveFont(lblC3.getFont().getStyle() | java.awt.Font.BOLD, lblC3.getFont().getSize()+2));
         lblC3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC3.setText("jLabel1");
 
