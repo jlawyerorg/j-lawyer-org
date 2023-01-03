@@ -673,8 +673,6 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-import java.awt.Color;
-import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -683,7 +681,6 @@ import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.UIManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
@@ -824,7 +821,7 @@ public class Main {
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
-        
+                
         FlatLaf.registerCustomDefaultsSource( "themes" );
         
         FlatInterFont.install();

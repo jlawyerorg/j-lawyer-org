@@ -721,8 +721,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.putClientProperty("JScrollBar.showButtons", false);
         this.jScrollPane3.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane3.putClientProperty("JScrollBar.showButtons", false);
         this.jScrollPane4.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane4.putClientProperty("JScrollBar.showButtons", false);
         
         try {
             InputStream is = DesktopPanel.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
