@@ -927,14 +927,8 @@ public class LauncherFactory {
 
                             PrinterJob job = PrinterJob.getPrinterJob();
                             job.setJobName(toBePrinted.getName());
-                            //job.setPageable(new PDFPageable(document,Orientation.AUTO,false,1200f).setR);
+                            
                             PDFPageable pageable = new PDFPageable(document);
-                            //PDFPageable pageable = new PDFPageable(document,Orientation.AUTO,false,1200f);
-//                            RenderingHints r = new RenderingHints(null);
-//                            r.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-//                            r.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                            //r.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                            //pageable.setRenderingHints(r);
                             job.setPageable(pageable);
                             job.setPrintService(service);
                             job.print();

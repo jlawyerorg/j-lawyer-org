@@ -38,7 +38,6 @@ import de.costache.calendar.util.EventCollection;
 import de.costache.calendar.util.EventCollectionRepository;
 import de.costache.calendar.util.GraphicsUtil;
 import java.util.ArrayList;
-import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 
 /**
@@ -167,11 +166,7 @@ public class DayCompleteContentPanel extends JPanel {
                 final String eventString = event.getSummary();
                 int fontSize = 12;
                 
-                //JLabel dummyLabel=new JLabel();
-                //int fontSize = dummyLabel.getFont().getSize();
-
                 final Font font = new Font("Verdana", Font.BOLD, fontSize);
-                //final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
                 final FontMetrics metrics = graphics2d.getFontMetrics(font);
                 graphics2d.setFont(font);
 

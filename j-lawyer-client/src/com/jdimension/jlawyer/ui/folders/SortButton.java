@@ -665,11 +665,8 @@ package com.jdimension.jlawyer.ui.folders;
 
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.event.MouseEvent;
-import java.io.InputStream;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -677,8 +674,6 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class SortButton extends JButton {
-
-    private static final Logger log = Logger.getLogger(SortButton.class.getName());
 
     public static int SORT_NONE = 10;
     public static int SORT_ASC = 20;
@@ -696,24 +691,13 @@ public class SortButton extends JButton {
         super();
         this.putClientProperty("JButton.buttonType", "roundRect");
 
-//        try {
-//            InputStream is = SortButton.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
-//            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-//
-//            this.setFont(font.deriveFont(Font.BOLD, 12));
-//        } catch (Throwable t) {
-//            log.error("Unable to load font for SortButton", t);
-//        }
-
-//        Font deriveFont=this.getFont().deriveFont((float)this.getFont().getSize() + 2f);
-//        this.setFont(deriveFont);
-
         Font deriveFont=getFont().deriveFont(getFont().getStyle() | java.awt.Font.BOLD, getFont().getSize()-2);
         setFont(deriveFont);
 
         addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                buttonClicked(evt);
+                buttonClicked();
             }
         });
 
@@ -739,7 +723,7 @@ public class SortButton extends JButton {
     
     
 
-    private void buttonClicked(MouseEvent evt) {
+    private void buttonClicked() {
         if (this.getSortState() == SORT_NONE) {
             this.setSortState(SORT_ASC);
         } else if (this.getSortState() == SORT_ASC) {

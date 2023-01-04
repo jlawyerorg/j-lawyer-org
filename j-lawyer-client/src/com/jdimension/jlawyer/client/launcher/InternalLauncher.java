@@ -673,7 +673,13 @@ public abstract class InternalLauncher extends Launcher {
     
     protected Window parent=null;
     
-    public InternalLauncher(String url, ObservedDocumentStore store, Window parent) {
+    /**
+     *
+     * @param url
+     * @param store
+     * @param parent
+     */
+    protected InternalLauncher(String url, ObservedDocumentStore store, Window parent) {
         super(url, store);
         this.parent=parent;
     }

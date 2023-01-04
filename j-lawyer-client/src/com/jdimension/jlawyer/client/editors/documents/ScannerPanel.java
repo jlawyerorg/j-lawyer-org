@@ -1450,7 +1450,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
             bulkSaveDlg.setVisible(true);
             
-            if (this.chkDeleteAfterAction.isSelected() && fileNames.size() > 0) {
+            if (this.chkDeleteAfterAction.isSelected() && !(fileNames.isEmpty())) {
                 Timer timer = new Timer();
                 TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
                 timer.schedule(scannerTask, 1);

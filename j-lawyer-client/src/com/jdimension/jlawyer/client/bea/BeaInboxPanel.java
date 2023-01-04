@@ -2482,8 +2482,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
                 bulkSaveDlg.setSelectedCase(targetCase);
 
-                if (attachmentsOnly) {
-                    if (targetCase != null) {
+                if (attachmentsOnly && targetCase != null) {
 
                         for (Attachment att : m.getAttachments()) {
 
@@ -2545,8 +2544,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                             bulkSaveDlg.addEntry(bulkEntry);
                         }
-
-                    }
                 }
 
                 if (targetCase != null && !attachmentsOnly) {

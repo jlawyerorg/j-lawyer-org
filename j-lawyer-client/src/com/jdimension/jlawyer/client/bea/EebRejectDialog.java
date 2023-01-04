@@ -663,7 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.EebLists;
@@ -677,10 +677,8 @@ public class EebRejectDialog extends javax.swing.JDialog {
     private String rejectionCode=null;
     private String rejectionComment=null;
     
-    private Hashtable<String,BeaListItem> authorities=new Hashtable<>();
-
     /**
-     * Creates new form SelectLegalAuthorityDialog
+     * Creates new form EebRejectDialog
      * @param parent
      * @param modal
      */
