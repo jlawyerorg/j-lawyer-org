@@ -1191,7 +1191,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             // just in case the Drebis request was started in the portal without the leading zeroes
             // removed due to custom file numbers
             // archiveFileNumber=ArchiveFileUtils.addLeadingZeroes(archiveFileNumber);
-            ArchiveFileBean targetCase = afs.getArchiveFileByFileNumber(archiveFileNumber);
             
             CaseFolder rootFolder = null;
             CaseFolder targetFolder = null;
@@ -1199,7 +1198,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             // get folders
             SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + archiveFileNumber, null);
             saDlg.setVisible(true);
-            targetCase = saDlg.getCaseSelection();
+            ArchiveFileBean targetCase = saDlg.getCaseSelection();
             targetFolder = saDlg.getFolderSelection();
             rootFolder = saDlg.getRootFolder();
 
@@ -1220,9 +1219,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 bulkEntry.setDocumentBytes(da.getContent());
 
                 String newName = da.getName() + "." + da.getSuffix();
-                if (newName == null) {
-                    newName = "";
-                }
                 newName = FileUtils.sanitizeFileName(newName);
 
                 bulkEntry.setDocumentFilename(da.getName() + "." + da.getSuffix());

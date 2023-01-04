@@ -752,6 +752,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         this.cmdCommonFolder.setEnabled(false);
         this.cmdTagAll.setEnabled(false);
         this.cmdFolderAll.setEnabled(false);
+        
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
     }
 
