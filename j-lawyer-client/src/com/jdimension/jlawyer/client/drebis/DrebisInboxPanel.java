@@ -683,7 +683,6 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.drebis.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DrebisServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
@@ -1180,12 +1179,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
         BulkSaveDialog bulkSaveDlg=new BulkSaveDialog(BulkSaveDialog.TYPE_DREBIS, EditorsRegistry.getInstance().getMainWindow(), true);
         
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
         try {
-            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
             String archiveFileNumber = this.txtFileNumber.getText();
 
             // just in case the Drebis request was started in the portal without the leading zeroes
