@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.util.List;
 
 /**
  *
@@ -675,7 +676,7 @@ public abstract class BulkSaveEntryProcessor {
         
     }
     
-    public abstract void preSave(BulkSaveEntry entry) throws Exception;
+    public abstract void preSave(BulkSaveEntry forEntry, List<BulkSaveEntry> allEntries) throws Exception;
     public abstract boolean isPreSaveProcessor();
     
     public abstract String save(BulkSaveEntry entry, ArchiveFileBean targetCase) throws Exception;
@@ -683,5 +684,8 @@ public abstract class BulkSaveEntryProcessor {
     
     public abstract void postSave(BulkSaveEntry entry) throws Exception;
     public abstract boolean isPostSaveProcessor();
+    
+    public abstract byte[] getBytes(BulkSaveEntry entry) throws Exception;
+    public abstract boolean isBytesProvider();
     
 }

@@ -2923,7 +2923,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
                 bulkSaveDlg.setVisible(true);
 
-                if (targetCase != null && !bulkSaveDlg.isFailed()) {
+                if (targetCase != null && !bulkSaveDlg.isFailedOrCancelled()) {
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
                         this.cmdDeleteActionPerformed(null);

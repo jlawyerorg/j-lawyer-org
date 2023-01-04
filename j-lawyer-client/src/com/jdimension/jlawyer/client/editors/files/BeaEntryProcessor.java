@@ -663,73 +663,76 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.IntegrationServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  *
  * @author jens
  */
-public class ScanEntryProcessor extends BulkSaveEntryProcessor {
+public class BeaEntryProcessor extends BulkSaveEntryProcessor {
     
-    private boolean deleteAssignedScan=false;
-    
-    public ScanEntryProcessor(boolean deleteAssignedScan) {
-        this.deleteAssignedScan=deleteAssignedScan;
+    public BeaEntryProcessor() {
+        super();
     }
 
     @Override
     public void preSave(BulkSaveEntry entry, List<BulkSaveEntry> allEntries) throws Exception {
-        // intentionally left blank
-    }
-
-    @Override
-    public boolean isPreSaveProcessor() {
-        return false;
-    }
-
-    @Override
-    public String save(BulkSaveEntry entry, ArchiveFileBean targetCase) throws Exception {
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-        IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-        return is.assignObservedFile(entry.getDocumentFilename(), targetCase.getId(), entry.getDocumentFilenameNew());
-    }
-
-    @Override
-    public boolean isSaveProcessor() {
-        return true;
-    }
-
-    @Override
-    public void postSave(BulkSaveEntry entry) throws Exception {
-        if(this.deleteAssignedScan) {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-            is.removeObservedFile(entry.getDocumentFilename());
+        String fName=entry.getDocumentFilename().toLowerCase();
+        if(fName.endsWith(".xml") && fName.contains("xjustiz_nachricht")) {
+            String xjustiz=new String(entry.getDocumentBytes());
+            
+            // longest file names go first - otherwise replacement will not work correctly if one filename contains another (shorter)
+            List<BulkSaveEntry> sortedEntries=new ArrayList<>(allEntries);
+            Collections.sort(sortedEntries, (Object arg0, Object arg1) -> {
+                BulkSaveEntry s1=(BulkSaveEntry)arg0;
+                BulkSaveEntry s2=(BulkSaveEntry)arg1;
+                return Integer.compare(s1.getDocumentFilename().length(), s2.getDocumentFilename().length());
+            });
+            Collections.reverse(sortedEntries);
+            
+            for(BulkSaveEntry bse: sortedEntries) {
+                xjustiz=xjustiz.replace(bse.getDocumentFilename(), bse.getDocumentFilenameNew());
+            }
+            entry.setDocumentBytes(xjustiz.getBytes());
         }
     }
 
     @Override
-    public boolean isPostSaveProcessor() {
+    public boolean isPreSaveProcessor() {
         return true;
+    }
+
+    @Override
+    public String save(BulkSaveEntry entry, ArchiveFileBean targetCase) throws Exception {
+        return null;
+    }
+
+    @Override
+    public boolean isSaveProcessor() {
+        return false;
+    }
+
+    @Override
+    public void postSave(BulkSaveEntry entry) throws Exception {
+        // intentionally left blank
+    }
+
+    @Override
+    public boolean isPostSaveProcessor() {
+        return false;
     }
 
     @Override
     public byte[] getBytes(BulkSaveEntry entry) throws Exception {
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-        IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-        return is.getObservedFile(entry.getDocumentFilename());
+        return null;
     }
 
     @Override
     public boolean isBytesProvider() {
-        return true;
+        return false;
     }
 
 }

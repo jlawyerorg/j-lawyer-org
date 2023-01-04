@@ -915,6 +915,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     private void lblFileNameOrgMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameOrgMouseClicked
         if (this.isSelected()) {
             try {
+                
+                if(this.documentBytes==null && this.saveDialog!=null && this.saveDialog.getEntryProcessor()!=null && this.saveDialog.getEntryProcessor().isBytesProvider()) {
+                    byte[] content=this.saveDialog.getEntryProcessor().getBytes(this);
+                    this.setDocumentBytes(content);
+                }
+                
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("bulksaveentry-" + this.documentFilename, this.documentFilename);
                 Launcher launcher = LauncherFactory.getLauncher(this.documentFilename, this.documentBytes, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);

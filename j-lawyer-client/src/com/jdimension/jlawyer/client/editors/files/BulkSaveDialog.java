@@ -710,6 +710,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     public static final String TYPE_MAIL="mail";
     public static final String TYPE_BEA="bea";
     public static final String TYPE_SCAN="scan";
+    public static final String TYPE_DREBIS="drebis";
     
     private static final Logger log = Logger.getLogger(BulkSaveDialog.class.getName());
     
@@ -725,7 +726,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
     private ArrayList<String> existingFileNames = new ArrayList<>();
     
-    protected boolean failed=false;
+    protected boolean failedOrCancelled=true;
 
     /**
      * Creates new form BulkSaveDialog
@@ -746,6 +747,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         this.initializeTags();
 
         this.extensionsPanel.setLayout(new WrapLayout());
+        
+        this.cmdCommonTags.setEnabled(false);
+        this.cmdCommonFolder.setEnabled(false);
+        this.cmdTagAll.setEnabled(false);
+        this.cmdFolderAll.setEnabled(false);
 
     }
 
@@ -1079,19 +1085,19 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                                 e.setDownloadProgress();
                             });
                             
-                            if(entryProcessor!=null && entryProcessor.isPreSaveProcessor())
-                                entryProcessor.preSave(e);
+                            if(getEntryProcessor()!=null && getEntryProcessor().isPreSaveProcessor())
+                                getEntryProcessor().preSave(e, entryList);
                             
                             String newDocId=null;
-                            if(entryProcessor!=null && entryProcessor.isSaveProcessor()) {
-                                newDocId=entryProcessor.save(e, selectedCase);
+                            if(getEntryProcessor()!=null && getEntryProcessor().isSaveProcessor()) {
+                                newDocId=getEntryProcessor().save(e, selectedCase);
                             } else {
                                 ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "");
                                 newDocId=newlyAddedDocument.getId();
                             }
                             
-                            if(entryProcessor!=null && entryProcessor.isPostSaveProcessor())
-                                entryProcessor.postSave(e);
+                            if(getEntryProcessor()!=null && getEntryProcessor().isPostSaveProcessor())
+                                getEntryProcessor().postSave(e);
                             
                             if (e.getDocumentDate() != null) {
                                 afs.setDocumentDate(newDocId, e.getDocumentDate());
@@ -1112,7 +1118,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                             });
                             
                         } catch (Exception ex) {
-                            failed=true;
+                            failedOrCancelled=true;
                             fails = fails+1;
                             log.error(ex);
                             SwingUtilities.invokeAndWait(() -> {
@@ -1125,6 +1131,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 }
                 
                 if (fails==0) {
+                    this.failedOrCancelled=false;
                     try {
                         Thread.sleep(1500);
                     } catch (Exception ex) {
@@ -1156,6 +1163,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdFolderAllActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.failedOrCancelled=true;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
@@ -1221,6 +1229,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         this.updateTotals();
         this.rebuildExtensionsPanel();
         this.checkForDuplicateFileNames();
+        
+        this.cmdCommonTags.setEnabled(this.entryList.size()>1);
+        this.cmdCommonFolder.setEnabled(this.entryList.size()>1);
+        this.cmdTagAll.setEnabled(this.entryList.size()>1);
+        this.cmdFolderAll.setEnabled(this.entryList.size()>1);
     }
 
     public void updateTotals() {
@@ -1444,9 +1457,16 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }
 
     /**
-     * @return the failed
+     * @return the failedOrCancelled
      */
-    public boolean isFailed() {
-        return failed;
+    public boolean isFailedOrCancelled() {
+        return failedOrCancelled;
+    }
+
+    /**
+     * @return the entryProcessor
+     */
+    public BulkSaveEntryProcessor getEntryProcessor() {
+        return entryProcessor;
     }
 }

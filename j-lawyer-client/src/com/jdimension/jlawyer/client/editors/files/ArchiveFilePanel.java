@@ -5725,14 +5725,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         @Override
         public void dragExit(DropTargetEvent dte) {
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             repaint();
         }
 
         @Override
         public void drop(DropTargetDropEvent dtde) {
 
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             Transferable transferable = dtde.getTransferable();
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.files.BeaEntryProcessor;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
@@ -2431,6 +2432,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         if (this.tblMails.getSelectedRowCount() == 1) {
 
             BulkSaveDialog bulkSaveDlg = new BulkSaveDialog(BulkSaveDialog.TYPE_BEA, EditorsRegistry.getInstance().getMainWindow(), true);
+            bulkSaveDlg.setEntryProcessor(new BeaEntryProcessor());
             try {
                 MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
@@ -2635,7 +2637,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 bulkSaveDlg.setVisible(true);
 
                 String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
-                if (targetCase != null && "true".equalsIgnoreCase(temp) && !bulkSaveDlg.isFailed()) {
+                if (targetCase != null && "true".equalsIgnoreCase(temp) && !bulkSaveDlg.isFailedOrCancelled()) {
                     int scrollToRow = tblMails.getSelectedRow();
                     int sortCol = -1;
                     List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
