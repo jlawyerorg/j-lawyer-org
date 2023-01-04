@@ -687,6 +687,12 @@ public class MultiCalDialog extends javax.swing.JDialog {
     private boolean initializing = true;
     private boolean holidayWarning = true;
 
+    /**
+     *
+     * @param target
+     * @param parent
+     * @param modal
+     */
     public MultiCalDialog(JTextField target, java.awt.Frame parent, boolean modal) {
         this(target, parent, modal, true);
     }

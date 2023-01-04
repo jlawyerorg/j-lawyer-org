@@ -685,6 +685,8 @@ public class BeaFxLauncher extends javax.swing.JDialog {
 
     /**
      * Creates new form BeaFxLauncher
+     * @param parent
+     * @param modal
      */
     public BeaFxLauncher(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
@@ -699,17 +701,11 @@ public class BeaFxLauncher extends javax.swing.JDialog {
         });
         
         try {
-                //lblCardLogin.setText("Verbinde zum beA... Karten-PIN...");
                 BeaAccess bea = BeaAccess.getInstance();
                 bea.login();
                 this.loggedIn=true;
                 setVisible(false);
-                //beain.initWithCard();
-               
-
-                //lblCardLogin.setText("Verbinde zum beA... laden...");
-                //beain.refreshFolders(true);
-                //lblCardLogin.setText("Verbinde zum beA... fertig.");
+                
             } catch (Throwable t) {
                 log.error(t);
                 this.loggedIn=false;

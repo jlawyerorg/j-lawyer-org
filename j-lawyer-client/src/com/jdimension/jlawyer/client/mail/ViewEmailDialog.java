@@ -699,7 +699,6 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     /**
      * Creates new form ViewEmailDialog
      * @param parent
-     * @param modal
      * @param contextArchiveFile
      * @param contextFolder
      */

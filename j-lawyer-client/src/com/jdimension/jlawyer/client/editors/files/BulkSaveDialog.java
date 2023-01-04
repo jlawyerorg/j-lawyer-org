@@ -729,6 +729,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form BulkSaveDialog
+     * @param type
+     * @param parent
+     * @param modal
      */
     public BulkSaveDialog(String type, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -749,8 +752,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private void initializeTags() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
+            
             String[] lastBulkSaveCaseTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, new String[]{""});
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<>();

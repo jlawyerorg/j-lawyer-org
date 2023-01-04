@@ -673,32 +673,34 @@ public class ProfileDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ProfileDialog
+     * @param parent
+     * @param modal
      */
     public ProfileDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         ServerSettings set=ServerSettings.getInstance();
-        this.txtCity.setText(set.getSetting(set.PROFILE_COMPANYCITY, ""));
-        this.txtCountry.setText(set.getSetting(set.PROFILE_COMPANYCOUNTRY, ""));
-        this.txtEmail.setText(set.getSetting(set.PROFILE_COMPANYEMAIL, ""));
-        this.txtFax.setText(set.getSetting(set.PROFILE_COMPANYFAX, ""));
-        this.txtMobile.setText(set.getSetting(set.PROFILE_COMPANYMOBILE, ""));
-        this.txtCompany.setText(set.getSetting(set.PROFILE_COMPANYNAME, ""));
-        this.txtPhone.setText(set.getSetting(set.PROFILE_COMPANYPHONE, ""));
-        this.txtStreet.setText(set.getSetting(set.PROFILE_COMPANYSTREET, ""));
-        this.txtStreet2.setText(set.getSetting(set.PROFILE_COMPANYSTREET2, ""));
-        this.txtWWW.setText(set.getSetting(set.PROFILE_COMPANYWWW, ""));
-        this.txtZip.setText(set.getSetting(set.PROFILE_COMPANYZIP, ""));
+        this.txtCity.setText(set.getSetting(ServerSettings.PROFILE_COMPANYCITY, ""));
+        this.txtCountry.setText(set.getSetting(ServerSettings.PROFILE_COMPANYCOUNTRY, ""));
+        this.txtEmail.setText(set.getSetting(ServerSettings.PROFILE_COMPANYEMAIL, ""));
+        this.txtFax.setText(set.getSetting(ServerSettings.PROFILE_COMPANYFAX, ""));
+        this.txtMobile.setText(set.getSetting(ServerSettings.PROFILE_COMPANYMOBILE, ""));
+        this.txtCompany.setText(set.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
+        this.txtPhone.setText(set.getSetting(ServerSettings.PROFILE_COMPANYPHONE, ""));
+        this.txtStreet.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET, ""));
+        this.txtStreet2.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET2, ""));
+        this.txtWWW.setText(set.getSetting(ServerSettings.PROFILE_COMPANYWWW, ""));
+        this.txtZip.setText(set.getSetting(ServerSettings.PROFILE_COMPANYZIP, ""));
         
-        this.txtTaxId.setText(set.getSetting(set.PROFILE_COMPANYTAXID, ""));
-        this.txtUstId.setText(set.getSetting(set.PROFILE_COMPANYUSTID, ""));
-        this.txtBank.setText(set.getSetting(set.PROFILE_COMPANYBANK, ""));
-        this.txtBankCode.setText(set.getSetting(set.PROFILE_COMPANYBANKCODE, ""));
-        this.txtAccountId.setText(set.getSetting(set.PROFILE_COMPANYACCOUNTNO, ""));
+        this.txtTaxId.setText(set.getSetting(ServerSettings.PROFILE_COMPANYTAXID, ""));
+        this.txtUstId.setText(set.getSetting(ServerSettings.PROFILE_COMPANYUSTID, ""));
+        this.txtBank.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANK, ""));
+        this.txtBankCode.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE, ""));
+        this.txtAccountId.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
         
-        this.txtBankAK.setText(set.getSetting(set.PROFILE_COMPANYBANK_AK, ""));
-        this.txtBankCodeAK.setText(set.getSetting(set.PROFILE_COMPANYBANKCODE_AK, ""));
-        this.txtAccountIdAK.setText(set.getSetting(set.PROFILE_COMPANYACCOUNTNO_AK, ""));
+        this.txtBankAK.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANK_AK, ""));
+        this.txtBankCodeAK.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE_AK, ""));
+        this.txtAccountIdAK.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO_AK, ""));
         
         
     }
@@ -1021,27 +1023,27 @@ public class ProfileDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set=ServerSettings.getInstance();
-        set.setSetting(set.PROFILE_COMPANYCITY, this.txtCity.getText());
-        set.setSetting(set.PROFILE_COMPANYCOUNTRY, this.txtCountry.getText());
-        set.setSetting(set.PROFILE_COMPANYEMAIL, this.txtEmail.getText());
-        set.setSetting(set.PROFILE_COMPANYFAX, this.txtFax.getText());
-        set.setSetting(set.PROFILE_COMPANYMOBILE, this.txtMobile.getText());
-        set.setSetting(set.PROFILE_COMPANYNAME, this.txtCompany.getText());
-        set.setSetting(set.PROFILE_COMPANYPHONE, this.txtPhone.getText());
-        set.setSetting(set.PROFILE_COMPANYSTREET, this.txtStreet.getText());
-        set.setSetting(set.PROFILE_COMPANYSTREET2, this.txtStreet2.getText());
-        set.setSetting(set.PROFILE_COMPANYWWW, this.txtWWW.getText());
-        set.setSetting(set.PROFILE_COMPANYZIP, this.txtZip.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYCITY, this.txtCity.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYCOUNTRY, this.txtCountry.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYEMAIL, this.txtEmail.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYFAX, this.txtFax.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYMOBILE, this.txtMobile.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYNAME, this.txtCompany.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYPHONE, this.txtPhone.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYSTREET, this.txtStreet.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYSTREET2, this.txtStreet2.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYWWW, this.txtWWW.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYZIP, this.txtZip.getText());
         
-        set.setSetting(set.PROFILE_COMPANYTAXID, this.txtTaxId.getText());
-        set.setSetting(set.PROFILE_COMPANYUSTID, this.txtUstId.getText());
-        set.setSetting(set.PROFILE_COMPANYBANK, this.txtBank.getText());
-        set.setSetting(set.PROFILE_COMPANYBANKCODE, this.txtBankCode.getText());
-        set.setSetting(set.PROFILE_COMPANYACCOUNTNO, this.txtAccountId.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYTAXID, this.txtTaxId.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYUSTID, this.txtUstId.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYBANK, this.txtBank.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYBANKCODE, this.txtBankCode.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, this.txtAccountId.getText());
         
-        set.setSetting(set.PROFILE_COMPANYBANK_AK, this.txtBankAK.getText());
-        set.setSetting(set.PROFILE_COMPANYBANKCODE_AK, this.txtBankCodeAK.getText());
-        set.setSetting(set.PROFILE_COMPANYACCOUNTNO_AK, this.txtAccountIdAK.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYBANK_AK, this.txtBankAK.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYBANKCODE_AK, this.txtBankCodeAK.getText());
+        set.setSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO_AK, this.txtAccountIdAK.getText());
         
         this.setVisible(false);
         this.dispose();
@@ -1086,19 +1088,16 @@ public class ProfileDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                ProfileDialog dialog = new ProfileDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ProfileDialog dialog = new ProfileDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

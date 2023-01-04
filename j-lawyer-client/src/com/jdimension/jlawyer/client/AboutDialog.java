@@ -677,11 +677,13 @@ public class AboutDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AboutDialog
+     * @param parent
+     * @param modal
      */
     public AboutDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         
         sb.append("<html>");
         sb.append("<br/>");
@@ -838,19 +840,16 @@ public class AboutDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                AboutDialog dialog = new AboutDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            AboutDialog dialog = new AboutDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

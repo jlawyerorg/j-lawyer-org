@@ -663,11 +663,6 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import java.io.File;
-import java.io.IOException;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 import org.apache.log4j.Logger;
 
 /**
@@ -678,7 +673,9 @@ public class ImportBanksDialog extends javax.swing.JDialog {
     
     private static final Logger log=Logger.getLogger(ImportBanksDialog.class.getName());
     
-    /** Creates new form ImportBanksDialog */
+    /** Creates new form ImportBanksDialog
+     * @param parent
+     * @param modal */
     public ImportBanksDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -783,10 +780,8 @@ public class ImportBanksDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ImportBanksDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ImportBanksDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     

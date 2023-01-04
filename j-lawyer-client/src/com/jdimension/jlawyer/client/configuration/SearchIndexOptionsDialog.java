@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SearchServiceRemote;
 import javax.swing.JOptionPane;
@@ -676,10 +675,12 @@ import org.apache.log4j.Logger;
  */
 public class SearchIndexOptionsDialog extends javax.swing.JDialog {
 
-    private static Logger log=Logger.getLogger(SearchIndexOptionsDialog.class.getName());
+    private static final Logger log=Logger.getLogger(SearchIndexOptionsDialog.class.getName());
     
     /**
      * Creates new form ProfileDialog
+     * @param parent
+     * @param modal
      */
     public SearchIndexOptionsDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -865,19 +866,16 @@ public class SearchIndexOptionsDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                SearchIndexOptionsDialog dialog = new SearchIndexOptionsDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            SearchIndexOptionsDialog dialog = new SearchIndexOptionsDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -691,6 +691,8 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form BackupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public BackupConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

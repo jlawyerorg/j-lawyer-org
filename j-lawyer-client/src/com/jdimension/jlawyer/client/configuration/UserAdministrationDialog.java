@@ -706,7 +706,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class UserAdministrationDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(UserAdministrationDialog.class.getName());
+    private static final Logger log = Logger.getLogger(UserAdministrationDialog.class.getName());
 
     private String optionGroup = null;
 
@@ -716,6 +716,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -2486,10 +2488,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new UserAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new UserAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
 

@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.drebis.coverage.*;
 import com.jdimension.jlawyer.client.wizard.*;
 
 /**
@@ -673,7 +672,9 @@ import com.jdimension.jlawyer.client.wizard.*;
 public class AddDocumentWizardDialog_unused extends javax.swing.JDialog {
 
     /**
-     * Creates new form WizardDialog
+     * Creates new form AddDocumentWizardDialog_unused
+     * @param parent
+     * @param modal
      */
     public AddDocumentWizardDialog_unused(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -745,17 +746,15 @@ public class AddDocumentWizardDialog_unused extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                AddDocumentWizardDialog_unused dialog = new AddDocumentWizardDialog_unused(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            AddDocumentWizardDialog_unused dialog = new AddDocumentWizardDialog_unused(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

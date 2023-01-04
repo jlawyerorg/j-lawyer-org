@@ -691,7 +691,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class PartyTypesDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(PartyTypesDialog.class.getName());
+    private static final Logger log = Logger.getLogger(PartyTypesDialog.class.getName());
 
     /**
      * Creates new form PartyTypesDialog

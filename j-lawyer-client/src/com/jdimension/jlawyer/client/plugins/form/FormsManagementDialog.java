@@ -703,6 +703,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
     /**
      * Creates new form FormsManagementDialog
+     * @param parent
+     * @param modal
      */
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

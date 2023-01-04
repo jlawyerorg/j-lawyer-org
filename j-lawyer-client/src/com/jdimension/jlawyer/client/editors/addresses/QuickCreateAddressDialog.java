@@ -689,6 +689,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form QuickCreateAddressDialog
+     * @param parent
+     * @param modal
      */
     public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
@@ -920,12 +922,6 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jLabel10.setText("E-Mail:");
 
-        txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtEmailKeyPressed(evt);
-            }
-        });
-
         jLabel11.setText("Homepage:");
 
         jLabel19.setText("Mobil:");
@@ -1088,19 +1084,12 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdChooseCityActionPerformed
 
-    private void txtEmailKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailKeyPressed
-        
-    }//GEN-LAST:event_txtEmailKeyPressed
-
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new QuickCreateAddressDialog(null, true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new QuickCreateAddressDialog(null, true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

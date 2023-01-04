@@ -681,11 +681,13 @@ import themes.colors.DefaultColorTheme;
  */
 public class ServerMonitoringDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(ServerMonitoringDialog.class.getName());
-    private static DecimalFormat diskFormat = new DecimalFormat("0.0");
+    private static final Logger log = Logger.getLogger(ServerMonitoringDialog.class.getName());
+    private static final DecimalFormat diskFormat = new DecimalFormat("0.0");
 
     /**
      * Creates new form BackupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public ServerMonitoringDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -1493,19 +1495,16 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                ServerMonitoringDialog dialog = new ServerMonitoringDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ServerMonitoringDialog dialog = new ServerMonitoringDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
