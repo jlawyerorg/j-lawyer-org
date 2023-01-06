@@ -691,6 +691,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -2480,72 +2481,72 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 if (targetCase == null) {
                     return false;
                 }
-                
+
                 bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
                 bulkSaveDlg.setSelectedCase(targetCase);
 
                 if (attachmentsOnly && targetCase != null) {
 
-                        for (Attachment att : m.getAttachments()) {
+                    for (Attachment att : m.getAttachments()) {
 
-                            BulkSaveEntry bulkEntry = new BulkSaveEntry();
-                            bulkEntry.setDocumentDate(m.getReceptionTime());
+                        BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                        bulkEntry.setDocumentDate(m.getReceptionTime());
 
-                            String attachmentName = att.getFileName();
-                            byte[] attachmentData = att.getContent();
-                            bulkEntry.setDocumentBytes(attachmentData);
+                        String attachmentName = att.getFileName();
+                        byte[] attachmentData = att.getContent();
+                        bulkEntry.setDocumentBytes(attachmentData);
 
-                            String newName = attachmentName;
-                            if (newName == null) {
-                                newName = "";
-                            }
-                            // file names need to be unique across the entire case, so when saving multiple
-                            // beA messages, there are multiple xjustiz sds
-                            if (newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
-                                newName = m.getId() + "_" + newName;
-                            }
-                            newName = FileUtils.sanitizeFileName(newName);
+                        String newName = attachmentName;
+                        if (newName == null) {
+                            newName = "";
+                        }
+                        // file names need to be unique across the entire case, so when saving multiple
+                        // beA messages, there are multiple xjustiz sds
+                        if (newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+                            newName = m.getId() + "_" + newName;
+                        }
+                        newName = FileUtils.sanitizeFileName(newName);
 
-                            if (newName.trim().length() == 0) {
-                                newName = "Anhang";
-                            }
-
-                            bulkEntry.setDocumentFilename(attachmentName);
-                            bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
-
-                            bulkSaveDlg.addEntry(bulkEntry);
-
+                        if (newName.trim().length() == 0) {
+                            newName = "Anhang";
                         }
 
-                        for (Attachment att : m.getVhnAttachments()) {
-                            BulkSaveEntry bulkEntry = new BulkSaveEntry();
-                            bulkEntry.setDocumentDate(m.getReceptionTime());
+                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
 
-                            String attachmentName = att.getFileName();
-                            byte[] attachmentData = att.getContent();
-                            bulkEntry.setDocumentBytes(attachmentData);
+                        bulkSaveDlg.addEntry(bulkEntry);
 
-                            String newName = attachmentName;
-                            if (newName == null) {
-                                newName = "";
-                            }
+                    }
 
-                            // file names need to be unique across the entire case, so when saving multiple
-                            // beA messages, there are multiple xjustiz sds
-                            if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
-                                newName = m.getId() + "_" + newName;
-                            }
-                            newName = FileUtils.sanitizeFileName(newName);
+                    for (Attachment att : m.getVhnAttachments()) {
+                        BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                        bulkEntry.setDocumentDate(m.getReceptionTime());
 
-                            if (newName.trim().length() == 0) {
-                                newName = "VHN-Anhang";
-                            }
+                        String attachmentName = att.getFileName();
+                        byte[] attachmentData = att.getContent();
+                        bulkEntry.setDocumentBytes(attachmentData);
 
-                            bulkEntry.setDocumentFilename(attachmentName);
-                            bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
-
-                            bulkSaveDlg.addEntry(bulkEntry);
+                        String newName = attachmentName;
+                        if (newName == null) {
+                            newName = "";
                         }
+
+                        // file names need to be unique across the entire case, so when saving multiple
+                        // beA messages, there are multiple xjustiz sds
+                        if (newName.equalsIgnoreCase("vhn.xml") || newName.equalsIgnoreCase("vhn.xml.p7s")) {
+                            newName = m.getId() + "_" + newName;
+                        }
+                        newName = FileUtils.sanitizeFileName(newName);
+
+                        if (newName.trim().length() == 0) {
+                            newName = "VHN-Anhang";
+                        }
+
+                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
+
+                        bulkSaveDlg.addEntry(bulkEntry);
+                    }
                 }
 
                 if (targetCase != null && !attachmentsOnly) {
@@ -2632,7 +2633,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
 
                 }
-                
+
                 FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
                 bulkSaveDlg.setVisible(true);
 
@@ -2734,6 +2735,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     return false;
                 }
                 Message sentMessage = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, m.getSenderSafeId(), abgabeDate);
+                this.saveEebResponse(sentMessage, mh, "Abgabe");
 
                 return true;
 
@@ -2799,6 +2801,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
 
                 Message sentMessage = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, m.getSenderSafeId(), code, comment);
+                this.saveEebResponse(sentMessage, mh, "Ablehnung");
 
                 return true;
 
@@ -2808,6 +2811,47 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         }
         return false;
+    }
+
+    private void saveEebResponse(Message m, MessageHeader originalMessage, String rejectionOrConfirmation) {
+
+        try {
+
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + originalMessage.getReferenceJustice() + originalMessage.getReferenceNumber() + m.getSubject() + m.getBody(), null);
+            dlg.setVisible(true);
+            ArchiveFileBean targetCase = dlg.getCaseSelection();
+            CaseFolder targetFolder = dlg.getFolderSelection();
+            dlg.dispose();
+            
+            // user decided to cancel
+            if(dlg.getCaseSelection()==null)
+                return;
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            MessageExport mex = BeaAccess.exportMessage(m);
+            String newName = FileUtils.getNewFileName(m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
+            if (newName == null || "".equals(newName)) {
+                newName=m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
+            }
+            newName = FileUtils.sanitizeFileName(newName);
+            newName = FileUtils.getNewFileNamePrefix(new Date()) + newName;
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "");
+
+            if (targetFolder != null) {
+                ArrayList<String> docId = new ArrayList<>();
+                docId.add(newDoc.getId());
+                remote.moveDocumentsToFolder(docId, targetFolder.getId());
+
+            }
+
+        } catch (Exception ioe) {
+            log.error("Error saving eEb response", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der eEb-Abgabe: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
     }
 
     @Override
