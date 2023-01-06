@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.*;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -688,7 +687,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
     private JFrame fParent = null;
     private JDialog dParent = null;
     private GlassPane glass = null;
-    private ProgressableAction action = null;
     private BeaLoginCallback callback = null;
 
     /**
@@ -766,10 +764,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 
     }
 
-    public void setAction(ProgressableAction a) {
-        this.action = a;
-    }
-
     public void setShowCancelButton(boolean show) {
         if (!show) {
             this.remove(this.cmdCancel);
@@ -826,6 +820,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 
         cmdCardLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons128/vcard.png"))); // NOI18N
         cmdCardLogin.setText("Karte");
+        cmdCardLogin.setEnabled(false);
         cmdCardLogin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdCardLogin.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         cmdCardLogin.addActionListener(new java.awt.event.ActionListener() {
@@ -953,7 +948,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
                     if (callback != null) {
                         callback.loginSuccess();
                     }
-                    //beain.refreshFolders(true);
                     lblCertLogin.setText("Verbinde zum beA... fertig.");
                 } catch (Throwable t) {
                     log.error(t);
@@ -970,7 +964,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
             ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
-        //}
     }//GEN-LAST:event_cmdCertificateLoginActionPerformed
 
     private void cmdCardLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCardLoginActionPerformed

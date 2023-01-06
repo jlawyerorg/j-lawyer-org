@@ -138,6 +138,7 @@
               <Image iconType="3" name="/icons128/vcard.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="Karte"/>
+            <Property name="enabled" type="boolean" value="false"/>
             <Property name="horizontalTextPosition" type="int" value="0"/>
             <Property name="verticalTextPosition" type="int" value="3"/>
           </Properties>
