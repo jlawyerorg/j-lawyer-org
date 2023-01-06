@@ -775,7 +775,7 @@ public interface SystemManagementRemote {
 
     void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     Hashtable<String,PartyTypeBean> getPartyTypesTable();
 

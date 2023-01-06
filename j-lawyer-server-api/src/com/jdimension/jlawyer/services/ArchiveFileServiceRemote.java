@@ -789,8 +789,6 @@ public interface ArchiveFileServiceRemote {
 
     void renameDocumentTag(String fromName, String toName) throws Exception;
 
-    List<PartyTypeBean> getAllPartyTypes();
-
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
 
     void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;

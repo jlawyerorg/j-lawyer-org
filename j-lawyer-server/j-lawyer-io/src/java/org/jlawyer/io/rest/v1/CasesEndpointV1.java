@@ -1341,7 +1341,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             PartyTypeBean partyType = system.getPartyType(party.getInvolvementType());
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             PartyTypeBean selectedPartyType = null;
             for (PartyTypeBean p : partyTypes) {
                 if (p.getName().equals(party.getInvolvementType())) {
@@ -1427,7 +1427,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             PartyTypeBean selectedPartyType = null;
             for (PartyTypeBean p : partyTypes) {
                 if (p.getName().equals(party.getInvolvementType())) {
@@ -1520,7 +1520,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             Collection<RestfulPartyTypeV1> result=new ArrayList<>();
             for(PartyTypeBean p: partyTypes) {
                 result.add(RestfulPartyTypeV1.fromPartyTypeBean(p));

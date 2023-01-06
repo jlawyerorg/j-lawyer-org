@@ -674,7 +674,6 @@ import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -743,8 +742,6 @@ public interface ArchiveFileServiceLocal {
     public boolean setDocumentContent(String id, byte[] content) throws Exception;
 
     ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
-
-    List<PartyTypeBean> getAllPartyTypes();
 
     ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
 

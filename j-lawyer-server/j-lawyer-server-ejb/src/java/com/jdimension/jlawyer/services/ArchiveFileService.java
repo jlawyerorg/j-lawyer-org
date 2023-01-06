@@ -751,8 +751,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private AddressBeanFacadeLocal addressFacade;
     @EJB
-    private PartyTypeBeanFacadeLocal partyTypeFacade;
-    @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
@@ -3450,10 +3448,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private String getSortString(ArchiveFileAddressesBean afab) {
         // 1 for clients, 2 for opponents, 3 for others
+        DecimalFormat df = new DecimalFormat("0000");
         String sortString = "";
         if (afab != null) {
             if (afab.getReferenceType() != null) {
-                sortString = sortString + afab.getReferenceType().getName();
+                sortString = sortString + df.format(afab.getReferenceType().getSequenceNumber());
             }
             sortString = sortString + afab.getAddressKey().toDisplayName();
         }
@@ -3807,44 +3806,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return address;
 
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<PartyTypeBean> getAllPartyTypes() {
-        List<PartyTypeBean> all = this.partyTypeFacade.findAll();
-        Collections.sort(all, (Object t, Object t1) -> {
-            Object u1 = t;
-            Object u2 = t1;
-            if (u1 == null) {
-                return -1;
-            }
-            if (u2 == null) {
-                return 1;
-            }
-            
-            if (!(u1 instanceof PartyTypeBean)) {
-                return -1;
-            }
-            if (!(u2 instanceof PartyTypeBean)) {
-                return 1;
-            }
-            
-            PartyTypeBean f1 = (PartyTypeBean) u1;
-            PartyTypeBean f2 = (PartyTypeBean) u2;
-            
-            String f1name = "";
-            if (f1.getName() != null) {
-                f1name = f1.getName().toLowerCase();
-            }
-            String f2name = "";
-            if (f2.getName() != null) {
-                f2name = f2.getName().toLowerCase();
-            }
-            
-            return f1name.compareTo(f2name);
-        });
-        return all;
     }
 
     @Override

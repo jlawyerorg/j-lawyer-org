@@ -817,7 +817,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.allPartyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
             this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
             this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
 

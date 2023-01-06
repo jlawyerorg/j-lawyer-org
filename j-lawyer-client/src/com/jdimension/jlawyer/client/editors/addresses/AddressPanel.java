@@ -2851,7 +2851,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
 
             // we do not know what role this person has - so put it as all three types
-            Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
             for (PartyTypeBean ptb : allPartyTypes) {
                 dlg.addParty(dto, ptb);
             }
@@ -3030,7 +3030,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
 
                 // we do not know what role this person has - so put it as all three types
-                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 for (PartyTypeBean ptb : allPartyTypes) {
                     dlg.addParty(dto, ptb);
                 }

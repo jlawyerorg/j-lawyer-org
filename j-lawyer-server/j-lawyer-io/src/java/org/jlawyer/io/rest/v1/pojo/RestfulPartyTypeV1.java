@@ -678,6 +678,8 @@ public class RestfulPartyTypeV1 {
     private String placeHolder=null;
     
     private int color=0;
+    
+    protected int sequenceNumber=1;
 
     public RestfulPartyTypeV1() {
     }
@@ -688,6 +690,7 @@ public class RestfulPartyTypeV1 {
         pt.setId(p.getId());
         pt.setName(p.getName());
         pt.setPlaceHolder(p.getPlaceHolder());
+        pt.setSequenceNumber(p.getSequenceNumber());
         return pt;
     }
 
@@ -745,6 +748,20 @@ public class RestfulPartyTypeV1 {
      */
     public void setColor(int color) {
         this.color = color;
+    }
+
+    /**
+     * @return the sequenceNumber
+     */
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * @param sequenceNumber the sequenceNumber to set
+     */
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
     
     

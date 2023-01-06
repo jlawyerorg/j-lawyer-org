@@ -741,7 +741,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
 
-    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<>();
+    private List<PartyTypeBean> allPartyTypes = new ArrayList<>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<>();
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();

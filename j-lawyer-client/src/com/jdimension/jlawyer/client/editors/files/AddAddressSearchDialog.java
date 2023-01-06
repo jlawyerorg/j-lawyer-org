@@ -679,8 +679,8 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -727,8 +727,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         ClientSettings s = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
-            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes = afRem.getAllPartyTypes();
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes = sys.getPartyTypes();
         } catch (Throwable t) {
             log.error("Error getting party types", t);
             JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

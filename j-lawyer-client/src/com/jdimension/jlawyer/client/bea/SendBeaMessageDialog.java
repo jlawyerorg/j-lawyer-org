@@ -745,15 +745,15 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
 
     private AppUserBean cu = null;
-    private Hashtable<String, String> attachments = new Hashtable<String, String>();
+    private Hashtable<String, String> attachments = new Hashtable<>();
     private ArchiveFileBean contextArchiveFile = null;
     private String contextDictateSign = null;
     private TextEditorPanel tp;
 
     private BeaListItem authority = null;
 
-    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
-    private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
+    private List<PartyTypeBean> allPartyTypes = new ArrayList<>();
+    private List<String> allPartyTypesPlaceholders = new ArrayList<>();
 
     private DropTarget dropTarget;
     private DropTargetHandler dropTargetHandler;

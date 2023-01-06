@@ -691,8 +691,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -753,8 +753,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes = afs.getAllPartyTypes();
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes = sys.getPartyTypes();
 
             this.cmbRefType.removeAllItems();
             ArrayList<String> refTypeNames = new ArrayList<>();

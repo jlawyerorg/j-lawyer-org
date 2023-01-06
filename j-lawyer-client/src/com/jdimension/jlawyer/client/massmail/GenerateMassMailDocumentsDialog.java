@@ -956,7 +956,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
                 List<String> placeHolders = null;
-                Collection<PartyTypeBean> allPartyTypes=null;
+                List<PartyTypeBean> allPartyTypes=null;
                 try {
                     placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<>());
                     allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
@@ -1098,7 +1098,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     ht.put(ph, "");
                 }
 
-                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 List<PartiesPanelEntry> ht2 = new ArrayList<>();
                 for (PartyTypeBean ptb : allPartyTypes) {
                     ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));

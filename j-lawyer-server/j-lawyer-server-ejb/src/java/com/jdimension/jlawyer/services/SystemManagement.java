@@ -1919,7 +1919,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         
         String tpl = localBaseDir + File.separator + templateName;
         
-        Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
+        List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
@@ -1935,7 +1935,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName);
 
-        Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
+        List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
@@ -2006,7 +2006,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public Collection<PartyTypeBean> getPartyTypes() {
+    public List<PartyTypeBean> getPartyTypes() {
         List<PartyTypeBean> all = this.partyTypesFacade.findAll();
         Collections.sort(all, (Object t, Object t1) -> {
             Object u1 = t;
@@ -2028,16 +2028,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             PartyTypeBean f1 = (PartyTypeBean) u1;
             PartyTypeBean f2 = (PartyTypeBean) u2;
 
-            String f1name = "";
-            if (f1.getName() != null) {
-                f1name = f1.getName().toLowerCase();
-            }
-            String f2name = "";
-            if (f2.getName() != null) {
-                f2name = f2.getName().toLowerCase();
-            }
+            
 
-            return f1name.compareTo(f2name);
+            int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
+            if(sequenceSortResult != 0) {
+                return sequenceSortResult;
+            } else {
+                String f1name = "";
+                if (f1.getName() != null) {
+                    f1name = f1.getName().toLowerCase();
+                }
+                String f2name = "";
+                if (f2.getName() != null) {
+                    f2name = f2.getName().toLowerCase();
+                }
+                return f1name.compareTo(f2name);
+            }
         });
         return all;
     }

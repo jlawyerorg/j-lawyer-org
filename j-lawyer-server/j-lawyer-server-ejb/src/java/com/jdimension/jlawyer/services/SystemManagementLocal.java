@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Local;
@@ -691,7 +690,7 @@ public interface SystemManagementLocal {
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
     

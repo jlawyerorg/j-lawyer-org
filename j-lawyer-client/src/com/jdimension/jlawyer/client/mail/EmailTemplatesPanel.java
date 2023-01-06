@@ -722,7 +722,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            List<PartyTypeBean> allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            List<PartyTypeBean> allPartyTypes=locator.lookupSystemManagementRemote().getPartyTypes();
             List<String> placeHolders=new ArrayList<>();
             for(PartyTypeBean ptb: allPartyTypes) {
                 placeHolders.add(ptb.getPlaceHolder());

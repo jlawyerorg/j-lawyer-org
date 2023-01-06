@@ -738,8 +738,8 @@ public class PartiesPanel extends javax.swing.JPanel {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.partyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
-            ArrayList<String> columnNames = new ArrayList<String>();
+            this.partyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            ArrayList<String> columnNames = new ArrayList<>();
 
             // display a column for EACH type, regardless of whether it is used
             // this is required because we do not know which placeholders are used in the template the user selected, and we allow to use an address for ANY type
@@ -750,7 +750,7 @@ public class PartiesPanel extends javax.swing.JPanel {
             }
 
             Collections.sort(columnNames);
-            ArrayList<String> allColumnNames = new ArrayList<String>();
+            ArrayList<String> allColumnNames = new ArrayList<>();
             allColumnNames.add("Beteiligte");
             allColumnNames.addAll(columnNames);
             String[] colNames = allColumnNames.toArray(new String[0]);
@@ -780,26 +780,23 @@ public class PartiesPanel extends javax.swing.JPanel {
                 model.addRow(rowArray);
             }
 
-            this.tblParties.getModel().addTableModelListener(
-                    new TableModelListener() {
-                public void tableChanged(TableModelEvent evt) {
-                    if (ignoreTableChanges) {
-                        return;
-                    }
-                    
-                    ignoreTableChanges = true;
-                    if (evt.getColumn() > 0) {
-                        Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
-                        if (newValue == true) {
-                            for (int i = 0; i < tblParties.getRowCount(); i++) {
-                                tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
-                            }
+            this.tblParties.getModel().addTableModelListener((TableModelEvent evt) -> {
+                if (ignoreTableChanges) {
+                    return;
+                }
+                
+                ignoreTableChanges = true;
+                if (evt.getColumn() > 0) {
+                    Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
+                    if (newValue == true) {
+                        for (int i = 0; i < tblParties.getRowCount(); i++) {
+                            tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
                         }
                     }
-                    ignoreTableChanges = false;
-                    if (listener != null) {
-                        listener.selectedPartiesUpdated();
-                    }
+                }
+                ignoreTableChanges = false;
+                if (listener != null) {
+                    listener.selectedPartiesUpdated();
                 }
             });
 
@@ -883,7 +880,7 @@ public class PartiesPanel extends javax.swing.JPanel {
     }
 
     public List<PartiesPanelEntry> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
-        List<PartiesPanelEntry> result = new ArrayList<PartiesPanelEntry>();
+        List<PartiesPanelEntry> result = new ArrayList<>();
         for (PartyTypeBean ptb : allPartyTypes) {
             PartiesPanelEntry selected = this.getSelectedParty(ptb);
             if (selected != null) {
