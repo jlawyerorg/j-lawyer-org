@@ -897,6 +897,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
             this.lblUpdateStatus.setText(((AutoUpdateEvent) e).getDescription());
         } else if(e instanceof ServicesEvent) {
+            this.mnuServices.removeAll();
             for (ServiceMenuItem si : ((ServicesEvent) e).getServices().values()) {
                 if ("---".equals(si.getName())) {
                     this.mnuServices.add(new JSeparator());

@@ -769,7 +769,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         graphics.fillRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint background
         graphics.setColor(getForeground());
         
-        graphics.setColor(DefaultColorTheme.COLOR_DARK_GREY);
+        graphics.setColor(Color.WHITE);
         graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
         graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
         graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border

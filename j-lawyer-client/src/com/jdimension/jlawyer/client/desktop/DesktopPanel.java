@@ -696,6 +696,7 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -840,6 +841,19 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }
+        
+        // pre-load JFileChooser to avoid long load times for the user
+        // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
+        Timer timer12 = new Timer();
+        TimerTask fileChooserPreload=new TimerTask() {
+            @Override
+            public void run() {
+                log.info("pre-loading JFileChooser");
+                JFileChooser fc=new JFileChooser();
+                log.info("pre-loading JFileChooser finished");
+            }   
+        };
+        timer12.schedule(fileChooserPreload, 7500);
 
         this.jSplitPane1.setDividerLocation(0.5d);
         
