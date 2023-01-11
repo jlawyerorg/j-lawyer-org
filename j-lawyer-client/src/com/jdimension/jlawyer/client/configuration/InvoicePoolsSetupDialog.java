@@ -670,14 +670,12 @@ import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JColorChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -707,27 +705,25 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         this.resetDetails();
         
         ServerSettings s = ServerSettings.getInstance();
-        this.chkFullSync.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, false));
-        this.chkConflictCheck.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true));
-
-        this.tblCalendars.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        
+        this.tblPools.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            List<CalendarSetup> calendars = locator.lookupCalendarServiceRemote().getAllCalendarSetups();
+            List<InvoicePool> pools = locator.lookupInvoiceServiceRemote().getAllInvoicePools();
 
-            this.tblCalendars.setDefaultRenderer(Object.class, new CalendarSetupTableCellRenderer());
+            this.tblPools.setDefaultRenderer(Object.class, new InvoicePoolTableCellRenderer());
 
-            for (CalendarSetup cs : calendars) {
-                ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{cs, cs.getBackground(), cs.getHref()});
+            for (InvoicePool ip : pools) {
+                ((DefaultTableModel) this.tblPools.getModel()).addRow(new Object[]{ip, ip.getPattern()});
 
             }
-            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblCalendars.getModel());
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblPools.getModel());
             sorter.setComparator(0, new CaseInsensitiveStringComparator());
-            this.tblCalendars.setRowSorter(sorter);
-            this.tblCalendars.getRowSorter().toggleSortOrder(0);
+            this.tblPools.setRowSorter(sorter);
+            this.tblPools.getRowSorter().toggleSortOrder(0);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -735,17 +731,16 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             return;
         }
 
-        ComponentUtils.autoSizeColumns(tblCalendars);
+        ComponentUtils.autoSizeColumns(tblPools);
     }
 
     private void resetDetails() {
-        this.cmdColor.setText("   ");
-        this.cmdColor.setBackground(new JButton().getBackground());
         this.txtDisplayName.setText("");
-        this.cmbName.removeAllItems();
-        this.rdFollowups.setSelected(true);
-        this.chkDeleteDone.setSelected(true);
-        this.pnlCloud.clear();
+        this.txtPattern.setText("");
+        this.chkManualAdjust.setSelected(false);
+        this.chkSmallBusiness.setSelected(false);
+        this.spnStartIndex.setValue(0);
+        this.lblLastIndex.setText("0");
 
     }
 
@@ -758,79 +753,67 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        rdEventType = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblCalendars = new javax.swing.JTable();
+        tblPools = new javax.swing.JTable();
         cmdAdd = new javax.swing.JButton();
         cmdRemove = new javax.swing.JButton();
-        chkFullSync = new javax.swing.JCheckBox();
-        jLabel7 = new javax.swing.JLabel();
-        chkConflictCheck = new javax.swing.JCheckBox();
-        jLabel8 = new javax.swing.JLabel();
         cmdClose = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         txtDisplayName = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        cmdColor = new javax.swing.JButton();
-        nextcloudTeaserPanel1 = new com.jdimension.jlawyer.client.configuration.NextcloudTeaserPanel();
         cmdSave = new javax.swing.JButton();
-        pnlCloud = new com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel();
-        jLabel2 = new javax.swing.JLabel();
-        cmbName = new javax.swing.JComboBox<>();
-        jLabel4 = new javax.swing.JLabel();
-        cmdGetCloudCalendars = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        jSeparator2 = new javax.swing.JSeparator();
-        jLabel6 = new javax.swing.JLabel();
-        rdFollowups = new javax.swing.JRadioButton();
-        rdRespites = new javax.swing.JRadioButton();
-        rdEvents = new javax.swing.JRadioButton();
-        chkDeleteDone = new javax.swing.JCheckBox();
+        txtPattern = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        spnStartIndex = new javax.swing.JSpinner();
+        jLabel4 = new javax.swing.JLabel();
+        lblLastIndex = new javax.swing.JLabel();
+        chkManualAdjust = new javax.swing.JCheckBox();
+        chkSmallBusiness = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Kalender");
+        setTitle("Rechnungsnummernkreise");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Kalender"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Nummernkreise"));
 
-        tblCalendars.setModel(new javax.swing.table.DefaultTableModel(
+        tblPools.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Name", "Farbe", "Zielkalender"
+                "Name", "Schema"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false
+                false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
-        tblCalendars.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        tblCalendars.getTableHeader().setReorderingAllowed(false);
-        tblCalendars.addMouseListener(new java.awt.event.MouseAdapter() {
+        tblPools.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblPools.getTableHeader().setReorderingAllowed(false);
+        tblPools.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblCalendarsMouseClicked(evt);
+                tblPoolsMouseClicked(evt);
             }
         });
-        tblCalendars.addKeyListener(new java.awt.event.KeyAdapter() {
+        tblPools.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                tblCalendarsKeyPressed(evt);
+                tblPoolsKeyPressed(evt);
             }
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                tblCalendarsKeyReleased(evt);
+                tblPoolsKeyReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(tblCalendars);
+        jScrollPane1.setViewportView(tblPools);
 
         cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdAdd.addActionListener(new java.awt.event.ActionListener() {
@@ -846,39 +829,17 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        chkFullSync.setText("in Intervallen synchronisieren");
-
-        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
-        jLabel7.setToolTipText("Sofern ein Kalender mit einer Nextcloud synchronisiert wird, geschieht dies automatisch.\nEine zusätzliche Synchronisation in Intervallen ist nur in Ausnahmefällen sinnvoll, bspw. \nwenn die Nextcloud nicht durchgehend erreichbar ist.\nAuf Geräte mit iOS / macOS kann die Intervallsynchronisation zur doppelten Anzeige von\nTerminen in den Kalender-Apps führen.");
-
-        chkConflictCheck.setSelected(true);
-        chkConflictCheck.setText("auf Terminkonflikte prüfen");
-
-        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
-        jLabel8.setToolTipText("Bei Erstellen und Bearbeiten von Kalendereinträgen wird auf \nmögliche Terminkonflikte geprüft und eine Warnung angezeigt.");
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdAdd)
-                            .addComponent(cmdRemove)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkFullSync)
-                            .addComponent(chkConflictCheck))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel7))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -886,20 +847,12 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 502, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cmdAdd)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRemove)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkConflictCheck)
-                    .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkFullSync)
-                    .addComponent(jLabel7))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -913,15 +866,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
 
         jLabel1.setText("Anzeigename:");
 
-        jLabel3.setText("Markieren in:");
-
-        cmdColor.setText("jButton1");
-        cmdColor.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdColorActionPerformed(evt);
-            }
-        });
-
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Übernehmen");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
@@ -930,37 +874,24 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel2.setText("Zielkalender:");
-
-        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
-        jLabel4.setForeground(new java.awt.Color(153, 153, 153));
-        jLabel4.setText("Synchronisation zu Nextcloud (optional)");
-
-        cmdGetCloudCalendars.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdGetCloudCalendars.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdGetCloudCalendarsActionPerformed(evt);
-            }
-        });
-
         jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
-        jLabel5.setText("Kalenderdaten");
+        jLabel5.setText("Nummernkreiskonfiguration");
 
-        jLabel6.setText("für");
+        jLabel2.setText("Schema:");
 
-        rdEventType.add(rdFollowups);
-        rdFollowups.setSelected(true);
-        rdFollowups.setText("Wiedervorlagen");
+        jLabel3.setText("Start-Index:");
 
-        rdEventType.add(rdRespites);
-        rdRespites.setText("Fristen");
+        spnStartIndex.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
 
-        rdEventType.add(rdEvents);
-        rdEvents.setText("Termine");
+        jLabel4.setText("zuletzt genutzt:");
 
-        chkDeleteDone.setSelected(true);
-        chkDeleteDone.setText("erledigte Termine aus Nextcloud löschen");
+        lblLastIndex.setText("0");
+
+        chkManualAdjust.setText("manuell editierbar");
+        chkManualAdjust.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
+
+        chkSmallBusiness.setText("Kleinunternehmerregelung");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -971,48 +902,30 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 351, Short.MAX_VALUE)
+                        .addComponent(cmdClose))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel1))
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtPattern)
                             .addComponent(txtDisplayName)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdColor)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addComponent(jSeparator1)
-                    .addComponent(pnlCloud, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(54, 54, 54)
-                                .addComponent(rdFollowups)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(rdRespites)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(rdEvents))
-                            .addComponent(jLabel4))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdClose, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmbName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdGetCloudCalendars))
-                            .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(chkDeleteDone)
+                                    .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(lblLastIndex))
+                                    .addComponent(chkManualAdjust)
+                                    .addComponent(chkSmallBusiness)
                                     .addComponent(cmdSave))
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
@@ -1031,34 +944,23 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                             .addComponent(jLabel1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel6)
-                            .addComponent(rdFollowups)
-                            .addComponent(rdRespites)
-                            .addComponent(rdEvents))
+                            .addComponent(txtPattern, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(cmdColor)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlCloud, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3)
+                            .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(cmdGetCloudCalendars)
-                            .addComponent(cmbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jLabel4)
+                            .addComponent(lblLastIndex))
+                        .addGap(18, 18, 18)
+                        .addComponent(chkManualAdjust)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chkDeleteDone)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
+                        .addComponent(chkSmallBusiness)
+                        .addGap(18, 18, 18)
                         .addComponent(cmdSave)
-                        .addGap(18, 18, 18)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdClose)))
                 .addContainerGap())
         );
@@ -1066,36 +968,29 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void saveGlobalFlags() {
-        ServerSettings s = ServerSettings.getInstance();
-        s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, this.chkFullSync.isSelected());
-        s.setSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, this.chkConflictCheck.isSelected());
-    }
-    
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.saveGlobalFlags();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
 
-    private void tblCalendarsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblCalendarsMouseClicked
+    private void tblPoolsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblPoolsMouseClicked
         if (evt.getClickCount() == 1 && !evt.isConsumed()) {
 
-            int row = this.tblCalendars.getSelectedRow();
+            int row = this.tblPools.getSelectedRow();
 
             if (row < 0) {
                 this.resetDetails();
             } else {
 
-                CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
-                this.updatedUI(cs);
+                InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
+                this.updatedUI(ip);
             }
 
         }
-    }//GEN-LAST:event_tblCalendarsMouseClicked
+    }//GEN-LAST:event_tblPoolsMouseClicked
 
     private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
-        Object newNameObject = JOptionPane.showInputDialog(this, "Anzeigename: ", "Neuen Kalender anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Kalender");
+        Object newNameObject = JOptionPane.showInputDialog(this, "Anzeigename: ", "Neuen Nummernkreis anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Nummernkreis");
         if (newNameObject == null) {
             return;
         }
@@ -1104,24 +999,20 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            CalendarSetup cs = new CalendarSetup();
-            cs.setDisplayName(newNameObject.toString());
-            if(this.rdFollowups.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_FOLLOWUP);
-            else if(this.rdRespites.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_RESPITE);
-            else if(this.rdEvents.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_EVENT);
-            cs.setHref(null);
-            cs.setDeleteDone(true);
-            cs.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN.getRGB());
-            CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
+            InvoicePool ip = new InvoicePool();
+            ip.setDisplayName(newNameObject.toString());
+            ip.setLastIndex(0);
+            ip.setManualAdjust(false);
+            ip.setPattern("R23-###");
+            ip.setSmallBusiness(false);
+            ip.setStartIndex(0);
+            InvoicePool savedPool = locator.lookupInvoiceServiceRemote().addInvoicePool(ip);
 
-            ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{savedCalendar, savedCalendar.getBackground(), null});
-            JOptionPane.showMessageDialog(this, "Der Kalender ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Kalenderberechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            ((DefaultTableModel) this.tblPools.getModel()).addRow(new Object[]{savedPool, savedPool.getPattern()});
+            JOptionPane.showMessageDialog(this, "Der Nummernkreis ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Weitere Berechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
-            log.error("Error creating new calendar", ex);
+            log.error("Error creating new invoice pool", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
@@ -1129,65 +1020,30 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
-        int row = this.tblCalendars.getSelectedRow();
+        int row = this.tblPools.getSelectedRow();
 
         if (row >= 0) {
 
 
-            if (this.cmbName.getSelectedItem() == null) {
-                if (!StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && !StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && !StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
-                    // user provided connection but no target calendar
-                    JOptionPane.showMessageDialog(this, "Es ist kein Zielkalender ausgewählt. Entweder Ziel angeben oder Nextcloudverbindung entfernen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            }
-            
-            
 
-            CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
-            cs.setDisplayName(this.txtDisplayName.getText());
-            if (this.cmbName.getSelectedItem() != null) {
-                cs.setHref(((CloudCalendar) this.cmbName.getSelectedItem()).getHref());
-            } else {
-                cs.setHref(null);
-            }
-            if (StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
-                // cloud sync has been removed
-                cs.setHref(null);
-            }
+            InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
+            ip.setDisplayName(this.txtDisplayName.getText());
+            ip.setManualAdjust(this.chkManualAdjust.isSelected());
+            ip.setPattern(this.txtPattern.getText());
+            ip.setSmallBusiness(this.chkSmallBusiness.isSelected());
+            ip.setStartIndex((Integer)this.spnStartIndex.getValue());
             
-            if(this.rdFollowups.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_FOLLOWUP);
-            else if(this.rdRespites.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_RESPITE);
-            else if(this.rdEvents.isSelected())
-                cs.setEventType(CalendarSetup.EVENTTYPE_EVENT);
-            cs.setBackground(this.cmdColor.getBackground().getRGB());
-            cs.setCloudHost(this.pnlCloud.getCloudHost());
-            try {
-                cs.setCloudPassword(Crypto.encrypt(this.pnlCloud.getCloudPassword()));
-            } catch (Exception ex) {
-                log.error("Error accessing cloud credentials", ex);
-                JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-            cs.setCloudPath(this.pnlCloud.getCloudPath());
-            cs.setCloudPort(this.pnlCloud.getCloudPort());
-            cs.setCloudSsl(this.pnlCloud.isSsl());
-            cs.setCloudUser(this.pnlCloud.getCloudUser());
-            cs.setDeleteDone(this.chkDeleteDone.isSelected());
-
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().updateCalendarSetup(cs);
-                row=this.tblCalendars.convertRowIndexToView(row);
-                ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar, row, 0);
-                ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getBackground(), row, 1);
-                ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getHref(), row, 2);
+                InvoicePool savedPool = locator.lookupInvoiceServiceRemote().updateInvoicePool(ip);
+                row=this.tblPools.convertRowIndexToView(row);
+                ((DefaultTableModel) this.tblPools.getModel()).setValueAt(savedPool, row, 0);
+                ((DefaultTableModel) this.tblPools.getModel()).setValueAt(savedPool.getPattern(), row, 1);
 
             } catch (Exception ex) {
-                log.error("Error updating calendar setup", ex);
+                log.error("Error updating invoice pool", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -1196,154 +1052,54 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
-        int row = this.tblCalendars.getSelectedRow();
+        int row = this.tblPools.getSelectedRow();
 
         if (row >= 0) {
         
-            CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
+            InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                List<CalendarSetup> allSetups=locator.lookupCalendarServiceRemote().getAllCalendarSetups();
-                List<CalendarSetup> setupsOfType=new ArrayList<>();
-                for(CalendarSetup cals: allSetups) {
-                    if(cals.getEventType()==cs.getEventType())
-                        setupsOfType.add(cals);
-                }
-                if(setupsOfType.size()==1) {
-                    // we must have at least one calendar per type at all times
-                    JOptionPane.showMessageDialog(this, "Kalender ist der letzte dieses Typs (WV/Frist/Termin)" + System.lineSeparator() + "Bitte erst einen alternativen Kalender anlegen und danach diesen löschen", "Kalender löschen", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                setupsOfType.remove(cs);
-                if(locator.lookupCalendarServiceRemote().hasEvents(cs)) {
-                    // transfer events to other calendar
-                    CalendarSetup s = (CalendarSetup)JOptionPane.showInputDialog(
-                    this,
-                    "Zu löschender Kalender enthält noch Einträge - in welchen Kalender sollen diese transferiert werden?",
-                    "Kalendereinträge transferieren",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    setupsOfType.toArray(),
-                    null);
-                    
-                    if(s==null)
-                        return;
-                    
-                    locator.lookupCalendarServiceRemote().migrateEvents(cs, s);
-                }
-                
-                locator.lookupCalendarServiceRemote().removeCalendarSetup(cs);
-                ((DefaultTableModel) this.tblCalendars.getModel()).removeRow(row);
+                locator.lookupInvoiceServiceRemote().removeInvoicePool(ip);
+                ((DefaultTableModel) this.tblPools.getModel()).removeRow(row);
 
                 this.resetDetails();
             } catch (Exception ex) {
-                log.error("Error removing calendar setup", ex);
+                log.error("Error removing invoice pool", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
 
-    private void cmdColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdColorActionPerformed
-        Color currentColor = JColorChooser.showDialog(this, "Farbe wählen", cmdColor.getBackground());
-        if (currentColor != null) {
-            cmdColor.setBackground(currentColor);
+    private void tblPoolsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPoolsKeyPressed
 
-        }
-    }//GEN-LAST:event_cmdColorActionPerformed
+    }//GEN-LAST:event_tblPoolsKeyPressed
 
-    private void tblCalendarsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblCalendarsKeyPressed
-
-    }//GEN-LAST:event_tblCalendarsKeyPressed
-
-    private void tblCalendarsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblCalendarsKeyReleased
-        int row = this.tblCalendars.getSelectedRow();
+    private void tblPoolsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPoolsKeyReleased
+        int row = this.tblPools.getSelectedRow();
 
         if (row < 0) {
             this.resetDetails();
         } else {
 
-            CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
-            this.updatedUI(cs);
+            InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
+            this.updatedUI(ip);
         }
-    }//GEN-LAST:event_tblCalendarsKeyReleased
-
-    private void cmdGetCloudCalendarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetCloudCalendarsActionPerformed
-        try {
-            NextcloudCalendarConnector nc = new NextcloudCalendarConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
-            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
-                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
-            List<CloudCalendar> cals = nc.getAllCalendars();
-            this.cmbName.removeAllItems();
-            cals.forEach(ab -> {
-                ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
-            });
-        } catch (Throwable ex) {
-            log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
+    }//GEN-LAST:event_tblPoolsKeyReleased
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        this.saveGlobalFlags();
+        
     }//GEN-LAST:event_formWindowClosing
 
-    private void updatedUI(CalendarSetup cs) {
-        this.cmbName.removeAllItems();
-        if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && !StringUtils.isEmpty(cs.getCloudPassword())) {
-            try {
-
-                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-                if(!StringUtils.isEmpty(cs.getCloudPath()))
-                    nc.setSubpathPrefix(cs.getCloudPath());
-                List<CloudCalendar> cals = nc.getAllCalendars();
-                
-                CloudCalendar selected = null;
-                for (CloudCalendar ab : cals) {
-                    ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
-                    if (ab.getHref().equals(cs.getHref())) {
-                        selected = ab;
-                    }
-                }
-                this.cmbName.setSelectedItem(selected);
-            } catch (Exception ex) {
-                log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        try {
-            this.pnlCloud.setCloudPassword(Crypto.decrypt(cs.getCloudPassword()));
-        } catch (Exception ex) {
-            log.error("Error accessing cloud credentials", ex);
-            this.pnlCloud.setCloudPassword("");
-            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+    private void updatedUI(InvoicePool ip) {
         
-        this.txtDisplayName.setText(cs.getDisplayName());
-        this.cmdColor.setBackground(new Color(cs.getBackground()));
-        this.pnlCloud.setSsl(cs.isCloudSsl());
-        this.pnlCloud.setCloudHost(cs.getCloudHost());
-        this.pnlCloud.setCloudPath(cs.getCloudPath());
-        this.pnlCloud.setCloudPort(cs.getCloudPort());
-        this.pnlCloud.setCloudUser(cs.getCloudUser());
-        this.chkDeleteDone.setSelected(cs.isDeleteDone());
-        
-        switch (cs.getEventType()) {
-            case CalendarSetup.EVENTTYPE_FOLLOWUP:
-                this.rdFollowups.setSelected(true);
-                break;
-            case CalendarSetup.EVENTTYPE_RESPITE:
-                this.rdRespites.setSelected(true);
-                break;
-            case CalendarSetup.EVENTTYPE_EVENT:
-                this.rdEvents.setSelected(true);
-                break;
-            default:
-                break;
-        }
+        this.txtDisplayName.setText(ip.getDisplayName());
+        this.txtPattern.setText(ip.getPattern());
+        this.chkManualAdjust.setSelected(ip.isManualAdjust());
+        this.chkSmallBusiness.setSelected(ip.isSmallBusiness());
+        this.spnStartIndex.setValue(ip.getStartIndex());
+        this.lblLastIndex.setText("" + ip.getLastIndex());
+
     }
 
     /**
@@ -1387,14 +1143,10 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkConflictCheck;
-    private javax.swing.JCheckBox chkDeleteDone;
-    private javax.swing.JCheckBox chkFullSync;
-    private javax.swing.JComboBox<String> cmbName;
+    private javax.swing.JCheckBox chkManualAdjust;
+    private javax.swing.JCheckBox chkSmallBusiness;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
-    private javax.swing.JButton cmdColor;
-    private javax.swing.JButton cmdGetCloudCalendars;
     private javax.swing.JButton cmdRemove;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
@@ -1402,20 +1154,12 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
-    private com.jdimension.jlawyer.client.configuration.NextcloudTeaserPanel nextcloudTeaserPanel1;
-    private com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel pnlCloud;
-    private javax.swing.ButtonGroup rdEventType;
-    private javax.swing.JRadioButton rdEvents;
-    private javax.swing.JRadioButton rdFollowups;
-    private javax.swing.JRadioButton rdRespites;
-    private javax.swing.JTable tblCalendars;
+    private javax.swing.JLabel lblLastIndex;
+    private javax.swing.JSpinner spnStartIndex;
+    private javax.swing.JTable tblPools;
     private javax.swing.JTextField txtDisplayName;
+    private javax.swing.JTextField txtPattern;
     // End of variables declaration//GEN-END:variables
 }

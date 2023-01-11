@@ -686,6 +686,8 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
@@ -766,6 +768,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{true, cs});
             }
             ComponentUtils.autoSizeColumns(tblCalendars);
+            
+            String[] colNames6 = new String[]{"", "Nummernkreise"};
+            GroupMembershipsTableModel model4 = new GroupMembershipsTableModel(colNames6, 0);
+            this.tblInvoicePools.setModel(model4);
+            Collection<InvoicePool> allPools = locator.lookupInvoiceServiceRemote().getAllInvoicePools();
+            for (InvoicePool ip : allPools) {
+                ((DefaultTableModel) this.tblInvoicePools.getModel()).addRow(new Object[]{true, ip});
+            }
+            ComponentUtils.autoSizeColumns(tblInvoicePools);
 
             String[] colNames5 = new String[]{"", "Postfach"};
             GroupMembershipsTableModel model3 = new GroupMembershipsTableModel(colNames5, 0);
@@ -868,6 +879,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         tblGroups = new javax.swing.JTable();
         jLabel20 = new javax.swing.JLabel();
         txtAbbreviation = new javax.swing.JTextField();
+        jPanel12 = new javax.swing.JPanel();
+        jLabel7 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tblInvoicePools = new javax.swing.JTable();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("Löschen");
@@ -1523,6 +1538,59 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Kürzel und Gruppen", jPanel9);
 
+        jLabel7.setText("Rechnungsnummernkreise:");
+
+        tblInvoicePools.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "", "Nummernkreis"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.Object.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        tblInvoicePools.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblInvoicePoolsMouseClicked(evt);
+            }
+        });
+        jScrollPane3.setViewportView(tblInvoicePools);
+
+        org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel7)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 734, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel12Layout.createSequentialGroup()
+                        .add(jLabel7)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Rechnungen", jPanel12);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1818,6 +1886,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     for (CalendarAccess ca : calendars) {
                         if (cs.getId().equals(ca.getCalendarId())) {
                             this.tblCalendars.setValueAt(true, i, 0);
+                            break;
+                        }
+                    }
+                }
+                
+                List<InvoicePoolAccess> invoicePools = locator.lookupSecurityServiceRemote().getInvoicePoolAccessForUser(u.getPrincipalId());
+                for (int i = 0; i < this.tblInvoicePools.getRowCount(); i++) {
+                    InvoicePool ip = (InvoicePool) this.tblInvoicePools.getValueAt(i, 1);
+                    this.tblInvoicePools.setValueAt(false, i, 0);
+                    for (InvoicePoolAccess pa : invoicePools) {
+                        if (ip.getId().equals(pa.getPoolId())) {
+                            this.tblInvoicePools.setValueAt(true, i, 0);
                             break;
                         }
                     }
@@ -2266,6 +2346,43 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdGetVoipIdsActionPerformed
 
+    private void tblInvoicePoolsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblInvoicePoolsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+
+            AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+            if (u == null) {
+                return;
+            }
+
+            Point p = evt.getPoint();
+            int col = this.tblInvoicePools.columnAtPoint(p);
+            if (col == 0) {
+                // click on checkbox in table
+                int row = this.tblInvoicePools.rowAtPoint(p);
+                InvoicePool ip = (InvoicePool) this.tblInvoicePools.getValueAt(row, 1);
+                Boolean newValue = !((Boolean) this.tblInvoicePools.getValueAt(row, 0));
+
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+                    if (newValue) {
+                        svc.addUserToInvoicePool(u.getPrincipalId(), ip.getId());
+                    } else {
+                        svc.removeUserFromInvoicePool(u.getPrincipalId(), ip.getId());
+                    }
+                } catch (Exception ex) {
+                    log.error("Error updating invoice pool access", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                this.tblInvoicePools.setValueAt(newValue, row, col);
+            }
+        }
+    }//GEN-LAST:event_tblInvoicePoolsMouseClicked
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2536,9 +2653,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2549,6 +2668,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
@@ -2565,6 +2685,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextArea taBeaCertificate;
     private javax.swing.JTable tblCalendars;
     private javax.swing.JTable tblGroups;
+    private javax.swing.JTable tblInvoicePools;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtDisplayName;
