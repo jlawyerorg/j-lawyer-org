@@ -1089,6 +1089,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuCalendarSetup = new javax.swing.JMenuItem();
         mnuCalendarSyncNow = new javax.swing.JMenuItem();
+        mnuFinance = new javax.swing.JMenu();
+        mnuInvoicePools = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1634,6 +1636,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuCalendarOptions.add(mnuCalendarSyncNow);
 
         mnuOptions.add(mnuCalendarOptions);
+
+        mnuFinance.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_calculate_black_48dp.png"))); // NOI18N
+        mnuFinance.setText("Finanzen");
+
+        mnuInvoicePools.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
+        mnuInvoicePools.setText("Rechnungsnummernkreise");
+        mnuInvoicePools.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoicePoolsActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoicePools);
+
+        mnuOptions.add(mnuFinance);
         mnuOptions.add(jSeparator2);
 
         mnuUserProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png"))); // NOI18N
@@ -2534,6 +2550,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuDocumentPreviewActionPerformed
 
+    private void mnuInvoicePoolsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePoolsActionPerformed
+        if (checkAdmin()) {
+                InvoicePoolsSetupDialog dlg = new InvoicePoolsSetupDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuInvoicePoolsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2602,11 +2626,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDrebisSettings;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFile;
+    private javax.swing.JMenu mnuFinance;
     private javax.swing.JMenuItem mnuFontSize;
     private javax.swing.JMenuItem mnuFormsManager;
     private javax.swing.JMenuItem mnuForum;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JMenuItem mnuInvoicePools;
     private javax.swing.JMenuItem mnuMailboxSettings;
     private javax.swing.JMenuItem mnuMappingEntries;
     private javax.swing.JMenuItem mnuMappingTables;

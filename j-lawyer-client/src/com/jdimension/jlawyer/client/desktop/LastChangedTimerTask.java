@@ -764,11 +764,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                 int i = 0;
                 for (ArchiveFileBean aFile : l1) {
 
-                    Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                    if (i % 2 == 0) {
-                        background = background.brighter();
-                    }
-                    LastChangedEntryPanel ep = new LastChangedEntryPanel(background);
+                    LastChangedEntryPanelTransparent ep = new LastChangedEntryPanelTransparent();
                     LastChangedEntry lce = new LastChangedEntry();
                     lce.setFileNumber(aFile.getFileNumber());
                     lce.setId(aFile.getId());
@@ -786,7 +782,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     ep.setEntry(lce);
 
                     resultUI.add(ep);
-                    resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                     i++;
                     if (i == 25) {
                         return;

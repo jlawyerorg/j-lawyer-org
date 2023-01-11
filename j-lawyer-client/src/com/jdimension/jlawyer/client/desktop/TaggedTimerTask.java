@@ -958,13 +958,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             int i = 0;
 
                             List<String> allTags = new ArrayList<>();
-                            ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
+                            ListMultimap<String, TaggedEntryPanelTransparent> tagToTep = ArrayListMultimap.create();
                             for (ArchiveFileBean aFile : l1) {
-                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                                if (i % 2 == 0) {
-                                    background = background.brighter();
-                                }
-                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                                TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
 
                                 TaggedEntry lce = new TaggedEntry();
                                 lce.setFileNumber(aFile.getFileNumber());
@@ -987,7 +983,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                 if (tags.get(aFile.getId()) != null) {
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                        TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
                                         tep.setEntry(lce);
                                         tagToTep.put(aftb.getTagName(), tep);
                                     }
@@ -995,7 +991,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 }
 
                                 resultUI.add(ep);
-                                resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                                 i++;
                                 if (i == 500) {
                                     break;
@@ -1003,11 +998,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             }
 
                             for (ArchiveFileDocumentsBean aDoc : l2) {
-                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                                if (i % 2 == 0) {
-                                    background = background.brighter();
-                                }
-                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                                TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
                                 TaggedEntry lce = new TaggedEntry();
                                 lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
                                 lce.setCaseId(aDoc.getArchiveFileKey().getId());
@@ -1031,7 +1022,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
-                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                        TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
                                         tep.setEntry(lce);
                                         tagToTep.put(dtb.getTagName(), tep);
                                     }
@@ -1039,7 +1030,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 }
 
                                 resultUI.add(ep);
-                                resultUI.add(Box.createRigidArea(new Dimension(5, 5)));
                                 i++;
                                 if (i == 500) {
                                     break;
@@ -1084,14 +1074,13 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             }
                         }
 
-                        private void addEntryToTab(String tagName, TaggedEntryPanel tep) {
+                        private void addEntryToTab(String tagName, TaggedEntryPanelTransparent tep) {
 
                             for (int i = 0; i < tagsPane.getTabCount(); i++) {
                                 if (tagsPane.getTitleAt(i).equals(tagName)) {
                                     JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
                                     JViewport p = (JViewport) sp.getComponent(0);
                                     ((JPanel) p.getComponent(0)).add(tep);
-                                    ((JPanel) p.getComponent(0)).add(Box.createRigidArea(new Dimension(5, 5)));
                                     break;
                                 }
                             }
