@@ -1230,7 +1230,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             InvoicePool testPool=new InvoicePool();
-            testPool.setLastIndex(0);
+            testPool.setLastIndex(Integer.parseInt(this.lblLastIndex.getText()));
             testPool.setStartIndex((Integer)this.spnStartIndex.getValue());
             testPool.setPattern(this.txtPattern.getText());
             List<String> preview = locator.lookupInvoiceServiceRemote().previewInvoiceNumbering(testPool);
