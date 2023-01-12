@@ -666,6 +666,10 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
+import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -725,6 +729,53 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @RolesAllowed({"adminRole"})
     public void removeInvoicePool(InvoicePool ip) {
         this.invoicePoolsAccess.remove(ip);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception {
+        ArrayList<String> previews = new ArrayList<>();
+        
+        int startFrom=testPool.getLastIndex()+1;
+        int startFrom2=startFrom;
+        if(testPool.getStartIndex()>startFrom)
+            startFrom=testPool.getStartIndex();
+        
+        Date now = new Date();
+        try {
+
+            for (int i = 0; i < 3; i++) {
+                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now, startFrom);
+                startFrom++;
+                previews.add(next);
+            }
+
+            Date now2 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l);
+            for (int i = 0; i < 3; i++) {
+                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now2, startFrom);
+                startFrom++;
+                previews.add(next);
+            }
+
+            Date now3 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l + 31l * 24l * 60l * 60l * 1000l);
+            for (int i = 0; i < 3; i++) {
+                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now3, startFrom);
+                startFrom++;
+                previews.add(next);
+            }
+
+            Date now4 = new Date(now3.getTime() + 366l * 24l * 60l * 60l * 1000l);
+            for (int i = 0; i < 3; i++) {
+                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now4, startFrom2);
+                startFrom++;
+                previews.add(next);
+            }
+
+            return previews;
+
+        } catch (InvalidSchemaPatternException isp) {
+            throw new Exception(isp.getMessage());
+        }
     }
 
     

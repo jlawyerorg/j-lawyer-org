@@ -664,25 +664,18 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.InvoicePool;
-import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.util.ArrayList;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.NextcloudCalendarConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -694,17 +687,17 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(InvoicePoolsSetupDialog.class.getName());
 
     /**
-     * Creates new form CalendarSetupDialog
+     * Creates new form InvoicePoolsSetupDialog
      * @param parent
      * @param modal
      */
     public InvoicePoolsSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.lstPreview.setModel(new DefaultListModel());
 
         this.resetDetails();
-        
-        ServerSettings s = ServerSettings.getInstance();
         
         this.tblPools.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
@@ -732,6 +725,8 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         }
 
         ComponentUtils.autoSizeColumns(tblPools);
+        
+        
     }
 
     private void resetDetails() {
@@ -771,6 +766,16 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         lblLastIndex = new javax.swing.JLabel();
         chkManualAdjust = new javax.swing.JCheckBox();
         chkSmallBusiness = new javax.swing.JCheckBox();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lstPreview = new javax.swing.JList<>();
+        jLabel6 = new javax.swing.JLabel();
+        lblError = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        cmdResetLastIndex = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Rechnungsnummernkreise");
@@ -835,7 +840,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdAdd)
@@ -856,6 +861,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
+        cmdClose.setFont(cmdClose.getFont());
         cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdClose.setText("Schliessen");
         cmdClose.addActionListener(new java.awt.event.ActionListener() {
@@ -864,8 +870,10 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Anzeigename:");
 
+        cmdSave.setFont(cmdSave.getFont());
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Übernehmen");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
@@ -878,20 +886,70 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Nummernkreiskonfiguration");
 
+        txtPattern.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtPatternKeyReleased(evt);
+            }
+        });
+
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Schema:");
 
+        jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("Start-Index:");
 
         spnStartIndex.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+        spnStartIndex.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnStartIndexStateChanged(evt);
+            }
+        });
 
+        jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("zuletzt genutzt:");
 
+        lblLastIndex.setFont(lblLastIndex.getFont());
         lblLastIndex.setText("0");
 
+        chkManualAdjust.setFont(chkManualAdjust.getFont());
         chkManualAdjust.setText("manuell editierbar");
         chkManualAdjust.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
 
+        chkSmallBusiness.setFont(chkSmallBusiness.getFont());
         chkSmallBusiness.setText("Kleinunternehmerregelung");
+
+        lstPreview.setFont(lstPreview.getFont());
+        lstPreview.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane2.setViewportView(lstPreview);
+
+        jLabel6.setFont(jLabel6.getFont());
+        jLabel6.setText("Vorschau:");
+
+        lblError.setFont(lblError.getFont().deriveFont(lblError.getFont().getStyle() | java.awt.Font.BOLD));
+        lblError.setForeground(new java.awt.Color(204, 51, 0));
+        lblError.setText(" ");
+
+        jLabel7.setText("n (laufende Nr, min. 3-stellig)");
+
+        jLabel8.setText("c (zufälliger Buchstabe)");
+
+        jLabel9.setText("r (zufällige Ziffer)");
+
+        jLabel10.setText("y m d (y...Jahr m...Monat d...Tag)");
+
+        jLabel11.setText("weitere Zeichen als fixe Bestandteile");
+
+        cmdResetLastIndex.setText("Zurücksetzen");
+        cmdResetLastIndex.setToolTipText("setzt den aktuellen Zählerwert auf 0 zurück");
+        cmdResetLastIndex.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdResetLastIndexActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -900,34 +958,47 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 351, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtPattern)
-                            .addComponent(txtDisplayName)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel5)
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel6))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtPattern)
+                                    .addComponent(txtDisplayName)
+                                    .addComponent(jScrollPane2)
+                                    .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel4)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(lblLastIndex))
-                                    .addComponent(chkManualAdjust)
-                                    .addComponent(chkSmallBusiness)
-                                    .addComponent(cmdSave))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(chkManualAdjust)
+                                            .addComponent(chkSmallBusiness)
+                                            .addComponent(jLabel7)
+                                            .addComponent(jLabel8)
+                                            .addComponent(jLabel9)
+                                            .addComponent(jLabel10)
+                                            .addComponent(jLabel11)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel4)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblLastIndex)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmdResetLastIndex)))
+                                        .addGap(0, 160, Short.MAX_VALUE)))))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -947,21 +1018,38 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                             .addComponent(txtPattern, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel9)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel3)
                             .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
-                            .addComponent(lblLastIndex))
+                            .addComponent(lblLastIndex)
+                            .addComponent(cmdResetLastIndex))
                         .addGap(18, 18, 18)
                         .addComponent(chkManualAdjust)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(chkSmallBusiness)
                         .addGap(18, 18, 18)
-                        .addComponent(cmdSave)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblError)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdClose)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdClose)
+                            .addComponent(cmdSave))))
                 .addContainerGap())
         );
 
@@ -983,7 +1071,8 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             } else {
 
                 InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
-                this.updatedUI(ip);
+                this.updateUI(ip);
+                this.updatePreview();
             }
 
         }
@@ -1032,6 +1121,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             ip.setPattern(this.txtPattern.getText());
             ip.setSmallBusiness(this.chkSmallBusiness.isSelected());
             ip.setStartIndex((Integer)this.spnStartIndex.getValue());
+            ip.setLastIndex(Integer.parseInt(this.lblLastIndex.getText()));
             
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1083,7 +1173,8 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         } else {
 
             InvoicePool ip = (InvoicePool) this.tblPools.getValueAt(row, 0);
-            this.updatedUI(ip);
+            this.updateUI(ip);
+            this.updatePreview();
         }
     }//GEN-LAST:event_tblPoolsKeyReleased
 
@@ -1091,7 +1182,21 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         
     }//GEN-LAST:event_formWindowClosing
 
-    private void updatedUI(InvoicePool ip) {
+    private void txtPatternKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPatternKeyReleased
+        if(this.tblPools.getSelectedRow()>-1)
+            this.updatePreview();
+    }//GEN-LAST:event_txtPatternKeyReleased
+
+    private void spnStartIndexStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnStartIndexStateChanged
+        if(this.tblPools.getSelectedRow()>-1)
+            this.updatePreview();
+    }//GEN-LAST:event_spnStartIndexStateChanged
+
+    private void cmdResetLastIndexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetLastIndexActionPerformed
+        this.lblLastIndex.setText("0");
+    }//GEN-LAST:event_cmdResetLastIndexActionPerformed
+
+    private void updateUI(InvoicePool ip) {
         
         this.txtDisplayName.setText(ip.getDisplayName());
         this.txtPattern.setText(ip.getPattern());
@@ -1100,6 +1205,47 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         this.spnStartIndex.setValue(ip.getStartIndex());
         this.lblLastIndex.setText("" + ip.getLastIndex());
 
+    }
+    
+    private void updatePreview() {
+        
+        this.lblError.setText(" ");
+        DefaultListModel dm=new DefaultListModel();
+            this.lstPreview.setModel(dm);
+        int start=-1;
+        try {
+            start=(Integer)this.spnStartIndex.getValue();
+            if(start<0) {
+                this.lblError.setText("unzulässiger Startwert");
+                this.cmdSave.setEnabled(false);
+                return;
+            }
+        } catch (Throwable t) {
+            this.cmdSave.setEnabled(false);
+            this.lblError.setText("unzulässiger Startwert");
+            return;
+        }
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            InvoicePool testPool=new InvoicePool();
+            testPool.setLastIndex(0);
+            testPool.setStartIndex((Integer)this.spnStartIndex.getValue());
+            testPool.setPattern(this.txtPattern.getText());
+            List<String> preview = locator.lookupInvoiceServiceRemote().previewInvoiceNumbering(testPool);
+            
+            for(String p: preview) {
+                dm.addElement(p);
+            }
+        } catch (Exception ex) {
+            this.lblError.setText(ex.getMessage());
+            this.cmdSave.setEnabled(false);
+            return;
+        }
+        
+        this.cmdSave.setEnabled(true);
+        
     }
 
     /**
@@ -1148,15 +1294,25 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdResetLastIndex;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblError;
     private javax.swing.JLabel lblLastIndex;
+    private javax.swing.JList<String> lstPreview;
     private javax.swing.JSpinner spnStartIndex;
     private javax.swing.JTable tblPools;
     private javax.swing.JTextField txtDisplayName;

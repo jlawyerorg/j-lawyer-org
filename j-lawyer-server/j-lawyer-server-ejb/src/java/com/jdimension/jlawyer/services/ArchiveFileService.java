@@ -681,7 +681,7 @@ import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
-import com.jdimension.jlawyer.server.utils.InvalidCaseNumberPatternException;
+import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
@@ -887,7 +887,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     // @todo: more efficient implementation
-    private synchronized String getNextCaseNumber() throws InvalidCaseNumberPatternException {
+    private synchronized String getNextCaseNumber() throws InvalidSchemaPatternException {
 
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.numbering.pattern");
         boolean legacy = true;
@@ -1165,7 +1165,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             newArchiveFileKeyExtension = this.getExtension(lawyerAbbr, gs);
-        } catch (InvalidCaseNumberPatternException icpe) {
+        } catch (InvalidSchemaPatternException icpe) {
             throw new Exception(icpe.getMessage());
         }
         dto.setFileNumberMain(newArchiveFileKey);
@@ -1500,7 +1500,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
 
                 newArchiveFileKeyExtension = this.getExtension(lawyerAbbr, gs);
-            } catch (InvalidCaseNumberPatternException ipe) {
+            } catch (InvalidSchemaPatternException ipe) {
                 throw new Exception(ipe.getMessage());
             }
             dto.setFileNumberMain(newArchiveFileKey);
@@ -2696,7 +2696,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             return previews.toArray(new String[0]);
 
-        } catch (InvalidCaseNumberPatternException icpe) {
+        } catch (InvalidSchemaPatternException icpe) {
             throw new Exception(icpe.getMessage());
         }
     }

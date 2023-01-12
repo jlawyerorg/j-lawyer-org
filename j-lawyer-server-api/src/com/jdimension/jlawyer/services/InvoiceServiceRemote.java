@@ -681,5 +681,7 @@ public interface InvoiceServiceRemote {
     InvoicePool updateInvoicePool(InvoicePool ip);
 
     void removeInvoicePool(InvoicePool ip);
+
+    List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception;
     
 }
