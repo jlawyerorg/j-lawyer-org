@@ -690,6 +690,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Insets;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -699,6 +700,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -746,8 +748,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane4.getViewport().setOpaque(false);
         
-        ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
-        ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
+        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+        //ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
+        ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
+        
+        ComponentUtils.decorateSplitPane(jSplitPane2, splitPaneColor);
         
         Date now = new Date();
         SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");

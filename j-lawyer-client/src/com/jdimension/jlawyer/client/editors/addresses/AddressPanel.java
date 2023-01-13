@@ -2823,15 +2823,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection col = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
-                Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType = new Hashtable<>();
+                Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType = new Hashtable<>();
                 Hashtable<String, PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypesTable();
                 for (Object o : col) {
                     ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
                     if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
-                        ArrayList<ArchiveFileBean> cases = new ArrayList<>();
+                        ArrayList<ArchiveFileAddressesBean> cases = new ArrayList<>();
                         casesByPartyType.put(afb.getReferenceType().getName(), cases);
                     }
-                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb.getArchiveFileKey());
+                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb);
 
                 }
                 this.fillCasesForContactPanel(casesByPartyType, partyTypes);
@@ -3220,11 +3220,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
-    private void fillCasesForContactPanel(Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType, Hashtable<String, PartyTypeBean> partyTypes) {
+    private void fillCasesForContactPanel(Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType, Hashtable<String, PartyTypeBean> partyTypes) {
         this.pnlCasesForContact.removeAll();
 
         int totalSize = 0;
-        for (ArrayList<ArchiveFileBean> list : casesByPartyType.values()) {
+        for (ArrayList<ArchiveFileAddressesBean> list : casesByPartyType.values()) {
             totalSize = totalSize + list.size();
         }
 
@@ -3233,20 +3233,21 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         int i = 0;
         for (String key : casesByPartyType.keySet()) {
 
-            ArrayList<ArchiveFileBean> partyFiles = casesByPartyType.get(key);
-            for (ArchiveFileBean aFile : partyFiles) {
+            ArrayList<ArchiveFileAddressesBean> partyFiles = casesByPartyType.get(key);
+            for (ArchiveFileAddressesBean aFile : partyFiles) {
                 CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
                 if (i % 2 == 0) {
                     ep.setBackground(ep.getBackground().brighter());
                 }
                 CaseForContactEntry lce = new CaseForContactEntry();
                 lce.setRoleForeground(new Color(partyTypes.get(key).getColor()));
-                lce.setFileNumber(aFile.getFileNumber());
+                lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());
                 lce.setId(aFile.getId());
                 lce.setRole(key);
-                lce.setName(aFile.getName());
-                lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-                lce.setArchived(aFile.getArchivedBoolean());
+                lce.setName(aFile.getArchiveFileKey().getName());
+                lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
+                lce.setArchived(aFile.getArchiveFileKey().getArchivedBoolean());
+                lce.setOwnReference(aFile.getReference());
                 ep.setEntry(lce);
 
                 this.pnlCasesForContact.add(ep);

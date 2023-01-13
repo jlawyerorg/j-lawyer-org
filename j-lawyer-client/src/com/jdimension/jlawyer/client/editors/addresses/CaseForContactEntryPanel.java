@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -692,7 +693,8 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
     private String openedFromEditorClass=null;
     
     /**
-     * Creates new form HitPanel
+     * Creates new form CaseForContactEntryPanel
+     * @param openedFromClassName
      */
     public CaseForContactEntryPanel(String openedFromClassName) {
         initComponents();
@@ -715,13 +717,14 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             reason=reason.substring(0,45) + "...";
         
         
-        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
+        String ownReference="";
+        if(!StringUtils.isEmpty(e.getOwnReference())) {
+            ownReference="<br/>Zeichen: " + e.getOwnReference();
+        }
+        
+        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + ownReference + "</html>");
         this.lblRole.setText(e.getRole());
         this.lblRole.setForeground(e.getRoleForeground());
-        
         
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
         String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
@@ -735,14 +738,6 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             this.lblArchived.setText("");
         }
         
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
-
     }
 
     /**
@@ -760,8 +755,7 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
 
         lblDescription.setFont(lblDescription.getFont().deriveFont(lblDescription.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
-        lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
+        lblDescription.setText("Akte xxx/yy");
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -795,7 +789,7 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE)
                         .addComponent(lblRole)
                         .addContainerGap())))
         );

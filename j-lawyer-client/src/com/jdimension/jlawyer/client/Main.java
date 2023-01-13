@@ -821,7 +821,7 @@ public class Main {
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
-                
+        
         FlatLaf.registerCustomDefaultsSource( "themes" );
         
         FlatInterFont.install();
