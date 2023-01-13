@@ -749,9 +749,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane4.getViewport().setOpaque(false);
         
         Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-        //ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
         ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
-        
         ComponentUtils.decorateSplitPane(jSplitPane2, splitPaneColor);
         
         Date now = new Date();
