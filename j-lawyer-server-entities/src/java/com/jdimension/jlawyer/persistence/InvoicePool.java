@@ -711,6 +711,9 @@ public class InvoicePool implements Serializable {
     @Column(name = "index_last")
     protected int lastIndex=0;
     
+    @Column(name = "payment_term")
+    protected int paymentTerm=14;
+    
     
 
     public String getId() {
@@ -828,6 +831,20 @@ public class InvoicePool implements Serializable {
      */
     public void setLastIndex(int lastIndex) {
         this.lastIndex = lastIndex;
+    }
+
+    /**
+     * @return the paymentTerm
+     */
+    public int getPaymentTerm() {
+        return paymentTerm;
+    }
+
+    /**
+     * @param paymentTerm the paymentTerm to set
+     */
+    public void setPaymentTerm(int paymentTerm) {
+        this.paymentTerm = paymentTerm;
     }
     
 }

@@ -735,6 +735,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         this.chkManualAdjust.setSelected(false);
         this.chkSmallBusiness.setSelected(false);
         this.spnStartIndex.setValue(0);
+        this.spnPaymentTerm.setValue(14);
         this.lblLastIndex.setText("0");
 
     }
@@ -776,6 +777,9 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         cmdResetLastIndex = new javax.swing.JButton();
+        spnPaymentTerm = new javax.swing.JSpinner();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Rechnungsnummernkreise");
@@ -898,7 +902,8 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("Start-Index:");
 
-        spnStartIndex.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+        spnStartIndex.setFont(spnStartIndex.getFont());
+        spnStartIndex.setModel(new javax.swing.SpinnerNumberModel());
         spnStartIndex.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 spnStartIndexStateChanged(evt);
@@ -933,14 +938,19 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         lblError.setForeground(new java.awt.Color(204, 51, 0));
         lblError.setText(" ");
 
+        jLabel7.setFont(jLabel7.getFont());
         jLabel7.setText("n (laufende Nr, min. 3-stellig)");
 
+        jLabel8.setFont(jLabel8.getFont());
         jLabel8.setText("c (zufälliger Buchstabe)");
 
+        jLabel9.setFont(jLabel9.getFont());
         jLabel9.setText("r (zufällige Ziffer)");
 
+        jLabel10.setFont(jLabel10.getFont());
         jLabel10.setText("y m d (y...Jahr m...Monat d...Tag)");
 
+        jLabel11.setFont(jLabel11.getFont());
         jLabel11.setText("weitere Zeichen als fixe Bestandteile");
 
         cmdResetLastIndex.setText("Zurücksetzen");
@@ -950,6 +960,20 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                 cmdResetLastIndexActionPerformed(evt);
             }
         });
+
+        spnPaymentTerm.setFont(spnPaymentTerm.getFont());
+        spnPaymentTerm.setModel(new javax.swing.SpinnerNumberModel(14, 1, 365, 1));
+        spnPaymentTerm.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnPaymentTermStateChanged(evt);
+            }
+        });
+
+        jLabel12.setFont(jLabel12.getFont());
+        jLabel12.setText("Zahlungsziel:");
+
+        jLabel13.setFont(jLabel13.getFont());
+        jLabel13.setText("Tage");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -974,31 +998,41 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel1)
                                     .addComponent(jLabel2)
+                                    .addComponent(jLabel12)
                                     .addComponent(jLabel3)
                                     .addComponent(jLabel6))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtPattern)
                                     .addComponent(txtDisplayName)
-                                    .addComponent(jScrollPane2)
-                                    .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(chkManualAdjust)
-                                            .addComponent(chkSmallBusiness)
+                                            .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addGap(0, 99, Short.MAX_VALUE)))
+                                        .addGap(258, 258, 258))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel7)
                                             .addComponent(jLabel8)
                                             .addComponent(jLabel9)
                                             .addComponent(jLabel10)
                                             .addComponent(jLabel11)
                                             .addGroup(layout.createSequentialGroup()
+                                                .addComponent(spnPaymentTerm, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jLabel13))
+                                            .addGroup(layout.createSequentialGroup()
                                                 .addComponent(jLabel4)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(lblLastIndex)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmdResetLastIndex)))
-                                        .addGap(0, 160, Short.MAX_VALUE)))))))
+                                                .addComponent(cmdResetLastIndex))
+                                            .addComponent(chkManualAdjust)
+                                            .addComponent(chkSmallBusiness))
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(jScrollPane2))))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1029,24 +1063,29 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                         .addComponent(jLabel11)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel3)
-                            .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(spnPaymentTerm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel12)
+                            .addComponent(jLabel13))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnStartIndex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
                             .addComponent(lblLastIndex)
                             .addComponent(cmdResetLastIndex))
-                        .addGap(18, 18, 18)
-                        .addComponent(chkManualAdjust)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chkSmallBusiness)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(chkManualAdjust)
                             .addComponent(jLabel6))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkSmallBusiness)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblError)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cmdClose)
                             .addComponent(cmdSave))))
@@ -1095,6 +1134,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             ip.setPattern("R23-###");
             ip.setSmallBusiness(false);
             ip.setStartIndex(0);
+            ip.setPaymentTerm(14);
             InvoicePool savedPool = locator.lookupInvoiceServiceRemote().addInvoicePool(ip);
 
             ((DefaultTableModel) this.tblPools.getModel()).addRow(new Object[]{savedPool, savedPool.getPattern()});
@@ -1122,6 +1162,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             ip.setSmallBusiness(this.chkSmallBusiness.isSelected());
             ip.setStartIndex((Integer)this.spnStartIndex.getValue());
             ip.setLastIndex(Integer.parseInt(this.lblLastIndex.getText()));
+            ip.setPaymentTerm((Integer)this.spnPaymentTerm.getValue());
             
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1196,6 +1237,10 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         this.lblLastIndex.setText("0");
     }//GEN-LAST:event_cmdResetLastIndexActionPerformed
 
+    private void spnPaymentTermStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnPaymentTermStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_spnPaymentTermStateChanged
+
     private void updateUI(InvoicePool ip) {
         
         this.txtDisplayName.setText(ip.getDisplayName());
@@ -1204,6 +1249,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         this.chkSmallBusiness.setSelected(ip.isSmallBusiness());
         this.spnStartIndex.setValue(ip.getStartIndex());
         this.lblLastIndex.setText("" + ip.getLastIndex());
+        this.spnPaymentTerm.setValue(ip.getPaymentTerm());
 
     }
     
@@ -1299,6 +1345,8 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1313,6 +1361,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblError;
     private javax.swing.JLabel lblLastIndex;
     private javax.swing.JList<String> lstPreview;
+    private javax.swing.JSpinner spnPaymentTerm;
     private javax.swing.JSpinner spnStartIndex;
     private javax.swing.JTable tblPools;
     private javax.swing.JTextField txtDisplayName;

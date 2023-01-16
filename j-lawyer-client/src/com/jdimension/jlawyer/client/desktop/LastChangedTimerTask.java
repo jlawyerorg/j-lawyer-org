@@ -670,9 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -680,7 +678,6 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -695,6 +692,10 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of LastChangedTimerTask
+     * @param owner
+     * @param resultPanel
+     * @param split
+     * @param ignoreCurrentEditor
      */
     public LastChangedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();

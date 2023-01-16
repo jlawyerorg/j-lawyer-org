@@ -715,6 +715,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JTable tblReviews;
     private JPanel tagPanel;
     private JPanel documentTagPanel;
+    private JPanel invoicesPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
@@ -731,7 +732,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -747,6 +748,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.formsPanel = formsPanel;
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
+        this.invoicesPanel = invoicesPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -761,7 +763,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 20;
+        return 21;
     }
 
     @Override
@@ -921,6 +923,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
+            
+            this.progress("Lade Akte: Rechnungen...");
+            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
+            this.invoicesPanel.removeAll();
+            for(Invoice inv: invoices) {
+                InvoiceEntryPanel ip=new InvoiceEntryPanel();
+                ip.setEntry(archiveFileKey, inv);
+                this.invoicesPanel.add(ip);
+            }
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

@@ -663,12 +663,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
@@ -693,12 +700,44 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @EJB
     private SecurityServiceLocal securityFacade;
     @EJB
-    private InvoicePoolFacadeLocal invoicePoolsAccess;
+    private InvoicePoolFacadeLocal invoicePools;
+    @EJB
+    private InvoicePoolAccessFacadeLocal invoicePoolAccess;
+    @EJB
+    private InvoiceFacadeLocal invoiceAccess;
     
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoicePool> getAllInvoicePools() throws Exception {
-        return this.invoicePoolsAccess.findAll();
+        List<InvoicePool> pools=this.invoicePools.findAll();
+        Collections.sort(pools, (InvoicePool arg0, InvoicePool arg1) -> {
+            String s1=arg0.getDisplayName();
+            if(s1==null)
+                s1="";
+            String s2=arg1.getDisplayName();
+            if(s2==null)
+                s2="";
+            return s1.toUpperCase().compareTo(s2.toUpperCase());
+        });
+        return pools;
+    }
+    
+    
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception {
+        List<InvoicePool> returnList = new ArrayList<>();
+        List<InvoicePoolAccess> acc = this.invoicePoolAccess.findByUser(principalId);
+        if (acc != null) {
+            for (InvoicePoolAccess ipa : acc) {
+                InvoicePool ip = this.invoicePools.find(ipa.getPoolId());
+                if (ip != null) {
+                    returnList.add(ip);
+                }
+            }
+        }
+        return returnList;
     }
 
     @Override
@@ -707,7 +746,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         StringGenerator idGen = new StringGenerator();
         String ipId = idGen.getID().toString();
         ip.setId(ipId);
-        this.invoicePoolsAccess.create(ip);
+        this.invoicePools.create(ip);
         String principalId = null;
         try {
             principalId = context.getCallerPrincipal().getName();
@@ -715,20 +754,20 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         } catch (Exception ex) {
             log.error("Could not add invoice pool privilege for invoice pool " + ipId + " to user " + principalId, ex);
         }
-        return this.invoicePoolsAccess.find(ipId);
+        return this.invoicePools.find(ipId);
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public InvoicePool updateInvoicePool(InvoicePool ip) {
-        this.invoicePoolsAccess.edit(ip);
-        return this.invoicePoolsAccess.find(ip.getId());
+        this.invoicePools.edit(ip);
+        return this.invoicePools.find(ip.getId());
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void removeInvoicePool(InvoicePool ip) {
-        this.invoicePoolsAccess.remove(ip);
+        this.invoicePools.remove(ip);
     }
 
     @Override
@@ -776,6 +815,34 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         } catch (InvalidSchemaPatternException isp) {
             throw new Exception(isp.getMessage());
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String nextInvoiceNumber(InvoicePool pool) throws Exception {
+        InvoicePool ip = this.invoicePools.find(pool.getId());
+        if(ip==null) {
+            log.error("invalid invoice pool with id " + pool.getId());
+            throw new Exception("Ungültiger Rechnungsnummernkreis");
+        }
+        
+        int startFrom=ip.getLastIndex()+1;
+        if(ip.getStartIndex()>startFrom)
+            startFrom=ip.getStartIndex();
+        ip.setLastIndex(startFrom);
+        
+        Date now = new Date();
+        try {
+
+            String next = InvoiceNumberGenerator.getNextInvoiceNumber(ip.getPattern(), now, startFrom);
+            this.invoicePools.edit(ip);
+            return next;
+
+        } catch (InvalidSchemaPatternException isp) {
+            log.error("invalid invoice schema pattern " + ip.getPattern(), isp);
+            throw new Exception(isp.getMessage());
+        }
+        
     }
 
     

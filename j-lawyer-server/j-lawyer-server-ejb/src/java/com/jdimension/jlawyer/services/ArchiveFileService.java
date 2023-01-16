@@ -698,6 +698,8 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -772,6 +774,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private CaseSyncSettingsFacadeLocal caseSyncFacade;
     @EJB
     private FormsServiceLocal formsFacade;
+    @EJB
+    private InvoiceFacadeLocal invoicesFacade;
+    @EJB
+    private InvoicePoolFacadeLocal invoicesPoolsFacade;
+    @EJB
+    private InvoiceServiceLocal invoiceService;
 
     // custom hooks support
     @Inject
@@ -1421,6 +1429,36 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return aFile;
     }
 
+    
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Invoice> getInvoices(String caseId) {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.invoicesFacade.findByArchiveFileKey(aFile);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+    
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
@@ -4675,6 +4713,63 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return true;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Invoice addInvoice(String caseId, InvoicePool invoicePool) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            InvoicePool pool=this.invoicesPoolsFacade.find(invoicePool.getId());
+            if(pool==null) {
+                log.error("Could not find invoice pool with id " + invoicePool.getId());
+                throw new Exception("Ungültiger Rechnungsnummernkreis");
+            }
+            
+            StringGenerator idGen = new StringGenerator();
+
+            Invoice i = new Invoice();
+            i.setArchiveFileKey(aFile);
+            i.setContact(null);
+            i.setCreationDate(new Date());
+            i.setDescription("");
+            
+            Date paymentDate = new Date();
+            LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            localDateTime = localDateTime.plusDays(pool.getPaymentTerm());
+            paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            i.setDueDate(paymentDate);
+            
+            i.setId(idGen.getID().toString());
+            i.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
+            i.setName("Rechnung " + i.getInvoiceNumber());
+            i.setPeriodFrom(new Date());
+            i.setPeriodTo(new Date());
+            i.setStatus(Invoice.STATUS_NEW);
+
+            this.invoicesFacade.create(i);
+            return this.invoicesFacade.find(i.getId());
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
     }
 
 }

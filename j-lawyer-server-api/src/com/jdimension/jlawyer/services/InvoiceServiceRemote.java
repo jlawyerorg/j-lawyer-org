@@ -675,6 +675,7 @@ import javax.ejb.Remote;
 public interface InvoiceServiceRemote {
 
     List<InvoicePool> getAllInvoicePools() throws Exception;
+    List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception;
 
     InvoicePool addInvoicePool(InvoicePool ip);
 
