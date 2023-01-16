@@ -855,7 +855,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                 };
 
                                 Document doc = webView.getEngine().getDocument();
-                                Element el = doc.getElementById("a");
                                 NodeList lista = doc.getElementsByTagName("a");
                                 for (int i = 0; i < lista.getLength(); i++) {
                                     ((EventTarget) lista.item(i)).addEventListener("click", listener, false);
@@ -1223,7 +1222,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 ClientSettings s = ClientSettings.getInstance();
                 String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(lblFrom.getText());
+                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
                 if (index > -1) {
                     contentUI.setBody(body, ContentTypes.TEXT_HTML);
                 } else {
@@ -1781,7 +1780,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             whiteListEntry = getFromAddress(this.lblFrom.getText(), this.msgContainer.getMessage());
         whitelist = whitelist + ",{" + whiteListEntry + "}";
         s.setConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, whitelist);
-        //this.cmdShowHtml.setEnabled(false);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
