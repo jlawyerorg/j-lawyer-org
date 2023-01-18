@@ -814,8 +814,8 @@ public class InvoiceNumberGenerator {
         Pattern cPattern = Pattern.compile("\\.*(c+)\\.*");
         Matcher mc = cPattern.matcher(currentPattern);
         char[] cPatternChar = currentPattern.toCharArray();
+        Random r = new Random();
         while (mc.find()) {
-            Random r = new Random();
             if (DBG) {
                 System.out.println("100");
             }

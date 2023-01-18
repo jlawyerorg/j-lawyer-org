@@ -690,7 +690,7 @@ import themes.colors.DefaultColorTheme;
 public class InvoiceDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
-    private static final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+    private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
     private static final DecimalFormat cf=new DecimalFormat("0.00");
     
     private Invoice currentEntry=null;

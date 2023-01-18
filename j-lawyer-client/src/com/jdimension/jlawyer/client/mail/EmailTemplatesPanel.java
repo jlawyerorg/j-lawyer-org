@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -1150,7 +1151,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         fileName = fileName.replaceAll(" ", "-");
         fileName = fileName + ".xml";
         if(fileName.length()==0) {
-            JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -1259,7 +1260,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
                             String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
                             if (newName==null || newName.isEmpty()) {
-                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
                                 return;
                             }
                             if(!newName.toLowerCase().endsWith(".xml"))
@@ -1292,7 +1293,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
                             String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
                             if (newName==null || newName.isEmpty()) {
-                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
                                 return;
                             }
                             if(!newName.toLowerCase().endsWith(".xml"))

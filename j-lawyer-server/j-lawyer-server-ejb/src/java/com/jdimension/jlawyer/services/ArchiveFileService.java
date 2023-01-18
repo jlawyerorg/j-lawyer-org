@@ -732,6 +732,10 @@ import org.jlawyer.search.SearchIndexRequest;
 public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFileServiceLocal {
 
     private static final Logger log = Logger.getLogger(ArchiveFileService.class.getName());
+    
+    private static final String MSG_MISSINGPRIVILEGE_CASE="Keine Berechtigung für diese Akte";    
+    private static final String MSG_MISSING_INVOICE="Rechnung kann nicht gefunden werden";
+    
     @Resource
     private SessionContext context;
     @EJB
@@ -4774,7 +4778,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicesFacade.create(i);
             return this.invoicesFacade.find(i.getId());
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
@@ -4787,7 +4791,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         
         Invoice invoice=this.invoicesFacade.find(invoiceId);
         if(invoice==null)
-            throw new Exception("Rechnung kann nicht gefunden werden");
+            throw new Exception(MSG_MISSING_INVOICE);
         
         ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
         boolean allowed = false;
@@ -4814,7 +4818,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicePositionsFacade.create(position);
             return this.invoicePositionsFacade.find(position.getId());
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
@@ -4825,7 +4829,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         
         Invoice invoice=this.invoicesFacade.find(invoiceId);
         if(invoice==null)
-            throw new Exception("Rechnung kann nicht gefunden werden");
+            throw new Exception(MSG_MISSING_INVOICE);
         
         ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
         boolean allowed = false;
@@ -4847,7 +4851,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             
             return this.invoicePositionsFacade.findByInvoice(invoice);
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
@@ -4858,7 +4862,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         
         Invoice invoice=this.invoicesFacade.find(invoiceId);
         if(invoice==null)
-            throw new Exception("Rechnung kann nicht gefunden werden");
+            throw new Exception(MSG_MISSING_INVOICE);
         
         ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
         boolean allowed = false;
@@ -4888,7 +4892,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicePositionsFacade.edit(updatePos);
             return this.invoicePositionsFacade.find(updatePos.getId());
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
@@ -4899,7 +4903,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         
         Invoice invoice=this.invoicesFacade.find(invoiceId);
         if(invoice==null)
-            throw new Exception("Rechnung kann nicht gefunden werden");
+            throw new Exception(MSG_MISSING_INVOICE);
         
         ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
         boolean allowed = false;
@@ -4921,7 +4925,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             InvoicePosition removePos=this.invoicePositionsFacade.find(position.getId());
             this.invoicePositionsFacade.remove(removePos);
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
@@ -4961,7 +4965,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicesFacade.edit(updatedInvoice);
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
-            throw new Exception("Keine Berechtigung für diese Akte");
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 
