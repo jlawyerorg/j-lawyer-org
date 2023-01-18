@@ -698,7 +698,7 @@ public class InvoicePosition implements Serializable {
     protected float taxRate;
     
     @Column(name = "units")
-    protected int units;
+    protected float units;
     
     @Column(name = "unit_price")
     protected float unitPrice;
@@ -832,14 +832,14 @@ public class InvoicePosition implements Serializable {
     /**
      * @return the units
      */
-    public int getUnits() {
+    public float getUnits() {
         return units;
     }
 
     /**
      * @param units the units to set
      */
-    public void setUnits(int units) {
+    public void setUnits(float units) {
         this.units = units;
     }
 

@@ -963,11 +963,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
 
         spnPaymentTerm.setFont(spnPaymentTerm.getFont());
         spnPaymentTerm.setModel(new javax.swing.SpinnerNumberModel(14, 1, 365, 1));
-        spnPaymentTerm.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                spnPaymentTermStateChanged(evt);
-            }
-        });
 
         jLabel12.setFont(jLabel12.getFont());
         jLabel12.setText("Zahlungsziel:");
@@ -1236,10 +1231,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
     private void cmdResetLastIndexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetLastIndexActionPerformed
         this.lblLastIndex.setText("0");
     }//GEN-LAST:event_cmdResetLastIndexActionPerformed
-
-    private void spnPaymentTermStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnPaymentTermStateChanged
-        // TODO add your handling code here:
-    }//GEN-LAST:event_spnPaymentTermStateChanged
 
     private void updateUI(InvoicePool ip) {
         

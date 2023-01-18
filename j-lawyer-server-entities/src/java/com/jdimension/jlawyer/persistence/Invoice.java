@@ -889,6 +889,22 @@ public class Invoice implements Serializable {
         
     }
     
+    public int getStatusInt(String statusString) {
+        switch(statusString) {
+            case "storniert":
+                return STATUS_CANCELLED;
+            case "Entwurf":
+                return STATUS_NEW;
+            case "offen":
+                return STATUS_OPEN;
+            case "bezahlt":
+                return STATUS_PAID;
+            default:
+                return STATUS_NEW;
+                
+        }
+    }
+    
     public List<String> getStatusValues() {
         List<String> statuses=new ArrayList<String>();
         statuses.add("Entwurf");

@@ -851,4 +851,14 @@ public interface ArchiveFileServiceRemote {
 
     Invoice addInvoice(String caseId, InvoicePool invoicePool) throws Exception;
 
+    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
+
+    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+
 }

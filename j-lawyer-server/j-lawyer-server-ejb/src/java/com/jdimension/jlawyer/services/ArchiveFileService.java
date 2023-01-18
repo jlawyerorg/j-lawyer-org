@@ -777,6 +777,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private InvoiceFacadeLocal invoicesFacade;
     @EJB
+    private InvoicePositionFacadeLocal invoicePositionsFacade;
+    @EJB
     private InvoicePoolFacadeLocal invoicesPoolsFacade;
     @EJB
     private InvoiceServiceLocal invoiceService;
@@ -4715,6 +4717,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return true;
     }
 
+    
+    
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Invoice addInvoice(String caseId, InvoicePool invoicePool) throws Exception {
@@ -4767,6 +4771,193 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             this.invoicesFacade.create(i);
             return this.invoicesFacade.find(i.getId());
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
+    }
+
+    
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null)
+            throw new Exception("Rechnung kann nicht gefunden werden");
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            StringGenerator idGen = new StringGenerator();
+            position.setId(idGen.getID().toString());
+            position.setInvoice(invoice);
+            
+            this.invoicePositionsFacade.create(position);
+            return this.invoicePositionsFacade.find(position.getId());
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null)
+            throw new Exception("Rechnung kann nicht gefunden werden");
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            return this.invoicePositionsFacade.findByInvoice(invoice);
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null)
+            throw new Exception("Rechnung kann nicht gefunden werden");
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            InvoicePosition updatePos=this.invoicePositionsFacade.find(position.getId());
+            updatePos.setDescription(position.getDescription());
+            updatePos.setName(position.getName());
+            updatePos.setPosition(position.getPosition());
+            updatePos.setTaxRate(position.getTaxRate());
+            updatePos.setTotal(position.getTotal());
+            updatePos.setUnitPrice(position.getUnitPrice());
+            updatePos.setUnits(position.getUnits());
+            this.invoicePositionsFacade.edit(updatePos);
+            return this.invoicePositionsFacade.find(updatePos.getId());
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null)
+            throw new Exception("Rechnung kann nicht gefunden werden");
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            InvoicePosition removePos=this.invoicePositionsFacade.find(position.getId());
+            this.invoicePositionsFacade.remove(removePos);
+        } else {
+            throw new Exception("Keine Berechtigung für diese Akte");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Invoice updateInvoice(String caseId, Invoice invoice) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            Invoice updatedInvoice=this.invoicesFacade.find(invoice.getId());
+            updatedInvoice.setContact(invoice.getContact());
+            updatedInvoice.setDescription(invoice.getDescription());
+            updatedInvoice.setDueDate(invoice.getDueDate());
+            updatedInvoice.setInvoiceNumber(invoice.getInvoiceNumber());
+            updatedInvoice.setName(invoice.getName());
+            updatedInvoice.setPeriodFrom(invoice.getPeriodFrom());
+            updatedInvoice.setPeriodTo(invoice.getPeriodTo());
+            updatedInvoice.setStatus(invoice.getStatus());
+
+            this.invoicesFacade.edit(updatedInvoice);
+            return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
             throw new Exception("Keine Berechtigung für diese Akte");
         }
