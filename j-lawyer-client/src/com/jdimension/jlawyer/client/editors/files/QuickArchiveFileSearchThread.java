@@ -739,9 +739,13 @@ public class QuickArchiveFileSearchThread implements Runnable {
             tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
+            ThreadUtils.setDefaultCursor(this.owner);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
+        // the search and loading data from the server is what takes the most time
+        // reset cursor
+        ThreadUtils.setDefaultCursor(this.owner);
 
         String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
@@ -766,7 +770,6 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model);
         }
         EditorsRegistry.getInstance().clearStatus(true);
-        ThreadUtils.setDefaultCursor(this.owner);
         
         if(this.callback!=null) {
             SwingUtilities.invokeLater(() -> {

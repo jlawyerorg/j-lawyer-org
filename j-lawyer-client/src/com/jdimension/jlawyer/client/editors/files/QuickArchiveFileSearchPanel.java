@@ -706,7 +706,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
-    private boolean userCanEdit=true;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -720,10 +719,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-            this.userCanEdit=true;
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
-            this.userCanEdit=false;
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
