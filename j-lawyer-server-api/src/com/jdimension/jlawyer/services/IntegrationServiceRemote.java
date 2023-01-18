@@ -714,5 +714,9 @@ public interface IntegrationServiceRemote {
     boolean renameObservedFile(String fromName, String toName) throws Exception;
 
     boolean addObservedFile(String fileName, byte[] data) throws Exception;
+
+    void renameEmailTemplate(String oldName, String newName) throws Exception;
+
+    void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
     
 }

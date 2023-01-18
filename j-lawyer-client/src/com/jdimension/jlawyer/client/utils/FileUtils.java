@@ -1049,7 +1049,7 @@ public class FileUtils extends ServerFileUtils {
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
         dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
-        //dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
+        
         // prevent user from using the 'X' button to close the dialog
         dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         dialog.setVisible(true);

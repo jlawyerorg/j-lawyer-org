@@ -681,6 +681,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -939,7 +943,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             fw.write(template.toXML());
         }
     }
-
+    
     @Override
     @RolesAllowed(value = {"loginRole"})
     public void deleteEmailTemplate(String fileName) throws Exception {
@@ -1171,4 +1175,62 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         return true;
     }
 
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void renameEmailTemplate(String oldName, String newName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + oldName);
+        if (!f.exists()) {
+            throw new Exception("Datei existiert nicht: " + oldName);
+        }
+        
+        File fNew =new File(localBaseDir + newName);
+        if (!f.exists()) {
+            throw new Exception("Dateiname bereits vergeben: " + newName);
+        }
+        
+        boolean renamed=f.renameTo(fNew);
+        if(!renamed)
+            throw new Exception("Umbenennen der Vorlage fehlgeschlagen");
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + templateName);
+        if (!f.exists()) {
+            throw new Exception("Datei existiert nicht: " + templateName);
+        }
+        
+        File fNew =new File(localBaseDir + duplicateName);
+        if (!f.exists()) {
+            throw new Exception("Dateiname bereits vergeben: " + duplicateName);
+        }
+        
+        Path originalPath = Paths.get(localBaseDir + templateName);
+        Path copied = Paths.get(localBaseDir + duplicateName);
+        Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
+        
+        boolean duplicated=fNew.exists();
+        if(!duplicated)
+            throw new Exception("Duplizieren der Vorlage fehlgeschlagen");
+    }
+
+    
+    
 }

@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -677,6 +678,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -814,6 +816,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         lstMailTemplates = new javax.swing.JList();
         cmdNew = new javax.swing.JButton();
         cmdDelete = new javax.swing.JButton();
+        cmdRename = new javax.swing.JButton();
+        cmdDuplicate = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -882,14 +886,34 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             }
         });
 
+        cmdRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdRename.setText("Umbenennen");
+        cmdRename.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRenameActionPerformed(evt);
+            }
+        });
+
+        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdDuplicate.setText("Duplizieren");
+        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jScrollPane1)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(0, 0, Short.MAX_VALUE)
+                .addContainerGap(295, Short.MAX_VALUE)
                 .add(cmdNew)
+                .add(18, 18, 18)
+                .add(cmdDuplicate)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdRename)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSave)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -903,7 +927,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdSave)
                     .add(cmdNew)
-                    .add(cmdDelete))
+                    .add(cmdDelete)
+                    .add(cmdRename)
+                    .add(cmdDuplicate))
                 .add(6, 6, 6))
         );
 
@@ -1052,7 +1078,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
-                        .add(0, 455, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(jSplitPane2))
                 .addContainerGap())
         );
@@ -1219,13 +1245,81 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         this.jSplitPane1.setDividerLocation(0.8d);
     }//GEN-LAST:event_jSplitPane1ComponentResized
 
+    private void cmdRenameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRenameActionPerformed
+        if (this.lstMailTemplates.getSelectedValue() != null) {
+            
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
+                    if(selectedValues!=null) {
+                        for(Object selectedValue : selectedValues) {
+
+                            String oldName = selectedValue.toString();
+
+                            String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
+                            if (newName==null || newName.isEmpty()) {
+                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
+                            if(!newName.toLowerCase().endsWith(".xml"))
+                                newName = newName + ".xml";
+                            
+                            locator.lookupIntegrationServiceRemote().renameEmailTemplate(oldName, newName);
+                        }
+                        
+                    }
+                    
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            
+        }
+        this.refreshList();
+    }//GEN-LAST:event_cmdRenameActionPerformed
+
+    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
+        if (this.lstMailTemplates.getSelectedValue() != null) {
+            
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
+                    if(selectedValues!=null) {
+                        for(Object selectedValue : selectedValues) {
+
+                            String oldName = selectedValue.toString();
+
+                            String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
+                            if (newName==null || newName.isEmpty()) {
+                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
+                            if(!newName.toLowerCase().endsWith(".xml"))
+                                newName = newName + ".xml";
+                            
+                            locator.lookupIntegrationServiceRemote().duplicateEmailTemplate(oldName, newName);
+                        }
+                        
+                    }
+                    
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            
+        }
+        this.refreshList();
+    }//GEN-LAST:event_cmdDuplicateActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbFormat;
     private javax.swing.JComboBox cmbPlaceHolderTarget;
     private javax.swing.JButton cmdAddPlaceHolder;
     private javax.swing.JButton cmdDelete;
+    private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdNew;
     private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdRename;
     private javax.swing.JButton cmdSave;
     private javax.swing.JPanel contentPanel;
     private javax.swing.JLabel jLabel1;
