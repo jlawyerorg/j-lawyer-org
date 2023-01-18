@@ -1263,6 +1263,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
             SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
@@ -1306,6 +1311,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);

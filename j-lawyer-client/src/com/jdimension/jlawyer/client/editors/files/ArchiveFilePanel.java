@@ -3580,31 +3580,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (table == null) {
             // not called from a plugin
-//            allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-//            allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-//            allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
             involved = this.pnlInvolvedParties.getInvolvedParties();
 
         } else {
             // when called from a plugin, the plugin loads the case async, and the parties might not be fully loaded when calling the AddDocument dialog
             ClientSettings settings = null;
-            List<AddressBean> addressesForCase = null;
-            //List<ArchiveFileAddressesBean> involvementForCase = null;
             try {
                 settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                addressesForCase = fileService.getAddressesForCase(this.dto.getId());
                 involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
-//                for (ArchiveFileAddressesBean aab : involved) {
-//                    if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-//                        allCl.add(aab.getAddressKey());
-//                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-//                        allOpp.add(aab.getAddressKey());
-//                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-//                        allOppAtt.add(aab.getAddressKey());
-//                    }
-//                }
             } catch (Throwable t) {
                 log.error("Error loading parties", t);
             }
@@ -3615,36 +3600,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-//        AddDocumentWizardDialog wiz=new AddDocumentWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-//        
-//        WizardSteps steps=new WizardSteps(wiz);
-//        steps.addStep(new ChooseTemplateStep());
-//        steps.addStep(new FileNameStep());
-//        steps.addStep(new PlaceHoldersStep());
-//        steps.addStep(new GenerateDocumentStep());
-//        
-//        WizardDataContainer data=steps.getData();
-//        data.put("archiveFile.id", this.dto.getId());
-//        data.put("archiveFile.name", this.dto.getName());
-//        data.put("archiveFile.fileNumber", this.dto.getFileNumber());
-//        data.put("insurances", ClientSettings.getInstance().getInsurances());
-//        //data.put("clients.addressbeans", clients);
-//        //data.put("others.addressbeans", others);
-//        //data.put("documents.documentbeans", docs);
-//        //data.put("documents.documentbeans.selected", selDocs);
-//        
-//        wiz.setSteps(steps);
-//        FrameUtils.centerDialog(wiz, EditorsRegistry.getInstance().getMainWindow());
-//        wiz.setVisible(true);        
     }
 
-    private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
-
-        // save all forms to have the latest data available for document creation
+    public void saveFormData() {
         for (int f = 1; f < this.tabPaneForms.getTabCount(); f++) {
             FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
+    }
+    
+    private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
+
+        // save all forms to have the latest data available for document creation
+        this.saveFormData();
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -4027,6 +3995,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
+        
+        // save form data so changes are available immediately for mail templates
+        if(!this.readOnly)
+            this.saveFormData();
 
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
@@ -4084,6 +4056,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // save form data so changes are available immediately for mail templates
+        if(!this.readOnly)
+            this.saveFormData();
+        
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
@@ -4766,6 +4742,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        if(!this.readOnly)
+            this.saveFormData();
+        
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
 
         dlg.setArchiveFile(dto);
@@ -4825,6 +4804,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        if(!this.readOnly)
+            this.saveFormData();
+        
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
 
         dlg.setArchiveFile(dto);
@@ -5993,15 +5975,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return false;
         }
 
-        for (int f = 1; f < this.tabPaneForms.getTabCount(); f++) {
-            FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
-            fip.save();
-        }
-
-//        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
-//            FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
-//            fip.save();
-//        }
+        this.saveFormData();
+        
         // todo: check all data here for changes
         if (this.dto.getArchivedBoolean() != this.chkArchived.isSelected()) {
             return true;
@@ -6210,15 +6185,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             this.lblHeaderInfo.setText(fileNumber + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
             this.txtFileNumber.setText(fileNumber);
-            //fileService.remove();
 
             // we need to update the search tables because they pass their cached DTOs to the editors
             // without updating, they would still have the old invalid data
             try {
                 Object editor = EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName());
                 ((QuickArchiveFileSearchPanel) editor).updateTable();
-//                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFilePanel.class.getName());
-//                ((QuickArchiveFileSearchPanel) editor).updateTable();
 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.openedFromEditorClass, ex);
