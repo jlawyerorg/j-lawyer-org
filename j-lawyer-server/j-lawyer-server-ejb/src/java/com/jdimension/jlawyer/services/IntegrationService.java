@@ -1192,7 +1192,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         
         File fNew =new File(localBaseDir + newName);
-        if (!f.exists()) {
+        if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + newName);
         }
         
@@ -1218,7 +1218,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         
         File fNew =new File(localBaseDir + duplicateName);
-        if (!f.exists()) {
+        if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + duplicateName);
         }
         
