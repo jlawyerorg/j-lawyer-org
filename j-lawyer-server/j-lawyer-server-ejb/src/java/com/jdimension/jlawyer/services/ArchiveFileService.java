@@ -4361,7 +4361,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return deletedAllowed;
     }
 
-    private void removeDocumentFromBinImpl(String docId, boolean authCheck) throws Exception {
+    private void removeDocumentFromBinImpl(String docId, boolean authCheck, boolean createHistoryEntry) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
         ArchiveFileBean aFile = db.getArchiveFileKey();
@@ -4390,13 +4390,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument aus dem Papierkorb gelöscht: " + db.getName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        if(createHistoryEntry) {
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(aFile);
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Dokument aus dem Papierkorb gelöscht: " + db.getName());
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+        }
 
         this.archiveFileDocumentsFacade.remove(db);
     }
@@ -4404,7 +4406,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeDocumentFromBin(String docId) throws Exception {
-        this.removeDocumentFromBinImpl(docId, true);
+        this.removeDocumentFromBinImpl(docId, true, true);
     }
 
     @Override
@@ -4486,7 +4488,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             if (delDate != null) {
                 long deletionDate = delDate.getTime();
                 if ((now - deletionDate) > retentionMillis) {
-                    this.removeDocumentFromBinImpl(doc.getId(), false);
+                    this.removeDocumentFromBinImpl(doc.getId(), false, false);
                 }
             } else {
                 log.error("document in bin has no deletion date: " + doc.getId());
