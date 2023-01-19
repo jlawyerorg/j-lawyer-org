@@ -238,7 +238,6 @@
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdActionsMousePressed"/>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdActionsActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="cmdToAddress">
@@ -407,9 +406,6 @@
         <Component class="javax.swing.JTextField" name="txtContact">
         </Component>
         <Component class="javax.swing.JTextField" name="txtCustom1">
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtCustom1ActionPerformed"/>
-          </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="txtCustom2">
         </Component>

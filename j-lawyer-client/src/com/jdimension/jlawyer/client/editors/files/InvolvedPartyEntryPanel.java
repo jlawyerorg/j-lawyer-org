@@ -836,6 +836,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             wrapper.append("<html>");
             wrapper.append("<table>");
             StringBuilder content = new StringBuilder();
+            if (!StringUtils.isEmpty(this.a.getCompany())) {
+                content.append(getContentRow("Unternehmen:", this.a.getCompany()));
+            }
+            if (!StringUtils.isEmpty(this.a.getDepartment())) {
+                content.append(getContentRow("Abteilung:", this.a.getDepartment()));
+            }
             if (!StringUtils.isEmpty(this.a.getPhone())) {
                 content.append(getContentRow("Festnetz:", this.a.getPhone()));
             }
@@ -1056,11 +1062,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 cmdActionsMousePressed(evt);
             }
         });
-        cmdActions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdActionsActionPerformed(evt);
-            }
-        });
 
         cmdToAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         cmdToAddress.addActionListener(new java.awt.event.ActionListener() {
@@ -1111,12 +1112,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         lblCustom2.setText("Eigene 2:");
 
         lblCustom3.setText("Eigene 3:");
-
-        txtCustom1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtCustom1ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jXTaskPane1Layout = new javax.swing.GroupLayout(jXTaskPane1.getContentPane());
         jXTaskPane1.getContentPane().setLayout(jXTaskPane1Layout);
@@ -1434,10 +1429,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
     }//GEN-LAST:event_mnuSendFaxActionPerformed
 
-    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-
-    }//GEN-LAST:event_cmdActionsActionPerformed
-
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
         this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdActionsMousePressed
@@ -1457,10 +1448,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void lblAddressMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseClicked
         this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblAddressMouseClicked
-
-    private void txtCustom1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCustom1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtCustom1ActionPerformed
 
     private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
         if(this.a!=null) {
