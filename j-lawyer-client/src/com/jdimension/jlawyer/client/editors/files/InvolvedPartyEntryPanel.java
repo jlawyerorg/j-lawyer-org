@@ -845,6 +845,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             if (!StringUtils.isEmpty(this.a.getPhone())) {
                 content.append(getContentRow("Festnetz:", this.a.getPhone()));
             }
+            if (!StringUtils.isEmpty(this.a.getFax())) {
+                content.append(getContentRow("Fax:", this.a.getFax()));
+            }
             if (!StringUtils.isEmpty(this.a.getMobile())) {
                 content.append(getContentRow("Mobil:", this.a.getMobile()));
             }
