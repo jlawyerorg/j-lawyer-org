@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -679,6 +680,8 @@ import javax.xml.bind.annotation.XmlTransient;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
+    @NamedQuery(name = "ArchiveFileBean.findAllSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a ORDER BY a.dateChanged DESC"),
+    @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = 0 ORDER BY a.dateChanged DESC"),
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileBean.findByGroup", query = "SELECT a FROM ArchiveFileBean a WHERE a.group = :group"),
@@ -725,6 +728,17 @@ public class ArchiveFileBean implements Serializable {
     private String custom2;
     @Column(name = "custom3")
     private String custom3;
+    
+    @Column(name = "date_created")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date dateCreated;
+    @Column(name = "date_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date dateChanged;
+    @Column(name = "date_archived")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date dateArchived;
+    
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
@@ -1090,6 +1104,48 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setRootFolder(CaseFolder rootFolder) {
         this.rootFolder = rootFolder;
+    }
+
+    /**
+     * @return the dateCreated
+     */
+    public Date getDateCreated() {
+        return dateCreated;
+    }
+
+    /**
+     * @param dateCreated the dateCreated to set
+     */
+    public void setDateCreated(Date dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    /**
+     * @return the dateChanged
+     */
+    public Date getDateChanged() {
+        return dateChanged;
+    }
+
+    /**
+     * @param dateChanged the dateChanged to set
+     */
+    public void setDateChanged(Date dateChanged) {
+        this.dateChanged = dateChanged;
+    }
+
+    /**
+     * @return the dateArchived
+     */
+    public Date getDateArchived() {
+        return dateArchived;
+    }
+
+    /**
+     * @param dateArchived the dateArchived to set
+     */
+    public void setDateArchived(Date dateArchived) {
+        this.dateArchived = dateArchived;
     }
     
 }

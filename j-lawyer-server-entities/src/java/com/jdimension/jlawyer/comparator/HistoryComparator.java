@@ -675,6 +675,7 @@ public class HistoryComparator implements java.util.Comparator {
         
     }
     
+    @Override
     public int compare(Object obj1, Object obj2) {
         if(obj1==null)
             return -1;
@@ -700,6 +701,7 @@ public class HistoryComparator implements java.util.Comparator {
             return -1;
     }
     
+    @Override
     public boolean equals(Object obj) {
         if(obj!=null)
             return obj.equals(this);

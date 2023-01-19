@@ -728,6 +728,9 @@ public class Invoice implements Serializable {
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
     
+    @Column(name = "small_business", columnDefinition = "TINYINT")
+    protected boolean smallBusiness=true;
+    
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
     @ManyToOne
     protected AddressBean contact;
@@ -947,6 +950,20 @@ public class Invoice implements Serializable {
      */
     public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the smallBusiness
+     */
+    public boolean isSmallBusiness() {
+        return smallBusiness;
+    }
+
+    /**
+     * @param smallBusiness the smallBusiness to set
+     */
+    public void setSmallBusiness(boolean smallBusiness) {
+        this.smallBusiness = smallBusiness;
     }
     
 }

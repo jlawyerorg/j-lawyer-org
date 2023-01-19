@@ -687,7 +687,7 @@ public interface ArchiveFileServiceRemote {
 
     void removeArchiveFile(String id) throws Exception;
 
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
+    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
 

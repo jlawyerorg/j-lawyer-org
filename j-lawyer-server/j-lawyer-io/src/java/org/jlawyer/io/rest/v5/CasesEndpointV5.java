@@ -799,7 +799,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 return res;
             }
 
-            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id);
+            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id, null);
             ArrayList<RestfulCaseHistoryV5> ddList = new ArrayList<>();
             for (ArchiveFileHistoryBean h : history) {
                 RestfulCaseHistoryV5 dd = new RestfulCaseHistoryV5();

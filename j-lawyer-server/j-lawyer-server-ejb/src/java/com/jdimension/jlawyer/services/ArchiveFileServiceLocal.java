@@ -706,7 +706,7 @@ public interface ArchiveFileServiceLocal {
     public byte[] getDocumentContent(String id) throws Exception;
     public DataBucket getDocumentContentBucket(String id) throws Exception;
     
-    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
+    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
     
     byte[] exportCaseToHtml(String caseId) throws Exception;
 

@@ -1128,17 +1128,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception {
+    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception {
 
-        return getHistoryForArchiveFileImpl(archiveFileKey, context.getCallerPrincipal().getName());
+        return getHistoryForArchiveFileImpl(archiveFileKey, context.getCallerPrincipal().getName(), since);
 
     }
 
-    private ArchiveFileHistoryBean[] getHistoryForArchiveFileImpl(String archiveFileKey, String principalId) throws Exception {
+    private ArchiveFileHistoryBean[] getHistoryForArchiveFileImpl(String archiveFileKey, String principalId, Date since) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         SecurityUtils.checkGroupsForCase(principalId, aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        List resultList = this.archiveFileHistoryFacade.findByArchiveFileKey(aFile);
+        List resultList = null;
+        if(since==null)
+            resultList=this.archiveFileHistoryFacade.findByArchiveFileKey(aFile);
+        else
+            resultList=this.archiveFileHistoryFacade.findByArchiveFileKeySince(aFile, since);
+        
         ArchiveFileHistoryBean[] resultArray = new ArchiveFileHistoryBean[0];
         if (resultList != null) {
             resultArray = (ArchiveFileHistoryBean[]) resultList.toArray(resultArray);
@@ -1207,15 +1212,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        ArchiveFileHistoryBean initialEntry = new ArchiveFileHistoryBean();
-        initialEntry.setId(idGen.getID().toString());
-        initialEntry.setArchiveFileKey(dto);
-        initialEntry.setChangeDate(new Date());
-        initialEntry.setChangeDescription("Akte erstellt");
-        initialEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(initialEntry);
-
+        dto.setDateCreated(new Date());
+        dto.setDateChanged(new Date());
+        dto.setDateArchived(null);
         this.archiveFileFacade.create(dto);
+        
+        this.addCaseHistory(idGen.getID().toString(), dto, "Akte erstellt");
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(dto.getId());
 
@@ -1227,6 +1229,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             rootFolder.setParentId(null);
             this.caseFolderFacade.create(rootFolder);
             aFile.setRootFolder(rootFolder);
+            aFile.setDateChanged(new Date());
             this.archiveFileFacade.edit(aFile);
         }
 
@@ -1275,37 +1278,32 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         boolean archivedOld = aFile.getArchivedBoolean();
         boolean archivedNew = dto.getArchivedBoolean();
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(dto);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Akte geändert");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), dto, "Akte geändert");
+        
         if (archivedOld != archivedNew) {
             // archive flag was changed
             String historyDescription;
             if (archivedNew) {
                 // archived
                 historyDescription = "Akte abgelegt / archiviert";
+                dto.setDateArchived(new Date());
             } else {
                 // de-archived
                 historyDescription = "Akte wieder aufgenommen / dearchiviert";
+                dto.setDateArchived(null);
             }
-            ArchiveFileHistoryBean archiveHistEntry = new ArchiveFileHistoryBean();
-            archiveHistEntry.setId(idGen.getID().toString());
-            archiveHistEntry.setArchiveFileKey(dto);
-            archiveHistEntry.setChangeDate(new Date());
-            archiveHistEntry.setChangeDescription(historyDescription);
-            archiveHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-            this.archiveFileHistoryFacade.create(archiveHistEntry);
+            
+            this.addCaseHistory(idGen.getID().toString(), dto, historyDescription);
+        } else {
+            dto.setDateArchived(aFile.getDateArchived());
         }
 
         // added because of lazy load issue when getting reviews from dto
         List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
         dto.setArchiveFileReviewsBeanList(reviewList);
 
+        dto.setDateCreated(aFile.getDateCreated());
+        dto.setDateChanged(new Date());
         this.archiveFileFacade.edit(dto);
 
         // remove all existing parties
@@ -1332,6 +1330,51 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         evt.setCaseId(dto.getId());
         this.updatedCaseEvent.fireAsync(evt);
 
+    }
+    
+    private void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
+        this.addCaseHistory(newHistoryId, dto, description, context.getCallerPrincipal().getName(), new Date());
+    }
+    
+    private void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate) {
+        ArchiveFileHistoryBean archiveHistEntry = new ArchiveFileHistoryBean();
+        archiveHistEntry.setId(newHistoryId);
+        archiveHistEntry.setArchiveFileKey(dto);
+        archiveHistEntry.setChangeDate(changeDate);
+        archiveHistEntry.setChangeDescription(description);
+        archiveHistEntry.setPrincipal(principalId);
+        this.archiveFileHistoryFacade.create(archiveHistEntry);
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        PreparedStatement st = null;
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("update cases set date_changed=? where id=?");
+            st.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            st.setString(2, dto.getId());
+            st.executeUpdate();
+
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files", sqle);
+            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+            
     }
 
     @Override
@@ -1572,15 +1615,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        ArchiveFileHistoryBean initialEntry = new ArchiveFileHistoryBean();
-        initialEntry.setId(idGen.getID().toString());
-        initialEntry.setArchiveFileKey(dto);
-        initialEntry.setChangeDate(new Date());
-        initialEntry.setChangeDescription("Akte erstellt");
-        initialEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(initialEntry);
-
         this.archiveFileFacade.create(dto);
+        
+        this.addCaseHistory(idGen.getID().toString(), dto, "Akte erstellt");
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(dto.getId());
 
@@ -1659,14 +1696,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletionDate(null);
         this.archiveFileDocumentsFacade.create(db);
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument hinzugefügt: " + fileName);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
+        
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -1772,14 +1803,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.warn("Error deleting document preview", t);
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument in den Papierkorb verschoben: " + db.getName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument in den Papierkorb verschoben: " + db.getName());
+        
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_DELETE);
             req.setId(id);
@@ -1859,14 +1884,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         StringGenerator idGen = new StringGenerator();
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(db.getArchiveFileKey());
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument geändert: " + db.getName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument geändert: " + db.getName());
+        
         DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aId);
@@ -1999,14 +2018,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             preview = ServerFileUtils.readFileAsString(prvFileId);
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
+        
         db.setName(newName);
         db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
@@ -2110,12 +2123,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = history;
         String histId = idGen.getID().toString();
-        newHistEntry.setId(histId);
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.addCaseHistory(histId, aFile, history.getChangeDescription(), history.getPrincipal(), history.getChangeDate());
+        
         return this.archiveFileHistoryFacade.find(histId);
     }
 
@@ -2146,14 +2156,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             historyText = "Akten-Etikett entfernt: " + tag.getTagName();
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(historyText);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, historyText);
+        
         CaseTagChangedEvent evt = new CaseTagChangedEvent();
         evt.setCaseId(archiveFileId);
         evt.setActive(active);
@@ -2187,14 +2191,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             historyText = "Dokument-Etikett entfernt von " + aFile.getName() + ": " + tag.getTagName();
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile.getArchiveFileKey());
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(historyText);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile.getArchiveFileKey(), historyText);
+        
         DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
         evt.setCaseId(aFile.getArchiveFileKey().getId());
         evt.setDocumentId(documentId);
@@ -2644,10 +2642,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getLastChanged(int limit) {
-        JDBCUtils utils = new JDBCUtils();
-        ResultSet rs = null;
-        List<ArchiveFileBean> returnList = new ArrayList<>();
-
+        
         ArrayList<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -2656,34 +2651,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
         }
 
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM case_history GROUP BY archiveFileKey order by maxChangeDate DESC) a1, cases a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?")) {
-
-            st.setInt(1, 5 * limit);
-            rs = st.executeQuery();
-            while (rs.next()) {
-                String id = rs.getString(1);
-                if (allowedCases.contains(id)) {
-                    ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-                    returnList.add(aFile);
-                }
-
-                if (returnList.size() == limit) {
-                    break;
-                }
-
+        List<ArchiveFileBean> returnList = new ArrayList<>();
+        // use 5 times the limit, because we then restrict further based on permissions
+        List<ArchiveFileBean> changedList=this.archiveFileFacade.findLastChangedNonArchived(5*limit);
+        for(ArchiveFileBean changedCase: changedList) {
+            if(allowedCases.contains(changedCase.getId())) {
+                returnList.add(changedCase);
             }
-
-            try {
-                rs.close();
-            } catch (Exception ex) {
-                log.error(ex);
-            }
-
-        } catch (SQLException sqle) {
-            log.error("Error getting last changed archive files", sqle);
-            throw new EJBException("Die zuletzt geänderten Akten konnten nicht ermittelt werden.", sqle);
+            if(returnList.size()>=limit)
+                break;
         }
-
+        
         return returnList;
     }
 
@@ -2903,7 +2881,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     public ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception {
-        return getHistoryForArchiveFileImpl(archiveFileKey, null);
+        return getHistoryForArchiveFileImpl(archiveFileKey, null, null);
     }
 
     @Override
@@ -3087,14 +3065,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileDocumentsFacade.edit(db);
 
         StringGenerator idGen = new StringGenerator();
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(db.getArchiveFileKey());
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokumentdatum geändert: " + db.getName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokumentdatum geändert: " + db.getName());
+        
         DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aId);
@@ -3429,14 +3401,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletionDate(null);
         this.archiveFileDocumentsFacade.create(db);
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument hinzugefügt: " + fileName);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
+        
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -3550,14 +3516,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileFacade.edit(afb);
 
         StringGenerator idGen = new StringGenerator();
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(afb);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), afb, "Aktenzeichen geändert: " + from + " --> " + to);
+        
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(afb.getId());
         this.updatedCaseEvent.fireAsync(evt);
@@ -3754,14 +3714,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             t.setTagName(toName);
             this.archiveFileTagsFacade.edit(t);
 
-            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-            newHistEntry.setId(idGen.getID().toString());
-            newHistEntry.setArchiveFileKey(t.getArchiveFileKey());
-            newHistEntry.setChangeDate(new Date());
-            newHistEntry.setChangeDescription("Etikett geändert: " + fromName + " -> " + toName);
-            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-            this.archiveFileHistoryFacade.create(newHistEntry);
-
+            this.addCaseHistory(idGen.getID().toString(), t.getArchiveFileKey(), "Etikett geändert: " + fromName + " -> " + toName);
+            
             CaseTagChangedEvent evt = new CaseTagChangedEvent();
             evt.setCaseId(t.getArchiveFileKey().getId());
             evt.setActive(false);
@@ -3787,14 +3741,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             t.setTagName(toName);
             this.documentTagsFacade.edit(t);
 
-            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-            newHistEntry.setId(idGen.getID().toString());
-            newHistEntry.setArchiveFileKey(t.getDocumentKey().getArchiveFileKey());
-            newHistEntry.setChangeDate(new Date());
-            newHistEntry.setChangeDescription("Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
-            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-            this.archiveFileHistoryFacade.create(newHistEntry);
-
+            this.addCaseHistory(idGen.getID().toString(), t.getDocumentKey().getArchiveFileKey(), "Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
+            
             DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
             evt.setCaseId(t.getDocumentKey().getArchiveFileKey().getId());
             evt.setDocumentId(t.getDocumentKey().getId());
@@ -3874,14 +3822,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.archiveFileAddressesFacade.edit(oldParty);
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Beteiligtendaten für " + name + " geändert");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Beteiligtendaten für " + name + " geändert");
+        
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(aFile.getId());
         this.updatedCaseEvent.fireAsync(evt);
@@ -3898,14 +3840,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Beteiligter gelöscht: " + db.getAddressKey().toDisplayName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Beteiligter gelöscht: " + db.getAddressKey().toDisplayName());
+        
         this.archiveFileAddressesFacade.remove(db);
 
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
@@ -4217,15 +4153,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             doc.setFolder(target);
             doc.bumpVersion();
             this.archiveFileDocumentsFacade.edit(doc);
-
-            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-            newHistEntry.setId(idGen.getID().toString());
-            newHistEntry.setArchiveFileKey(afb);
-            newHistEntry.setChangeDate(new Date());
-            newHistEntry.setChangeDescription("Dokument " + doc.getName() + " in den Ordner " + target.getName() + " verschoben");
-            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-            this.archiveFileHistoryFacade.create(newHistEntry);
-
+            this.addCaseHistory(idGen.getID().toString(), afb, "Dokument " + doc.getName() + " in den Ordner " + target.getName() + " verschoben");
         }
 
     }
@@ -4395,13 +4323,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if(createHistoryEntry) {
-            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-            newHistEntry.setId(idGen.getID().toString());
-            newHistEntry.setArchiveFileKey(aFile);
-            newHistEntry.setChangeDate(new Date());
-            newHistEntry.setChangeDescription("Dokument aus dem Papierkorb gelöscht: " + db.getName());
-            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-            this.archiveFileHistoryFacade.create(newHistEntry);
+            this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument aus dem Papierkorb gelöscht: " + db.getName());
         }
 
         this.archiveFileDocumentsFacade.remove(db);
@@ -4427,14 +4349,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.bumpVersion();
         this.archiveFileDocumentsFacade.edit(db);
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument aus dem Papierkorb wiederhergestellt: " + db.getName());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
-
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument aus dem Papierkorb wiederhergestellt: " + db.getName());
+        
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -4761,6 +4677,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setContact(null);
             i.setCreationDate(new Date());
             i.setDescription("");
+            i.setSmallBusiness(pool.isSmallBusiness());
             
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -4961,6 +4878,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setPeriodFrom(invoice.getPeriodFrom());
             updatedInvoice.setPeriodTo(invoice.getPeriodTo());
             updatedInvoice.setStatus(invoice.getStatus());
+            updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
 
             this.invoicesFacade.edit(updatedInvoice);
             return this.invoicesFacade.find(updatedInvoice.getId());

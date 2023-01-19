@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
@@ -719,14 +718,12 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @EJB
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
     @EJB
-    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    private ArchiveFileServiceLocal archiveFileService;
     
     // custom hooks support
     @Inject
     Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     @Override
     @RolesAllowed({"loginRole"})
     public List<FormTypeBean> getAllFormTypes() {
@@ -833,7 +830,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(afb.getId(), newHistEntry);
 
         return this.caseFormsFacade.find(id);
 
@@ -887,7 +884,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(afb.getArchiveFileKey().getId(), newHistEntry);
     }
 
     @Override

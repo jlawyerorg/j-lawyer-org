@@ -763,6 +763,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
             this.dtDue.setText("");
             this.dtCreated.setText("");
             this.lblRecipient.setText("");
+            this.chkSmallBusiness.setSelected(true);
 
             
 
@@ -777,6 +778,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
             this.dtTo.setText(df.format(invoice.getPeriodTo()));
             this.dtDue.setText(df.format(invoice.getDueDate()));
             this.dtCreated.setText(df.format(invoice.getCreationDate()));
+            this.chkSmallBusiness.setSelected(invoice.isSmallBusiness());
             if(invoice.getContact()!=null)
                 this.lblRecipient.setText(invoice.getContact().toDisplayName());
             else
@@ -850,6 +852,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
         lblInvoicePositions = new javax.swing.JLabel();
         cmdAddPosition = new javax.swing.JButton();
         lblInvoiceHeader = new javax.swing.JLabel();
+        chkSmallBusiness = new javax.swing.JCheckBox();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -987,6 +990,10 @@ public class InvoiceDialog extends javax.swing.JDialog {
         lblInvoiceHeader.setFont(lblInvoiceHeader.getFont().deriveFont(lblInvoiceHeader.getFont().getStyle() | java.awt.Font.BOLD, lblInvoiceHeader.getFont().getSize()-2));
         lblInvoiceHeader.setText("Rechnungskopf");
 
+        chkSmallBusiness.setFont(chkSmallBusiness.getFont());
+        chkSmallBusiness.setSelected(true);
+        chkSmallBusiness.setText("USt ausweisen");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1039,14 +1046,15 @@ public class InvoiceDialog extends javax.swing.JDialog {
                                         .addComponent(cmdDatePeriodTo)))
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(jSeparator1)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblInvoicePositions)
-                            .addComponent(lblInvoiceHeader))
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdAddPosition)))
+                        .addComponent(cmdAddPosition))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblInvoiceHeader)
+                            .addComponent(chkSmallBusiness)
+                            .addComponent(lblInvoicePositions))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1092,13 +1100,15 @@ public class InvoiceDialog extends javax.swing.JDialog {
                     .addComponent(dtDue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5)
                     .addComponent(cmdDateDue))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkSmallBusiness)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblInvoicePositions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdAddPosition)
-                .addContainerGap())
+                .addGap(111, 111, 111))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1119,10 +1129,10 @@ public class InvoiceDialog extends javax.swing.JDialog {
         splitMain.setRightComponent(jScrollPane2);
 
         lblInvoiceTotal.setFont(lblInvoiceTotal.getFont().deriveFont(lblInvoiceTotal.getFont().getStyle() | java.awt.Font.BOLD, lblInvoiceTotal.getFont().getSize()-2));
-        lblInvoiceTotal.setText("jLabel8");
+        lblInvoiceTotal.setText(" ");
 
         lblInvoiceTax.setFont(lblInvoiceTax.getFont().deriveFont(lblInvoiceTax.getFont().getSize()-2f));
-        lblInvoiceTax.setText("jLabel9");
+        lblInvoiceTax.setText(" ");
 
         jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD, jLabel10.getFont().getSize()-2));
         jLabel10.setText("Gesamt:");
@@ -1144,15 +1154,12 @@ public class InvoiceDialog extends javax.swing.JDialog {
                         .addComponent(cmdCancel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel10)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel11)
-                                .addGap(15, 15, 15)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(lblInvoiceTax, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblInvoiceTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jLabel11)
+                            .addComponent(jLabel10))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lblInvoiceTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblInvoiceTax, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1249,6 +1256,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
             this.currentEntry.setPeriodFrom(df.parse(this.dtFrom.getText()));
             this.currentEntry.setPeriodTo(df.parse(this.dtTo.getText()));
             this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
+            this.currentEntry.setSmallBusiness(this.chkSmallBusiness.isSelected());
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(caseId, currentEntry);
@@ -1357,6 +1365,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkSmallBusiness;
     private javax.swing.JComboBox<String> cmbInvoicePool;
     private javax.swing.JComboBox<String> cmbStatus;
     private javax.swing.JButton cmdAddPosition;

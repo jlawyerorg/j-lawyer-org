@@ -700,6 +700,12 @@ public class HistorySearchThread implements Runnable {
 
     /**
      * Creates a new instance of ArchiveFileReviewsSearchThread
+     * @param owner
+     * @param target
+     * @param principalId
+     * @param maxEntries
+     * @param toDate
+     * @param fromDate
      */
     public HistorySearchThread(Component owner, JPanel target, String principalId, Date fromDate, Date toDate, int maxEntries) {
         this.owner = owner;
@@ -711,6 +717,7 @@ public class HistorySearchThread implements Runnable {
         
     }
     
+    @Override
     public void run() {
         lastThreadStart=System.currentTimeMillis();
         
@@ -767,7 +774,6 @@ public class HistorySearchThread implements Runnable {
             }
 
             for (int i = 0; i < sortedKeys.size(); i++) {
-                Date d = df.parse(sortedKeys.get(i));
                 ArrayList<ArchiveFileHistoryBean> list = ht.get(sortedKeys.get(i));
                 Collections.sort(list, (ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) -> {
                     try {

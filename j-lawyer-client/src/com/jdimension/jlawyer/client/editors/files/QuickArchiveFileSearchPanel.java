@@ -729,7 +729,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.chkIncludeArchive.setSelected(true);
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert", "", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -962,11 +962,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdDocumentTagFilterMousePressed(evt);
-            }
-        });
-        cmdDocumentTagFilter.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDocumentTagFilterActionPerformed(evt);
             }
         });
 
@@ -1264,10 +1259,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
         this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
-
-    private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
 
     private void chkIncludeArchiveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeArchiveActionPerformed
         if (this.initializing) {

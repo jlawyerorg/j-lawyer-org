@@ -689,6 +689,7 @@ public interface ArchiveFileHistoryBeanFacadeLocal {
     int count();
     
     public List<ArchiveFileHistoryBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+    public List<ArchiveFileHistoryBean> findByArchiveFileKeySince(ArchiveFileBean archiveFileKey, Date since);
     
     public List<ArchiveFileHistoryBean> findByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit);
     

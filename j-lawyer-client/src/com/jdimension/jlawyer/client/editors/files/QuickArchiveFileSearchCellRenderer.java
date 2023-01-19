@@ -679,9 +679,9 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
             boolean hasFocus, int row, int column) {
         Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        Object boolObject = table.getValueAt(row, 3);
+        Object boolObject = table.getValueAt(row, 4);
         if (boolObject != null) {
-            Boolean b = (Boolean) table.getValueAt(row, 3);
+            Boolean b = (Boolean) table.getValueAt(row, 4);
             if (b) {
                 if (isSelected) {
                     ((Component) returnRenderer).setForeground(Color.GRAY.brighter());

@@ -689,7 +689,7 @@ import org.apache.log4j.Logger;
 @Stateless
 public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
 
-    private static Logger log = Logger.getLogger(DrebisService.class.getName());
+    private static final Logger log = Logger.getLogger(DrebisService.class.getName());
     
     @Resource
     private SessionContext context;
@@ -698,14 +698,14 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
     @EJB
-    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    private ArchiveFileServiceLocal archiveFileService;
     
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<InsuranceInfo> getInsurances() throws DrebisException {
         
         if(!this.isDrebisEnabled()) {
-            return new ArrayList<InsuranceInfo>();
+            return new ArrayList<>();
         }
         
         DrebisAPI api=this.getAPI();
@@ -739,14 +739,11 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         }
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
-
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<InsuranceInfo> getMotorInsurances() throws DrebisException {
         if(!this.isDrebisEnabled()) {
-            return new ArrayList<InsuranceInfo>();
+            return new ArrayList<>();
         }
         
         DrebisAPI api=this.getAPI();
@@ -773,7 +770,6 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
                 GregorianCalendar cal = new GregorianCalendar();
                 cal.setTime(claimDate);
                 claimDateX = DatatypeFactory.newInstance().newXMLGregorianCalendarDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH)+1, cal.get(Calendar.DAY_OF_MONTH), 0);
-                //XMLGregorianCalendar xmlTime = df.newXMLGregorianCalendarTime(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 0);
                 
             } catch (DatatypeConfigurationException ex) {
                 log.error("Error converting Date to XMLGregorianCalender", ex);
@@ -783,7 +779,6 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         
         DrebisAPI api=this.getAPI();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        //String url= api.sendCoverageNote(aFile.getFileNumber(), archiveFileName, insurance, policyNumber, clients, others, documents);
         String url= api.sendClaimNote(aFile.getFileNumber(), archiveFileName, insu, policyNumber, clients, others, docs, licensePlate, registeredWithPolice, place, claimType, claimDateX, claimNumber);
         
         StringGenerator idGen = new StringGenerator();
@@ -797,7 +792,12 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
             newHistEntry.setChangeDescription("Schadenmeldung (mit Zentralruf) gesendet");
         }
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        try {
+            this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        } catch (Exception ex) {
+            log.error("Unable to send claim note", ex);
+            throw new DrebisException(ex.getMessage());
+        }
         
         return url;
     }
@@ -820,7 +820,12 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Deckungsanfrage an " + insurance.getName() + " gesendet");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        try {
+            this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        } catch (Exception ex) {
+            log.error("unable to send coverage request", ex);
+            throw new DrebisException(ex.getMessage());
+        }
         
         return url;
     }
@@ -829,7 +834,7 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
     @RolesAllowed({"readArchiveFileRole"})
     public List<DrebisMessagesHeader> messagesList() throws DrebisException {
         if(!this.isDrebisEnabled()) {
-            return new ArrayList<DrebisMessagesHeader>();
+            return new ArrayList<>();
         }
         DrebisAPI api=this.getAPI();
         return api.messagesList();
@@ -839,7 +844,7 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
     @RolesAllowed({"readArchiveFileRole"})
     public List<DrebisMessagesEntry> messages(DrebisMessagesHeader header) throws DrebisException {
         if(!this.isDrebisEnabled()) {
-            return new ArrayList<DrebisMessagesEntry>();
+            return new ArrayList<>();
         }
         DrebisAPI api=this.getAPI();
         return api.messages(header);
@@ -873,7 +878,12 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Freitext-Nachricht an " + insu.getName() + " gesendet");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        try {
+            this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        } catch (Exception ex) {
+            log.error("Unable to send message", ex);
+            throw new DrebisException(ex.getMessage());
+        }
         
         return dmr;
     }

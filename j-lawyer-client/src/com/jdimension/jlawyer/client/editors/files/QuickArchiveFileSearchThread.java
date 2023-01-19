@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JTable;
@@ -688,6 +689,8 @@ import org.apache.log4j.Logger;
 public class QuickArchiveFileSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(QuickArchiveFileSearchThread.class.getName());
+    
+    private final SimpleDateFormat dayFormat=new SimpleDateFormat("dd.MM.yyyy");
 
     private final String query;
     private final Component owner;
@@ -747,11 +750,11 @@ public class QuickArchiveFileSearchThread implements Runnable {
         // reset cursor
         ThreadUtils.setDefaultCursor(this.owner);
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert","", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
         for (int i = 0; i < dtos.length; i++) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
+            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getDateCreated(), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getDateArchived(), dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
             model.addRow(row);
         }
         if (dtos.length > 0) {
