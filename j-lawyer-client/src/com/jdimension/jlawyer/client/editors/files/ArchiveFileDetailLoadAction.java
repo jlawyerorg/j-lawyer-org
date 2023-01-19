@@ -847,10 +847,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             localDateTime = localDateTime.minusMonths(6);
             sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
             
-            long start=System.currentTimeMillis();
             dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey, sinceDate);
-            System.out.println("history: " + (System.currentTimeMillis()-start));
-
+            
             this.progress("Lade Akte: Berechtigungen...");
             Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
             Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
