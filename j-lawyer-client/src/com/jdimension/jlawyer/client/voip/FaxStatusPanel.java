@@ -1151,6 +1151,10 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
             for (String id : ids.keySet()) {
                 String defaultName = locator.lookupVoipServiceRemote().getNewFaxReportFileName(id);
                 defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
+                if(defaultName==null) {
+                    this.clearDetails();
+                    return;
+                }
                 
                 boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(ids.get(id).getId(), defaultName);
                 while (documentExists) {

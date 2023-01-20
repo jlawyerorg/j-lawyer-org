@@ -3534,8 +3534,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         for (Object d : resultList) {
             if (d instanceof ArchiveFileDocumentsBean) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                if (doc.getName().equalsIgnoreCase(documentName)) {
-                    return true;
+                if (doc.getName() != null) {
+                    if (doc.getName().equalsIgnoreCase(documentName)) {
+                        return true;
+                    }
                 }
             }
         }

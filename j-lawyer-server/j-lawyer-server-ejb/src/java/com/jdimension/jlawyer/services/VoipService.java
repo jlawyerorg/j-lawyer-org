@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.fax.SipgateInstance;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -693,7 +694,7 @@ import org.apache.log4j.Logger;
 @Stateless
 public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
-    private static Logger log = Logger.getLogger(VoipService.class.getName());
+    private static final Logger log = Logger.getLogger(VoipService.class.getName());
     @Resource
     private SessionContext context;
     @EJB
@@ -973,6 +974,9 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         if (sessionId == null) {
             return;
         }
+        
+        if(ServerStringUtils.isEmpty(fileName))
+            return;
 
         FaxQueueBean fb = this.faxFacade.find(sessionId);
         if (fb != null) {
