@@ -732,27 +732,6 @@ public class BeaAccess {
     private MessageSorterFilter lastFilter=null;
 
     private BeaAccess(byte[] certificate, String password) throws BeaWrapperException {
-//        byte[] certificate = null;
-//        try {
-//
-//            InputStream is = this.getClass().getClassLoader().getResourceAsStream("com/jdimension/jlawyer/client/bea/Zert01.p12");
-//            if (is == null) {
-//                throw new BeaWrapperException("Certificate " + "com/jdimension/jlawyer/client/bea/Zert01.p12" + " not available / not found!");
-//            }
-//
-//            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-//            BufferedInputStream bin = new BufferedInputStream(is);
-//            byte[] buffer = new byte[1024];
-//            int bytesRead = -1;
-//            while ((bytesRead = bin.read(buffer)) > -1) {
-//                bout.write(buffer, 0, bytesRead);
-//            }
-//            bout.close();
-//            certificate = bout.toByteArray();
-//
-//        } catch (Exception ex) {
-//            throw new BeaWrapperException("Could not create temporary certificate file!");
-//        }
 
         ServerSettings set = ServerSettings.getInstance();
         String endpoint = set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
@@ -847,42 +826,22 @@ public class BeaAccess {
 
         this.cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
                 .with(CacheManagerBuilder.persistence(new File(storagePath, this.cachePrefix + "-bea")))
-                //                .withCache("bea-messageheaders-cache",
-                //                        CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, Message.class,
-                //                                ResourcePoolsBuilder.newResourcePoolsBuilder()
-                //                                        .heap(100, MemoryUnit.MB)
-                //                                        //.offheap(1, MemoryUnit.MB)
-                //                                        .disk(250, MemoryUnit.MB, true)
-                //                        )
-                //                )
-                //                .withCache("bea-messages-cache",
-                //                        CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
-                //                                ResourcePoolsBuilder.newResourcePoolsBuilder()
-                //                                        .heap(50, MemoryUnit.MB)
-                //                                        //.offheap(1, MemoryUnit.MB)
-                //                                        .disk(250, MemoryUnit.MB, true)
-                //                        )
-                //                )
                 .build(true);
 
-        //this.messageCache= cacheManager.getCache("bea-messages-cache", String.class, Message.class);
         try {
             this.messageCache = cacheManager.createCache("bea-messages-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(50, MemoryUnit.MB)
-                            //.offheap(1, MemoryUnit.MB)
-                            .disk(250, MemoryUnit.MB, true)
+                            .disk(1000, MemoryUnit.MB, true)
             ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
         } catch (Throwable t) {
             log.error(t);
         }
 
-        //this.folderOverviewCache= cacheManager.getCache("bea-messageheaders-cache", Long.class, Collection.class);
         try {
             this.folderOverviewCache = cacheManager.createCache("bea-messageheaders-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ArrayList.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(100, MemoryUnit.MB)
-                            //.offheap(1, MemoryUnit.MB)
                             .disk(250, MemoryUnit.MB, true)
             ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
 
@@ -890,10 +849,6 @@ public class BeaAccess {
             log.error(t);
         }
 
-//        Cache<Long, String> myCache = cacheManager.createCache("myCache",
-//                CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, String.class, ResourcePoolsBuilder.heap(10)));
-//        myCache.put(1L, "da one!");
-//        String value = myCache.get(1L);
     }
 
     public static boolean hasInstance() {
@@ -928,7 +883,7 @@ public class BeaAccess {
     
     public static boolean isBeaEnabled() {
         ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_BEAMODE, "on");
+        String mode = set.getSetting(ServerSettings.SERVERCONF_BEAMODE, "on");
         if ("on".equalsIgnoreCase(mode)) {
             return true;
         }
