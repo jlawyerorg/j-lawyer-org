@@ -669,7 +669,7 @@ import java.awt.FlowLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 /**
  *
@@ -698,7 +698,7 @@ public class DayHistoryPanel extends javax.swing.JPanel {
         this.pnlEntries.setLayout(layout);
         
         
-        Hashtable<String,ArrayList<ArchiveFileHistoryBean>> ht=new Hashtable<>();
+        HashMap<String,ArrayList<ArchiveFileHistoryBean>> ht=new HashMap<>();
         ArrayList<String> sortedKeys=new ArrayList<>();
         for(int i=0;i<list.size();i++) {
             

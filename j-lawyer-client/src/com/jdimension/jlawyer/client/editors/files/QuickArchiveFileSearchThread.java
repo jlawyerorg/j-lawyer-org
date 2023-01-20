@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JTable;
@@ -690,8 +689,6 @@ public class QuickArchiveFileSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(QuickArchiveFileSearchThread.class.getName());
     
-    private final SimpleDateFormat dayFormat=new SimpleDateFormat("dd.MM.yyyy");
-
     private final String query;
     private final Component owner;
     private final JTable target;

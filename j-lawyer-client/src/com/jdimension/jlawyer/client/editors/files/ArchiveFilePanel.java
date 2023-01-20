@@ -5511,7 +5511,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     model2.addRow(row);
                 }
             }
-            ArrayList list = new ArrayList();
+            ArrayList<RowSorter.SortKey> list = new ArrayList<>();
             list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
             htrs.setSortKeys(list);
             htrs.sort();

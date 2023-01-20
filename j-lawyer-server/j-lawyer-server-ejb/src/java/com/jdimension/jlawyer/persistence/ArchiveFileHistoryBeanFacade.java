@@ -690,27 +690,23 @@ public class ArchiveFileHistoryBeanFacade extends AbstractFacade<ArchiveFileHist
     @Override
     public List<ArchiveFileHistoryBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
         
-        List<ArchiveFileHistoryBean> list = em.createQuery("from ArchiveFileHistoryBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
-        return list;
+        return em.createQuery("from ArchiveFileHistoryBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
     }
     
     @Override
     public List<ArchiveFileHistoryBean> findByArchiveFileKeySince(ArchiveFileBean archiveFileKey, Date since) {
         
-        List<ArchiveFileHistoryBean> list = em.createNamedQuery("ArchiveFileHistoryBean.findByArchiveFileKeySince").setParameter("archiveFileKey", archiveFileKey).setParameter("fromDate", since).getResultList();
-        return list;
+        return em.createNamedQuery("ArchiveFileHistoryBean.findByArchiveFileKeySince").setParameter("archiveFileKey", archiveFileKey).setParameter("fromDate", since).getResultList();
     }
 
     @Override
     public List<ArchiveFileHistoryBean> findByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit) {
-        List<ArchiveFileHistoryBean> list = em.createQuery("from ArchiveFileHistoryBean a where a.principal = ?1 and a.changeDate >= ?2 and a.changeDate <= ?3 order by a.changeDate desc").setParameter(1, principal).setParameter(2, fromDate).setParameter(3, toDate).setMaxResults(limit).getResultList();
-        return list;
+        return em.createQuery("from ArchiveFileHistoryBean a where a.principal = ?1 and a.changeDate >= ?2 and a.changeDate <= ?3 order by a.changeDate desc").setParameter(1, principal).setParameter(2, fromDate).setParameter(3, toDate).setMaxResults(limit).getResultList();
     }
 
     @Override
     public List<ArchiveFileHistoryBean> findByDateInterval(Date fromDate, Date toDate, int limit) {
-        List<ArchiveFileHistoryBean> list = em.createQuery("from ArchiveFileHistoryBean a where a.changeDate >= ?1 and a.changeDate <= ?2 order by a.changeDate desc").setParameter(1, fromDate).setParameter(2, toDate).setMaxResults(limit).getResultList();
-        return list;
+        return em.createQuery("from ArchiveFileHistoryBean a where a.changeDate >= ?1 and a.changeDate <= ?2 order by a.changeDate desc").setParameter(1, fromDate).setParameter(2, toDate).setMaxResults(limit).getResultList();
     }
     
 }
