@@ -1017,6 +1017,14 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(AKTE_EIGENE3)) {
                 placeHolders.put(AKTE_EIGENE3, val(aFile.getCustom3()));
             }
+            if (placeHolders.containsKey(AKTE_ERSTELLT)) {
+                if(aFile.getDateCreated()!=null) {
+                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+                    placeHolders.put(AKTE_ERSTELLT, df.format(aFile.getDateCreated()));
+                } else {
+                    placeHolders.put(AKTE_ERSTELLT, "");
+                }
+            }
 
         }
         
