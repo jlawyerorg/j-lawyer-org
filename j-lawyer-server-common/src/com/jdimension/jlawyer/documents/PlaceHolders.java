@@ -761,6 +761,7 @@ public class PlaceHolders {
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
     public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
@@ -902,6 +903,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
         
         ALLPLACEHOLDERS.add(AUTOR_AN);
 
