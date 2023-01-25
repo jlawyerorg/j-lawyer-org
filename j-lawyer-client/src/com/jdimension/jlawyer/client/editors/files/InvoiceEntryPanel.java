@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import java.awt.Color;
 import java.text.SimpleDateFormat;
@@ -680,7 +681,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     
     private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
     
-    private String caseId=null;
+    private ArchiveFileBean caseDto=null;
     private Invoice invoice=null;
 
     /**
@@ -690,8 +691,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         initComponents();
     }
     
-    public void setEntry(String caseId, Invoice invoice) {
-        this.caseId=caseId;
+    public void setEntry(ArchiveFileBean caseDto, Invoice invoice) {
+        this.caseDto=caseDto;
         this.invoice=invoice;
         this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
         this.lblDueDate.setText(df.format(invoice.getDueDate()));
@@ -800,7 +801,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.caseId, EditorsRegistry.getInstance().getMainWindow(), true);
+        InvoiceDialog dlg=new InvoiceDialog(this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setEntry(this.invoice);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

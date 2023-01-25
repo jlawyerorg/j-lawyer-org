@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.plugins.calculation;
 
 import java.awt.Container;
+import java.util.ArrayList;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
@@ -676,5 +677,6 @@ public interface CalculationPluginCallback {
     public void processResultToClipboardAsText(Object r);
     public void processResultToClipboardAsHtml(Object r);
     public void processResultToDocument(GenericCalculationTable table, Container container);
+    public void processResultToInvoice(ArrayList invoicePositions);
     
 }

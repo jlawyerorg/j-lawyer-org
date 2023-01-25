@@ -1106,15 +1106,25 @@ public class Main {
         history.setFullName("Historie");
         root.addChildModule(history);
 
-        ModuleMetadata allHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
-        allHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.HistoryPanel");
-        allHistory.setBackgroundImage("history.jpg");
-        allHistory.setFullName("Aktenhistorie");
-        allHistory.setEditorName("Aktenhistorie");
-        allHistory.setModuleName("Recherche");
-        allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
-        allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
-        history.addChildModule(allHistory);
+//        ModuleMetadata allHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
+//        allHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.HistoryPanel");
+//        allHistory.setBackgroundImage("history.jpg");
+//        allHistory.setFullName("Aktenhistorie");
+//        allHistory.setEditorName("Aktenhistorie");
+//        allHistory.setModuleName("Recherche");
+//        allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
+//        allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
+//        history.addChildModule(allHistory);
+        
+        ModuleMetadata reporting = new ModuleMetadata("Auswertungen");
+        reporting.setEditorClass("com.jdimension.jlawyer.client.editors.reporting.ReportingPanel");
+        reporting.setBackgroundImage("history.jpg");
+        reporting.setFullName("Auswertungen");
+        reporting.setEditorName("Auswertungen");
+        reporting.setModuleName("Recherche");
+        reporting.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_blue_48dp.png")));
+        reporting.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_green_48dp.png")));
+        history.addChildModule(reporting);
 
         ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
         knowledge.setFullName("Historie");

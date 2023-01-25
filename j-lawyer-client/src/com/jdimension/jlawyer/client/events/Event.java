@@ -685,6 +685,7 @@ public abstract class Event {
     public static final Integer TYPE_DOCUMENTADDED=110;
     public static final Integer TYPE_CONTACTUPDATED=120;
     public static final Integer TYPE_REVIEWADDED=130;
+    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
     
     
     private Integer type=TYPE_DEFAULT;

@@ -4815,6 +4815,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    
+    
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
@@ -4884,6 +4886,40 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             this.invoicesFacade.edit(updatedInvoice);
             return this.invoicesFacade.find(updatedInvoice.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeAllInvoicePositions(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null)
+            throw new Exception(MSG_MISSING_INVOICE);
+        
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            for(InvoicePosition pos: this.invoicePositionsFacade.findByInvoice(invoice)) {
+                this.invoicePositionsFacade.remove(pos);
+            }
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }

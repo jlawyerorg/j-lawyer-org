@@ -937,7 +937,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.invoicesPanel.removeAll();
             for(Invoice inv: invoices) {
                 InvoiceEntryPanel ip=new InvoiceEntryPanel();
-                ip.setEntry(archiveFileKey, inv);
+                ip.setEntry(this.caseDto, inv);
                 this.invoicesPanel.add(ip);
             }
 

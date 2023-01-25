@@ -29,7 +29,7 @@
                   <Component id="scrollMain" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="824" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="842" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -46,7 +46,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollMain" pref="623" max="32767" attributes="0"/>
+              <Component id="scrollMain" pref="716" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblUpdated" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -61,6 +61,11 @@
     </Container>
     <Component class="javax.swing.JLabel" name="lblDescription">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="lblDescription" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" value="Pluginbeschreibung"/>
       </Properties>
     </Component>

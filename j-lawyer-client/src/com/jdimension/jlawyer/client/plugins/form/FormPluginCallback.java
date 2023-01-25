@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.plugins.calculation.GenericCalculationCallback;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.Container;
@@ -691,7 +690,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  */
 public class FormPluginCallback {
 
-    private static Logger log = Logger.getLogger(FormPluginCallback.class.getName());
+    private static final Logger log = Logger.getLogger(FormPluginCallback.class.getName());
 
     private ArchiveFileBean selectedCase = null;
 
@@ -792,18 +791,21 @@ public class FormPluginCallback {
 
         }
 
+        @Override
         public DataFlavor[] getTransferDataFlavors() {
 
             return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
 
         }
 
+        @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
 
             return htmlFlavors.contains(flavor);
 
         }
 
+        @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
 
             if (String.class.equals(flavor.getRepresentationClass())) {

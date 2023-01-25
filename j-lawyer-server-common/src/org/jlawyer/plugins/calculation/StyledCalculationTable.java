@@ -674,10 +674,10 @@ import java.util.Hashtable;
  */
 public class StyledCalculationTable extends GenericCalculationTable implements Serializable {
 
-    private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
+    private ArrayList<ArrayList<Cell>> data = new ArrayList<>();
     private boolean lineBorder=false;
     private Color borderColor=Color.BLACK;
-    private Hashtable<Integer,Integer> columnWidths=new Hashtable<Integer, Integer>();
+    private Hashtable<Integer,Integer> columnWidths=new Hashtable<>();
     private String fontFamily="Arial";
     
     

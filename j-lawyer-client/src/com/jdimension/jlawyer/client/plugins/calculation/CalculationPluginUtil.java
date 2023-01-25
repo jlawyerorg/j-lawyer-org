@@ -668,7 +668,6 @@ import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
 import java.util.ArrayList;
-import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,7 +686,7 @@ public class CalculationPluginUtil {
     public static synchronized ArrayList<CalculationPlugin> loadLocalPlugins() {
 
         if (pluginList == null) {
-            pluginList = new ArrayList<CalculationPlugin>();
+            pluginList = new ArrayList<>();
             String localDir = getLocalDirectory() + File.separator;
 
             File pluginDir = new File(localDir);

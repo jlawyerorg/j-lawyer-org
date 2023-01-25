@@ -665,21 +665,35 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -687,26 +701,26 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class InvoiceDialog extends javax.swing.JDialog {
+public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
     private static final DecimalFormat cf=new DecimalFormat("0.00");
     
     private Invoice currentEntry=null;
-    private String caseId=null;
+    private ArchiveFileBean caseDto=null;
     
     private HashMap<String,InvoicePool> invoicePools=new HashMap<>();
 
     /**
      * Creates new form InvoiceDialog
-     * @param caseId
+     * @param caseDto
      * @param parent
      * @param modal
      */
-    public InvoiceDialog(String caseId, java.awt.Frame parent, boolean modal) {
+    public InvoiceDialog(ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
-        this.caseId=caseId;
+        this.caseDto=caseDto;
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         ComponentUtils.decorateSplitPane(splitMain);
@@ -743,7 +757,33 @@ public class InvoiceDialog extends javax.swing.JDialog {
             this.cmbStatus.addItem(s);
         }
         
+        ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
+        Collections.sort(plugins);
+        for (CalculationPlugin cp : plugins) {
+            JMenuItem mi = new JMenuItem();
+            mi.setText(cp.getName());
+            mi.setToolTipText(cp.getDescription());
+            mi.addActionListener((ActionEvent e) -> {
+                try {
+                    JPanel ui1 = cp.getUi(this.currentEntry, caseDto, caseDto.getClaimValue());
+                    CalculationPluginDialog dlg = new CalculationPluginDialog(this, true, ui1);
+                    dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
+                    dlg.setHeader(cp.getDescription());
+                    dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                } catch (Exception ex) {
+                    log.error("Error launching plugin UI", ex);
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+            this.popCalculations.add(mi);
+        }
+        
         this.setEntry(null);
+        
+        EventBroker b = EventBroker.getInstance();
+        b.subscribeConsumer(this, Event.TYPE_INVOICEPOSITIONADDED);
     }
 
     public void setEntry(Invoice invoice) {
@@ -820,6 +860,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popCalculations = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         splitMain = new javax.swing.JSplitPane();
@@ -853,6 +894,8 @@ public class InvoiceDialog extends javax.swing.JDialog {
         cmdAddPosition = new javax.swing.JButton();
         lblInvoiceHeader = new javax.swing.JLabel();
         chkSmallBusiness = new javax.swing.JCheckBox();
+        cmdCalculation = new javax.swing.JButton();
+        cmdRemoveAllPositions = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -994,6 +1037,20 @@ public class InvoiceDialog extends javax.swing.JDialog {
         chkSmallBusiness.setSelected(true);
         chkSmallBusiness.setText("USt ausweisen");
 
+        cmdCalculation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/money.png"))); // NOI18N
+        cmdCalculation.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCalculationMousePressed(evt);
+            }
+        });
+
+        cmdRemoveAllPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveAllPositions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveAllPositionsActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1046,15 +1103,19 @@ public class InvoiceDialog extends javax.swing.JDialog {
                                         .addComponent(cmdDatePeriodTo)))
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(jSeparator1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdAddPosition))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblInvoiceHeader)
                             .addComponent(chkSmallBusiness)
-                            .addComponent(lblInvoicePositions))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(lblInvoicePositions)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(cmdAddPosition)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCalculation)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdRemoveAllPositions)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1105,9 +1166,14 @@ public class InvoiceDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblInvoicePositions)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdAddPosition)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(lblInvoicePositions)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmdAddPosition)
+                            .addComponent(cmdCalculation)))
+                    .addComponent(cmdRemoveAllPositions))
                 .addGap(111, 111, 111))
         );
 
@@ -1194,7 +1260,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(caseId, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()));
+            Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(this.caseDto.getId(), this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()));
             this.setEntry(newInvoice);
 
         } catch (Exception ex) {
@@ -1259,7 +1325,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
             this.currentEntry.setSmallBusiness(this.chkSmallBusiness.isSelected());
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updateInvoice(caseId, currentEntry);
+            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), currentEntry);
 
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
@@ -1291,18 +1357,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
         this.lblInvoiceTotal.setText(cf.format(total));
     }
     
-    private void cmdAddPositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPositionActionPerformed
-
-        InvoicePosition pos=new InvoicePosition();
-        pos.setDescription("Beschreibung");
-        pos.setInvoice(this.currentEntry);
-        pos.setName("Name");
-        pos.setPosition(this.pnlInvoicePositions.getComponentCount()+1);
-        pos.setTaxRate(19f);
-        pos.setTotal(0f);
-        pos.setUnitPrice(0f);
-        pos.setUnits(1f);
-        
+    private void addPosition(InvoicePosition pos) {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1321,8 +1376,46 @@ public class InvoiceDialog extends javax.swing.JDialog {
             log.error("Error creating invoice position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    private void cmdAddPositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPositionActionPerformed
+
+        InvoicePosition pos=new InvoicePosition();
+        pos.setDescription("Beschreibung");
+        pos.setInvoice(this.currentEntry);
+        pos.setName("Name");
+        pos.setPosition(this.pnlInvoicePositions.getComponentCount()+1);
+        pos.setTaxRate(19f);
+        pos.setTotal(0f);
+        pos.setUnitPrice(0f);
+        pos.setUnits(1f);
+        
+        this.addPosition(pos);
         
     }//GEN-LAST:event_cmdAddPositionActionPerformed
+
+    private void cmdCalculationMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCalculationMousePressed
+        this.popCalculations.show(this.cmdCalculation, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdCalculationMousePressed
+
+    private void cmdRemoveAllPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAllPositionsActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().removeAllInvoicePositions(this.currentEntry.getId());
+
+        } catch (Exception ex) {
+            log.error("Error removing invoice positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Entfernen der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        this.pnlInvoicePositions.removeAll();
+        this.pnlInvoicePositions.doLayout();
+        int dl = this.splitMain.getDividerLocation();
+        this.splitMain.setDividerLocation(dl + 1);
+        this.splitMain.setDividerLocation(dl);
+
+    }//GEN-LAST:event_cmdRemoveAllPositionsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1369,12 +1462,14 @@ public class InvoiceDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbInvoicePool;
     private javax.swing.JComboBox<String> cmbStatus;
     private javax.swing.JButton cmdAddPosition;
+    private javax.swing.JButton cmdCalculation;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdConfirmInvoiceNumber;
     private javax.swing.JButton cmdDateCreated;
     private javax.swing.JButton cmdDateDue;
     private javax.swing.JButton cmdDatePeriodFrom;
     private javax.swing.JButton cmdDatePeriodTo;
+    private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JTextField dtCreated;
@@ -1401,8 +1496,18 @@ public class InvoiceDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblInvoiceTotal;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JPanel pnlInvoicePositions;
+    private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JSplitPane splitMain;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void onEvent(Event e) {
+        if (e instanceof InvoicePositionAddedEvent) {
+            if (this.currentEntry != null) {
+                this.addPosition(((InvoicePositionAddedEvent)e).getPosition());
+            }
+        }
+    }
 }

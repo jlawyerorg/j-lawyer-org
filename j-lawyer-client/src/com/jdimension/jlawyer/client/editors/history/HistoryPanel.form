@@ -92,9 +92,6 @@
             <Font bold="true" component="lblPanelTitle" property="font" relativeSize="true" size="12"/>
           </FontInfo>
         </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
         <Property name="text" type="java.lang.String" value="Historienrecherche"/>
       </Properties>
       <AuxValues>
@@ -116,9 +113,6 @@
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="cc" green="b8" id="Slider.foreground" palette="3" red="a3" type="palette"/>
         </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
         <Property name="text" type="java.lang.String" value="01.01.2015"/>
       </Properties>
     </Component>
@@ -126,9 +120,6 @@
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="cc" green="b8" id="Slider.foreground" palette="3" red="a3" type="palette"/>
-        </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
         <Property name="text" type="java.lang.String" value="31.12.2015"/>
       </Properties>
@@ -188,9 +179,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkOnlyMine">
       <Properties>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="nur meine &#xc4;nderungen"/>
       </Properties>

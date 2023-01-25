@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.plugins.calculation;
 
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
@@ -708,6 +709,15 @@ public class CalculationPlugin implements Comparable {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
         bind.setVariable("callback", new GenericCalculationCallback(targetCase));
+        bind.setVariable("claimvalue", claimValue);
+        e.run(getId() + "_ui.groovy", bind);
+        return (JPanel)bind.getVariable("SCRIPTPANEL");
+    }
+    
+    public JPanel getUi(Invoice invoice, ArchiveFileBean targetCase, float claimValue) throws Exception {
+        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
+        Binding bind = new Binding();
+        bind.setVariable("callback", new GenericCalculationCallback(invoice, targetCase));
         bind.setVariable("claimvalue", claimValue);
         e.run(getId() + "_ui.groovy", bind);
         return (JPanel)bind.getVariable("SCRIPTPANEL");

@@ -5479,7 +5479,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
 
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.dto.getId(), EditorsRegistry.getInstance().getMainWindow(), true);
+        InvoiceDialog dlg=new InvoiceDialog(this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed

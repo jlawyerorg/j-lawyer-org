@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 
 /**
@@ -694,6 +695,18 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
         
     }
     
+    /**
+     * Creates new form CalculationPluginDialog
+     * @param parent
+     * @param modal
+     */
+    public CalculationPluginDialog(JDialog parent, boolean modal, JPanel pluginUi) {
+        super(parent, modal);
+        initComponents();
+        this.scrollMain.setViewportView(pluginUi);
+        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
+    }
+    
     public void setHeader(String h) {
         this.lblDescription.setText(h);
     }
@@ -717,6 +730,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
+        lblDescription.setFont(lblDescription.getFont());
         lblDescription.setText("Pluginbeschreibung");
 
         lblUpdated.setFont(lblUpdated.getFont().deriveFont(lblUpdated.getFont().getSize()-2f));
@@ -732,7 +746,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
                     .addComponent(scrollMain)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addGap(0, 824, Short.MAX_VALUE))
+                        .addGap(0, 842, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(lblUpdated)))
@@ -744,7 +758,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(lblDescription)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollMain, javax.swing.GroupLayout.DEFAULT_SIZE, 623, Short.MAX_VALUE)
+                .addComponent(scrollMain, javax.swing.GroupLayout.DEFAULT_SIZE, 716, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblUpdated)
                 .addContainerGap())
