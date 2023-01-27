@@ -667,6 +667,7 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -681,6 +682,7 @@ public class ReportEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form ReportEntryPanel
+     * @param reportPane
      */
     public ReportEntryPanel(JTabbedPane reportPane) {
         initComponents();
@@ -721,12 +723,18 @@ public class ReportEntryPanel extends javax.swing.JPanel {
         
         if(report.isFirstInCategory()) {
             this.lblCategory.setText(report.getCategory());
+            this.lblCategory.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
             this.lblCategory.setText("");
+            this.lblCategory.setBackground(this.lblName.getBackground());
         }
         this.lblName.setText(report.getName());
         this.lblDescription.setText(report.getDescription());
         
+        if(!(report.getSecurityType()==Report.SECURITY_CONFIDENTIAL)) {
+            this.lblConfidential.setIcon(null);
+            this.lblConfidential.setToolTipText(null);
+        }
         
     }
 
@@ -746,9 +754,11 @@ public class ReportEntryPanel extends javax.swing.JPanel {
         lblChart = new javax.swing.JLabel();
         lblTable = new javax.swing.JLabel();
         cmdPlay = new javax.swing.JButton();
+        lblConfidential = new javax.swing.JLabel();
 
         lblCategory.setFont(lblCategory.getFont().deriveFont(lblCategory.getFont().getStyle() | java.awt.Font.BOLD, lblCategory.getFont().getSize()+2));
         lblCategory.setText("Kategorie");
+        lblCategory.setOpaque(true);
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText("Name");
@@ -770,6 +780,9 @@ public class ReportEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblConfidential.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_red_48dp.png"))); // NOI18N
+        lblConfidential.setToolTipText("Report ist nur mit erweiterten Rechten ausführbar");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -777,19 +790,21 @@ public class ReportEntryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblCategory, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdPlay)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblName)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblConfidential)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblTable)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblChart)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblSpecial)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblCategory, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -798,13 +813,13 @@ public class ReportEntryPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(lblCategory)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdPlay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblChart, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(lblTable, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(lblSpecial, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(lblChart, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblTable, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblConfidential, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblName, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdPlay, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSpecial, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblDescription)
                 .addContainerGap())
@@ -816,6 +831,8 @@ public class ReportEntryPanel extends javax.swing.JPanel {
         try {
             Object report = Class.forName(this.entry.getClassName()).newInstance();
             reportComponent=(JComponent)report;
+            if(reportComponent instanceof ReportResultPanel)
+                ((ReportResultPanel)reportComponent).initialize(this.entry.getName(), this.entry.getReportId(), this.entry.getDefaultBeginDate(), this.entry.getDefaultEndDate());
         } catch (Exception ex) {
             log.error("Error creating report from class " + this.entry.getClassName(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Reports: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
@@ -829,6 +846,7 @@ public class ReportEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdPlay;
     private javax.swing.JLabel lblCategory;
     private javax.swing.JLabel lblChart;
+    private javax.swing.JLabel lblConfidential;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblSpecial;

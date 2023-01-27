@@ -741,12 +741,9 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public boolean login(String principalId, String password) {
-        //System.out.println(sessionContext.isCallerInRole("loginRole"));
         return false;
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     @Override
     @RolesAllowed({"loginRole"})
     public boolean isAdmin() {

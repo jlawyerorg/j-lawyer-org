@@ -787,6 +787,16 @@ public class JLawyerServiceLocator {
         }
     }
     
+    public ReportServiceRemote lookupReportServiceRemote() {
+        try {
+            return (ReportServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ReportService!com.jdimension.jlawyer.services.ReportServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
     public IntegrationServiceRemote lookupIntegrationServiceRemote() {
         try {
             return (IntegrationServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");

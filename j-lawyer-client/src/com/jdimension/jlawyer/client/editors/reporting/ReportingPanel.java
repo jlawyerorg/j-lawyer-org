@@ -672,11 +672,12 @@ import java.awt.Image;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
 import org.apache.log4j.Logger;
+import org.jlawyer.reporting.Reports;
 
 /**
  *
@@ -703,6 +704,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOpen.setSequence(10);
         invoicesOpen.setTypeChart(true);
         invoicesOpen.setTypeTable(true);
+        invoicesOpen.setSecurityType(Report.SECURITY_COMMON);
         allReports.add(invoicesOpen);
         
         Report invoicesOverdue=new Report();
@@ -713,6 +715,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOverdue.setSequence(20);
         invoicesOverdue.setTypeChart(true);
         invoicesOverdue.setTypeTable(true);
+        invoicesOverdue.setSecurityType(Report.SECURITY_COMMON);
         allReports.add(invoicesOverdue);
         
         Report caseHistory=new Report();
@@ -722,27 +725,66 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         caseHistory.setCategory("Historie");
         caseHistory.setSequence(10);
         caseHistory.setTypeSpecial(true);
+        caseHistory.setSecurityType(Report.SECURITY_COMMON);
+        Date fromDate=new Date();
+        caseHistory.setDefaultBeginDate(fromDate);
+        Date toDate=new Date();
+        caseHistory.setDefaultEndDate(toDate);
         allReports.add(caseHistory);
         
         Report casesPerMonth=new Report();
         casesPerMonth.setName("Akten pro Monat");
         casesPerMonth.setDescription("<html>Grafische / tabellarische Auswertungen des <b>Aktenaufkommens pro Monat</b> für einen ausgewählten Zeitraum</html>");
-        casesPerMonth.setClassName(CasesPerYearPanel.class.getName());
+        casesPerMonth.setReportId(Reports.RPT_CASES_BYMONTH);
+        casesPerMonth.setClassName(DynamicReportContainerPanel.class.getName());
         casesPerMonth.setCategory("Unternehmensentwicklung");
         casesPerMonth.setSequence(10);
         casesPerMonth.setTypeTable(true);
         casesPerMonth.setTypeChart(true);
+        casesPerMonth.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setYear(fromDate.getYear()-1);
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        casesPerMonth.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        casesPerMonth.setDefaultEndDate(toDate);
         allReports.add(casesPerMonth);
         
         Report casesPerYear=new Report();
         casesPerYear.setName("Akten pro Jahr");
         casesPerYear.setDescription("<html>Grafische / tabellarische Auswertungen des <b>Aktenaufkommens pro Jahr</b></html>");
-        casesPerYear.setClassName(CasesPerYearPanel.class.getName());
+        casesPerYear.setReportId(Reports.RPT_CASES_BYYEAR);
+        casesPerYear.setClassName(DynamicReportContainerPanel.class.getName());
         casesPerYear.setCategory("Unternehmensentwicklung");
         casesPerYear.setSequence(20);
         casesPerYear.setTypeTable(true);
         casesPerYear.setTypeChart(true);
+        casesPerYear.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setYear(fromDate.getYear()-10);
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        casesPerYear.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        casesPerYear.setDefaultEndDate(toDate);
         allReports.add(casesPerYear);
+        
+        Report employeeReport=new Report();
+        employeeReport.setName("Mitarbeiterreport");
+        employeeReport.setDescription("<html>Tabellarische Auswertungen zu <b>Aktenaktivitäten</b> einer Mitarbeiterin / eines Mitarbeiters</html>");
+        employeeReport.setReportId(Reports.RPT_EMPLOYEE_ACTIVITY);
+        employeeReport.setClassName(DynamicReportContainerPanel.class.getName());
+        employeeReport.setCategory("Zeiten");
+        employeeReport.setSequence(10);
+        employeeReport.setTypeTable(true);
+        employeeReport.setTypeChart(true);
+        employeeReport.setSecurityType(Report.SECURITY_CONFIDENTIAL);
+        fromDate=new Date(System.currentTimeMillis()-7l*24l*60l*60l*1000l);
+        employeeReport.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        employeeReport.setDefaultEndDate(toDate);
+        allReports.add(employeeReport);
         
         DecimalFormat df=new DecimalFormat("000");
         Collections.sort(allReports, (Object arg0, Object arg1) -> {

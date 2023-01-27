@@ -713,8 +713,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
             this.principalId = null;
         }
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png")));
-
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -767,7 +765,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         historyIntervalSlider = new com.jdimension.jlawyer.client.components.RangeSlider();
         lblMinDate = new javax.swing.JLabel();
@@ -784,8 +781,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
                 formComponentResized(evt);
             }
         });
-
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setText("Historienrecherche");
@@ -844,8 +839,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
                     .add(jScrollPane1)
                     .add(layout.createSequentialGroup()
                         .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -868,11 +861,10 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRefresh)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                        .add(chkOnlyMine)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbMaxEntries))))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(chkOnlyMine)
+                            .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(cmbMaxEntries, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -953,7 +945,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     private javax.swing.JComboBox cmbMaxEntries;
     private javax.swing.JButton cmdRefresh;
     private com.jdimension.jlawyer.client.components.RangeSlider historyIntervalSlider;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblMaxDate;
     private javax.swing.JLabel lblMinDate;

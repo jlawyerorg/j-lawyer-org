@@ -663,14 +663,20 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.reporting;
 
+import java.util.Date;
+
 /**
  *
  * @author jens
  */
 public class Report {
     
+    public static final int SECURITY_COMMON=10;
+    public static final int SECURITY_CONFIDENTIAL=20;
+    
     protected String name=null;
     protected String description=null;
+    protected String reportId=null;
     protected String className=null;
     protected String category=null;
     protected boolean firstInCategory=false;
@@ -679,6 +685,11 @@ public class Report {
     protected boolean typeChart=false;
     protected boolean typeTable=false;
     protected boolean typeSpecial=false;
+    
+    protected Date defaultBeginDate=new Date();
+    protected Date defaultEndDate=new Date();
+    
+    protected int securityType=SECURITY_COMMON;
     
     public Report() {
         
@@ -808,6 +819,62 @@ public class Report {
      */
     public void setFirstInCategory(boolean firstInCategory) {
         this.firstInCategory = firstInCategory;
+    }
+
+    /**
+     * @return the securityType
+     */
+    public int getSecurityType() {
+        return securityType;
+    }
+
+    /**
+     * @param securityType the securityType to set
+     */
+    public void setSecurityType(int securityType) {
+        this.securityType = securityType;
+    }
+
+    /**
+     * @return the reportId
+     */
+    public String getReportId() {
+        return reportId;
+    }
+
+    /**
+     * @param reportId the reportId to set
+     */
+    public void setReportId(String reportId) {
+        this.reportId = reportId;
+    }
+
+    /**
+     * @return the defaultBeginDate
+     */
+    public Date getDefaultBeginDate() {
+        return defaultBeginDate;
+    }
+
+    /**
+     * @param defaultBeginDate the defaultBeginDate to set
+     */
+    public void setDefaultBeginDate(Date defaultBeginDate) {
+        this.defaultBeginDate = defaultBeginDate;
+    }
+
+    /**
+     * @return the defaultEndDate
+     */
+    public Date getDefaultEndDate() {
+        return defaultEndDate;
+    }
+
+    /**
+     * @param defaultEndDate the defaultEndDate to set
+     */
+    public void setDefaultEndDate(Date defaultEndDate) {
+        this.defaultEndDate = defaultEndDate;
     }
     
 }

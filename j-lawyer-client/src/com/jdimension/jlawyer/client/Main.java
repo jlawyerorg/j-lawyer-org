@@ -1105,16 +1105,6 @@ public class Main {
         ModuleMetadata history = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
         history.setFullName("Historie");
         root.addChildModule(history);
-
-//        ModuleMetadata allHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
-//        allHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.HistoryPanel");
-//        allHistory.setBackgroundImage("history.jpg");
-//        allHistory.setFullName("Aktenhistorie");
-//        allHistory.setEditorName("Aktenhistorie");
-//        allHistory.setModuleName("Recherche");
-//        allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
-//        allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
-//        history.addChildModule(allHistory);
         
         ModuleMetadata reporting = new ModuleMetadata("Auswertungen");
         reporting.setEditorClass("com.jdimension.jlawyer.client.editors.reporting.ReportingPanel");

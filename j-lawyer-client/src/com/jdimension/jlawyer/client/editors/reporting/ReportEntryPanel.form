@@ -19,13 +19,13 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="lblCategory" max="32767" attributes="0"/>
-                  <Component id="lblDescription" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="cmdPlay" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblName" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblConfidential" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblTable" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblChart" min="-2" max="-2" attributes="0"/>
@@ -33,6 +33,8 @@
                       <Component id="lblSpecial" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
+                  <Component id="lblDescription" max="32767" attributes="0"/>
+                  <Component id="lblCategory" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -44,14 +46,13 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblCategory" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="cmdPlay" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="lblChart" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                      <Component id="lblTable" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                      <Component id="lblSpecial" alignment="0" min="-2" pref="30" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="lblName" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                  <Component id="lblChart" alignment="0" max="32767" attributes="0"/>
+                  <Component id="lblTable" alignment="0" max="32767" attributes="0"/>
+                  <Component id="lblConfidential" alignment="0" max="32767" attributes="0"/>
+                  <Component id="lblName" alignment="0" max="32767" attributes="0"/>
+                  <Component id="cmdPlay" alignment="0" max="32767" attributes="0"/>
+                  <Component id="lblSpecial" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
@@ -69,6 +70,7 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Kategorie"/>
+        <Property name="opaque" type="boolean" value="true"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblName">
@@ -116,6 +118,14 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPlayActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblConfidential">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/baseline_lock_red_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Report ist nur mit erweiterten Rechten ausf&#xfc;hrbar"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
