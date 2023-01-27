@@ -922,6 +922,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     @Override
     @RolesAllowed({"adminRole"})
     @Asynchronous
+    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
     public void runFullAddressBookSync() {
         this.fullAddressBookSyncImpl();
     }
