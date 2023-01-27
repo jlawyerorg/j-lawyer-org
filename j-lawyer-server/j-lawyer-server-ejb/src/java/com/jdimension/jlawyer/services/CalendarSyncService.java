@@ -722,6 +722,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     @Override
     @RolesAllowed({"adminRole"})
     @Asynchronous
+    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
     public void runFullCalendarSync() {
         this.fullCalendarSyncImpl();
     }
