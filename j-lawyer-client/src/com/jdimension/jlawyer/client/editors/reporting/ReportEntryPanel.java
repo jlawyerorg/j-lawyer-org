@@ -731,7 +731,7 @@ public class ReportEntryPanel extends javax.swing.JPanel {
         this.lblName.setText(report.getName());
         this.lblDescription.setText(report.getDescription());
         
-        if(!(report.getSecurityType()==Report.SECURITY_CONFIDENTIAL)) {
+        if(report.getSecurityType()!=Report.SECURITY_CONFIDENTIAL) {
             this.lblConfidential.setIcon(null);
             this.lblConfidential.setToolTipText(null);
         }
