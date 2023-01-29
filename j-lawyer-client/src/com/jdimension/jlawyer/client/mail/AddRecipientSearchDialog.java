@@ -672,8 +672,8 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -690,13 +690,15 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddRecipientSearchDialog.class.getName());
     private JTextField to = null;
-    private int targetReferenceType = -1;
-    //private KeyAdapter tableKeyListener = null;
     private JDialog parent=null;
     private JComponent nextFocus=null;
 
     /**
      * Creates new form AddRecipientSearchDialog
+     * @param parent
+     * @param modal
+     * @param to
+     * @param nextFocus
      */
     public AddRecipientSearchDialog(JDialog parent, boolean modal, JTextField to, JComponent nextFocus) {
         super(parent, modal);
@@ -714,14 +716,6 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 
         ComponentUtils.restoreDialogSize(this);
 
-//        this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//            public void keyPressed(java.awt.event.KeyEvent evt) {
-//                if (evt.getKeyCode() == evt.VK_ENTER) {
-//                    useSelection();
-//                }
-//            }
-//        };
-        //this.tableKeyListener = null;
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -848,7 +842,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
         }
@@ -864,7 +858,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
             email = "";
         }
 
-        if (this.to.getText().indexOf(email) < 0) {
+        if (!this.to.getText().contains(email)) {
             if (this.to.getText().trim().length() > 0) {
                 this.to.setText(this.to.getText() + ", " + email);
             } else {
@@ -898,7 +892,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
     }
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
-// perform search here
+        // perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
         
@@ -906,17 +900,8 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
-            //this.tblResults.removeKeyListener(this.tableKeyListener);
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
-//            this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//                public void keyPressed(java.awt.event.KeyEvent evt) {
-//                    if (evt.getKeyCode() == evt.VK_ENTER) {
-//                        useSelection();
-//                    }
-//                }
-//            };
-//            tblResults.addKeyListener(this.tableKeyListener);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
@@ -932,12 +917,8 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new AddRecipientSearchDialog(null, true, null, null).setVisible(true);
-                //new AddRecipientSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new AddRecipientSearchDialog(null, true, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

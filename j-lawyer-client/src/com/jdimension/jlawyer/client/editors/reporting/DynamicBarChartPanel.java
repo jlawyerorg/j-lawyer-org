@@ -706,6 +706,9 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
 //    chart.getStyler().setAxisTitleFont(new JLabel().getFont());
 //    chart.getStyler().setChartTitleFont(new JLabel().getFont().deriveFont(Font.BOLD));
         ch.getStyler().setToolTipsEnabled(this.resultChart.isToolTipsEnabled());
+        
+        //ch.getStyler().se
+        
 //    chart.getStyler().setToolTipBackgroundColor(DefaultColorTheme.COLOR_DARK_GREY);
 //    chart.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN);
 //    chart.getStyler().setChartBackgroundColor(DefaultColorTheme.COLOR_DARK_GREY);

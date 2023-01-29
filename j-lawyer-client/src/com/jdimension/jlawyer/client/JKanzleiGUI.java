@@ -1091,6 +1091,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuCalendarSyncNow = new javax.swing.JMenuItem();
         mnuFinance = new javax.swing.JMenu();
         mnuInvoicePools = new javax.swing.JMenuItem();
+        mnuInvoiceTypes = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1648,6 +1649,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuInvoicePools);
+
+        mnuInvoiceTypes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
+        mnuInvoiceTypes.setText("Belegarten");
+        mnuInvoiceTypes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoiceTypesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoiceTypes);
 
         mnuOptions.add(mnuFinance);
         mnuOptions.add(jSeparator2);
@@ -2558,6 +2568,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuInvoicePoolsActionPerformed
 
+    private void mnuInvoiceTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTypesActionPerformed
+        if (checkAdmin()) {
+                InvoiceTypesSetupDialog dlg = new InvoiceTypesSetupDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuInvoiceTypesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2633,6 +2651,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuInvoicePools;
+    private javax.swing.JMenuItem mnuInvoiceTypes;
     private javax.swing.JMenuItem mnuMailboxSettings;
     private javax.swing.JMenuItem mnuMappingEntries;
     private javax.swing.JMenuItem mnuMappingTables;

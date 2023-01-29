@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import java.util.List;
 import javax.ejb.Remote;
 
@@ -684,5 +685,13 @@ public interface InvoiceServiceRemote {
     void removeInvoicePool(InvoicePool ip);
 
     List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception;
+
+    List<InvoiceType> getAllInvoiceTypes() throws Exception;
+
+    InvoiceType addInvoiceType(InvoiceType invoiceType) throws Exception;
+
+    InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception;
+
+    void removeInvoiceType(InvoiceType invoiceType) throws Exception;
     
 }

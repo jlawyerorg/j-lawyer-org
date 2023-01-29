@@ -665,10 +665,7 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -723,6 +720,10 @@ public class Invoice implements Serializable {
     @Column(name = "period_to")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date periodTo;
+    
+    @JoinColumn(name = "invoice_type", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    private InvoiceType invoiceType;
     
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne

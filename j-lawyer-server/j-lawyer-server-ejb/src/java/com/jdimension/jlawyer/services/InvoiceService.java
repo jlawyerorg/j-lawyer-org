@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
@@ -702,6 +704,8 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     private InvoicePoolAccessFacadeLocal invoicePoolAccess;
     @EJB
     private InvoiceFacadeLocal invoiceAccess;
+    @EJB
+    private InvoiceTypeFacadeLocal invoiceTypes;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -718,8 +722,6 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         });
         return pools;
     }
-    
-    
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -840,6 +842,36 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             throw new Exception(isp.getMessage());
         }
         
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InvoiceType> getAllInvoiceTypes() throws Exception {
+        List<InvoiceType> types=this.invoiceTypes.findAll();
+        return types;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public InvoiceType addInvoiceType(InvoiceType invoiceType) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String ipId = idGen.getID().toString();
+        invoiceType.setId(ipId);
+        this.invoiceTypes.create(invoiceType);
+        return this.invoiceTypes.find(ipId);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception {
+        this.invoiceTypes.edit(invoiceType);
+        return this.invoiceTypes.find(invoiceType.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeInvoiceType(InvoiceType invoiceType) throws Exception {
+        this.invoiceTypes.remove(invoiceType);
     }
 
     

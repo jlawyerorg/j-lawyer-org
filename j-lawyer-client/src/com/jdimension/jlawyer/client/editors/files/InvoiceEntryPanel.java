@@ -666,11 +666,13 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -683,6 +685,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     
     private ArchiveFileBean caseDto=null;
     private Invoice invoice=null;
+    private List<AddressBean> addresses=null;
 
     /**
      * Creates new form InvoiceEntryPanel
@@ -691,9 +694,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         initComponents();
     }
     
-    public void setEntry(ArchiveFileBean caseDto, Invoice invoice) {
+    public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
         this.caseDto=caseDto;
         this.invoice=invoice;
+        this.addresses=addresses;
         this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
         this.lblDueDate.setText(df.format(invoice.getDueDate()));
         if(invoice.getDueDate().getTime()<new Date().getTime()) {
@@ -801,7 +805,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
+        InvoiceDialog dlg=new InvoiceDialog(this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
         dlg.setEntry(this.invoice);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

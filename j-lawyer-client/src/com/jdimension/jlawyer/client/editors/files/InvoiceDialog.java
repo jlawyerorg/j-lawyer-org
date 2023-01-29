@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
@@ -709,6 +710,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     
     private Invoice currentEntry=null;
     private ArchiveFileBean caseDto=null;
+    private AddressBean recipientAddress=null;
     
     private HashMap<String,InvoicePool> invoicePools=new HashMap<>();
 
@@ -717,8 +719,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
      * @param caseDto
      * @param parent
      * @param modal
+     * @param addresses
      */
-    public InvoiceDialog(ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal) {
+    public InvoiceDialog(ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
         super(parent, modal);
         this.caseDto=caseDto;
         initComponents();
@@ -778,6 +781,17 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
             });
             this.popCalculations.add(mi);
+        }
+        
+        for (AddressBean ad : addresses) {
+            JMenuItem mi = new JMenuItem();
+            mi.setText(ad.toDisplayName());
+            mi.setToolTipText(ad.toDisplayName() + " als Belegempfänger verwenden");
+            mi.addActionListener((ActionEvent e) -> {
+                lblRecipient.setText(ad.toDisplayName());
+                recipientAddress=ad;
+            });
+            this.popRecipients.add(mi);
         }
         
         this.setEntry(null);
@@ -861,6 +875,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void initComponents() {
 
         popCalculations = new javax.swing.JPopupMenu();
+        popRecipients = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         splitMain = new javax.swing.JSplitPane();
@@ -968,6 +983,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         txtName.setText("Name");
 
         cmdSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchRecipient.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdSearchRecipientMousePressed(evt);
+            }
+        });
 
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont());
@@ -1323,6 +1343,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.currentEntry.setPeriodTo(df.parse(this.dtTo.getText()));
             this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
             this.currentEntry.setSmallBusiness(this.chkSmallBusiness.isSelected());
+            this.currentEntry.setContact(this.recipientAddress);
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), currentEntry);
@@ -1417,6 +1438,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     }//GEN-LAST:event_cmdRemoveAllPositionsActionPerformed
 
+    private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
+        this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdSearchRecipientMousePressed
+
     /**
      * @param args the command line arguments
      */
@@ -1446,7 +1471,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            InvoiceDialog dialog = new InvoiceDialog(null, new javax.swing.JFrame(), true);
+            InvoiceDialog dialog = new InvoiceDialog(null, new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1497,6 +1522,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JPanel pnlInvoicePositions;
     private javax.swing.JPopupMenu popCalculations;
+    private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JSplitPane splitMain;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
