@@ -788,6 +788,19 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         
 //        this.treeFolders.setLargeModel(true);
 
+        this.cmdSearch.setText("");
+
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche im aktuellen Ordner");
+        this.txtSearchString.putClientProperty("JTextField.clearCallback",
+                (Runnable) () -> {
+                    SwingUtilities.invokeLater(() -> {
+                        txtSearchString.setText("");
+                        cmdSearchActionPerformed(null);
+                    });
+                    
+                });
+
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.decorateSplitPane(this.jSplitPane2);
         ComponentUtils.decorateSplitPane(this.jSplitPane3);
@@ -1161,6 +1174,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         cmdDelete = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         chkDeleteAfterAction = new javax.swing.JCheckBox();
+        txtSearchString = new javax.swing.JTextField();
+        cmdSearch = new javax.swing.JButton();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1355,7 +1370,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -1461,6 +1476,20 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
+        txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtSearchStringKeyPressed(evt);
+            }
+        });
+
+        cmdSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdSearch.setText(" ");
+        cmdSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSearchActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1481,6 +1510,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(chkDeleteAfterAction)
+                        .add(18, 18, 18)
+                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 260, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdSearch)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1496,9 +1529,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkDeleteAfterAction)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkDeleteAfterAction)
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdSearch))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1512,7 +1548,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
-        this.treeFoldersValueChangedImpl(evt, 3, -1);
+        this.treeFoldersValueChangedImpl(evt, 3, -1, null);
     }//GEN-LAST:event_treeFoldersValueChanged
 
     /*
@@ -1529,7 +1565,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         
     }
     
-    private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow) {
+    private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow, String searchTerm) {
         this.mailContentUI.clear();
         this.pnlActionsChild.removeAll();
         this.cmdDelete.setEnabled(false);
@@ -1584,7 +1620,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-            LoadFolderAction a = new LoadFolderAction(dlg, folder, tblMails, sortCol, scrollToRow);
+            LoadFolderAction a = new LoadFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, searchTerm);
             a.start();
 
         } catch (Exception ex) {
@@ -1957,7 +1993,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         }
         this.resetCacheForSelectedFolder();
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
 
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
@@ -2247,7 +2283,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
@@ -2286,6 +2322,23 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
         
     }//GEN-LAST:event_treeFoldersTreeExpanded
+
+    private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            this.cmdSearchActionPerformed(null);
+        }
+    }//GEN-LAST:event_txtSearchStringKeyPressed
+
+    private void cmdSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchActionPerformed
+        int sortCol = -1;
+        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+        if (sortKeys != null) {
+            if (sortKeys.size() > 0) {
+                sortCol = sortKeys.get(0).getColumn();
+            }
+        }
+        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, -1, this.txtSearchString.getText());
+    }//GEN-LAST:event_cmdSearchActionPerformed
 
     private String getFullPath(TreePath tp) {
         StringBuilder sb = new StringBuilder();
@@ -2700,7 +2753,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
             target.resetCaches();
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
 
         } catch (Exception e) {
             log.error(e);
@@ -2987,6 +3040,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JButton cmdReply;
     private javax.swing.JButton cmdReplyAll;
+    private javax.swing.JButton cmdSearch;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel2;
@@ -3019,5 +3073,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
+    private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
 }
