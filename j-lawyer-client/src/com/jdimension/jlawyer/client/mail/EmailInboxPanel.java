@@ -2332,10 +2332,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private void cmdSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchActionPerformed
         int sortCol = -1;
         List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-        if (sortKeys != null) {
-            if (sortKeys.size() > 0) {
-                sortCol = sortKeys.get(0).getColumn();
-            }
+        if (sortKeys != null && !(sortKeys.isEmpty())) {
+            sortCol = sortKeys.get(0).getColumn();
         }
         this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, -1, this.txtSearchString.getText());
     }//GEN-LAST:event_cmdSearchActionPerformed

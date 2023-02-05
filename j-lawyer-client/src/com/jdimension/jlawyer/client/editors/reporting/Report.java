@@ -688,6 +688,7 @@ public class Report {
     
     protected Date defaultBeginDate=new Date();
     protected Date defaultEndDate=new Date();
+    protected String dateSelectionLabel="Datum";
     
     protected int securityType=SECURITY_COMMON;
     
@@ -875,6 +876,20 @@ public class Report {
      */
     public void setDefaultEndDate(Date defaultEndDate) {
         this.defaultEndDate = defaultEndDate;
+    }
+
+    /**
+     * @return the dateSelectionLabel
+     */
+    public String getDateSelectionLabel() {
+        return dateSelectionLabel;
+    }
+
+    /**
+     * @param dateSelectionLabel the dateSelectionLabel to set
+     */
+    public void setDateSelectionLabel(String dateSelectionLabel) {
+        this.dateSelectionLabel = dateSelectionLabel;
     }
     
 }

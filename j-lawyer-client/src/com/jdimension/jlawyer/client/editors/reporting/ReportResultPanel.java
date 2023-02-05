@@ -678,6 +678,6 @@ public interface ReportResultPanel {
      * @param fromDate
      * @param toDate
      */
-    public void initialize(String name, String reportId, Date fromDate, Date toDate);
+    public void initialize(String name, String reportId, Date fromDate, Date toDate, String dateLabel);
     
 }

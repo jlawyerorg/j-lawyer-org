@@ -735,7 +735,7 @@ public class InvoiceType implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.InvoiceType[ id=" + id + " ]";
+        return this.getDisplayName();
     }
 
     /**

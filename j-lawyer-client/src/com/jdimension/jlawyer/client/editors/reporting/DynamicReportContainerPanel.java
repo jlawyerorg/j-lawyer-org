@@ -724,6 +724,7 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
         jLabel1 = new javax.swing.JLabel();
         dtTo = new javax.swing.JTextField();
         cmdTo = new javax.swing.JButton();
+        lblDateLabel = new javax.swing.JLabel();
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setText("<Name>");
@@ -762,6 +763,9 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
             }
         });
 
+        lblDateLabel.setFont(lblDateLabel.getFont());
+        lblDateLabel.setText("Datum:");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -777,6 +781,8 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(lblPanelTitle))
                             .add(layout.createSequentialGroup()
+                                .add(lblDateLabel)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(dtFrom, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdFrom)
@@ -798,13 +804,15 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                     .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(dtFrom, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(dtFrom, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(lblDateLabel))
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdFrom)
                         .add(jLabel1)
                         .add(dtTo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(cmdTo)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(12, 12, 12)
                 .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -834,19 +842,21 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
     private javax.swing.JTextField dtTo;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JLabel lblDateLabel;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JTabbedPane tabbedCharts;
     private javax.swing.JTabbedPane tabbedTables;
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void initialize(String name, String reportId, Date fromDate, Date toDate) {
+    public void initialize(String name, String reportId, Date fromDate, Date toDate, String dateLabel) {
         
         this.reportId=reportId;
         
         this.lblPanelTitle.setText(name);
         this.dtFrom.setText(df.format(fromDate));
         this.dtTo.setText(df.format(toDate));
+        this.lblDateLabel.setText(dateLabel + ":");
         
         this.renderReport();
         

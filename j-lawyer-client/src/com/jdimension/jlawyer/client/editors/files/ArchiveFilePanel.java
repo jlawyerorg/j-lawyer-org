@@ -5482,6 +5482,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         InvoiceDialog dlg=new InvoiceDialog(this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        
+        InvoiceEntryPanel ip=new InvoiceEntryPanel();
+        ip.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        this.pnlInvoices.add(ip);
+        
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed
 
     private void cmdLoadFullHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoadFullHistoryActionPerformed

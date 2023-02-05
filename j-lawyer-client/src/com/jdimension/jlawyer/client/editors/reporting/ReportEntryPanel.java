@@ -832,7 +832,7 @@ public class ReportEntryPanel extends javax.swing.JPanel {
             Object report = Class.forName(this.entry.getClassName()).newInstance();
             reportComponent=(JComponent)report;
             if(reportComponent instanceof ReportResultPanel)
-                ((ReportResultPanel)reportComponent).initialize(this.entry.getName(), this.entry.getReportId(), this.entry.getDefaultBeginDate(), this.entry.getDefaultEndDate());
+                ((ReportResultPanel)reportComponent).initialize(this.entry.getName(), this.entry.getReportId(), this.entry.getDefaultBeginDate(), this.entry.getDefaultEndDate(), this.entry.getDateSelectionLabel());
         } catch (Exception ex) {
             log.error("Error creating report from class " + this.entry.getClassName(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Reports: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);

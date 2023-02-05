@@ -849,7 +849,7 @@ public interface ArchiveFileServiceRemote {
     
     List<Invoice> getInvoices(String caseId);
 
-    Invoice addInvoice(String caseId, InvoicePool invoicePool) throws Exception;
+    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
 
     InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
@@ -862,5 +862,7 @@ public interface ArchiveFileServiceRemote {
     Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
 
     void removeAllInvoicePositions(String invoiceId) throws Exception;
+
+    Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
 
 }

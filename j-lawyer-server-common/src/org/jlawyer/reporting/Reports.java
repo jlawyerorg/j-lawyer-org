@@ -671,7 +671,10 @@ public class Reports {
     
     private static final long serialVersionUID = 1L;
     
+    public static final String RPT_INV_ALL="invoices.all";
     public static final String RPT_INV_OPEN="invoices.open";
+    public static final String RPT_INV_OVERDUE="invoices.overdue";
+    
     public static final String RPT_EMPLOYEE_ACTIVITY="employee.activity";
     
     public static final String RPT_CASES_BYYEAR="cases.byyear";

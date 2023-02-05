@@ -847,8 +847,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoiceType> getAllInvoiceTypes() throws Exception {
-        List<InvoiceType> types=this.invoiceTypes.findAll();
-        return types;
+        return this.invoiceTypes.findAll();
     }
 
     @Override

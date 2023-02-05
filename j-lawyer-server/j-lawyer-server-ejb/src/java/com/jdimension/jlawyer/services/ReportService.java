@@ -707,6 +707,11 @@ public class ReportService implements ReportServiceRemote {
         reportPrivs.put(Reports.RPT_INV_OPEN, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_CASES_BYMONTH, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_CASES_BYYEAR, PRIVILEGE_COMMON);
+        
+        reportPrivs.put(Reports.RPT_INV_ALL, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_INV_OPEN, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_INV_OVERDUE, PRIVILEGE_COMMON);
+        
         reportPrivs.put(Reports.RPT_EMPLOYEE_ACTIVITY, PRIVILEGE_CONFIDENTIAL);
         
                 
@@ -720,9 +725,7 @@ public class ReportService implements ReportServiceRemote {
         }
         
         ReportResult result=new ReportResult();
-        if(Reports.RPT_INV_OPEN.equals(reportId)) {
-            
-        } else if(Reports.RPT_EMPLOYEE_ACTIVITY.equals(reportId)) {
+        if(Reports.RPT_EMPLOYEE_ACTIVITY.equals(reportId)) {
             String query="select * from (SELECT ch.principal as Nutzername, ch.changeDate as Zeit, ch.changeDescription as Nutzeraktion, concat(c.fileNumber, c.filenumberext) as AZ FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.changeDate>=? and ch.changeDate<=?) t1 order by Zeit desc";
             result.getTables().add(getTable("alle Aktivitäten", query, params));
             
@@ -730,19 +733,101 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable("Aktivitäten tageweise", query2, params));
             
             String query3="select Nutzername, concat(date(Von), ' (', dayname(Von), ')') as Tag, TIMESTAMPDIFF(MINUTE, Von, Bis) as Minuten from (SELECT ch.principal as Nutzername, min(changeDate) as Von, max(changeDate) as Bis FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.principal!='anonymous' and ch.changeDate>=? and ch.changeDate<=? group by date(ch.changeDate), principal) t1 order by Tag asc, Bis desc";
-            result.getBarCharts().add(getBarChart("Aktivitäten tageweise", query3, 1, 2, 3, params));
+            result.getBarCharts().add(getBarChart("Aktivitäten tageweise", "Tag", "geleistete Zeit (min)", query3, 1, 2, 3, params));
         } else if(Reports.RPT_CASES_BYYEAR.equals(reportId)) {
             String query="select year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
             result.getTables().add(getTable("Akten pro Jahr", query, params));
             
             String query2="select 'Akten', year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
-            result.getBarCharts().add(getBarChart("Akten pro Jahr", query2, 1, 2, 3, params));
+            result.getBarCharts().add(getBarChart("Akten pro Jahr", "Jahr", "Anzahl Akten", query2, 1, 2, 3, params));
         } else if(Reports.RPT_CASES_BYMONTH.equals(reportId)) {
             String query="select DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getTables().add(getTable("Akten pro Monat", query, params));
             
             String query2="select 'Akten' as Serie, DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
-            result.getBarCharts().add(getBarChart("Akten pro Monat", query2, 1, 2, 3, params));
+            result.getBarCharts().add(getBarChart("Akten pro Monat", "Monat", "Anzahl Akten", query2, 1, 2, 3, params));
+        } else if(Reports.RPT_INV_ALL.equals(reportId)) {
+            String query= "SELECT inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+                    + "    case \n"
+                    + "        when inv.invoice_status = 10 then 'neu'\n"
+                    + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 30 then 'bezahlt'\n"
+                    + "        when inv.invoice_status = 40 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    round(sum(invp.total),2) Rechnungsbetrag, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
+                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where inv.created >=? and inv.created<=?\n"
+                    + "group by invp.invoice_id";
+            result.getTables().add(getTable("Alle Rechnungen / Belege", query, params));
+            
+        } else if(Reports.RPT_INV_OPEN.equals(reportId)) {
+            String query = "SELECT inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+                    + "    case \n"
+                    + "        when inv.invoice_status = 10 then 'neu'\n"
+                    + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 30 then 'bezahlt'\n"
+                    + "        when inv.invoice_status = 40 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    round(sum(invp.total), 2) Rechnungsbetrag, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
+                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=?\n"
+                    + "-- where inv.created >=? and inv.created<=?\n"
+                    + "group by invp.invoice_id";
+            result.getTables().add(getTable("Offene Rechnungen", query, params));
+            
+            String query3 = "SELECT 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
+                    + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
+                    + "     FROM invoice_positions invp\n"
+                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=?\n"
+                    + "group by Faelligkeit\n"
+                    + "order by Faelligkeit";
+            result.getBarCharts().add(getBarChart("Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 1, 2, 3, params));
+            
+        }  else if(Reports.RPT_INV_OVERDUE.equals(reportId)) {
+            String query = "SELECT inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+                    + "    case \n"
+                    + "        when inv.invoice_status = 10 then 'neu'\n"
+                    + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 30 then 'bezahlt'\n"
+                    + "        when inv.invoice_status = 40 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    round(sum(invp.total), 2) Rechnungsbetrag, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
+                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
+                    + "group by invp.invoice_id";
+            result.getTables().add(getTable("Fällige Rechnungen", query, params));
+            
+            String query3 = "SELECT 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
+                    + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
+                    + "     FROM invoice_positions invp\n"
+                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
+                    + "group by Faelligkeit\n"
+                    + "order by Faelligkeit";
+            result.getBarCharts().add(getBarChart("Alle fälligen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 1, 2, 3, params));
+            
         }
         
         return result;
@@ -818,12 +903,12 @@ public class ReportService implements ReportServiceRemote {
         return table;
     }
     
-    private ReportResultBarChart getBarChart(String name, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {
+    private ReportResultBarChart getBarChart(String name, String xTitle, String yTitle, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {
         ReportResultBarChart chart=new ReportResultBarChart();
         chart.setChartName(name);
         chart.setToolTipsEnabled(true);
-        chart.setxAxisTitle("Tag");
-        chart.setyAxisTitle("geleistete Zeit (min)");
+        chart.setxAxisTitle(xTitle);
+        chart.setyAxisTitle(yTitle);
         
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;

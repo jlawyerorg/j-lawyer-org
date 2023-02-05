@@ -723,7 +723,7 @@ public class Invoice implements Serializable {
     
     @JoinColumn(name = "invoice_type", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
-    private InvoiceType invoiceType;
+    protected InvoiceType invoiceType;
     
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
@@ -733,7 +733,7 @@ public class Invoice implements Serializable {
     protected boolean smallBusiness=true;
     
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     protected AddressBean contact;
 
     public Invoice() {
@@ -965,6 +965,20 @@ public class Invoice implements Serializable {
      */
     public void setSmallBusiness(boolean smallBusiness) {
         this.smallBusiness = smallBusiness;
+    }
+
+    /**
+     * @return the invoiceType
+     */
+    public InvoiceType getInvoiceType() {
+        return invoiceType;
+    }
+
+    /**
+     * @param invoiceType the invoiceType to set
+     */
+    public void setInvoiceType(InvoiceType invoiceType) {
+        this.invoiceType = invoiceType;
     }
     
 }
