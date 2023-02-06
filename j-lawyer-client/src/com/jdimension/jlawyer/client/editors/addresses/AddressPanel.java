@@ -702,6 +702,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.AddressTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -724,10 +725,18 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
+import org.knowm.xchart.PieChart;
+import org.knowm.xchart.PieChartBuilder;
+import org.knowm.xchart.PieSeries.PieSeriesRenderStyle;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.style.PieStyler;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -1072,6 +1081,37 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
 
         this.jTabbedPane1StateChanged(null);
+        
+        PieChart chart = new PieChartBuilder().width(this.pnlInvoicesChart.getWidth()).height(this.pnlInvoicesChart.getHeight()).title("Rechnungsbeträge").build();
+        Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
+        chart.getStyler().setSeriesColors(sliceColors);
+        chart.addSeries("neu", 240.7);
+        chart.addSeries("offen", 378);
+        chart.addSeries("bezahlt", 3900);
+        chart.addSeries("storniert", 17);
+        chart.getStyler().setLegendVisible(false);
+        
+        //chart.getStyler().setLegendVisible(false);
+        //chart.getStyler().setAnnotationType(AnnotationType.Label);
+        //chart.getStyler().setAnnotationDistance(.82);
+        chart.getStyler().setLabelType(PieStyler.LabelType.NameAndValue);
+        chart.getStyler().setLabelsVisible(true);
+        chart.getStyler().setForceAllLabelsVisible(true);
+        chart.getStyler().setToolTipsEnabled(true);
+        chart.getStyler().setToolTipsEnabled(true);
+        chart.getStyler().setBaseFont(new JLabel().getFont());
+        //chart.getStyler().setPlotContentSize(.9);
+        chart.getStyler().setDefaultSeriesRenderStyle(PieSeriesRenderStyle.Donut);
+        
+        
+        XChartPanel<PieChart> xchartPanel = new XChartPanel<PieChart>(chart);
+        xchartPanel.setBorder(null);
+        xchartPanel.setBackground(new JPanel().getBackground());
+        xchartPanel.setOpaque(false);
+        xchartPanel.setPrintString("drucken");
+        xchartPanel.setSaveAsString("speichern als...");
+        xchartPanel.setBackground(this.pnlInvoicesChart.getBackground());
+        this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
     }
 
     public void reset() {
@@ -1338,6 +1378,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmdSelectBirthday = new javax.swing.JButton();
         cmdSelectDeathday = new javax.swing.JButton();
         lblAge = new javax.swing.JLabel();
+        pnlInvoicesChart = new javax.swing.JPanel();
         jSeparator2 = new javax.swing.JSeparator();
         jPanel19 = new javax.swing.JPanel();
         txtNoticePane = new javax.swing.JScrollPane();
@@ -1557,6 +1598,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         lblAge.setText("jLabel48");
 
+        pnlInvoicesChart.setLayout(new java.awt.BorderLayout());
+
         org.jdesktop.layout.GroupLayout jPanel22Layout = new org.jdesktop.layout.GroupLayout(jPanel22);
         jPanel22.setLayout(jPanel22Layout);
         jPanel22Layout.setHorizontalGroup(
@@ -1581,6 +1624,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(lblAge)
                 .addContainerGap())
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, pnlInvoicesChart, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel22Layout.setVerticalGroup(
             jPanel22Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1603,7 +1647,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(cmdSelectDeathday))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblAge)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pnlInvoicesChart, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -1614,25 +1659,21 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(jPanel1Layout.createSequentialGroup()
-                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jLabel1)
-                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel31)
-                                    .add(jLabel2))
-                                .add(jLabel40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 65, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(63, 63, 63))
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                            .add(jLabel30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 152, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                .add(jLabel1)
+                                .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel31)
+                                .add(jLabel2))
+                            .add(jLabel40)
                             .add(jLabel25)
                             .add(jLabel47)
                             .add(jLabel41)
                             .add(jLabel44))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                        .add(29, 29, 29))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .add(jLabel30)
+                        .add(23, 23, 23)))
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1661,7 +1702,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                                 .add(cmbDegreeSuffix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(cmbNationality, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(0, 24, Short.MAX_VALUE)))
+                        .add(0, 38, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -3399,6 +3440,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JLabel lblHeaderInfo;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JPanel pnlCasesForContact;
+    private javax.swing.JPanel pnlInvoicesChart;
     private javax.swing.JRadioButton rdGenderDivers;
     private javax.swing.JRadioButton rdGenderFemale;
     private javax.swing.JRadioButton rdGenderMale;
