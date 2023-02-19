@@ -1324,15 +1324,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 try {
-                    Object content = part.getContent();
+                    //Object content = part.getContent();
                     String contentId = "" + System.currentTimeMillis();
                     if (part instanceof MimeBodyPart) {
                         contentId = ((MimeBodyPart) part).getContentID();
                     }
 
-                    if (content instanceof InputStream) {
+                    //if (content instanceof InputStream) {
 
-                        InputStream inStream = (InputStream) content;
+                        //InputStream inStream = (InputStream) content;
+                        InputStream inStream = part.getInputStream();
                         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
                         byte[] tempBuffer = new byte[4096];// 4 KB
                         int numRead;
@@ -1343,7 +1344,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         outStream.close();
                         cids.put(contentId, outStream.toByteArray());
 
-                    }
+                    //}
                 } catch (Throwable t) {
                     log.error("could not load inline image", t);
                 }
