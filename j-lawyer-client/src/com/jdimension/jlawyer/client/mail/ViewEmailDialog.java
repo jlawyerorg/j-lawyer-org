@@ -718,17 +718,6 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     }
     
-    public ViewEmailDialog(ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, ObservedDocument odoc) {
-        super();
-        initComponents();
-        this.contextArchiveFile = contextArchiveFile;
-        this.contextFolder=contextFolder;
-        this.odoc = odoc;
-
-        ComponentUtils.restoreDialogSize(this);
-
-    }
-
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
         this.content.setMessage(msgC, ms);
         this.msgContainer = msgC;
