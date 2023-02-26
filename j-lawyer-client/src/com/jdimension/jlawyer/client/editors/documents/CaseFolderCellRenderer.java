@@ -697,11 +697,6 @@ public class CaseFolderCellRenderer extends DefaultTreeCellRenderer {
         
         this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
 
-
-        if (((DefaultMutableTreeNode) object).getUserObject() == null) {
-            return this;
-        }
-
         return this;
     }
 
