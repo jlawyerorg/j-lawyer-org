@@ -720,7 +720,7 @@ public class EMLInternalLauncher extends InternalLauncher {
             if(this.parent==null) 
                 view=new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), archiveFile, caseFolder, odoc);
             else
-                view=new ViewEmailDialog(archiveFile, caseFolder, odoc);
+                view=new ViewEmailDialog(this.parent, archiveFile, caseFolder, odoc);
             MailboxSetup ms=EmailUtils.getMailboxSetup(message);
             view.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
             try {
