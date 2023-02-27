@@ -1410,7 +1410,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jToolBar1.add(jSeparator5);
 
         cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
-        cmdSaveDraft.setToolTipText("Datei anhängen");
+        cmdSaveDraft.setToolTipText("als Entwurf speichern");
+        cmdSaveDraft.setEnabled(false);
         cmdSaveDraft.setFocusable(false);
         cmdSaveDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdSaveDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
