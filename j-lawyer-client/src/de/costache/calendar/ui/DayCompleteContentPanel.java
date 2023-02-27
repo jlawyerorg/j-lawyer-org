@@ -37,7 +37,9 @@ import de.costache.calendar.util.CalendarUtil;
 import de.costache.calendar.util.EventCollection;
 import de.costache.calendar.util.EventCollectionRepository;
 import de.costache.calendar.util.GraphicsUtil;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
+import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 
 /**
@@ -151,6 +153,9 @@ public class DayCompleteContentPanel extends JPanel {
         if (events.size() > 0) {
 
             final Config config = owner.getOwner().getConfig();
+            
+            JLabel dummyLabel = new JLabel();
+            final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
 
             for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
                 if (!event.isAllDay()) {
@@ -161,20 +166,21 @@ public class DayCompleteContentPanel extends JPanel {
                 Color fgColor = event.getType().getForegroundColor();
                 fgColor = fgColor == null ? config.getEventDefaultForegroundColor() : fgColor;
                 graphics2d.setColor(!event.isSelected() ? bgColor : bgColor.darker().darker());
-                graphics2d.fillRect(2, pos, getWidth() - 4, 15);
+                graphics2d.fillRect(2, pos, getWidth() - 4, 17);
 
                 final String eventString = event.getSummary();
-                int fontSize = 12;
                 
-                final Font font = new Font("Verdana", Font.BOLD, fontSize);
                 final FontMetrics metrics = graphics2d.getFontMetrics(font);
                 graphics2d.setFont(font);
+                RenderingHints hints = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics2d.setRenderingHints(hints);
 
                 graphics2d.setColor(!event.isSelected() ? fgColor : Color.white);
                 GraphicsUtil.drawTrimmedString(graphics2d, eventString, 6,
                         pos + (13 / 2 + metrics.getHeight() / 2) - 2, getWidth());
 
-                pos += 17;
+                pos += 19;
             }
             setPreferredSize(new Dimension(0, pos));
             revalidate();

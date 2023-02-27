@@ -29,7 +29,6 @@ import java.awt.event.MouseListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  * @author theodorcostache
@@ -359,6 +358,10 @@ public class DayContentPanel extends JPanel {
 
         final Config config = owner.getOwner().getConfig();
         if (events.size() > 0) {
+            
+            JLabel dummyLabel = new JLabel();
+            final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
+            
             for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
                 if (event.isAllDay() || event.isHoliday())
                     continue;
@@ -403,9 +406,12 @@ public class DayContentPanel extends JPanel {
                 final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
 
-                graphics2d.setFont(new Font("Verdana", Font.BOLD, 12));
+                graphics2d.setFont(font);
                 graphics2d
                         .setColor(!event.isSelected() ? fgColor : Color.white);
+                RenderingHints hints = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics2d.setRenderingHints(hints);
 
                 GraphicsUtil.drawString(graphics2d, eventString, conflictIndex
                                 * (getWidth() - 4) / conflictingEventsSize + 3,
