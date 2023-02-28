@@ -693,5 +693,10 @@ public class InvoiceFacade extends AbstractFacade<Invoice> implements InvoiceFac
         return (List<Invoice>) em.createNamedQuery("Invoice.findByArchiveFileKey").setParameter("archiveFileKey", archiveFileKey).getResultList();
         
     }
+
+    @Override
+    public List<Invoice> findByAddress(AddressBean address) {
+        return (List<Invoice>) em.createNamedQuery("Invoice.findByAddress").setParameter("contact", address).getResultList();
+    }
     
 }
