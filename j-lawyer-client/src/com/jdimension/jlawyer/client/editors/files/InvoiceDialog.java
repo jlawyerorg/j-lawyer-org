@@ -705,6 +705,8 @@ import themes.colors.DefaultColorTheme;
  */
 public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer {
 
+    private static final String ICON_SUCCESS="/icons/agt_action_success.png";
+    
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private static final DecimalFormat cf = new DecimalFormat("0.00");
@@ -741,7 +743,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.pnlInvoicePositions.setLayout(boxLayout);
 
         this.cmbInvoicePool.removeAllItems();
-        DefaultComboBoxModel dmPools = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> dmPools = new DefaultComboBoxModel<>();
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -754,7 +756,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         } catch (Exception ex) {
             log.error("Error determining invoice pools", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernschemas: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
         DefaultComboBoxModel dmTypes = new DefaultComboBoxModel();
@@ -839,7 +841,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.lblRecipient.setText("");
             this.chkSmallBusiness.setSelected(true);
 
-            this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource(ICON_SUCCESS)));
 
         } else {
             this.setTitle("Rechnung " + invoice.getInvoiceNumber());
@@ -1356,8 +1358,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     this.setEntry(newInvoice);
 
                 } catch (Exception ex) {
-                    log.error("Error determining invoice pools", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernschemas: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    log.error("Error creating invoice", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 // updated
@@ -1371,8 +1373,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     this.setEntry(updatedInvoice);
 
                 } catch (Exception ex) {
-                    log.error("Error determining invoice pools", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernschemas: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    log.error("Error updating invoice", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Aktualisieren der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             }
 
@@ -1384,7 +1386,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.cmbInvoicePool.setEnabled(true);
             this.cmbInvoiceType.setEnabled(true);
 
-            this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource(ICON_SUCCESS)));
         }
 
 
