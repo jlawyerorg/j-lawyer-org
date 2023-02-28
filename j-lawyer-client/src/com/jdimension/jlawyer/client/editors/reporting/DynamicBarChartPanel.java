@@ -664,7 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.reporting;
 
 import java.awt.BorderLayout;
-import java.util.Arrays;
+import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResultBarChart;
 import org.jlawyer.reporting.ReportResultBarChartSeries;
@@ -672,9 +672,7 @@ import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.CategorySeries;
 import org.knowm.xchart.XChartPanel;
-import org.knowm.xchart.style.CategoryStyler;
 import org.knowm.xchart.style.Styler;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -701,30 +699,10 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
         ch.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         ch.getStyler().setDatePattern(this.resultChart.getDatePattern());
         ch.getStyler().setXAxisLabelRotation(90);
-//    chart.getStyler().setAnnotationTextFont(new JLabel().getFont());
-//    chart.getStyler().setAxisTickLabelsFont(new JLabel().getFont());
-//    chart.getStyler().setAxisTitleFont(new JLabel().getFont());
-//    chart.getStyler().setChartTitleFont(new JLabel().getFont().deriveFont(Font.BOLD));
-        ch.getStyler().setToolTipsEnabled(this.resultChart.isToolTipsEnabled());
-        
-        //ch.getStyler().se
-        
-//    chart.getStyler().setToolTipBackgroundColor(DefaultColorTheme.COLOR_DARK_GREY);
-//    chart.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-//    chart.getStyler().setChartBackgroundColor(DefaultColorTheme.COLOR_DARK_GREY);
 
-//    chart.getStyler().setZoomEnabled(true);
-//chart.getStyler().setZoomResetButtomPosition(Styler.CardinalPosition.InsideS);
-//chart.getStyler().setZoomResetByDoubleClick(false);
-//chart.getStyler().setZoomResetByButton(true);
-//chart.getStyler().setZoomSelectionColor(new Color(0,0 , 192, 128));
-        //chart.getStyler().setHasAnnotations(true);
-        // Series
-//    CategorySeries series1=chart.addSeries("test 1", Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 }), Arrays.asList(new Integer[] { 4, 5, 9, 6, 5 }));
-//    series1.setFillColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-//    CategorySeries series2=chart.addSeries("test 2", Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 }), Arrays.asList(new Integer[] { 10, 4, 9, 8, 2 }));
-//    series2.setFillColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        // CategorySeries series3 = chart.addSeries("Anwalt 1", Arrays.asList(new Date[]{new Date(), new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000), new Date(System.currentTimeMillis() + 2 * 24 * 60 * 60 * 1000), new Date(System.currentTimeMillis() + 3 * 24 * 60 * 60 * 1000), new Date(System.currentTimeMillis() + 4 * 24 * 60 * 60 * 1000)}), Arrays.asList(new Integer[]{10, 4, 9, 8, 2}));
+        ch.getStyler().setToolTipsEnabled(this.resultChart.isToolTipsEnabled());
+        ch.getStyler().setToolTipFont(new JLabel().getFont());
+        ch.getStyler().setYAxisDecimalPattern("0.00");
         
         for(ReportResultBarChartSeries s: this.resultChart.getSeries()) {
             CategorySeries series = ch.addSeries(s.getName(), s.getxData(), s.getyData());
@@ -732,7 +710,6 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
                 series.setFillColor(s.getFillColor());
         }
 
-        //this.chartPanel.add(new SwingWrapper<CategoryChart>(chart).getXChartPanel());
         XChartPanel<CategoryChart> xchartPanel = new XChartPanel<CategoryChart>(ch);
 
         this.add(xchartPanel, BorderLayout.CENTER);
