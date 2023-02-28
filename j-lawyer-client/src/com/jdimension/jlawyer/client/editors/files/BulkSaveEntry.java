@@ -895,6 +895,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
     private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
         this.documentFilenameNew=this.txtFileNameNew.getText();
+        String oldExt=FileUtils.getExtension(this.documentFilename);
+        String newExt=FileUtils.getExtension(this.documentFilenameNew);
+        if(!oldExt.equalsIgnoreCase(newExt)) {
+            this.documentFilenameNew=FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
+            this.txtFileNameNew.setText(this.documentFilenameNew);
+        }
         this.saveDialog.checkForDuplicateFileNames();
     }//GEN-LAST:event_txtFileNameNewKeyReleased
 
