@@ -865,4 +865,6 @@ public interface ArchiveFileServiceRemote {
 
     Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
 
+    List<Invoice> getInvoicesForAddress(String addressId, boolean turnOverOnly) throws Exception;
+
 }
