@@ -4318,19 +4318,31 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-        dst = dst + db.getName();
-
-        File dbFile = new File(dst);
-        if (!(dbFile.exists())) {
-            log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
-        } else {
+        
+        String dstById=dst + db.getId();
+        File dbFile = new File(dstById);
+        if (dbFile.exists()) {
             boolean deleted = dbFile.delete();
             if (!deleted) {
                 // could not delete document, but still let's continue with removal
-                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
+                log.error("Dokument " + dstById + " konnte nicht gelöscht werden!");
             }
+        } else {
+            String dstByName=dst + db.getName();
+            dbFile = new File(dstByName);
+            if (dbFile.exists()) {
+                boolean deleted = dbFile.delete();
+                if (!deleted) {
+                    // could not delete document, but still let's continue with removal
+                    log.error("Dokument " + dstByName + " konnte nicht gelöscht werden!");
+                }
+            } else {
+                log.warn("Dokument " + dstByName + " existiert nicht und kann nicht gelöscht werden!");
+            }
+            
+            
         }
-
+        
         if (createHistoryEntry) {
             this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument aus dem Papierkorb gelöscht: " + db.getName());
         }
@@ -4975,7 +4987,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
                 
                 existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-                existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                if(invoiceType!=null)
+                    existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                else
+                    existingInvoice.setInvoiceType(null);
                 this.invoicesFacade.edit(existingInvoice);
                 
             }
@@ -4983,6 +4998,48 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public List<Invoice> getInvoicesForAddress(String addressId, boolean turnOverOnly) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        
+        AddressBean adr=this.addressFacade.find(addressId);
+        if(adr==null)
+            throw new Exception("Adresse " + addressId + " kann nicht gefunden werden");
+        
+        List<Invoice> invoices = this.invoicesFacade.findByAddress(adr);
+        List<Invoice> result=new ArrayList<>();
+        for (Invoice inv : invoices) {
+            ArchiveFileBean aFile = inv.getArchiveFileKey();
+            
+            boolean allowed = false;
+            if(aFile != null) {
+                if (principalId != null) {
+                    if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                        allowed = true;
+                    }
+                } else {
+                    allowed = true;
+                }
+            } else {
+                allowed=true;
+            }
+            
+            if(turnOverOnly && !inv.getInvoiceType().isTurnOver())
+                continue;
+
+            result.add(inv);
+        }
+        return result;
+        
     }
 
 }
