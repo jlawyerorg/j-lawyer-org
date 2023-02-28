@@ -890,6 +890,8 @@ public class FileUtils extends ServerFileUtils {
             currentExt = ".pdf";
         } else if (currentFileName.toLowerCase().endsWith(".eml")) {
             currentExt = ".eml";
+        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
+            currentExt = ".bea";
         }
 
         if (!newFileName.endsWith(currentExt)) {
