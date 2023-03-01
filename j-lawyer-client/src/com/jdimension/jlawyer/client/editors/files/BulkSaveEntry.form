@@ -162,6 +162,9 @@
           <Image iconType="3" name="/icons16/package_favorite.png"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="togFavoriteItemStateChanged"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JSeparator" name="sepBottom">
     </Component>

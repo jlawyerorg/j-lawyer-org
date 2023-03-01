@@ -711,6 +711,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     protected CaseFolder caseFolder = null;
     
     protected BulkSaveDialog saveDialog=null;
+    
+    protected boolean favorite=false;
 
     /**
      * Creates new form BulkSaveEntry
@@ -784,6 +786,11 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
         togFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png"))); // NOI18N
         togFavorite.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite.png"))); // NOI18N
+        togFavorite.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                togFavoriteItemStateChanged(evt);
+            }
+        });
 
         cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
         cmdDocTags.setToolTipText("Dokumentetikett auswählen");
@@ -937,6 +944,10 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             }
         }
     }//GEN-LAST:event_lblFileNameOrgMouseClicked
+
+    private void togFavoriteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_togFavoriteItemStateChanged
+        this.favorite=this.togFavorite.isSelected();
+    }//GEN-LAST:event_togFavoriteItemStateChanged
 
     public void setDownloadProgress() {
         this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
@@ -1183,5 +1194,20 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 buildMoveToFolderMenu(items, child, itemName);
             }
         }
+    }
+
+    /**
+     * @return the favorite
+     */
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    /**
+     * @param favorite the favorite to set
+     */
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+        this.togFavorite.setSelected(favorite);
     }
 }

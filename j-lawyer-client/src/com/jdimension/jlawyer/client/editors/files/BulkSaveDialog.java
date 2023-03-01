@@ -1110,6 +1110,10 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                                 afs.moveDocumentsToFolder(docList, e.getSelectedCaseFolder().getId());
                             }
                             
+                            if(e.isFavorite()) {
+                                afs.setDocumentFavorite(newDocId, true);
+                            }
+                            
                             List<String> tags = e.getDocumentTags();
                             for (String docTag : tags) {
                                 afs.setDocumentTag(newDocId, new DocumentTagsBean(newDocId, docTag), true);
