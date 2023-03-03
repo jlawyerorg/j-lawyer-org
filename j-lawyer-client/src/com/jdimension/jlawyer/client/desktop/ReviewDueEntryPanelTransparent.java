@@ -778,14 +778,26 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 //        graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
 //        graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
         
-        if(this.overDue) {
-            graphics.setColor(OVERDUE_COLOR_DARK);
+
+
+//        if(this.overDue) {
+//            graphics.setColor(OVERDUE_COLOR_DARK);
+//            Polygon plgn = new Polygon();
+//            plgn.addPoint(3, 3);
+//            plgn.addPoint(17, 3);
+//            plgn.addPoint(3, 17);
+//            graphics.fillPolygon(plgn);
+//        }
+        
+        if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
+            graphics.setColor(new Color(this.e.getCalendarSetupColor()));
             Polygon plgn = new Polygon();
             plgn.addPoint(3, 3);
             plgn.addPoint(17, 3);
             plgn.addPoint(3, 17);
             graphics.fillPolygon(plgn);
         }
+        
      }
 
     public void setEntry(ReviewDueEntry entry) {

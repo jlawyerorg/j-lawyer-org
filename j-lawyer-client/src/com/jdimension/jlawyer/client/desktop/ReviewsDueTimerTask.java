@@ -763,6 +763,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setReviewReason(ar.getSummary());
                     e.setType(ar.getEventType());
                     e.setReview(ar);
+                    if(ar.getCalendarSetup()!=null)
+                        e.setCalendarSetupColor(ar.getCalendarSetup().getBackground());
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
                     ArrayList<String> xTags = new ArrayList<>();
                     if (tags != null) {

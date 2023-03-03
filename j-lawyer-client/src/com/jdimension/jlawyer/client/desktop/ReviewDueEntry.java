@@ -687,6 +687,8 @@ public class ReviewDueEntry {
     
     private ArchiveFileReviewsBean review=null;
     
+    protected int calendarSetupColor=Integer.MIN_VALUE;
+    
     public ReviewDueEntry() {
         
     }
@@ -843,6 +845,20 @@ public class ReviewDueEntry {
      */
     public void setArchiveFileReason(String archiveFileReason) {
         this.archiveFileReason = archiveFileReason;
+    }
+
+    /**
+     * @return the calendarSetupColor
+     */
+    public int getCalendarSetupColor() {
+        return calendarSetupColor;
+    }
+
+    /**
+     * @param calendarSetupColor the calendarSetupColor to set
+     */
+    public void setCalendarSetupColor(int calendarSetupColor) {
+        this.calendarSetupColor = calendarSetupColor;
     }
     
     
