@@ -502,7 +502,7 @@
     <Component class="javax.swing.JCheckBox" name="chkEmailInSsl">
       <Properties>
         <Property name="selected" type="boolean" value="true"/>
-        <Property name="text" type="java.lang.String" value="SSL"/>
+        <Property name="text" type="java.lang.String" value="SSL/TLS"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel15">
@@ -527,7 +527,7 @@
     <Component class="javax.swing.JCheckBox" name="chkEmailOutSsl">
       <Properties>
         <Property name="selected" type="boolean" value="true"/>
-        <Property name="text" type="java.lang.String" value="SSL"/>
+        <Property name="text" type="java.lang.String" value="SSL/TLS"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel16">

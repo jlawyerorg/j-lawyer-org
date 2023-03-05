@@ -931,7 +931,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         cmbAccountType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "imap", "pop3" }));
 
         chkEmailInSsl.setSelected(true);
-        chkEmailInSsl.setText("SSL");
+        chkEmailInSsl.setText("SSL/TLS");
 
         jLabel15.setText("Passwort:");
 
@@ -940,7 +940,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         chkEmailStartTls.setText("StartTLS");
 
         chkEmailOutSsl.setSelected(true);
-        chkEmailOutSsl.setText("SSL");
+        chkEmailOutSsl.setText("SSL/TLS");
 
         jLabel16.setText("Passwort:");
 
