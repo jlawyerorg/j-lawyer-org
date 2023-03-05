@@ -683,16 +683,13 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
-import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Polygon;
-import java.awt.RenderingHints;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -718,11 +715,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private String doneDescription = "";
     private String unDoneDescription = "";
     
-    private boolean overDue=false;
-
-    //private static Color OVERDUE_COLOR=new Color(-3407821);
     private static final Color OVERDUE_COLOR=DefaultColorTheme.COLOR_LOGO_RED.brighter().brighter();
-    private static final Color OVERDUE_COLOR_DARK=DefaultColorTheme.COLOR_LOGO_RED;
     
     private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220);
     private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
@@ -777,17 +770,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 //        graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
 //        graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
 //        graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
-        
-
-
-//        if(this.overDue) {
-//            graphics.setColor(OVERDUE_COLOR_DARK);
-//            Polygon plgn = new Polygon();
-//            plgn.addPoint(3, 3);
-//            plgn.addPoint(17, 3);
-//            plgn.addPoint(3, 17);
-//            graphics.fillPolygon(plgn);
-//        }
         
         if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
             graphics.setColor(new Color(this.e.getCalendarSetupColor()));
@@ -854,10 +836,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (!sameDay) {
             // not today, must be overdue
             this.lblDescription.setForeground(OVERDUE_COLOR);
-            this.overDue=true;
         } else {
             this.lblDescription.setForeground(Color.WHITE);
-            this.overDue=false;
         }
 
         StringBuilder tooltip = new StringBuilder();
