@@ -2659,6 +2659,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         cmdNewInvoice.setFont(cmdNewInvoice.getFont());
         cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewInvoice.setEnabled(false);
         cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdNewInvoiceActionPerformed(evt);
@@ -6215,11 +6216,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String fileNumberMain = null;
             String fileNumberExt = null;
             CaseFolder rootFolder = null;
+            Date dCr=null;
+            Date dCh=null;
+            Date dAr=null;
             if (this.dto != null) {
                 id = this.dto.getId();
                 fileNumberMain = this.dto.getFileNumberMain();
                 fileNumberExt = this.dto.getFileNumberExtension();
                 rootFolder = this.dto.getRootFolder();
+                dCr=this.dto.getDateCreated();
+                dCh=this.dto.getDateChanged();
+                dAr=this.dto.getDateArchived();
             }
 
             this.dto = new ArchiveFileBean();
@@ -6228,6 +6235,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.dto.setFileNumberMain(fileNumberMain);
                 this.dto.setFileNumberExtension(fileNumberExt);
                 this.dto.setRootFolder(rootFolder);
+                this.dto.setDateCreated(dCr);
+                this.dto.setDateChanged(dCh);
+                this.dto.setDateArchived(dAr);
             }
 
             this.fillDTO(this.dto, true);
