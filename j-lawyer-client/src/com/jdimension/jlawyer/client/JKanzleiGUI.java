@@ -1643,6 +1643,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuInvoicePools.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
         mnuInvoicePools.setText("Rechnungsnummernkreise");
+        mnuInvoicePools.setEnabled(false);
         mnuInvoicePools.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuInvoicePoolsActionPerformed(evt);
@@ -1652,6 +1653,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuInvoiceTypes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
         mnuInvoiceTypes.setText("Belegarten");
+        mnuInvoiceTypes.setEnabled(false);
         mnuInvoiceTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuInvoiceTypesActionPerformed(evt);
