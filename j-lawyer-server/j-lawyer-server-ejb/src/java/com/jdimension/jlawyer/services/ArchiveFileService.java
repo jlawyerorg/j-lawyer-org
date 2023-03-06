@@ -5033,9 +5033,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 allowed=true;
             }
             
+            if(!allowed)
+                continue;
+            
             if(turnOverOnly && !inv.getInvoiceType().isTurnOver())
                 continue;
-
+            
             result.add(inv);
         }
         return result;
