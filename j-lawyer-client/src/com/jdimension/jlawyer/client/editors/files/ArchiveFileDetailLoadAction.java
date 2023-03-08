@@ -842,7 +842,12 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             
-            Date sinceDate = new Date();
+            Date sinceDate = null;
+            if(this.caseDto.getDateChanged()==null) {
+                sinceDate=new Date();
+            } else {
+                sinceDate=this.caseDto.getDateChanged();
+            }
             LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
             localDateTime = localDateTime.minusMonths(6);
             sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
