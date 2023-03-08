@@ -876,7 +876,7 @@ public class RestoreExecutor {
                 t.printStackTrace();
                 fileFailures = fileFailures + 1;
                 if (fileFailures > 5) {
-                    throw new Exception("Mehr als 5 Dateien konnten nicht wiederhergestellt werden - Abbruch!");
+                    throw new Exception("Mehr als 5 Dateien aus " + source.getAbsolutePath() + " konnten nicht wiederhergestellt werden - Abbruch!");
                 }
             }
         }
