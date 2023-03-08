@@ -47,9 +47,10 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lblByFileTypes" max="32767" attributes="0"/>
                   <Component id="jSeparator2" max="32767" attributes="0"/>
                   <Component id="jScrollPane2" max="32767" attributes="0"/>
                   <Component id="jSeparator1" max="32767" attributes="0"/>
@@ -120,7 +121,9 @@
                   <Component id="cmdFolderAll" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane2" min="-2" max="-2" attributes="0"/>
+              <Component id="lblByFileTypes" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jScrollPane2" min="-2" pref="79" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator2" min="-2" pref="2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -129,7 +132,7 @@
                   <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="347" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="349" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblTotalSize" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -171,7 +174,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="f&#xfc;r alle Dateien &#xfc;bernehmen"/>
+        <Property name="toolTipText" type="java.lang.String" value="f&#xfc;r alle zum Speichern markierten Dateien &#xfc;bernehmen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTagAllActionPerformed"/>
@@ -187,7 +190,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="f&#xfc;r alle Dateien &#xfc;bernehmen"/>
+        <Property name="toolTipText" type="java.lang.String" value="f&#xfc;r alle zum Speichern markierten Dateien &#xfc;bernehmen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdFolderAllActionPerformed"/>
@@ -316,6 +319,17 @@
       </Events>
     </Component>
     <Component class="javax.swing.JSeparator" name="jSeparator2">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblByFileTypes">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblByFileTypes" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
+        </Property>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="text" type="java.lang.String" value="Auswahl nach Dateitypen:"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

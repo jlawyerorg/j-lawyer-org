@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.ui.tagging;
 
 import java.awt.Font;
 import java.awt.event.ItemEvent;
+import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import themes.colors.DefaultColorTheme;
 
@@ -673,6 +674,9 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class TagToggleButton extends JToggleButton {
+    
+    protected ImageIcon selectedIcon=new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png"));
+    protected ImageIcon unselectedIcon=null;
 
     public TagToggleButton() {
         this("default");
@@ -690,14 +694,42 @@ public class TagToggleButton extends JToggleButton {
 
         this.addItemListener((ItemEvent arg0) -> {
             if (isSelected()) {
-                setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png")));
+                setIcon(selectedIcon);
                 setFont(getFont().deriveFont(Font.BOLD));
             } else {
-                setIcon(null);
+                setIcon(unselectedIcon);
                 setFont(getFont().deriveFont(Font.PLAIN));
             }
         });
 
+    }
+
+    /**
+     * @return the selectedIcon
+     */
+    public ImageIcon getSelectedIcon() {
+        return selectedIcon;
+    }
+
+    /**
+     * @param selectedIcon the selectedIcon to set
+     */
+    public void setSelectedIcon(ImageIcon selectedIcon) {
+        this.selectedIcon = selectedIcon;
+    }
+
+    /**
+     * @return the unselectedIcon
+     */
+    public ImageIcon getUnselectedIcon() {
+        return unselectedIcon;
+    }
+
+    /**
+     * @param unselectedIcon the unselectedIcon to set
+     */
+    public void setUnselectedIcon(ImageIcon unselectedIcon) {
+        this.unselectedIcon = unselectedIcon;
     }
 
 }
