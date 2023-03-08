@@ -2802,6 +2802,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 MailboxSetup ms = this.getSelectedMailbox();
                 if(ms==null)
                     ms=EmailUtils.getMailboxSetup(m);
+                
+                // may happen if neither the FROM nor the recipients of the mail contain an address that has a mailbox setup configuration
+                if(ms==null) {
+                    log.warn("Mailbox setup is unknown when saving message - falling back to first available");
+                    UserSettings uset = UserSettings.getInstance();
+                    List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+                    if(mailboxes.size()>0)
+                        ms=mailboxes.get(0);
+                }
+                
                 Properties props = System.getProperties();
                 props.setProperty("mail.store.protocol", ms.getEmailInType());
                 if (ms.isEmailInSsl()) {
@@ -2878,8 +2888,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 bulkSaveDlg.setSelectedCase(targetCase);
 
                 if (attachmentsOnly) {
-                    if (targetCase != null) {
-
                         ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
                         for (String attachmentName : attachmentNames) {
                             
@@ -2905,8 +2913,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             
                             bulkSaveDlg.addEntry(bulkEntry);
                         }
-
-                    }
                 }
 
                 if (targetCase != null && !attachmentsOnly) {
