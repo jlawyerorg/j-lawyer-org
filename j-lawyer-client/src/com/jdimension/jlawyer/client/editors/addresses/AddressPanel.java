@@ -811,7 +811,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             @Override
             public void actionPerformed(ActionEvent ae) {
                 cmdChooseBankActionPerformed(null);
-
             }
         });
 
