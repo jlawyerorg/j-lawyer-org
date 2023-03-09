@@ -665,8 +665,8 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -675,23 +675,20 @@ import java.util.List;
  */
 public class EmailTemplateAccess {
     
-    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders) {
-        ArrayList<String> result=new ArrayList<String>();
+    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders, Collection<String> formPlaceHolders) {
+        ArrayList<String> result=new ArrayList<>();
         if(templateText==null)
             templateText="";
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, new ArrayList<String>())) {
-            String key = r;
-            if(templateText.indexOf(r)>-1)
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formPlaceHolders)) {
+            if(templateText.contains(r))
                 result.add(r);
             
         }
         return result;
     }
     
-    public static String replacePlaceHolders(String content, Hashtable values) {
-        Enumeration en = values.keys();
-        while (en.hasMoreElements()) {
-            String key = (String) en.nextElement();
+    public static String replacePlaceHolders(String content, HashMap<String,Object> values) {
+        for (String key: values.keySet()) {
             String keyRegX = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
             String value = (String) values.get(key);
             if (value == null) {

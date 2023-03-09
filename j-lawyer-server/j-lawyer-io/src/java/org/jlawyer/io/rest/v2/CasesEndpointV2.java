@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -715,7 +714,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCase(@PathParam("id") String id) {
@@ -750,35 +749,8 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
                 c.setGroup(afb.getGroup().getName());
             }
 
-            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id);
-            Arrays.sort(history, (Object t, Object t1) -> {
-                try {
-
-                    Date d1 = null;
-                    Date d2 = null;
-
-                    if (t instanceof ArchiveFileHistoryBean && t1 instanceof ArchiveFileHistoryBean) {
-                        ArchiveFileHistoryBean i1 = (ArchiveFileHistoryBean) t;
-                        ArchiveFileHistoryBean i2 = (ArchiveFileHistoryBean) t1;
-                        d1 = i1.getChangeDate();
-                        d2 = i2.getChangeDate();
-                    } else {
-                        d1 = new Date();
-                        d2 = new Date();
-                    }
-
-                    return d1.compareTo(d2);
-
-                } catch (Throwable thr) {
-                    log.error("error sorting history entries", thr);
-                    return -1;
-                }
-            });
-            if(history.length>0) {
-                c.setDateCreated(history[0].getChangeDate());
-                c.setDateUpdated(history[history.length-1].getChangeDate());
-            }
-
+            c.setDateCreated(afb.getDateCreated());
+            c.setDateUpdated(afb.getDateChanged());
             Response res = Response.ok(c).build();
             return res;
         } catch (Exception ex) {
@@ -798,7 +770,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
     public Response createCase(RestfulCaseV2 caseData) {
@@ -850,7 +822,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response updateCase(RestfulCaseV2 caseData) {

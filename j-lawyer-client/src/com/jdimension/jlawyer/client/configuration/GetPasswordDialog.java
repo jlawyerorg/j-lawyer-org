@@ -678,6 +678,9 @@ public class GetPasswordDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form GetPasswordDialog
+     * @param parent
+     * @param modal
+     * @param forceStrongComplexity
      */
     public GetPasswordDialog(javax.swing.JDialog parent, boolean modal, boolean forceStrongComplexity) {
         super(parent, modal);
@@ -714,18 +717,12 @@ public class GetPasswordDialog extends javax.swing.JDialog {
             }
         });
         pw1.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                pw1KeyTyped(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 pw1KeyReleased(evt);
             }
         });
 
         pw2.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                pw2KeyTyped(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 pw2KeyReleased(evt);
             }
@@ -808,10 +805,6 @@ public class GetPasswordDialog extends javax.swing.JDialog {
         // TODO add your handling code here:
     }//GEN-LAST:event_pw1ActionPerformed
 
-    private void pw1KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pw1KeyTyped
-        
-    }//GEN-LAST:event_pw1KeyTyped
-
     private void checkPasswords() {
         String password=new String(this.pw1.getPassword());
         int complexity=PasswordsUtil.validatePasswordComplexity(password);
@@ -863,10 +856,6 @@ public class GetPasswordDialog extends javax.swing.JDialog {
         return this.result;
     }
     
-    private void pw2KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pw2KeyTyped
-        
-    }//GEN-LAST:event_pw2KeyTyped
-
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         this.result=null;
         this.setVisible(false);
@@ -915,17 +904,15 @@ public class GetPasswordDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                GetPasswordDialog dialog = new GetPasswordDialog(null, true, true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            GetPasswordDialog dialog = new GetPasswordDialog(null, true, true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

@@ -3,7 +3,9 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jlawyerorg_j-lawyer-org&metric=alert_status)](https://sonarcloud.io/dashboard?id=jlawyerorg_j-lawyer-org)
 
 # j-lawyer-org
-j-lawyer.org core project and builds
+j-lawyer.org core project and builds.
+
+Are you a j-lawyer.org user? Let us know here: https://github.com/jlawyerorg/j-lawyer-org/discussions/1620
 
 
 ## Getting Started
@@ -28,11 +30,11 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 * **Jens Kutschke** - *Initial work* - [j-dimension](https://github.com/j-dimension)
 * **Anatol Anuschewski** - *plugins* - [an-mus](https://github.com/an-mus)
+* **Benjamin Pabst** - *various improvements in j-lawyer.org Client* - [Bentipa](https://github.com/Bentipa)
 * **Karin Beck** - *urteile-gesetze.de integration* - [karbek](https://github.com/karbek)
 * **Daniel Beck** - *urteile-gesetze.de integration* - [danbeck](https://github.com/danbeck)
 * **Patrick Baumfalk** - *Icons, Document Templates* - [PBaumfalk](https://github.com/PBaumfalk)
-* **fortrieb** - *Faxeingang - Aktionen auf Mehrfachselektionen* - [fortrieb](https://github.com/fortrieb)
-* **Bentipa** - *Verbesserungen Handaktenbogen* - [Bentipa](https://github.com/Bentipa)
+* **fortrieb** - *Fax inbox improvements* - [fortrieb](https://github.com/fortrieb)
 
 ## License
 

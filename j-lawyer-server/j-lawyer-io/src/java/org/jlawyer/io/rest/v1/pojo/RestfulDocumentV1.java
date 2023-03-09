@@ -677,6 +677,9 @@ public class RestfulDocumentV1 {
     private long size=0l;
     private boolean favorite=false;
     protected String folderId=null;
+    protected long version=1l;
+    protected int highlight1=-1;
+    protected int highlight2=-1;
 
     public RestfulDocumentV1() {
     }
@@ -763,6 +766,48 @@ public class RestfulDocumentV1 {
      */
     public void setFolderId(String folderId) {
         this.folderId = folderId;
+    }
+
+    /**
+     * @return the version
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    /**
+     * @return the highlight1
+     */
+    public int getHighlight1() {
+        return highlight1;
+    }
+
+    /**
+     * @param highlight1 the highlight1 to set
+     */
+    public void setHighlight1(int highlight1) {
+        this.highlight1 = highlight1;
+    }
+
+    /**
+     * @return the highlight2
+     */
+    public int getHighlight2() {
+        return highlight2;
+    }
+
+    /**
+     * @param highlight2 the highlight2 to set
+     */
+    public void setHighlight2(int highlight2) {
+        this.highlight2 = highlight2;
     }
     
     

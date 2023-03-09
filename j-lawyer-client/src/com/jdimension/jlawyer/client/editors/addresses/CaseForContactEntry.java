@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.addresses;
 
-import com.jdimension.jlawyer.client.desktop.*;
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import java.awt.Color;
 import themes.colors.DefaultColorTheme;
 
@@ -677,6 +675,7 @@ public class CaseForContactEntry {
     private String id=null;
     private String name=null;
     private String fileNumber=null;
+    protected String ownReference=null;
     private String reason=null;
     private String role=null;
     private boolean archived=false;
@@ -737,6 +736,7 @@ public class CaseForContactEntry {
     }
 
     /**
+     * @param role
      */
     public void setRole(String role) {
         this.role = role;
@@ -782,6 +782,20 @@ public class CaseForContactEntry {
      */
     public void setRoleForeground(Color roleForeground) {
         this.roleForeground = roleForeground;
+    }
+
+    /**
+     * @return the ownReference
+     */
+    public String getOwnReference() {
+        return ownReference;
+    }
+
+    /**
+     * @param ownReference the ownReference to set
+     */
+    public void setOwnReference(String ownReference) {
+        this.ownReference = ownReference;
     }
     
 }

@@ -677,6 +677,8 @@ import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupFacadeLocal;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.persistence.GroupMembershipFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -713,6 +715,9 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     private CalendarAccessFacadeLocal calendarAccessFacade;
     
     @EJB
+    private InvoicePoolAccessFacadeLocal invoicePoolAccessFacade;
+    
+    @EJB
     private CalendarSetupFacadeLocal calendarSetupFacade;
     
     @EJB
@@ -736,12 +741,9 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public boolean login(String principalId, String password) {
-        //System.out.println(sessionContext.isCallerInRole("loginRole"));
         return false;
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     @Override
     @RolesAllowed({"loginRole"})
     public boolean isAdmin() {
@@ -825,6 +827,8 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         }
         return true;
     }
+    
+    
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -845,6 +849,16 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         }
         return true;
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean removeUserFromInvoicePool(String principalId, String poolId) throws Exception {
+        InvoicePoolAccess pa = this.invoicePoolAccessFacade.findByUserAndPool(principalId, poolId);
+        if (pa != null) {
+            this.invoicePoolAccessFacade.remove(pa);
+        }
+        return true;
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -856,6 +870,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @RolesAllowed({"loginRole"})
     public List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception {
         return this.calendarAccessFacade.findByUser(principalId);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InvoicePoolAccess> getInvoicePoolAccessForUser(String principalId) throws Exception {
+        return this.invoicePoolAccessFacade.findByUser(principalId);
     }
 
     @Override
@@ -973,6 +993,21 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @RolesAllowed({"adminRole"})
     public void removeMailboxSetup(MailboxSetup ms) {
         this.mailboxSetupFacade.remove(ms);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean addUserToInvoicePool(String principalId, String poolId) throws Exception {
+        InvoicePoolAccess pa = this.invoicePoolAccessFacade.findByUserAndPool(principalId, poolId);
+        if (pa == null) {
+            String id = new StringGenerator().getID().toString();
+            InvoicePoolAccess newPa = new InvoicePoolAccess();
+            newPa.setId(id);
+            newPa.setPoolId(poolId);
+            newPa.setPrincipalId(principalId);
+            this.invoicePoolAccessFacade.create(newPa);
+        }
+        return true;
     }
 
 }

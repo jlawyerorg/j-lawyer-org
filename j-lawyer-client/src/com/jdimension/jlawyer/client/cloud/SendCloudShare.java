@@ -696,6 +696,11 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
 
     /**
      * Creates new form SendShare
+     * @param parent
+     * @param modal
+     * @param caseDto
+     * @param parties
+     * @param shareDocs
      */
     public SendCloudShare(java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto, ArrayList<ArchiveFileAddressesBean> parties, ArrayList<ArchiveFileDocumentsBean> shareDocs) {
         super(parent, modal);
@@ -707,11 +712,11 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
 
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud == null) {
-            this.currentShares = new ArrayList<Share>();
+            this.currentShares = new ArrayList<>();
         } else {
             List<Share> shares = cloud.getShares();
 
-            ArrayList<Share> folderShares = new ArrayList<Share>();
+            ArrayList<Share> folderShares = new ArrayList<>();
 
             for (Share s : shares) {
                 // only interested in folder shares, because we can upload more files there
@@ -720,14 +725,10 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
                 }
             }
 
-            Collections.sort(folderShares, new Comparator() {
-                @Override
-                public int compare(Object t1, Object t2) {
-                    String p1 = ((Share) t1).getPath();
-                    String p2 = ((Share) t2).getPath();
-                    return p1.toLowerCase().compareTo(p2.toLowerCase());
-                }
-
+            Collections.sort(folderShares, (Object t1, Object t2) -> {
+                String p1 = ((Share) t1).getPath();
+                String p2 = ((Share) t2).getPath();
+                return p1.toLowerCase().compareTo(p2.toLowerCase());
             });
 
             ShareInfoPanel initialSelection = null;
@@ -749,19 +750,15 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
             
             // check folders for all shares can be time consuming - doing it in an extra thread 
             // so the user gets a dialog more quickly
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        for (ShareInfoPanel p : allPanels) {
-
-                            p.loadFolders();
-                        }
-                    } catch (Throwable t) {
-                        log.error(t);
+            new Thread(() -> {
+                try {
+                    for (ShareInfoPanel p : allPanels) {
+                        
+                        p.loadFolders();
                     }
+                } catch (Throwable t) {
+                    log.error(t);
                 }
-
             }).start();
         }
 
@@ -871,7 +868,7 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
 
             ShareInfoPanel initialSelection = null;
             for (Share s : this.currentShares) {
-                if (s.getPath().toLowerCase().indexOf(this.txtFilter.getText().toLowerCase()) > -1) {
+                if (s.getPath().toLowerCase().contains(this.txtFilter.getText().toLowerCase())) {
                     ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
                     this.pnlSharesList.add(p);
                     if (initialSelection == null) {
@@ -990,17 +987,15 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true, null, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true, null, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

@@ -663,22 +663,15 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import java.io.File;
-import java.io.IOException;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
-import org.apache.log4j.Logger;
-
 /**
  *
  * @author  jens
  */
 public class ImportZipCodesDialog extends javax.swing.JDialog {
     
-    private static final Logger log=Logger.getLogger(ImportZipCodesDialog.class.getName());
-    
-    /** Creates new form ImportZipCodesDialog */
+    /** Creates new form ImportZipCodesDialog
+     * @param parent
+     * @param modal */
     public ImportZipCodesDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -780,10 +773,8 @@ public class ImportZipCodesDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ImportZipCodesDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ImportZipCodesDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     
@@ -795,26 +786,5 @@ public class ImportZipCodesDialog extends javax.swing.JDialog {
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JProgressBar progBar;
     // End of variables declaration//GEN-END:variables
-    
-//    final class CSVFileFilter extends FileFilter {
-//        public CSVFileFilter() {
-//            super();
-//        }
-//
-//        public boolean accept(File file) {
-//            if(file.isDirectory())
-//                return true;
-//            
-//            String fileName=file.getName().toLowerCase();
-//            if(fileName.endsWith(".txt")) {
-//                return true;
-//            }
-//            return false;
-//        }
-//
-//        public String getDescription() {
-//            return "Textdateien";
-//        }
-//    }
     
 }

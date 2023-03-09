@@ -706,7 +706,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/duedates")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDueDates(@PathParam("id") String id) {

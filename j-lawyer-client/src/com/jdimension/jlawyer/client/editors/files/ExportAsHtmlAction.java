@@ -669,11 +669,13 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -686,10 +688,11 @@ import org.apache.log4j.Logger;
 public class ExportAsHtmlAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(ExportAsHtmlAction.class.getName());
-
+    
     private Component owner;
     private File dir = null;
     private String caseId = null;
+    private int max=0;
 
     public ExportAsHtmlAction(ProgressIndicator i, Component owner, File dir, String caseId) {
         super(i, false);
@@ -702,7 +705,7 @@ public class ExportAsHtmlAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 0;
+        return max;
     }
 
     @Override
@@ -717,12 +720,29 @@ public class ExportAsHtmlAction extends ProgressableAction {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            this.progress("Lade Export vom Server...");
-            byte[] zipBytes = fileService.exportCaseToHtml(this.caseId);
+            this.progress("Export wird erstellt...",2);
+            DataBucket bucket = fileService.loadHtmlCaseExport(this.caseId);
+            this.max=bucket.getTotalNumberOfBuckets()+2;
+            try ( FileOutputStream output = new FileOutputStream(dir.getPath() + File.separator + bucket.getFileName(), true)) {
+                output.write(bucket.getPayload());
+            }
+            DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
+            while (bucket.hasNext()) {
+                if(this.isCancelled())
+                    return true;
+                double percentage=bucket.getPercentage();
+                this.progress("Lade Export vom Server... " + (int)percentage + "%", max);
+                bucket.resetPayload();
+                bucket = bucketLoader.nextBucket(bucket);
+                try ( FileOutputStream output = new FileOutputStream(dir.getPath() + File.separator + bucket.getFileName(), true)) {
+                    output.write(bucket.getPayload());
+                }
+            }
 
             //get the zip file content
+            FileInputStream bucketInStream=new FileInputStream(dir.getPath() + File.separator + bucket.getFileName());
             ZipInputStream zis
-                    = new ZipInputStream(new ByteArrayInputStream(zipBytes));
+                    = new ZipInputStream(bucketInStream);
             //get the zipped file list entry
             ZipEntry ze = zis.getNextEntry();
 
@@ -741,7 +761,7 @@ public class ExportAsHtmlAction extends ProgressableAction {
                 //else you will hit FileNotFoundException for compressed folder
                 new File(newFile.getParent()).mkdirs();
 
-                try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                try ( FileOutputStream fos = new FileOutputStream(newFile)) {
 
                     int len;
                     while ((len = zis.read(buffer)) > 0) {
@@ -764,6 +784,11 @@ public class ExportAsHtmlAction extends ProgressableAction {
 
             zis.closeEntry();
             zis.close();
+            bucketInStream.close();
+            String bucketFile=dir.getPath() + File.separator + bucket.getFileName();
+            if(!(new File(bucketFile).delete())) {
+                log.error("Could not delete data bucket file " + bucketFile);
+            }
 
             DesktopUtils.openBrowserFromDialog(browserUrl, this.indicator);
 

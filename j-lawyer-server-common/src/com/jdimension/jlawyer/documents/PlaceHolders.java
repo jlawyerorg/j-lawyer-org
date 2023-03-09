@@ -761,6 +761,7 @@ public class PlaceHolders {
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
     public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
@@ -779,6 +780,20 @@ public class PlaceHolders {
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
+    }
+    
+    public static String insertAt(String origin, String insert, int position) {
+        String origin1 = origin.substring(0, position);
+        String origin2 = origin.substring(position, origin.length());
+        return origin1 + insert + origin2;
+
+    }
+    
+    protected static String val(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s;
     }
     
     public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
@@ -888,6 +903,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
         
         ALLPLACEHOLDERS.add(AUTOR_AN);
 

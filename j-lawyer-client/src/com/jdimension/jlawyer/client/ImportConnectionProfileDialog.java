@@ -673,6 +673,8 @@ public class ImportConnectionProfileDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ImportConnectionProfileDialog
+     * @param parent
+     * @param modal
      */
     public ImportConnectionProfileDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

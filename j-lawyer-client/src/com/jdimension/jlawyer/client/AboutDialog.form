@@ -3,7 +3,6 @@
 <Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
-    <Property name="resizable" type="boolean" value="false"/>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -88,6 +87,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblInfos">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblInfos" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="horizontalAlignment" type="int" value="2"/>
         <Property name="text" type="java.lang.String" value="jLabel2"/>
         <Property name="verticalAlignment" type="int" value="1"/>
@@ -109,8 +113,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="7" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="jLabel2" property="font" relativeSize="true" size="-5"/>
+          </FontInfo>
         </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" value="Logo CC-BY Christian Cadena"/>

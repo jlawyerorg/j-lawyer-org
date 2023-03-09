@@ -747,6 +747,7 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
         cmdCell = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
 
+        lblAddress.setFont(lblAddress.getFont());
         lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         lblAddress.setText("<Adresse>");
         lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -770,6 +771,7 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Tel.");
 
         cmdCell.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
@@ -779,6 +781,7 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Mobil");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -808,10 +811,9 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(cmdCell, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdPhone, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(cmdCell, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdPhone, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents

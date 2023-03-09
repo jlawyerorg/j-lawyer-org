@@ -886,7 +886,7 @@ public class NextcloudCalendarConnector {
                 try {
                     return m.getResponses()[0].getProperties(200).get("getetag").getValue().toString();
                 } catch (Throwable t) {
-                    log.error("unable to etag for " + calendarHref, t);
+                    log.error("unable to get etag for " + calendarHref, t);
                 }
             }
         }

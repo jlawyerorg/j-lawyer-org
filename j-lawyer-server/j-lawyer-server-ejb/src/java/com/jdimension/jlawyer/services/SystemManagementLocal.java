@@ -664,12 +664,15 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Local;
+import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -687,7 +690,7 @@ public interface SystemManagementLocal {
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
     
@@ -696,4 +699,14 @@ public interface SystemManagementLocal {
     List<MappingTable> getMappingTables();
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
+    
+    GenericNode getAllTemplatesTree() throws Exception;
+
+    String getTemplatesBaseDir() throws Exception;
+
+    List<String> getTemplatesByPath(String folder) throws Exception;
+    
+    List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception;
+    
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception;
 }

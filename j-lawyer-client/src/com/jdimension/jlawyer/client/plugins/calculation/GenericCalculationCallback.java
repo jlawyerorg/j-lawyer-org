@@ -670,12 +670,17 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
@@ -693,9 +698,10 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  */
 public class GenericCalculationCallback implements CalculationPluginCallback {
 
-    private static Logger log = Logger.getLogger(GenericCalculationCallback.class.getName());
+    private static final Logger log = Logger.getLogger(GenericCalculationCallback.class.getName());
 
     private ArchiveFileBean selectedCase = null;
+    private Invoice selectedInvoice = null;
 
     public GenericCalculationCallback() {
         this.selectedCase = null;
@@ -704,12 +710,31 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
     public GenericCalculationCallback(ArchiveFileBean target) {
         this.selectedCase = target;
     }
+    
+    public GenericCalculationCallback(Invoice invoice, ArchiveFileBean target) {
+        this.selectedInvoice = invoice;
+        this.selectedCase = target;
+    }
 
     @Override
     public void processResultToClipboard(Object r) {
+        this.processResultToClipboardAsHtml(r);
+    }
+    
+    @Override
+    public void processResultToClipboardAsHtml(Object r) {
         System.out.println("received result: " + r.toString());
 
         HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }
+    
+    @Override
+    public void processResultToClipboardAsText(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        StringSelection stsel = new StringSelection(r.toString());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
         system.setContents(stsel, null);
     }
@@ -753,6 +778,20 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
             }
         }
     }
+
+    @Override
+    public void processResultToInvoice(ArrayList invoicePositions) {
+        EventBroker eb = EventBroker.getInstance();
+        String invoiceId=null;
+        if(this.selectedInvoice!=null)
+            invoiceId=this.selectedInvoice.getId();
+        
+        for(Object pos: invoicePositions) {
+            if(pos instanceof InvoicePosition) {
+                eb.publishEvent(new InvoicePositionAddedEvent(invoiceId, (InvoicePosition)pos));
+            }
+        }
+    }
     
     private static class HtmlSelection implements Transferable {
 
@@ -763,9 +802,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
             try {
 
                 htmlFlavors.add(new DataFlavor("text/html;class=java.lang.String"));
-
                 htmlFlavors.add(new DataFlavor("text/html;class=java.io.Reader"));
-
                 htmlFlavors.add(new DataFlavor("text/html;charset=unicode;class=java.io.InputStream"));
 
             } catch (ClassNotFoundException ex) {
@@ -784,18 +821,21 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
 
         }
 
+        @Override
         public DataFlavor[] getTransferDataFlavors() {
 
             return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
 
         }
 
+        @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
 
             return htmlFlavors.contains(flavor);
 
         }
 
+        @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
 
             if (String.class.equals(flavor.getRepresentationClass())) {

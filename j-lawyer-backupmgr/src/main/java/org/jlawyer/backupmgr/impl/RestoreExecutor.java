@@ -749,7 +749,7 @@ public class RestoreExecutor {
         }
         Class.forName("com.mysql.jdbc.Driver");
         boolean jlawyerdbFound = false;
-        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword)) {
+        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&serverTimezone=Europe/Berlin&useSSL=false&password=" + mysqlPassword)) {
             ResultSet rs = mysql.getMetaData().getCatalogs();
 
             while (rs.next()) {
@@ -772,9 +772,9 @@ public class RestoreExecutor {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
-        if (osName.indexOf("win") > -1) {
+        if (osName.contains("win")) {
 
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (osName.contains("linux")) {
 
         } else if (osName.startsWith("mac")) {
             path = "/usr/local/mysql/bin/";
@@ -876,7 +876,7 @@ public class RestoreExecutor {
                 t.printStackTrace();
                 fileFailures = fileFailures + 1;
                 if (fileFailures > 5) {
-                    throw new Exception("Mehr als 5 Dateien konnten nicht wiederhergestellt werden - Abbruch!");
+                    throw new Exception("Mehr als 5 Dateien aus " + source.getAbsolutePath() + " konnten nicht wiederhergestellt werden - Abbruch!");
                 }
             }
         }
@@ -935,7 +935,7 @@ public class RestoreExecutor {
         if (progress != null) {
             progress.onProgress("Prüfe Datensicherungsverzeichnis " + dir.getAbsolutePath());
         }
-        ArrayList<String> subDirs = new ArrayList<String>();
+        ArrayList<String> subDirs = new ArrayList<>();
         if (!dir.exists()) {
             throw new Exception("Verzeichnis '" + this.backupDirectory + "' existiert nicht!");
         }
@@ -972,7 +972,7 @@ public class RestoreExecutor {
         if (progress != null) {
             progress.onProgress("Prüfe Datenverzeichnis " + dir.getAbsolutePath());
         }
-        ArrayList<String> subDirs = new ArrayList<String>();
+        ArrayList<String> subDirs = new ArrayList<>();
         if (!dir.exists()) {
             throw new Exception("Verzeichnis '" + this.dataDirectory + "' existiert nicht!");
         }
@@ -1158,9 +1158,9 @@ public class RestoreExecutor {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
-        if (osName.indexOf("win") > -1) {
+        if (osName.contains("win")) {
             backup = backup.replace("\\", "/");
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (osName.contains("linux")) {
 
         } else if (osName.startsWith("mac")) {
             path = "/usr/local/mysql/bin/";

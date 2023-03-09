@@ -706,6 +706,17 @@ public class LoginDialog extends javax.swing.JFrame {
 
     /**
      * Creates new form LoginDialog
+     * @param initialStatus
+     * @param cmdHost
+     * @param cmdPort
+     * @param cmdSshUser
+     * @param cmdPassword
+     * @param cmdSecMode
+     * @param cmdSshHost
+     * @param cmdUser
+     * @param cmdSshPwd
+     * @param cmdSshPort
+     * @param cmdSshTargetPort
      */
     public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
@@ -739,16 +750,13 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.txtUser.setFont(font.deriveFont(Font.BOLD, 24));
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            //this.txtUser.putClientProperty( "JComponent.roundRect", true );
             this.txtUser.putClientProperty("JTextField.placeholderText", "Nutzername");
             this.txtUser.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_face_black_24dp.png")));
 
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            //this.pwPassword.putClientProperty("JTextField.placeholderText", "Passwort");
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
-            //this.pwPassword.putClientProperty( "JComponent.roundRect", true );
-
+            
             this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 24));
             this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
 
@@ -881,7 +889,8 @@ public class LoginDialog extends javax.swing.JFrame {
                 this.pwdSshPassword.setText(cmdSshPwd);
                 this.txtTargetPort.setText(cmdSshTargetPort);
             }
-            this.cmdLoginActionPerformed(null);
+            // login without saving profile (e.g. changed user name)
+            this.loginPerformed(false);
 
         } else {
             this.setFocusToPasswordField();
@@ -1614,12 +1623,15 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            this.cmdLoginActionPerformed(null);
+            this.loginPerformed(true);
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
+        this.loginPerformed(true);
+    }//GEN-LAST:event_cmdLoginActionPerformed
 
+    private void loginPerformed(boolean saveProfile) {
         if (launching) {
             return;
         }
@@ -1679,24 +1691,20 @@ public class LoginDialog extends javax.swing.JFrame {
 
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             properties.put(Context.PROVIDER_URL, "https-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            //properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "true");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "true");
         } else if (this.rdSecTunnel.isSelected()) {
 
             // need to use dynamically determined source port of ssh tunnel for http-remoting
-            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
             properties.put("jboss.naming.client.ejb.context", true);
 
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + sourcePort);
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
@@ -1704,12 +1712,10 @@ public class LoginDialog extends javax.swing.JFrame {
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
 
         } else {
-            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
             properties.put("jboss.naming.client.ejb.context", true);
 
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
@@ -1718,74 +1724,20 @@ public class LoginDialog extends javax.swing.JFrame {
 
         }
 
-        //properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        properties.put("", "false");
-//        
-//        remote.connections=default
-//remote.connection.default.host=localhost
-//remote.connection.default.port=8443
-//remote.connection.default.protocol=https-remoting
-//remote.connection.default.username=ejbUserOne
-//remote.connection.default.password=ejbPasswordOne@123
-// 
-//remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT=false
-//remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS=false
-//remote.connection.default.connect.options.org.xnio.Options.SSL_STARTTLS=true
-//remote.connection.default.connect.options.org.xnio.Options.SSL_PROTOCOL=TLSv1.2
-//remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED=true
-        //        properties = new Properties();
-        //          properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-        //  properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-        //  properties.put(Context.PROVIDER_URL, "remote+http://" + this.txtServer.getText() + ":" + this.txtPort.getText());
-        //  properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
-        //  properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
-        // end: for JMS only
-        //        Properties properties = new Properties();
-        //        properties.put("java.naming.factory.initial",
-        //                "org.jnp.interfaces.NamingContextFactory");
-        //        properties.put("java.naming.factory.url.pkgs",
-        //                "org.jboss.naming:org.jnp.interfaces");
-        //        properties.put("java.naming.provider.url", "jnp://" + this.txtServer.getText() + ":" + this.txtPort.getText());
-        //        properties.put("jnp.disableDiscovery", "true");
-        //        properties.put(InitialContext.SECURITY_PRINCIPAL, this.txtUser.getText());
-        //        properties.put(InitialContext.SECURITY_CREDENTIALS, this.pwPassword.getText());
-        //
-        //        properties.setProperty("j2ee.clientName", "j-lawyer-client");
         settings.setLookupProperties(properties);
 
-        //SecurityClientCallbackHandler callbackHandler = new SecurityClientCallbackHandler(this.txtUser.getText(), this.pwPassword.getText());
-        //        try {
-        //            LoginContext loginContext = new LoginContext("j-lawyer-security", callbackHandler);
-        //            loginContext.login();
-        //
-        //        } catch (LoginException loginEx) {
-        //            log.error("Error logging in", loginEx);
-        //            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginfailed"), new Object[]{loginEx.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
-        //            return;
-        //        }
         // try connecting to see whether the loginContext.login succeeded
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             // this is needed e.g. when the user changed the server or port
             locator.forceNewLookupProperties(settings.getLookupProperties());
 
-            //SecurityServiceRemoteHome home = (SecurityServiceRemoteHome)locator.getRemoteHome("ejb/SecurityServiceBean", SecurityServiceRemoteHome.class);
             SecurityServiceRemote simple = locator.lookupSecurityServiceRemote();
             simple.login(this.txtUser.getText(), this.pwPassword.getText());
 
             SystemManagementRemote sysMan = locator.lookupSystemManagementRemote();
             UserSettings.getInstance().setCurrentUser(sysMan.getUser(this.txtUser.getText()));
 
-            //simple.remove();
         } catch (EJBAccessException ex) {
             log.error("Invalid user credentials", ex);
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
@@ -1804,6 +1756,11 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         settings.setConfiguration(ClientSettings.CONF_LASTCONNECTION, this.cmbCurrentConnection.getSelectedItem().toString());
+        
+        if(saveProfile) {
+            // save profile in case user changed the user name
+            this.cmdSaveProfileActionPerformed(null);
+        }
 
         String serverVersion = VersionUtils.getServerVersion();
         String clientVersion = VersionUtils.getFullClientVersion();
@@ -1831,8 +1788,8 @@ public class LoginDialog extends javax.swing.JFrame {
         splash.repaint();
 
         new Thread(new SplashThread(splash, settings, this)).start();
-    }//GEN-LAST:event_cmdLoginActionPerformed
-
+    }
+    
     private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
         this.highlightSecuritySelection();
     }//GEN-LAST:event_rdSecNoneActionPerformed

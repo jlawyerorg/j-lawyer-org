@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -686,7 +687,7 @@ public interface ArchiveFileServiceRemote {
 
     void removeArchiveFile(String id) throws Exception;
 
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
+    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
 
@@ -757,6 +758,8 @@ public interface ArchiveFileServiceRemote {
     Collection<ArchiveFileBean> getAllWithMissingReviews();
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
+    
+    DataBucket loadHtmlCaseExport(String caseId) throws Exception;
 
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 
@@ -766,7 +769,7 @@ public interface ArchiveFileServiceRemote {
 
     HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
+    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
 
     List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
 
@@ -785,8 +788,6 @@ public interface ArchiveFileServiceRemote {
     void renameTag(String fromName, String toName) throws Exception;
 
     void renameDocumentTag(String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getAllPartyTypes();
 
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
 
@@ -841,5 +842,29 @@ public interface ArchiveFileServiceRemote {
     void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
 
     List<CaseSyncSettings> getCaseSyncs(String caseId);
+
+    DataBucket getDocumentContentBucket(String id) throws Exception;
+
+    boolean setDocumentHighlights(String id, int highlight1, int highlight2) throws Exception;
+    
+    List<Invoice> getInvoices(String caseId);
+
+    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
+
+    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
+
+    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+
+    Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+
+    void removeAllInvoicePositions(String invoiceId) throws Exception;
+
+    Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
+
+    List<Invoice> getInvoicesForAddress(String addressId, boolean turnOverOnly) throws Exception;
 
 }

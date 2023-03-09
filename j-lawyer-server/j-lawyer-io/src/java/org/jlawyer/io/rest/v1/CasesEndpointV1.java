@@ -727,7 +727,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"readArchiveFileRole"})
     public Response listCases() {
@@ -737,7 +737,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArrayList<String> ids = cases.getAllArchiveFileIds();
-            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<RestfulCaseOverviewV1>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
             for (String id : ids) {
                 ArchiveFileBean afb=null;
                 try {
@@ -771,7 +771,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCase(@PathParam("id") String id) {
@@ -819,7 +819,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseTags(@PathParam("id") String id) {
@@ -863,7 +863,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
     public Response createCase(RestfulCaseV1 caseData) {
@@ -902,7 +902,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response updateCase(RestfulCaseV1 caseData) {
@@ -965,7 +965,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/documents")
     @RolesAllowed({"readArchiveFileRole"})
@@ -983,14 +983,17 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(id);
-            ArrayList<RestfulDocumentV1> docList = new ArrayList<RestfulDocumentV1>();
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : documents) {
                 RestfulDocumentV1 d = new RestfulDocumentV1();
                 d.setId(doc.getId());
+                d.setVersion(doc.getVersion());
                 d.setName(doc.getName());
                 d.setCreationDate(doc.getCreationDate());
                 d.setFavorite(doc.isFavorite());
                 d.setSize(doc.getSize());
+                d.setHighlight1(doc.getHighlight1());
+                d.setHighlight2(doc.getHighlight2());
                 if(doc.getFolder()!=null)
                     d.setFolderId(doc.getFolder().getId());
                 docList.add(d);
@@ -1015,13 +1018,12 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/content")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDocumentContent(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/document/0c6f1f867f00010173b54cfcd4cce056/content
         try {
-
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileDocumentsBean doc = cases.getDocument(id);
@@ -1041,6 +1043,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             String base64 = new Base64().encode(content);
             RestfulDocumentContentV1 rdc = new RestfulDocumentContentV1();
             rdc.setId(id);
+            rdc.setVersion(doc.getVersion());
             rdc.setFileName(doc.getName());
             rdc.setCaseId(doc.getArchiveFileKey().getId());
             rdc.setBase64content(base64);
@@ -1064,7 +1067,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/duedates")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDueDates(@PathParam("id") String id) {
@@ -1117,7 +1120,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/parties")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseParties(@PathParam("id") String id) {
@@ -1134,7 +1137,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileAddressesBean> involvements = cases.getInvolvementDetailsForCase(id);
-            ArrayList<RestfulPartyV1> invList = new ArrayList<RestfulPartyV1>();
+            ArrayList<RestfulPartyV1> invList = new ArrayList<>();
             for (ArchiveFileAddressesBean inv : involvements) {
                 RestfulPartyV1 i = new RestfulPartyV1();
                 i.setId(inv.getId());
@@ -1168,7 +1171,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/create")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1188,6 +1191,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             doc.setCaseId(document.getCaseId());
             doc.setFileName(newDoc.getName());
             doc.setId(newDoc.getId());
+            doc.setVersion(newDoc.getVersion());
             if(newDoc.getFolder()!=null)
                 doc.setFolderId(newDoc.getFolder().getId());
 
@@ -1212,7 +1216,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/update")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1252,6 +1256,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             doc.setCaseId(document.getCaseId());
             doc.setFileName(updated.getName());
             doc.setId(updated.getId());
+            doc.setVersion(updated.getVersion());
             if(updated.getFolder()!=null)
                 doc.setFolderId(updated.getFolder().getId());
 
@@ -1277,7 +1282,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/document/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1309,7 +1314,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/create")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1336,7 +1341,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             PartyTypeBean partyType = system.getPartyType(party.getInvolvementType());
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             PartyTypeBean selectedPartyType = null;
             for (PartyTypeBean p : partyTypes) {
                 if (p.getName().equals(party.getInvolvementType())) {
@@ -1396,7 +1401,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/update")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1422,7 +1427,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             PartyTypeBean selectedPartyType = null;
             for (PartyTypeBean p : partyTypes) {
                 if (p.getName().equals(party.getInvolvementType())) {
@@ -1476,7 +1481,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/party/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -1506,7 +1511,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/party/types")
     @RolesAllowed({"loginRole"})
     public Response getPartyTypes() {
@@ -1515,7 +1520,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            List<PartyTypeBean> partyTypes = system.getPartyTypes();
             Collection<RestfulPartyTypeV1> result=new ArrayList<>();
             for(PartyTypeBean p: partyTypes) {
                 result.add(RestfulPartyTypeV1.fromPartyTypeBean(p));
@@ -1540,7 +1545,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/forms")
     @RolesAllowed({"readArchiveFileRole"})
@@ -1559,7 +1564,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileFormsBean> caseForms = forms.getFormsForCase(id);
-            ArrayList<RestfulFormV1> formList = new ArrayList<RestfulFormV1>();
+            ArrayList<RestfulFormV1> formList = new ArrayList<>();
             for (ArchiveFileFormsBean form : caseForms) {
                 RestfulFormV1 f = new RestfulFormV1();
                 f.setId(form.getId());

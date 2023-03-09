@@ -687,12 +687,12 @@ public class DocumentViewerFactory {
 
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewContent, content, width, height);
+    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
+        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
     }
     
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
-
+    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
+        
         if (fileName.toLowerCase().endsWith(".pdf")) {
             PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
             pdfP.setSize(new Dimension(width, height));
@@ -721,7 +721,11 @@ public class DocumentViewerFactory {
             ptp.setSize(new Dimension(width, height));
             ptp.setMaximumSize(new Dimension(width, height));
             ptp.setPreferredSize(new Dimension(width, height));
-            ptp.showContent(previewContent.getBytes());
+            try {
+                ptp.showContent(previewProvider.getPreview().getBytes());
+            } catch(Exception ex) {
+                ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+            }
             return ptp;
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
@@ -816,16 +820,12 @@ public class DocumentViewerFactory {
                 zis.close();
 
                 if (thumbBytes != null) {
-                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewContent.getBytes());
+                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewProvider.getPreview().getBytes());
                     ip.setSize(width, height);
                     ip.setMaximumSize(new Dimension(width, height));
                     ip.setPreferredSize(new Dimension(width, height));
                     ip.showContent(thumbBytes);
                     return ip;
-//                    GifJpegPngImagePanel ip = new GifJpegPngImagePanel(thumbBytes);
-//                    ip.setSize(width, height);
-//                    ip.showContent(thumbBytes);
-//                    return ip;
                 }
             } catch (Throwable t) {
                 log.error("Error extracting thumbnail from " + fileName, t);
@@ -884,7 +884,12 @@ public class DocumentViewerFactory {
         //ptp.showStatus("Vorschau wird geladen...");
         // we just reuse the showStatus method because it is doing the same thing
         //ptp.showStatus(previewContent);
-        ptp.showContent(previewContent.getBytes());
+        try {
+            ptp.showContent(previewProvider.getPreview().getBytes());
+        } catch(Exception ex) {
+            ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+        }
+        
 
         return ptp;
 

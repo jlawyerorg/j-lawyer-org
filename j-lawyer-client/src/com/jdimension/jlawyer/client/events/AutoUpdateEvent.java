@@ -691,7 +691,7 @@ public class AutoUpdateEvent extends Event {
     }
 
     public String getLongDescriptionHtml() {
-        StringBuffer updBuff = new StringBuffer();
+        StringBuilder updBuff = new StringBuilder();
         updBuff.append("<html><p align=\"center\">");
         updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.text"));
         updBuff.append("<br/> ");

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.fax.SipgateInstance;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -693,7 +694,7 @@ import org.apache.log4j.Logger;
 @Stateless
 public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
-    private static Logger log = Logger.getLogger(VoipService.class.getName());
+    private static final Logger log = Logger.getLogger(VoipService.class.getName());
     @Resource
     private SessionContext context;
     @EJB
@@ -759,7 +760,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public String initiateCall(String localUri, String remoteUri) throws SipgateException {
+    public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
         AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
         if (!currentUser.isVoipEnabled()) {
 
@@ -767,7 +768,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
-        return sip.initiateCall(localUri, remoteUri);
+        return sip.initiateCall(localUri, remoteUri, callerId);
     }
 
     @Override
@@ -969,10 +970,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void saveFaxReport(String sessionId) throws SipgateException {
+    public void saveFaxReport(String sessionId, String fileName) throws SipgateException {
         if (sessionId == null) {
             return;
         }
+        
+        if(ServerStringUtils.isEmpty(fileName))
+            return;
 
         FaxQueueBean fb = this.faxFacade.find(sessionId);
         if (fb != null) {
@@ -998,8 +1002,6 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         
         try {
-            SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-            String fileName = "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".pdf";
             byte[] reportData=sip.getFaxReport(sessionId);
             if(reportData!=null)
                 this.fileSvc.addDocument(afb.getId(), fileName, reportData, "");
@@ -1017,6 +1019,12 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     public List<SipUser> getUsers(String user, String password) throws SipgateException {
         SipgateInstance sip = SipgateInstance.getInstance(user, password);
         return sip.getUsers();
+    }
+
+    @Override
+    public String getNewFaxReportFileName(String sessionId) throws Exception {
+        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+        return "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".pdf";
     }
 
 }

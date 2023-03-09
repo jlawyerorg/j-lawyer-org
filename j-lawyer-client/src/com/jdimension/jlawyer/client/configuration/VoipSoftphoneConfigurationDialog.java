@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
 import java.io.IOException;
 import javax.swing.JFileChooser;
@@ -680,7 +679,9 @@ public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
     private static final Logger log=Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName());
 
     /**
-     * Creates new form BackupConfigurationDialog
+     * Creates new form VoipSoftphoneConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public VoipSoftphoneConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -905,6 +906,7 @@ public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdFindExecutableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFindExecutableActionPerformed
         JFileChooser chooser = new JFileChooser();
+        chooser.setFileHidingEnabled(false);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 
@@ -954,19 +956,16 @@ public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                VoipSoftphoneConfigurationDialog dialog = new VoipSoftphoneConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            VoipSoftphoneConfigurationDialog dialog = new VoipSoftphoneConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

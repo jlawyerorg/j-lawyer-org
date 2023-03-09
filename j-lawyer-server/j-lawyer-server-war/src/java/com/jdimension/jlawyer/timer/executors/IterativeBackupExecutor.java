@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.timer.executors;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -684,10 +683,7 @@ import org.apache.tika.parser.txt.CharsetDetector;
 public class IterativeBackupExecutor {
 
     private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
-    private final SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
-    private final SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
-    private static final DecimalFormat mbFormat = new DecimalFormat("0.0");
-
+    
     // these directories will be zipped entirely with each backup run
     private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates"};
     // these directories will be zipped on a per subdirectory basis and only if there are changes
@@ -726,7 +722,6 @@ public class IterativeBackupExecutor {
         }
 
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
-        //SimpleDateFormat dftime = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String encrypted = "";
         if (encrypt) {
             encrypted = "-encrypted";
@@ -775,7 +770,7 @@ public class IterativeBackupExecutor {
             throw new Exception("Datenbank-Dump unvollständig!");
         }
         // encrypt if needed
-        List<File> dumpFileList = new ArrayList<File>();
+        List<File> dumpFileList = new ArrayList<>();
         dumpFileList.add(dumpFile);
         log.info("Creating zip file");
         File targetDir = new File(this.backupDirectory);
@@ -790,10 +785,10 @@ public class IterativeBackupExecutor {
         dumpFile.delete();
 
         Date backupDate = new Date();
-        ArrayList<String> errorList = new ArrayList<String>();
+        ArrayList<String> errorList = new ArrayList<>();
         try {
             for (String fullBackupDir : fullBackupDirs) {
-                List<File> fileList = new ArrayList<File>();
+                List<File> fileList = new ArrayList<>();
                 
                 File checkAndCreate=new File(this.dataDirectory + File.separator + fullBackupDir);
                 checkAndCreate.mkdirs();
@@ -837,7 +832,7 @@ public class IterativeBackupExecutor {
                 File[] children = dir.listFiles();
                 for (File child : children) {
                     if (child.isDirectory()) {
-                        List<File> fileList = new ArrayList<File>();
+                        List<File> fileList = new ArrayList<>();
 
                         log.debug("Getting references to all files in: " + this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName());
                         getAllFiles(new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList);
@@ -846,14 +841,14 @@ public class IterativeBackupExecutor {
                         if (encrypt) {
                             // delete backups that are not encrypted
                             for (File temp : targetDir.listFiles()) {
-                                if (temp.getName().indexOf("encrypted") < 0) {
+                                if (!temp.getName().contains("encrypted")) {
                                     temp.delete();
                                 }
                             }
                         } else {
                             // delete backups that are encrypted
                             for (File temp : targetDir.listFiles()) {
-                                if (temp.getName().indexOf("encrypted") >= 0) {
+                                if (temp.getName().contains("encrypted")) {
                                     temp.delete();
                                 }
                             }
@@ -912,15 +907,15 @@ public class IterativeBackupExecutor {
         }
     }
 
-    private static File dumpDatabase(String user, String password, String port, String backupDir) {
+    private static File dumpDatabase(String user, String password, String port, String backupDir) throws Exception {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         String backupFilePath=backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql";
         
-        if (osName.indexOf("win") > -1) {
+        if (osName.contains("win")) {
 
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (osName.contains("linux")) {
 
         } else if (osName.startsWith("mac")) {
             path = "/usr/local/mysql/bin/";
@@ -954,6 +949,7 @@ public class IterativeBackupExecutor {
         Process process = null;
 
         File f = new File(backupFilePath);
+        int exitCode=0;
         try {
 
             if (f.exists()) {
@@ -961,7 +957,7 @@ public class IterativeBackupExecutor {
             }
 
             process = shell.exec(cmd);
-            process.waitFor();
+            exitCode=process.waitFor();
 
             f.setLastModified(System.currentTimeMillis());
             
@@ -970,6 +966,12 @@ public class IterativeBackupExecutor {
             log.error(ex);
             
         }
+        
+        if(exitCode!=0) {
+            log.error("mysqldump returned with exit code " + exitCode);
+            throw new Exception("Datenbank-Dump fehlgeschlagen - Rückgabewert " + exitCode);
+        }
+        
         return f;
     }
 

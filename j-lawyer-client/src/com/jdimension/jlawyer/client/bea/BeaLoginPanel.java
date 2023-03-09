@@ -774,7 +774,7 @@ public class BeaLoginPanel extends javax.swing.JPanel implements ThemeableEditor
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/bea32.png"))); // NOI18N
         lblPanelTitle.setText("Anwaltspostfach");

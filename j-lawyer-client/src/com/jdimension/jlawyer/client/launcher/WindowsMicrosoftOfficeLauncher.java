@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import java.io.File;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -675,9 +676,11 @@ import org.apache.log4j.Logger;
 public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
 
     private static final Logger log = Logger.getLogger(WindowsMicrosoftOfficeLauncher.class.getName());
-    private static String winwordBinary = "winword.exe";
-    private static String powerpointBinary = "powerpnt.exe";
-    private static String excelBinary = "excel.exe";
+    private static final String WINWORD_BINARY = "winword.exe";
+    private static final String POWERPOINT_BINARY = "powerpnt.exe";
+    private static final String EXCEL_BINARY = "excel.exe";
+    
+    private static final String[] BINARY_SEARCHPATHS={"C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office16\\", "C:\\Program Files\\Microsoft Office 16\\ClientX64\\Root\\Office16\\", "C:\\Program Files (x86)\\Microsoft Office 16\\ClientX86\\Root\\Office16\\", "C:\\Program Files\\Microsoft Office\\root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office\\Office15\\", "C:\\Program Files\\Microsoft Office 15\\ClientX64\\Root\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office 15\\ClientX86\\Root\\Office15\\"};
 
     public WindowsMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
@@ -686,78 +689,72 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
     @Override
     public void launch(boolean autoCloseExistingDocument) throws Exception {
 
-        
-        // winword.exe does not reliably close, so we allow opening the same document
-//        if (isDocumentOpen(store.getDocumentIdentifier())) {
-//            log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
-//            throw new Exception("Dokument " + store.getFileName() + "ist bereits geöffnet");
-//        }
-
         final Launcher thisLauncher = this;
 
-        new Thread(new Runnable() {
-
-            public void run() {
-
+        new Thread(() -> {
+            try {
+                
+                ObservedMicrosoftOfficeDocument odoc = new ObservedMicrosoftOfficeDocument(url, store, thisLauncher);
+                DocumentObserver observer = DocumentObserver.getInstance();
+                log.debug("observer status launching " + odoc.getName());
+                odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                observer.addDocument(odoc);
+                
+                Process p = null;
                 try {
-
-                    ObservedMicrosoftOfficeDocument odoc = new ObservedMicrosoftOfficeDocument(url, store, thisLauncher);
-                    DocumentObserver observer = DocumentObserver.getInstance();
-                    log.debug("observer status launching " + odoc.getName());
-                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                    observer.addDocument(odoc);
-
-                    Process p = null;
-                    try {
-                        String binary=winwordBinary;
-                        if(LauncherFactory.supportedByMicrosoftOfficeWord(url))
-                            binary=winwordBinary;
-                        else if(LauncherFactory.supportedByMicrosoftOfficeExcel(url))
-                            binary=excelBinary;
-                        else if(LauncherFactory.supportedByMicrosoftOfficePowerPoint(url))
-                            binary=powerpointBinary;
-                        
-                        p = Runtime.getRuntime().exec(new String[]{binary, url});
-                        log.debug("using " + binary + " for " + odoc.getName());
-
-                    } catch (Throwable ex) {
-                        log.error("error starting winword" + ex.getMessage());
-
-                    }
-
-                    log.debug("observer status open " + odoc.getName());
-                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
-
-                    log.debug("waitFor");
-                    int exit=-42;
-                    if(p!=null)
-                        exit = p.waitFor();
-                    else
-                        log.error("no process was launched");
+                    String binary=WINWORD_BINARY;
+                    if(LauncherFactory.supportedByMicrosoftOfficeWord(url))
+                        binary=WINWORD_BINARY;
+                    else if(LauncherFactory.supportedByMicrosoftOfficeExcel(url))
+                        binary=EXCEL_BINARY;
+                    else if(LauncherFactory.supportedByMicrosoftOfficePowerPoint(url))
+                        binary=POWERPOINT_BINARY;
                     
-                    log.debug("exit code: " + exit);
-                    if (exit == 0) {
-
-                        log.debug("process returned exit code 0. keeping file open, relying on lock file");
-
+                    if(this.isBinaryInPathEnv(binary)) {
+                        p = Runtime.getRuntime().exec(new String[]{binary, url});
+                        log.info("using " + binary + " for " + odoc.getName() + " from PATH");
                     } else {
-                        log.error("observer NOT closing due to exit code " + exit);
-
+                        String spBinary=this.searchBinary(binary);
+                        log.info("Binary " + binary + " for " + odoc.getName() + " could not be found in PATH - search yielded: " + spBinary);
+                        if(spBinary!=null)
+                            binary=spBinary;
+                        p = Runtime.getRuntime().exec(new String[]{binary, url});
                     }
-
-                } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            String errorMsg="";
-                            if(t.getMessage()!=null)
-                                errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage() + "; Pfad zu winword.exe im PATH vorhanden?";
-                            else
-                                errorMsg="Fehler beim Öffnen des Dokuments - Pfad zu winword.exe im PATH vorhanden?";
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
+                    
+                } catch (Throwable ex) {
+                    log.error("error starting MS Office: " +ex.getMessage(), ex);
+                    
                 }
+                
+                log.debug("observer status open " + odoc.getName());
+                odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                
+                log.debug("waitFor");
+                int exit=-42;
+                if(p!=null)
+                    exit = p.waitFor();
+                else
+                    log.error("no process was launched");
+                
+                log.debug("exit code: " + exit);
+                if (exit == 0) {
+                    
+                    log.debug("process returned exit code 0. keeping file open, relying on lock file");
+                    
+                } else {
+                    log.error("observer NOT closing due to exit code " + exit);
+                    
+                }
+                
+            } catch (final Throwable t) {
+                SwingUtilities.invokeLater(() -> {
+                    String errorMsg="";
+                    if(t.getMessage()!=null)
+                        errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage() + "; Pfad zu winword.exe im PATH vorhanden?";
+                    else
+                        errorMsg="Fehler beim Öffnen des Dokuments - Pfad zu winword.exe im PATH vorhanden?";
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
             }
         }).start();
     }
@@ -765,6 +762,29 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
     @Override
     public String getType() {
         return "Microsoft Office Windows Launcher";
+    }
+    
+    private boolean isBinaryInPathEnv(String binary) {
+        String pathEnv=System.getenv("PATH");
+        String[] paths=pathEnv.split(";");
+        for(String p: paths) {
+            if(!(p.endsWith(File.separator)))
+                p=p + File.separator;
+            if(new File(p + binary).exists())
+                return true;
+        }
+        return false;
+    }
+    
+    private String searchBinary(String binary) {
+        for(String sp: BINARY_SEARCHPATHS) {
+            String spBinary=sp+binary;
+            log.debug("searching for " + binary + ": " +spBinary);
+            if(new File(spBinary).exists())
+                return spBinary;
+        }
+        
+        return null;
     }
 
 }

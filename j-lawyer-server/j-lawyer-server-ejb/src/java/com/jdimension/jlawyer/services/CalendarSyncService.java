@@ -673,12 +673,14 @@ import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.logging.Logger;
 import org.jlawyer.cloud.NextcloudCalendarConnector;
 
@@ -699,7 +701,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
     @Override
-    @Schedule(dayOfWeek = "*", hour = "6,12,19", minute = "1", second = "0", persistent = false)
+    @Schedule(dayOfWeek = "*", hour = "13,20", minute = "41", second = "0", persistent = false)
+    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
     public void fullCalendarSync() {
 
         // interval syncs seem to cause duplicate display of events on iOS / macOS
@@ -719,6 +722,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     @Override
     @RolesAllowed({"adminRole"})
     @Asynchronous
+    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
     public void runFullCalendarSync() {
         this.fullCalendarSyncImpl();
     }
@@ -788,7 +792,10 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
             // remove anything that is done
             if (event.getDoneBoolean()) {
-                this.eventDeleted(event);
+                CalendarSetup cs = event.getCalendarSetup();
+                if(cs.isDeleteDone()) {
+                    this.eventDeleted(event);
+                }
             } else {
 
                 try {

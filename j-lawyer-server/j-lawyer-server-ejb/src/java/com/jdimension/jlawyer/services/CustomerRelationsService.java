@@ -691,12 +691,10 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
-import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
@@ -711,10 +709,7 @@ import org.jlawyer.data.tree.TreeNodeUtils;
 @SecurityDomain("j-lawyer-security")
 public class CustomerRelationsService implements CustomerRelationsServiceRemote, CustomerRelationsServiceLocal {
     
-    private static Logger log=Logger.getLogger(CustomerRelationsService.class.getName());
-    
-    @Resource
-    private SessionContext context;
+    private static final Logger log=Logger.getLogger(CustomerRelationsService.class.getName());
     
     @EJB
     private CampaignFacadeLocal campaignFacade;
@@ -776,7 +771,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     @RolesAllowed({"readAddressRole"})
     public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception {
         List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign);
-        List<AddressBean> result=new ArrayList<AddressBean>();
+        List<AddressBean> result=new ArrayList<>();
         for(CampaignAddress ca: cas) {
             result.add(ca.getAddressKey());
         }
@@ -785,7 +780,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     
     @Override
     @RolesAllowed({"readAddressRole"})
-    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, Hashtable placeHolderValues) throws Exception {
+    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues) throws Exception {
         StringGenerator idGen = new StringGenerator();
         
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
@@ -816,7 +811,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
 
         SystemManagement.copyFile(src, dst);
 
-        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues);
+        LibreOfficeAccess.setPlaceHolders("", dst, dst, placeHolderValues, null);
 
         return ServerFileUtils.readFile(new File(dst));
     }

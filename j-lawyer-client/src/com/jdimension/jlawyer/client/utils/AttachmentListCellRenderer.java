@@ -667,9 +667,11 @@ import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Component;
+import java.io.File;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.jlawyer.bea.model.Attachment;
 
 /**
  *
@@ -685,12 +687,22 @@ public class AttachmentListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList jlist, Object o, int i, boolean bln, boolean bln1) {
         Component ret = super.getListCellRendererComponent(jlist, o, i, bln, bln1);
         if (o instanceof String) {
-            // ignore
+            ((JLabel) ret).setText(o.toString());
+            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(o.toString()));
         } else if (o instanceof ArchiveFileDocumentsBean) {
             ArchiveFileDocumentsBean d = (ArchiveFileDocumentsBean) o;
             ((JLabel) ret).setText(d.getName());
             ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
+        } else if (o instanceof Attachment) {
+            Attachment d = (Attachment) o;
+            ((JLabel) ret).setText(d.toString());
+            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getFileName()));
+        } else if (o instanceof File) {
+            File d = (File) o;
+            ((JLabel) ret).setText(d.getName());
+            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
         }
+        
         return ret;
         //throw new UnsupportedOperationException("Not supported yet.");
     }

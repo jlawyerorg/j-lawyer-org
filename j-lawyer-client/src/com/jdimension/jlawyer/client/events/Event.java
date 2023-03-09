@@ -671,6 +671,7 @@ public abstract class Event {
     
     public static final Integer TYPE_DEFAULT=0;
     public static final Integer TYPE_AUTOUPDATE=10;
+    public static final Integer TYPE_SERVICES=11;
     public static final Integer TYPE_NEWS=20;
     public static final Integer TYPE_SYSTEMSTATUS=30;
     public static final Integer TYPE_SCANNERSTATUS=40;
@@ -684,6 +685,7 @@ public abstract class Event {
     public static final Integer TYPE_DOCUMENTADDED=110;
     public static final Integer TYPE_CONTACTUPDATED=120;
     public static final Integer TYPE_REVIEWADDED=130;
+    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
     
     
     private Integer type=TYPE_DEFAULT;

@@ -703,6 +703,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
     /**
      * Creates new form FormsManagementDialog
+     * @param parent
+     * @param modal
      */
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -970,10 +972,10 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         jScrollPane2.setViewportView(formPluginsPanel);
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD, jLabel1.getFont().getSize()-2));
         jLabel1.setText("Verbesserungsvorschläge / neue Falldatenblätter anfragen:");
 
-        lblGitHubLink.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblGitHubLink.setFont(lblGitHubLink.getFont().deriveFont(lblGitHubLink.getFont().getSize()-2f));
         lblGitHubLink.setText("https://github.com/jlawyerorg/j-lawyer-forms/issues");
         lblGitHubLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblGitHubLink.addMouseListener(new java.awt.event.MouseAdapter() {

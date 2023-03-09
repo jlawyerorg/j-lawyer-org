@@ -688,14 +688,22 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
     
     @Override
     public List<ArchiveFileBean> findByFileNumber(String fileNumber) {
-        List<ArchiveFileBean> l=(List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByFileNumber").setParameter("fileNumber", fileNumber).getResultList();
-        return l;
+        return (List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByFileNumber").setParameter("fileNumber", fileNumber).getResultList();
+    }
+    
+    @Override
+    public List<ArchiveFileBean> findLastChanged(int limit) {
+        return (List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findAllSortedByChangeDate").setMaxResults(limit).getResultList();
+    }
+    
+    @Override
+    public List<ArchiveFileBean> findLastChangedNonArchived(int limit) {
+        return (List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findNonArchivedSortedByChangeDate").setMaxResults(limit).getResultList();
     }
     
     @Override
     public List<ArchiveFileBean> findByGroup(Group g) {
-        List<ArchiveFileBean> l=(List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByGroup").setParameter("group", g).getResultList();
-        return l;
+        return (List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByGroup").setParameter("group", g).getResultList();
     }
     
 }

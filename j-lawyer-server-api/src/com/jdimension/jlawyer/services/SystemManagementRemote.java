@@ -668,11 +668,13 @@ import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import javax.ejb.Remote;
 import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -727,7 +729,7 @@ public interface SystemManagementRemote {
     
     void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
     
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd) throws Exception;
+    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
 
     boolean validateFileOnServer(File file, boolean isDirectory);
 
@@ -773,7 +775,7 @@ public interface SystemManagementRemote {
 
     void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     Hashtable<String,PartyTypeBean> getPartyTypesTable();
 
@@ -800,5 +802,7 @@ public interface SystemManagementRemote {
     void deleteMappingTable(String tableName) throws Exception;
 
     MappingTable updateMappingTable(MappingTable mt) throws Exception;
+
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception;
     
 }

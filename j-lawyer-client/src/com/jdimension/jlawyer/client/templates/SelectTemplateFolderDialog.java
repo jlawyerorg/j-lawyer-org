@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.templates;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -672,7 +671,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
-import javax.swing.JOptionPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -690,7 +688,9 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
     private GenericNode folder=null;
     
     /**
-     * Creates new form BankSearchDialog
+     * Creates new form SelectTemplateFolderDialog
+     * @param parent
+     * @param modal
      */
     public SelectTemplateFolderDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -849,11 +849,8 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new SelectTemplateFolderDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new SelectTemplateFolderDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

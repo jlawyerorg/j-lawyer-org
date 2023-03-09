@@ -704,7 +704,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
     public Response getContact(@PathParam("id") String id) {
@@ -732,7 +732,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
     public Response createContact(RestfulContactV1 contact) {
@@ -761,7 +761,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"readAddressRole"})
     public Response listContacts() {
@@ -800,7 +800,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
     public Response updateContact(RestfulContactV1 contact) {

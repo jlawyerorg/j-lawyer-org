@@ -1,6 +1,8 @@
 import templates.smart.SmartFunctions;
 
 class SmartTemplate {
+    
+    String caseId="SMARTTEMPLATECASEID";
 	
     double doIt(double d1) {
         System.out.println("ok");
@@ -9,6 +11,19 @@ class SmartTemplate {
     
     String evaluateScript() {
         return SMARTTEMPLATESCRIPT;
+    }
+    
+    String WENNETIKETT(String etikett, String then, String otherwise) {
+        if(etikett==null)
+            return otherwise;
+        if("".equals(etikett))
+            return otherwise;
+        
+        return SmartFunctions.wennEtikett(caseId, etikett, then, otherwise);
+    }
+    
+    String WENNETIKETT(String etikett, String then) {
+        return WENNETIKETT(etikett, then, "");
     }
     
     String WENNGLEICH(String s1, String s2, String then, String otherwise) {
@@ -52,6 +67,20 @@ class SmartTemplate {
     
     String WENNLEER(String s1, String then) {
         return WENNLEER(s1, then, "");
+    }
+    
+    String WENNFALLDATEN(String s1, String then) {
+        return WENNFALLDATEN(s1, then, "");
+    }
+    
+    String WENNFALLDATEN(String s1, String then, String otherwise) {
+        // this variable value will be replaced by LibreOfficeAccess before execution
+        String allFormPrefixes="ALLFORMPREFIXES";
+        if(allFormPrefixes.contains("-" + s1 + "-")) {
+            return then;
+        } else {
+            return otherwise;
+        }
     }
     
     String WENNGROESSER(String s1, String s2, String then, String otherwise) {
@@ -106,6 +135,19 @@ class SmartTemplate {
             
         if(s1.length()>0)
             s1=s1.substring(0, 1).toUpperCase() + s1.substring(1);
+            
+        return s1;
+    }
+    
+    /*
+    * E.g. when string is taken from a mapping table and the term is used within a sentence.
+    */
+    String KLEIN(String s1) {
+        if(s1==null)
+            s1="";
+            
+        if(s1.length()>0)
+            s1=s1.substring(0, 1).toLowerCase() + s1.substring(1);
             
         return s1;
     }

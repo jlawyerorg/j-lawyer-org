@@ -670,38 +670,28 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.ViewAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
-import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
-import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
-import com.jdimension.jlawyer.client.events.Event;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
+import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.drebis.*;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.persistence.DocumentTagsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DrebisServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -710,34 +700,19 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEditor, EventConsumer {
+public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEditor {
 
     private static final Logger log = Logger.getLogger(DrebisInboxPanel.class.getName());
     private Image backgroundImage = null;
 
     /**
-     * Creates new form AddressPanel
+     * Creates new form DrebisInboxPanel
      */
     public DrebisInboxPanel() {
 
         initComponents();
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
-
-        UserSettings us = UserSettings.getInstance();
-        String temp = us.getSetting(UserSettings.CONF_DREBIS_TAGGINGENABLED, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkCaseTagging.setSelected(true);
-        }
-
-        temp = us.getSetting(UserSettings.CONF_DREBIS_DOCUMENTTAGGINGENABLED, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkDocumentTagging.setSelected(true);
-        }
-
-        EventBroker eb = EventBroker.getInstance();
-        eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
-        eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
 
         new Thread(() -> {
             ClientSettings settings = ClientSettings.getInstance();
@@ -767,7 +742,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }).start();
 
-//        this.refreshList();
     }
 
     private void refreshList() {
@@ -848,7 +822,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
 
     }
 
@@ -887,15 +860,11 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         txtFileName = new javax.swing.JTextField();
         txtFileNumber = new javax.swing.JTextField();
         cmdSaveConfirm = new javax.swing.JButton();
-        cmbDocumentTag = new javax.swing.JComboBox<>();
-        chkDocumentTagging = new javax.swing.JCheckBox();
-        cmbCaseTag = new javax.swing.JComboBox<>();
-        chkCaseTagging = new javax.swing.JCheckBox();
         cmdRefresh = new javax.swing.JButton();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("- Nachrichten");
 
@@ -1020,34 +989,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        cmbDocumentTag.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbDocumentTagActionPerformed(evt);
-            }
-        });
-
-        chkDocumentTagging.setText("Dokumentetikett:");
-        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkDocumentTaggingActionPerformed(evt);
-            }
-        });
-
-        cmbCaseTag.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCaseTagActionPerformed(evt);
-            }
-        });
-
-        chkCaseTagging.setText("Aktenetikett:");
-        chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkCaseTaggingActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1057,7 +998,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE)
+                            .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(jLabel3)
@@ -1070,17 +1011,9 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                                     .add(txtFileName)
                                     .add(txtFileNumber))))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE))
+                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(chkCaseTagging)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(chkDocumentTagging)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(0, 284, Short.MAX_VALUE)
                         .add(cmdSaveConfirm)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdConfirm)))
@@ -1111,11 +1044,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdConfirm)
-                    .add(cmdSaveConfirm)
-                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkDocumentTagging)
-                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkCaseTagging))
+                    .add(cmdSaveConfirm))
                 .addContainerGap())
         );
 
@@ -1184,7 +1113,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtFreeText.setText(me.getFreeText());
         this.txtClaimNumber.setText("" + me.getClaimNumber());
 
-        //((DefaultTableModel)this.tblAttachments.getModel()).re
         for (DrebisAttachment da : me.getAttachments()) {
             Vector aRow = new Vector();
             aRow.add(da);
@@ -1204,7 +1132,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 DrebisAttachment da = (DrebisAttachment) this.tblAttachments.getValueAt(this.tblAttachments.getSelectedRow(), 0);
                 byte[] data = da.getContent();
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("drebis-attachment-" + da.getName() + "." + da.getSuffix(), da.getName() + "." + da.getSuffix());
-                Launcher launcher = LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store);
+                Launcher launcher = LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
 
             } catch (Exception ex) {
@@ -1235,7 +1163,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Exception ex) {
             log.error("Error confirming drebis message", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Bestätigen der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().
         }
 
         this.cmdRefreshActionPerformed(null);
@@ -1250,68 +1177,53 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
+        BulkSaveDialog bulkSaveDlg=new BulkSaveDialog(BulkSaveDialog.TYPE_DREBIS, EditorsRegistry.getInstance().getMainWindow(), true);
+        
         try {
-            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-            //byte[] data = this.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString());
             String archiveFileNumber = this.txtFileNumber.getText();
 
             // just in case the Drebis request was started in the portal without the leading zeroes
             // removed due to custom file numbers
             // archiveFileNumber=ArchiveFileUtils.addLeadingZeroes(archiveFileNumber);
-            ArchiveFileBean sel = afs.getArchiveFileByFileNumber(archiveFileNumber);
-            CaseFolder folder=null;
-            if (sel == null) {
+            
+            CaseFolder rootFolder = null;
+            CaseFolder targetFolder = null;
                 
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+archiveFileNumber, null);
-                saDlg.setVisible(true);
-                sel = saDlg.getCaseSelection();
-                folder=saDlg.getFolderSelection();
+            // get folders
+            SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + archiveFileNumber, null);
+            saDlg.setVisible(true);
+            ArchiveFileBean targetCase = saDlg.getCaseSelection();
+            targetFolder = saDlg.getFolderSelection();
+            rootFolder = saDlg.getRootFolder();
 
-                saDlg.dispose();
-                
-                if(sel==null)
-                    return;
-                
-            }
+            saDlg.dispose();
 
-            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_TAGGINGENABLED, "false");
-            if ("true".equalsIgnoreCase(temp)) {
-                String caseTag = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_LASTTAG, "");
-                if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
-                    afs.setTag(sel.getId(), new ArchiveFileTagsBean(null, caseTag), true);
-                }
-            }
+            if (targetCase == null)
+                return;
+            
+            bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
+            bulkSaveDlg.setSelectedCase(targetCase);
 
             for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
 
                 DrebisAttachment da = (DrebisAttachment) this.tblAttachments.getValueAt(i, 0);
 
-                String newName = this.getNewFileName(da.getName() + "." + da.getSuffix());
-                if (newName == null) {
-                    // user decided to cancel --> do NOT confirm the message then
-                    return;
-                }
+                BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                bulkEntry.setDocumentDate(new Date());
+                bulkEntry.setDocumentBytes(da.getContent());
 
-                ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(sel.getId(), newName, da.getContent(), "");
+                String newName = da.getName() + "." + da.getSuffix();
+                newName = FileUtils.sanitizeFileName(newName);
 
-                if (folder != null) {
-                    ArrayList<String> docList = new ArrayList<>();
-                    docList.add(newlyAddedDocument.getId());
-                    afs.moveDocumentsToFolder(docList, folder.getId());
-                }
-                
-                temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_DOCUMENTTAGGINGENABLED, "false");
-                if ("true".equalsIgnoreCase(temp)) {
-                    String docTag = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_LASTDOCUMENTTAG, "");
-                    if (docTag != null && !"".equalsIgnoreCase(docTag)) {
-                        afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
-                    }
-                }
+                bulkEntry.setDocumentFilename(da.getName() + "." + da.getSuffix());
+                bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(new Date()) + newName);
+
+                bulkSaveDlg.addEntry(bulkEntry);
+
             }
+            
+            FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
+            bulkSaveDlg.setVisible(true);
 
         } catch (Exception ex) {
             log.error("Error storing drebis attachments", ex);
@@ -1319,7 +1231,8 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        this.cmdConfirmActionPerformed(evt);
+        if(!bulkSaveDlg.isFailedOrCancelled())        
+            this.cmdConfirmActionPerformed(evt);
 
     }//GEN-LAST:event_cmdSaveConfirmActionPerformed
 
@@ -1333,39 +1246,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             this.tblHeadersMouseClicked(null);
     }//GEN-LAST:event_tblHeadersKeyPressed
 
-    private void chkCaseTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCaseTaggingActionPerformed
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean tagging = this.chkCaseTagging.isSelected();
-        settings.setSetting(UserSettings.CONF_DREBIS_TAGGINGENABLED, "" + tagging);
-    }//GEN-LAST:event_chkCaseTaggingActionPerformed
-
-    private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean tagging = this.chkDocumentTagging.isSelected();
-        settings.setSetting(UserSettings.CONF_DREBIS_DOCUMENTTAGGINGENABLED, "" + tagging);
-    }//GEN-LAST:event_chkDocumentTaggingActionPerformed
-
-    private void cmbCaseTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCaseTagActionPerformed
-        UserSettings settings = UserSettings.getInstance();
-
-        String lastTag = this.cmbCaseTag.getSelectedItem().toString();
-        settings.setSetting(UserSettings.CONF_DREBIS_LASTTAG, lastTag);
-    }//GEN-LAST:event_cmbCaseTagActionPerformed
-
-    private void cmbDocumentTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDocumentTagActionPerformed
-        UserSettings settings = UserSettings.getInstance();
-
-        String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
-        settings.setSetting(UserSettings.CONF_DREBIS_LASTDOCUMENTTAG, lastTag);
-    }//GEN-LAST:event_cmbDocumentTagActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkCaseTagging;
-    private javax.swing.JCheckBox chkDocumentTagging;
-    private javax.swing.JComboBox<String> cmbCaseTag;
-    private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JButton cmdConfirm;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JButton cmdSaveConfirm;
@@ -1393,48 +1274,4 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         return this.backgroundImage;
     }
 
-    @Override
-    public void onEvent(Event e) {
-        if (e instanceof AllCaseTagsEvent) {
-            DefaultComboBoxModel dm = new DefaultComboBoxModel();
-            dm.addElement("");
-            ArrayList<String> allTags = new ArrayList<>();
-            for (AppOptionGroupBean tag : ((AllCaseTagsEvent) e).getTagDtos()) {
-                //dm.addElement(tag.getValue());
-                allTags.add(tag.getValue());
-            }
-            Collections.sort(allTags);
-            for (String s : allTags) {
-                dm.addElement(s);
-            }
-            this.cmbCaseTag.setModel(dm);
-            UserSettings settings = UserSettings.getInstance();
-            String lastTag = settings.getSetting(UserSettings.CONF_DREBIS_LASTTAG, "");
-            if (allTags.contains(lastTag)) {
-                this.cmbCaseTag.setSelectedItem(lastTag);
-            } else {
-                this.cmbCaseTag.setSelectedItem("");
-            }
-        } else if (e instanceof AllDocumentTagsEvent) {
-            DefaultComboBoxModel dm = new DefaultComboBoxModel();
-            dm.addElement("");
-            ArrayList<String> allTags = new ArrayList<>();
-            for (AppOptionGroupBean tag : ((AllDocumentTagsEvent) e).getTagDtos()) {
-                //dm.addElement(tag.getValue());
-                allTags.add(tag.getValue());
-            }
-            Collections.sort(allTags);
-            for (String s : allTags) {
-                dm.addElement(s);
-            }
-            this.cmbDocumentTag.setModel(dm);
-            UserSettings settings = UserSettings.getInstance();
-            String lastTag = settings.getSetting(UserSettings.CONF_DREBIS_LASTDOCUMENTTAG, "");
-            if (allTags.contains(lastTag)) {
-                this.cmbDocumentTag.setSelectedItem(lastTag);
-            } else {
-                this.cmbDocumentTag.setSelectedItem("");
-            }
-        }
-    }
 }

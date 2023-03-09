@@ -708,6 +708,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         
         ServerSettings s = ServerSettings.getInstance();
         this.chkFullSync.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, false));
+        this.chkConflictCheck.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true));
 
         this.tblCalendars.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
@@ -743,6 +744,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         this.txtDisplayName.setText("");
         this.cmbName.removeAllItems();
         this.rdFollowups.setSelected(true);
+        this.chkDeleteDone.setSelected(true);
         this.pnlCloud.clear();
 
     }
@@ -764,6 +766,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         cmdRemove = new javax.swing.JButton();
         chkFullSync = new javax.swing.JCheckBox();
         jLabel7 = new javax.swing.JLabel();
+        chkConflictCheck = new javax.swing.JCheckBox();
+        jLabel8 = new javax.swing.JLabel();
         cmdClose = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         txtDisplayName = new javax.swing.JTextField();
@@ -783,6 +787,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         rdFollowups = new javax.swing.JRadioButton();
         rdRespites = new javax.swing.JRadioButton();
         rdEvents = new javax.swing.JRadioButton();
+        chkDeleteDone = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Kalender");
@@ -846,6 +851,12 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
         jLabel7.setToolTipText("Sofern ein Kalender mit einer Nextcloud synchronisiert wird, geschieht dies automatisch.\nEine zusätzliche Synchronisation in Intervallen ist nur in Ausnahmefällen sinnvoll, bspw. \nwenn die Nextcloud nicht durchgehend erreichbar ist.\nAuf Geräte mit iOS / macOS kann die Intervallsynchronisation zur doppelten Anzeige von\nTerminen in den Kalender-Apps führen.");
 
+        chkConflictCheck.setSelected(true);
+        chkConflictCheck.setText("auf Terminkonflikte prüfen");
+
+        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
+        jLabel8.setToolTipText("Bei Erstellen und Bearbeiten von Kalendereinträgen wird auf \nmögliche Terminkonflikte geprüft und eine Warnung angezeigt.");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -854,16 +865,20 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(chkFullSync)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel7)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdAdd)
-                            .addComponent(cmdRemove))))
+                            .addComponent(cmdRemove)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkFullSync)
+                            .addComponent(chkConflictCheck))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel7))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -877,6 +892,10 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                         .addComponent(cmdRemove)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkConflictCheck)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkFullSync)
@@ -913,7 +932,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         jLabel2.setText("Zielkalender:");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setForeground(new java.awt.Color(153, 153, 153));
         jLabel4.setText("Synchronisation zu Nextcloud (optional)");
 
@@ -924,7 +943,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Kalenderdaten");
 
@@ -940,6 +959,9 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         rdEventType.add(rdEvents);
         rdEvents.setText("Termine");
 
+        chkDeleteDone.setSelected(true);
+        chkDeleteDone.setText("erledigte Termine aus Nextcloud löschen");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -949,9 +971,6 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
@@ -965,19 +984,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                     .addComponent(jSeparator1)
                     .addComponent(pnlCloud, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmbName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdGetCloudCalendars))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSave)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel5)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -987,9 +995,26 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                                 .addComponent(rdRespites)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(rdEvents))
-                            .addComponent(jLabel4)
-                            .addComponent(jSeparator2))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(jLabel4))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdClose, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmbName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdGetCloudCalendars))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(chkDeleteDone)
+                                    .addComponent(cmdSave))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1025,11 +1050,13 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                             .addComponent(jLabel2)
                             .addComponent(cmdGetCloudCalendars)
                             .addComponent(cmbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkDeleteDone)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addGap(18, 18, 18)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(cmdClose)))
@@ -1039,13 +1066,14 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void saveFullSyncFlag() {
+    private void saveGlobalFlags() {
         ServerSettings s = ServerSettings.getInstance();
         s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC, this.chkFullSync.isSelected());
+        s.setSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, this.chkConflictCheck.isSelected());
     }
     
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.saveFullSyncFlag();
+        this.saveGlobalFlags();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
@@ -1085,6 +1113,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             else if(this.rdEvents.isSelected())
                 cs.setEventType(CalendarSetup.EVENTTYPE_EVENT);
             cs.setHref(null);
+            cs.setDeleteDone(true);
             cs.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN.getRGB());
             CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
 
@@ -1145,6 +1174,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             cs.setCloudPort(this.pnlCloud.getCloudPort());
             cs.setCloudSsl(this.pnlCloud.isSsl());
             cs.setCloudUser(this.pnlCloud.getCloudUser());
+            cs.setDeleteDone(this.chkDeleteDone.isSelected());
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1257,7 +1287,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        this.saveFullSyncFlag();
+        this.saveGlobalFlags();
     }//GEN-LAST:event_formWindowClosing
 
     private void updatedUI(CalendarSetup cs) {
@@ -1299,6 +1329,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         this.pnlCloud.setCloudPath(cs.getCloudPath());
         this.pnlCloud.setCloudPort(cs.getCloudPort());
         this.pnlCloud.setCloudUser(cs.getCloudUser());
+        this.chkDeleteDone.setSelected(cs.isDeleteDone());
         
         switch (cs.getEventType()) {
             case CalendarSetup.EVENTTYPE_FOLLOWUP:
@@ -1354,6 +1385,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkConflictCheck;
+    private javax.swing.JCheckBox chkDeleteDone;
     private javax.swing.JCheckBox chkFullSync;
     private javax.swing.JComboBox<String> cmbName;
     private javax.swing.JButton cmdAdd;
@@ -1369,6 +1402,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;

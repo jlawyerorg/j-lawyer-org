@@ -671,7 +671,6 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ejb.EJBHome;
 import javax.ejb.EJBLocalHome;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -707,18 +706,7 @@ public class JLawyerServiceLocator {
 
     public SecurityServiceRemote lookupSecurityServiceRemote() {
         try {
-            //Context c = new InitialContext();
-
-            //return (SecurityServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
-
-            //return (SecurityServiceRemote) ic.lookup("/j-lawyer-server/SecurityService/remote");
             return (SecurityServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
-//            Object o=ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote");
-//            System.out.println(o.getClass().getName());
-//            System.out.println("" + (o instanceof SecurityServiceRemote));
-//            
-//            return (SecurityServiceRemote) ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote");
-            //return (SecurityServiceRemote) ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote-com.jdimension.jlawyer.services.SecurityServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
             throw new RuntimeException(ne);
@@ -727,8 +715,6 @@ public class JLawyerServiceLocator {
 
     public AddressServiceRemote lookupAddressServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (AddressServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
             return (AddressServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -738,8 +724,6 @@ public class JLawyerServiceLocator {
     
     public SingletonServiceRemote lookupSingletonServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (AddressServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
             return (SingletonServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SingletonService!com.jdimension.jlawyer.services.SingletonServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -749,9 +733,16 @@ public class JLawyerServiceLocator {
 
     public ArchiveFileServiceRemote lookupArchiveFileServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
             return (ArchiveFileServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public DataBucketLoaderRemote lookupDataBucketLoaderRemote() {
+        try {
+            return (DataBucketLoaderRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DataBucketLoader!com.jdimension.jlawyer.services.DataBucketLoaderRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
             throw new RuntimeException(ne);
@@ -760,8 +751,6 @@ public class JLawyerServiceLocator {
     
     public CustomerRelationsServiceRemote lookupCustomerRelationsServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
             return (CustomerRelationsServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CustomerRelationsService!com.jdimension.jlawyer.services.CustomerRelationsServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -771,8 +760,6 @@ public class JLawyerServiceLocator {
     
     public SearchServiceRemote lookupSearchServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
             return (SearchServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SearchService!com.jdimension.jlawyer.services.SearchServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -782,10 +769,27 @@ public class JLawyerServiceLocator {
     
     public CalendarServiceRemote lookupCalendarServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
             return (CalendarServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CalendarService!com.jdimension.jlawyer.services.CalendarServiceRemote");
-            // before Wildfly return (CalendarServiceRemote) ic.lookup("java:/j-lawyer-server/CalendarService/remote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public InvoiceServiceRemote lookupInvoiceServiceRemote() {
+        try {
+            return (InvoiceServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public ReportServiceRemote lookupReportServiceRemote() {
+        try {
+            return (ReportServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ReportService!com.jdimension.jlawyer.services.ReportServiceRemote");
             
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -795,8 +799,6 @@ public class JLawyerServiceLocator {
     
     public IntegrationServiceRemote lookupIntegrationServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
             return (IntegrationServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -806,8 +808,6 @@ public class JLawyerServiceLocator {
 
     public SystemManagementRemote lookupSystemManagementRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
             return (SystemManagementRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -817,8 +817,6 @@ public class JLawyerServiceLocator {
     
     public VoipServiceRemote lookupVoipServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
             return (VoipServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//VoipService!com.jdimension.jlawyer.services.VoipServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -828,8 +826,6 @@ public class JLawyerServiceLocator {
     
     public DrebisServiceRemote lookupDrebisServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
             return (DrebisServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DrebisService!com.jdimension.jlawyer.services.DrebisServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -839,8 +835,6 @@ public class JLawyerServiceLocator {
     
     public FormsServiceRemote lookupFormsServiceRemote() {
         try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
             return (FormsServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//FormsService!com.jdimension.jlawyer.services.FormsServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -860,8 +854,6 @@ public class JLawyerServiceLocator {
     
     public ConnectionFactory lookupJMSConnectionFactory() {
         try {
-            //ConnectionFactory cf = (ConnectionFactory) ic.lookup("java:/ConnectionFactory");
-            //ConnectionFactory cf = (ConnectionFactory) ic.lookup("java:jboss/exported/jms/RemoteConnectionFactory");
             ConnectionFactory cf = (ConnectionFactory) icJms.lookup("java:/jms/RemoteConnectionFactory");
             
             return cf;
@@ -888,9 +880,10 @@ public class JLawyerServiceLocator {
     }
 
     /**
-     * will get the ejb Local home factory. If this ejb home factory has already
+     * will get the ejb Local home factory.If this ejb home factory has already
      * been clients need to cast to the type of EJBHome they desire
      *
+     * @param jndiHomeName
      * @return the EJB Home corresponding to the homeName
      */
     public EJBLocalHome getLocalHome(String jndiHomeName) throws NamingException {

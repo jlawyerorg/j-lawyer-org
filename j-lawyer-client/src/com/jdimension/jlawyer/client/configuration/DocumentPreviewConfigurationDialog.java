@@ -674,6 +674,8 @@ public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public DocumentPreviewConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

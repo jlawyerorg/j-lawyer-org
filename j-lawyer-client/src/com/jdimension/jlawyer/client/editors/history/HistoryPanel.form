@@ -25,8 +25,6 @@
                   <Component id="jScrollPane1" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
@@ -54,12 +52,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
                   <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                      <Component id="chkOnlyMine" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="jLabel18" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
-                          <Component id="cmbMaxEntries" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="chkOnlyMine" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblPanelTitle" alignment="3" max="32767" attributes="0"/>
                       </Group>
+                      <Component id="cmbMaxEntries" min="-2" pref="40" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -78,20 +75,12 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="jLabel18">
-      <Properties>
-        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons32/history_big.png"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JLabel" name="lblPanelTitle">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="24" style="1"/>
-        </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblPanelTitle" property="font" relativeSize="true" size="12"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Historienrecherche"/>
       </Properties>
@@ -114,9 +103,6 @@
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="cc" green="b8" id="Slider.foreground" palette="3" red="a3" type="palette"/>
         </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
         <Property name="text" type="java.lang.String" value="01.01.2015"/>
       </Properties>
     </Component>
@@ -124,9 +110,6 @@
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="cc" green="b8" id="Slider.foreground" palette="3" red="a3" type="palette"/>
-        </Property>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
         <Property name="text" type="java.lang.String" value="31.12.2015"/>
       </Properties>
@@ -186,9 +169,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkOnlyMine">
       <Properties>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="nur meine &#xc4;nderungen"/>
       </Properties>

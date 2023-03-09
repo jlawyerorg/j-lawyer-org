@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.3" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+<Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
     <Component class="javax.swing.ButtonGroup" name="backupMode">
     </Component>
@@ -166,8 +166,10 @@
           <SubComponents>
             <Component class="javax.swing.JProgressBar" name="prgVMMemory">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="14" style="1"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="prgVMMemory" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
                 </Property>
                 <Property name="value" type="int" value="50"/>
                 <Property name="string" type="java.lang.String" value="blubb"/>
@@ -196,24 +198,30 @@
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgDisk">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="14" style="1"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="prgDisk" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
                 </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgMemory">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="14" style="1"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="prgMemory" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
                 </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgCpu">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="14" style="1"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="prgCpu" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
                 </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>

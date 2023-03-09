@@ -685,7 +685,7 @@ public interface VoipServiceRemote {
 
     void initiateSms(String localUri, String remoteUri, String content) throws SipgateException;
 
-    String initiateCall(String localUri, String remoteUri) throws SipgateException;
+    String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException;
 
     String initiateFax(String localUri, String remoteUri, String remoteName, String pdfName, byte[] pdfData, String archiveFileId) throws SipgateException;
 
@@ -697,8 +697,10 @@ public interface VoipServiceRemote {
 
     String reInitiateFax(String id) throws SipgateException;
 
-    void saveFaxReport(String sessionId) throws SipgateException;
+    void saveFaxReport(String sessionId, String fileName) throws SipgateException;
 
     List<SipUser> getUsers(String user, String password) throws SipgateException;
+
+    String getNewFaxReportFileName(String sessionId) throws Exception;
     
 }

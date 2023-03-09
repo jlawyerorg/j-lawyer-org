@@ -707,6 +707,7 @@ public class ClientSettings {
     public static final String CONF_HEIGHT="client.height";
     public static final String CONF_WIDTH="client.width";
     
+    public static final String CONF_UI_SCALING="client.ui.scaling";
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT="client.desktop.myappointments.height";
@@ -743,8 +744,6 @@ public class ClientSettings {
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     public static final String CONF_SCANS_OBSERVELOCALDIR="client.scans.observelocaldir";
     
-    public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
-    public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
     
     public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
@@ -755,6 +754,7 @@ public class ClientSettings {
     public static final String CONF_BEA_LASTTAG="client.bea.lasttag";
     public static final String CONF_BEA_LASTDOCUMENTTAG="client.bea.lastdocumenttag";
     public static final String CONF_BEA_MOVETOIMPORTEDENABLED="client.bea.movetoimportedenabled";
+    public static final String CONF_BEA_DOWNLOADRESTRICTION="client.bea.downloadrestriction";
     
     public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
     public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
@@ -768,8 +768,6 @@ public class ClientSettings {
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
-    public static final String CONF_MAIL_LASTTAG="client.mail.lasttag";
-    public static final String CONF_MAIL_LASTDOCUMENTTAG="client.mail.lastdocumenttag";
     public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
     
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
@@ -794,7 +792,6 @@ public class ClientSettings {
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
-   
     
     
     private ModuleMetadata rootModule=null;

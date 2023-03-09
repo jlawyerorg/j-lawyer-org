@@ -713,6 +713,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
 
+        lblAddress.setFont(lblAddress.getFont());
         lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         lblAddress.setText("neue Adresse erstellen:");
         lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -732,10 +733,10 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("als Organisation");
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("als Person");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

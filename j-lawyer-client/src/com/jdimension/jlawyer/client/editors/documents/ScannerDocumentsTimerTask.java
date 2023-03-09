@@ -686,6 +686,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
     
     /**
      * Creates a new instance of SystemStateTimerTask
+     * @param bypassCache
      */
     public ScannerDocumentsTimerTask(boolean bypassCache) {
         super();
@@ -693,6 +694,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
         synchronized (this) {
             try {
@@ -711,7 +713,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ScannerStatusEvent(files));
                 }
-                this.lastFiles = currentFiles;
+                lastFiles = currentFiles;
 
             } catch (Throwable ex) {
                 log.error("Error connecting to server", ex);

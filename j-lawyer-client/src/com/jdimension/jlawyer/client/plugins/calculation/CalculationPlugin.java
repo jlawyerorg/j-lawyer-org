@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.plugins.calculation;
 
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
@@ -681,6 +682,10 @@ import javax.swing.JPanel;
  * @author jens
  */
 public class CalculationPlugin implements Comparable {
+    
+    private static final String VARNAME_CALLBACK="callback";
+    private static final String VARNAME_SCRIPTPANEL="SCRIPTPANEL";
+    private static final String UICLASS_SUFFIX="_ui.groovy";
 
     private String name = null;
     private String id = null;
@@ -699,18 +704,27 @@ public class CalculationPlugin implements Comparable {
     public JPanel getUi() throws Exception {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
-        bind.setVariable("callback", new GenericCalculationCallback());
-        e.run(getId() + "_ui.groovy", bind);
-        return (JPanel)bind.getVariable("SCRIPTPANEL");
+        bind.setVariable(VARNAME_CALLBACK, new GenericCalculationCallback());
+        e.run(getId() + UICLASS_SUFFIX, bind);
+        return (JPanel)bind.getVariable(VARNAME_SCRIPTPANEL);
     }
     
     public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
-        bind.setVariable("callback", new GenericCalculationCallback(targetCase));
+        bind.setVariable(VARNAME_CALLBACK, new GenericCalculationCallback(targetCase));
         bind.setVariable("claimvalue", claimValue);
-        e.run(getId() + "_ui.groovy", bind);
-        return (JPanel)bind.getVariable("SCRIPTPANEL");
+        e.run(getId() + UICLASS_SUFFIX, bind);
+        return (JPanel)bind.getVariable(VARNAME_SCRIPTPANEL);
+    }
+    
+    public JPanel getUi(Invoice invoice, ArchiveFileBean targetCase, float claimValue) throws Exception {
+        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
+        Binding bind = new Binding();
+        bind.setVariable(VARNAME_CALLBACK, new GenericCalculationCallback(invoice, targetCase));
+        bind.setVariable("claimvalue", claimValue);
+        e.run(getId() + UICLASS_SUFFIX, bind);
+        return (JPanel)bind.getVariable(VARNAME_SCRIPTPANEL);
     }
 
     public void download(boolean force) throws Exception {

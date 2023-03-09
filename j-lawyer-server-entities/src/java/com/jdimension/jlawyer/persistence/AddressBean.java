@@ -1189,6 +1189,10 @@ public class AddressBean implements Serializable {
         
             if (getCompany() != null && !("".equals(getCompany()))) {
                 returnValue = getCompany();
+                if (getDepartment()!= null && !("".equals(getDepartment()))) {
+                    returnValue = returnValue + " (Abt. " + getDepartment()+")";
+                }
+                
                 String nametest = getName();
                 if (getFirstName() != null && !("".equals(getFirstName()))) {
                     nametest = nametest + ", " + getFirstName();

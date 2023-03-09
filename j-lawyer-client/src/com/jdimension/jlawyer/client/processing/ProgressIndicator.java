@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.processing;
 import java.awt.Font;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -674,14 +676,17 @@ import themes.colors.DefaultColorTheme;
  */
 public class ProgressIndicator extends javax.swing.JDialog {
 
+    private static final Logger log=Logger.getLogger(ProgressIndicator.class.getName());
+        
     private JFrame fParent=null;
     private JDialog dParent=null;
     private GlassPane glass=null;
     private ProgressableAction action=null;
-//    private boolean clearParent=false;
     
     /**
      * Creates new form ProgressIndicator
+     * @param parent
+     * @param modal
      */
     public ProgressIndicator(JFrame parent, boolean modal) {
         super(parent, modal);
@@ -695,28 +700,13 @@ public class ProgressIndicator extends javax.swing.JDialog {
         this.glass.setOpaque(false);
         this.glass.setSize(parent.getSize());
         this.fParent.setGlassPane(this.glass);
-        //this.glass.setVisible(true);
-        
-//        new Thread(new Runnable() { 
-//            public void run() {
-//                action.execute();
-//            }
-//        }).start();
         
     }
     
-//    public ProgressIndicator(JFrame parent, boolean modal, boolean clearParent) {
-//        this(parent, modal);
-//        this.clearParent=clearParent;
-//    }
-//    
-//    public ProgressIndicator(JDialog parent, boolean modal, boolean clearParent) {
-//        this(parent, modal);
-//        this.clearParent=clearParent;
-//    }
-    
     /**
      * Creates new form ProgressIndicator
+     * @param parent
+     * @param modal
      */
     public ProgressIndicator(JDialog parent, boolean modal) {
         super(parent, modal);
@@ -738,7 +728,14 @@ public class ProgressIndicator extends javax.swing.JDialog {
     }
     
     public void setMax(int max) {
-        this.progress.setMaximum(max);
+        try {
+            if(!SwingUtilities.isEventDispatchThread())
+                SwingUtilities.invokeAndWait(()->progress.setMaximum(max));
+            else
+                progress.setMaximum(max);
+        } catch (Throwable t) {
+            log.error("Unable to update max of progress indicator", t);
+        }
     }
     
     public void setMin(int min) {
@@ -797,22 +794,8 @@ public class ProgressIndicator extends javax.swing.JDialog {
             
         
         super.setVisible(b);
-//        if(this.fParent!=null)
-//            this.fParent.setVisible(false);
-//        if(this.dParent!=null)
-//            this.dParent.setVisible(false);
         
     }
-
-//    @Override
-//    public void dispose() {
-//        super.dispose();
-//        
-//        if(this.fParent!=null)
-//            this.fParent.dispose();
-//        if(this.dParent!=null)
-//            this.dParent.dispose();
-//    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -903,17 +886,15 @@ public class ProgressIndicator extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ProgressIndicator dialog = new ProgressIndicator(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ProgressIndicator dialog = new ProgressIndicator(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

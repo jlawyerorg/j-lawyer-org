@@ -677,7 +677,7 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class QuickDateSelectionPanel extends javax.swing.JPanel {
-
+    
     private static final Logger log=Logger.getLogger(QuickDateSelectionPanel.class.getName());
     protected JTextField target = null;
     protected QuickDateSelectionListener listener=null;

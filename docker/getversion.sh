@@ -2,7 +2,8 @@
 #!/bin/bash
  
 # get latest filename in db migrations
-jlversionfile=`ls -1 ../j-lawyer-server-entities/src/java/db/migration | sort -r | head -1`
+# jlversionfile=`ls -1 ../j-lawyer-server-entities/src/java/db/migration | sort -r | head -1`
+jlversionfile=`cd ../j-lawyer-server-entities/src/java/db/migration/ && ls -1 -r *.{java,sql} | head -1`
  
 # cut at double underscore
 jlversion=${jlversionfile%__*}

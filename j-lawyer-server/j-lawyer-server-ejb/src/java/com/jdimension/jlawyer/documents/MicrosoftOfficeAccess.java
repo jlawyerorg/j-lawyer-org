@@ -667,9 +667,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
@@ -697,17 +698,17 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 public class MicrosoftOfficeAccess {
 
     private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
+    
+    private static final String CURSOR_TEXTFIELD="declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
 
-    public static void setPlaceHolders(String file, Hashtable values) throws Exception {
-        if (file.toLowerCase().endsWith(".docx")) {
+    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
+        if (fileName.toLowerCase().endsWith(".docx")) {
 
             XWPFDocument outputDocx;
-            FileInputStream fileIn = new FileInputStream(file);
+            FileInputStream fileIn = new FileInputStream(fileInFileSystem);
             outputDocx = new XWPFDocument(fileIn);
 
-            Enumeration en = values.keys();
-            while (en.hasMoreElements()) {
-                String key = (String) en.nextElement();
+            for (String key: values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -905,14 +906,28 @@ public class MicrosoftOfficeAccess {
 
             }
 
+            // look for scripts
+            String scriptRegExKey = "\\[\\[SCRIPT:[^\\]]*\\]\\]";
+            Pattern pattern = Pattern.compile(scriptRegExKey);
+            // header
+            for (XWPFHeader header : outputDocx.getHeaderList()) {
+                replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, header.getBodyElements());
+            }
+            // body
+            replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, outputDocx.getBodyElements());
+            // footer
+            for (XWPFFooter footer : outputDocx.getFooterList()) {
+                replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, footer.getBodyElements());
+            }
+
             fileIn.close();
-            FileOutputStream out = new FileOutputStream(file);
+            FileOutputStream out = new FileOutputStream(fileInFileSystem);
             outputDocx.write(out);
             out.close();
         }
     }
 
-    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, Hashtable<Integer, CTR> tfCache) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, HashMap<Integer, CTR> tfCache) throws Exception {
 
         if (file.toLowerCase().endsWith(".docx")) {
 
@@ -957,6 +972,21 @@ public class MicrosoftOfficeAccess {
                     }
                 }
             }
+
+            // look for scripts
+            String scriptRegExKey = "(?s)\\[\\[SCRIPT\\:[.\\s\\S\\r\\n]*\\]\\]";
+            Pattern pattern = Pattern.compile(scriptRegExKey);
+            // header
+            for (XWPFHeader header : outputDocx.getHeaderList()) {
+                findScriptsInBodyElements(pattern, header.getBodyElements(), resultList, tfCache, allPartyTypesPlaceHolders, formsPlaceHolders);
+            }
+            // body
+            findScriptsInBodyElements(pattern, outputDocx.getBodyElements(), resultList, tfCache, allPartyTypesPlaceHolders, formsPlaceHolders);
+            // footer
+            for (XWPFFooter footer : outputDocx.getFooterList()) {
+                findScriptsInBodyElements(pattern, footer.getBodyElements(), resultList, tfCache, allPartyTypesPlaceHolders, formsPlaceHolders);
+            }
+
             fileIn.close();
 
             return resultList;
@@ -967,7 +997,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
+    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache) {
         if (resultList.contains(key)) {
             return;
         }
@@ -991,6 +1021,21 @@ public class MicrosoftOfficeAccess {
         }
     }
 
+    private static void findScriptsInBodyElements(Pattern pattern, List<IBodyElement> bodyElements, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+        for (IBodyElement bodyElement : bodyElements) {
+            if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                findScriptsInParagraph(pattern, (XWPFParagraph) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
+
+                findScriptsInTextfield(pattern, (XWPFParagraph) bodyElement, resultList, tfCache, allPartyTypesPlaceHolders, formsPlaceHolders);
+
+            }
+            if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                findScriptsInTable(pattern, (XWPFTable) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
+
+            }
+        }
+    }
+
     private static void replaceInBodyElements(String key, String value, List<IBodyElement> bodyElements) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
@@ -998,6 +1043,19 @@ public class MicrosoftOfficeAccess {
                 replaceInTextfield(key, value, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceInTable(key, value, (XWPFTable) bodyElement);
+            } else {
+                System.out.println("Not iterating " + bodyElement.getElementType());
+            }
+        }
+    }
+
+    private static void replaceScriptsInBodyElements(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements) {
+        for (IBodyElement bodyElement : bodyElements) {
+            if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                replaceScriptsInParagraph(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
+                replaceScriptsInTextfield(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
+            } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement);
             } else {
                 System.out.println("Not iterating " + bodyElement.getElementType());
             }
@@ -1022,13 +1080,31 @@ public class MicrosoftOfficeAccess {
 
         //for (XWPFParagraph paragraph : xwpfParagraphs) {
         //List<XWPFRun> runs = xwpfParagraph.getRuns();
-
         String find = key;
         TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
         if (found != null) {
             if (!resultList.contains(key)) {
                 resultList.add(key);
-                return;
+            }
+        }
+
+    }
+
+    private static void findScriptsInParagraph(Pattern pattern, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+
+        String fullParagraph = xwpfParagraph.getText();
+        Matcher m = pattern.matcher(fullParagraph);
+        while (m.find()) {
+            String itemText = m.group();
+            resultList.add(itemText);
+
+            // within the script, the placeholders are contianed without {{ }}
+            // need to look up such occurrences and add placeholders for them in the result list
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
+                String key = r.substring(2, r.length() - 2);
+                if (itemText.contains(key) && !resultList.contains(r)) {
+                    resultList.add(r);
+                }
             }
         }
 
@@ -1074,6 +1150,57 @@ public class MicrosoftOfficeAccess {
 
     }
 
+    private static void replaceScriptsInParagraph(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+
+        ArrayList<String> scriptList=new ArrayList<>();
+        
+        String fullParagraph = xwpfParagraph.getText();
+        Matcher m = pattern.matcher(fullParagraph);
+        while (m.find()) {
+            String itemText = m.group();
+            scriptList.add(itemText);
+        }
+        
+        
+        List<XWPFRun> runs = xwpfParagraph.getRuns();
+
+        for (String script : scriptList) {
+            String find = script;
+            String repl = LibreOfficeAccess.evaluateScript(caseId, script, values, formsPrefixes);
+            
+            TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
+            if (found != null) {
+                if (found.getBeginRun() == found.getEndRun()) {
+                    // whole search string is in one Run
+                    XWPFRun run = runs.get(found.getBeginRun());
+                    String runText = run.getText(run.getTextPosition());
+                    String replaced = runText.replace(find, repl);
+                    run.setText(replaced, 0);
+                } else {
+                    // The search string spans over more than one Run
+                    // Put the Strings together
+                    StringBuilder b = new StringBuilder();
+                    for (int runPos = found.getBeginRun(); runPos <= found.getEndRun(); runPos++) {
+                        XWPFRun run = runs.get(runPos);
+                        b.append(run.getText(run.getTextPosition()));
+                    }
+                    String connectedRuns = b.toString();
+                    String replaced = connectedRuns.replace(find, repl);
+
+                    // The first Run receives the replaced String of all connected Runs
+                    XWPFRun partOne = runs.get(found.getBeginRun());
+                    partOne.setText(replaced, 0);
+                    // Removing the text in the other Runs.
+                    for (int runPos = found.getBeginRun() + 1; runPos <= found.getEndRun(); runPos++) {
+                        XWPFRun partNext = runs.get(runPos);
+                        partNext.setText("", 0);
+                    }
+                }
+            }
+        }
+
+    }
+
     private static void findInTable(String key, XWPFTable table, ArrayList<String> resultList) {
         if (resultList.contains(key)) {
             return;
@@ -1099,6 +1226,21 @@ public class MicrosoftOfficeAccess {
         }
     }
 
+    private static void findScriptsInTable(Pattern pattern, XWPFTable table, ArrayList<String> resultList, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (IBodyElement bodyElement : cell.getBodyElements()) {
+                    if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                        findScriptsInParagraph(pattern, (XWPFParagraph) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
+                    }
+                    if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                        findScriptsInTable(pattern, (XWPFTable) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
+                    }
+                }
+            }
+        }
+    }
+
     private static void replaceInTable(String key, String value, XWPFTable table) {
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
@@ -1114,14 +1256,29 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
+    private static void replaceScriptsInTable(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFTable table) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (IBodyElement bodyElement : cell.getBodyElements()) {
+                    if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                        replaceScriptsInParagraph(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
+                    }
+                    if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                        replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache) {
 
         if (resultList.contains(key)) {
             return;
         }
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1137,8 +1294,6 @@ public class MicrosoftOfficeAccess {
                     CTR ctr = CTR.Factory.parse(xmlText);
                     tfCache.put(xmlText.hashCode(), ctr);
 
-                } else {
-                    //System.out.println("cache hit");
                 }
                 CTR ctr = tfCache.get(xmlText.hashCode());
                 //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
@@ -1164,10 +1319,60 @@ public class MicrosoftOfficeAccess {
 
     }
 
+    private static void findScriptsInTextfield(Pattern pattern, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
+
+        XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
+        cursor.selectPath(CURSOR_TEXTFIELD);
+
+        List<XmlObject> ctrsintxtbx = new ArrayList<>();
+
+        while (cursor.hasNextSelection()) {
+            cursor.toNextSelection();
+            XmlObject obj = cursor.getObject();
+            ctrsintxtbx.add(obj);
+        }
+        for (XmlObject obj : ctrsintxtbx) {
+            try {
+                String xmlText = obj.xmlText();
+                if (!(tfCache.containsKey(xmlText.hashCode()))) {
+                    CTR ctr = CTR.Factory.parse(xmlText);
+                    tfCache.put(xmlText.hashCode(), ctr);
+
+                }
+                CTR ctr = tfCache.get(xmlText.hashCode());
+                //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
+
+                //CTR ctr = CTR.Factory.parse(obj.newInputStream());
+                XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
+                String text = bufferrun.getText(0);
+                if (text != null) {
+                    Matcher m = pattern.matcher(text);
+                    while (m.find()) {
+                        String itemText = m.group();
+                        resultList.add(itemText);
+
+                        // within the script, the placeholders are contianed without {{ }}
+                        // need to look up such occurrences and add placeholders for them in the result list
+                        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
+                            String key = r.substring(2, r.length() - 2);
+                            if (itemText.contains(key) && !resultList.contains(r)) {
+                                resultList.add(r);
+                            }
+                        }
+                    }
+                }
+
+            } catch (Exception ex) {
+                log.error("Unable to iterate text fields", ex);
+            }
+        }
+
+    }
+
     private static void replaceInTextfield(String key, String value, XWPFParagraph xwpfParagraph) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
+        cursor.selectPath(CURSOR_TEXTFIELD);
 
         List<XmlObject> ctrsintxtbx = new ArrayList<>();
 
@@ -1197,19 +1402,42 @@ public class MicrosoftOfficeAccess {
 
     }
 
-//    private static String replacePlaceHolders(String content, Hashtable values) {
-//        Enumeration en = values.keys();
-//        while (en.hasMoreElements()) {
-//            String key = (String) en.nextElement();
-//            key = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-//            String value = (String) values.get(key);
-//            if (value == null) {
-//                value = "";
-//            }
-//
-//            content = content.replaceAll(key, value);
-//        }
-//
-//        return content;
-//    }
+    private static void replaceScriptsInTextfield(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+
+        XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
+        cursor.selectPath(CURSOR_TEXTFIELD);
+
+        List<XmlObject> ctrsintxtbx = new ArrayList<>();
+
+        while (cursor.hasNextSelection()) {
+            cursor.toNextSelection();
+            XmlObject obj = cursor.getObject();
+            ctrsintxtbx.add(obj);
+        }
+        for (XmlObject obj : ctrsintxtbx) {
+            try {
+                String xmlText = obj.xmlText();
+                CTR ctr = CTR.Factory.parse(xmlText);
+                
+                XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
+                String text = bufferrun.getText(0);
+                if (text != null) {
+                    Matcher m = pattern.matcher(text);
+                    while (m.find()) {
+                        String itemText = m.group();
+                        String scriptResult=LibreOfficeAccess.evaluateScript(caseId, itemText, values, formsPrefixes);
+                        text = text.replace(itemText, scriptResult);
+                        bufferrun.setText(text, 0);
+                        
+                        obj.set(bufferrun.getCTR());
+                    }
+                }
+
+            } catch (Exception ex) {
+                log.error("Unable to iterate text fields", ex);
+            }
+        }
+        
+    }
+
 }

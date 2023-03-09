@@ -673,10 +673,11 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.*;
@@ -703,6 +704,10 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AddDocumentDialog
+     * @param campaign
+     * @param addresses
+     * @param parent
+     * @param modal
      */
     public GenerateMassMailDocumentsDialog(Campaign campaign, List<AddressBean> addresses, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -716,7 +721,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblPlaceHolders, model);
 
-        ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Lade Dokumentvorlagen...");
 
         this.cmdAddDocument.setEnabled(false);
@@ -729,7 +733,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         renderer.setLeafIcon(renderer.getClosedIcon());
         this.treeFolders.setCellRenderer(renderer);
 
-        this.refreshTree();
+        refreshTree();
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -745,7 +749,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btGrpReviews = new javax.swing.ButtonGroup();
         cmdCancel = new javax.swing.JButton();
         cmdAddDocument = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
@@ -784,11 +787,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlage"));
 
-        txtTemplateFilter.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txtTemplateFilterFocusLost(evt);
-            }
-        });
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyPressed(evt);
@@ -946,7 +944,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         EditorsRegistry.getInstance().updateStatus("Erstelle Dokumente...");
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             this.progress.setMaximum(this.addresses.size() * 2);
@@ -955,91 +952,85 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             this.cmdAddDocument.setEnabled(false);
             this.cmdCancel.setEnabled(false);
             this.cmdCancel.setText("Schliessen");
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
-                    GenericNode gn = (GenericNode) tn.getUserObject();
-                    List<String> placeHolders = null;
-                    Collection<PartyTypeBean> allPartyTypes=null;
-                    try {
-                        placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<String>());
-                        allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-                    } catch (Exception ex) {
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                        return;
-                    }
-
-                    for (int i = 0; i < addresses.size(); i++) {
-                        AddressBean ad = addresses.get(i);
-                        try {
-
-                            String fileName = ad.toDisplayName();
-                            fileName = FileUtils.preserveExtension(lstTemplates.getSelectedValue().toString(), fileName);
-                            fileName = FileUtils.sanitizeFileName(fileName);
-
-                            ThreadUtils.updateProgressBar(progress, fileName + " (generiere...)", progress.getValue() + 1, progress.getMaximum(), false);
-
-                            String[] colNames = new String[]{"Platzhalter", "Wert"};
-                            ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
-
-                            Hashtable ht = new Hashtable();
-                            for (String ph : placeHolders) {
-                                ht.put(ph, "");
-                            }
-
-                            
-                            List<PartiesPanelEntry> ht2=new ArrayList<PartiesPanelEntry>();
-                            for (PartyTypeBean ptb : allPartyTypes) {
-                                ht2.add(new PartiesPanelEntry(ad, ptb));
-                            }
-
-                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<String,String>(), null, null, null);
-
-                            Enumeration htEn = ht.keys();
-                            while (htEn.hasMoreElements()) {
-                                Object key = htEn.nextElement();
-                                Object[] row = new Object[]{key, ht.get(key)};
-                                model.addRow(row);
-                            }
-
-                            progress.setString(fileName);
-                            ThreadUtils.setTableModel(tblPlaceHolders, model);
-
-                            byte[] document = locator.lookupCustomerRelationsServiceRemote().getDocumentForAddress(gn, lstTemplates.getSelectedValue().toString(), ht);
-
-                            ThreadUtils.updateProgressBar(progress, fileName + " (konvertiere nach PDF...)", progress.getValue() + 1, progress.getMaximum(), false);
-                            FileOutputStream fout = new FileOutputStream(controller.getCampaignFolder(campaign.getName()) + File.separator + fileName);
-                            fout.write(document);
-                            fout.close();
-                            FileConverter conv = FileConverter.getInstance();
-                            conv.convertToPDF(controller.getCampaignFolder(campaign.getName()) + File.separator + fileName);
-                        } catch (Throwable t) {
-                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei Dokumenterstellung für " + ad.toDisplayName(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                        }
-                    }
-                    ThreadUtils.updateProgressBar(progress, "Fertig.", progress.getMaximum(), progress.getMaximum(), false);
-                    ThreadUtils.enableComponent(cmdCancel, true);
-                    DesktopUtils.openFileManager(new File(controller.getCampaignFolder(campaign.getName())));
-
+            new Thread(() -> {
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                GenericNode gn = (GenericNode) tn.getUserObject();
+                List<String> placeHolders = null;
+                List<PartyTypeBean> allPartyTypes=null;
+                try {
+                    placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<>());
+                    allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                } catch (Exception ex) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    return;
                 }
+                
+                for (int i = 0; i < addresses.size(); i++) {
+                    AddressBean ad = addresses.get(i);
+                    try {
+                        
+                        String fileName = ad.toDisplayName();
+                        fileName = FileUtils.preserveExtension(lstTemplates.getSelectedValue().toString(), fileName);
+                        fileName = FileUtils.sanitizeFileName(fileName);
+                        
+                        ThreadUtils.updateProgressBar(progress, fileName + " (generiere...)", progress.getValue() + 1, progress.getMaximum(), false);
+                        
+                        String[] colNames = new String[]{"Platzhalter", "Wert"};
+                        ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
+                        
+                        HashMap<String,Object> ht = new HashMap<>();
+                        for (String ph : placeHolders) {
+                            ht.put(ph, "");
+                        }
+                        
+                        
+                        List<PartiesPanelEntry> ht2=new ArrayList<>();
+                        for (PartyTypeBean ptb : allPartyTypes) {
+                            ht2.add(new PartiesPanelEntry(ad, ptb));
+                        }
 
+                        List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                        for (PartiesPanelEntry pe : ht2) {
+                            PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                            partiesTriplets.add(triplet);
+                        }
+
+                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
+                        
+                        for (String key: ht.keySet()) {
+                            Object[] row = new Object[]{key, ht.get(key)};
+                            model.addRow(row);
+                        }
+                        
+                        progress.setString(fileName);
+                        ThreadUtils.setTableModel(tblPlaceHolders, model);
+                        
+                        byte[] document = locator.lookupCustomerRelationsServiceRemote().getDocumentForAddress(gn, lstTemplates.getSelectedValue().toString(), ht);
+                        
+                        ThreadUtils.updateProgressBar(progress, fileName + " (konvertiere nach PDF...)", progress.getValue() + 1, progress.getMaximum(), false);
+                        FileOutputStream fout = new FileOutputStream(controller.getCampaignFolder(campaign.getName()) + File.separator + fileName);
+                        fout.write(document);
+                        fout.close();
+                        FileConverter conv = FileConverter.getInstance();
+                        conv.convertToPDF(controller.getCampaignFolder(campaign.getName()) + File.separator + fileName);
+                    } catch (Throwable t) {
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei Dokumenterstellung für " + ad.toDisplayName(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    }
+                }
+                ThreadUtils.updateProgressBar(progress, "Fertig.", progress.getMaximum(), progress.getMaximum(), false);
+                ThreadUtils.enableComponent(cmdCancel, true);
+                DesktopUtils.openFileManager(new File(controller.getCampaignFolder(campaign.getName())));
             }).start();
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
-            return;
         }
-
-//        EditorsRegistry.getInstance().clearStatus();
-//        this.setVisible(false);
-//        this.dispose();
     }//GEN-LAST:event_cmdAddDocumentActionPerformed
 
     private void txtTemplateFilterKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateFilterKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.highlightTree(this.txtTemplateFilter.getText());
 
         }
@@ -1052,14 +1043,13 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
     private void highlightTree(String templateQuery) {
         try {
             int[] selectedRows = this.treeFolders.getSelectionRows();
-            List<GenericNode> list = new ArrayList<GenericNode>();
+            List<GenericNode> list = new ArrayList<>();
             if (!("".equalsIgnoreCase(templateQuery.trim()))) {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 list = locator.lookupSystemManagementRemote().searchTemplateFolders(this.txtTemplateFilter.getText());
             }
 
-            //System.out.println(list.size());
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
             ((DefaultTreeModel) this.treeFolders.getModel()).reload();
             ComponentUtils.expandTree(treeFolders);
@@ -1078,13 +1068,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         }
     }
 
-    private void txtTemplateFilterFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateFilterFocusLost
-//        String search = this.txtTemplateFilter.getText();
-//        if(search.trim().length()>0)
-//            this.highlightTree(search);
-
-    }//GEN-LAST:event_txtTemplateFilterFocusLost
-
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
@@ -1099,35 +1082,36 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             EditorsRegistry.getInstance().updateStatus("Analysiere Dokumentvorlage...");
 
-            //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             try {
 
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
 
-                //InitialContext context = new InitialContext(settings.getLookupProperties());
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), new ArrayList<String>());
+                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), new ArrayList<>());
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
                 Collections.sort(placeHolders);
-                Hashtable ht = new Hashtable();
+                HashMap<String,Object> ht = new HashMap<>();
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
 
-                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 List<PartiesPanelEntry> ht2 = new ArrayList<>();
                 for (PartyTypeBean ptb : allPartyTypes) {
                     ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<String,String>(), null, null, null);
+                List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                for (PartiesPanelEntry pe : ht2) {
+                    PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                    partiesTriplets.add(triplet);
+                }
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
 
-                Enumeration htEn = ht.keys();
-                while (htEn.hasMoreElements()) {
-                    Object key = htEn.nextElement();
+                for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
                 }
@@ -1165,8 +1149,8 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         ArrayList<GenericNode> children = current.getChildren();
 
-        Hashtable<String, GenericNode> childHt = new Hashtable<String, GenericNode>();
-        ArrayList<String> htKeys = new ArrayList<String>();
+        Hashtable<String, GenericNode> childHt = new Hashtable<>();
+        ArrayList<String> htKeys = new ArrayList<>();
         for (GenericNode child : children) {
 
             childHt.put(child.getName(), child);
@@ -1190,15 +1174,8 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         this.lstTemplates.setModel(model);
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
-//
-//            for (Object o : fileNames) {
-//                model.addElement(o);
-//            }
-
             GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
@@ -1210,10 +1187,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
             this.treeFolders.setSelectionRow(0);
 
-//            } else {
-//                this.lstTemplates.setToolTipText("Zugriff nur für Administratoren möglich");
-//                this.lstTemplates.setEnabled(false);
-//            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -1242,7 +1215,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             for (Object o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().indexOf(this.txtTemplateFilter.getText().trim().toLowerCase()) > -1) {
+                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }
@@ -1257,15 +1230,11 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new GenerateMassMailDocumentsDialog(null, null, new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new GenerateMassMailDocumentsDialog(null, null, new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdClearFilter;

@@ -838,7 +838,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             .addGap(0, 0, Short.MAX_VALUE)
         );
 
-        lblTitle.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblTitle.setFont(lblTitle.getFont().deriveFont(lblTitle.getFont().getSize()+2f));
         lblTitle.setText("jLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

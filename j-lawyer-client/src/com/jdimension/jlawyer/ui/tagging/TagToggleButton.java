@@ -663,8 +663,9 @@
  */
 package com.jdimension.jlawyer.ui.tagging;
 
-import java.awt.*;
-import javax.swing.ButtonModel;
+import java.awt.Font;
+import java.awt.event.ItemEvent;
+import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import themes.colors.DefaultColorTheme;
 
@@ -674,158 +675,61 @@ import themes.colors.DefaultColorTheme;
  */
 public class TagToggleButton extends JToggleButton {
     
-    private Color foreGround=Color.DARK_GRAY.brighter().brighter().brighter();
-    
-    private Color selectedBackColor=new Color(0,153,255);
-    //private Color selectedForeColor=new Color(0,0,0,0);
-    private Color selectedForeColor=DefaultColorTheme.COLOR_LOGO_GREEN;
-    
-    private GradientPaint gpSelected=null;
-    private GradientPaint gpUnselected=null;
-    
-        public TagToggleButton() {
+    protected ImageIcon selectedIcon=new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png"));
+    protected ImageIcon unselectedIcon=null;
+
+    public TagToggleButton() {
         this("default");
-        
+
     }
 
     public TagToggleButton(String text) {
-        //this.setMargin(new Insets(0,0,0,0));
+        super();
         setText(text);
-        setBorderPainted(false);
-        setContentAreaFilled(false);
-        setFocusPainted(false);
-        setOpaque(false);
-        setForeground(Color.gray);
+        putClientProperty("JButton.buttonType", "roundRect");
+        putClientProperty("ToggleButton.borderWidth", "12");
+        putClientProperty("JButton.foreGround", DefaultColorTheme.COLOR_DARK_GREY);
+
+        putClientProperty("FlatLaf.style", "borderWidth: 2; pressedBackground: rgb(102, 102, 102); selectedBackground: rgb(151, 191, 13); selectedForeground: rgb(0, 0, 0); foreground: rgb(102, 102, 102)");
+
+        this.addItemListener((ItemEvent arg0) -> {
+            if (isSelected()) {
+                setIcon(selectedIcon);
+                setFont(getFont().deriveFont(Font.BOLD));
+            } else {
+                setIcon(unselectedIcon);
+                setFont(getFont().deriveFont(Font.PLAIN));
+            }
+        });
+
     }
 
-    @Override
-    public void setFont(Font font) {
-        super.setFont(font.deriveFont(Font.BOLD));
+    /**
+     * @return the selectedIcon
+     */
+    public ImageIcon getSelectedIcon() {
+        return selectedIcon;
     }
 
-    @Override
-    public void setSize(Dimension d) {
-        super.setSize(d); //To change body of generated methods, choose Tools | Templates.
-        this.gpSelected=null;
-        this.gpUnselected=null;
+    /**
+     * @param selectedIcon the selectedIcon to set
+     */
+    public void setSelectedIcon(ImageIcon selectedIcon) {
+        this.selectedIcon = selectedIcon;
     }
 
-    @Override
-    public void setSize(int width, int height) {
-        super.setSize(width, height); //To change body of generated methods, choose Tools | Templates.
-        this.gpSelected=null;
-        this.gpUnselected=null;
+    /**
+     * @return the unselectedIcon
+     */
+    public ImageIcon getUnselectedIcon() {
+        return unselectedIcon;
     }
 
-    @Override
-    public void setBounds(Rectangle r) {
-        super.setBounds(r); //To change body of generated methods, choose Tools | Templates.
-        this.gpSelected=null;
-        this.gpUnselected=null;
+    /**
+     * @param unselectedIcon the unselectedIcon to set
+     */
+    public void setUnselectedIcon(ImageIcon unselectedIcon) {
+        this.unselectedIcon = unselectedIcon;
     }
 
-    @Override
-    public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, y, width, height); //To change body of generated methods, choose Tools | Templates.
-        this.gpSelected=null;
-        this.gpUnselected=null;
-    }
-
-    
-    
-    @Override
-    protected void paintComponent(Graphics g) {
-        
-        if(this.gpSelected==null)
-            //this.gpSelected=new GradientPaint(0, 0, selectedForeColor, 0, getHeight(), selectedBackColor);
-            this.gpSelected=new GradientPaint(0, 0, selectedForeColor, 0, getHeight(), selectedBackColor);
-        
-        if(this.gpUnselected==null)
-            this.gpUnselected=new   GradientPaint(0,   0,   Color.lightGray,   0, getHeight(), Color.white);
-        
-        
-        
-        ButtonModel buttonModel = getModel();
-        Graphics2D gd = (Graphics2D) g.create();
-        gd.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        //gd.setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), new Color(0, 0, 0, 0)));
-        Paint defaultPaint=gd.getPaint();
-        
-        //gd.setPaint(gpUnselected);
-        gd.setPaint(DefaultColorTheme.COLOR_LIGHT_GREY);
-        
-        
-        //gd.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, getHeight(), Color.white));
-        //setForeground(Color.DARK_GRAY.brighter().brighter().brighter());
-        // issue - causes infinite #paintComponent loop: setForeground(foreGround);
-        //this.setFont(this.getFont().deriveFont(Font.BOLD));
-//        if (buttonModel.isRollover()) {
-//            gd.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, getHeight(), Color.white));
-//            if (buttonModel.isSelected()) {
-//                gd.setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), Color.white));
-//                setForeground(Color.BLACK);
-//            } else {
-//                setForeground(Color.white);
-//            }
-//        }
-
-
-        if (buttonModel.isSelected()) {
-            this.setForeground(Color.white);
-        } else {
-            this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        }
-
-        if (buttonModel.isSelected()) {
-            
-            //gd.setPaint(gpSelected);
-            gd.setPaint(DefaultColorTheme.COLOR_LOGO_GREEN);
-            
-            // issue - causes infinite #paintComponent loop: setForeground(Color.white);
-            //this.setFont(this.getFont().deriveFont(Font.BOLD));
-//            if (buttonModel.isSelected()) {
-//                gd.setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), Color.white));
-//                setForeground(Color.BLACK);
-//            } else {
-//                setForeground(Color.white);
-//            }
-        }
-
-        //gd.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-        Polygon plgn=new Polygon();
-        plgn.addPoint(0, 0);
-        plgn.addPoint(getWidth()-10, 0);
-        plgn.addPoint(getWidth(), getHeight()/2);
-        plgn.addPoint(getWidth()-10, getHeight());
-        plgn.addPoint(0, getHeight());
-        gd.fillPolygon(plgn);
-        
-        gd.setPaint(defaultPaint);
-        if(buttonModel.isSelected())
-            gd.setColor(Color.WHITE);
-        else
-            gd.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        gd.fillOval(getWidth()-10, getHeight()/2-3, 5, 5);
-        
-        
-        
-        gd.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        Polygon l1=new Polygon();
-//        l1.addPoint(getWidth()-10+3, getHeight()/2+1);
-//        l1.addPoint(getWidth(), getHeight()+1);
-//        l1.addPoint(getWidth()-10+5, getHeight()/2-1);
-//        l1.addPoint(getWidth(), getHeight()+4);
-        
-        l1.addPoint(getWidth()-10+2, getHeight()/2+1);
-        l1.addPoint(getWidth(), 1);
-        l1.addPoint(getWidth()-10+5, getHeight()/2+3);
-        l1.addPoint(getWidth(), 5);
-        
-        gd.fillPolygon(l1);
-
-        //gd.fill
-        gd.dispose();
-        super.paintComponent(g);
-    }
-    
 }

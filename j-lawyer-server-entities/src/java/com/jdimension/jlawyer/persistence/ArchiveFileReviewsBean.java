@@ -720,6 +720,24 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @ManyToOne
     private CalendarSetup calendarSetup;
 
+    public Object getClone() {
+        ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
+        a.archiveFileKey=this.archiveFileKey;
+        a.assignee=this.assignee;
+        a.beginDate=this.beginDate;
+        a.endDate=this.endDate;
+        a.calendarSetup=this.calendarSetup;
+        a.description=this.description;
+        a.done=this.done;
+        a.eventType=this.eventType;
+        a.id=this.id;
+        a.location=this.location;
+        a.summary=this.summary;
+        return a;
+    }
+
+    
+    
     public ArchiveFileReviewsBean() {
     }
 
@@ -806,21 +824,27 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
 
     @Override
     public String toString() {
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        return toString(dateTimeFormat, dateFormat, timeFormat);
+    }
+    
+    public String toString(SimpleDateFormat dateTimeFormat, SimpleDateFormat dateFormat, SimpleDateFormat timeFormat) {
         String undefined="undefiniert";
         if (this.hasEndDateAndTime()) {
-            SimpleDateFormat df1 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-            SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
+            
             StringBuilder sb=new StringBuilder();
             if (this.beginDate != null) {
-                sb.append(df1.format(this.beginDate));
+                sb.append(dateTimeFormat.format(this.beginDate));
                 if(this.endDate!=null) {
                     sb.append(" - ");
                     if(this.beginDate.getDate()==this.endDate.getDate() && this.beginDate.getMonth()==this.endDate.getMonth() && this.beginDate.getYear()==this.endDate.getYear()) {
                         // same day
-                        sb.append(df2.format(this.endDate));
+                        sb.append(timeFormat.format(this.endDate));
                     } else {
                         // spans multiple days
-                        sb.append(df1.format(this.endDate));
+                        sb.append(dateTimeFormat.format(this.endDate));
                     }
                     return sb.toString();
                 } else {
@@ -831,8 +855,8 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
             }
         } else {
             if (this.beginDate != null) {
-                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                return df.format(this.beginDate);
+                
+                return dateFormat.format(this.beginDate);
             } else {
                 return undefined;
             }

@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -697,5 +698,7 @@ public interface FormsServiceLocal {
     ArchiveFileFormsBean getForm(String id) throws Exception;
 
     Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
+    
+    HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception;
     
 }

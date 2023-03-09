@@ -691,6 +691,8 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     /**
      * Creates new form FormInstancePanel
+     * @param container
+     * @param plugin
      */
     public FormInstancePanel(JTabbedPane container, FormPlugin plugin) {
         initComponents();

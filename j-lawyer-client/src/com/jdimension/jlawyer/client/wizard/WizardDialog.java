@@ -671,6 +671,8 @@ public class WizardDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form WizardDialog
+     * @param parent
+     * @param modal
      */
     public WizardDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -737,17 +739,15 @@ public class WizardDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                WizardDialog dialog = new WizardDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            WizardDialog dialog = new WizardDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

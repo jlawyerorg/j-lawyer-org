@@ -669,6 +669,12 @@ package com.jdimension.jlawyer.client.mail;
  */
 public interface SaveToCaseExecutor {
     
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, boolean onlyAttachments);
+    public boolean saveToCaseCallback(String caseId, boolean withAttachments, boolean separateAttachments, boolean onlyAttachments);
+    
+    public boolean renameCallback();
+    
+    public boolean removeCallback();
+    
+    public boolean splitPdfCallback();
     
 }

@@ -681,7 +681,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
 import org.junit.After;
@@ -763,14 +763,14 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.odt", "test/data/template-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -869,6 +869,7 @@ public class LibreOfficeODFTest {
             
             String myclass = sb.toString();
             myclass=myclass.replace("SMARTTEMPLATESCRIPT", "\"schnuffel\"");
+            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
             GroovyClassLoader gcl = new GroovyClassLoader();
             Class calcClass = gcl.parseClass(myclass);
             GroovyObject calc = (GroovyObject) calcClass.newInstance();
@@ -1099,6 +1100,7 @@ public class LibreOfficeODFTest {
             
             String myclass = sb.toString();
             myclass=myclass.replace("SMARTTEMPLATESCRIPT", script);
+            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
             GroovyClassLoader gcl = new GroovyClassLoader();
             Class calcClass = gcl.parseClass(myclass);
             GroovyObject calc = (GroovyObject) calcClass.newInstance();
@@ -1123,14 +1125,14 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-scripts-run.odt", "test/data/template-scripts-run.odt", ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1178,13 +1180,13 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         // replace with empty value
         ph.put("{{MANDANT_NAME}}", "");
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-emptyline-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-emptyline-run.odt", "test/data/template-emptyline-run.odt", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             Assert.fail();
@@ -1241,7 +1243,7 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         // replace with empty value
         ph.put("{{MANDANT_NAME}}", "Kut");
         ph.put("{{MANDANT_VORNAME}}", "Jens");
@@ -1250,7 +1252,7 @@ public class LibreOfficeODFTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", "test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph, null);
 //            int count=0;
 //            do {
 //                count=LibreOfficeAccess.setPlaceHoldersOnDedicatedLines("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
@@ -1301,14 +1303,14 @@ public class LibreOfficeODFTest {
 
         }
 
-        Hashtable ph = new Hashtable();
+        HashMap<String,Object> ph = new HashMap<>();
         ph.put("{{MANDANT_NAME}}", "otto");
         ph.put("{{MANDANT_VORNAME}}", "hans");
         ph.put("{{MANDANT_ANREDE}}", "");
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods", ph);
-            LibreOfficeAccess.setPlaceHolders("test/data/template-run.ods", ph);
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.ods", "test/data/template-run.ods", ph, null);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             t.printStackTrace();
@@ -1349,7 +1351,7 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(105, content.indexOf("otto test"));
         Assert.assertEquals(117, content.indexOf("hans otto"));
         Assert.assertEquals(130, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
 

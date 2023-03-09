@@ -667,9 +667,9 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -686,16 +686,22 @@ import org.jlawyer.bea.model.Identity;
 public class BeaIdentitySearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(BeaIdentitySearchDialog.class.getName());
-    private Window parent=null;
     private JComponent nextFocus=null;
     private Identity selection=null;
 
     /**
      * Creates new form BeaIdentitySearchDialog
+     * @param parent
+     * @param modal
+     * @param target
+     * @param nextFocus
+     * @param firstName
+     * @param surName
+     * @param zipCode
+     * @param city
      */
     public BeaIdentitySearchDialog(JFrame parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
         super(parent, modal);
-        this.parent=parent;
         this.nextFocus=nextFocus;
         this.selection=target;
         initComponents();
@@ -729,10 +735,17 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form BeaIdentitySearchDialog
+     * @param parent
+     * @param modal
+     * @param target
+     * @param nextFocus
+     * @param firstName
+     * @param city
+     * @param surName
+     * @param zipCode
      */
     public BeaIdentitySearchDialog(JDialog parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
         super(parent, modal);
-        this.parent=parent;
         this.nextFocus=nextFocus;
         this.selection=target;
         initComponents();
@@ -950,7 +963,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
         }
@@ -964,20 +977,11 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         int row = this.tblResults.getSelectedRow();
         BeaIdentitySearchRowIdentifier identity = (BeaIdentitySearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-//        if (this.to.getText().indexOf(email) < 0) {
-//            if (this.to.getText().trim().length() > 0) {
-//                this.to.setText(this.to.getText() + ", " + email);
-//            } else {
-//                this.to.setText(email);
-//            }
-//
-//        }
-        
         // @todo workaround: search does not deliver all fields, so do a getidentity for the selection
         this.selection=identity.getIdentity();
         try {
             BeaAccess bea=BeaAccess.getInstance();
-            this.selection=bea.getIdentity(identity.getIdentity().getSafeId());
+            this.selection=bea.getIdentity(identity.getIdentity().getSafeId(), identity.getIdentity().getZipCode());
         } catch (Throwable t) {
             log.error(t);
             
@@ -999,17 +1003,8 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void txtFirstnameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFirstnameKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
-            //this.tblResults.removeKeyListener(this.tableKeyListener);
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
-//            this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//                public void keyPressed(java.awt.event.KeyEvent evt) {
-//                    if (evt.getKeyCode() == evt.VK_ENTER) {
-//                        useSelection();
-//                    }
-//                }
-//            };
-//            tblResults.addKeyListener(this.tableKeyListener);
         }
     }//GEN-LAST:event_txtFirstnameKeyPressed
 
@@ -1018,31 +1013,31 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentResized
 
     private void txtNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNameKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtNameKeyPressed
 
     private void txtUserNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtUserNameKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtUserNameKeyPressed
 
     private void txtCityKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCityKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtCityKeyPressed
 
     private void txtZipCodeKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtZipCodeKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtZipCodeKeyPressed
 
     private void txtOfficeNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtOfficeNameKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtOfficeNameKeyPressed
@@ -1051,12 +1046,8 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new BeaIdentitySearchDialog((JFrame)null, true, null, null, "", "", "", "").setVisible(true);
-                //new AddRecipientSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new BeaIdentitySearchDialog((JFrame)null, true, null, null, "", "", "", "").setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -697,6 +697,8 @@ public class ImportContactsDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ImportBanksDialog
+     * @param parent
+     * @param modal
      */
     public ImportContactsDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -1069,11 +1071,8 @@ public class ImportContactsDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new ImportContactsDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ImportContactsDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

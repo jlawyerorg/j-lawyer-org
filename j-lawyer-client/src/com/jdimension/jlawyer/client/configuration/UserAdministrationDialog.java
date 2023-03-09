@@ -686,12 +686,16 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -706,9 +710,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class UserAdministrationDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(UserAdministrationDialog.class.getName());
-
-    private String optionGroup = null;
+    private static final Logger log = Logger.getLogger(UserAdministrationDialog.class.getName());
 
     private ArrayList<CalendarRegion> countries = null;
 
@@ -716,6 +718,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -764,6 +768,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{true, cs});
             }
             ComponentUtils.autoSizeColumns(tblCalendars);
+            
+            String[] colNames6 = new String[]{"", "Nummernkreise"};
+            GroupMembershipsTableModel model4 = new GroupMembershipsTableModel(colNames6, 0);
+            this.tblInvoicePools.setModel(model4);
+            Collection<InvoicePool> allPools = locator.lookupInvoiceServiceRemote().getAllInvoicePools();
+            for (InvoicePool ip : allPools) {
+                ((DefaultTableModel) this.tblInvoicePools.getModel()).addRow(new Object[]{true, ip});
+            }
+            ComponentUtils.autoSizeColumns(tblInvoicePools);
 
             String[] colNames5 = new String[]{"", "Postfach"};
             GroupMembershipsTableModel model3 = new GroupMembershipsTableModel(colNames5, 0);
@@ -823,6 +836,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkLawyer = new javax.swing.JCheckBox();
         jLabel27 = new javax.swing.JLabel();
         txtDisplayName = new javax.swing.JTextField();
+        jPanel13 = new javax.swing.JPanel();
+        chkReportCommon = new javax.swing.JCheckBox();
+        chkReportConfidential = new javax.swing.JCheckBox();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -866,6 +882,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         tblGroups = new javax.swing.JTable();
         jLabel20 = new javax.swing.JLabel();
         txtAbbreviation = new javax.swing.JTextField();
+        jPanel12 = new javax.swing.JPanel();
+        jLabel7 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tblInvoicePools = new javax.swing.JTable();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("Löschen");
@@ -1063,7 +1083,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(218, Short.MAX_VALUE))
+                .addContainerGap(135, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1080,6 +1100,35 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel27.setText("Anzeigename:");
 
+        jPanel13.setBorder(javax.swing.BorderFactory.createTitledBorder("Auswertungen"));
+
+        chkReportCommon.setText("allgemeine");
+        chkReportCommon.setToolTipText("bspw. offene Posten, Aktenhistorien");
+
+        chkReportConfidential.setText("vertrauliche");
+        chkReportConfidential.setToolTipText("bspw. mitarbeiterbezogene Auswertungen");
+
+        org.jdesktop.layout.GroupLayout jPanel13Layout = new org.jdesktop.layout.GroupLayout(jPanel13);
+        jPanel13.setLayout(jPanel13Layout);
+        jPanel13Layout.setHorizontalGroup(
+            jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel13Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(chkReportCommon)
+                    .add(chkReportConfidential))
+                .addContainerGap(112, Short.MAX_VALUE))
+        );
+        jPanel13Layout.setVerticalGroup(
+            jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel13Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(chkReportCommon)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkReportConfidential)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1087,22 +1136,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
                         .add(jLabel27)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtDisplayName)
+                        .add(txtDisplayName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
                         .add(18, 18, 18)
                         .add(chkLawyer)
-                        .add(189, 189, 189))))
+                        .add(189, 189, 189))
+                    .add(jPanel5Layout.createSequentialGroup()
+                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel5Layout.createSequentialGroup()
+                                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1114,11 +1166,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(281, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1274,11 +1329,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         btGrpAutoLogin.add(rdManualLogin);
         rdManualLogin.setText("manueller Login mit Zertifikat oder Kartenleser");
-        rdManualLogin.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rdManualLoginActionPerformed(evt);
-            }
-        });
 
         cmdSelectCertificate.setText("...");
         cmdSelectCertificate.setToolTipText("Zertifikat uploaden");
@@ -1521,6 +1571,59 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Kürzel und Gruppen", jPanel9);
 
+        jLabel7.setText("Rechnungsnummernkreise:");
+
+        tblInvoicePools.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "", "Nummernkreis"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.Object.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        tblInvoicePools.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblInvoicePoolsMouseClicked(evt);
+            }
+        });
+        jScrollPane3.setViewportView(tblInvoicePools);
+
+        org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel7)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 734, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel12Layout.createSequentialGroup()
+                        .add(jLabel7)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Rechnungen", jPanel12);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1570,7 +1673,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtUserKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtUserKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddActionPerformed(null);
         }
     }//GEN-LAST:event_txtUserKeyPressed
@@ -1691,7 +1794,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }
 
     private void lstUsersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstUsersMousePressed
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+        if (evt.getModifiers() == MouseEvent.BUTTON2_MASK || evt.getModifiers() == MouseEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == MouseEvent.BUTTON3_MASK || evt.getModifiers() == MouseEvent.BUTTON3_DOWN_MASK) {
             if (this.lstUsers.getSelectedValues().length > 0) {
                 this.popDelete.show(this.lstUsers, evt.getX(), evt.getY());
             }
@@ -1816,6 +1919,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     for (CalendarAccess ca : calendars) {
                         if (cs.getId().equals(ca.getCalendarId())) {
                             this.tblCalendars.setValueAt(true, i, 0);
+                            break;
+                        }
+                    }
+                }
+                
+                List<InvoicePoolAccess> invoicePools = locator.lookupSecurityServiceRemote().getInvoicePoolAccessForUser(u.getPrincipalId());
+                for (int i = 0; i < this.tblInvoicePools.getRowCount(); i++) {
+                    InvoicePool ip = (InvoicePool) this.tblInvoicePools.getValueAt(i, 1);
+                    this.tblInvoicePools.setValueAt(false, i, 0);
+                    for (InvoicePoolAccess pa : invoicePools) {
+                        if (ip.getId().equals(pa.getPoolId())) {
+                            this.tblInvoicePools.setValueAt(true, i, 0);
                             break;
                         }
                     }
@@ -2005,14 +2120,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmbCountryItemStateChanged
 
-    private void rdManualLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdManualLoginActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_rdManualLoginActionPerformed
-
     private void cmdSelectCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectCertificateActionPerformed
         JFileChooser chooser = new JFileChooser();
-        //ExtensionFilter filter = new ExtensionFilter(this.lstExtensions.getSelectedValue().toString());
-        //chooser.setFileFilter(filter);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 
@@ -2029,7 +2138,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.currentCertificate = content;
 
                 Hashtable ht = BeaAccess.getCertificateInformation(content, certPwd.toString());
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 Enumeration keys = ht.keys();
                 while (keys.hasMoreElements()) {
                     Object k = keys.nextElement();
@@ -2264,6 +2373,43 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdGetVoipIdsActionPerformed
 
+    private void tblInvoicePoolsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblInvoicePoolsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+
+            AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+            if (u == null) {
+                return;
+            }
+
+            Point p = evt.getPoint();
+            int col = this.tblInvoicePools.columnAtPoint(p);
+            if (col == 0) {
+                // click on checkbox in table
+                int row = this.tblInvoicePools.rowAtPoint(p);
+                InvoicePool ip = (InvoicePool) this.tblInvoicePools.getValueAt(row, 1);
+                Boolean newValue = !((Boolean) this.tblInvoicePools.getValueAt(row, 0));
+
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+                    if (newValue) {
+                        svc.addUserToInvoicePool(u.getPrincipalId(), ip.getId());
+                    } else {
+                        svc.removeUserFromInvoicePool(u.getPrincipalId(), ip.getId());
+                    }
+                } catch (Exception ex) {
+                    log.error("Error updating invoice pool access", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                this.tblInvoicePools.setValueAt(newValue, row, col);
+            }
+        }
+    }//GEN-LAST:event_tblInvoicePoolsMouseClicked
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2378,6 +2524,22 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r8.setRoleGroup("Roles");
             result.add(r8);
         }
+        
+        if (this.chkReportCommon.isSelected()) {
+            AppRoleBean r = new AppRoleBean();
+            r.setPrincipalId(principalId);
+            r.setRole("commonReportRole");
+            r.setRoleGroup("Roles");
+            result.add(r);
+        }
+        
+        if (this.chkReportConfidential.isSelected()) {
+            AppRoleBean r = new AppRoleBean();
+            r.setPrincipalId(principalId);
+            r.setRole("confidentialReportRole");
+            r.setRoleGroup("Roles");
+            result.add(r);
+        }
 
         return result;
     }
@@ -2446,6 +2608,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.chkRemoveAddress.setSelected(false);
         this.chkRemoveFile.setSelected(false);
         this.chkRemoveOption.setSelected(false);
+        this.chkReportCommon.setSelected(false);
+        this.chkReportConfidential.setSelected(false);
 
         for (AppRoleBean r : roles) {
             String rn = r.getRole();
@@ -2477,6 +2641,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkRemoveFile.setSelected(true);
             } else if ("deleteOptionGroupRole".equals(rn)) {
                 this.chkRemoveOption.setSelected(true);
+            } else if ("commonReportRole".equals(rn)) {
+                this.chkReportCommon.setSelected(true);
+            } else if ("confidentialReportRole".equals(rn)) {
+                this.chkReportConfidential.setSelected(true);
             }
         }
 
@@ -2486,10 +2654,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new UserAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new UserAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
 
@@ -2507,6 +2673,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkRemoveAddress;
     private javax.swing.JCheckBox chkRemoveFile;
     private javax.swing.JCheckBox chkRemoveOption;
+    private javax.swing.JCheckBox chkReportCommon;
+    private javax.swing.JCheckBox chkReportConfidential;
     private javax.swing.JCheckBox chkWriteAddress;
     private javax.swing.JCheckBox chkWriteFile;
     private javax.swing.JCheckBox chkWriteOption;
@@ -2536,9 +2704,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
+    private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2549,6 +2720,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
@@ -2565,6 +2737,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextArea taBeaCertificate;
     private javax.swing.JTable tblCalendars;
     private javax.swing.JTable tblGroups;
+    private javax.swing.JTable tblInvoicePools;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtDisplayName;

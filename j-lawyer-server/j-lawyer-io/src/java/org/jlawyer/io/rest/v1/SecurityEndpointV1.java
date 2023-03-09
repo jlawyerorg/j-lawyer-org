@@ -690,11 +690,11 @@ public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
     @Override
     @Path("/metadata")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     public Response getApiMetadata() {
 
         ApiMetadataV1 meta = new ApiMetadataV1();
-        meta.setApiLevel(5);
+        meta.setApiLevel(6);
 
         Response res = Response.ok(meta).build();
         return res;

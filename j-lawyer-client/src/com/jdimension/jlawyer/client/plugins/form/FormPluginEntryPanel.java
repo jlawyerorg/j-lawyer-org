@@ -798,7 +798,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         });
         actionPopup.add(mnuRemove);
 
-        lblName.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getSize()+2f));
         lblName.setText("Pluginname");
         lblName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblName.addMouseListener(new java.awt.event.MouseAdapter() {

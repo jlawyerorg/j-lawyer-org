@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -676,13 +677,13 @@ import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
@@ -708,11 +709,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private JTable tblReviewReasons = null;
-    private List<ArchiveFileAddressesBean> involved = null;
     private GenericCalculationTable calculationTable = null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
-    private Hashtable<String, String> formPlaceHolderValues = new Hashtable<>();
+    private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
@@ -720,6 +720,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     /**
      * Creates new form AddDocumentDialog
+     *
      * @param parent
      * @param modal
      * @param targetTable
@@ -736,7 +737,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
-        this.involved = involved;
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
@@ -817,7 +817,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.allPartyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
             this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
             this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
 
@@ -830,7 +830,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());
         }
-        
+
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
@@ -847,9 +847,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         String templateFileName = templateName;
-        if(templateFileName==null)
-            templateFileName="";
-        
+        if (templateFileName == null) {
+            templateFileName = "";
+        }
+
         if (templateFileName.lastIndexOf(".") >= 0) {
             templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
         }
@@ -866,7 +867,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             if (t2 != null) {
                 prefix2 = t2.getPlaceHolder();
             }
-            
+
             int l1 = 0;
             if (prefix1 != null) {
                 l1 = prefix1.length();
@@ -1374,7 +1375,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
         this.addAndOpen(false);
-        
+
     }//GEN-LAST:event_cmdAddActionPerformed
 
     private void addAndOpen(boolean openAfterAdd) {
@@ -1386,13 +1387,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ClientSettings settings = ClientSettings.getInstance();
 
         EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
-        ArchiveFileDocumentsBean db=null;
+        ArchiveFileDocumentsBean db = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Hashtable phValues = new Hashtable();
+            HashMap<String, Object> phValues = new HashMap<>();
             TableModel model = this.tblPlaceHolders.getModel();
             for (int r = 0; r < model.getRowCount(); r++) {
-                phValues.put(model.getValueAt(r, 0), model.getValueAt(r, 1));
+                phValues.put(model.getValueAt(r, 0).toString(), model.getValueAt(r, 1));
             }
 
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
@@ -1433,42 +1434,44 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            } catch (Exception ex) {
-                log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
+                model.addRow(row);
+                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
-
-            ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            Object[] row=ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-            model.addRow(row);
-            ComponentUtils.autoSizeColumns(tblReviewReasons);
 
         }
 
-        if(openAfterAdd) {
+        if (openAfterAdd) {
             try {
                 CaseUtils.openDocument(aFile, db, false, this);
             } catch (Exception ex) {
                 log.error("Error opening document", ex);
                 JOptionPane.showMessageDialog(this, "Dokument kann nicht geöffnet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            } 
+            }
         }
-        
+
         EditorsRegistry.getInstance().clearStatus();
         this.setVisible(false);
         this.dispose();
     }
-    
+
     private void txtFileNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddActionPerformed(null);
@@ -1546,7 +1549,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
 
@@ -1596,7 +1598,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
                 Collections.sort(placeHolders);
-                Hashtable ht = new Hashtable();
+                HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
@@ -1619,13 +1621,17 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
+                List<PartiesTriplet> partiesTriplets=new ArrayList<>();
+                for(PartiesPanelEntry pe: selectedParties) {
+                    PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                    partiesTriplets.add(triplet);
+                }
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
 
-                Enumeration htEn = ht.keys();
-                while (htEn.hasMoreElements()) {
-                    Object key = htEn.nextElement();
-                    if(key.toString().startsWith("[[SCRIPT:"))
+                for (String key : ht.keySet()) {
+                    if (key.startsWith("[[SCRIPT:")) {
                         continue;
+                    }
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
                 }

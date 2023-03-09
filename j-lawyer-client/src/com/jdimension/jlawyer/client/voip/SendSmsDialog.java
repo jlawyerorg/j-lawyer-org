@@ -683,70 +683,74 @@ import org.apache.log4j.Logger;
  */
 public class SendSmsDialog extends javax.swing.JDialog {
 
-    private static final Logger log=Logger.getLogger(SendSmsDialog.class.getName());
-    
+    private static final Logger log = Logger.getLogger(SendSmsDialog.class.getName());
+
     public SendSmsDialog(java.awt.Frame parent, boolean modal, AddressBean ab, String text) {
         this(parent, modal, ab);
         this.txtBody.setText(text);
     }
-    
+
     /**
      * Creates new form SendSmsDialog
+     * @param parent
+     * @param modal
+     * @param ab
      */
     public SendSmsDialog(java.awt.Frame parent, boolean modal, AddressBean ab) {
         super(parent, modal);
         initComponents();
-        String mobile=ab.getMobile();
-        if(mobile==null)
-            mobile="";
-        if("".equals(mobile))
-            mobile="0";
-        
+        String mobile = ab.getMobile();
+        if (mobile == null) {
+            mobile = "";
+        }
+        if ("".equals(mobile)) {
+            mobile = "0";
+        }
+
         this.lblTo.setText(ab.toDisplayName() + " (" + mobile + ")");
         this.txtE164.setText(SipUtils.E164NumberWithPlusSign(mobile));
-        
+
         ClientSettings settings = ClientSettings.getInstance();
-        String lastUsed=settings.getConfiguration(ClientSettings.CONF_VOIP_LASTSIPSMS, "");
+        String lastUsed = settings.getConfiguration(ClientSettings.CONF_VOIP_LASTSIPSMS, "");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-              ArrayList<SipUri> list=locator.lookupVoipServiceRemote().getOwnUris();
-            DefaultComboBoxModel m=new DefaultComboBoxModel();
-            SipUri lastUsedUri=null;
-            for(SipUri uri: list) {
+            ArrayList<SipUri> list = locator.lookupVoipServiceRemote().getOwnUris();
+            DefaultComboBoxModel m = new DefaultComboBoxModel();
+            SipUri lastUsedUri = null;
+            for (SipUri uri : list) {
                 m.addElement(uri);
-                if(uri.getUri().equals(lastUsed))
-                    lastUsedUri=uri;
+                if (uri.getUri().equals(lastUsed)) {
+                    lastUsedUri = uri;
+                }
             }
             this.cmbOwnUris.setModel(m);
-            if(lastUsedUri!=null)
+            if (lastUsedUri != null) {
                 this.cmbOwnUris.setSelectedItem(lastUsedUri);
+            }
 
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
-        
+
         this.cmbOwnUrisActionPerformed(null);
-        
+
         ComponentUtils.restoreDialogSize(this);
-        
+
         new Thread(() -> {
             ClientSettings settings1 = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings1.getLookupProperties());
                 final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        NumberFormat nf=NumberFormat.getCurrencyInstance();
-                        lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    NumberFormat nf = NumberFormat.getCurrencyInstance();
+                    lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
                 });
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 log.error(ex);
-                //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }).start();
-        
+
     }
 
     /**
@@ -964,12 +968,12 @@ public class SendSmsDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtBodyKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBodyKeyPressed
-        if(txtBody.getText().length()>460)
-            txtBody.setText(txtBody.getText().substring(0,459));
+        if (txtBody.getText().length() > 460)
+            txtBody.setText(txtBody.getText().substring(0, 459));
     }//GEN-LAST:event_txtBodyKeyPressed
 
     private void cmbOwnUrisItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOwnUrisItemStateChanged
-        
+
     }//GEN-LAST:event_cmbOwnUrisItemStateChanged
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
@@ -981,9 +985,9 @@ public class SendSmsDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SipUri localUri=(SipUri)this.cmbOwnUris.getSelectedItem();
-            String remoteUri=this.txtE164.getText();
-            
+            SipUri localUri = (SipUri) this.cmbOwnUris.getSelectedItem();
+            String remoteUri = this.txtE164.getText();
+
             locator.lookupVoipServiceRemote().initiateSms(localUri.getUri(), remoteUri, this.txtBody.getText());
             settings.setConfiguration(ClientSettings.CONF_VOIP_LASTSIPSMS, localUri.getUri());
             this.setVisible(false);
@@ -992,28 +996,31 @@ public class SendSmsDialog extends javax.swing.JDialog {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
-        
-        
+
+
     }//GEN-LAST:event_cmdSendActionPerformed
 
     private void cmbOwnUrisActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbOwnUrisActionPerformed
-        Object sel=this.cmbOwnUris.getSelectedItem();
-        if(sel!=null && sel instanceof SipUri) {
-            SipUri uri=(SipUri)sel;
+        Object sel = this.cmbOwnUris.getSelectedItem();
+        if (sel != null && sel instanceof SipUri) {
+            SipUri uri = (SipUri) sel;
             this.lblFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.lblVoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.lblText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            
-            ArrayList<String> tosList=uri.getTypeOfService();
-            for(String tos: tosList) {
-                if(SipUtils.TOS_FAX.equals(tos))
+
+            ArrayList<String> tosList = uri.getTypeOfService();
+            for (String tos : tosList) {
+                if (SipUtils.TOS_FAX.equals(tos)) {
                     this.lblFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                
-                if(SipUtils.TOS_TEXT.equals(tos))
+                }
+
+                if (SipUtils.TOS_TEXT.equals(tos)) {
                     this.lblText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                
-                if(SipUtils.TOS_VOICE.equals(tos))
+                }
+
+                if (SipUtils.TOS_VOICE.equals(tos)) {
                     this.lblVoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+                }
             }
         }
     }//GEN-LAST:event_cmbOwnUrisActionPerformed
@@ -1059,7 +1066,7 @@ public class SendSmsDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(() -> {
             SendSmsDialog dialog = new SendSmsDialog(new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                
+
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     System.exit(0);

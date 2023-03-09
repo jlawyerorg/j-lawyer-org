@@ -721,18 +721,29 @@ public class UserSettings {
     public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
     public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
     
+    public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
+    
     public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
+    
+    public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
+    public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
+    
+    
+    // for new bulk save dialog
+    public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
+    public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
+    
 
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
-
+    
     private AppUserBean currentUser = null;
 
     private AppUserBean[] lawyerUsers = null;
@@ -764,7 +775,6 @@ public class UserSettings {
             mgmt = locator.lookupSystemManagementRemote();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            return;
         }
     }
 
@@ -885,7 +895,7 @@ public class UserSettings {
     }
 
     public void setSettingArray(String key, String[] value) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (value == null) {
             value = new String[]{""};
         }

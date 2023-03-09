@@ -707,7 +707,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/foldertemplates")
     @RolesAllowed({"loginRole"})
     public Response listFolderTemplates() {
@@ -742,7 +742,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/folders")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseFolders(@PathParam("id") String id) {
@@ -799,7 +799,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/foldertemplates/{templateId}/apply")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response applyFolderTemplate(@PathParam("id") String id, @PathParam("templateId") String templateId) {

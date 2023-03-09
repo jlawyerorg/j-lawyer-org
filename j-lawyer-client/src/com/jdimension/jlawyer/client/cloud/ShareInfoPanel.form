@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -126,8 +126,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblPath">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblPath" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="/shared/dings/bla"/>
         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -141,56 +143,70 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblShareType">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblShareType" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Geteilter Link"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="jLabel2" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="von"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblOwner">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblOwner" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Eigent&#xfc;mer"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="jLabel3" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="vom"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblShareTime">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblShareTime" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="01.01.2020"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel4">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="jLabel4" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="G&#xfc;ltig bis"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblExpiration">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="10" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblExpiration" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="unbegrenzt"/>
       </Properties>

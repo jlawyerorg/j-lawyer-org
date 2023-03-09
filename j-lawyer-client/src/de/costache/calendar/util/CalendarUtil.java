@@ -49,6 +49,28 @@ public class CalendarUtil {
 
         return calendar.getTime().equals(now.getTime());
     }
+    
+    public static List<CalendarEvent> sortEvents(List<CalendarEvent> events) {
+        events.sort((o1, o2) -> {
+            if (o1.getType().getUniqueKey() != null && o2.getType().getUniqueKey() == null)
+                return -1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() != null)
+                return 1;
+            if (o1.getType().getUniqueKey() == null && o2.getType().getUniqueKey() == null)
+                return 0;
+            if (o1.getType().getUniqueKey().equals(o2.getType().getUniqueKey())) {
+                return 0;
+            } else if ("Termin".equals(o1.getType().getUniqueKey())) {
+                return -1;
+            } else if ("Frist".equals(o1.getType().getUniqueKey())
+                    && !"Termin".equals(o2.getType().getUniqueKey())) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+        return events;
+    }
 
     public static Calendar copyCalendar(final Calendar calendar, final boolean stripTime) {
         final Calendar c = Calendar.getInstance();
@@ -133,7 +155,7 @@ public class CalendarUtil {
 
     public static long getTotalSeconds(final Date date) {
         final Calendar c = CalendarUtil.getCalendar(date, false);
-        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60l * 60l;
+        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60L * 60L;
         seconds += c.get(Calendar.MINUTE) * 60;
         seconds += c.get(Calendar.SECOND);
         return seconds;
@@ -160,7 +182,7 @@ public class CalendarUtil {
 
         for (int i = 0; i < clonedCollection.size(); i++) {
             final CalendarEvent event1 = clonedCollection.get(i);
-             conflictingEvents.put(event1, new ArrayList<>());
+            conflictingEvents.put(event1, new ArrayList<>());
             for (int j = 0; j < clonedCollection.size(); j++) {
                 final CalendarEvent event2 = clonedCollection.get(j);
                 if (event2.isAllDay() || event2.isHoliday())
@@ -218,13 +240,13 @@ public class CalendarUtil {
 
         if (time <= 30) {
             c.set(Calendar.MINUTE, roundUp ? 30 : 0);
-        } else if (time > 30) {
+        } else {
             c.set(Calendar.MINUTE, roundUp ? 0 : 30);
-            if(roundUp)
-            c.add(Calendar.HOUR, 1);
+            if (roundUp)
+                c.add(Calendar.HOUR, 1);
         }
-        c.set(Calendar.SECOND,0);
-        c.set(Calendar.MILLISECOND,0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
         return c.getTime();
     }
 

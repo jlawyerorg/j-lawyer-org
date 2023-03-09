@@ -663,11 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package templates.smart;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.MappingEntry;
 import com.jdimension.jlawyer.persistence.MappingEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.MappingTableFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import java.util.Collection;
 import java.util.List;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
@@ -739,6 +742,34 @@ public class SmartFunctions {
             return "Fehler: " + t.getMessage();
         }
         
+    }
+    
+    public static String wennEtikett(String caseId, String etikett, String then, String otherwise) {
+        
+        if("".equals(caseId))
+            return otherwise;
+        
+        if("SMARTTEMPLATECASEID".equalsIgnoreCase(caseId))
+            return otherwise;
+        
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal svc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            Collection<ArchiveFileTagsBean> result=svc.getTags(caseId);
+            if(result==null || result.isEmpty()) {
+                return otherwise;
+            } else {
+                for(ArchiveFileTagsBean t: result) {
+                    if(t.getTagName().equalsIgnoreCase(etikett)) {
+                        return then;
+                    }
+                }
+                return otherwise;
+            }
+        } catch (Throwable t) {
+            log.error("unable to look up tags for case " + caseId, t);
+            return "Fehler: " + t.getMessage();
+        }
     }
 
 }

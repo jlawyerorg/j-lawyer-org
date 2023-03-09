@@ -687,6 +687,8 @@ public interface ArchiveFileDocumentsBeanFacadeLocal {
     
     public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey, boolean deleted);
     
+    public ArchiveFileDocumentsBean findByArchiveFileKey(ArchiveFileBean archiveFileKey, String fileName) throws Exception;
+    
     public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder);
     
     public List<ArchiveFileDocumentsBean> findDeleted();

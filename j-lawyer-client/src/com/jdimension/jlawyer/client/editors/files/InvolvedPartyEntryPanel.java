@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.AddressUtils;
 import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -681,6 +682,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
@@ -689,26 +691,26 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
 import themes.colors.DefaultColorTheme;
 
 /**
- *
  * @author jens
  */
 public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private AddressBean a = null;
     private ArchiveFileAddressesBean afa = null;
     private ArchiveFileBean caseDto = null;
@@ -751,8 +753,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes = afs.getAllPartyTypes();
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes = sys.getPartyTypes();
 
             this.cmbRefType.removeAllItems();
             ArrayList<String> refTypeNames = new ArrayList<>();
@@ -828,8 +830,85 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                     this.lblUnderage.setToolTipText("Beteiligte(r) ist minderjährig");
                 }
             }
+
+            // Set important information to content panel
+            StringBuilder wrapper = new StringBuilder();
+            wrapper.append("<html>");
+            wrapper.append("<table>");
+            StringBuilder content = new StringBuilder();
+            if (!StringUtils.isEmpty(this.a.getCompany())) {
+                content.append(getContentRow("Unternehmen:", this.a.getCompany()));
+            }
+            if (!StringUtils.isEmpty(this.a.getDepartment())) {
+                content.append(getContentRow("Abteilung:", this.a.getDepartment()));
+            }
+            if (!StringUtils.isEmpty(this.a.getPhone())) {
+                content.append(getContentRow("Festnetz:", this.a.getPhone()));
+            }
+            if (!StringUtils.isEmpty(this.a.getFax())) {
+                content.append(getContentRow("Fax:", this.a.getFax()));
+            }
+            if (!StringUtils.isEmpty(this.a.getMobile())) {
+                content.append(getContentRow("Mobil:", this.a.getMobile()));
+            }
+            if (!StringUtils.isEmpty(this.a.getEmail())) {
+                content.append(getContentRow("E-Mail:", this.a.getEmail()));
+            }
+            if (!StringUtils.isEmpty(this.a.getWebsite())) {
+                content.append(getContentRow("Website:", this.a.getWebsite()));
+            }
+            StringBuilder address = new StringBuilder();
+            // Add street + street number
+            if (!StringUtils.isEmpty(this.a.getStreet()) && StringUtils.isEmpty(this.a.getStreetNumber())) {
+                address.append(this.a.getStreet())
+                        .append("<br>");
+            } else if (!StringUtils.isEmpty(this.a.getStreet()) && !StringUtils.isEmpty(this.a.getStreetNumber())) {
+                address.append(this.a.getStreet())
+                        .append(" ")
+                        .append(this.a.getStreetNumber())
+                        .append("<br>");
+            }
+            // Add zipcode + city
+            if (!StringUtils.isEmpty(this.a.getZipCode()) && StringUtils.isEmpty(this.a.getCity())) {
+                address.append(this.a.getZipCode())
+                        .append("<br>");
+            } else if (!StringUtils.isEmpty(this.a.getZipCode()) && !StringUtils.isEmpty(this.a.getCity())) {
+                address.append(this.a.getZipCode())
+                        .append(" ")
+                        .append(this.a.getCity())
+                        .append("<br>");
+            }
+            // Add country
+            if (!StringUtils.isEmpty(this.a.getCountry())) {
+                address.append(this.a.getCountry());
+            }
+            if (!StringUtils.isEmpty(address.toString())) {
+                content.append(getContentRow("Adresse:", address.toString()));
+            }
+            wrapper.append(content.toString());
+            wrapper.append("</table>");
+            wrapper.append("</html>");
+            this.detailsContent.setBorder(null);
+            this.detailsContent.setContentType("text/html");
+            this.detailsContent.setText(wrapper.toString());
+            if (content.toString().isEmpty()) {
+                detailsContentTaskPane.setVisible(false);
+            }
         }
 
+    }
+
+    private String getContentRow(String label, String value) {
+        StringBuilder row = new StringBuilder();
+        return row.append("<tr>")
+                .append("<td valign=\"top\"><b>")
+                .append(label)
+                .append("</b></td>")
+                .append("<td>")
+                .append(value)
+                .append("</td>")
+                .append("</tr>")
+                .toString();
     }
 
     /**
@@ -850,6 +929,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuCallPhone = new javax.swing.JMenuItem();
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
+        mnuCopy = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -857,6 +937,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         cmdActions = new javax.swing.JButton();
         cmdToAddress = new javax.swing.JButton();
         lblType = new javax.swing.JLabel();
+        detailsContentTaskPane = new org.jdesktop.swingx.JXTaskPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        detailsContent = new javax.swing.JTextPane();
         jXTaskPane1 = new org.jdesktop.swingx.JXTaskPane();
         jLabel2 = new javax.swing.JLabel();
         lblCustom1 = new javax.swing.JLabel();
@@ -940,9 +1023,19 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuRemoveParty);
 
-        lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        mnuCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopy.setText("kopieren");
+        mnuCopy.setToolTipText("Adresse in die Zwischenablage kopieren");
+        mnuCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuCopy);
+
+        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
-        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         lblAddress.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblAddressMouseClicked(evt);
@@ -955,6 +1048,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
 
+        cmbRefType.setFont(cmbRefType.getFont().deriveFont(cmbRefType.getFont().getStyle() | java.awt.Font.BOLD));
         cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mandant", "Gegner", "Dritte" }));
         cmbRefType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -962,17 +1056,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
 
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel3.setText("Zeichen:");
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
         cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdActionsMousePressed(evt);
-            }
-        });
-        cmdActions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdActionsActionPerformed(evt);
             }
         });
 
@@ -988,10 +1078,35 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         lblType.setText("  ");
         lblType.setOpaque(true);
 
+        detailsContentTaskPane.setExpanded(false);
+        detailsContentTaskPane.setForeground(new java.awt.Color(255, 255, 255));
+        detailsContentTaskPane.setTitle("Details");
+        detailsContentTaskPane.setAnimated(false);
+        detailsContentTaskPane.setFont(detailsContentTaskPane.getFont().deriveFont(detailsContentTaskPane.getFont().getStyle() | java.awt.Font.BOLD));
+
+        jScrollPane1.setBorder(null);
+
+        detailsContent.setBorder(null);
+        jScrollPane1.setViewportView(detailsContent);
+
+        javax.swing.GroupLayout detailsContentTaskPaneLayout = new javax.swing.GroupLayout(detailsContentTaskPane.getContentPane());
+        detailsContentTaskPane.getContentPane().setLayout(detailsContentTaskPaneLayout);
+        detailsContentTaskPaneLayout.setHorizontalGroup(
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        detailsContentTaskPaneLayout.setVerticalGroup(
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsContentTaskPaneLayout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
         jXTaskPane1.setExpanded(false);
         jXTaskPane1.setForeground(new java.awt.Color(255, 255, 255));
-        jXTaskPane1.setTitle("Details");
+        jXTaskPane1.setTitle("Zusätzliche Angaben");
         jXTaskPane1.setAnimated(false);
+        jXTaskPane1.setFont(jXTaskPane1.getFont().deriveFont(jXTaskPane1.getFont().getStyle() | java.awt.Font.BOLD));
 
         jLabel2.setText("Ansprechpartner:");
 
@@ -1000,12 +1115,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         lblCustom2.setText("Eigene 2:");
 
         lblCustom3.setText("Eigene 3:");
-
-        txtCustom1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtCustom1ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jXTaskPane1Layout = new javax.swing.GroupLayout(jXTaskPane1.getContentPane());
         jXTaskPane1.getContentPane().setLayout(jXTaskPane1Layout);
@@ -1029,6 +1138,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         jXTaskPane1Layout.setVerticalGroup(
             jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
@@ -1047,6 +1157,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        lblUnderage.setFont(lblUnderage.getFont().deriveFont(lblUnderage.getFont().getStyle() | java.awt.Font.BOLD));
         lblUnderage.setText("jLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1071,7 +1182,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addComponent(cmdToAddress)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdActions))
-                    .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1089,8 +1201,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addComponent(jLabel3)
                         .addComponent(lblUnderage)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(21, 21, 21))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1117,7 +1231,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
         }
 
-        if (!this.initializing && this.a!=null) {
+        if (!this.initializing && this.a != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1147,8 +1261,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-            dlg.setInvolvedInCase(this.container.getInvolvedParties());
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
+            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
@@ -1191,6 +1309,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
@@ -1295,7 +1418,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
         if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-            ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
+            ArrayList<AddressBean> faxList = new ArrayList<>();
 
             faxList.addAll(this.container.getInvolvedPartiesAddress());
 
@@ -1308,10 +1431,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         }
     }//GEN-LAST:event_mnuSendFaxActionPerformed
-
-    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-
-    }//GEN-LAST:event_cmdActionsActionPerformed
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
         this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
@@ -1333,16 +1452,21 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblAddressMouseClicked
 
-    private void txtCustom1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCustom1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtCustom1ActionPerformed
+    private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
+        if(this.a!=null) {
+            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
+        }
+    }//GEN-LAST:event_mnuCopyActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdActions;
     private javax.swing.JButton cmdToAddress;
+    private javax.swing.JTextPane detailsContent;
+    private org.jdesktop.swingx.JXTaskPane detailsContentTaskPane;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JScrollPane jScrollPane1;
     private org.jdesktop.swingx.JXTaskPane jXTaskPane1;
     private javax.swing.JLabel lblAddress;
     private javax.swing.JLabel lblCustom1;
@@ -1352,6 +1476,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JLabel lblUnderage;
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
+    private javax.swing.JMenuItem mnuCopy;
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendEmail;

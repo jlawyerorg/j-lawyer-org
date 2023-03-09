@@ -663,11 +663,8 @@
  */
 package com.jdimension.jlawyer.client.encryption;
 
-import com.jdimension.jlawyer.client.configuration.*;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import java.io.File;
 import java.util.ArrayList;
@@ -688,6 +685,9 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form CitySearchDialog
+     * @param parent
+     * @param modal
+     * @param pdfSourceFile
      */
     public PDFEncryptionDialog(java.awt.Frame parent, boolean modal, String pdfSourceFile) {
         super(parent, modal);
@@ -709,9 +709,6 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         }
 
         this.txtLastDir.setText(lastDir);
-
-//        String lastPwd = settings.getConfiguration("client.archivefiles.encryptedpdf.lastpwd", "");
-//        this.txtPassword.setText(lastPwd);
 
     }
 
@@ -905,7 +902,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
                 .useLower(true)
                 .useUpper(true)
                 .build();
-        String password = passwordGenerator.generate(8);
+        String password = passwordGenerator.generate(10);
         this.txtPassword.setText(password);
     }//GEN-LAST:event_cmdGeneratePasswordActionPerformed
 
@@ -916,7 +913,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
 
     private void cmbRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRecipientActionPerformed
         
-        if(this.recipientList.size()==0)
+        if(this.recipientList.isEmpty())
             return;
         
         if (this.cmbRecipient.getSelectedIndex() > -1) {
@@ -932,10 +929,8 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new PDFEncryptionDialog(new javax.swing.JFrame(), true, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new PDFEncryptionDialog(new javax.swing.JFrame(), true, null).setVisible(true);
         });
     }
 

@@ -663,13 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
-import javax.swing.DefaultListModel;
-import org.jlawyer.bea.model.LegalAuthorities;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.EebLists;
 
@@ -682,10 +677,10 @@ public class EebRejectDialog extends javax.swing.JDialog {
     private String rejectionCode=null;
     private String rejectionComment=null;
     
-    private Hashtable<String,BeaListItem> authorities=new Hashtable<String,BeaListItem>();
-
     /**
-     * Creates new form SelectLegalAuthorityDialog
+     * Creates new form EebRejectDialog
+     * @param parent
+     * @param modal
      */
     public EebRejectDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -826,17 +821,15 @@ public class EebRejectDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                EebRejectDialog dialog = new EebRejectDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            EebRejectDialog dialog = new EebRejectDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

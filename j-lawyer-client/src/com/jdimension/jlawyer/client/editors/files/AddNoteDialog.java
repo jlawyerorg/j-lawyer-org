@@ -663,16 +663,15 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -701,6 +700,12 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AddNoteDialog
+     *
+     * @param parent
+     * @param modal
+     * @param targetTable
+     * @param aFile
+     * @param tblReviewReasons
      */
     public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, JTable tblReviewReasons) {
         super(parent, modal);
@@ -784,12 +789,18 @@ public class AddNoteDialog extends javax.swing.JDialog {
             dm2.addElement(s);
         }
         this.cmbDocumentTag.setModel(dm2);
-        
+
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
+        
+        
         this.initializing = false;
 
+    }
+    
+    public void setFocusToBody() {
+        this.htmlEditorPanel1.requestFocus();
     }
 
     /**
@@ -853,7 +864,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Notiz:");
 
@@ -1071,7 +1082,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        if(this.htmlEditorPanel1.getText().length()>200) {
+        if (this.htmlEditorPanel1.getText().length() > 200) {
             int response = JOptionPane.showConfirmDialog(this, "Notiz verwerfen und Dialog schliessen?", "Notiz verwerfen", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return;
@@ -1098,17 +1109,17 @@ public class AddNoteDialog extends javax.swing.JDialog {
         EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
             this.targetTable.addDocument(db);
-            
+
             if (this.chkCaseTagging.isSelected()) {
                 Object caseTag = this.cmbCaseTag.getSelectedItem();
                 if (caseTag != null && !"".equals(caseTag)) {
                     afs.setTag(this.aFile.getId(), new ArchiveFileTagsBean(null, caseTag.toString()), true);
                 }
             }
-            
+
             if (this.chkDocumentTagging.isSelected()) {
                 Object docTag = this.cmbDocumentTag.getSelectedItem();
                 if (docTag != null && !"".equals(docTag)) {
@@ -1122,7 +1133,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        
+
         if (!(this.radioReviewTypeNone.isSelected())) {
             if (this.txtReviewDateField.getText().length() != 10) {
                 JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "Dokument erstellen", JOptionPane.INFORMATION_MESSAGE);
@@ -1148,26 +1159,28 @@ public class AddNoteDialog extends javax.swing.JDialog {
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
-            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            } catch (Exception ex) {
-                log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
+
+                model.addRow(row);
+                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
-
-            ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            Object[] row=ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-            
-            model.addRow(row);
-            ComponentUtils.autoSizeColumns(tblReviewReasons);
 
         }
 
@@ -1185,7 +1198,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
 

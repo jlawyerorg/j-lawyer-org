@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.net.URL;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -673,11 +672,11 @@ import org.apache.log4j.Logger;
  */
 public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     
-    private static Logger log=Logger.getLogger(WordProcessorConfigurationDialog.class.getName());
-    
     private String categoryKey=null;
     
-    /** Creates new form WordProcessorConfigurationDialog */
+    /** Creates new form WordProcessorConfigurationDialog
+     * @param parent
+     * @param modal */
     public WordProcessorConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -815,10 +814,8 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new WordProcessorConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new WordProcessorConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     

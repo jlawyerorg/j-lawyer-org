@@ -706,7 +706,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
-    private boolean userCanEdit=true;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -720,10 +719,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-            this.userCanEdit=true;
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
-            this.userCanEdit=false;
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
@@ -732,7 +729,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.chkIncludeArchive.setSelected(true);
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert", "", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -759,7 +756,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -918,7 +915,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         jScrollPane2.setViewportView(lblSummary);
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("check");
 
@@ -965,11 +962,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdDocumentTagFilterMousePressed(evt);
-            }
-        });
-        cmdDocumentTagFilter.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDocumentTagFilterActionPerformed(evt);
             }
         });
 
@@ -1267,10 +1259,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
         this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
-
-    private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
 
     private void chkIncludeArchiveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeArchiveActionPerformed
         if (this.initializing) {

@@ -664,14 +664,18 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.pojo.DataBucket;
+import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.io.ByteArrayOutputStream;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -680,43 +684,66 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class CaseUtils {
-    
-    private static final Logger log=Logger.getLogger(CaseUtils.class.getName());
+
+    private static final Logger log = Logger.getLogger(CaseUtils.class.getName());
+
+    public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, OpenDocumentAction action) throws Exception {
+        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null, action);
+    }
 
     public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent) throws Exception {
-        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null);
+        openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null, null);
     }
-    
-    public static void openDocumentInCustomLauncher(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, String customLauncherName) throws Exception {
+
+    public static void openDocumentInCustomLauncher(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, String customLauncherName, OpenDocumentAction action) throws Exception {
         if (value != null) {
-                ClientSettings settings = ClientSettings.getInstance();
-                byte[] content = null;
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                } catch (Exception ex) {
-                    log.error("Error loading document [" + value.getId() + " " + value.getName() + "]", ex);
-                    throw ex;
+            ClientSettings settings = ClientSettings.getInstance();
+            byte[] content = null;
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DataBucket contentBucket = locator.lookupArchiveFileServiceRemote().getDocumentContentBucket(value.getId());
+                if (action != null) {
+                    action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
                 }
-
-                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-                Launcher launcher = null;
-                if(customLauncherName==null) {
-                    launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-                } else {
-                    launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName);
-                }
-                
-                int response = JOptionPane.NO_OPTION;
-                if (launcher.isDocumentOpen(value.getId())) {
-                    response = JOptionPane.showConfirmDialog(parent, "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
-                    if (response == JOptionPane.NO_OPTION) {
-                        return;
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                bout.write(contentBucket.getPayload());
+                DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
+                while (contentBucket.hasNext()) {
+                    if (action != null) {
+                        if(action.isCancelled())
+                            return;
                     }
+                    contentBucket.resetPayload();
+                    contentBucket = bucketLoader.nextBucket(contentBucket);
+                    if (action != null) {
+                        action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
+                    }
+                    bout.write(contentBucket.getPayload());
                 }
-                launcher.launch(response == JOptionPane.YES_OPTION);
-
+                content = bout.toByteArray();
+            } catch (Exception ex) {
+                log.error("Error loading document [" + value.getId() + " " + value.getName() + "]", ex);
+                throw ex;
             }
+
+            CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
+            Launcher launcher = null;
+            if (customLauncherName == null) {
+                launcher = LauncherFactory.getLauncher(value.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
+            } else {
+                launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName, EditorsRegistry.getInstance().getMainWindow());
+            }
+
+            int response = JOptionPane.NO_OPTION;
+            if (launcher.isDocumentOpen(value.getId())) {
+                response = JOptionPane.showConfirmDialog(parent, "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+            launcher.launch(response == JOptionPane.YES_OPTION);
+
+        }
     }
-    
+
 }

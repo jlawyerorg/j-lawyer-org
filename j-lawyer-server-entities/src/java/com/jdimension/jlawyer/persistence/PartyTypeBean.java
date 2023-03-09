@@ -701,6 +701,9 @@ public class PartyTypeBean implements Serializable {
     @Column(name = "color")
     private int color;
     
+    @Column(name = "sequence_no")
+    protected int sequenceNumber;
+    
     
 
     public String getId() {
@@ -776,6 +779,20 @@ public class PartyTypeBean implements Serializable {
      */
     public void setColor(int color) {
         this.color = color;
+    }
+
+    /**
+     * @return the sequenceNumber
+     */
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * @param sequenceNumber the sequenceNumber to set
+     */
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
     
 }

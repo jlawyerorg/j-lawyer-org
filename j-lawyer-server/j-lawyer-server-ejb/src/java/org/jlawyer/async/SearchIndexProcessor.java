@@ -683,68 +683,68 @@ import org.jlawyer.search.SearchIndexRequest;
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/searchIndexProcessorQueue"),
-    @ActivationConfigProperty(propertyName="transactionTimeout", propertyValue="18000")  
+    @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "18000")
 })
 public class SearchIndexProcessor implements MessageListener {
-    
-    private static final Logger log=Logger.getLogger(SearchIndexProcessor.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(SearchIndexProcessor.class.getName());
+
     @EJB
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
-    
+
     public SearchIndexProcessor() {
     }
-    
+
     @Override
     public void onMessage(Message message) {
-        
+
         try {
-        
-        if(message instanceof ObjectMessage) {
-            ObjectMessage om=(ObjectMessage)message;
-            Object o=om.getObject();
-            if(o instanceof SearchIndexRequest) {
-                SearchIndexRequest req=(SearchIndexRequest)o;
-                SearchAPI api=SearchAPI.getInstance();
-                if(req.getAction()==req.ACTION_ADD) {
-                    api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
-                } else if(req.getAction()==req.ACTION_DELETE) {
-                    api.removeFromIndex(req.getId());
-                } else if(req.getAction()==req.ACTION_UPDATE) {
-                    api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
-                } else if(req.getAction()==req.ACTION_DELETEALL) {
-                    api.deleteAll();
-                } else if(req.getAction()==req.ACTION_REINDEXALL) {
-                    api.deleteAll();
-                    
-                    PreviewGenerator pg=new PreviewGenerator(this.archiveFileDocumentsFacade);
-                    List<ArchiveFileDocumentsBean> allDocs=this.archiveFileDocumentsFacade.findAll();
-                    for(ArchiveFileDocumentsBean db: allDocs) {
-                        if(db.isDeleted())
-                            continue;
-                        try {
-                            this.doAddToIndex(db, pg, api);
-                        } catch (Throwable th) {
-                            log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
+
+            if (message instanceof ObjectMessage) {
+                ObjectMessage om = (ObjectMessage) message;
+                Object o = om.getObject();
+                if (o instanceof SearchIndexRequest) {
+                    SearchIndexRequest req = (SearchIndexRequest) o;
+                    SearchAPI api = SearchAPI.getInstance();
+                    if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
+                        api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
+                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETE) {
+                        api.removeFromIndex(req.getId());
+                    } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE) {
+                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
+                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETEALL) {
+                        api.deleteAll();
+                    } else if (req.getAction() == SearchIndexRequest.ACTION_REINDEXALL) {
+                        api.deleteAll();
+
+                        PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
+                        List<ArchiveFileDocumentsBean> allDocs = this.archiveFileDocumentsFacade.findAll();
+                        for (ArchiveFileDocumentsBean db : allDocs) {
+                            if (db.isDeleted()) {
+                                continue;
+                            }
+                            try {
+                                this.doAddToIndex(db, pg, api);
+                            } catch (Throwable th) {
+                                log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
+                            }
                         }
                     }
                 }
             }
-        }
-        
+
         } catch (Throwable t) {
             log.error("Could not process search index request: " + message.toString(), t);
-            
+
         }
-        
+
     }
-    
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     private void doAddToIndex(ArchiveFileDocumentsBean db, PreviewGenerator pg, SearchAPI api) throws Exception {
         log.info("indexing document " + db.getName());
-                        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId()), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
-                    
+        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId()), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
+
     }
-    
-    
+
 }

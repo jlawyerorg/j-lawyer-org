@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.templates;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
@@ -679,7 +680,6 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
@@ -696,11 +696,12 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TooManyListenersException;
 import javax.swing.DefaultListModel;
@@ -710,7 +711,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -776,16 +776,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         this.lstTemplates.setModel(model);
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-//            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
-//
-//            for (Object o : fileNames) {
-//                model.addElement(o);
-//            }
-
             GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
@@ -793,15 +785,10 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
             DefaultTreeModel tm = new DefaultTreeModel(rootNode);
             this.treeFolders.setModel(tm);
-            //JTreeUtils.expandAll(this.treeFolders);
             JTreeUtils.expandToLevel(treeFolders, 1);
 
             this.treeFolders.setSelectionRow(0);
 
-//            } else {
-//                this.lstTemplates.setToolTipText("Zugriff nur für Administratoren möglich");
-//                this.lstTemplates.setEnabled(false);
-//            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -841,8 +828,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         ArrayList<GenericNode> children = current.getChildren();
 
-        Hashtable<String, GenericNode> childHt = new Hashtable<String, GenericNode>();
-        ArrayList<String> htKeys = new ArrayList<String>();
+        HashMap<String, GenericNode> childHt = new HashMap<>();
+        ArrayList<String> htKeys = new ArrayList<>();
         for (GenericNode child : children) {
 
             childHt.put(child.getName(), child);
@@ -860,12 +847,13 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -969,7 +957,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Vorlagen");
 
@@ -1110,7 +1098,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             this.mnuEditTemplateActionPerformed(null);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
             evt.consume();
-            //this.updateDocumentPreview();
         }
     }//GEN-LAST:event_lstTemplatesMouseClicked
 
@@ -1132,7 +1119,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         GenericNode folder = (GenericNode) selNode.getUserObject();
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage.odt", folder);
@@ -1161,7 +1147,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         GenericNode folder = (GenericNode) selNode.getUserObject();
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage-Tabelle.ods", folder);
@@ -1179,7 +1164,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
                 File[] fileArray = chooser.getSelectedFiles();
-                ArrayList<File> files = new ArrayList<File>();
+                ArrayList<File> files = new ArrayList<>();
                 for (File f : fileArray) {
                         files.add(f);
                     
@@ -1244,7 +1229,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             return;
         }
         newFolderName = newNameObject.toString();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean created = locator.lookupSystemManagementRemote().addTemplateFolder(gn, newFolderName);
@@ -1282,7 +1266,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             return;
         }
         newFolderName = newNameObject.toString();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean renamed = locator.lookupSystemManagementRemote().renameTemplateFolder(gn.getParent(), oldFolderName, newFolderName);
@@ -1311,7 +1294,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     }//GEN-LAST:event_lstTemplatesKeyReleased
 
     private void lstTemplatesMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMousePressed
-        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
+        if(evt.getModifiers()==MouseEvent.BUTTON2_MASK || evt.getModifiers()==MouseEvent.BUTTON2_DOWN_MASK || evt.getModifiers()==MouseEvent.BUTTON3_MASK || evt.getModifiers()==MouseEvent.BUTTON3_DOWN_MASK) {
             if(this.lstTemplates.getSelectedValues().length>0)
                 this.popTemplates.show(this.lstTemplates, evt.getX(), evt.getY());
         }
@@ -1331,12 +1314,10 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         GenericNode folder = (GenericNode) selNode.getUserObject();
 
         ClientSettings settings = ClientSettings.getInstance();
-        String tmpUrl = null;
         byte[] content = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             content = locator.lookupSystemManagementRemote().getTemplateData(folder, this.lstTemplates.getSelectedValue().toString());
-            //tmpUrl=FileUtils.createTempFile(this.lstTemplates.getSelectedValue().toString(), content);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
@@ -1344,7 +1325,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         try {
             TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
-            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
+            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store, EditorsRegistry.getInstance().getMainWindow());
             launcher.launch(false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1368,8 +1349,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             return;
 
         ClientSettings settings = ClientSettings.getInstance();
-        String tmpUrl = null;
-        byte[] content = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupSystemManagementRemote().renameTemplate(folder, this.lstTemplates.getSelectedValue().toString(), newName);
@@ -1414,7 +1393,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
             ClientSettings settings = ClientSettings.getInstance();
-            //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 for (Object delTempl : this.lstTemplates.getSelectedValuesList()) {
@@ -1492,7 +1470,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        int scrollToRow = -1;
         try {
             // Ok, get the dropped object and try to figure out what it is
             Transferable tr = dtde.getTransferable();
@@ -1571,14 +1548,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         @Override
         public void dragEnter(DropTargetDragEvent dtde) {
             processDrag(dtde);
-            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
             repaint();
         }
 
         @Override
         public void dragOver(DropTargetDragEvent dtde) {
             processDrag(dtde);
-            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
             repaint();
         }
 
@@ -1588,14 +1563,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         @Override
         public void dragExit(DropTargetEvent dte) {
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             repaint();
         }
 
         @Override
         public void drop(DropTargetDropEvent dtde) {
 
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             Transferable transferable = dtde.getTransferable();
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());
@@ -1606,7 +1579,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
                         ThreadUtils.setWaitCursor(p);
 
-                        ArrayList<File> files = new ArrayList<File>();
+                        ArrayList<File> files = new ArrayList<>();
                         for (Object fo : transferData) {
                             if (fo instanceof File) {
                                     files.add((File) fo);
@@ -1675,21 +1648,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             int divLoc=this.jSplitPane2.getDividerLocation();
             this.pnlPreview.setVisible(false);
             this.pnlPreview.removeAll();
-//            ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-//            JProgressBar loading = new JProgressBar();
-//            loading.setIndeterminate(true);
-//
-//            this.pnlPreview.add(loading);
-//            this.pnlPreview.setVisible(true);
-//            try {
-//                // there were some unclear occasions where the document preview panel would still show the preview of the last document in the case that was loaded before this one
-//                Thread.sleep(100);
-//            } catch (Throwable t) {
-//            }
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, new FixedStringPreviewProvider(newText), null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
-//            this.pnlPreview.remove(loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
             this.pnlPreview.add(preview, BorderLayout.CENTER);
             this.pnlPreview.setVisible(true);

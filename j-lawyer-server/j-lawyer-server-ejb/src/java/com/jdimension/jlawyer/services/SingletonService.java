@@ -684,7 +684,6 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import javax.annotation.security.PermitAll;
@@ -700,10 +699,8 @@ import org.apache.log4j.Logger;
 @Singleton
 public class SingletonService implements SingletonServiceRemote, SingletonServiceLocal {
     
-    private static Logger log = Logger.getLogger(SingletonService.class.getName());
+    private static final Logger log = Logger.getLogger(SingletonService.class.getName());
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
     private Hashtable<File, Date> observedFileNames = new Hashtable<File, Date>();
     private FaxQueueBean failedFax = null;
@@ -734,8 +731,6 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
             SingletonServiceLocal singleton = null;
             try {
                 InitialContext ic = new InitialContext();
-                //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
-                // ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal	
                 ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
                 singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
                 mode = settings.find("jlawyer.server.observe.directory");
@@ -748,7 +743,6 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
                 return;
             }
 
-            //String scanDir = System.getProperty("jlawyer.server.observe.directory");
             String scanDir = mode.getSettingValue();
             if (scanDir == null || "".equals(scanDir)) {
                 log.info("directory observation is switched off");
@@ -766,7 +760,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
                 return;
             }
 
-            Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
+            Hashtable<File, Date> fileObjects = new Hashtable<>();
             File files[] = scanDirectory.listFiles();
             if (files != null) {
                 for (File f : files) {

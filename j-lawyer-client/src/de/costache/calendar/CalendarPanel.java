@@ -678,6 +678,7 @@ import de.costache.calendar.events.ModelChangedListener;
 import de.costache.calendar.events.SelectionChangedEvent;
 import de.costache.calendar.model.CalendarEvent;
 import de.costache.calendar.model.EventType;
+import de.costache.calendar.ui.strategy.DisplayStrategy;
 import de.costache.calendar.util.CalendarUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -686,6 +687,7 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -698,8 +700,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import org.apache.log4j.Logger;
 
 /**
@@ -728,7 +728,9 @@ public class CalendarPanel extends javax.swing.JPanel {
     private transient Image backgroundImage = null;
     private String parentClass = null;
     
-    private Collection<ArchiveFileReviewsBean> cachedEvents=null;
+    protected int eventAlpha=255;
+
+    private Collection<ArchiveFileReviewsBean> cachedEvents = null;
 
     /**
      * Creates new form CalendarPanel
@@ -870,8 +872,8 @@ public class CalendarPanel extends javax.swing.JPanel {
 //    }
     public void setData(Collection<ArchiveFileReviewsBean> dtos) {
 
-        this.cachedEvents=dtos;
-        
+        this.cachedEvents = dtos;
+
         for (CalendarEvent ce : this.jCalendar.getCalendarEvents()) {
             this.jCalendar.removeCalendarEvent(ce);
         }
@@ -881,6 +883,14 @@ public class CalendarPanel extends javax.swing.JPanel {
         }
 
     }
+    
+    public void setSelectedDay(Date selDate) {
+        this.jCalendar.setSelectedDay(selDate);
+    }
+    
+    public void setSelectedDayInDayView(Date selDate) {
+        this.jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, selDate);
+    }
 
     public void addCalendarEvent(ArchiveFileReviewsBean rev) {
 
@@ -888,17 +898,19 @@ public class CalendarPanel extends javax.swing.JPanel {
             return;
         }
 
-        if(!this.cachedEvents.contains(rev))
+        if (!this.cachedEvents.contains(rev)) {
             this.cachedEvents.add(rev);
-        
-        CalendarEvent calendarEvent;
+        }
+
         if (rev.getCalendarSetup() != null) {
             if (!this.allCalTypes.containsKey(rev.getCalendarSetup().getId())) {
                 EventType t = new EventType();
-                Color backColor = new Color(rev.getCalendarSetup().getBackground());
+                Color opaque=new Color(rev.getCalendarSetup().getBackground());
+                Color backColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), this.eventAlpha);
                 t.setBackgroundColor(backColor);
                 t.setForegroundColor(Color.WHITE);
                 t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                t.setUniqueKey(rev.getEventTypeName());
                 this.allCalTypes.put(rev.getCalendarSetup().getId(), t);
                 this.selectedCalTypes.add(rev.getCalendarSetup().getId());
 
@@ -921,10 +933,10 @@ public class CalendarPanel extends javax.swing.JPanel {
                         selectedCalTypes.add(rev.getCalendarSetup().getId());
                     }
 
-                    Collection<ArchiveFileReviewsBean> cacheClone=new ArrayList<>();
+                    Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
                     cacheClone.addAll(cachedEvents);
                     setData(cacheClone);
-                    
+
                 });
                 this.toolBar.add(tog);
 
@@ -942,34 +954,114 @@ public class CalendarPanel extends javax.swing.JPanel {
             final int year = rev.getBeginDate().getYear() + 1900;
             final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
 
+            int eday = 0;
+            int emonth = 0;
+            int eyear = 0;
             Date end = null;
             if (rev.getEndDate() != null) {
                 int ehour = rev.getEndDate().getHours();
-                final int emin = rev.getEndDate().getMinutes();
-                final int eday = rev.getEndDate().getDate();
-                final int emonth = rev.getEndDate().getMonth() + 1;
-                final int eyear = rev.getEndDate().getYear() + 1900;
+                int emin = rev.getEndDate().getMinutes();
+                eday = rev.getEndDate().getDate();
+                emonth = rev.getEndDate().getMonth() + 1;
+                eyear = rev.getEndDate().getYear() + 1900;
                 end = CalendarUtil.createDate(eyear, emonth, eday, ehour, emin, 0, 0);
             } else {
+                eday = day;
+                emonth = month;
+                eyear = year;
                 end = CalendarUtil.createDate(year, month, day, hour + 1, min, 0, 0);
             }
-            calendarEvent = new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
-            calendarEvent.setDescription(rev.getDescription());
-            calendarEvent.setLocation(rev.getLocation());
 
-            if (rev.getCalendarSetup() != null) {
-                calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
+            // for events spanning multiple days - split into separate events per day
+            if (day != eday || month != emonth || year != eyear) {
+                Date current = start;
+                Calendar splitCalendar = Calendar.getInstance();
+                splitCalendar.setTime(current);
+
+                Calendar endCalendar = Calendar.getInstance();
+                endCalendar.setTime(end);
+                
+                if(endCalendar.getTimeInMillis()<=splitCalendar.getTimeInMillis())
+                    return;
+
+                // partial day at the beginning
+                Calendar partialBegin = Calendar.getInstance();
+                partialBegin.setTime(start);
+
+                Calendar partialEnd = Calendar.getInstance();
+                partialEnd.setTime(start);
+                partialEnd.set(Calendar.HOUR_OF_DAY, 23);
+                partialEnd.set(Calendar.MINUTE, 59);
+                partialEnd.set(Calendar.SECOND, 59);
+
+                this.addToRenderedCalendar(rev, partialBegin.getTime(), partialEnd.getTime(), false);
+
+                // any full days in between
+                splitCalendar.add(Calendar.DATE, 1);
+                splitCalendar.set(Calendar.HOUR_OF_DAY, 0);
+                splitCalendar.set(Calendar.MINUTE, 0);
+                splitCalendar.set(Calendar.SECOND, 0);
+                while ((end.getTime() - splitCalendar.getTimeInMillis()) > 24l * 60l * 60l * 1000l) {
+                    Date newEvent = splitCalendar.getTime();
+                    Calendar splitEventStart = Calendar.getInstance();
+                    splitEventStart.setTime(newEvent);
+                    splitEventStart.set(Calendar.HOUR_OF_DAY, 0);
+                    splitEventStart.set(Calendar.MINUTE, 0);
+                    splitEventStart.set(Calendar.SECOND, 0);
+
+                    Calendar splitEventEnd = Calendar.getInstance();
+                    splitEventEnd.setTime(newEvent);
+                    splitEventEnd.set(Calendar.HOUR_OF_DAY, 23);
+                    splitEventEnd.set(Calendar.MINUTE, 59);
+                    splitEventEnd.set(Calendar.SECOND, 59);
+
+                    this.addToRenderedCalendar(rev, splitEventStart.getTime(), splitEventEnd.getTime(), false);
+
+                    splitCalendar.add(Calendar.DATE, 1);
+                }
+
+                // partial at the end
+                partialBegin = Calendar.getInstance();
+                partialBegin.setTime(end);
+                partialBegin.set(Calendar.HOUR_OF_DAY, 0);
+                partialBegin.set(Calendar.MINUTE, 0);
+                partialBegin.set(Calendar.SECOND, 0);
+
+                partialEnd = Calendar.getInstance();
+                partialEnd.setTime(end);
+                this.addToRenderedCalendar(rev, partialBegin.getTime(), partialEnd.getTime(), false);
+
+            } else {
+                // within a day
+                this.addToRenderedCalendar(rev, start, end, !rev.hasEndDateAndTime());
             }
 
-            if (rev.getArchiveFileKey() != null) {
-                calendarEvent.setCaseDto(rev.getArchiveFileKey());
-            }
-
-            calendarEvent.setAssignee(rev.getAssignee());
-
-            calendarEvent.setAllDay(!rev.hasEndDateAndTime());
-            jCalendar.addCalendarEvent(calendarEvent);
         }
+    }
+
+    private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
+
+        CalendarEvent calendarEvent = null;
+        if(rev.getArchiveFileKey()!=null) {
+            calendarEvent=new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+        } else {
+            calendarEvent=new CalendarEvent(rev.getSummary(), start, end);
+        }
+        calendarEvent.setDescription(rev.getDescription());
+        calendarEvent.setLocation(rev.getLocation());
+
+        if (rev.getCalendarSetup() != null) {
+            calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
+        }
+
+        if (rev.getArchiveFileKey() != null) {
+            calendarEvent.setCaseDto(rev.getArchiveFileKey());
+        }
+
+        calendarEvent.setAssignee(rev.getAssignee());
+
+        calendarEvent.setAllDay(allDay);
+        jCalendar.addCalendarEvent(calendarEvent);
     }
 
     private void bindListeners() {
@@ -1040,7 +1132,6 @@ public class CalendarPanel extends javax.swing.JPanel {
             } else {
                 //System.out.println("Selection cleared ");
             }
-            //System.out.println("\n");
         });
 
         //jCalendar.a
@@ -1050,8 +1141,6 @@ public class CalendarPanel extends javax.swing.JPanel {
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
-//            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
-//                    + event.getIntervalEnd() + "\n");
 
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
@@ -1063,10 +1152,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
 
             NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), true, sel);
-            dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-            if ((event.getIntervalEnd().getTime() - event.getIntervalStart().getTime()) > (30 * 60 * 1000l)) {
-                dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
-            }
+            dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());
             FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
@@ -1074,25 +1160,25 @@ public class CalendarPanel extends javax.swing.JPanel {
 
         });
 
-        popup.addPopupMenuListener(new PopupMenuListener() {
-
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
-//				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent arg0) {
-                // TODO Auto-generated method stub
-
-            }
-        });
+//        popup.addPopupMenuListener(new PopupMenuListener() {
+//
+//            @Override
+//            public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
+////				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
+//            }
+//
+//            @Override
+//            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
+//
+//
+//            }
+//
+//            @Override
+//            public void popupMenuCanceled(PopupMenuEvent arg0) {
+//
+//
+//            }
+//        });
     }
 
     /**
@@ -1115,6 +1201,20 @@ public class CalendarPanel extends javax.swing.JPanel {
             .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * @return the eventAlpha
+     */
+    public int getEventAlpha() {
+        return eventAlpha;
+    }
+
+    /**
+     * @param eventAlpha the eventAlpha to set
+     */
+    public void setEventAlpha(int eventAlpha) {
+        this.eventAlpha = eventAlpha;
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

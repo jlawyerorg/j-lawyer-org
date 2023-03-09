@@ -667,6 +667,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
 import javax.mail.Folder;
+import javax.mail.MessagingException;
 import org.apache.log4j.Logger;
 
 /**
@@ -674,56 +675,87 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class FolderContainer {
+
+    public static final String INBOX = "INBOX";
+    public static final String SENT = "Sent";
+    public static final String TRASH = "Trash";
+    public static final String DRAFTS = "Drafts";
+
+    private long cachedToStringUpdated = -1;
+    private String cachedToString = null;
     
-    public static final String INBOX="INBOX";
-    public static final String SENT="Sent";
-    public static final String TRASH="Trash";
-    
+    private long cachedUnreadUpdated = -1;
+    private int cachedUnread = -1;
+
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
-    private static Hashtable<String,String> folderNameMapping=new Hashtable<String,String>();
-    
+    private static Hashtable<String, String> folderNameMapping = new Hashtable<>();
+
     static {
         folderNameMapping.put(INBOX, "Posteingang");
         folderNameMapping.put(SENT, "Gesendet");
         folderNameMapping.put(TRASH, "Papierkorb");
+        folderNameMapping.put(DRAFTS, "Entwürfe");
     }
-    
+
     private Folder folder;
-    
+
     public FolderContainer(Folder f) {
-        this.folder=f;
+        this.folder = f;
     }
     
+    public void resetCaches() {
+        this.cachedToStringUpdated=-1;
+        this.cachedUnreadUpdated=-1;
+    }
+    
+    public int getUnreadMessageCount() {
+        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
+            if(this.folder!=null) {
+                try {
+                    this.cachedUnread=this.folder.getUnreadMessageCount();
+                } catch (MessagingException ex) {
+                    log.error("Unable to determine number of unread messages", ex);
+                }
+                this.cachedUnreadUpdated=System.currentTimeMillis();
+            }
+        }
+        return cachedUnread;
+    }
+
+    /*
+    * Called e.g. by the email tree cell renderer, therefore it is performance critical
+    */
     @Override
     public String toString() {
-        try {
-//            if(!this.folder.isOpen())
-//                this.folder.open(Folder.READ_WRITE);
-            String name=this.folder.getName();
-            
-            Set mapKey=folderNameMapping.keySet();
-            Iterator mIt=mapKey.iterator();
-            while(mIt.hasNext()) {
-                String k=mIt.next().toString();
-                if(k.equalsIgnoreCase(name)) {
-                    name=folderNameMapping.get(k);
-                    break;
+        // refresh after 3mins plus x (because not all folders should refresh at the same time)
+        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
+            try {
+                String name = this.folder.getName();
+
+                Set mapKey = folderNameMapping.keySet();
+                Iterator mIt = mapKey.iterator();
+                while (mIt.hasNext()) {
+                    String k = mIt.next().toString();
+                    if (k.equalsIgnoreCase(name)) {
+                        name = folderNameMapping.get(k);
+                        break;
+                    }
                 }
+
+                int msgCount = this.folder.getMessageCount();
+                cachedToStringUpdated = System.currentTimeMillis();
+                if (msgCount < 0) {
+                    cachedToString = name;
+                } else {
+                    cachedToString = name + " (" + msgCount + ")";
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+                cachedToString = this.folder.getName();
             }
-            
-//            if(folderNameMapping.containsKey(name.toLowerCase()))
-//                name=folderNameMapping.get(name.toLowerCase());
-            
-            int msgCount=this.folder.getMessageCount();
-            if(msgCount<0)
-                return name;
-            else
-                return name + " (" + msgCount + ")";
-            
-        } catch (Exception ex) {
-            log.error(ex);
-            return this.folder.getName();
         }
+        return cachedToString;
     }
 
     /**
@@ -739,5 +771,5 @@ public class FolderContainer {
     public void setFolder(Folder folder) {
         this.folder = folder;
     }
-    
+
 }

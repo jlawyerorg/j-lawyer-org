@@ -131,8 +131,10 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="14" style="1"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="jLabel6" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -144,6 +146,11 @@
             </Component>
             <Component class="javax.swing.JCheckBox" name="chkOnlyMyReviews">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="chkOnlyMyReviews" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
@@ -160,11 +167,7 @@
                   <Image iconType="3" name="/icons16/material/baseline_refresh_white_36dp.png"/>
                 </Property>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                  <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                    <LineBorder roundedCorners="true">
-                      <Color PropertyName="color" blue="ff" green="ff" red="ff" type="rgb"/>
-                    </LineBorder>
-                  </Border>
+                  <Border info="null"/>
                 </Property>
                 <Property name="contentAreaFilled" type="boolean" value="false"/>
                 <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -179,8 +182,10 @@
               <Properties>
                 <Property name="tabLayoutPolicy" type="int" value="1"/>
                 <Property name="tabPlacement" type="int" value="3"/>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Dialog" size="10" style="0"/>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="tabPaneDue" property="font" relativeSize="true" size="-2"/>
+                  </FontInfo>
                 </Property>
               </Properties>
 
@@ -283,7 +288,7 @@
                               <Component id="cmdRefreshLastChanged" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jScrollPane3" pref="157" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="259" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -292,8 +297,10 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="jLabel5">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Dialog" size="14" style="1"/>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="true" component="jLabel5" property="font" relativeSize="true" size="2"/>
+                      </FontInfo>
                     </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -352,6 +359,11 @@
                 </Container>
                 <Component class="javax.swing.JCheckBox" name="chkOnlyMyCases">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="true" component="chkOnlyMyCases" property="font" relativeSize="true" size="0"/>
+                      </FontInfo>
+                    </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="ff" green="ff" red="ff" type="rgb"/>
                     </Property>
@@ -367,11 +379,7 @@
                       <Image iconType="3" name="/icons16/material/baseline_refresh_white_36dp.png"/>
                     </Property>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                      <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                        <LineBorder roundedCorners="true">
-                          <Color PropertyName="color" blue="ff" green="ff" red="ff" type="rgb"/>
-                        </LineBorder>
-                      </Border>
+                      <Border info="null"/>
                     </Property>
                     <Property name="contentAreaFilled" type="boolean" value="false"/>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -408,7 +416,7 @@
                                   <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="248" max="32767" attributes="0"/>
+                                  <EmptySpace pref="230" max="32767" attributes="0"/>
                                   <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="tabPaneTagged" max="32767" attributes="0"/>
@@ -440,8 +448,10 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="jLabel9">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Dialog" size="14" style="1"/>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="true" component="jLabel9" property="font" relativeSize="true" size="2"/>
+                      </FontInfo>
                     </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -453,6 +463,11 @@
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="chkOnlyMyTagged">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="true" component="chkOnlyMyTagged" property="font" relativeSize="true" size="0"/>
+                      </FontInfo>
+                    </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="ff" green="ff" red="ff" type="rgb"/>
                     </Property>
@@ -468,11 +483,7 @@
                       <Image iconType="3" name="/icons16/material/baseline_refresh_white_36dp.png"/>
                     </Property>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                      <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                        <LineBorder roundedCorners="true">
-                          <Color PropertyName="color" blue="ff" green="ff" red="ff" type="rgb"/>
-                        </LineBorder>
-                      </Border>
+                      <Border info="null"/>
                     </Property>
                     <Property name="contentAreaFilled" type="boolean" value="false"/>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -490,11 +501,7 @@
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Akten-Etiketten"/>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                      <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                        <LineBorder roundedCorners="true">
-                          <Color PropertyName="color" blue="ff" green="ff" red="ff" type="rgb"/>
-                        </LineBorder>
-                      </Border>
+                      <Border info="null"/>
                     </Property>
                     <Property name="contentAreaFilled" type="boolean" value="false"/>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -513,11 +520,7 @@
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Dokument-Etiketten"/>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                      <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                        <LineBorder roundedCorners="true">
-                          <Color PropertyName="color" blue="ff" green="ff" red="ff" type="rgb"/>
-                        </LineBorder>
-                      </Border>
+                      <Border info="null"/>
                     </Property>
                     <Property name="contentAreaFilled" type="boolean" value="false"/>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
@@ -533,8 +536,10 @@
                   <Properties>
                     <Property name="tabLayoutPolicy" type="int" value="1"/>
                     <Property name="tabPlacement" type="int" value="3"/>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Dialog" size="10" style="0"/>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="false" component="tabPaneTagged" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
                     </Property>
                   </Properties>
 
@@ -642,8 +647,10 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="lblUnreadMail">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblUnreadMail" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -658,8 +665,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblUnreadBea">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblUnreadBea" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -675,8 +684,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblScans">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblScans" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -691,8 +702,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblUnreadDrebis">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblUnreadDrebis" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -707,8 +720,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblUpdateStatus">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="12" style="0"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="lblUpdateStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -719,8 +734,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblNewsStatus">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="12" style="0"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="lblNewsStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
@@ -731,8 +748,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblFaxStatus">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblFaxStatus" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="0" green="0" red="ff" type="rgb"/>
@@ -783,6 +802,11 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="lblArchiveFileCount">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblArchiveFileCount" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
@@ -796,6 +820,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblArchiveFileArchivedCount">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblArchiveFileArchivedCount" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
@@ -809,6 +838,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblAddressCount">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblAddressCount" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
@@ -822,6 +856,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblDocumentCount">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblDocumentCount" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
@@ -835,6 +874,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblVoipBalance">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblVoipBalance" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
@@ -893,8 +937,10 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblUserName">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="lblUserName" property="font" relativeSize="true" size="2"/>
+              </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -913,8 +959,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="lblDay">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblDay" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>

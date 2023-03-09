@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.client.cli.CommandHandler;
 import com.jdimension.jlawyer.client.cli.CommandHandlerFactory;
+import java.awt.event.KeyEvent;
 
 /**
  *
@@ -796,7 +797,7 @@ public class AdminConsoleFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtCommandKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCommandKeyPressed
-        if(evt.getKeyCode()==evt.VK_ENTER) {
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
             this.txtResults.setText("");
             
             CommandHandler ch=CommandHandlerFactory.getHandler(this.txtCommand.getText(), this.rdInfo.isSelected());
@@ -849,11 +850,8 @@ public class AdminConsoleFrame extends javax.swing.JFrame {
         /*
          * Create and display the form
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new AdminConsoleFrame().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new AdminConsoleFrame().setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -692,30 +692,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
     @Override
     public void nextEvent() throws Exception {
         
-//        if(this.cmbInsurances.getSelectedItem()==null) {
-//            throw new Exception("Es muss ein von Drebis unterstütztes Versicherungsunternehmen gewählt werden");
-//        }
-        
-        // default "" insurance (empty insurance) has been selected
-//        if(this.cmbInsurances.getSelectedItem() instanceof String)
-//            throw new Exception("Es muss ein von Drebis unterstütztes Versicherungsunternehmen gewählt werden");
-        
-//        if(this.cmbInsurance.getSelectedItem()==null) {
-//            throw new Exception("Es muss ein Versicherungsschein angegeben werden");
-//        }
-        
-//        if("".equals(this.cmbInsurance.getSelectedItem().toString().trim())) {
-//            throw new Exception("Es muss ein Versicherungsschein angegeben werden");
-//        }
-        
-        
-//        String regex = ((InsuranceInfo) this.cmbInsurances.getSelectedItem()).getPolicyNumberRegEx();
-//        if (regex != null && !("".equals(regex))) {
-//            if (!this.cmbInsurance.getSelectedItem().toString().matches(regex)) {
-//                throw new Exception("Versicherungsschein inkorrekt - bitte beachten Sie die Hinweise hinter dem Eingabefeld" + System.getProperty("line.separator") + ((InsuranceInfo) this.cmbInsurances.getSelectedItem()).getPolicyNumberRegEx());
-//            }
-//        }
-        
         this.storeData();
         
     }
@@ -741,23 +717,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
     }
     
     private void storeData() {
-//        ArrayList<ArchiveFileDocumentsBean> drebDocs=new ArrayList<ArchiveFileDocumentsBean>();
-//        
-//        DefaultTableModel dm=(DefaultTableModel)this.tblDocuments.getModel();
-//        for(int i=0;i<dm.getRowCount();i++) {
-//            Boolean enabled = (Boolean)dm.getValueAt(i, 0);
-//            if(enabled.booleanValue()) {
-//                // user chose to submit this document
-//                
-//                // columns: 0 submit, 1 datum, 2 name, 3 dictatesign
-//                ArchiveFileDocumentsBean d=(ArchiveFileDocumentsBean)dm.getValueAt(i, 1);
-//                
-//                drebDocs.add(d);
-//                
-//            }
-//        }
-//        
-//        this.data.put("documents.drebisdocumentbeans", drebDocs);
         
         this.data.put("claimdetails.insurance", this.cmbInsurances.getSelectedItem());
         if(this.cmbInsurance.getSelectedItem()!=null)
@@ -772,27 +731,21 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
         this.data.put("claimdetails.claimtype", this.cmbClaimType.getSelectedItem().toString());
         this.data.put("claimdetails.registered", this.chkRegistered.isSelected());
         
-        
-        
-        
-        return;
     }
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         this.storeData();
-        return;
     }
 
     @Override
     public void cancelledEvent() {
-        return;
+        // not implemented
     }
 
     @Override
     public void finishedEvent() {
-        return;
+        // not implemented
     }
 
     /**
@@ -1044,8 +997,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
 
     private void cmdClaimDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClaimDateActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtClaimDate, EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setLocation(this.getX() + this.cmdClaimDate.getX(), this.getY() + this.cmdClaimDate.getY());
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdClaimDateActionPerformed
 
@@ -1079,24 +1030,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
 
     @Override
     public void display() {
-//        InsuranceInfo ins = (InsuranceInfo) this.data.get("clients.insurance");
-//        if (ins != null) {
-//            String hint = "<html><p>W&auml;hlen Sie die zu &uuml;bermittelnden Dokumente aus (optionaler Schritt). Sie k&ouml;nnen den Dateinamen vor der &Uuml;bertragung direkt in der Tabelle anpassen. Die <b>{INSURANCE}</b> akzeptiert Dateien bis zu einer jeweiligen Gr&ouml;&szlig;e von <b>{MAXFILESIZE}</b>.";
-//            hint = hint.replaceAll("\\{INSURANCE\\}", ins.toString());
-//
-//            long fs = ins.getMaxFileSize();
-//            if (fs < 0 || fs > (20 * 1024 * 1024)) {
-//                fs = 20 * 1024 * 1024;
-//            }
-//
-//            DecimalFormat df = new DecimalFormat("##.00");
-//            double fsMB = (double) ((double) fs / 1024d / 1024d);
-//
-//            hint = hint.replaceAll("\\{MAXFILESIZE\\}", df.format(fsMB) + "MB");
-//            this.jLabel1.setText(hint);
-//        }
-//
-//
         Object test = data.get("documents.drebisdocumentbeans");
         if (test != null) {
             // user navigated back - do not reset but use what is there
@@ -1134,11 +1067,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
             for (int i = 0; i < others.size(); i++) {
                 AddressBean oth = others.get(i);
 
-//                String t = oth.getInsuranceNumber();
-//                if (t != null && !("".equalsIgnoreCase(t))) {
-//                    this.cmbInsurance.addItem(t);
-//                }
-
                 String t = oth.getMotorInsuranceNumber();
                 if (t != null && !("".equalsIgnoreCase(t))) {
                     this.cmbInsurance.addItem(t);
@@ -1166,8 +1094,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
 
         }
 
-
-        return;
     }
 
     @Override

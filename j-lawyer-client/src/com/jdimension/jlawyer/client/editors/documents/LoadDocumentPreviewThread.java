@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
+import com.jdimension.jlawyer.client.editors.documents.viewer.CaseDocumentPreviewProvider;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -724,8 +725,6 @@ public class LoadDocumentPreviewThread implements Runnable {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            String previewText = afs.getDocumentPreview(this.docDto.getId());
-            
             long maxPreviewBytes=2l*1024l*1024l;
             String maxPreviewBytesString=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
             try {
@@ -742,7 +741,7 @@ public class LoadDocumentPreviewThread implements Runnable {
                 preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
             } else {
                 byte[] data = afs.getDocumentContent(this.docDto.getId());
-                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             }
             
             

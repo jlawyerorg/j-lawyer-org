@@ -698,6 +698,7 @@ public class EmailUtils {
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
 
     private static ArrayList<String> trashAliases;
+    private static ArrayList<String> draftAliases;
     private static ArrayList<String> sentAliases;
     private static ArrayList<String> inboxAliases;
     private static ArrayList<String> defaultAliases;
@@ -707,14 +708,21 @@ public class EmailUtils {
         trashAliases.add("Papierkorb");
         trashAliases.add("Gelöscht");
         trashAliases.add("Trash");
+        trashAliases.add("Gelöschte Elemente");
 
         sentAliases = new ArrayList<>();
         sentAliases.add("Gesendet");
         sentAliases.add("Sent");
         sentAliases.add("Sent Items");
+        sentAliases.add("Gesendete Elemente");
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
+        
+        draftAliases = new ArrayList<>();
+        draftAliases.add("Entwürfe");
+        draftAliases.add("Drafts");
+        draftAliases.add("Entwuerfe");
 
         defaultAliases = new ArrayList<>();
 
@@ -807,9 +815,9 @@ public class EmailUtils {
             return null;
 
         } catch (Exception ex) {
-            String subject="";
+            String subject = "";
             try {
-                subject=msg.getSubject();
+                subject = msg.getSubject();
             } catch (Throwable t) {
                 log.warn("cannot determine message subject", t);
             }
@@ -913,19 +921,19 @@ public class EmailUtils {
         }
         return null;
     }
-    
+
     private static void openFolder(Folder f) throws Exception {
         boolean closed = false;
         if (f != null) {
             closed = !f.isOpen();
         }
-        if (closed) {
+        if (closed && f != null) {
             f.open(Folder.READ_WRITE);
         }
     }
 
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
-        
+
         openFolder(msgContainer.getMessage().getFolder());
         Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
@@ -1012,6 +1020,18 @@ public class EmailUtils {
         }
         return getSentFolder(accountFolders);
     }
+    
+    public static Folder getDraftsFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
+        }
+        return getDraftsFolder(accountFolders);
+    }
 
     public static Folder getInboxFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
@@ -1039,6 +1059,14 @@ public class EmailUtils {
 
     public static Folder getInboxFolder(Folder[] folders) throws Exception {
         return getFolderByName(folders, FolderContainer.INBOX);
+    }
+    
+    public static Folder getDraftsFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, FolderContainer.DRAFTS);
+    }
+
+    public static Folder getDraftsFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, FolderContainer.DRAFTS);
     }
 
     public static Folder getFolderByName(Folder inbox, String name) throws Exception {
@@ -1078,6 +1106,8 @@ public class EmailUtils {
             return sentAliases;
         } else if (FolderContainer.INBOX.equalsIgnoreCase(folderName)) {
             return inboxAliases;
+        } else if (FolderContainer.DRAFTS.equalsIgnoreCase(folderName)) {
+            return draftAliases;
         } else {
             return defaultAliases;
         }
@@ -1177,7 +1207,6 @@ public class EmailUtils {
 
     public static ArrayList<String> getAllMailAddressesFromString(String s) {
         ArrayList<String> mails = new ArrayList<>();
-        //Pattern pattern = Pattern.compile("[\\w.]+@[\\w.]+");
         Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
         Matcher matcher = pattern.matcher(s);
         while (matcher.find()) {
@@ -1203,8 +1232,6 @@ public class EmailUtils {
                 receiptHeader = true;
             }
 
-            //msg.setHeader("Disposition-Notification-To", cu.getEmailAddress());
-//                msg.setHeader("Return-Receipt-To", cu.getEmailAddress());
             return (unread && receiptHeader);
         } catch (Exception ex) {
             log.error(ex);
@@ -1318,38 +1345,38 @@ public class EmailUtils {
             return html;
         }
     }
-    
+
     public static SendEmailDialog reply(Message m, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
             // figure out if the message was sent from one of the users accounts
-            boolean sentByCurrentUser=false;
+            boolean sentByCurrentUser = false;
             UserSettings usettings = UserSettings.getInstance();
             AppUserBean cu = usettings.getCurrentUser();
-            List<MailboxSetup> allInboxes=usettings.getMailboxes(cu.getPrincipalId());
+            List<MailboxSetup> allInboxes = usettings.getMailboxes(cu.getPrincipalId());
             Address[] allFrom = m.getFrom();
             for (Address toa : allFrom) {
-                for(MailboxSetup mbx: allInboxes) {
-                    if(toa.toString().toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
-                        sentByCurrentUser=true;
+                for (MailboxSetup mbx : allInboxes) {
+                    if (toa.toString().toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
+                        sentByCurrentUser = true;
                         break;
                     }
                 }
-                if(sentByCurrentUser)
+                if (sentByCurrentUser) {
                     break;
+                }
             }
-            
-            
-            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
-            if(ms!=null) {
+
+            MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+            if (ms != null) {
                 dlg.setFrom(ms);
             }
             Address[] replyTos = m.getReplyTo();
-            
+
             StringBuilder toString = new StringBuilder();
-            if(sentByCurrentUser) {
+            if (sentByCurrentUser) {
                 // sent by the current user - reply to the recipient of the message
-                Address[] recs=m.getRecipients(Message.RecipientType.TO);
+                Address[] recs = m.getRecipients(Message.RecipientType.TO);
                 for (Address a : recs) {
                     toString.append(MimeUtility.decodeText(a.toString())).append(", ");
                 }
@@ -1391,5 +1418,27 @@ public class EmailUtils {
         }
 
         return dlg;
+    }
+
+    public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
+        StringBuilder listString = new StringBuilder();
+        if (a != null) {
+            for (Address adr : a) {
+                if (adr == null) {
+                    continue;
+                }
+                if (adr instanceof InternetAddress) {
+                    listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                } else {
+                    listString.append(MimeUtility.decodeText(adr.toString())).append(", ");
+                }
+            }
+        }
+
+        String s=listString.toString();
+        if(s.endsWith(", "))
+            s=s.substring(0, s.length()-2);
+        
+        return s;
     }
 }

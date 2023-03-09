@@ -683,6 +683,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileHistoryBean.findByDateInterval", query = "SELECT a FROM ArchiveFileHistoryBean a WHERE a.changeDate >= :fromDate and a.changeDate <= :toDate"),
     @NamedQuery(name = "ArchiveFileHistoryBean.findByChangeDescription", query = "SELECT a FROM ArchiveFileHistoryBean a WHERE a.changeDescription = :changeDescription"),
     @NamedQuery(name = "ArchiveFileHistoryBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileHistoryBean a WHERE a.archiveFileKey = :archiveFileKey"),
+    @NamedQuery(name = "ArchiveFileHistoryBean.findByArchiveFileKeySince", query = "SELECT a FROM ArchiveFileHistoryBean a WHERE a.archiveFileKey = :archiveFileKey and a.changeDate >= :fromDate"),
     @NamedQuery(name = "ArchiveFileHistoryBean.findByChangeDate", query = "SELECT a FROM ArchiveFileHistoryBean a WHERE a.changeDate = :changeDate")})
 public class ArchiveFileHistoryBean implements Serializable {
     private static final long serialVersionUID = 1L;

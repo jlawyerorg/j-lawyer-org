@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -699,6 +700,8 @@ import org.apache.log4j.Logger;
 public class SendAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendAction.class.getName());
+    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    
     private List<String> attachments = null;
     private MailboxSetup ms = null;
     private boolean readReceipt = false;
@@ -709,7 +712,7 @@ public class SendAction extends ProgressableAction {
     private String body = "";
     private String contentType = ContentTypes.TEXT_PLAIN;
     private ArchiveFileBean archiveFile = null;
-    private CaseFolder caseFolder=null;
+    private CaseFolder caseFolder = null;
     private String documentTag = null;
 
     public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
@@ -729,7 +732,7 @@ public class SendAction extends ProgressableAction {
     public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
-        this.caseFolder=folder;
+        this.caseFolder = folder;
     }
 
     @Override
@@ -751,10 +754,10 @@ public class SendAction extends ProgressableAction {
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
         }
-        
-        if(ms.getEmailOutPort()!=null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
+
+        if (ms.getEmailOutPort() != null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
             try {
-                int testInt=Integer.parseInt(ms.getEmailOutPort());
+                int testInt = Integer.parseInt(ms.getEmailOutPort());
                 props.put("mail.smtp.port", ms.getEmailOutPort());
                 props.put("mail.smtps.port", ms.getEmailOutPort());
             } catch (Throwable t) {
@@ -775,18 +778,34 @@ public class SendAction extends ProgressableAction {
         props.put("mail.password", Crypto.decrypt(ms.getEmailOutPwd()));
 
         // add outbox properties for storing in "sent"
-        props.setProperty("mail.store.protocol", ms.getEmailInType());
-        if (ms.isEmailInSsl()) {
-            props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+        if (ms.isMsExchange()) {
+            props.put("mail.imaps.sasl.enable", "true");
+            props.put("mail.imaps.port", "993");
+
+            props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+            props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+            props.put("mail.imaps.auth.login.disable", "true");
+            props.put("mail.imaps.auth.plain.disable", "true");
+
+            props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+            props.setProperty("mail.imaps.socketFactory.fallback", "false");
+            props.setProperty("mail.imaps.socketFactory.port", "993");
+            props.setProperty("mail.imaps.starttls.enable", "true");
+        } else {
+            props.setProperty("mail.store.protocol", ms.getEmailInType());
+            if (ms.isEmailInSsl()) {
+                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
         }
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
             public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd=ms.getEmailOutPwd();
+                String outPwd = ms.getEmailOutPwd();
                 try {
-                    outPwd=Crypto.decrypt(ms.getEmailOutPwd());
+                    outPwd = Crypto.decrypt(ms.getEmailOutPwd());
                 } catch (Throwable t) {
                     log.error(t);
                 }
@@ -831,8 +850,10 @@ public class SendAction extends ProgressableAction {
             for (String url : this.attachments) {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
-                
+
                 att.attachFile(url);
+                att.setDisposition(Part.ATTACHMENT);
+                att.setFileName(attFile.getName());
 
                 attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
@@ -869,7 +890,7 @@ public class SendAction extends ProgressableAction {
                     newName = FileUtils.sanitizeFileName(newName);
                     java.util.Date sentPrefix = new Date();
                     newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei benennen");
-                    if(newName !=null) {
+                    if (newName != null) {
                         if (newName.trim().length() == 0) {
                             newName = "E-Mail";
                         }
@@ -890,15 +911,14 @@ public class SendAction extends ProgressableAction {
                     }
 
                     if (newName != null) {
-                        
 
                         ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
 
                         if (this.documentTag != null && !("".equals(this.documentTag))) {
                             afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                         }
-                        
-                        if(this.caseFolder != null) {
+
+                        if (this.caseFolder != null) {
                             ArrayList<String> docList = new ArrayList<>();
                             docList.add(newDoc.getId());
                             afs.moveDocumentsToFolder(docList, caseFolder.getId());
@@ -909,8 +929,9 @@ public class SendAction extends ProgressableAction {
                         historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + msg.getSubject());
                         afs.addHistory(this.archiveFile.getId(), historyDto);
 
-                        if(caseFolder!=null)
+                        if (caseFolder != null) {
                             newDoc.setFolder(caseFolder);
+                        }
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
                     }
@@ -926,8 +947,18 @@ public class SendAction extends ProgressableAction {
             bus.close();
 
             this.progress("Suche Ordner 'Gesendet'...");
-            Store store = session.getStore(ms.getEmailInType());
-            store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+            Store store = null;
+            if (ms.isMsExchange()) {
+                String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                
+                session = Session.getInstance(props);
+                store = session.getStore("imaps");
+                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
+
+            } else {
+                store = session.getStore(ms.getEmailInType());
+                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+            }
 
             Folder folder = EmailUtils.getInboxFolder(store);
             if (!folder.isOpen()) {

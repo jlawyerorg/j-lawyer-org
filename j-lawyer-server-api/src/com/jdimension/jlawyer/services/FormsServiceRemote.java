@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.ejb.Remote;
@@ -707,6 +708,6 @@ public interface FormsServiceRemote {
 
     Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
 
-    Hashtable<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception;
+    HashMap<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception;
 
 }

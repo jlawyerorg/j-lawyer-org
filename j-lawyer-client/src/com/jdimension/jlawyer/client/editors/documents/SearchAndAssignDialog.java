@@ -682,6 +682,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -703,8 +704,11 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
     // holds the selected case, e.g. when user double clicks an entry or uses the button
     private ArchiveFileBean caseSelection = null;
-    // nolds the last selected folder
+    // holds the last selected folder
     private CaseFolder folderSelection = null;
+    
+    // holds the root folder of the last selected case
+    private CaseFolder rootFolder = null;
 
     // holds the last selected case, required to determine whether or not caseSelection actually changed
     // only when changed, the folder structure is to be reloaded, otherwise selected folder needs to be retained
@@ -722,6 +726,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
     /**
      * Creates new form SearchAndAssignDialog
+     * @param parent
+     * @param modal
+     * @param searchContext
+     * @param forceCaseId
      */
     public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
@@ -736,6 +744,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
     /**
      * Creates new form SearchAndAssignDialog
+     * @param parent
+     * @param modal
+     * @param searchContext
+     * @param forceCaseId
      */
     public SearchAndAssignDialog(java.awt.Frame parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
@@ -780,7 +792,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             List<ArchiveFileBean> lastChanged = fileService.getLastChanged(150);
-            String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
+            String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert", "", "Anwalt", "Sachbearbeiter"};
             QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
             this.tblResults.setModel(model);
 
@@ -805,13 +817,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 // matching entries at the top
                 for (ArchiveFileBean a : contextMatches) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
 
                 // last changed follow
                 for (ArchiveFileBean a : lastChanged) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
             } else {
@@ -824,7 +836,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 ArchiveFileBean forcedCase = fileService.getArchiveFile(forceCaseId);
                 if (forcedCase != null) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getLawyer()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
                     model.addRow(row);
                 }
             }
@@ -1095,7 +1107,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
             if (this.lastSelection == null || !selectedCase.equals(this.lastSelection)) {
 
-                CaseFolder rootFolder = selectedCase.getRootFolder();
+                this.rootFolder = selectedCase.getRootFolder();
 
                 DefaultTreeModel tm = new DefaultTreeModel(buildTree(rootFolder));
                 this.treeFolders.setModel(tm);
@@ -1118,7 +1130,15 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     private MutableTreeNode buildTree(CaseFolder cf) {
         if (cf != null) {
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(cf);
-            for (CaseFolder child : cf.getChildren()) {
+            
+            List<CaseFolder> allChildren = cf.getChildren();
+            Collections.sort(allChildren, (Object t, Object t1) -> {
+                CaseFolder f1 = (CaseFolder) t;
+                CaseFolder f2 = (CaseFolder) t1;
+                return f1.getName().toLowerCase().compareTo(f2.getName().toLowerCase());
+            });
+            
+            for (CaseFolder child : allChildren) {
                 node.add(buildTree(child));
             }
             return node;
@@ -1322,5 +1342,12 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     @Override
     public void actionFinished() {
         this.updateCaseFolderStructure();
+    }
+
+    /**
+     * @return the rootFolder
+     */
+    public CaseFolder getRootFolder() {
+        return rootFolder;
     }
 }

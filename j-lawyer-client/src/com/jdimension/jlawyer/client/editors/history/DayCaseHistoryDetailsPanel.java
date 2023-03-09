@@ -742,7 +742,7 @@ public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(965, 189));
 
         lblArchiveFile.setBackground(new java.awt.Color(102, 0, 204));
-        lblArchiveFile.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblArchiveFile.setFont(lblArchiveFile.getFont().deriveFont(lblArchiveFile.getFont().getSize()+2f));
         lblArchiveFile.setForeground(new java.awt.Color(255, 255, 255));
         lblArchiveFile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N

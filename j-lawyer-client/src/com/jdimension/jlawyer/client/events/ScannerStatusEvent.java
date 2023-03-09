@@ -663,17 +663,9 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.awt.Desktop;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
-import java.net.URI;
 import java.util.Date;
 import java.util.Hashtable;
-import javax.swing.ImageIcon;
 
 /**
  *

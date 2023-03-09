@@ -668,6 +668,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -680,6 +682,7 @@ import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.MenuElement;
 import javax.swing.border.Border;
@@ -687,7 +690,12 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
+import org.jdesktop.swingx.autocomplete.ComboBoxAdaptor;
+import org.jdesktop.swingx.autocomplete.ListAdaptor;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -703,6 +711,38 @@ public class ComponentUtils {
         for (int i = 0; i < tree.getRowCount(); i++) {
             tree.expandRow(i);
         }
+    }
+    
+    public static void addDropRenderer(JTree tree) {
+        tree.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int x = (int) e.getPoint().getX();
+                int y = (int) e.getPoint().getY();
+                int row=tree.getRowForLocation(x, y);
+                
+                JTree.DropLocation dropLocation = tree.getDropLocation();
+                if (dropLocation != null
+                        && dropLocation.getChildIndex() == -1
+                        && tree.getRowForPath(dropLocation.getPath()) == row) {
+                    // this row represents the current drop location
+                    // so render it specially, perhaps with a different color
+                    tree.getComponentAt(x, y).setForeground(Color.GREEN);
+
+                }
+                
+//                int x = (int) e.getPoint().getX();
+//                int y = (int) e.getPoint().getY();
+//                //TreePath path = tree.getPathForLocation(x, y);
+//                int row=tree.getRowForLocation(x, y);
+//////                if (path == null) {
+//////                    tree.setCursor(Cursor.getDefaultCursor());
+//////                } else {
+//////                    tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+//////                }
+//            }
+            }
+        });
     }
 
     public static Object[] getAllListElements(JList list) {
@@ -875,6 +915,53 @@ public class ComponentUtils {
             }
         }
     }
+    
+    public static List<String> getPopupMenuItems(JPopupMenu pop) {
+        ArrayList<String> items=new ArrayList<>();
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                items.add(mi.getText());
+            }
+        }
+        return items;
+    }
+    
+    public static List<String> getSelectedPopupMenuItems(JPopupMenu pop) {
+        ArrayList<String> items=new ArrayList<>();
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                if(mi.isSelected())
+                    items.add(mi.getText());
+            }
+        }
+        return items;
+    }
+    
+    public static String getSelectedPopupMenuItemsAsString(JPopupMenu pop) {
+        List<String> items=getSelectedPopupMenuItems(pop);
+        StringBuilder sb=new StringBuilder();
+        for (String i: items) {
+            sb.append(i).append(", ");
+        }
+        String result=sb.toString();
+        if(result.endsWith(", "))
+            result=result.substring(0, result.length()-2);
+        return result;
+    }
+    
+    public static void selectPopupMenuItems(JPopupMenu pop, List<String> selectedItems) {
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                if(selectedItems.contains(mi.getText()))
+                    mi.setSelected(true);
+                else
+                    mi.setSelected(false);
+            }
+        }
+    }
 
     public static void decorateSplitPane(JSplitPane split) {
         decorateSplitPane(split, null);
@@ -930,5 +1017,19 @@ public class ComponentUtils {
         });
         split.setBorder(null);
 
+    }
+    
+    public static void addAutoComplete(JComboBox cmb) {
+//        ComboBoxAdaptor cmbAdaptor = new ComboBoxAdaptor(cmb);
+//        AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(cmbAdaptor, false);
+//        AutoCompleteDecorator.decorate(cmb);
+        AutoCompleteDecorator.decorate(cmb);
+    }
+    
+    public static void addAutoComplete(JTextField txt, String[] candidates) {
+        JList dataList = new JList(candidates);
+        ListAdaptor listAdaptor = new ListAdaptor(dataList, txt);
+        AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(listAdaptor, false);
+        AutoCompleteDecorator.decorate(txt, autoCompDoc, listAdaptor);
     }
 }

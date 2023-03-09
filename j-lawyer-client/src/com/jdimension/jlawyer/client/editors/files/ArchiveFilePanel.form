@@ -213,6 +213,32 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSetDocumentDateActionPerformed"/>
           </Events>
         </MenuItem>
+        <Menu class="javax.swing.JMenu" name="mnuDocumentHighlights">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/baseline_palette_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="farblich hervorheben"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentHighlight1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="erste Farbe"/>
+              </Properties>
+              <Events>
+                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mnuDocumentHighlight1MousePressed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentHighlight2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="zweite Farbe"/>
+              </Properties>
+              <Events>
+                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mnuDocumentHighlight2MousePressed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
         <MenuItem class="javax.swing.JMenuItem" name="mnuToggleFavorite">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -548,7 +574,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jPanel1" max="32767" attributes="0"/>
-                          <Component id="splitNotes" alignment="0" pref="953" max="32767" attributes="0"/>
+                          <Component id="splitNotes" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -560,7 +586,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="splitNotes" pref="371" max="32767" attributes="0"/>
+                      <Component id="splitNotes" pref="408" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -582,26 +608,65 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <Component id="txtFileNumber" min="-2" pref="200" max="-2" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="chkArchived" min="-2" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="lblArchivedSince" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <Component id="txtClaimValue" min="-2" pref="151" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="348" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="txtReason" alignment="0" max="32767" attributes="0"/>
-                              <Component id="cmbSubjectField" alignment="0" max="32767" attributes="0"/>
-                              <Component id="txtName" alignment="0" max="32767" attributes="0"/>
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="txtReason" alignment="1" max="32767" attributes="0"/>
+                                              <Component id="txtName" max="32767" attributes="0"/>
+                                              <Component id="cmbSubjectField" max="32767" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <Group type="102" attributes="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Group type="102" attributes="0">
+                                                          <Component id="txtFileNumber" min="-2" pref="200" max="-2" attributes="0"/>
+                                                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                                                          <Component id="chkArchived" min="-2" max="-2" attributes="0"/>
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Component id="lblArchivedSince" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <Group type="102" attributes="0">
+                                                          <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Component id="lblCaseCreated" min="-2" max="-2" attributes="0"/>
+                                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                          <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Component id="lblCaseChanged" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                  </Group>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                  <Component id="txtClaimNumber" min="-2" pref="150" max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                              </Group>
                           </Group>
-                          <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                           <Component id="jSeparator7" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="tabPrivileges" min="-2" pref="291" max="-2" attributes="0"/>
@@ -611,36 +676,55 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtFileNumber" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="chkArchived" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblArchivedSince" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtName" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="txtReason" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="cmbSubjectField" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="32767" attributes="0"/>
-                      </Group>
-                      <Group type="102" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jSeparator7" max="32767" attributes="0"/>
-                              <Group type="102" attributes="0">
-                                  <Component id="tabPrivileges" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" alignment="1" attributes="0">
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Component id="jSeparator7" alignment="0" max="32767" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="txtFileNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="chkArchived" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="lblArchivedSince" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="lblCaseCreated" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="lblCaseChanged" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="txtName" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="txtReason" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="cmbSubjectField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="txtClaimValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="txtClaimNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <Component id="tabPrivileges" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <EmptySpace min="0" pref="2" max="32767" attributes="0"/>
                               </Group>
                           </Group>
@@ -736,8 +820,10 @@
                 <Container class="javax.swing.JTabbedPane" name="tabPrivileges">
                   <Properties>
                     <Property name="tabPlacement" type="int" value="3"/>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Dialog" size="10" style="1"/>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="tabPrivileges" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
                     </Property>
                   </Properties>
 
@@ -924,6 +1010,71 @@
                     </Container>
                   </SubComponents>
                 </Container>
+                <Component class="javax.swing.JLabel" name="jLabel4">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Schadennummer:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="txtClaimNumber">
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel5">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Gegenstandswert:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="txtClaimValue">
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel6">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="EUR"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel12">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="jLabel12" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="erstellt:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lblCaseCreated">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lblCaseCreated" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="jLabel21"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel21">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="jLabel21" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="ge&#xe4;ndert:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lblCaseChanged">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lblCaseChanged" property="font" relativeSize="true" size="-2"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="jLabel22"/>
+                  </Properties>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JSplitPane" name="splitNotes">
@@ -1010,7 +1161,7 @@
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="txtNoticePane" pref="154" max="32767" attributes="0"/>
+                              <Component id="txtNoticePane" pref="193" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1064,7 +1215,7 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane8" pref="953" max="32767" attributes="0"/>
+                          <Component id="jScrollPane8" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -1080,7 +1231,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane8" pref="612" max="32767" attributes="0"/>
+                      <Component id="jScrollPane8" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1108,7 +1259,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="927" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="1003" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
@@ -1307,14 +1458,36 @@
                 </Component>
                 <Container class="javax.swing.JSplitPane" name="splitDocumentsMain">
                   <Properties>
-                    <Property name="orientation" type="int" value="0"/>
+                    <Property name="dividerLocation" type="int" value="500"/>
                   </Properties>
 
                   <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
                   <SubComponents>
+                    <Container class="javax.swing.JScrollPane" name="jScrollPane7">
+                      <Properties>
+                        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="jScrollPane7ComponentResized"/>
+                      </Events>
+                      <Constraints>
+                        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
+                          <JSplitPaneConstraints position="right"/>
+                        </Constraint>
+                      </Constraints>
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                      <SubComponents>
+                        <Container class="javax.swing.JPanel" name="pnlPreview">
+
+                          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
+                        </Container>
+                      </SubComponents>
+                    </Container>
                     <Container class="javax.swing.JSplitPane" name="splitDocuments">
                       <Properties>
                         <Property name="dividerLocation" type="int" value="400"/>
+                        <Property name="orientation" type="int" value="0"/>
                         <Property name="oneTouchExpandable" type="boolean" value="true"/>
                       </Properties>
                       <Events>
@@ -1328,27 +1501,6 @@
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
                       <SubComponents>
-                        <Container class="javax.swing.JScrollPane" name="jScrollPane7">
-                          <Properties>
-                            <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
-                          </Properties>
-                          <Events>
-                            <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="jScrollPane7ComponentResized"/>
-                          </Events>
-                          <Constraints>
-                            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
-                              <JSplitPaneConstraints position="right"/>
-                            </Constraint>
-                          </Constraints>
-
-                          <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-                          <SubComponents>
-                            <Container class="javax.swing.JPanel" name="pnlPreview">
-
-                              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
-                            </Container>
-                          </SubComponents>
-                        </Container>
                         <Component class="com.jdimension.jlawyer.ui.folders.CaseFolderPanel" name="caseFolderPanel1">
                           <Constraints>
                             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
@@ -1356,52 +1508,52 @@
                             </Constraint>
                           </Constraints>
                         </Component>
-                      </SubComponents>
-                    </Container>
-                    <Container class="javax.swing.JPanel" name="jPanel4">
-                      <Properties>
-                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                            <TitledBorder title="Dokument-Etiketten"/>
-                          </Border>
-                        </Property>
-                      </Properties>
-                      <Constraints>
-                        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
-                          <JSplitPaneConstraints position="right"/>
-                        </Constraint>
-                      </Constraints>
-
-                      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
-                      <SubComponents>
-                        <Container class="javax.swing.JScrollPane" name="jScrollPane2">
+                        <Container class="javax.swing.JPanel" name="jPanel4">
                           <Properties>
                             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                              <Border info="null"/>
+                              <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                                <TitledBorder title="Dokument-Etiketten"/>
+                              </Border>
                             </Property>
                           </Properties>
                           <Constraints>
-                            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
-                              <BorderConstraints direction="Center"/>
+                            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
+                              <JSplitPaneConstraints position="right"/>
                             </Constraint>
                           </Constraints>
 
-                          <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
                           <SubComponents>
-                            <Container class="javax.swing.JPanel" name="documentTagPanel">
+                            <Container class="javax.swing.JScrollPane" name="jScrollPane2">
+                              <Properties>
+                                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                  <Border info="null"/>
+                                </Property>
+                              </Properties>
+                              <Constraints>
+                                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
+                                  <BorderConstraints direction="Center"/>
+                                </Constraint>
+                              </Constraints>
 
-                              <Layout>
-                                <DimensionLayout dim="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  </Group>
-                                </DimensionLayout>
-                                <DimensionLayout dim="1">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  </Group>
-                                </DimensionLayout>
-                              </Layout>
+                              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                              <SubComponents>
+                                <Container class="javax.swing.JPanel" name="documentTagPanel">
+
+                                  <Layout>
+                                    <DimensionLayout dim="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                    </DimensionLayout>
+                                    <DimensionLayout dim="1">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                    </DimensionLayout>
+                                  </Layout>
+                                </Container>
+                              </SubComponents>
                             </Container>
                           </SubComponents>
                         </Container>
@@ -1416,8 +1568,8 @@
         <Container class="javax.swing.JPanel" name="tabClaims">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Berechnung">
-                <Property name="tabTitle" type="java.lang.String" value="Berechnung"/>
+              <JTabbedPaneConstraints tabName="Finanzen">
+                <Property name="tabTitle" type="java.lang.String" value="Finanzen"/>
                 <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/money.png"/>
                 </Property>
@@ -1428,117 +1580,83 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jPanel8" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="123" max="-2" attributes="0"/>
+                              <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="pnlInvoices" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="632" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jPanel8" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmdNewRvg" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="pnlInvoices" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Container class="javax.swing.JPanel" name="jPanel8">
+            <Component class="javax.swing.JButton" name="cmdNewRvg">
               <Properties>
-                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="Sch&#xe4;den"/>
-                  </Border>
-                </Property>
+                <Property name="text" type="java.lang.String" value="neue Berechnung"/>
               </Properties>
+              <Events>
+                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdNewRvgMousePressed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel7">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Rechnungen:"/>
+              </Properties>
+            </Component>
+            <Container class="javax.swing.JPanel" name="pnlInvoices">
 
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="1" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="txtClaimNumber" pref="727" max="32767" attributes="0"/>
-                                      <Component id="txtClaimValue" alignment="0" pref="727" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                      </Group>
+                      <EmptySpace min="0" pref="386" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtClaimNumber" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtClaimValue" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="531" max="32767" attributes="0"/>
-                      </Group>
+                      <EmptySpace min="0" pref="595" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
-              <SubComponents>
-                <Component class="javax.swing.JLabel" name="jLabel4">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Schadennummer:"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JTextField" name="txtClaimNumber">
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
-                  </AuxValues>
-                </Component>
-                <Component class="javax.swing.JLabel" name="jLabel5">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Gegenstandswert:"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JTextField" name="txtClaimValue">
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
-                  </AuxValues>
-                </Component>
-                <Component class="javax.swing.JLabel" name="jLabel6">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="EUR"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JButton" name="cmdNewRvg">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="neue Berechnung"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdNewRvgMousePressed"/>
-                  </Events>
-                </Component>
-              </SubComponents>
             </Container>
+            <Component class="javax.swing.JButton" name="cmdNewInvoice">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font component="cmdNewInvoice" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/edit_add.png"/>
+                </Property>
+                <Property name="enabled" type="boolean" value="false"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewInvoiceActionPerformed"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="tabReviews">
@@ -1599,7 +1717,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="tblReviewReasonsPane" pref="600" max="32767" attributes="0"/>
+                              <Component id="tblReviewReasonsPane" pref="624" max="32767" attributes="0"/>
                               <Component id="newEventPanel" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1692,7 +1810,7 @@
                       <Component id="lblCustom3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane6" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="425" max="32767" attributes="0"/>
+                      <EmptySpace pref="467" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1769,7 +1887,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="660" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="682" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
@@ -1889,7 +2007,7 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdAddForm" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="453" max="32767" attributes="0"/>
+                              <EmptySpace pref="481" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1908,8 +2026,10 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel16">
                       <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Dialog" size="14" style="1"/>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font component="jLabel16" property="font" relativeSize="true" size="2"/>
+                          </FontInfo>
                         </Property>
                         <Property name="text" type="java.lang.String" value="Falldaten hinzuf&#xfc;gen"/>
                       </Properties>
@@ -2018,7 +2138,7 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane4" pref="911" max="32767" attributes="0"/>
+                              <Component id="jScrollPane4" pref="972" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -2028,17 +2148,17 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="txtHistoryDesc" max="32767" attributes="0"/>
                                       <Group type="102" attributes="0">
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <Component id="txtHistoryDate" min="-2" pref="103" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="cmdShowHistorySelector" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                                  <Component id="cmbHistoryTime" min="-2" pref="70" max="-2" attributes="0"/>
-                                              </Group>
-                                          </Group>
+                                          <Component id="txtHistoryDate" min="-2" pref="103" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmdShowHistorySelector" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                                          <Component id="cmbHistoryTime" min="-2" pref="70" max="-2" attributes="0"/>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="32767" attributes="0"/>
+                                          <Component id="cmdLoadFullHistory" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -2067,9 +2187,12 @@
                               <Component id="txtHistoryDesc" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="cmdAddHistory" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdLoadFullHistory" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="jScrollPane4" pref="495" max="32767" attributes="0"/>
+                          <Component id="jScrollPane4" pref="521" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -2179,6 +2302,17 @@
                     </Property>
                   </Properties>
                 </Component>
+                <Component class="javax.swing.JButton" name="cmdLoadFullHistory">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/history.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Historie auf 6 Monate beschr&#xe4;nkt - volle Historie laden"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLoadFullHistoryActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
           </SubComponents>
@@ -2187,8 +2321,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="lblPanelTitle">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="24" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblPanelTitle" property="font" relativeSize="true" size="12"/>
+          </FontInfo>
         </Property>
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -2209,8 +2345,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblHeaderInfo">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblHeaderInfo" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>

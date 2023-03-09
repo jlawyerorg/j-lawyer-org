@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
 import com.jdimension.jlawyer.events.HookType;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -675,10 +676,16 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -812,7 +819,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
-    public boolean assignObservedFile(String fileName, String archiveFileId) throws Exception {
+    public String assignObservedFile(String fileName, String archiveFileId) throws Exception {
         return assignObservedFile(fileName, archiveFileId, fileName);
     }
 
@@ -853,17 +860,21 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
-    public boolean assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
+    public String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.error("directory observation is switched off");
-            return false;
+            return null;
         }
 
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
-            return false;
+            return null;
         }
 
         if (renameTo == null || "".equalsIgnoreCase(renameTo)) {
@@ -873,21 +884,21 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         File scanDirectory = new File(scanDir);
         if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
-            return false;
+            return null;
         }
 
-        File files[] = scanDirectory.listFiles();
+        File[] files = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     byte[] data = SystemManagement.readFile(f);
-                    this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
-                    return true;
+                    ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
+                    return d.getId();
                 }
             }
         }
-        return false;
+        return null;
     }
 
     @Override
@@ -932,7 +943,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             fw.write(template.toXML());
         }
     }
-
+    
     @Override
     @RolesAllowed(value = {"loginRole"})
     public void deleteEmailTemplate(String fileName) throws Exception {
@@ -1076,4 +1087,150 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         this.hookService.resetCache();
     }
 
+    @Override
+    @RolesAllowed(value = {"readArchiveFileRole"})
+    public boolean renameObservedFile(String fromName, String toName) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.info("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(toName)) {
+                    throw new Exception("Datei '" + toName + "' existiert bereits!");
+                }
+            }
+        }
+        files= scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fromName)) {
+                    if(!scanDir.endsWith(File.separator))
+                        scanDir=scanDir+File.separator;
+                    File toFile=new File(scanDir + toName);
+                    return f.renameTo(toFile);
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public boolean addObservedFile(String fileName, byte[] data) throws Exception {
+        
+        if(fileName==null || "".equals(fileName))
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.info("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+
+        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd_HH-mm");
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fileName)) {
+                    fileName=df.format(new Date())+"_"+name;
+                }
+            }
+        }
+        if(!scanDir.endsWith(File.separator))
+            scanDir=scanDir+File.separator;
+        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+            fout.write(data);
+        }
+        return true;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void renameEmailTemplate(String oldName, String newName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + oldName);
+        if (!f.exists()) {
+            throw new Exception("Datei existiert nicht: " + oldName);
+        }
+        
+        File fNew =new File(localBaseDir + newName);
+        if (fNew.exists()) {
+            throw new Exception("Dateiname bereits vergeben: " + newName);
+        }
+        
+        boolean renamed=f.renameTo(fNew);
+        if(!renamed)
+            throw new Exception("Umbenennen der Vorlage fehlgeschlagen");
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + templateName);
+        if (!f.exists()) {
+            throw new Exception("Datei existiert nicht: " + templateName);
+        }
+        
+        File fNew =new File(localBaseDir + duplicateName);
+        if (fNew.exists()) {
+            throw new Exception("Dateiname bereits vergeben: " + duplicateName);
+        }
+        
+        Path originalPath = Paths.get(localBaseDir + templateName);
+        Path copied = Paths.get(localBaseDir + duplicateName);
+        Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
+        
+        boolean duplicated=fNew.exists();
+        if(!duplicated)
+            throw new Exception("Duplizieren der Vorlage fehlgeschlagen");
+    }
+
+    
+    
 }
