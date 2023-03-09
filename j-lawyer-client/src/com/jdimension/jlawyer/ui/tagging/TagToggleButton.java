@@ -707,6 +707,7 @@ public class TagToggleButton extends JToggleButton {
     /**
      * @return the selectedIcon
      */
+    @Override
     public ImageIcon getSelectedIcon() {
         return selectedIcon;
     }
@@ -715,6 +716,7 @@ public class TagToggleButton extends JToggleButton {
      * @param selectedIcon the selectedIcon to set
      */
     public void setSelectedIcon(ImageIcon selectedIcon) {
+        super.setSelectedIcon(selectedIcon);
         this.selectedIcon = selectedIcon;
     }
 
