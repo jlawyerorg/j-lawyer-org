@@ -6,6 +6,7 @@
             <name>j-lawyer-server-ejb</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <!-- explicit-platform explicit-source-supported="true"/ -->
+            <explicit-platform explicit-source-supported="true"/>
             <included-library dirs="100">reference.j-lawyer-server-entities.dist</included-library>
             <included-library dirs="200">reference.j-lawyer-server-api.jar</included-library>
             <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
