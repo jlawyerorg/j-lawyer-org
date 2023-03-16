@@ -24,7 +24,7 @@ ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xm
 check_error $?
 ant -buildfile j-lawyer-server-api/build.xml jar
 check_error $?
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
+ant -Dplatforms.default_platform.home=/home/jens/bin/jdk-11.0.9.1-full/ -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
 check_error $?
 ant -buildfile j-lawyer-io-common/build.xml jar
 check_error $?
