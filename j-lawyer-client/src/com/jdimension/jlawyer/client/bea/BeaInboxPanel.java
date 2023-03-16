@@ -2647,8 +2647,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             sortCol = sortKeys.get(0).getColumn();
                         }
                     }
+                    if(this.treeFolders.getSelectionPath()==null) {
+                        log.error("no source folder selected");
+                    }
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    if(tn==null) {
+                        log.error("last patch component of source folder is null");
+                    }
                     org.jlawyer.bea.model.Folder sourceFolder = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+                    if(sourceFolder==null) {
+                        log.error("user object of source folder is null");
+                    }
                     Folder importedFolder = BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
                     if (importedFolder != null) {
                         BeaAccess.getInstance().moveMessageToFolder(mh.getId(), sourceFolder.getId(), importedFolder.getId());
