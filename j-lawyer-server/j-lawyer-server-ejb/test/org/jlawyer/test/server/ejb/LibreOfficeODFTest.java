@@ -690,6 +690,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.odftoolkit.simple.TextDocument;
+import org.odftoolkit.simple.draw.Image;
+import org.odftoolkit.simple.style.StyleTypeDefinitions;
+import org.odftoolkit.simple.text.Header;
 
 /**
  *
@@ -1287,6 +1291,31 @@ public class LibreOfficeODFTest {
         }
 
     }
+    
+//    @Test
+//    public void setBackgroundImage() {
+//        try {
+//            File f = new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt");
+//            f.delete();
+//            copyFileUsingStream(new File("test/data/j-lawyer-allgemeiner-Brief-Mandant.odt"), new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt"));
+//        } catch (Throwable t) {
+//            t.printStackTrace();
+//            Assert.fail();
+//
+//        }
+//
+//        TextDocument outputOdt = TextDocument.loadDocument("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt");
+//        
+//        Header h=outputOdt.getHeader(true);
+//        h.appendSection("bla").
+//        Image image = Image.newImage(h, "image-pfad");
+//        image.setHorizontalPosition(StyleTypeDefinitions.FrameHorizontalPosition.RIGHT);
+//        image.setVerticalPosition(StyleTypeDefinitions.FrameVerticalPosition.BELOW);
+//        
+//        
+//        
+//
+//    }
 
     @Test
     public void setPlaceHoldersODS() {
