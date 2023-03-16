@@ -5,14 +5,11 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer.html.cid;
 
-import com.jdimension.jlawyer.client.editors.documents.viewer.html.data.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Base64;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  *
