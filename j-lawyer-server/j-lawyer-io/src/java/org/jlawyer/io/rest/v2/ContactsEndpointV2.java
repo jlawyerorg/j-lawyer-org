@@ -747,8 +747,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             }
         } catch (Exception ex) {
             log.error("can not get address by external id " + extId, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
