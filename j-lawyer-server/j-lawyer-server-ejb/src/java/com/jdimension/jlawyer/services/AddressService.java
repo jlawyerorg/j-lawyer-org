@@ -907,6 +907,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     public AddressBean getAddress(String id) {
         return this.addressFacade.find(id);
     }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId(String extId) {
+        return this.addressFacade.findByExternalId(extId);
+    }
 
     @Override
     @RolesAllowed({"writeAddressRole"})

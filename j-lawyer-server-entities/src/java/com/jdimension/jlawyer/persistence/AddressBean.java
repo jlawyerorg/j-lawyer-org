@@ -702,6 +702,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "AddressBean.findByBankAccount", query = "SELECT a FROM AddressBean a WHERE a.bankAccount = :bankAccount"),
     @NamedQuery(name = "AddressBean.findByEmail", query = "SELECT a FROM AddressBean a WHERE a.email = :email"),
     @NamedQuery(name = "AddressBean.findByWebsite", query = "SELECT a FROM AddressBean a WHERE a.website = :website"),
+    @NamedQuery(name = "AddressBean.findByExternalId", query = "SELECT a FROM AddressBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "AddressBean.findByCreator", query = "SELECT a FROM AddressBean a WHERE a.creator = :creator"),
     @NamedQuery(name = "AddressBean.findByLastModifier", query = "SELECT a FROM AddressBean a WHERE a.lastModifier = :lastModifier"),
     @NamedQuery(name = "AddressBean.findByCreationDate", query = "SELECT a FROM AddressBean a WHERE a.creationDate = :creationDate"),
@@ -852,6 +853,9 @@ public class AddressBean implements Serializable {
     
     @Column(name = "default_role")
     protected String defaultRole;
+    
+    @Column(name = "ext_id")
+    protected String externalId;
 
     public AddressBean() {
     }
@@ -1719,6 +1723,20 @@ public class AddressBean implements Serializable {
      */
     public void setDefaultRole(String defaultRole) {
         this.defaultRole = defaultRole;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
 }

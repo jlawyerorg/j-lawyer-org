@@ -3817,13 +3817,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
 
             String id = null;
+            String externalId = null;
             if (this.dto != null) {
                 id = this.dto.getId();
+                externalId = this.dto.getExternalId();
             }
 
             this.dto = new AddressBean();
             if (id != null) {
                 this.dto.setId(id);
+            }
+            if (externalId != null) {
+                this.dto.setExternalId(externalId);
             }
 
             this.fillDTO(this.dto);

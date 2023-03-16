@@ -770,11 +770,12 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             ArrayList<String> ids = addresses.getAllAddressIds();
-            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<RestfulContactOverviewV1>();
+            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
             for (String id : ids) {
                 AddressBean afb = addresses.getAddress(id);
                 RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
                 rco.setId(id);
+                rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
                 rco.setCity(afb.getCity());
                 rco.setFirstName(afb.getFirstName());
