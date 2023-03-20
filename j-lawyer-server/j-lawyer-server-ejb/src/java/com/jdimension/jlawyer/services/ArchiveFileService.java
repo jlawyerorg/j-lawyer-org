@@ -2125,10 +2125,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        String princ=context.getCallerPrincipal().getName();
+        SecurityUtils.checkGroupsForCase(princ, aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         String histId = idGen.getID().toString();
-        this.addCaseHistory(histId, aFile, history.getChangeDescription(), history.getPrincipal(), history.getChangeDate());
+        this.addCaseHistory(histId, aFile, history.getChangeDescription(), princ, history.getChangeDate());
 
         return this.archiveFileHistoryFacade.find(histId);
     }
