@@ -715,6 +715,8 @@ public class EmailUtils {
         sentAliases.add("Sent");
         sentAliases.add("Sent Items");
         sentAliases.add("Gesendete Elemente");
+        sentAliases.add("Sent Objects");
+        sentAliases.add("Gesendete Objekte");
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");

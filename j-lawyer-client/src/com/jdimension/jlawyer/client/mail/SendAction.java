@@ -972,6 +972,8 @@ public class SendAction extends ProgressableAction {
                 msg.setFlag(Flags.Flag.SEEN, true);
                 sent.appendMessages(new Message[]{msg});
 
+            } else {
+                log.error("Unable to determine 'Sent' folder for mailbox");
             }
 
             try {
