@@ -683,6 +683,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -769,7 +770,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
-        this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
+        QuickArchiveFileSearchCellRenderer renderer=new QuickArchiveFileSearchCellRenderer();
+        this.tblResults.setDefaultRenderer(Object.class, renderer);
+        this.tblResults.setDefaultRenderer(Date.class, renderer);
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getArchiveFileTagsInUse();

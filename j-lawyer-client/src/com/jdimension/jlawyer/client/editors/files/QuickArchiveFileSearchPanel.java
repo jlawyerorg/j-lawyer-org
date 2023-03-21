@@ -734,8 +734,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
-        this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
-        this.tblResults.setDefaultRenderer(Date.class, new QuickArchiveFileSearchCellRenderer());
+        QuickArchiveFileSearchCellRenderer renderer=new QuickArchiveFileSearchCellRenderer();
+        this.tblResults.setDefaultRenderer(Object.class, renderer);
+        this.tblResults.setDefaultRenderer(Date.class, renderer);
 
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
