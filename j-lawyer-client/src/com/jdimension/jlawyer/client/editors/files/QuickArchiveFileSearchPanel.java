@@ -688,6 +688,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -734,6 +735,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.tblResults.setModel(model);
 
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
+        this.tblResults.setDefaultRenderer(Date.class, new QuickArchiveFileSearchCellRenderer());
 
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {

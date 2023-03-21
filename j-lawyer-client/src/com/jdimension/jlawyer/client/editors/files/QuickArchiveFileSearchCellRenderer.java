@@ -665,6 +665,9 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -673,6 +676,8 @@ import javax.swing.table.DefaultTableCellRenderer;
  * @author jens
  */
 public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer {
+    
+    private SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -693,6 +698,11 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
                 ((Component) returnRenderer).setForeground(Color.WHITE);
             } else {
                 ((Component) returnRenderer).setForeground(Color.BLACK);
+            }
+            
+            if(value instanceof java.util.Date) {
+                if(returnRenderer instanceof JLabel)
+                ((JLabel) returnRenderer).setText(df.format((Date)value));
             }
         }
 
