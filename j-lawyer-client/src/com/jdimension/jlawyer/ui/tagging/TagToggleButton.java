@@ -676,7 +676,7 @@ import themes.colors.DefaultColorTheme;
 public class TagToggleButton extends JToggleButton {
     
     protected ImageIcon selectedIcon=new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_done_black_48dp.png"));
-    protected ImageIcon unselectedIcon=null;
+    protected ImageIcon unselectedIcon=new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_undone_black_48dp.png"));
 
     public TagToggleButton() {
         this("default");
@@ -692,6 +692,8 @@ public class TagToggleButton extends JToggleButton {
 
         putClientProperty("FlatLaf.style", "borderWidth: 2; pressedBackground: rgb(102, 102, 102); selectedBackground: rgb(151, 191, 13); selectedForeground: rgb(0, 0, 0); foreground: rgb(102, 102, 102)");
 
+        setIcon(unselectedIcon);
+        
         this.addItemListener((ItemEvent arg0) -> {
             if (isSelected()) {
                 setIcon(selectedIcon);
@@ -701,6 +703,7 @@ public class TagToggleButton extends JToggleButton {
                 setFont(getFont().deriveFont(Font.PLAIN));
             }
         });
+        
 
     }
 
