@@ -702,7 +702,7 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
             
             if(value instanceof java.util.Date) {
                 if(returnRenderer instanceof JLabel)
-                ((JLabel) returnRenderer).setText(df.format((Date)value));
+                    ((JLabel) returnRenderer).setText(df.format((Date)value));
             }
         }
 
