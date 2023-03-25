@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -679,6 +680,7 @@ import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -695,6 +697,7 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -745,6 +748,14 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 useSelection();
             }
         });
+        
+        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+        ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
+        this.jSplitPane1.setDividerLocation(0.8d);
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        jSplitPane1.setBorder(null);
+        jSplitPane1.setOpaque(false);
 
         this.initializing = false;
     }
@@ -804,17 +815,18 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
         txtSearchString = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         cmdQuickSearch = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lblSummary = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         chkIncludeArchive = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResults = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lblSummary = new javax.swing.JLabel();
 
         mnuOpenSelectedArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenSelectedArchiveFile.setText("öffnen");
@@ -880,33 +892,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblResultsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tblResultsKeyReleased(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
         cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdQuickSearch.setToolTipText("Suchen");
         cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
@@ -914,9 +899,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 cmdQuickSearchActionPerformed(evt);
             }
         });
-
-        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jScrollPane2.setViewportView(lblSummary);
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
@@ -968,6 +950,42 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        tblResults.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResults.getTableHeader().setReorderingAllowed(false);
+        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsMousePressed(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsMouseClicked(evt);
+            }
+        });
+        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblResultsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResults);
+
+        jSplitPane1.setLeftComponent(jScrollPane1);
+
+        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        jScrollPane2.setViewportView(lblSummary);
+
+        jSplitPane1.setRightComponent(jScrollPane2);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -975,9 +993,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 819, Short.MAX_VALUE)
+                    .add(jSplitPane1)
                     .add(layout.createSequentialGroup()
-                        .add(txtSearchString)
+                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -986,7 +1004,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter))
-                    .add(jScrollPane2)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
@@ -1012,9 +1029,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     .add(chkIncludeArchive)
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 123, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 578, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1320,6 +1335,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSplitPane jSplitPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
