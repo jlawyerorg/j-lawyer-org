@@ -1556,11 +1556,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     should be invoked after a change that manipulates the name or the number of messages or unread messages in the folder
     */
     private void resetCacheForSelectedFolder() {
-        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        if(this.treeFolders.getSelectionPath() != null) {
+            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
 
-        if (selNode.getUserObject() instanceof FolderContainer) {
-            FolderContainer folderC = (FolderContainer) selNode.getUserObject();
-            folderC.resetCaches();
+            if (selNode!= null && selNode.getUserObject() instanceof FolderContainer) {
+                FolderContainer folderC = (FolderContainer) selNode.getUserObject();
+                folderC.resetCaches();
+            }
         }
         
     }
@@ -2820,9 +2822,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 Date sentDate = m.getSentDate();
                 Folder f = m.getFolder();
-                boolean closed = !f.isOpen();
-                if (closed) {
-                    f.open(Folder.READ_WRITE);
+                boolean closed=false;
+                if (f != null) {
+                    closed = !f.isOpen();
+                    if (closed) {
+                        f.open(Folder.READ_WRITE);
+                    }
                 }
                 byte[] data = null;
 
@@ -2915,7 +2920,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         }
                 }
 
-                if (targetCase != null && !attachmentsOnly) {
+                if (!attachmentsOnly) {
 
                     String newName = m.getSubject();
                     if (newName == null) {
@@ -2937,7 +2942,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 }
 
-                if (targetCase != null && separateAttachments && !attachmentsOnly) {
+                if (separateAttachments && !attachmentsOnly) {
                     ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
                     for (String attachmentName : attachmentNames) {
                         
@@ -2980,7 +2985,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
                 bulkSaveDlg.setVisible(true);
 
-                if (targetCase != null && !bulkSaveDlg.isFailedOrCancelled()) {
+                if (!bulkSaveDlg.isFailedOrCancelled()) {
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
                         this.cmdDeleteActionPerformed(null);
