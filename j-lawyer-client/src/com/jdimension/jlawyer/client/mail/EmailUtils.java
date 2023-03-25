@@ -858,13 +858,13 @@ public class EmailUtils {
 
                     }
 
-                } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                     }
-                } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
@@ -1162,6 +1162,9 @@ public class EmailUtils {
 
     // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f) {
+        if(f==null)
+            return;
+        
         try {
             if (isIMAP(f)) {
                 if (f.isOpen()) {
