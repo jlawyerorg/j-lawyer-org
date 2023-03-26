@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -908,6 +907,17 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.documentFilenameNew=FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
             this.txtFileNameNew.setText(this.documentFilenameNew);
         }
+        
+        // use may have typed invalid characters
+        String checkedName=FileUtils.sanitizeFileName(this.documentFilenameNew);
+        if(!checkedName.equals(this.txtFileNameNew.getText())) {
+            int caretPosition=this.txtFileNameNew.getCaretPosition();
+            this.txtFileNameNew.setText(checkedName);
+            this.documentFilenameNew=checkedName;
+            if(this.txtFileNameNew.getText().length()>=caretPosition)
+                this.txtFileNameNew.setCaretPosition(caretPosition);
+        }
+        
         this.saveDialog.checkForDuplicateFileNames();
     }//GEN-LAST:event_txtFileNameNewKeyReleased
 
@@ -997,20 +1007,14 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
         
         for (MenuElement me : popup.getSubElements()) {
-            ((JCheckBoxMenuItem) me.getComponent()).addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent arg0) {
-                    allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
-                }
-                
+            ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
+                allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
                 boolean selected = false;
-                ArrayList<String> al = new ArrayList<>();
                 for (MenuElement me1 : popup.getSubElements()) {
                     JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
                     if (mi.isSelected()) {
-                        al.add(mi.getText());
                         selected = true;
                     }
                 }
@@ -1145,6 +1149,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     }
     
     /**
+     * @param rootFolder
      * @param caseFolder the caseFolder to set
      */
     public void setCaseFolder(CaseFolder rootFolder, CaseFolder caseFolder) {
