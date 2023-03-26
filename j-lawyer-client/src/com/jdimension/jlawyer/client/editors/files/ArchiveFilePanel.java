@@ -2630,7 +2630,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         cmdNewInvoice.setFont(cmdNewInvoice.getFont());
         cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewInvoice.setEnabled(false);
         cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdNewInvoiceActionPerformed(evt);

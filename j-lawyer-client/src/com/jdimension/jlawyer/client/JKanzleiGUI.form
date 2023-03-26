@@ -589,7 +589,6 @@
                       <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="Rechnungsnummernkreise"/>
-                    <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoicePoolsActionPerformed"/>
@@ -601,7 +600,6 @@
                       <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="Belegarten"/>
-                    <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoiceTypesActionPerformed"/>
