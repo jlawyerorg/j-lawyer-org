@@ -904,8 +904,11 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         String oldExt=FileUtils.getExtension(this.documentFilename);
         String newExt=FileUtils.getExtension(this.documentFilenameNew);
         if(!oldExt.equalsIgnoreCase(newExt)) {
+            int caretPosition=this.txtFileNameNew.getCaretPosition();
             this.documentFilenameNew=FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
             this.txtFileNameNew.setText(this.documentFilenameNew);
+            if(this.txtFileNameNew.getText().length()>=caretPosition)
+                this.txtFileNameNew.setCaretPosition(caretPosition);
         }
         
         // use may have typed invalid characters
