@@ -718,6 +718,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -750,12 +751,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private String openedFromEditorClass = null;
     private Image backgroundImage = null;
     protected String encryptionPwd = null;
+    
+    private HashMap<String,ArrayList<Invoice>> invoicesPerCase=null;
 
     /**
      * Creates new form AddressPanel
      */
     public AddressPanel() {
         this.dto = null;
+        this.invoicesPerCase=new HashMap<>();
         initComponents();
         this.lblAge.setText("");
 
@@ -940,8 +944,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
-    public void setAddressDTO(AddressBean dto) {
+     public void setAddressDTO(AddressBean dto) {
         this.dto = dto;
+        this.invoicesPerCase.clear();
         this.encryptionPwd = this.dto.getEncryptionPwd();
         if (!StringUtils.isEmpty(encryptionPwd)) {
             this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
@@ -1082,27 +1087,35 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         this.jTabbedPane1StateChanged(null);
         
-        
+        List<Invoice> invoices=new ArrayList<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<Invoice> invoices=locator.lookupArchiveFileServiceRemote().getInvoicesForAddress(dto.getId(), false);
-            invoices.size();
+            List<Invoice> existingInvoices=locator.lookupArchiveFileServiceRemote().getInvoicesForAddress(dto.getId(), false);
+            if(existingInvoices!=null && !existingInvoices.isEmpty())
+                invoices.addAll(existingInvoices);
 
-            
         } catch (Exception ex) {
             log.error("Error getting invoices for address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsbeträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
         
+        this.invoicesPerCase.clear();
+        HashMap<Integer, Float> cumulatedInvoiceValues=this.getCumulatedInvoicesValue(invoices);
+        for(Invoice inv: invoices) {
+            if(!this.invoicesPerCase.containsKey(inv.getArchiveFileKey().getId()))
+                this.invoicesPerCase.put(inv.getArchiveFileKey().getId(), new ArrayList<>());
+            this.invoicesPerCase.get(inv.getArchiveFileKey().getId()).add(inv);
+        }
+        
         PieChart chart = new PieChartBuilder().width(this.pnlInvoicesChart.getWidth()).height(this.pnlInvoicesChart.getHeight()).title("Rechnungsbeträge").build();
         Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
         chart.getStyler().setSeriesColors(sliceColors);
-        chart.addSeries("neu", 0.0);
-        chart.addSeries("offen", 0.0);
-        chart.addSeries("bezahlt", 0.0);
-        chart.addSeries("storniert", 0.0);
+        chart.addSeries("neu", cumulatedInvoiceValues.get(Invoice.STATUS_NEW));
+        chart.addSeries("offen", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN));
+        chart.addSeries("bezahlt", cumulatedInvoiceValues.get(Invoice.STATUS_PAID));
+        chart.addSeries("storniert", -1f * cumulatedInvoiceValues.get(Invoice.STATUS_CANCELLED));
         chart.getStyler().setLegendVisible(true);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setSumVisible(true);
@@ -1135,6 +1148,22 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         xchartPanel.setSaveAsString("speichern als...");
         xchartPanel.setBackground(this.pnlInvoicesChart.getBackground());
         this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
+    }
+     
+    private HashMap<Integer, Float> getCumulatedInvoicesValue(List<Invoice> invoices) {
+        HashMap<Integer, Float> cumulatedInvoiceValues=new HashMap<>();
+        cumulatedInvoiceValues.put(Invoice.STATUS_NEW, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_PAID, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_CANCELLED, 0f);
+        for(Invoice inv: invoices) {
+            if(inv.getInvoiceType().isTurnOver()) {
+                float f=cumulatedInvoiceValues.get(inv.getStatus());
+                f=f+inv.getTotal();
+                cumulatedInvoiceValues.put(inv.getStatus(), f);
+            }
+        }
+        return cumulatedInvoiceValues;
     }
 
     public void reset() {
@@ -1192,6 +1221,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     public void clearInputs() {
         this.dto = null;
+        this.invoicesPerCase.clear();
         this.encryptionPwd = null;
         this.chkEncryption.setSelected(false);
         this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
@@ -2837,6 +2867,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (this.jTabbedPane1.getSelectedIndex() == 5) {
             if (this.dto == null) {
                 this.pnlCasesForContact.removeAll();
+                this.invoicesPerCase.clear();
                 return;
             }
             try {
@@ -3269,6 +3300,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
                 lce.setArchived(aFile.getArchiveFileKey().getArchivedBoolean());
                 lce.setOwnReference(aFile.getReference());
+                
+                if(this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
+                    HashMap<Integer, Float> invoicesForCase=this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
+                    lce.setInvoicesByStatus(invoicesForCase);
+                }
+                
                 ep.setEntry(lce);
 
                 this.pnlCasesForContact.add(ep);

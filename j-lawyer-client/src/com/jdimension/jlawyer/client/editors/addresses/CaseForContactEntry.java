@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import java.awt.Color;
+import java.util.HashMap;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -679,6 +680,7 @@ public class CaseForContactEntry {
     private String reason=null;
     private String role=null;
     private boolean archived=false;
+    protected HashMap<Integer, Float> invoicesByStatus=null;
     private Color roleForeground=DefaultColorTheme.COLOR_LOGO_BLUE;
     
     
@@ -796,6 +798,20 @@ public class CaseForContactEntry {
      */
     public void setOwnReference(String ownReference) {
         this.ownReference = ownReference;
+    }
+
+    /**
+     * @return the invoicesByStatus
+     */
+    public HashMap<Integer, Float> getInvoicesByStatus() {
+        return invoicesByStatus;
+    }
+
+    /**
+     * @param invoicesByStatus the invoicesByStatus to set
+     */
+    public void setInvoicesByStatus(HashMap<Integer, Float> invoicesByStatus) {
+        this.invoicesByStatus = invoicesByStatus;
     }
     
 }

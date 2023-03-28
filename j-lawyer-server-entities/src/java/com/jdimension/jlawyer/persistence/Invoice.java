@@ -736,6 +736,9 @@ public class Invoice implements Serializable {
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     protected AddressBean contact;
+    
+    @Column(name = "total")
+    protected float total=0f;
 
     public Invoice() {
     }
@@ -980,6 +983,20 @@ public class Invoice implements Serializable {
      */
     public void setInvoiceType(InvoiceType invoiceType) {
         this.invoiceType = invoiceType;
+    }
+
+    /**
+     * @return the total
+     */
+    public float getTotal() {
+        return total;
+    }
+
+    /**
+     * @param total the total to set
+     */
+    public void setTotal(float total) {
+        this.total = total;
     }
     
 }

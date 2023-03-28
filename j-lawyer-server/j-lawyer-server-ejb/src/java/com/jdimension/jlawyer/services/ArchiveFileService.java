@@ -4707,6 +4707,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setDescription("");
             i.setSmallBusiness(pool.isSmallBusiness());
             i.setInvoiceType(iType);
+            i.setTotal(0f);
 
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -4761,10 +4762,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             position.setInvoice(invoice);
 
             this.invoicePositionsFacade.create(position);
+            this.updateInvoiceTotal(invoiceId);
             return this.invoicePositionsFacade.find(position.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
+    }
+    
+    private void updateInvoiceTotal(String invoiceId) throws Exception {
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+        List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(invoice);
+        if(positions==null)
+            positions=new ArrayList<>();
+        float newTotal=0f;
+        for(InvoicePosition p: positions) {
+            newTotal=newTotal+p.getTotal();
+        }
+        invoice.setTotal(newTotal);
+        this.invoicesFacade.edit(invoice);
     }
 
     @Override
@@ -4837,6 +4855,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatePos.setUnitPrice(position.getUnitPrice());
             updatePos.setUnits(position.getUnits());
             this.invoicePositionsFacade.edit(updatePos);
+            this.updateInvoiceTotal(invoiceId);
             return this.invoicePositionsFacade.find(updatePos.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4872,6 +4891,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             InvoicePosition removePos = this.invoicePositionsFacade.find(position.getId());
             this.invoicePositionsFacade.remove(removePos);
+            this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -4912,6 +4932,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
 
             this.invoicesFacade.edit(updatedInvoice);
+            this.updateInvoiceTotal(invoice.getId());
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4948,6 +4969,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (InvoicePosition pos : this.invoicePositionsFacade.findByInvoice(invoice)) {
                 this.invoicePositionsFacade.remove(pos);
             }
+            this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
