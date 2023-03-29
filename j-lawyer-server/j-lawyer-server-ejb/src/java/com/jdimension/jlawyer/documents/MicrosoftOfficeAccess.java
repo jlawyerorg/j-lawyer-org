@@ -808,10 +808,20 @@ public class MicrosoftOfficeAccess {
 //                                Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
 //                                border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
 
+//                                for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
+//                                    t.getRow(0).addNewTableCell();
+//                                }
                                 for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
-                                    t.getRow(0).addNewTableCell();
+                                    t.addNewCol();
                                 }
-                                for (int i = 0; i < tab.getRowCount() - 1; i++) {
+                                
+//                                for (int i = 0; i < tab.getRowCount() - 1; i++) {
+//                                    XWPFTableRow newrow = t.createRow();
+//                                    t.addRow(newrow);
+//
+//                                }
+                                
+                                for (int i = 0; i < tab.getRowCount(); i++) {
                                     XWPFTableRow newrow = t.createRow();
                                     t.addRow(newrow);
 
@@ -834,16 +844,16 @@ public class MicrosoftOfficeAccess {
                                     for (int k = 0; k < tab.getRowCount(); k++) {
                                         //t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
 
-                                        List<XWPFParagraph> paragraphs = t.getRow(k).getCell(i).getParagraphs();
+                                        List<XWPFParagraph> paragraphs = t.getRow(k+1).getCell(i).getParagraphs();
                                         if (paragraphs.size() > 0) {
 //                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).getParagraphArray(0);
 //                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
-                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+                                            t.getRow(k+1).getCell(i).setText(tab.getValueAt(k, i));
                                         } else {
 
 //                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).addParagraph();
 //                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
-                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+                                            t.getRow(k+1).getCell(i).setText(tab.getValueAt(k, i));
 
                                         }
 //                                        if (tab.isLineBorder()) {

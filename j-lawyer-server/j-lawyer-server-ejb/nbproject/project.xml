@@ -6,7 +6,6 @@
             <name>j-lawyer-server-ejb</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <!-- explicit-platform explicit-source-supported="true"/ -->
-            <explicit-platform explicit-source-supported="true"/>
             <included-library dirs="100">reference.j-lawyer-server-entities.dist</included-library>
             <included-library dirs="200">reference.j-lawyer-server-api.jar</included-library>
             <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
@@ -51,12 +50,12 @@
             <included-library dirs="200">file.reference.jaxb-api-2.3.1.jar</included-library>
             <included-library dirs="200">file.reference.jaxb-core-2.3.0.1.jar</included-library>
             <included-library dirs="200">file.reference.jaxb-impl-2.3.2.jar</included-library>
-            <included-library dirs="200">file.reference.poi-4.1.1.jar</included-library>
-            <included-library dirs="200">file.reference.poi-excelant-4.1.1.jar</included-library>
-            <included-library dirs="200">file.reference.poi-ooxml-4.1.1.jar</included-library>
-            <included-library dirs="200">file.reference.poi-ooxml-schemas-4.1.1.jar</included-library>
-            <included-library dirs="200">file.reference.poi-scratchpad-4.1.1.jar</included-library>
             <included-library dirs="200">file.reference.curvesapi-1.06.jar</included-library>
+            <included-library dirs="200">file.reference.poi-4.1.2.jar</included-library>
+            <included-library dirs="200">file.reference.poi-excelant-4.1.2.jar</included-library>
+            <included-library dirs="200">file.reference.poi-ooxml-4.1.2.jar</included-library>
+            <included-library dirs="200">file.reference.poi-ooxml-schemas-4.1.2.jar</included-library>
+            <included-library dirs="200">file.reference.poi-scratchpad-4.1.2.jar</included-library>
             <included-library dirs="200">file.reference.xmlbeans-3.1.0.jar</included-library>
             <included-library dirs="200">file.reference.libphonenumber-8.12.18.jar</included-library>
             <included-library dirs="200">file.reference.j-lawyer-cloud.jar</included-library>
