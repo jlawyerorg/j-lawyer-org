@@ -730,6 +730,7 @@ public class DocumentViewerFactory {
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
+            hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(content);
