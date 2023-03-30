@@ -709,6 +709,8 @@ public interface CalendarServiceRemote {
     List<CalendarSetup> getCalendarSetupsForUser(String principalId);
 
     CalendarSetup addCalendarSetup(CalendarSetup cs);
+    
+    List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
 
     CalendarSetup updateCalendarSetup(CalendarSetup cs);
 

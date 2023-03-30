@@ -706,6 +706,7 @@ import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
+import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -1247,7 +1248,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void runFullCalendarSync() {
         this.calendarSync.runFullCalendarSync();
     }
-
+    
     @Override
     @RolesAllowed({"loginRole"})
     public boolean hasEvents(CalendarSetup calendar) throws Exception {
@@ -1400,6 +1401,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return list;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
+        return this.calendarSync.listCalendars(host, ssl, port, user, password, path);
     }
 
 }
