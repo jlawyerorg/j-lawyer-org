@@ -684,14 +684,16 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
     
     private ArchiveFileBean caseDto=null;
+    private ArchiveFilePanel caseView=null;
     private Invoice invoice=null;
     private List<AddressBean> addresses=null;
 
     /**
      * Creates new form InvoiceEntryPanel
      */
-    public InvoiceEntryPanel() {
+    public InvoiceEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
+        this.caseView=caseView;
     }
     
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -818,7 +820,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
+        InvoiceDialog dlg=new InvoiceDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
         dlg.setEntry(this.invoice);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

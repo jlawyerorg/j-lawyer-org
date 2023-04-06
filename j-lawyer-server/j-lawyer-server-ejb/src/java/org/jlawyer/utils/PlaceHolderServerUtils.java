@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -688,7 +689,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  */
 public class PlaceHolderServerUtils extends PlaceHolders  {
 
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception {
+    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -1034,6 +1035,39 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             } else {
                 placeHolders.put(AUTOR_AN, "");
             }
+        }
+        
+        if (invoice != null) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+            if (placeHolders.containsKey(RG_BESCHR)) {
+                placeHolders.put(RG_BESCHR, val(invoice.getDescription()));
+            }
+            if (placeHolders.containsKey(RG_DTERSTELLT)) {
+                placeHolders.put(RG_DTERSTELLT, df.format(invoice.getCreationDate()));
+            }
+            if (placeHolders.containsKey(RG_DTFAELLIG)) {
+                placeHolders.put(RG_DTFAELLIG, df.format(invoice.getDueDate()));
+            }
+            if (placeHolders.containsKey(RG_DTLZBIS)) {
+                placeHolders.put(RG_DTLZBIS, df.format(invoice.getPeriodTo()));
+            }
+            if (placeHolders.containsKey(RG_DTLZVON)) {
+                placeHolders.put(RG_DTLZVON, df.format(invoice.getPeriodFrom()));
+            }
+            if (placeHolders.containsKey(RG_NAME)) {
+                placeHolders.put(RG_NAME, val(invoice.getName()));
+            }
+            if (placeHolders.containsKey(RG_NR)) {
+                placeHolders.put(RG_NR, val(invoice.getInvoiceNumber()));
+            }
+            if (placeHolders.containsKey(RG_TOTAL)) {
+                placeHolders.put(RG_TOTAL, currencyFormat.format(invoice.getTotal()));
+            }
+        }
+        
+        if (placeHolders.containsKey(RG_TABELLE)) {
+            if(invoiceTable!=null)
+                placeHolders.put(RG_TABELLE, invoiceTable);
         }
         
         return placeHolders;

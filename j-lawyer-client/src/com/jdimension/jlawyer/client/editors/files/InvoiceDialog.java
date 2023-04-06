@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -683,6 +684,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
@@ -697,6 +699,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
+import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -705,14 +709,15 @@ import themes.colors.DefaultColorTheme;
  */
 public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer {
 
-    private static final String ICON_SUCCESS="/icons/agt_action_success.png";
-    
+    private static final String ICON_SUCCESS = "/icons/agt_action_success.png";
+
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private static final DecimalFormat cf = new DecimalFormat("0.00");
 
     private Invoice currentEntry = null;
     private ArchiveFileBean caseDto = null;
+    private ArchiveFilePanel caseView = null;
     private AddressBean recipientAddress = null;
 
     private HashMap<String, InvoicePool> invoicePools = new HashMap<>();
@@ -720,14 +725,16 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     /**
      * Creates new form InvoiceDialog
      *
+     * @param caseView
      * @param caseDto
      * @param parent
      * @param modal
      * @param addresses
      */
-    public InvoiceDialog(ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
+    public InvoiceDialog(ArchiveFilePanel caseView, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
         super(parent, modal);
         this.caseDto = caseDto;
+        this.caseView = caseView;
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         ComponentUtils.decorateSplitPane(splitMain);
@@ -758,7 +765,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             log.error("Error determining invoice pools", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         DefaultComboBoxModel dmTypes = new DefaultComboBoxModel();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -821,7 +828,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     public Invoice getEntry() {
         return this.currentEntry;
     }
-    
+
     public void setEntry(Invoice invoice) {
         this.currentEntry = invoice;
 
@@ -859,9 +866,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.dtDue.setText(df.format(invoice.getDueDate()));
             this.dtCreated.setText(df.format(invoice.getCreationDate()));
             this.chkSmallBusiness.setSelected(invoice.isSmallBusiness());
-            if(invoice.getInvoiceType()!=null)
+            if (invoice.getInvoiceType() != null) {
                 this.cmbInvoiceType.setSelectedItem(invoice.getInvoiceType());
-            this.recipientAddress=invoice.getContact();
+            }
+            this.recipientAddress = invoice.getContact();
             if (invoice.getContact() != null) {
                 this.lblRecipient.setText(invoice.getContact().toDisplayName());
             } else {
@@ -944,6 +952,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         cmbInvoiceType = new javax.swing.JComboBox<>();
+        cmdCreateInvoiceDocument = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -1157,10 +1166,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        cmdCreateInvoiceDocument.setText("jButton1");
+        cmdCreateInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCreateInvoiceDocumentActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblHeader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -1208,10 +1225,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(cmdAddPosition)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCalculation)))
+                                .addComponent(cmdCalculation))
+                            .addComponent(cmdCreateInvoiceDocument, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addComponent(lblHeader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1262,7 +1279,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                             .addComponent(cmdAddPosition)
                             .addComponent(cmdCalculation)))
                     .addComponent(cmdRemoveAllPositions))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCreateInvoiceDocument)
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1301,7 +1320,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 791, Short.MAX_VALUE)
+                    .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1354,7 +1373,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(this.caseDto.getId(), this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType)this.cmbInvoiceType.getSelectedItem());
+                    Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(this.caseDto.getId(), this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
                     this.setEntry(newInvoice);
 
                 } catch (Exception ex) {
@@ -1363,13 +1382,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
             } else {
                 // updated
-                
+
                 this.currentEntry.setInvoiceNumber(this.lblInvoiceNumber.getText());
-                
+
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    Invoice updatedInvoice = locator.lookupArchiveFileServiceRemote().updateInvoiceType(this.caseDto.getId(), this.currentEntry, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType)this.cmbInvoiceType.getSelectedItem());
+                    Invoice updatedInvoice = locator.lookupArchiveFileServiceRemote().updateInvoiceType(this.caseDto.getId(), this.currentEntry, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
                     this.setEntry(updatedInvoice);
 
                 } catch (Exception ex) {
@@ -1460,6 +1479,108 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
 
+    private StyledCalculationTable getPositionsAsTable() {
+        float totalTax = 0f;
+        float total = 0f;
+        
+        int rowcount = 0;
+        
+        StyledCalculationTable ct = new StyledCalculationTable();
+        ct.addHeaders("", "Position", "Betrag");
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "");
+        }
+
+        for (Component c : this.pnlInvoicePositions.getComponents()) {
+            if (c instanceof InvoicePositionEntryPanel) {
+
+                InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
+                float u = pos.getUnits();
+                float up = pos.getUnitPrice();
+                float t = pos.getTaxRate();
+
+                totalTax = totalTax + (u * up * (t / 100f));
+                total = total + (u * up * (1 + t / 100f));
+                
+                ct.addRow("", pos.getName() + ": " + pos.getDescription(), cf.format(u * up * (1 + t / 100f)) + " €");
+                rowcount = rowcount + 1;
+            }
+        }
+        
+
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "");
+        }
+        int footerRow = ct.addRow("", "Zahlbetrag", lblInvoiceTotal.getText() + " €");
+
+        //HeaderRow
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
+            ct.setRowBold(0, true);
+        } else {
+            ct.setRowBold(0, false);
+        }
+
+        
+
+        //FooterRow
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
+            ct.setRowBold(footerRow, true);
+        } else {
+            ct.setRowBold(footerRow, false);
+        }
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true)) {
+            //ct.getCellAt(footerRow, 1).setUnderline(true);
+            ct.getCellAt(footerRow, 2).setUnderline(true);
+        } else {
+            //ct.getCellAt(footerRow, 1).setUnderline(false);
+            ct.getCellAt(footerRow, 2).setUnderline(false);
+        }
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
+            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(true);
+            } else {
+                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(true);
+            }
+        } else {
+            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(false);
+            } else {
+                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(false);
+            }
+        }
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Italic", true)) {
+            ct.getCellAt(footerRow, 1).setItalic(true);
+            ct.getCellAt(footerRow, 2).setItalic(true);
+        } else {
+            ct.getCellAt(footerRow, 1).setItalic(false);
+            ct.getCellAt(footerRow, 2).setItalic(false);
+        }
+        ct.setRowForeGround(footerRow, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(footerRow, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
+
+        //TableLayout
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 25);
+        ct.setColumnWidth(1, 120);
+        ct.setColumnWidth(2, 35);
+        ct.setFontFamily("Arial");
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
+            ct.setLineBorder(true);
+        } else {
+            ct.setLineBorder(false);
+        }
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        
+        return ct;
+
+    }
+
     public void updateTotals(InvoicePositionEntryPanel ep) {
         ep.updateEntryTotal();
 
@@ -1545,6 +1666,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSearchRecipientMousePressed
 
+    private void cmdCreateInvoiceDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateInvoiceDocumentActionPerformed
+        if (this.caseView != null)
+            this.caseView.newDocumentDialog(null, currentEntry, this.getPositionsAsTable());
+    }//GEN-LAST:event_cmdCreateInvoiceDocumentActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1574,7 +1700,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            InvoiceDialog dialog = new InvoiceDialog(null, new javax.swing.JFrame(), true, null);
+            InvoiceDialog dialog = new InvoiceDialog(null, null, new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1594,6 +1720,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdCalculation;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdConfirmInvoiceNumber;
+    private javax.swing.JButton cmdCreateInvoiceDocument;
     private javax.swing.JButton cmdDateCreated;
     private javax.swing.JButton cmdDateDue;
     private javax.swing.JButton cmdDatePeriodFrom;

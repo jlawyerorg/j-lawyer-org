@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
@@ -708,5 +709,5 @@ public interface SystemManagementLocal {
     
     List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception;
     
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception;
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception;
 }

@@ -941,7 +941,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
             this.invoicesPanel.removeAll();
             for(Invoice inv: invoices) {
-                InvoiceEntryPanel ip=new InvoiceEntryPanel();
+                InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
             }

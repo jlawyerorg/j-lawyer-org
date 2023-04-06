@@ -800,7 +800,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-     * Creates a new document based on a template. Any place holders are automaticall populated, but a client may override them.
+     * Creates a new document based on a template. Any place holders are automatically populated, but a client may override them. Invoice creation not supported.
      *
      * @param caseId the id of the case
      * @param fileName file name of the document to be created, without file extension (server will enforce same extension as template)
@@ -867,7 +867,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
             
             
-            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null);
+            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null);
                         
             
             for(RestfulPlaceholderV6 rph: placeHolderValues) {

@@ -698,6 +698,7 @@ import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
@@ -710,12 +711,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFileBean aFile = null;
     private JTable tblReviewReasons = null;
     private GenericCalculationTable calculationTable = null;
+    private Invoice invoice=null;
+    private StyledCalculationTable invoiceTable=null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
-        this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
+        this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null, null, null);
     }
 
     /**
@@ -729,10 +732,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param tblReviewReasons
      * @param aFile
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
+        this.invoice=invoice;
+        this.invoiceTable=invoiceTable;
 
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
@@ -1076,7 +1081,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                                         .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(cmdShowReviewSelector)))
-                                .add(0, 34, Short.MAX_VALUE)))))
+                                .add(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1170,9 +1175,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlage"));
 
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtTemplateFilterKeyTyped(evt);
-            }
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyPressed(evt);
             }
@@ -1486,9 +1488,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_txtTemplateFilterKeyPressed
 
-    private void txtTemplateFilterKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateFilterKeyTyped
-    }//GEN-LAST:event_txtTemplateFilterKeyTyped
-
     private void highlightTree(String templateQuery) {
         try {
             int[] selectedRows = this.treeFolders.getSelectionRows();
@@ -1626,7 +1625,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable);
 
                 for (String key : ht.keySet()) {
                     if (key.startsWith("[[SCRIPT:")) {

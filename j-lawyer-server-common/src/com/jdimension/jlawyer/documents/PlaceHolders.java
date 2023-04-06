@@ -775,11 +775,24 @@ public class PlaceHolders {
     public static final String AUTOR_AN = "{{AUTOR_AN}}";
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
+    
+    // invoices
+    public static final String RG_NR = "{{RG_NR}}";
+    public static final String RG_NAME = "{{RG_NAME}}";
+    public static final String RG_BESCHR = "{{RG_BESCHR}}";
+    public static final String RG_DTFAELLIG = "{{RG_DTFAELLIG}}";
+    public static final String RG_DTLZVON = "{{RG_DTLZVON}}";
+    public static final String RG_DTLZBIS = "{{RG_DTLZBIS}}";
+    public static final String RG_DTERSTELLT = "{{RG_DTERSTELLT}}";
+    public static final String RG_TOTAL = "{{RG_TOTAL}}";
+    public static final String RG_TABELLE = "{{RG_TABELLE}}";
+    
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
+        ALLTABLEPLACEHOLDERS.add(RG_TABELLE);
     }
     
     public static String insertAt(String origin, String insert, int position) {
@@ -908,6 +921,15 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AUTOR_AN);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
+        
+        ALLPLACEHOLDERS.add(RG_NR);
+        ALLPLACEHOLDERS.add(RG_NAME);
+        ALLPLACEHOLDERS.add(RG_BESCHR);
+        ALLPLACEHOLDERS.add(RG_DTFAELLIG);
+        ALLPLACEHOLDERS.add(RG_DTLZVON);
+        ALLPLACEHOLDERS.add(RG_DTLZBIS);
+        ALLPLACEHOLDERS.add(RG_DTERSTELLT);
+        ALLPLACEHOLDERS.add(RG_TOTAL);
 
         return ALLPLACEHOLDERS;
     }

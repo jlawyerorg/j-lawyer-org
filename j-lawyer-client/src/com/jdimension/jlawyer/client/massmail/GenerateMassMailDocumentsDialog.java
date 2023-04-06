@@ -791,9 +791,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyPressed(evt);
             }
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtTemplateFilterKeyTyped(evt);
-            }
         });
 
         jLabel3.setText("Filter:");
@@ -995,7 +992,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             partiesTriplets.add(triplet);
                         }
 
-                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
+                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null);
                         
                         for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
@@ -1036,9 +1033,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         }
 
     }//GEN-LAST:event_txtTemplateFilterKeyPressed
-
-    private void txtTemplateFilterKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateFilterKeyTyped
-    }//GEN-LAST:event_txtTemplateFilterKeyTyped
 
     private void highlightTree(String templateQuery) {
         try {
@@ -1109,7 +1103,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null);
 
                 for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
