@@ -833,7 +833,7 @@ public class BeaAccess {
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(50, MemoryUnit.MB)
                             .disk(1000, MemoryUnit.MB, true)
-            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
+            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
         } catch (Throwable t) {
             log.error(t);
         }
@@ -843,7 +843,7 @@ public class BeaAccess {
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(100, MemoryUnit.MB)
                             .disk(250, MemoryUnit.MB, true)
-            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
+            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
 
         } catch (Throwable t) {
             log.error(t);
