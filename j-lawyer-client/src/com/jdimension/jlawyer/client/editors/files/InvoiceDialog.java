@@ -1516,13 +1516,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         //HeaderRow
         ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
         ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
-            ct.setRowBold(0, true);
-        } else {
-            ct.setRowBold(0, false);
-        }
-
-        
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
 
         //FooterRow
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
@@ -1530,13 +1524,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         } else {
             ct.setRowBold(footerRow, false);
         }
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true)) {
-            //ct.getCellAt(footerRow, 1).setUnderline(true);
-            ct.getCellAt(footerRow, 2).setUnderline(true);
-        } else {
-            //ct.getCellAt(footerRow, 1).setUnderline(false);
-            ct.getCellAt(footerRow, 2).setUnderline(false);
-        }
+        ct.getCellAt(footerRow, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
+        
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
             if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
                 ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(true);
@@ -1568,11 +1557,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(1, 120);
         ct.setColumnWidth(2, 35);
         ct.setFontFamily("Arial");
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
-            ct.setLineBorder(true);
-        } else {
-            ct.setLineBorder(false);
-        }
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
         ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));

@@ -2688,7 +2688,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }
     
     private DefaultMutableTreeNode findFolder(DefaultMutableTreeNode node, long folderId, String safeId) {
-        if(node.getUserObject()!=null && node.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
+        if(node.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
             org.jlawyer.bea.model.Folder f=(org.jlawyer.bea.model.Folder)node.getUserObject();
             if(f.getId()==folderId && f.getSafeId().equals(safeId))
                 return node;

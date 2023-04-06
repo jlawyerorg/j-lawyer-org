@@ -688,6 +688,8 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  * @author jens
  */
 public class PlaceHolderServerUtils extends PlaceHolders  {
+    
+    private static String DATE_FORMAT="dd.MM.yyyy";
 
     public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception {
 
@@ -701,7 +703,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         }
         
         if (placeHolders.containsKey(KURZDATUM)) {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
             placeHolders.put(KURZDATUM, df.format(new Date()));
         }
 
@@ -1020,7 +1022,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             }
             if (placeHolders.containsKey(AKTE_ERSTELLT)) {
                 if(aFile.getDateCreated()!=null) {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+                    SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
                     placeHolders.put(AKTE_ERSTELLT, df.format(aFile.getDateCreated()));
                 } else {
                     placeHolders.put(AKTE_ERSTELLT, "");
@@ -1038,7 +1040,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         }
         
         if (invoice != null) {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
             if (placeHolders.containsKey(RG_BESCHR)) {
                 placeHolders.put(RG_BESCHR, val(invoice.getDescription()));
             }
@@ -1065,9 +1067,8 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             }
         }
         
-        if (placeHolders.containsKey(RG_TABELLE)) {
-            if(invoiceTable!=null)
-                placeHolders.put(RG_TABELLE, invoiceTable);
+        if (placeHolders.containsKey(RG_TABELLE) && invoiceTable!=null) {
+            placeHolders.put(RG_TABELLE, invoiceTable);
         }
         
         return placeHolders;
