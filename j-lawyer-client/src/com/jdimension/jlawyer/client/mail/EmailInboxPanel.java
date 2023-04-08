@@ -1555,16 +1555,39 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     * resets the caches of the currently selected folder
     should be invoked after a change that manipulates the name or the number of messages or unread messages in the folder
     */
-    private void resetCacheForSelectedFolder() {
-        if(this.treeFolders.getSelectionPath() != null) {
-            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-
-            if (selNode!= null && selNode.getUserObject() instanceof FolderContainer) {
-                FolderContainer folderC = (FolderContainer) selNode.getUserObject();
-                folderC.resetCaches();
+    private void resetCacheForSelectedFolder(Folder folder) {
+        DefaultMutableTreeNode selNode = null;
+        if (this.treeFolders.getSelectionPath() != null) {
+            selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        } else {
+            selNode = this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), folder);
+        }
+        if (selNode != null && selNode.getUserObject() instanceof FolderContainer) {
+            FolderContainer folderC = (FolderContainer) selNode.getUserObject();
+            folderC.resetCaches();
+        }
+    }
+    
+    private DefaultMutableTreeNode findFolder(DefaultMutableTreeNode node, Folder f) {
+        if(f==null)
+            return null;
+        
+        if(node.getUserObject() instanceof FolderContainer) {
+            Folder fo=((FolderContainer)node.getUserObject()).getFolder();
+            try {
+                if (f.getURLName().toString().equals(fo.getURLName().toString())) {
+                    return node;
+                }
+            } catch (Throwable t) {
+                log.error("cannot compare folders, #getURLName raises exception", t);
             }
         }
-        
+        for(int i=0;i<node.getChildCount();i++) {
+            DefaultMutableTreeNode c=findFolder((DefaultMutableTreeNode)node.getChildAt(i), f);
+            if(c!=null)
+                return c;
+        }
+        return null;
     }
     
     private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow, String searchTerm) {
@@ -1821,33 +1844,30 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_tblMailsMousePressed
 
     private void mnuMarkReadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkReadActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        for (int sel : selected) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
-            try {
-                msgC.setRead(true);
-                this.tblMails.setValueAt(msgC, sel, 0);
-            } catch (MessagingException ex) {
-                log.error(ex);
-            }
-        }
-        this.resetCacheForSelectedFolder();
+        this.markAsRead(true);
     }//GEN-LAST:event_mnuMarkReadActionPerformed
 
     private void mnuMarkUnreadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkUnreadActionPerformed
+        this.markAsRead(false);
+    }//GEN-LAST:event_mnuMarkUnreadActionPerformed
+
+    private void markAsRead(boolean read) {
         int[] selected = this.tblMails.getSelectedRows();
+        Folder folder=null;
         for (int sel : selected) {
             MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
+            if(folder==null && msgC!=null)
+                folder=msgC.getMessage().getFolder();
             try {
-                msgC.setRead(false);
+                msgC.setRead(read);
                 this.tblMails.setValueAt(msgC, sel, 0);
             } catch (MessagingException ex) {
                 log.error(ex);
             }
         }
-        this.resetCacheForSelectedFolder();
-    }//GEN-LAST:event_mnuMarkUnreadActionPerformed
-
+        this.resetCacheForSelectedFolder(folder);
+    }
+    
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
         Folder expungeFolder = null;
@@ -1994,8 +2014,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 sortCol = sortKeys.get(0).getColumn();
             }
         }
-        this.resetCacheForSelectedFolder();
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
+        this.resetCacheForSelectedFolder(expungeFolder);
+        TreePath selectedPath=this.treeFolders.getSelectionPath();
+        if(selectedPath==null) {
+            DefaultMutableTreeNode selectedFolder=this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), expungeFolder);
+            selectedPath=new TreePath(selectedFolder.getPath());
+        }
+        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null);
 
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
@@ -2976,7 +3001,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 }
                 
-                this.resetCacheForSelectedFolder();
+                this.resetCacheForSelectedFolder(m.getFolder());
 
                 if (closed) {
                     EmailUtils.closeIfIMAP(f);
