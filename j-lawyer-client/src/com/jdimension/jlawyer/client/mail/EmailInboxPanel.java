@@ -2020,9 +2020,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         TreePath selectedPath=this.treeFolders.getSelectionPath();
         if(selectedPath==null) {
             DefaultMutableTreeNode selectedFolder=this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), expungeFolder);
-            selectedPath=new TreePath(selectedFolder.getPath());
+            if(selectedFolder!=null)
+                selectedPath=new TreePath(selectedFolder.getPath());
         }
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null);
+        
+        if(selectedPath!=null)
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null);
 
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
