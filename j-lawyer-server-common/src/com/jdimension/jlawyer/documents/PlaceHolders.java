@@ -785,6 +785,7 @@ public class PlaceHolders {
     public static final String RG_DTLZBIS = "{{RG_DTLZBIS}}";
     public static final String RG_DTERSTELLT = "{{RG_DTERSTELLT}}";
     public static final String RG_TOTAL = "{{RG_TOTAL}}";
+    public static final String RG_WHRG = "{{RG_WHRG}}";
     public static final String RG_TABELLE = "{{RG_TABELLE}}";
     
 
@@ -930,6 +931,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(RG_DTLZBIS);
         ALLPLACEHOLDERS.add(RG_DTERSTELLT);
         ALLPLACEHOLDERS.add(RG_TOTAL);
+        ALLPLACEHOLDERS.add(RG_WHRG);
 
         return ALLPLACEHOLDERS;
     }

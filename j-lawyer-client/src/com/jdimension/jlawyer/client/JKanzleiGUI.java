@@ -1092,6 +1092,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance = new javax.swing.JMenu();
         mnuInvoicePools = new javax.swing.JMenuItem();
         mnuInvoiceTypes = new javax.swing.JMenuItem();
+        mnuInvoiceCurrencies = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1658,6 +1659,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuInvoiceTypes);
+
+        mnuInvoiceCurrencies.setFont(mnuInvoiceCurrencies.getFont());
+        mnuInvoiceCurrencies.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoiceCurrencies.setText("Währungen");
+        mnuInvoiceCurrencies.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoiceCurrenciesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoiceCurrencies);
 
         mnuOptions.add(mnuFinance);
         mnuOptions.add(jSeparator2);
@@ -2576,6 +2587,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuInvoiceTypesActionPerformed
 
+    private void mnuInvoiceCurrenciesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceCurrenciesActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Währungen");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuInvoiceCurrenciesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2650,6 +2669,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuForum;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JMenuItem mnuInvoiceCurrencies;
     private javax.swing.JMenuItem mnuInvoicePools;
     private javax.swing.JMenuItem mnuInvoiceTypes;
     private javax.swing.JMenuItem mnuMailboxSettings;

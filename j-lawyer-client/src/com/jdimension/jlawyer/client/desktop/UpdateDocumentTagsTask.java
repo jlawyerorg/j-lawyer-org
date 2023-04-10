@@ -664,12 +664,10 @@
 package com.jdimension.jlawyer.client.desktop;
 
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchPanel;
-import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -692,7 +690,9 @@ public class UpdateDocumentTagsTask extends java.util.TimerTask {
     //private QuickArchiveFileSearchPanel p2;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of UpdateDocumentTagsTask
+     * @param owner
+     * @param p1
      */
     public UpdateDocumentTagsTask(Component owner, QuickArchiveFileSearchPanel p1) {
         super();
@@ -702,6 +702,7 @@ public class UpdateDocumentTagsTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
         final List<String> tagsInUse2;
         try {
@@ -730,27 +731,12 @@ public class UpdateDocumentTagsTask extends java.util.TimerTask {
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.error"));
             return;
         }
 
         try {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-
-                    p1.populateDocumentTags(tagsInUse2);
-                    //p2.populateTags(tagsInUse2);
-
-//                DefaultListModel dm=new DefaultListModel();
-//                myListUI.setModel(dm);
-//                myListUI.setCellRenderer(new MyListCellRenderer());
-//                dm.removeAllElements();
-//                for(ArchiveFileBean aFile:myList) {
-//                    dm.addElement(aFile.getFileNumber() + " - " + aFile.getName());
-//                    
-//                }
-                }
+            SwingUtilities.invokeLater(() -> {
+                p1.populateDocumentTags(tagsInUse2);
             });
         } catch (Throwable t) {
             log.error(t);

@@ -683,7 +683,14 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByName", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByCreationDate", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.creationDate = :creationDate")})
 public class ArchiveFileDocumentsBean implements Serializable {
+    
     private static final long serialVersionUID = 1L;
+    
+    // default for new documents or documents not typed before
+    public static final int TYPE_GENERIC=10;
+    // invoices etc.
+    public static final int TYPE_RECEIPT=20;
+    
     @Id
     @Basic(optional = false)
     @Column(name = "id")
@@ -723,6 +730,9 @@ public class ArchiveFileDocumentsBean implements Serializable {
     protected int highlight1=Integer.MIN_VALUE;
     @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -2147483648")
     protected int highlight2=Integer.MIN_VALUE;
+    
+    @Column(name = "document_type", columnDefinition = "INTEGER DEFAULT 10")
+    protected long documentType=TYPE_GENERIC;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -946,6 +956,20 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setHighlight2(int highlight2) {
         this.highlight2 = highlight2;
+    }
+
+    /**
+     * @return the documentType
+     */
+    public long getDocumentType() {
+        return documentType;
+    }
+
+    /**
+     * @param documentType the documentType to set
+     */
+    public void setDocumentType(long documentType) {
+        this.documentType = documentType;
     }
     
 }

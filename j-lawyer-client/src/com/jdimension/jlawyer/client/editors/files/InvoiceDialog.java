@@ -678,11 +678,13 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
@@ -744,6 +746,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
         this.lblInvoicePositions.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblInvoiceDocument.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
 
         BoxLayout boxLayout = new BoxLayout(this.pnlInvoicePositions, BoxLayout.Y_AXIS);
@@ -765,6 +768,22 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             log.error("Error determining invoice pools", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        
+        DefaultComboBoxModel<String> dmCurrencies = new DefaultComboBoxModel<>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AppOptionGroupBean[] currencyDtos = locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+            for (AppOptionGroupBean cur : currencyDtos) {
+                dmCurrencies.addElement(cur.getValue());
+            }
+            this.cmbCurrency.setModel(dmCurrencies);
+
+        } catch (Exception ex) {
+            log.error("Error determining invoice currencies", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Währungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        String lastCurrency=UserSettings.getInstance().getSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, "EUR");
+        this.cmbCurrency.setSelectedItem(lastCurrency);
 
         DefaultComboBoxModel dmTypes = new DefaultComboBoxModel();
         try {
@@ -875,6 +894,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             } else {
                 this.lblRecipient.setText("");
             }
+            this.cmbCurrency.setSelectedItem(invoice.getCurrency());
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -953,6 +973,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         jLabel9 = new javax.swing.JLabel();
         cmbInvoiceType = new javax.swing.JComboBox<>();
         cmdCreateInvoiceDocument = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
+        lblInvoiceDocument = new javax.swing.JLabel();
+        cmdViewDocument = new javax.swing.JButton();
+        cmdNavigateToDocument = new javax.swing.JButton();
+        cmbCurrency = new javax.swing.JComboBox<>();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -1166,12 +1191,24 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        cmdCreateInvoiceDocument.setText("jButton1");
+        cmdCreateInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdCreateInvoiceDocument.setToolTipText("Dokument erzeugen");
         cmdCreateInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCreateInvoiceDocumentActionPerformed(evt);
             }
         });
+
+        lblInvoiceDocument.setFont(lblInvoiceDocument.getFont().deriveFont(lblInvoiceDocument.getFont().getStyle() | java.awt.Font.BOLD, lblInvoiceDocument.getFont().getSize()-2));
+        lblInvoiceDocument.setText("Rechnungsdokument");
+
+        cmdViewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdViewDocument.setToolTipText("Dokument anzeigen");
+
+        cmdNavigateToDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_forward.png"))); // NOI18N
+        cmdNavigateToDocument.setToolTipText("zum Dokument wechseln");
+
+        cmbCurrency.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1197,36 +1234,51 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSearchRecipient))
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(dtDue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDateDue))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(dtCreated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDateCreated))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(dtFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDatePeriodFrom)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(dtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDatePeriodTo))))
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(dtCreated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdDateCreated))
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(dtFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdDatePeriodFrom)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(dtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdDatePeriodTo))
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(dtDue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(cmbCurrency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addGap(12, 12, 12)
+                                                .addComponent(chkSmallBusiness))
+                                            .addComponent(cmdDateDue))))
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(jSeparator1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdRemoveAllPositions))
+                    .addComponent(jSeparator2)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkSmallBusiness)
                             .addComponent(lblInvoicePositions)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(cmdAddPosition)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdCalculation))
-                            .addComponent(cmdCreateInvoiceDocument, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lblInvoiceDocument)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(cmdCreateInvoiceDocument)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdViewDocument)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdNavigateToDocument)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1267,21 +1319,28 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     .addComponent(jLabel5)
                     .addComponent(cmdDateDue))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkSmallBusiness)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkSmallBusiness)
+                    .addComponent(cmbCurrency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(lblInvoicePositions)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(cmdAddPosition)
-                            .addComponent(cmdCalculation)))
-                    .addComponent(cmdRemoveAllPositions))
+                .addComponent(lblInvoicePositions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdCreateInvoiceDocument)
-                .addContainerGap(17, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdAddPosition)
+                    .addComponent(cmdCalculation)
+                    .addComponent(cmdRemoveAllPositions))
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblInvoiceDocument)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdCreateInvoiceDocument)
+                    .addComponent(cmdNavigateToDocument)
+                    .addComponent(cmdViewDocument))
+                .addContainerGap(80, Short.MAX_VALUE))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1339,7 +1398,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)
+                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 637, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1368,14 +1427,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         if (this.cmbInvoicePool.isEnabled()) {
             // user confirmed invoice creation or update
 
+            UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
             if (this.currentEntry == null) {
                 // creation
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(this.caseDto.getId(), this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
+                    Invoice newInvoice = locator.lookupArchiveFileServiceRemote().addInvoice(this.caseDto.getId(), this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem(), this.cmbCurrency.getSelectedItem().toString());
                     this.setEntry(newInvoice);
-
+                    
                 } catch (Exception ex) {
                     log.error("Error creating invoice", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1458,6 +1518,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         try {
+            UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
+            
             this.currentEntry.setDescription(this.taDescription.getText());
             this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
             this.currentEntry.setName(this.txtName.getText());
@@ -1466,6 +1528,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
             this.currentEntry.setSmallBusiness(this.chkSmallBusiness.isSelected());
             this.currentEntry.setContact(this.recipientAddress);
+            this.currentEntry.setCurrency(this.cmbCurrency.getSelectedItem().toString());
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), currentEntry);
@@ -1698,6 +1761,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkSmallBusiness;
+    private javax.swing.JComboBox<String> cmbCurrency;
     private javax.swing.JComboBox<String> cmbInvoicePool;
     private javax.swing.JComboBox<String> cmbInvoiceType;
     private javax.swing.JComboBox<String> cmbStatus;
@@ -1710,9 +1774,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdDateDue;
     private javax.swing.JButton cmdDatePeriodFrom;
     private javax.swing.JButton cmdDatePeriodTo;
+    private javax.swing.JButton cmdNavigateToDocument;
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchRecipient;
+    private javax.swing.JButton cmdViewDocument;
     private javax.swing.JTextField dtCreated;
     private javax.swing.JTextField dtDue;
     private javax.swing.JTextField dtFrom;
@@ -1732,7 +1798,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JPanel lblHeader;
+    private javax.swing.JLabel lblInvoiceDocument;
     private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblInvoicePositions;
     private javax.swing.JLabel lblInvoiceTax;

@@ -739,6 +739,13 @@ public class Invoice implements Serializable {
     
     @Column(name = "total")
     protected float total=0f;
+    
+    @JoinColumn(name = "invoice_document", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    protected ArchiveFileDocumentsBean invoiceDocument;
+    
+    @Column(name = "currency")
+    protected String currency="EUR";
 
     public Invoice() {
     }
@@ -997,6 +1004,34 @@ public class Invoice implements Serializable {
      */
     public void setTotal(float total) {
         this.total = total;
+    }
+
+    /**
+     * @return the invoiceDocument
+     */
+    public ArchiveFileDocumentsBean getInvoiceDocument() {
+        return invoiceDocument;
+    }
+
+    /**
+     * @param invoiceDocument the invoiceDocument to set
+     */
+    public void setInvoiceDocument(ArchiveFileDocumentsBean invoiceDocument) {
+        this.invoiceDocument = invoiceDocument;
+    }
+
+    /**
+     * @return the currency
+     */
+    public String getCurrency() {
+        return currency;
+    }
+
+    /**
+     * @param currency the currency to set
+     */
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
     
 }

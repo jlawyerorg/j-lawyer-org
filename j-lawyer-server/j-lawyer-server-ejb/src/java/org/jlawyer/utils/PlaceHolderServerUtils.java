@@ -1065,6 +1065,9 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(RG_TOTAL)) {
                 placeHolders.put(RG_TOTAL, currencyFormat.format(invoice.getTotal()));
             }
+            if (placeHolders.containsKey(RG_WHRG)) {
+                placeHolders.put(RG_WHRG, val(invoice.getCurrency()));
+            }
         }
         
         if (placeHolders.containsKey(RG_TABELLE) && invoiceTable!=null) {

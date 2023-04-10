@@ -4665,7 +4665,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception {
+    public Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
@@ -4708,6 +4708,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setSmallBusiness(pool.isSmallBusiness());
             i.setInvoiceType(iType);
             i.setTotal(0f);
+            i.setCurrency(currency);
 
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -4930,6 +4931,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setPeriodTo(invoice.getPeriodTo());
             updatedInvoice.setStatus(invoice.getStatus());
             updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
+            updatedInvoice.setCurrency(invoice.getCurrency());
 
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
@@ -5066,6 +5068,39 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return result;
         
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeInvoice(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.invoicesFacade.remove(invoice);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
     }
 
 }
