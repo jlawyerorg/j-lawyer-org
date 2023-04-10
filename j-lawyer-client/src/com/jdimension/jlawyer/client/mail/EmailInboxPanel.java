@@ -1858,11 +1858,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
             if(folder==null && msgC!=null)
                 folder=msgC.getMessage().getFolder();
-            try {
-                msgC.setRead(read);
-                this.tblMails.setValueAt(msgC, sel, 0);
-            } catch (MessagingException ex) {
-                log.error(ex);
+            if (msgC != null) {
+                try {
+                    msgC.setRead(read);
+                    this.tblMails.setValueAt(msgC, sel, 0);
+                } catch (MessagingException ex) {
+                    log.error(ex);
+                }
             }
         }
         this.resetCacheForSelectedFolder(folder);
