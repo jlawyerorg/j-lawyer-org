@@ -682,7 +682,9 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -700,6 +702,7 @@ import static javafx.concurrent.Worker.State.FAILED;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
+import javax.imageio.ImageIO;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.InternetAddress;
@@ -1319,6 +1322,40 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         recursiveLoadInlineImages(contentTest, cids);
                     } catch (Throwable t) {
                         log.error("Unable to load inline image(s)", t);
+                    }
+                } else {
+                    if(mimePart.getContentID()!=null) {
+                        if(mimePart.getContentType()!=null && mimePart.getContentType().toLowerCase().contains("image")) {
+                            String contentId = mimePart.getContentID();
+                            if(contentId.startsWith("<"))
+                                contentId=contentId.substring(1);
+                            if(contentId.endsWith(">"))
+                                contentId=contentId.substring(0, contentId.length()-1);
+                            InputStream inStream = part.getInputStream();
+                            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                            byte[] tempBuffer = new byte[4096];// 4 KB
+                            int numRead;
+                            while ((numRead = inStream.read(tempBuffer)) != -1) {
+                                outStream.write(tempBuffer);
+                            }
+                            inStream.close();
+                            outStream.close();
+                            byte[] resultBytes=outStream.toByteArray();
+                            
+                            if(mimePart.getContentType()!=null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
+                                // read a jpeg from a inputFile
+                                InputStream is = new ByteArrayInputStream(resultBytes);
+                                BufferedImage bufferedImage = ImageIO.read(is);
+
+                                // this writes the bufferedImage into a byte array called resultingBytes
+                                ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+                                ImageIO.write(bufferedImage, "png", byteArrayOut);
+                                resultBytes = byteArrayOut.toByteArray();
+                            }
+                            
+                            
+                            cids.put(contentId, resultBytes);
+                        }
                     }
                 }
 
