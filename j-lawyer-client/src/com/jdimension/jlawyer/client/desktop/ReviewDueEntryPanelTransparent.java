@@ -715,7 +715,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private String doneDescription = "";
     private String unDoneDescription = "";
     
-    private static final Color OVERDUE_COLOR=DefaultColorTheme.COLOR_LOGO_RED.brighter().brighter();
+    private static final Color OVERDUE_RESPITE_COLOR=DefaultColorTheme.COLOR_LOGO_RED.brighter().brighter();
+    private static final Color OVERDUE_REVIEW_COLOR=Color.ORANGE;
     
     private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
     private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
@@ -835,7 +836,11 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
         if (!sameDay) {
             // not today, must be overdue
-            this.lblDescription.setForeground(OVERDUE_COLOR);
+            if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                this.lblDescription.setForeground(OVERDUE_RESPITE_COLOR);
+            } else {
+                this.lblDescription.setForeground(OVERDUE_REVIEW_COLOR);
+            }
         } else {
             this.lblDescription.setForeground(Color.WHITE);
         }
@@ -880,7 +885,11 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
         if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
             this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
-            this.lblResponsible.setForeground(OVERDUE_COLOR);
+            if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                this.lblResponsible.setForeground(OVERDUE_RESPITE_COLOR);
+            } else {
+                this.lblResponsible.setForeground(OVERDUE_REVIEW_COLOR);
+            }
         }
 
         this.lblTags.setText("");
