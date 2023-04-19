@@ -704,8 +704,13 @@ import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -714,6 +719,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.Icon;
@@ -735,16 +741,32 @@ import themes.colors.DefaultColorTheme;
 public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jlawyer.client.events.EventConsumer {
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
+    
+    
+    
     private boolean initializing = false;
+    private List<Rectangle> monitorBounds;
+    private long initialized=Long.MIN_VALUE;
 
-    //private ModuleBar moduleBar=new ModuleBar();
     /**
      * Creates new form JKanzleiGUI
      */
     public JKanzleiGUI() {
         this.initializing = true;
+        
+        // Load the frame bounds for each monitor from preferences
+        monitorBounds = getMonitorBounds();
+        Rectangle targetBounds=this.restoreWindowSize();
+        
+        this.initialized=System.currentTimeMillis();
+        // for some reason, initComponents resets the bounds
         initComponents();
+        if(targetBounds!=null)
+            this.setBounds(targetBounds);
         this.lblNewsStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        
+        
+
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
@@ -759,8 +781,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
 
-//        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
-//        this.scrollMain.getHorizontalScrollBar().setUnitIncrement(16);
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         if ("0".equalsIgnoreCase(randomBackgrounds)) {
@@ -768,15 +788,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else {
             this.mnuChkRandomBackground.setSelected(true);
         }
-//        String h = settings.getConfiguration(ClientSettings.CONF_HEIGHT, "600");
-//        String w = settings.getConfiguration(ClientSettings.CONF_WIDTH, "900");
-//        double wd = Double.parseDouble(w);
-//        double hd = Double.parseDouble(h);
-//        this.setSize((int) wd, (int) hd);
-        setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
-//        this.doLayout();
-//        this.pack();
-        //FrameUtils.centerFrame(this, null);
+        //setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 
         ModuleMetadata rootModule = settings.getRootModule();
 
@@ -784,35 +796,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         registry.setMainEditorsPane(this.jPanel1);
 
         DefaultTreeModel model = new DefaultTreeModel(rootModule);
-//        this.treeModules.setModel(model);
-
-//        this.treeModules.setCellRenderer(new ModuleTreeCellRenderer());
-//        NavigationUtils navUtils = NavigationUtils.getInstance();
-//        navUtils.setTreeModules(this.treeModules);
-//        this.treeModules.setSelectionPath(treeModules.getPathForRow(1).getParentPath());
-//        ComponentUtils.expandTree(this.treeModules);
-//        this.moduleBar.addModule(rootModule);
-//        for(int i=0;i<rootModule.getChildCount();i++) {
-//            ModuleMetadata folderMod=(ModuleMetadata)rootModule.getChildAt(i);
-//            for(int k=0;k<folderMod.getChildCount();k++) {
-//                this.moduleBar.addModule((ModuleMetadata)folderMod.getChildAt(k));
-//            }
-//        }
-//        this.moduleBar.doLayout();
-//        
-//        this.scrollModules.add(this.moduleBar);
-//        this.scrollModules.doLayout();
-//        EditorsRegistry registry = EditorsRegistry.getInstance();
-//        registry.setMainEditorsPane(this.scrollMain);
         registry.setStatusLabel(this.statusLabel);
 
-//        try {
-//            MainPanel mainPanel = (MainPanel) EditorsRegistry.getInstance().getEditor(MainPanel.class.getName());
-//            mainPanel.setAddressCount(initialAddressCount);
-//            mainPanel.setArchiveFileCount(initialArchiveFileCount);
-//        } catch (Exception ex) {
-//            log.error(ex);
-//        }
         // will initialize the system tray icon for the first time
         SwingUtilities.invokeLater(() -> {
             SystrayUtils.getInstance();
@@ -868,6 +853,101 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         }));
 
+    }
+    
+    public Rectangle restoreWindowSize() {
+        ClientSettings cs=ClientSettings.getInstance();
+        int lastMonitorIndex = Integer.parseInt(cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS + ".monitorIndex", "0"));
+        Rectangle lastBounds = null;
+        String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
+        if (lastBoundsString != null) {
+            lastBounds = this.rectangleFromBoundsString(lastBoundsString);
+        }
+        Rectangle targetBounds=null;
+        for (int i = 0; i < monitorBounds.size(); i++) {
+            String boundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS + "." + i, null);
+            if (boundsString != null) {
+                Rectangle bounds = this.rectangleFromBoundsString(boundsString);
+                if (i == lastMonitorIndex && lastBounds != null) {
+                    // If the frame was previously located on this monitor, center it on the same monitor
+                    bounds.x = lastBounds.x + (lastBounds.width - bounds.width) / 2;
+                    bounds.y = lastBounds.y + (lastBounds.height - bounds.height) / 2;
+                } else {
+                    // Otherwise, center it on the current monitor
+                    centerFrameOnScreen(bounds);
+                }
+                targetBounds=getIntersectingBounds(bounds, monitorBounds.get(i));
+                this.setBounds(targetBounds);
+            } else {
+                // Center the frame on the current monitor if no saved bounds were found
+                centerFrameOnScreen(monitorBounds.get(i));
+            }
+        }
+        return targetBounds;
+    }
+    
+    private void saveFrameBounds() {
+        ClientSettings cs=ClientSettings.getInstance();
+        int monitorIndex = getMonitorIndex(this.getBounds(), monitorBounds);
+        Rectangle bounds = this.getBounds();
+        Rectangle intersectingBounds = getIntersectingBounds(bounds, monitorBounds.get(monitorIndex));
+        String boundsString = intersectingBounds.x + "," + intersectingBounds.y + ","
+                + intersectingBounds.width + "," + intersectingBounds.height;
+        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS + "." + monitorIndex, boundsString);
+        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS + ".monitorIndex", ""+monitorIndex);
+        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS, boundsString);
+    }
+
+    
+    private List<Rectangle> getMonitorBounds() {
+        List<Rectangle> boundsList = new ArrayList<>();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] devices = ge.getScreenDevices();
+        for (GraphicsDevice device : devices) {
+            GraphicsConfiguration gc = device.getDefaultConfiguration();
+            boundsList.add(gc.getBounds());
+        }
+        return boundsList;
+    }
+
+    private int getMonitorIndex(Rectangle bounds, List<Rectangle> monitorBounds) {
+        for (int i = 0; i < monitorBounds.size(); i++) {
+            if (bounds.intersects(monitorBounds.get(i))) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    private Rectangle getIntersectingBounds(Rectangle bounds1, Rectangle bounds2) {
+        int x = Math.max(bounds1.x, bounds2.x);
+        int y = Math.max(bounds1.y, bounds2.y);
+        int width = Math.min(bounds1.x + bounds1.width, bounds2.x + bounds2.width) - x;
+        int height = Math.min(bounds1.y + bounds1.height, bounds2.y + bounds2.height) - y;
+        return new Rectangle(x, y, width, height);
+    }
+
+    private void centerFrameOnScreen(Rectangle bounds) {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (screenSize.width - bounds.width) / 2;
+        int y = (screenSize.height - bounds.height) / 2;
+        bounds.setLocation(x, y);
+    }
+    
+    private Rectangle rectangleFromBoundsString(String boundsStr) {
+        try {
+            String[] boundsParts = boundsStr.split(",");
+            int x = Integer.parseInt(boundsParts[0]);
+            int y = Integer.parseInt(boundsParts[1]);
+            int width = Integer.parseInt(boundsParts[2]);
+            int height = Integer.parseInt(boundsParts[3]);
+            Rectangle bounds = new Rectangle();
+            bounds.setBounds(x, y, width, height);
+            return bounds;
+        } catch (Exception e) {
+            log.error("unable to get rectangle from string: " + boundsStr, e);
+            return null;
+        }
     }
 
     public void buildModuleBar() {
@@ -1124,6 +1204,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         setTitle(bundle.getString("title")); // NOI18N
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
         addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
@@ -2030,10 +2113,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAdminConsoleActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        if (!this.initializing) {
-            ClientSettings s = ClientSettings.getInstance();
-            s.setConfiguration(ClientSettings.CONF_HEIGHT, "" + this.getSize().getHeight());
-            s.setConfiguration(ClientSettings.CONF_WIDTH, "" + this.getSize().getWidth());
+        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+            saveFrameBounds();
         }
     }//GEN-LAST:event_formComponentResized
 
@@ -2594,6 +2675,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuInvoiceCurrenciesActionPerformed
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+            saveFrameBounds();
+        }
+    }//GEN-LAST:event_formComponentMoved
 
     /**
      * @param args the command line arguments
