@@ -588,7 +588,8 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Rechnungsnummernkreise"/>
+                    <Property name="text" type="java.lang.String" value="Nummernkreise"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Nummernkreise f&#xfc;r alle Belegarten"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoicePoolsActionPerformed"/>
@@ -619,6 +620,28 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoiceCurrenciesActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuInvoiceTaxRates">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/file_doc.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Steuers&#xe4;tze"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoiceTaxRatesActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuInvoicePositionTemplates">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/file_doc.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Belegpositionen (Vorlagen)"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuInvoicePositionTemplatesActionPerformed"/>
                   </Events>
                 </MenuItem>
               </SubComponents>

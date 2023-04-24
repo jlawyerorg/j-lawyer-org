@@ -716,6 +716,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
+    
+    protected ArchiveFileDocumentsBean addedDocument=null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null, null, null);
@@ -1381,6 +1383,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdAddActionPerformed
 
     private void addAndOpen(boolean openAfterAdd) {
+        this.addedDocument=null;
+        
         if (this.txtFileName.getText() == null || "".equals(this.txtFileName.getText()) || this.hasFileExtension(this.txtFileName.getText())) {
             JOptionPane.showMessageDialog(this, "Bitte geben Sie einen Dateinamen ohne Erweiterung ein.", "Dokument erstellen", JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -1402,13 +1406,26 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             GenericNode gn = (GenericNode) tn.getUserObject();
 
             db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
-            targetTable.addDocument(db);
+            this.addedDocument=db;
+            targetTable.addDocument(db, this.invoice);
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
             return;
+        }
+        
+        if(this.invoice!=null) {
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().linkInvoiceDocument(db.getId(), this.invoice.getId());
+            } catch (Exception ex) {
+                log.error("Error linking invoice document", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Verknüpfen von Rechnung und Dokument: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
         }
 
         if (!(this.radioReviewTypeNone.isSelected())) {
@@ -1842,5 +1859,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     public void selectedPartiesUpdated() {
         this.updateFileName();
         this.lstTemplatesMouseClicked(null);
+    }
+
+    /**
+     * @return the addedDocument
+     */
+    public ArchiveFileDocumentsBean getAddedDocument() {
+        return addedDocument;
     }
 }

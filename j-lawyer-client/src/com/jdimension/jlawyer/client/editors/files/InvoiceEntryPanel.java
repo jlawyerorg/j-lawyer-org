@@ -696,6 +696,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form InvoiceEntryPanel
+     * @param caseView
      */
     public InvoiceEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
@@ -708,10 +709,14 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.addresses=addresses;
         this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
         this.lblDueDate.setText(df.format(invoice.getDueDate()));
-        if(invoice.getDueDate().getTime()<new Date().getTime()) {
-            this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        if(invoice.getStatus()==Invoice.STATUS_CANCELLED || invoice.getStatus()==Invoice.STATUS_PAID) {
+            this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
-            this.lblDueDate.setForeground(Color.black);
+            if(invoice.getDueDate().getTime()<new Date().getTime()) {
+                this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            } else {
+                this.lblDueDate.setForeground(Color.black);
+            }
         }
         this.lblName.setText(invoice.getName());
         this.lblStatus.setText("(" + invoice.getStatusString() + ")");
@@ -753,6 +758,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         lblRecipient = new javax.swing.JLabel();
         lblInvoiceType = new javax.swing.JLabel();
         cmdDelete = new javax.swing.JButton();
+        cmdDuplicate = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
@@ -791,8 +797,21 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdDuplicate.setToolTipText("in dieser Akte duplizieren");
+        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateActionPerformed(evt);
+            }
+        });
+
         cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         cmdCopy.setToolTipText("in andere Akte kopieren");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -802,22 +821,25 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(cmdOpen)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdDuplicate)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdCopy)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdDelete)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblDueDate)
-                    .addComponent(lblInvoiceType))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblDueDate)
+                        .addGap(18, 18, 18)
                         .addComponent(lblInvoiceNumber)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblStatus)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblInvoiceType)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -828,18 +850,19 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                     .addComponent(cmdOpen)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cmdDelete)
-                        .addComponent(cmdCopy))
+                        .addComponent(cmdDuplicate))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblDueDate)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblInvoiceNumber)
-                                .addComponent(lblStatus)))
+                                .addComponent(lblStatus))
+                            .addComponent(lblDueDate))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblInvoiceType)
-                            .addComponent(lblName))))
-                .addGap(9, 9, 9)
+                            .addComponent(lblName)))
+                    .addComponent(cmdCopy))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRecipient)
                 .addContainerGap())
         );
@@ -871,10 +894,19 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
+    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
+        this.caseView.duplicateInvoice(this.caseDto.getId(), this.invoice.getId());
+    }//GEN-LAST:event_cmdDuplicateActionPerformed
+
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+        this.caseView.duplicateInvoice(null, this.invoice.getId());
+    }//GEN-LAST:event_cmdCopyActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdDelete;
+    private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdOpen;
     private javax.swing.JLabel lblDueDate;
     private javax.swing.JLabel lblInvoiceNumber;

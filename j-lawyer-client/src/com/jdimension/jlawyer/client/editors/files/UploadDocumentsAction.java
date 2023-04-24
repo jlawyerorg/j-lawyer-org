@@ -750,7 +750,7 @@ public class UploadDocumentsAction extends ProgressableAction {
                         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
 //                        persisting the folder for this document is automatically done by this call (not just UI update)
                         SwingUtilities.invokeLater(() -> {
-                            docTarget.addDocument(doc);
+                            docTarget.addDocument(doc, null);
                             if(targetFolder!=null) {
                                 ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
                                 docs.add(doc);

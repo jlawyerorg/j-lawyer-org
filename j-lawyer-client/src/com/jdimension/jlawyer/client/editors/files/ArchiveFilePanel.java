@@ -739,6 +739,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -966,6 +967,59 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public long getLastPopupClosed() {
         return this.lastPopupClosed;
     }
+    
+    public void duplicateInvoice(String caseId, String invoiceId) {
+        if(caseId==null) {
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
+            dlg.setVisible(true);
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            dlg.dispose();
+            if (sel == null) {
+                return;
+            }
+            caseId=sel.getId();
+        }
+        
+        // get invoice pool
+        ClientSettings settings = ClientSettings.getInstance();
+        DefaultComboBoxModel<InvoicePool> dmPools = new DefaultComboBoxModel<>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<InvoicePool> pools = locator.lookupInvoiceServiceRemote().getInvoicePoolsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            for (InvoicePool ip : pools) {
+                dmPools.addElement(ip);
+            }
+        } catch (Exception ex) {
+            log.error("Error determining invoice pools", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        JComboBox cmbInvoicePool = new JComboBox();
+        cmbInvoicePool.setModel(dmPools);
+        cmbInvoicePool.setSelectedIndex(1);
+        int response=JOptionPane.showConfirmDialog(null, cmbInvoicePool, "Nummernkreis für neuen Beleg",JOptionPane.CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        
+        if(response==JOptionPane.CANCEL_OPTION)
+            return;
+        
+        InvoicePool selectedPool=(InvoicePool)cmbInvoicePool.getSelectedItem();
+        
+        // duplicate and add to view, if same case
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Invoice invoiceCopy=locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool);
+            if(this.dto.getId().equals(caseId)) {
+                InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
+                ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
+                this.pnlInvoices.add(ip);
+            }
+        } catch (Exception ex) {
+            log.error("Error determining invoice pools", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
 
     public void documentSelectionChanged() {
 //        if (!evt.getValueIsAdjusting()) {
@@ -1171,6 +1225,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtCustom2.setEnabled(!readOnly && !archived);
         this.taCustom3.setEnabled(!readOnly && !archived);
 
+    }
+    
+    public ArrayList<AddressBean> getInvolvedAddresses() {
+        ArrayList<AddressBean> clients = new ArrayList<>();
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            clients.add(abean);
+        }
+        return clients;
+    }
+    
+    public ArchiveFileBean getArchiveFileDTO() {
+        return this.dto;
     }
 
     public void setArchiveFileDTO(ArchiveFileBean inDto) {
@@ -2632,7 +2698,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jLabel7.setText("Rechnungen:");
+        jLabel7.setText("Belege:");
 
         org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
         pnlInvoices.setLayout(pnlInvoicesLayout);
@@ -3634,11 +3700,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    public void newDocumentDialog(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable) {
-        this.newDocumentActionPerformedImpl(table, invoice, invoiceTable);
+    public ArchiveFileDocumentsBean newDocumentDialog(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable) {
+        return this.newDocumentActionPerformedImpl(table, invoice, invoiceTable);
     }
 
-    private void newDocumentActionPerformedImpl(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable) {
+    private ArchiveFileDocumentsBean newDocumentActionPerformedImpl(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable) {
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -3663,7 +3729,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-
+        return dlg.getAddedDocument();
     }
 
     public void saveFormData() {
@@ -3916,7 +3982,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
 
                         }
-                        caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()));
+                        caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
                         this.lastPopupClosed = System.currentTimeMillis();
 
                     } catch (Exception ioe) {
@@ -4692,7 +4758,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         } else {
                             log.warn("document folder of source document is null when duplicating as PDF/A");
                         }
-                        caseFolderPanel1.addDocument(newDoc);
+                        caseFolderPanel1.addDocument(newDoc, null);
                     } catch (Throwable t) {
                         log.error("Could not convert document to PDF", t);
                         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -5176,7 +5242,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
 
-                        caseFolderPanel1.addDocument(newDoc);
+                        caseFolderPanel1.addDocument(newDoc, null);
 
                     } catch (Exception ioe) {
                         log.error("Error duplicating document", ioe);
@@ -5708,7 +5774,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (this.dto.getId() != null) {
                     ArchiveFileDocumentsBean eventDoc = ((DocumentAddedEvent) e).getDocument();
                     if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
-                        caseFolderPanel1.addDocument(eventDoc);
+                        caseFolderPanel1.addDocument(eventDoc, null);
                     }
                 }
             }
@@ -6228,7 +6294,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ClientSettings settings = ClientSettings.getInstance();
-        EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        EditorsRegistry.getInstance().updateStatus("Akte wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 

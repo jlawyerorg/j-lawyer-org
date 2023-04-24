@@ -1603,7 +1603,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel7">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Rechnungen:"/>
+                <Property name="text" type="java.lang.String" value="Belege:"/>
               </Properties>
             </Component>
             <Container class="javax.swing.JPanel" name="pnlInvoices">

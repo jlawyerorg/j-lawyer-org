@@ -957,6 +957,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel1.setText("Nutzername:");
 
+        jTabbedPane1.setFont(jTabbedPane1.getFont());
+
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Allgemein"));
         jPanel1.setName(""); // NOI18N
 
@@ -1571,7 +1573,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Kürzel und Gruppen", jPanel9);
 
-        jLabel7.setText("Rechnungsnummernkreise:");
+        jLabel7.setText("Belegnummernkreise:");
 
         tblInvoicePools.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1607,7 +1609,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jLabel7)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 734, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
@@ -1622,7 +1624,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Rechnungen", jPanel12);
+        jTabbedPane1.addTab("Belege", jPanel12);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

@@ -35,9 +35,13 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblDictateSign" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="lblFolder" pref="117" max="32767" attributes="0"/>
+                      <Component id="lblFolder" max="32767" attributes="0"/>
                   </Group>
                   <Component id="lblFileName" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="226" pref="226" max="-2" attributes="0"/>
+                  </Group>
               </Group>
           </Group>
       </Group>
@@ -57,7 +61,8 @@
                           <Component id="lblFileSize" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="4" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+                      <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -174,6 +179,24 @@
       <Properties>
         <Property name="text" type="java.lang.String" value=" "/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblInvoice">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblInvoice" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
+        </Property>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/man.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="RG-1234"/>
+      </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblInvoiceMouseClicked"/>
+        <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblInvoiceMouseEntered"/>
+        <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblInvoiceMouseExited"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

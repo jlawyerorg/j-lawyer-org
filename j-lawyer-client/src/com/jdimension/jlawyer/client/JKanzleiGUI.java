@@ -1173,6 +1173,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuInvoicePools = new javax.swing.JMenuItem();
         mnuInvoiceTypes = new javax.swing.JMenuItem();
         mnuInvoiceCurrencies = new javax.swing.JMenuItem();
+        mnuInvoiceTaxRates = new javax.swing.JMenuItem();
+        mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1726,7 +1728,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance.setText("Finanzen");
 
         mnuInvoicePools.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
-        mnuInvoicePools.setText("Rechnungsnummernkreise");
+        mnuInvoicePools.setText("Nummernkreise");
+        mnuInvoicePools.setToolTipText("Nummernkreise für alle Belegarten");
         mnuInvoicePools.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuInvoicePoolsActionPerformed(evt);
@@ -1752,6 +1755,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuInvoiceCurrencies);
+
+        mnuInvoiceTaxRates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoiceTaxRates.setText("Steuersätze");
+        mnuInvoiceTaxRates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoiceTaxRatesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoiceTaxRates);
+
+        mnuInvoicePositionTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoicePositionTemplates.setText("Belegpositionen (Vorlagen)");
+        mnuInvoicePositionTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoicePositionTemplatesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoicePositionTemplates);
 
         mnuOptions.add(mnuFinance);
         mnuOptions.add(jSeparator2);
@@ -2682,6 +2703,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_formComponentMoved
 
+    private void mnuInvoiceTaxRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTaxRatesActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Steuersätze");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuInvoiceTaxRatesActionPerformed
+
+    private void mnuInvoicePositionTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePositionTemplatesActionPerformed
+        if (checkAdmin()) {
+                InvoicePositionTemplatesSetupDialog dlg = new InvoicePositionTemplatesSetupDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuInvoicePositionTemplatesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2758,6 +2795,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuInvoiceCurrencies;
     private javax.swing.JMenuItem mnuInvoicePools;
+    private javax.swing.JMenuItem mnuInvoicePositionTemplates;
+    private javax.swing.JMenuItem mnuInvoiceTaxRates;
     private javax.swing.JMenuItem mnuInvoiceTypes;
     private javax.swing.JMenuItem mnuMailboxSettings;
     private javax.swing.JMenuItem mnuMappingEntries;

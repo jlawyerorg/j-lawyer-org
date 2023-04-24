@@ -20,24 +20,27 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdOpen" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="cmdDuplicate" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdCopy" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdDelete" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="lblDueDate" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblInvoiceType" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="lblRecipient" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
+                      <Component id="lblDueDate" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblInvoiceNumber" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblStatus" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="lblName" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="lblInvoiceType" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblName" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -50,16 +53,16 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="cmdOpen" min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="cmdDelete" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdCopy" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDelete" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDuplicate" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="lblDueDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                               <Component id="lblInvoiceNumber" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="lblStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="lblDueDate" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -67,8 +70,9 @@
                           <Component id="lblName" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
+                  <Component id="cmdCopy" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRecipient" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -162,6 +166,17 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeleteActionPerformed"/>
       </Events>
     </Component>
+    <Component class="javax.swing.JButton" name="cmdDuplicate">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/editcopy.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="in dieser Akte duplizieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDuplicateActionPerformed"/>
+      </Events>
+    </Component>
     <Component class="javax.swing.JButton" name="cmdCopy">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -169,6 +184,9 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="in andere Akte kopieren"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

@@ -913,6 +913,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Kalender...");
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             events = calService.getReviews(this.archiveFileKey);
+            
+            this.progress("Lade Akte: Rechnungen...");
+            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
+            HashMap <String,Invoice> docToInvoice=new HashMap<>();
+            this.invoicesPanel.removeAll();
+            for(Invoice inv: invoices) {
+                if(inv.getInvoiceDocument()!=null)
+                    docToInvoice.put(inv.getInvoiceDocument().getId(), inv);
+                InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
+                ip.setEntry(this.caseDto, inv, addressesForCase);
+                this.invoicesPanel.add(ip);
+            }
+            
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
             List<String> folderIds = new ArrayList<>();
@@ -923,7 +936,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setReadOnly(readOnly || this.caseDto.getArchivedBoolean());
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCaseId(archiveFileKey);
-            caseFolders.setDocuments(new ArrayList(documents));
+            
+            //final CaseFolderPanel cfp=caseFolders;
+            //final ArrayList docList=new ArrayList(documents);
+            //SwingUtilities.invokeAndWait(() -> {
+            //    caseFolders.setDocuments(docList, docToInvoice);
+            //});
+            caseFolders.setDocuments(new ArrayList(documents), docToInvoice);
             caseFolders.sortByDateDesc();
             caseFolders.sort();
 
@@ -937,14 +956,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
             
-            this.progress("Lade Akte: Rechnungen...");
-            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
-            this.invoicesPanel.removeAll();
-            for(Invoice inv: invoices) {
-                InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
-                ip.setEntry(this.caseDto, inv, addressesForCase);
-                this.invoicesPanel.add(ip);
-            }
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

@@ -68,7 +68,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="splitMain" pref="637" max="32767" attributes="0"/>
+              <Component id="splitMain" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -183,7 +183,7 @@
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" attributes="0">
                                                       <EmptySpace min="12" pref="12" max="-2" attributes="0"/>
-                                                      <Component id="chkSmallBusiness" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="chkTaxes" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Component id="cmdDateDue" min="-2" max="-2" attributes="0"/>
                                               </Group>
@@ -194,10 +194,6 @@
                               </Group>
                           </Group>
                           <Component id="jSeparator1" max="32767" attributes="0"/>
-                          <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Component id="jSeparator2" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -206,6 +202,8 @@
                                       <Component id="cmdAddPosition" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdCalculation" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="lblInvoiceDocument" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
@@ -217,6 +215,14 @@
                                   </Group>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Group type="103" groupAlignment="1" attributes="0">
+                                  <Component id="textSearchPositionTemplate" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane3" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdApplyPositionTemplate" min="-2" pref="54" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -268,7 +274,7 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="chkSmallBusiness" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkTaxes" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmbCurrency" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -281,17 +287,29 @@
                           <Component id="cmdCalculation" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="lblInvoiceDocument" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="textSearchPositionTemplate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="cmdCreateInvoiceDocument" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdNavigateToDocument" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdViewDocument" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jScrollPane3" pref="123" max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lblInvoiceDocument" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="cmdCreateInvoiceDocument" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdNavigateToDocument" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdViewDocument" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Component id="cmdApplyPositionTemplate" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
                       </Group>
-                      <EmptySpace pref="80" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -503,27 +521,32 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/folder_new.png"/>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="leere Position hinzuf&#xfc;gen"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddPositionActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="chkSmallBusiness">
+            <Component class="javax.swing.JCheckBox" name="chkTaxes">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font component="chkSmallBusiness" property="font" relativeSize="true" size="0"/>
+                    <Font component="chkTaxes" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
                 <Property name="selected" type="boolean" value="true"/>
                 <Property name="text" type="java.lang.String" value="USt ausweisen"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkTaxesActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="cmdCalculation">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/money.png"/>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Positionen aus Berechnungsplugin &#xfc;bernehmen"/>
               </Properties>
               <Events>
                 <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdCalculationMousePressed"/>
@@ -534,6 +557,7 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/editdelete.png"/>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="alle Positionen l&#xf6;schen"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRemoveAllPositionsActionPerformed"/>
@@ -736,6 +760,9 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value="Dokument anzeigen"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdViewDocumentActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="cmdNavigateToDocument">
               <Properties>
@@ -744,6 +771,9 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value="zum Dokument wechseln"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNavigateToDocumentActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JComboBox" name="cmbCurrency">
               <Properties>
@@ -759,6 +789,47 @@
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
+            </Component>
+            <Component class="javax.swing.JTextField" name="textSearchPositionTemplate">
+              <Events>
+                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="textSearchPositionTemplateKeyReleased"/>
+              </Events>
+            </Component>
+            <Container class="javax.swing.JScrollPane" name="jScrollPane3">
+              <AuxValues>
+                <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+              </AuxValues>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+              <SubComponents>
+                <Component class="javax.swing.JList" name="lstPositionTemplates">
+                  <Properties>
+                    <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
+                      <StringArray count="5">
+                        <StringItem index="0" value="Item 1"/>
+                        <StringItem index="1" value="Item 2"/>
+                        <StringItem index="2" value="Item 3"/>
+                        <StringItem index="3" value="Item 4"/>
+                        <StringItem index="4" value="Item 5"/>
+                      </StringArray>
+                    </Property>
+                  </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JButton" name="cmdApplyPositionTemplate">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/1rightarrow.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Positionsvorlage &#xfc;bernehmen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdApplyPositionTemplateActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
@@ -776,12 +847,12 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="381" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="383" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="672" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="720" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
