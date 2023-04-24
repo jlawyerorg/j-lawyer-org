@@ -1799,6 +1799,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
+        // find invoice linked to this document and unlink it
+        List<Invoice> linkedInvoices=this.invoicesFacade.findByInvoiceDocument(db);
+        for(Invoice inv: linkedInvoices) {
+            inv.setInvoiceDocument(null);
+            this.invoicesFacade.edit(inv);
+        }
+        
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), id, db.getName());
@@ -4724,6 +4731,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setStatus(Invoice.STATUS_NEW);
 
             this.invoicesFacade.create(i);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg erstellt (" + i.getInvoiceNumber() + ", " + i.getInvoiceType().getDisplayName());
+            
             return this.invoicesFacade.find(i.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4935,6 +4945,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
+            
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -5019,6 +5032,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.invoicesFacade.edit(existingInvoice);
                 
             }
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
+            
             return this.invoicesFacade.find(existingInvoice.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -5098,9 +5114,94 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (allowed) {
             this.invoicesFacade.remove(invoice);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg gelöscht (" + invoice.getInvoiceNumber() + ", " + invoice.getInvoiceType().getDisplayName() + ")");
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void linkInvoiceDocument(String documentId, String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileDocumentsBean document=this.archiveFileDocumentsFacade.find(documentId);
+        if(document==null) {
+            log.error("Document " + documentId + " can not be found and not linked to invoice " + invoiceId);
+            throw new Exception("Dokument kann nicht gefunden werden!");
+        }
+        
+        ArchiveFileBean aFile = document.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            Invoice updatedInvoice = this.invoicesFacade.find(invoiceId);
+            
+            // check for existing linked document
+            if(updatedInvoice.getInvoiceDocument()!=null) {
+                this.removeDocument(updatedInvoice.getInvoiceDocument().getId());
+            }
+            
+            updatedInvoice.setInvoiceDocument(document);
+            this.invoicesFacade.edit(updatedInvoice);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception {
+        
+        Invoice oldInvoice=this.invoicesFacade.find(invoiceId);
+        
+        Invoice newInvoice=this.addInvoice(toCaseId, invoicePool,oldInvoice.getInvoiceType(), oldInvoice.getCurrency());
+        newInvoice.setContact(oldInvoice.getContact());
+        newInvoice.setCreationDate(new Date());
+        newInvoice.setCurrency(oldInvoice.getCurrency());
+        newInvoice.setDescription(oldInvoice.getDescription());
+        
+        Date paymentDate = new Date();
+        LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        localDateTime = localDateTime.plusDays(invoicePool.getPaymentTerm());
+        paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        newInvoice.setDueDate(paymentDate);
+        
+        newInvoice.setName("Kopie von '" + oldInvoice.getName() + "'");
+        newInvoice.setPeriodFrom(oldInvoice.getPeriodFrom());
+        newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
+        newInvoice.setStatus(Invoice.STATUS_NEW);
+        newInvoice.setTotal(oldInvoice.getTotal());
+        this.updateInvoice(toCaseId, newInvoice);
+        
+        List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(oldInvoice);
+        for(InvoicePosition pos: positions) {
+            InvoicePosition clone=new InvoicePosition();
+            clone.setDescription(pos.getDescription());
+            clone.setInvoice(newInvoice);
+            clone.setName(pos.getName());
+            clone.setPosition(pos.getPosition());
+            clone.setTaxRate(pos.getTaxRate());
+            clone.setTotal(pos.getTotal());
+            clone.setUnitPrice(pos.getUnitPrice());
+            clone.setUnits(pos.getUnits());
+            this.addInvoicePosition(newInvoice.getId(), clone);
+        }
+        
+        return this.invoicesFacade.find(newInvoice.getId());
     }
 
 }

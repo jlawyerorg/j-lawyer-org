@@ -869,4 +869,8 @@ public interface ArchiveFileServiceRemote {
 
     void removeInvoice(String invoiceId) throws Exception;
 
+    void linkInvoiceDocument(String documentId, String invoiceId) throws Exception;
+
+    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception;
+
 }

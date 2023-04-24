@@ -681,6 +681,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Invoice.findAll", query = "SELECT a FROM Invoice a"),
     @NamedQuery(name = "Invoice.findById", query = "SELECT a FROM Invoice a WHERE a.id = :id"),
     @NamedQuery(name = "Invoice.findByArchiveFileKey", query = "SELECT a FROM Invoice a WHERE a.archiveFileKey = :archiveFileKey"),
+    @NamedQuery(name = "Invoice.findByInvoiceDocument", query = "SELECT a FROM Invoice a WHERE a.invoiceDocument = :invoiceDocument"),
     @NamedQuery(name = "Invoice.findByAddress", query = "SELECT a FROM Invoice a WHERE a.contact = :contact")})
 public class Invoice implements Serializable {
     

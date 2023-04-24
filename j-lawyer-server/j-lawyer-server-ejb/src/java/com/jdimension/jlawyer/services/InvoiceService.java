@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
+import com.jdimension.jlawyer.persistence.InvoicePositionTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -703,9 +705,9 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @EJB
     private InvoicePoolAccessFacadeLocal invoicePoolAccess;
     @EJB
-    private InvoiceFacadeLocal invoiceAccess;
-    @EJB
     private InvoiceTypeFacadeLocal invoiceTypes;
+    @EJB
+    private InvoicePositionTemplateFacadeLocal posTemplates;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -721,6 +723,22 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             return s1.toUpperCase().compareTo(s2.toUpperCase());
         });
         return pools;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception {
+        List<InvoicePositionTemplate> tpls=this.posTemplates.findAll();
+        Collections.sort(tpls, (InvoicePositionTemplate arg0, InvoicePositionTemplate arg1) -> {
+            String s1=arg0.getName();
+            if(s1==null)
+                s1="";
+            String s2=arg1.getName();
+            if(s2==null)
+                s2="";
+            return s1.toUpperCase().compareTo(s2.toUpperCase());
+        });
+        return tpls;
     }
     
     @Override
@@ -755,6 +773,16 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
         return this.invoicePools.find(ipId);
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl) {
+        StringGenerator idGen = new StringGenerator();
+        String tplId = idGen.getID().toString();
+        tpl.setId(tplId);
+        this.posTemplates.create(tpl);
+        return this.posTemplates.find(tplId);
+    }
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -762,11 +790,24 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         this.invoicePools.edit(ip);
         return this.invoicePools.find(ip.getId());
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public InvoicePositionTemplate updateInvoicePositionTemplate(InvoicePositionTemplate tpl) {
+        this.posTemplates.edit(tpl);
+        return this.posTemplates.find(tpl.getId());
+    }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void removeInvoicePool(InvoicePool ip) {
         this.invoicePools.remove(ip);
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeInvoicePositionTemplate(InvoicePositionTemplate tpl) {
+        this.posTemplates.remove(tpl);
     }
 
     @Override
