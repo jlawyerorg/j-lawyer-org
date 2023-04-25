@@ -2706,7 +2706,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private void mnuInvoiceTaxRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTaxRatesActionPerformed
         OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
         dlg.setTitle("Steuersätze");
-        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICETAXRATES);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuInvoiceTaxRatesActionPerformed
