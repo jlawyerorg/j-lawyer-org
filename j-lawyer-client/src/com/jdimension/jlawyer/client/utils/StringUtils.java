@@ -664,13 +664,18 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.*;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class StringUtils extends ServerStringUtils {
+    
+    private static final Logger log=Logger.getLogger(StringUtils.class);
     
     public static boolean equals(String s1, String s2) {
         if(s1==null) {
@@ -700,6 +705,29 @@ public class StringUtils extends ServerStringUtils {
             String s1 = (String) o1;
             String s2 = (String) o2;
             return s1.toLowerCase().compareTo(s2.toLowerCase());
+        }
+    }
+    
+    public static String md5(String plaintext) {
+
+        try {
+
+            MessageDigest m = MessageDigest.getInstance("MD5");
+
+            m.reset();
+
+            m.update(plaintext.getBytes("UTF-8"));
+
+            byte[] digest = m.digest();
+
+            BigInteger bigInt = new BigInteger(1, digest);
+
+            String hashtext = bigInt.toString(16);
+
+            return hashtext;
+        } catch (Throwable t) {
+            log.error(t);
+            return "" + plaintext.hashCode();
         }
     }
     
