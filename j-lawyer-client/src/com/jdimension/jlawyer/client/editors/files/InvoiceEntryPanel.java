@@ -726,8 +726,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         tooltip.append("<br/>");
         tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
         tooltip.append("<br/><br/>");
-        tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
-        tooltip.append("<br/>");
+        if(!StringUtils.isEmpty(invoice.getDescription())) {
+            tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
+            tooltip.append("<br/>");
+        }
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
         if(invoice.getInvoiceType()!=null)
@@ -848,9 +850,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdOpen)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmdDelete)
-                        .addComponent(cmdDuplicate))
+                    .addComponent(cmdDelete)
+                    .addComponent(cmdDuplicate)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)

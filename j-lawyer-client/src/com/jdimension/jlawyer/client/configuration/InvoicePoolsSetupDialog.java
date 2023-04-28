@@ -921,7 +921,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         chkManualAdjust.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
 
         chkSmallBusiness.setFont(chkSmallBusiness.getFont());
-        chkSmallBusiness.setText("Kleinunternehmerregelung");
+        chkSmallBusiness.setText("USt ausweisen");
 
         lstPreview.setFont(lstPreview.getFont());
         lstPreview.setModel(new javax.swing.AbstractListModel<String>() {

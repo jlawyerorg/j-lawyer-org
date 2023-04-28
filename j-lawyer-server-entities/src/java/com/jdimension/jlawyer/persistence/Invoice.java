@@ -747,6 +747,9 @@ public class Invoice implements Serializable {
     
     @Column(name = "currency")
     protected String currency="EUR";
+    
+    @Column(name = "last_pool_id")
+    protected String lastPoolId;
 
     public Invoice() {
     }
@@ -1033,6 +1036,20 @@ public class Invoice implements Serializable {
      */
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    /**
+     * @return the lastPoolId
+     */
+    public String getLastPoolId() {
+        return lastPoolId;
+    }
+
+    /**
+     * @param lastPoolId the lastPoolId to set
+     */
+    public void setLastPoolId(String lastPoolId) {
+        this.lastPoolId = lastPoolId;
     }
     
 }

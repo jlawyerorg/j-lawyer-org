@@ -1504,21 +1504,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         }
     }
-
-//    private void showLinkedInvoices() {
-//        for (Component c : this.pnlDocumentEntries.getComponents()) {
-//            if (c instanceof DocumentEntryPanel) {
-//                ArchiveFileDocumentsBean docEntry = ((DocumentEntryPanel) c).getDocument();
-//                if (docEntry != null && docEntry.getId() != null) {
-//                    for (Invoice inv : this.linkedInvoices) {
-//                        if (inv.getInvoiceDocument() != null && inv.getInvoiceDocument().getId().equals(docEntry.getId())) {
-//                            ((DocumentEntryPanel) c).setLinkedInvoice(inv);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
     
     /**
      * @param documents the documents to set

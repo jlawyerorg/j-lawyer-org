@@ -4716,6 +4716,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setInvoiceType(iType);
             i.setTotal(0f);
             i.setCurrency(currency);
+            i.setLastPoolId(pool.getId());
 
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -5014,26 +5015,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             Invoice existingInvoice=this.invoicesFacade.find(invoice.getId());
-            if((existingInvoice.getInvoiceType()!=null && invoiceType==null) ||
+            boolean poolChange=(existingInvoice.getLastPoolId()!=null && invoicePool==null) ||
+                    (existingInvoice.getLastPoolId()==null && invoiceType!=null) ||
+                    (existingInvoice.getLastPoolId()!=null && invoicePool!=null && !(existingInvoice.getLastPoolId().equals(invoicePool.getId())));
+            boolean typeChange=(existingInvoice.getInvoiceType()!=null && invoiceType==null) ||
                     (existingInvoice.getInvoiceType()==null && invoiceType!=null) ||
-                    (existingInvoice.getInvoiceType()!=null && invoiceType!=null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())))) {
+                    (existingInvoice.getInvoiceType()!=null && invoiceType!=null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())));
+            if(poolChange || typeChange) {
                 // types have changed
-                InvoicePool pool = this.invoicesPoolsFacade.find(invoicePool.getId());
-                if (pool == null) {
-                    log.error("Could not find invoice pool with id " + invoicePool.getId());
-                    throw new Exception("Ungültiger Rechnungsnummernkreis");
+                if(typeChange)  {
+                    if (invoiceType != null)
+                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                    else
+                        existingInvoice.setInvoiceType(null);
+                }
+                if(poolChange) {
+                    InvoicePool pool = this.invoicesPoolsFacade.find(invoicePool.getId());
+                    if (pool == null) {
+                        log.error("Could not find invoice pool with id " + invoicePool.getId());
+                        throw new Exception("Ungültiger Rechnungsnummernkreis");
+                    }
+
+                    existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
+                    existingInvoice.setSmallBusiness(pool.isSmallBusiness());
+                    existingInvoice.setLastPoolId(pool.getId());
                 }
                 
-                existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-                if(invoiceType!=null)
-                    existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
-                else
-                    existingInvoice.setInvoiceType(null);
                 this.invoicesFacade.edit(existingInvoice);
-                
+                this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart oder Nummernkreis geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
             }
-            
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
             
             return this.invoicesFacade.find(existingInvoice.getId());
         } else {

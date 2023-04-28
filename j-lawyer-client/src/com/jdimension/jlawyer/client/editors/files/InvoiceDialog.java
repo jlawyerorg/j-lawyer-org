@@ -856,7 +856,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.popRecipients.add(mi);
         }
         
-        DefaultListModel templateModel=new DefaultListModel();
+        DefaultListModel<String> templateModel=new DefaultListModel<>();
         this.lstPositionTemplates.setModel(templateModel);
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1538,11 +1538,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
             } else {
                 // updated
-
                 this.currentEntry.setInvoiceNumber(this.lblInvoiceNumber.getText());
 
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
+                    this.fillCurrentEntry();
+                    this.currentEntry.setSmallBusiness(this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()).isSmallBusiness());
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     Invoice updatedInvoice = locator.lookupArchiveFileServiceRemote().updateInvoiceType(this.caseDto.getId(), this.currentEntry, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
                     this.setEntry(updatedInvoice);
@@ -1592,7 +1593,19 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+    private void fillCurrentEntry() throws Exception {
+        this.currentEntry.setDescription(this.taDescription.getText());
+        this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
+        this.currentEntry.setName(this.txtName.getText());
+        this.currentEntry.setPeriodFrom(df.parse(this.dtFrom.getText()));
+        this.currentEntry.setPeriodTo(df.parse(this.dtTo.getText()));
+        this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
+        this.currentEntry.setSmallBusiness(this.chkTaxes.isSelected());
+        this.currentEntry.setContact(this.recipientAddress);
+        this.currentEntry.setCurrency(this.cmbCurrency.getSelectedItem().toString());
+    }
+    
+    private void save() {
         ClientSettings settings = ClientSettings.getInstance();
         int positionIndex = 0;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
@@ -1616,24 +1629,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         try {
             UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
             
-            this.currentEntry.setDescription(this.taDescription.getText());
-            this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
-            this.currentEntry.setName(this.txtName.getText());
-            this.currentEntry.setPeriodFrom(df.parse(this.dtFrom.getText()));
-            this.currentEntry.setPeriodTo(df.parse(this.dtTo.getText()));
-            this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
-            this.currentEntry.setSmallBusiness(this.chkTaxes.isSelected());
-            this.currentEntry.setContact(this.recipientAddress);
-            this.currentEntry.setCurrency(this.cmbCurrency.getSelectedItem().toString());
+            this.fillCurrentEntry();
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), currentEntry);
+            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
 
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
+    }
+    
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        
+        this.save();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -1645,11 +1654,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int rowcount = 0;
         
         StyledCalculationTable ct = new StyledCalculationTable();
-        ct.addHeaders("", "Position", "Betrag");
+        ct.addHeaders("", "Position", "Menge", "Einzel", "Gesamt");
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "");
+            ct.addRow("", "", "", "", "");
         }
 
+        int positionIndex=0;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
 
@@ -1661,29 +1671,55 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 totalTax = totalTax + (u * up * (t / 100f));
                 total = total + (u * up * (1 + t / 100f));
                 
-                ct.addRow("", pos.getName() + ": " + pos.getDescription(), cf.format(u * up * (1 + t / 100f)) + " €");
+                positionIndex=positionIndex+1;
+                //ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(u * up * (1 + t / 100f)) + " " + this.cmbCurrency.getSelectedItem());
+                ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 rowcount = rowcount + 1;
             }
         }
         
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "");
+            ct.addRow("", "", "", "", "");
         }
-        int footerRow = ct.addRow("", "Zahlbetrag", lblInvoiceTotal.getText() + " €");
+        int footerRowTaxes = ct.addRow("", "Umsatzsteuer", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
+        int footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
 
         //HeaderRow
         ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
         ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
         ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
 
-        //FooterRow
+        this.formatFooterRow(ct, footerRowTaxes);
+        this.formatFooterRow(ct, footerRowTotal);
+
+        //TableLayout
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 25);
+        ct.setColumnWidth(1, 120);
+        ct.setColumnWidth(2, 35);
+        ct.setColumnWidth(3, 35);
+        ct.setColumnWidth(4, 35);
+        ct.setFontFamily("Arial");
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        
+        return ct;
+
+    }
+    
+    private void formatFooterRow(StyledCalculationTable ct, int footerRowIndex) {
+                //FooterRow
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
-            ct.setRowBold(footerRow, true);
+            ct.setRowBold(footerRowIndex, true);
         } else {
-            ct.setRowBold(footerRow, false);
+            ct.setRowBold(footerRowIndex, false);
         }
-        ct.getCellAt(footerRow, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
+        ct.getCellAt(footerRowIndex, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
         
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
             if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
@@ -1699,29 +1735,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         }
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Italic", true)) {
-            ct.getCellAt(footerRow, 1).setItalic(true);
-            ct.getCellAt(footerRow, 2).setItalic(true);
+            ct.getCellAt(footerRowIndex, 1).setItalic(true);
+            ct.getCellAt(footerRowIndex, 2).setItalic(true);
         } else {
-            ct.getCellAt(footerRow, 1).setItalic(false);
-            ct.getCellAt(footerRow, 2).setItalic(false);
+            ct.getCellAt(footerRowIndex, 1).setItalic(false);
+            ct.getCellAt(footerRowIndex, 2).setItalic(false);
         }
-        ct.setRowForeGround(footerRow, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(footerRow, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
-
-        //TableLayout
-        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
-        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
-        ct.setRowFontSize(0, 12);
-        ct.setColumnWidth(0, 25);
-        ct.setColumnWidth(1, 120);
-        ct.setColumnWidth(2, 35);
-        ct.setFontFamily("Arial");
-        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
-        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
-        
-        return ct;
+        ct.setRowForeGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
 
     }
 
@@ -1749,6 +1770,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
         this.lblInvoiceTax.setText(cf.format(totalTax));
         this.lblInvoiceTotal.setText(cf.format(total));
+        if(this.currentEntry!=null) {
+            this.currentEntry.setTotal(total);
+            
+        }
     }
 
     private void addPosition(InvoicePosition pos) {
@@ -1820,10 +1845,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void cmdCreateInvoiceDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateInvoiceDocumentActionPerformed
         if (this.caseView != null) {
-            
+            if(this.currentEntry!=null) {
+                this.save();
+            }
             ArchiveFileDocumentsBean invoiceDoc=this.caseView.newDocumentDialog(null, currentEntry, this.getPositionsAsTable());
             if(this.currentEntry!=null) {
-                this.currentEntry.setInvoiceDocument(invoiceDoc);
+                this.save();
                 this.cmdViewDocument.setEnabled(true);
                 this.cmdNavigateToDocument.setEnabled(true);
             }
@@ -1856,7 +1883,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_chkTaxesActionPerformed
 
     private void cmdApplyPositionTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdApplyPositionTemplateActionPerformed
-        if(this.lstPositionTemplates.getSelectedValuesList().size()>0) {
+        if(!this.lstPositionTemplates.getSelectedValuesList().isEmpty()) {
             for(String sel : this.lstPositionTemplates.getSelectedValuesList()) {
                 InvoicePositionTemplate tpl = this.invoicePosTemplates.get(sel);
                 InvoicePosition pos = new InvoicePosition();

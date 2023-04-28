@@ -937,12 +937,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCaseId(archiveFileKey);
             
-            //final CaseFolderPanel cfp=caseFolders;
-            //final ArrayList docList=new ArrayList(documents);
-            //SwingUtilities.invokeAndWait(() -> {
-            //    caseFolders.setDocuments(docList, docToInvoice);
-            //});
-            caseFolders.setDocuments(new ArrayList(documents), docToInvoice);
+            caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
             caseFolders.sortByDateDesc();
             caseFolders.sort();
 

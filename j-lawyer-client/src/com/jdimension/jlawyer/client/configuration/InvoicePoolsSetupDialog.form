@@ -418,7 +418,7 @@
             <Font component="chkSmallBusiness" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="Kleinunternehmerregelung"/>
+        <Property name="text" type="java.lang.String" value="USt ausweisen"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane2">

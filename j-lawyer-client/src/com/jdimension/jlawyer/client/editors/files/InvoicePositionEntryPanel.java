@@ -667,6 +667,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Container;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -931,8 +932,13 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().removeInvoicePosition(invoiceId, this.position);
-            this.getParent().remove(this);
-            this.getParent().doLayout();
+            Container parent=this.getParent();
+            parent.remove(this);
+            try {
+                parent.doLayout();
+            } catch (Exception ex) {
+                log.warn("unable to layout invoice dialog", ex);
+            }
         } catch (Exception ex) {
             log.error("Error updating invoice position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

@@ -702,9 +702,6 @@ public class InvoiceType implements Serializable {
     @Column(name = "turnover", columnDefinition = "TINYINT")
     protected boolean turnOver=true;
     
-    @Column(name = "number_required", columnDefinition = "TINYINT")
-    protected boolean numberRequired=true;
-
     public String getId() {
         return id;
     }
@@ -778,20 +775,6 @@ public class InvoiceType implements Serializable {
      */
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    /**
-     * @return the numberRequired
-     */
-    public boolean isNumberRequired() {
-        return numberRequired;
-    }
-
-    /**
-     * @param numberRequired the numberRequired to set
-     */
-    public void setNumberRequired(boolean numberRequired) {
-        this.numberRequired = numberRequired;
     }
     
 }

@@ -1147,6 +1147,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         xchartPanel.setPrintString("drucken");
         xchartPanel.setSaveAsString("speichern als...");
         xchartPanel.setBackground(this.pnlInvoicesChart.getBackground());
+        this.pnlInvoicesChart.removeAll();
         this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
     }
      

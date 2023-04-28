@@ -1279,7 +1279,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             if(linkedInvoice.getDueDate()!=null)
                 dueDate=dfDate.format(linkedInvoice.getDueDate());
             lblInvoice.setText(linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber());
-            lblInvoice.setToolTipText("<html><b>" + linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber() + "</b><br/>" + linkedInvoice.getStatusString() + "<br/>f&auml;llig: " + dueDate + "<br/>Betrag: " + currencyFormat.format(linkedInvoice.getTotal()) + "</html>");
+            lblInvoice.setToolTipText("<html><b>" + linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber() + "</b><br/>" + linkedInvoice.getStatusString() + "<br/>f&auml;llig: " + dueDate + "<br/>Betrag: " + currencyFormat.format(linkedInvoice.getTotal()) + " " + linkedInvoice.getCurrency()+ "</html>");
             lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
             
         } else {
