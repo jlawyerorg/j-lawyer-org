@@ -994,7 +994,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
-        JComboBox cmbInvoicePool = new JComboBox();
+        JComboBox<InvoicePool> cmbInvoicePool = new JComboBox<>();
         cmbInvoicePool.setModel(dmPools);
         cmbInvoicePool.setSelectedIndex(1);
         int response=JOptionPane.showConfirmDialog(null, cmbInvoicePool, "Nummernkreis für neuen Beleg",JOptionPane.CANCEL_OPTION,
@@ -6366,6 +6366,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }));
 
             }
+            
+            this.saveFormData();
+            
             if (this.groupPrivilegesChanged) {
                 ArrayList<Group> allowedGroups = new ArrayList<>();
                 for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
