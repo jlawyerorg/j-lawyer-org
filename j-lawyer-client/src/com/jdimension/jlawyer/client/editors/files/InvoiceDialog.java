@@ -1672,7 +1672,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 total = total + (u * up * (1 + t / 100f));
                 
                 positionIndex=positionIndex+1;
-                //ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(u * up * (1 + t / 100f)) + " " + this.cmbCurrency.getSelectedItem());
                 ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 rowcount = rowcount + 1;
             }

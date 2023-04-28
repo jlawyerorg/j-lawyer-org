@@ -1031,6 +1031,8 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
             }
+            if(unitPrice==null)
+                unitPrice=0f;
             
             Number taxRate = null;
             try {
@@ -1044,6 +1046,8 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 this.txtTaxRate.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
             }
+            if(taxRate==null)
+                taxRate=0f;
             
             Number units = null;
             try {
@@ -1057,6 +1061,8 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 this.txtUnits.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
             }
+            if(units==null)
+                units=1;
 
 
             InvoicePositionTemplate tpl = (InvoicePositionTemplate) this.tblTemplates.getValueAt(row, 0);

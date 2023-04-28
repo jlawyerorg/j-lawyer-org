@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 import org.apache.log4j.Logger;
@@ -713,18 +714,12 @@ public class StringUtils extends ServerStringUtils {
         try {
 
             MessageDigest m = MessageDigest.getInstance("MD5");
-
             m.reset();
-
-            m.update(plaintext.getBytes("UTF-8"));
-
+            m.update(plaintext.getBytes(StandardCharsets.UTF_8));
             byte[] digest = m.digest();
-
             BigInteger bigInt = new BigInteger(1, digest);
+            return bigInt.toString(16);
 
-            String hashtext = bigInt.toString(16);
-
-            return hashtext;
         } catch (Throwable t) {
             log.error(t);
             return "" + plaintext.hashCode();

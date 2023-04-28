@@ -5030,7 +5030,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         existingInvoice.setInvoiceType(null);
                 }
                 if(poolChange) {
-                    InvoicePool pool = this.invoicesPoolsFacade.find(invoicePool.getId());
+                    InvoicePool pool = null;
+                    if(invoicePool!=null)
+                        pool=this.invoicesPoolsFacade.find(invoicePool.getId());
                     if (pool == null) {
                         log.error("Could not find invoice pool with id " + invoicePool.getId());
                         throw new Exception("Ungültiger Rechnungsnummernkreis");

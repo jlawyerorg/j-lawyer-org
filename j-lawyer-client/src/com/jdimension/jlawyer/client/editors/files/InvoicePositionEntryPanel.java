@@ -932,10 +932,10 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().removeInvoicePosition(invoiceId, this.position);
-            Container parent=this.getParent();
-            parent.remove(this);
+            Container parentContainer=this.getParent();
+            parentContainer.remove(this);
             try {
-                parent.doLayout();
+                parentContainer.doLayout();
             } catch (Exception ex) {
                 log.warn("unable to layout invoice dialog", ex);
             }
