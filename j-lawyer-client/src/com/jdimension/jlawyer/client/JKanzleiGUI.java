@@ -868,6 +868,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             String boundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS + "." + i, null);
             if (boundsString != null) {
                 Rectangle bounds = this.rectangleFromBoundsString(boundsString);
+                if(bounds==null)
+                    return null;
                 if (i == lastMonitorIndex && lastBounds != null) {
                     // If the frame was previously located on this monitor, center it on the same monitor
                     bounds.x = lastBounds.x + (lastBounds.width - bounds.width) / 2;
