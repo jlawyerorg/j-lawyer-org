@@ -19,7 +19,7 @@ jlversion=${jlversion:1}
 # replace underscores by dots
 jlversion=`echo "$jlversion" | tr _ .`
  
-# tadaaa!
+# tadaaa! 
 # echo $jlversion
 echo 2.3.1.9
  
