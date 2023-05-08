@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.Group;
 
 /**
  *
@@ -711,7 +712,7 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
         if (!StringUtils.isEmpty((String) this.cmbSubjectField.getSelectedItem())) {
             return true;
         }
-        
+                
         if (!StringUtils.isEmpty(this.txtCustom1.getText())) {
             return true;
         }

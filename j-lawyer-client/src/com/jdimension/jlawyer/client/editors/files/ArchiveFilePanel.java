@@ -2298,6 +2298,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         cmdCopyCaseNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
         cmdCopyCaseNumber.setText(" ");
+        cmdCopyCaseNumber.setToolTipText("Aktenzeichen in Zwischenablage kopieren");
         cmdCopyCaseNumber.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCopyCaseNumberActionPerformed(evt);
@@ -5976,7 +5977,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JCheckBox chkArchived;
     protected javax.swing.JComboBox cmbAssistant;
     private javax.swing.JComboBox<Object> cmbFormType;
-    private javax.swing.JComboBox<String> cmbGroup;
+    protected javax.swing.JComboBox<String> cmbGroup;
     private javax.swing.JComboBox cmbHistoryTime;
     protected javax.swing.JComboBox cmbLawyer;
     protected javax.swing.JComboBox cmbSubjectField;

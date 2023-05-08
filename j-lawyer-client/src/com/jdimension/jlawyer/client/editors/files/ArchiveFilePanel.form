@@ -865,6 +865,7 @@
                           </Properties>
                           <AuxValues>
                             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
                           </AuxValues>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="cmbLawyer">
@@ -1027,6 +1028,7 @@
                       <Image iconType="3" name="/icons16/editpaste.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value=" "/>
+                    <Property name="toolTipText" type="java.lang.String" value="Aktenzeichen in Zwischenablage kopieren"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyCaseNumberActionPerformed"/>

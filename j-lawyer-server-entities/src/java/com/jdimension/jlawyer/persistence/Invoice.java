@@ -689,6 +689,10 @@ public class Invoice implements Serializable {
     public static final int STATUS_NEW=10;
     // when sent to recipient
     public static final int STATUS_OPEN=20;
+    public static final int STATUS_OPEN_REMINDER1=21;
+    public static final int STATUS_OPEN_REMINDER2=22;
+    public static final int STATUS_OPEN_REMINDER3=23;
+    public static final int STATUS_OPEN_NONENFORCEABLE=24;
     // paid
     public static final int STATUS_PAID=30;
     // cancelled
@@ -900,6 +904,14 @@ public class Invoice implements Serializable {
                 return "Entwurf";
             case STATUS_OPEN:
                 return "offen";
+            case STATUS_OPEN_REMINDER1:
+                return "offen - 1. Mahnstufe";
+            case STATUS_OPEN_REMINDER2:
+                return "offen - 2. Mahnstufe";
+            case STATUS_OPEN_REMINDER3:
+                return "offen - 3. Mahnstufe";
+            case STATUS_OPEN_NONENFORCEABLE:
+                return "offen - nicht vollstreckbar";
             case STATUS_PAID:
                 return "bezahlt";
             default:
@@ -916,6 +928,14 @@ public class Invoice implements Serializable {
                 return STATUS_NEW;
             case "offen":
                 return STATUS_OPEN;
+            case "offen - 1. Mahnstufe":
+                return STATUS_OPEN_REMINDER1;
+            case "offen - 2. Mahnstufe":
+                return STATUS_OPEN_REMINDER2;
+            case "offen - 3. Mahnstufe":
+                return STATUS_OPEN_REMINDER3;
+            case "offen - nicht vollstreckbar":
+                return STATUS_OPEN_NONENFORCEABLE;
             case "bezahlt":
                 return STATUS_PAID;
             default:
@@ -925,9 +945,13 @@ public class Invoice implements Serializable {
     }
     
     public List<String> getStatusValues() {
-        List<String> statuses=new ArrayList<String>();
+        List<String> statuses=new ArrayList<>();
         statuses.add("Entwurf");
         statuses.add("offen");
+        statuses.add("offen - 1. Mahnstufe");
+        statuses.add("offen - 2. Mahnstufe");
+        statuses.add("offen - 3. Mahnstufe");
+        statuses.add("offen - nicht vollstreckbar");
         statuses.add("bezahlt");
         statuses.add("storniert");
         return statuses;

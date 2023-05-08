@@ -862,8 +862,8 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
         jLabel2.setText("Beschreibung:");
 
         chkTurnOver.setFont(chkTurnOver.getFont());
-        chkTurnOver.setText("umsatzrelevant (wird in Auswertungen berücksichtigt)");
-        chkTurnOver.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
+        chkTurnOver.setText("zur Offene Posten-Liste");
+        chkTurnOver.setToolTipText("Belege dieser Art in der Offene Posten-Liste anzeigen\n(bspw. Rechnungen, Korrekturrechnungen, aber keine Angebote)");
 
         lblError.setFont(lblError.getFont().deriveFont(lblError.getFont().getStyle() | java.awt.Font.BOLD));
         lblError.setForeground(new java.awt.Color(204, 51, 0));

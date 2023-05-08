@@ -751,6 +751,10 @@ public class ReportService implements ReportServiceRemote {
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 21 then 'offen - 1. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 22 then 'offen - 2. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 23 then 'offen - 3. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 24 then 'offen - nicht vollstreckbar'\n"
                     + "        when inv.invoice_status = 30 then 'bezahlt'\n"
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
@@ -770,6 +774,10 @@ public class ReportService implements ReportServiceRemote {
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 21 then 'offen - 1. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 22 then 'offen - 2. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 23 then 'offen - 3. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 24 then 'offen - nicht vollstreckbar'\n"
                     + "        when inv.invoice_status = 30 then 'bezahlt'\n"
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
@@ -780,7 +788,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=?\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
                     + "-- where inv.created >=? and inv.created<=?\n"
                     + "group by invp.invoice_id";
             result.getTables().add(getTable("Offene Rechnungen", query, params));
@@ -792,7 +800,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=?\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
                     + "group by Faelligkeit\n"
                     + "order by Faelligkeit";
             result.getBarCharts().add(getBarChart("Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 1, 2, 3, params));
@@ -802,6 +810,10 @@ public class ReportService implements ReportServiceRemote {
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 21 then 'offen - 1. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 22 then 'offen - 2. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 23 then 'offen - 3. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 24 then 'offen - nicht vollstreckbar'\n"
                     + "        when inv.invoice_status = 30 then 'bezahlt'\n"
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
@@ -812,7 +824,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
                     + "group by invp.invoice_id";
             result.getTables().add(getTable("Fällige Rechnungen", query, params));
             
@@ -823,7 +835,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status=20 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
                     + "group by Faelligkeit\n"
                     + "order by Faelligkeit";
             result.getBarCharts().add(getBarChart("Alle fälligen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 1, 2, 3, params));

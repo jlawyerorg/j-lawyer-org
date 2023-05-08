@@ -291,8 +291,8 @@
             <Font component="chkTurnOver" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="umsatzrelevant (wird in Auswertungen ber&#xfc;cksichtigt)"/>
-        <Property name="toolTipText" type="java.lang.String" value="Rechnungsnummer bei Rechnungserstellung manuell editierbar machen"/>
+        <Property name="text" type="java.lang.String" value="zur Offene Posten-Liste"/>
+        <Property name="toolTipText" type="java.lang.String" value="Belege dieser Art in der Offene Posten-Liste anzeigen&#xa;(bspw. Rechnungen, Korrekturrechnungen, aber keine Angebote)"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblError">
