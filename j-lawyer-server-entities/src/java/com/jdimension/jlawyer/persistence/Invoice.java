@@ -689,10 +689,15 @@ public class Invoice implements Serializable {
     public static final int STATUS_NEW=10;
     // when sent to recipient
     public static final int STATUS_OPEN=20;
+    private static final String S_STATUS_OPEN="offen";
     public static final int STATUS_OPEN_REMINDER1=21;
+    private static final String S_STATUS_OPEN_REMINDER1="offen - 1. Mahnstufe";
     public static final int STATUS_OPEN_REMINDER2=22;
+    private static final String S_STATUS_OPEN_REMINDER2="offen - 2. Mahnstufe";
     public static final int STATUS_OPEN_REMINDER3=23;
+    private static final String S_STATUS_OPEN_REMINDER3="offen - 3. Mahnstufe";
     public static final int STATUS_OPEN_NONENFORCEABLE=24;
+    private static final String S_STATUS_OPEN_NONENFORCEABLE="offen - nicht vollstreckbar";
     // paid
     public static final int STATUS_PAID=30;
     // cancelled
@@ -903,15 +908,15 @@ public class Invoice implements Serializable {
             case STATUS_NEW:
                 return "Entwurf";
             case STATUS_OPEN:
-                return "offen";
+                return S_STATUS_OPEN;
             case STATUS_OPEN_REMINDER1:
-                return "offen - 1. Mahnstufe";
+                return S_STATUS_OPEN_REMINDER1;
             case STATUS_OPEN_REMINDER2:
-                return "offen - 2. Mahnstufe";
+                return S_STATUS_OPEN_REMINDER2;
             case STATUS_OPEN_REMINDER3:
-                return "offen - 3. Mahnstufe";
+                return S_STATUS_OPEN_REMINDER3;
             case STATUS_OPEN_NONENFORCEABLE:
-                return "offen - nicht vollstreckbar";
+                return S_STATUS_OPEN_NONENFORCEABLE;
             case STATUS_PAID:
                 return "bezahlt";
             default:
@@ -926,15 +931,15 @@ public class Invoice implements Serializable {
                 return STATUS_CANCELLED;
             case "Entwurf":
                 return STATUS_NEW;
-            case "offen":
+            case S_STATUS_OPEN:
                 return STATUS_OPEN;
-            case "offen - 1. Mahnstufe":
+            case S_STATUS_OPEN_REMINDER1:
                 return STATUS_OPEN_REMINDER1;
-            case "offen - 2. Mahnstufe":
+            case S_STATUS_OPEN_REMINDER2:
                 return STATUS_OPEN_REMINDER2;
-            case "offen - 3. Mahnstufe":
+            case S_STATUS_OPEN_REMINDER3:
                 return STATUS_OPEN_REMINDER3;
-            case "offen - nicht vollstreckbar":
+            case S_STATUS_OPEN_NONENFORCEABLE:
                 return STATUS_OPEN_NONENFORCEABLE;
             case "bezahlt":
                 return STATUS_PAID;
@@ -947,11 +952,11 @@ public class Invoice implements Serializable {
     public List<String> getStatusValues() {
         List<String> statuses=new ArrayList<>();
         statuses.add("Entwurf");
-        statuses.add("offen");
-        statuses.add("offen - 1. Mahnstufe");
-        statuses.add("offen - 2. Mahnstufe");
-        statuses.add("offen - 3. Mahnstufe");
-        statuses.add("offen - nicht vollstreckbar");
+        statuses.add(S_STATUS_OPEN);
+        statuses.add(S_STATUS_OPEN_REMINDER1);
+        statuses.add(S_STATUS_OPEN_REMINDER2);
+        statuses.add(S_STATUS_OPEN_REMINDER1);
+        statuses.add(S_STATUS_OPEN_NONENFORCEABLE);
         statuses.add("bezahlt");
         statuses.add("storniert");
         return statuses;
