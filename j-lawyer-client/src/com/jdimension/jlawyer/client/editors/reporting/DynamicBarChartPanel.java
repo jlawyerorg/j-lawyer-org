@@ -673,6 +673,7 @@ import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.CategorySeries;
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.style.Styler;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -702,6 +703,7 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
 
         ch.getStyler().setToolTipsEnabled(this.resultChart.isToolTipsEnabled());
         ch.getStyler().setToolTipFont(new JLabel().getFont());
+        ch.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN);
         ch.getStyler().setYAxisDecimalPattern("0.00");
         
         for(ReportResultBarChartSeries s: this.resultChart.getSeries()) {
@@ -710,7 +712,7 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
                 series.setFillColor(s.getFillColor());
         }
 
-        XChartPanel<CategoryChart> xchartPanel = new XChartPanel<CategoryChart>(ch);
+        XChartPanel<CategoryChart> xchartPanel = new XChartPanel<>(ch);
 
         this.add(xchartPanel, BorderLayout.CENTER);
         
