@@ -1130,6 +1130,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         chart.getStyler().setBaseFont(new JLabel().getFont());
         chart.getStyler().setLabelsFont(new JLabel().getFont());
         chart.getStyler().setToolTipFont(new JLabel().getFont());
+        chart.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN.darker().darker());
         chart.getStyler().setDefaultSeriesRenderStyle(PieSeriesRenderStyle.Donut);
         
         Color transparentColor=new Color(255, 255, 255, 0);
