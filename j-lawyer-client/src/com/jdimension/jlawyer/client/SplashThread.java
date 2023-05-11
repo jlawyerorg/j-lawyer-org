@@ -1051,7 +1051,6 @@ public class SplashThread implements Runnable {
                     serverSettings1.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                 }
             }
-            
             gui.restoreWindowSize();
         });
     }

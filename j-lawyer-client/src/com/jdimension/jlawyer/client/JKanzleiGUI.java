@@ -705,9 +705,6 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -719,7 +716,6 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.Icon;
@@ -745,7 +741,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     
     
     private boolean initializing = false;
-    private List<Rectangle> monitorBounds;
     private long initialized=Long.MIN_VALUE;
 
     /**
@@ -754,15 +749,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     public JKanzleiGUI() {
         this.initializing = true;
         
-        // Load the frame bounds for each monitor from preferences
-        monitorBounds = getMonitorBounds();
-        Rectangle targetBounds=this.restoreWindowSize();
+        this.restoreWindowSize();
         
         this.initialized=System.currentTimeMillis();
         // for some reason, initComponents resets the bounds
         initComponents();
-        if(targetBounds!=null)
-            this.setBounds(targetBounds);
+        
         this.lblNewsStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         
         
@@ -855,85 +847,40 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     }
     
-    public Rectangle restoreWindowSize() {
+    public void restoreWindowSize() {
         ClientSettings cs=ClientSettings.getInstance();
-        int lastMonitorIndex = Integer.parseInt(cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS + ".monitorIndex", "0"));
         Rectangle lastBounds = null;
         String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
+        log.info("restoring windows size (x,y,w,h) to " + lastBoundsString);
         if (lastBoundsString != null) {
             lastBounds = this.rectangleFromBoundsString(lastBoundsString);
         }
-        Rectangle targetBounds=null;
-        for (int i = 0; i < monitorBounds.size(); i++) {
-            String boundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS + "." + i, null);
-            if (boundsString != null) {
-                Rectangle bounds = this.rectangleFromBoundsString(boundsString);
-                if(bounds==null)
-                    return null;
-                if (i == lastMonitorIndex && lastBounds != null) {
-                    // If the frame was previously located on this monitor, center it on the same monitor
-                    bounds.x = lastBounds.x + (lastBounds.width - bounds.width) / 2;
-                    bounds.y = lastBounds.y + (lastBounds.height - bounds.height) / 2;
-                } else {
-                    // Otherwise, center it on the current monitor
-                    centerFrameOnScreen(bounds);
-                }
-                targetBounds=getIntersectingBounds(bounds, monitorBounds.get(i));
-                this.setBounds(targetBounds);
-            } else {
-                // Center the frame on the current monitor if no saved bounds were found
-                centerFrameOnScreen(monitorBounds.get(i));
-            }
+
+        if (lastBounds != null) {
+            Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
+            if(lastBounds.x>screenSize.width)
+                lastBounds.x=0;
+            if(lastBounds.y>screenSize.height)
+                lastBounds.y=0;
+            if(lastBounds.width>screenSize.width)
+                lastBounds.width=screenSize.width;
+            if(lastBounds.height>screenSize.height)
+                lastBounds.height=screenSize.height;
+            this.setBounds(lastBounds);
+            this.setSize(lastBounds.width, lastBounds.height);
+        } else {
+            // Otherwise, maximize window
+            setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
         }
-        return targetBounds;
+        
+
     }
     
     private void saveFrameBounds() {
         ClientSettings cs=ClientSettings.getInstance();
-        int monitorIndex = getMonitorIndex(this.getBounds(), monitorBounds);
         Rectangle bounds = this.getBounds();
-        Rectangle intersectingBounds = getIntersectingBounds(bounds, monitorBounds.get(monitorIndex));
-        String boundsString = intersectingBounds.x + "," + intersectingBounds.y + ","
-                + intersectingBounds.width + "," + intersectingBounds.height;
-        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS + "." + monitorIndex, boundsString);
-        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS + ".monitorIndex", ""+monitorIndex);
+        String boundsString = bounds.x + "," + bounds.y + "," + bounds.width + "," + bounds.height;
         cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS, boundsString);
-    }
-
-    
-    private List<Rectangle> getMonitorBounds() {
-        List<Rectangle> boundsList = new ArrayList<>();
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] devices = ge.getScreenDevices();
-        for (GraphicsDevice device : devices) {
-            GraphicsConfiguration gc = device.getDefaultConfiguration();
-            boundsList.add(gc.getBounds());
-        }
-        return boundsList;
-    }
-
-    private int getMonitorIndex(Rectangle bounds, List<Rectangle> monitorBounds) {
-        for (int i = 0; i < monitorBounds.size(); i++) {
-            if (bounds.intersects(monitorBounds.get(i))) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    private Rectangle getIntersectingBounds(Rectangle bounds1, Rectangle bounds2) {
-        int x = Math.max(bounds1.x, bounds2.x);
-        int y = Math.max(bounds1.y, bounds2.y);
-        int width = Math.min(bounds1.x + bounds1.width, bounds2.x + bounds2.width) - x;
-        int height = Math.min(bounds1.y + bounds1.height, bounds2.y + bounds2.height) - y;
-        return new Rectangle(x, y, width, height);
-    }
-
-    private void centerFrameOnScreen(Rectangle bounds) {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int x = (screenSize.width - bounds.width) / 2;
-        int y = (screenSize.height - bounds.height) / 2;
-        bounds.setLocation(x, y);
     }
     
     private Rectangle rectangleFromBoundsString(String boundsStr) {
