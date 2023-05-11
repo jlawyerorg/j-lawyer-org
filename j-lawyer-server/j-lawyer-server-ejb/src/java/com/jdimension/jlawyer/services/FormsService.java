@@ -921,13 +921,17 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         }
 
         StringGenerator idGen = new StringGenerator();
+        long totalChars=0;
         for (ArchiveFileFormEntriesBean newEntry : formEntries) {
             newEntry.setForm(afb);
             newEntry.setArchiveFileKey(afb.getArchiveFileKey());
             newEntry.setId(idGen.getID().toString());
             newEntry.setEntryKey(newEntry.getPlaceHolder());
+            if(newEntry.getStringValue()!=null)
+                totalChars=totalChars+newEntry.getStringValue().length();
             this.caseFormEntriesFacade.create(newEntry);
         }
+        log.info(context.getCallerPrincipal().getName() + " saved " + formEntries.size() + " entries with total " + totalChars + " chars to form " + formId);
         
         if(entriesChanged) {
             try {

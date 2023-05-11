@@ -861,8 +861,11 @@ public class FormInstancePanel extends javax.swing.JPanel {
         if (placeHolders == null) {
             // this happens e.g. when the form had compile issues and did not load.
             // in that case, do NOT overwrite existing values with an empty set - it would mean data loss for this form!
+            log.warn("Form plugin did not provide any placeholders - skip saving to avoid empty form!");
             return;
         }
+        
+        log.info("Form plugin " + form.getId() + " has " + placeHolders.size() + " placeholder values");
         
         boolean save=true;
         
@@ -889,6 +892,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
         }
         
         if(save) {
+            log.info("form " + form.getId() + " has been updated - saving");
             ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
@@ -902,6 +906,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
                     formEntries.add(formEntry);
                 }
                 locator.lookupFormsServiceRemote().setFormEntries(this.form.getId(), formEntries);
+                log.info("finished saving " + formEntries.size() + " form entries");
             } catch (Throwable t) {
                 log.error("Error saving form entries", t);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
