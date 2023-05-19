@@ -1826,12 +1826,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
-            Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, folder);
+            Collection<String> fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, folder);
 
-            for (Object o : fileNames) {
+            for (String o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
+                } else if (o.toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }

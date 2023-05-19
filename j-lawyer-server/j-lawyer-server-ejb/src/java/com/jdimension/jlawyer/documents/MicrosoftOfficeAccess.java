@@ -704,9 +704,10 @@ public class MicrosoftOfficeAccess {
     private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
 
     private static final String CURSOR_TEXTFIELD = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
+    private static final String EXT_DOCX = ".docx";
 
     public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
-        if (fileName.toLowerCase().endsWith(".docx")) {
+        if (fileName.toLowerCase().endsWith(EXT_DOCX)) {
 
             XWPFDocument outputDocx;
             FileInputStream fileIn = new FileInputStream(fileInFileSystem);
@@ -889,7 +890,7 @@ public class MicrosoftOfficeAccess {
 
     public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, HashMap<Integer, CTR> tfCache) throws Exception {
 
-        if (file.toLowerCase().endsWith(".docx")) {
+        if (file.toLowerCase().endsWith(EXT_DOCX)) {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<>();
@@ -1406,7 +1407,7 @@ public class MicrosoftOfficeAccess {
 
     static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
-        if (mergeDocument.toLowerCase().endsWith(".docx")) {
+        if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
             merge(intoDocument, mergeDocument);
         } else {
             throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
@@ -1427,6 +1428,12 @@ public class MicrosoftOfficeAccess {
         for (XWPFParagraph paragraph : bodyDoc.getParagraphs()) {
             XWPFParagraph newParagraph = mergedDoc.createParagraph();
             copyParagraph(paragraph, newParagraph);
+        }
+        
+        for (XWPFTable tab : bodyDoc.getTables()) {
+            XWPFTable mergedTable1 = mergedDoc.createTable(tab.getRows().size(),
+                    tab.getRow(0).getTableCells().size());
+            copyTable(tab, mergedTable1);
         }
 
         // Save the merged document as a new file

@@ -826,9 +826,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
-            Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(this.templateType, folder);
-
-            for (Object o : fileNames) {
+            Collection<String> fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(this.templateType, folder);
+            for (String o : fileNames) {
                 model.addElement(o);
             }
 
@@ -1508,12 +1507,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 byte[] templateData=sysMan.getTemplateData(this.templateType, source, templateName.toString());
             if(dtde.getDropAction()==DnDConstants.ACTION_COPY) {
                 
-                boolean copied=sysMan.addTemplate(this.templateType, target, templateName.toString(), templateData);
+                sysMan.addTemplate(this.templateType, target, templateName.toString(), templateData);
             } else if(dtde.getDropAction()==DnDConstants.ACTION_MOVE) {
                 
                 boolean copied=sysMan.addTemplate(this.templateType, target, templateName.toString(), templateData);
                 if(copied) {
-                    boolean deleted=sysMan.deleteTemplate(this.templateType, source, templateName.toString());
+                    sysMan.deleteTemplate(this.templateType, source, templateName.toString());
                     
                 }
             } 

@@ -670,8 +670,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -731,7 +730,7 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
 
         ArrayList<GenericNode> children = current.getChildren();
 
-        Hashtable<String, GenericNode> childHt = new Hashtable<>();
+        HashMap<String, GenericNode> childHt = new HashMap<>();
         ArrayList<String> htKeys = new ArrayList<>();
         for (GenericNode child : children) {
 

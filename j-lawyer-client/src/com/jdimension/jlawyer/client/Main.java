@@ -1092,11 +1092,12 @@ public class Main {
         allTpl.setSettingsEntry(true);
         templates.addChildModule(allTpl);
         
-        ModuleMetadata allTplHeads = new ModuleMetadata("Briefköpfe");
+        final String modLetterHeads="Briefköpfe";
+        ModuleMetadata allTplHeads = new ModuleMetadata(modLetterHeads);
         allTplHeads.setEditorClass("com.jdimension.jlawyer.client.templates.LetterHeadsTreePanel");
         allTplHeads.setBackgroundImage("templates.jpg");
-        allTplHeads.setFullName("Briefköpfe");
-        allTplHeads.setEditorName("Briefköpfe");
+        allTplHeads.setFullName(modLetterHeads);
+        allTplHeads.setEditorName(modLetterHeads);
         allTplHeads.setModuleName("Akten");
         allTplHeads.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
         allTplHeads.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));

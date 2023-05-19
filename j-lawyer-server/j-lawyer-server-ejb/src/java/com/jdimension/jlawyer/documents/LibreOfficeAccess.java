@@ -714,6 +714,7 @@ public class LibreOfficeAccess {
 
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
+    private static final String EXT_DOCX = ".docx";
 
     public static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
@@ -721,7 +722,7 @@ public class LibreOfficeAccess {
             merge(intoDocument, mergeDocument);
         } else if (mergeDocument.toLowerCase().endsWith(".ods")) {
             throw new Exception("Keine Briefkopf-Unterstützung für Tabellendokumente!");
-        } else if (mergeDocument.toLowerCase().endsWith(".docx")) {
+        } else if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
             MicrosoftOfficeAccess.mergeDocuments(intoDocument, mergeDocument);
         } else {
             throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
@@ -741,7 +742,7 @@ public class LibreOfficeAccess {
         // Copy the body document to the new document
         OfficeTextElement bodyContent = bodyDoc.getContentRoot();
 
-        browseAndMergeElements(bodyDoc.getContentRoot(), mergedDoc);
+        browseAndMergeElements(bodyContent, mergedDoc);
 
         // Save the merged document
         mergedDoc.save(new FileOutputStream(intoDocument));
@@ -802,7 +803,7 @@ public class LibreOfficeAccess {
                     }
                 }
             } else {
-                System.out.println("unkown element type: " + childNode.getNodeName());
+                log.warn("unkown element type: " + childNode.getNodeName());
                 // If the child element has child nodes, recursively call this function on them
                 if (childNode.hasChildNodes()) {
                     browseAndMergeElements(childNode, targetDoc);
@@ -1179,7 +1180,7 @@ public class LibreOfficeAccess {
 
             outputOds.save(new File(fileInFileSystem));
             outputOds.close();
-        } else if (fileName.toLowerCase().endsWith(".docx")) {
+        } else if (fileName.toLowerCase().endsWith(EXT_DOCX)) {
             MicrosoftOfficeAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
@@ -1266,7 +1267,7 @@ public class LibreOfficeAccess {
 
             outputOds.close();
             return resultList;
-        } else if (file.toLowerCase().endsWith(".docx")) {
+        } else if (file.toLowerCase().endsWith(EXT_DOCX)) {
 
             HashMap<Integer, CTR> tfCache = new HashMap<>();
             return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
