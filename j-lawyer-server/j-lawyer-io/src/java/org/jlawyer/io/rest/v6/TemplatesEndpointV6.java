@@ -722,8 +722,8 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            GenericNode rootNode=system.getAllTemplatesTree();
-            String baseDir=system.getTemplatesBaseDir();
+            GenericNode rootNode=system.getAllTemplatesTree(SystemManagementLocal.TEMPLATE_TYPE_BODY);
+            String baseDir=system.getTemplatesBaseDir(SystemManagementLocal.TEMPLATE_TYPE_BODY);
             ArrayList<String> nodeIds=new ArrayList<>();
             collectFolders(rootNode, baseDir, nodeIds);
             Collections.sort(nodeIds, String.CASE_INSENSITIVE_ORDER);
@@ -762,7 +762,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             
-            List<String> resultList=system.getTemplatesByPath(folder);
+            List<String> resultList=system.getTemplatesByPath(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder);
             Collections.sort(resultList, String.CASE_INSENSITIVE_ORDER);
             return Response.ok(resultList).build();
         } catch (Exception ex) {
@@ -790,7 +790,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             
-            List<String> resultList=system.getPlaceHoldersForTemplate(folder, template, caseId);
+            List<String> resultList=system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
             Collections.sort(resultList, String.CASE_INSENSITIVE_ORDER);
             return Response.ok(resultList.stream().filter(ph -> !ph.startsWith("[[")).toArray()).build();
         } catch (Exception ex) {
@@ -800,7 +800,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-     * Creates a new document based on a template. Any place holders are automatically populated, but a client may override them. Invoice creation not supported.
+     * Creates a new document based on a template.Any place holders are automatically populated, but a client may override them. Invoice creation not supported.
      *
      * @param caseId the id of the case
      * @param fileName file name of the document to be created, without file extension (server will enforce same extension as template)
@@ -828,7 +828,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             ArchiveFileServiceLocal casesvc = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
             
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            List<String> placeHoldersInTemplate=system.getPlaceHoldersForTemplate(folder, template, caseId);
+            List<String> placeHoldersInTemplate=system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
             Collections.sort(placeHoldersInTemplate, String.CASE_INSENSITIVE_ORDER);
             Object[] placeHoldersInTemplateArray=placeHoldersInTemplate.stream().filter(ph -> !ph.startsWith("[[")).toArray();
             HashMap<String,Object> placeHoldersInTemplateMap=new HashMap<>();
@@ -878,7 +878,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
                     key=key+"}}";
                 placeHoldersInTemplateMap.put(key, rph.getPlaceHolderValue());
             }
-            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, folder, template, placeHoldersInTemplateMap, "");
+            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "");
             RestfulDocumentV1 rdoc=new RestfulDocumentV1();
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setFavorite(rdoc.isFavorite());

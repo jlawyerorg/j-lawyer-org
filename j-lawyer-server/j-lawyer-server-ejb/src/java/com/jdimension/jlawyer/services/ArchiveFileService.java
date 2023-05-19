@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.nio.file.Files;
@@ -3343,7 +3344,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -3392,9 +3393,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
-        SystemManagement.copyFile(src, dstId);
+        if(ServerStringUtils.isEmpty(letterHead)) {
+            // new document equals the body template
+            SystemManagement.copyFile(src, dstId);
+        } else {
+            // new document equals the head template
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            SystemManagement.copyFile(srcHead, dstId);
+            if (!(new File(srcHead).exists())) {
+                throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
+            }
+            // migrate body template into head template
+            LibreOfficeAccess.mergeDocuments(dstId, src);
+        }
 
-        LibreOfficeAccess.setPlaceHolders(archiveFileId, dstId, fileName, placeHolderValues, formsPrefixes);
+        try {
+            LibreOfficeAccess.setPlaceHolders(archiveFileId, dstId, fileName, placeHolderValues, formsPrefixes);
+        } catch (Exception ex) {
+            log.error("could not set placeholders in file " + dstId, ex);
+        }
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
 
@@ -3451,8 +3468,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
-        return this.addDocumentFromTemplate(archiveFileId, fileName, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
+        return this.addDocumentFromTemplate(archiveFileId, fileName, letterHead, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
     }
 
     @Override

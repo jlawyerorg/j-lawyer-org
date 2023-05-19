@@ -667,6 +667,7 @@ import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -679,8 +680,16 @@ import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.odftoolkit.odfdom.dom.element.office.OfficeTextElement;
+import org.odftoolkit.odfdom.dom.element.table.TableTableCellElementBase;
+import org.odftoolkit.odfdom.dom.element.table.TableTableElement;
+import org.odftoolkit.odfdom.dom.element.table.TableTableRowElement;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
+import org.odftoolkit.odfdom.dom.element.text.TextListElement;
+import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
+import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
+import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
@@ -692,8 +701,10 @@ import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
+import org.odftoolkit.simple.text.Paragraph;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  *
@@ -704,7 +715,126 @@ public class LibreOfficeAccess {
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
-    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
+    public static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
+        // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
+        if (mergeDocument.toLowerCase().endsWith(".odt")) {
+            merge(intoDocument, mergeDocument);
+        } else if (mergeDocument.toLowerCase().endsWith(".ods")) {
+            throw new Exception("Keine Briefkopf-Unterstützung für Tabellendokumente!");
+        } else if (mergeDocument.toLowerCase().endsWith(".docx")) {
+            MicrosoftOfficeAccess.mergeDocuments(intoDocument, mergeDocument);
+        } else {
+            throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
+        }
+    }
+
+    private static void merge(String intoDocument, String mergeDocument) throws Exception {
+        // Load body document
+        TextDocument bodyDoc = TextDocument.loadDocument(new File(mergeDocument));
+
+        // Create a new document to store the merged documents
+        TextDocument mergedDoc = TextDocument.loadDocument(new File(intoDocument));
+
+        // Get the content root element of the new document
+        OfficeTextElement contentRoot = mergedDoc.getContentRoot();
+
+        // Copy the body document to the new document
+        OfficeTextElement bodyContent = bodyDoc.getContentRoot();
+
+        browseAndMergeElements(bodyDoc.getContentRoot(), mergedDoc);
+
+        // Save the merged document
+        mergedDoc.save(new FileOutputStream(intoDocument));
+
+        // Close all the documents
+        bodyDoc.close();
+    }
+
+    // Define a recursive function to browse through all elements in the document
+    public static void browseAndMergeElements(Node parentElement, TextDocument targetDoc) {
+        NodeList childNodes = parentElement.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+
+            // If the child node is a paragraph, create a new Paragraph object
+            if (childNode.getNodeName().equals("text:p")) {
+                OdfElement odfElement = (OdfElement) childNode;
+                TextPElement pElement = (TextPElement) odfElement;
+                targetDoc.addParagraph(pElement.getTextContent());
+                
+            } // If the child node is a table, create a new Table object
+            else if (childNode.getNodeName().equals("table:table")) {
+                OdfElement odfElement = (OdfElement) childNode;
+                TableTableElement tableElement = (TableTableElement) odfElement;
+
+                Paragraph tableParagraph = targetDoc.addParagraph("");
+
+                TableTableRowElement[] rows = getChildElementsOfType(childNode, TableTableRowElement.class);
+                int numRows = rows.length;
+                int numCols = 0;
+                for (int j = 0; j < numRows; j++) {
+                    TableTableCellElementBase[] cells = getChildElementsOfType(rows[j], TableTableCellElementBase.class);
+                    int numCells = cells.length;
+                    numCols = Math.max(numCols, numCells);
+                }
+                Table table = targetDoc.addTable(numRows, numCols);
+                for (int j = 0; j < numRows; j++) {
+                    TableTableCellElementBase[] cells = getChildElementsOfType(rows[j], TableTableCellElementBase.class);
+                    for (int k = 0; k < cells.length; k++) {
+                        String cellText = cells[k].getTextContent();
+                        table.getCellByPosition(j, k).setDisplayText(cellText);
+                    }
+                }
+
+            } else if (childNode.getNodeName().equals("text:list")) {
+                OdfElement odfElement = (OdfElement) childNode;
+                TextListElement listElement = (TextListElement) odfElement;
+                org.odftoolkit.simple.text.list.List list = targetDoc.addList();
+
+                // Get the list items and add them to the list
+                NodeList listItems = listElement.getElementsByTagName("text:list-item");
+                for (int j = 0; j < listItems.getLength(); j++) {
+                    Node listItemNode = listItems.item(j);
+                    if (listItemNode.getNodeType() == Node.ELEMENT_NODE) {
+                        OdfElement listItemElement = (OdfElement) listItemNode;
+                        TextListItemElement listItem = (TextListItemElement) listItemElement;
+                        list.addItem(listItem.getTextContent());
+                    }
+                }
+            } else {
+                System.out.println("unkown element type: " + childNode.getNodeName());
+                // If the child element has child nodes, recursively call this function on them
+                if (childNode.hasChildNodes()) {
+                    browseAndMergeElements(childNode, targetDoc);
+                }
+            }
+
+        }
+    }
+
+    // Define a utility function to get an array of child elements of a certain type
+    public static <T extends Node> T[] getChildElementsOfType(Node parent, Class<T> type) {
+        NodeList childNodes = parent.getChildNodes();
+        int count = 0;
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+            if (type.isInstance(childNode)) {
+                count++;
+            }
+        }
+        T[] elements = (T[]) java.lang.reflect.Array.newInstance(type, count);
+        int index = 0;
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+            if (type.isInstance(childNode)) {
+                elements[index] = (T) childNode;
+                index++;
+            }
+        }
+        return elements;
+    }
+
+    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
 
         if (fileName.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
@@ -713,7 +843,7 @@ public class LibreOfficeAccess {
             ArrayList<Node> removalParents = new ArrayList<>();
             ArrayList<Node> removalChildren = new ArrayList<>();
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -995,7 +1125,7 @@ public class LibreOfficeAccess {
             SpreadsheetDocument outputOds;
             outputOds = SpreadsheetDocument.loadDocument(fileInFileSystem);
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
 
                 // if the placeholder is followed by one of these characters, do not append a space
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
@@ -1147,7 +1277,7 @@ public class LibreOfficeAccess {
 
     }
 
-    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String,Object> values, ArrayList<String> formsPrefixes) {
+    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String, Object> values, ArrayList<String> formsPrefixes) {
         if (scriptContent.startsWith("[[SCRIPT:")) {
             scriptContent = scriptContent.substring(9);
         }
@@ -1157,19 +1287,21 @@ public class LibreOfficeAccess {
         scriptContent = scriptContent.trim();
 
         Set<String> valueKeys = values.keySet();
-        
+
         // need to sort by key length descending
         // e.g. to prevent MANDANT_ORT from replacing the value for MANDANT_ORTSTEIL
-        List<String> lengthSortedValueKeys=new ArrayList<>(valueKeys);
+        List<String> lengthSortedValueKeys = new ArrayList<>(valueKeys);
         Collections.sort(lengthSortedValueKeys, (Object arg0, Object arg1) -> {
-            if(arg0==null)
-                arg0="";
-            if(arg1==null)
-                arg1="";
+            if (arg0 == null) {
+                arg0 = "";
+            }
+            if (arg1 == null) {
+                arg1 = "";
+            }
             return Integer.compare(arg1.toString().length(), arg0.toString().length());
         });
-        
-        for (String scriptPlaceHolderKey: lengthSortedValueKeys) {
+
+        for (String scriptPlaceHolderKey : lengthSortedValueKeys) {
             if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
                 String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
@@ -1182,7 +1314,6 @@ public class LibreOfficeAccess {
 
         // required for "WENNVORHANDEN"
         // scriptContent = scriptContent.replace("\"\"", "\"");
-
         try ( InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");  InputStreamReader isr = new InputStreamReader(is);  BufferedReader br = new BufferedReader(isr);) {
 
             StringBuilder sb = new StringBuilder();
@@ -1267,11 +1398,11 @@ public class LibreOfficeAccess {
 
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
 
-            HashMap<String,Object> values = new HashMap<>();
+            HashMap<String, Object> values = new HashMap<>();
             values.put("{{PROFIL_EMAIL}}", "jens.kutschke@waat???");
             values.put("{{MANDANT_STRASSE}}", "jens.kutschke strasse");
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}\\.";
                 String value = (String) values.get(key);
                 if (value == null) {

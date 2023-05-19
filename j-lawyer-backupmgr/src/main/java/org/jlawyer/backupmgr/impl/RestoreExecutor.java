@@ -814,6 +814,8 @@ public class RestoreExecutor {
         this.validateEncryptionForDirectory(dir, progress);
         dir = new File(this.backupDirectory + File.separator + "mastertemplates");
         this.validateEncryptionForDirectory(dir, progress);
+        dir = new File(this.backupDirectory + File.separator + "letterheads");
+        this.validateEncryptionForDirectory(dir, progress);
         dir = new File(this.backupDirectory + File.separator + "emailtemplates");
         this.validateEncryptionForDirectory(dir, progress);
         dir = new File(this.backupDirectory + File.separator + "faxqueue");
@@ -958,7 +960,7 @@ public class RestoreExecutor {
                 }
             }
         }
-        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates")) {
+        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates") || !subDirs.contains("letterheads")) {
             throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates");
         }
 
@@ -999,8 +1001,8 @@ public class RestoreExecutor {
                 }
             }
         }
-        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates")) {
-            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates");
+        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates") || !subDirs.contains("letterheads")) {
+            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates, letterheads");
         }
 
         if (dumpExists) {
@@ -1033,6 +1035,7 @@ public class RestoreExecutor {
 
         // archivefiles, emailtemplates, faxqueue, mastertemplates, templates
         this.restoreFromTo(backup + "templates", data + "templates", progress);
+        this.restoreFromTo(backup + "letterheads", data + "letterheads", progress);
         try {
             // allowed to fail
             this.restoreFromTo(backup + "mastertemplates", data + "mastertemplates", progress);
@@ -1102,6 +1105,10 @@ public class RestoreExecutor {
         delDir.mkdirs();
 
         delDir = new File(data + "mastertemplates");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir = new File(data + "letterheads");
         this.deleteRecursively(delDir, progress);
         delDir.mkdirs();
 

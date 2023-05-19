@@ -681,6 +681,10 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  */
 @Local
 public interface SystemManagementLocal {
+    
+    public static final int TEMPLATE_TYPE_BODY=10;
+    public static final int TEMPLATE_TYPE_HEAD=20;
+    
     public String getServerVersion();
     public void statusMail(String subject, String body);
     public MonitoringSnapshot getMonitoringSnapshot();
@@ -701,13 +705,13 @@ public interface SystemManagementLocal {
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
     
-    GenericNode getAllTemplatesTree() throws Exception;
+    GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
-    String getTemplatesBaseDir() throws Exception;
+    String getTemplatesBaseDir(int templateType) throws Exception;
 
-    List<String> getTemplatesByPath(String folder) throws Exception;
+    List<String> getTemplatesByPath(int templateType, String folder) throws Exception;
     
-    List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception;
+    List<String> getPlaceHoldersForTemplate(int templateType, String templatePath, String templateName, String caseId) throws Exception;
     
     HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception;
 }

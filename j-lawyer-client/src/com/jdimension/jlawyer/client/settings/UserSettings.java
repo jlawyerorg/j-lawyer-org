@@ -741,6 +741,8 @@ public class UserSettings {
     // invoice related
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
     
+    public static final String CASE_LASTUSEDLETTERHEAD="user.case.lastletterhead";
+    
 
     private static final String ARRAY_DELIMITER = "#####";
 

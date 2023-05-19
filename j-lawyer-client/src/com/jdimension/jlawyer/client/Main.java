@@ -1082,7 +1082,7 @@ public class Main {
         templates.setFullName("Dokumente");
         root.addChildModule(templates);
         ModuleMetadata allTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.templates"));
-        allTpl.setEditorClass("com.jdimension.jlawyer.client.templates.TemplatesTreePanel");
+        allTpl.setEditorClass("com.jdimension.jlawyer.client.templates.LetterTemplatesTreePanel");
         allTpl.setBackgroundImage("templates.jpg");
         allTpl.setFullName("Dokumentvorlagen");
         allTpl.setEditorName("Dokumentvorlagen");
@@ -1091,6 +1091,17 @@ public class Main {
         allTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
         allTpl.setSettingsEntry(true);
         templates.addChildModule(allTpl);
+        
+        ModuleMetadata allTplHeads = new ModuleMetadata("Briefköpfe");
+        allTplHeads.setEditorClass("com.jdimension.jlawyer.client.templates.LetterHeadsTreePanel");
+        allTplHeads.setBackgroundImage("templates.jpg");
+        allTplHeads.setFullName("Briefköpfe");
+        allTplHeads.setEditorName("Briefköpfe");
+        allTplHeads.setModuleName("Akten");
+        allTplHeads.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
+        allTplHeads.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
+        allTplHeads.setSettingsEntry(true);
+        templates.addChildModule(allTplHeads);
 
         ModuleMetadata docSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
         docSearch.setEditorClass("com.jdimension.jlawyer.client.editors.search.DocumentSearchPanel");

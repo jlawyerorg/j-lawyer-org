@@ -675,18 +675,20 @@ public class TemplatePreviewProvider implements DocumentPreviewProvider {
     private SystemManagementRemote is=null;
     private String fileName=null;
     private GenericNode node=null;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
     
-    public TemplatePreviewProvider(SystemManagementRemote is, GenericNode node, String fileName) {
+    public TemplatePreviewProvider(int templateType, SystemManagementRemote is, GenericNode node, String fileName) {
         this.is=is;
         this.fileName=fileName;
         this.node=node;
+        this.templateType=templateType;
     }
 
     
     
     @Override
     public String getPreview() throws Exception {
-        return this.is.getTemplatePreview(this.node, this.fileName);
+        return this.is.getTemplatePreview(this.templateType, this.node, this.fileName);
     }
     
     

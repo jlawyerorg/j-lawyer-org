@@ -727,6 +727,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -5042,7 +5043,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuUseDocumentAsTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUseDocumentAsTemplateActionPerformed
         try {
 
-            SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true, SystemManagementRemote.TEMPLATE_TYPE_BODY);
             FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
             stf.setVisible(true);
             GenericNode targetFolder = stf.getSelectedFolder();
@@ -5070,7 +5071,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         continue;
                     }
 
-                    locator.lookupSystemManagementRemote().addTemplate(targetFolder, newName, content);
+                    locator.lookupSystemManagementRemote().addTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, targetFolder, newName, content);
 
                 }
 

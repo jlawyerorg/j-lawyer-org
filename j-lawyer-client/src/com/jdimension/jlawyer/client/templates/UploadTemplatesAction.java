@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Component;
 import java.io.File;
 import java.util.List;
@@ -684,23 +685,22 @@ import org.jlawyer.data.tree.GenericNode;
 public class UploadTemplatesAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(UploadTemplatesAction.class.getName());
-    //private JTable table = null;
-    //private SendEmailDialog dlg = null;
 
     private Component owner;
     private JList docTarget;
 
     private List<File> files;
     private GenericNode folder=null;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
 
-    public UploadTemplatesAction(ProgressIndicator i, Component owner, JList docTarget, List<File> files, GenericNode folder) {
+    public UploadTemplatesAction(ProgressIndicator i, Component owner, int templateType, JList docTarget, List<File> files, GenericNode folder) {
         super(i, false);
 
         this.owner = owner;
         this.docTarget = docTarget;
         this.files = files;
         this.folder=folder;
-
+        this.templateType=templateType;
     }
 
     @Override
@@ -727,7 +727,7 @@ public class UploadTemplatesAction extends ProgressableAction {
                     if (!f.isDirectory()) {
 
                         byte[] data = FileUtils.readFile(f);
-                        final boolean added = locator.lookupSystemManagementRemote().addTemplate(folder,f.getName(), data);
+                        final boolean added = locator.lookupSystemManagementRemote().addTemplate(this.templateType, folder,f.getName(), data);
                         if (added) {
                             SwingUtilities.invokeLater(() -> {
                                 DefaultListModel m = (DefaultListModel) docTarget.getModel();
