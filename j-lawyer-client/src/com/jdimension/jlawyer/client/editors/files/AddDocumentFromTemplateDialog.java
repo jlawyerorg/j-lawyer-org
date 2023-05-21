@@ -1437,9 +1437,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             GenericNode gn = (GenericNode) tn.getUserObject();
 
+            
+            
             String letterHead="";
             if(this.cmbLetterHeads.getSelectedItem()!=null)
                 letterHead=this.cmbLetterHeads.getSelectedItem().toString();
+            
+            // remember last letter head selection
+            UserSettings.getInstance().setSetting(UserSettings.CASE_LASTUSEDLETTERHEAD, letterHead);
+            
             db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
             this.addedDocument=db;
             targetTable.addDocument(db, this.invoice);
@@ -1755,8 +1761,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdAddAndOpenActionPerformed
 
     private void cmbLetterHeadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbLetterHeadsActionPerformed
-        if(this.cmbLetterHeads.getSelectedItem()!=null && !"".equalsIgnoreCase(this.cmbLetterHeads.getSelectedItem().toString()))
-            UserSettings.getInstance().setSetting(UserSettings.CASE_LASTUSEDLETTERHEAD, this.cmbLetterHeads.getSelectedItem().toString());
+        
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_cmbLetterHeadsActionPerformed
 
