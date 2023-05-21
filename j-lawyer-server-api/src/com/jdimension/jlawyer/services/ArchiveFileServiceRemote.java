@@ -854,6 +854,8 @@ public interface ArchiveFileServiceRemote {
     InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
     List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
+    
+    ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception;
 
     InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 

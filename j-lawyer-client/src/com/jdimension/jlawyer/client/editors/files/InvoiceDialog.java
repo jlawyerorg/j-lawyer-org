@@ -1021,6 +1021,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         jScrollPane3 = new javax.swing.JScrollPane();
         lstPositionTemplates = new javax.swing.JList<>();
         cmdApplyPositionTemplate = new javax.swing.JButton();
+        cmdUploadInvoiceDocument = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -1242,7 +1243,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        cmdCreateInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdCreateInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         cmdCreateInvoiceDocument.setToolTipText("Dokument erzeugen");
         cmdCreateInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1289,6 +1290,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         cmdApplyPositionTemplate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdApplyPositionTemplateActionPerformed(evt);
+            }
+        });
+
+        cmdUploadInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
+        cmdUploadInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUploadInvoiceDocumentActionPerformed(evt);
             }
         });
 
@@ -1344,6 +1352,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(jSeparator1)
                     .addComponent(jSeparator2)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(textSearchPositionTemplate, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdApplyPositionTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblInvoicePositions)
@@ -1357,16 +1371,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(cmdCreateInvoiceDocument)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdUploadInvoiceDocument)
+                                .addGap(18, 18, 18)
                                 .addComponent(cmdViewDocument)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdNavigateToDocument)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(textSearchPositionTemplate, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdApplyPositionTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1423,19 +1433,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
+                        .addComponent(jScrollPane3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblInvoiceDocument)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdCreateInvoiceDocument)
-                            .addComponent(cmdNavigateToDocument)
-                            .addComponent(cmdViewDocument)))
+                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(cmdApplyPositionTemplate)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(132, 132, 132)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblInvoiceDocument)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdCreateInvoiceDocument)
+                    .addComponent(cmdNavigateToDocument)
+                    .addComponent(cmdViewDocument)
+                    .addComponent(cmdUploadInvoiceDocument))
                 .addContainerGap())
         );
 
@@ -1449,7 +1460,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         );
         pnlInvoicePositionsLayout.setVerticalGroup(
             pnlInvoicePositionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 720, Short.MAX_VALUE)
+            .addGap(0, 745, Short.MAX_VALUE)
         );
 
         jScrollPane2.setViewportView(pnlInvoicePositions);
@@ -1850,6 +1861,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ArchiveFileDocumentsBean invoiceDoc=this.caseView.newDocumentDialog(null, currentEntry, this.getPositionsAsTable());
             if(this.currentEntry!=null) {
                 this.save();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    currentEntry.setInvoiceDocument(locator.lookupArchiveFileServiceRemote().getInvoiceDocument(currentEntry.getId()));
+                } catch (Exception ex) {
+                    log.error("error loading invoice document", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
                 this.cmdViewDocument.setEnabled(true);
                 this.cmdNavigateToDocument.setEnabled(true);
             }
@@ -1918,6 +1936,27 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
     }//GEN-LAST:event_textSearchPositionTemplateKeyReleased
 
+    private void cmdUploadInvoiceDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadInvoiceDocumentActionPerformed
+        if (this.caseView != null) {
+            if(this.currentEntry!=null) {
+                this.save();
+            }
+            this.caseView.uploadDocument(currentEntry);
+            if(this.currentEntry!=null) {
+                this.save();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    currentEntry.setInvoiceDocument(locator.lookupArchiveFileServiceRemote().getInvoiceDocument(currentEntry.getId()));
+                } catch (Exception ex) {
+                    log.error("error loading invoice document", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                this.cmdViewDocument.setEnabled(true);
+                this.cmdNavigateToDocument.setEnabled(true);
+            }
+        }
+    }//GEN-LAST:event_cmdUploadInvoiceDocumentActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1978,6 +2017,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchRecipient;
+    private javax.swing.JButton cmdUploadInvoiceDocument;
     private javax.swing.JButton cmdViewDocument;
     private javax.swing.JTextField dtCreated;
     private javax.swing.JTextField dtDue;

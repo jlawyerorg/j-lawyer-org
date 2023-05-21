@@ -4847,6 +4847,40 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            return invoice.getInvoiceDocument();
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})

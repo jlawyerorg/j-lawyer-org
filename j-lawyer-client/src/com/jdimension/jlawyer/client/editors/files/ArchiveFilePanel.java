@@ -3865,8 +3865,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdPrintActionPerformed
 
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
+        this.uploadDocument(null);
+    }//GEN-LAST:event_cmdUploadDocumentActionPerformed
+
+    public void uploadDocument(Invoice invoice) {
         JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(true);
+        chooser.setMultiSelectionEnabled(invoice==null);
 
         ClientSettings settings = ClientSettings.getInstance();
         String lastUploadDir = settings.getConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, null);
@@ -3882,7 +3886,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
-                File[] fileArray = chooser.getSelectedFiles();
+                File[] fileArray=null;
+                if(chooser.isMultiSelectionEnabled()) {
+                    fileArray = chooser.getSelectedFiles();
+                } else {
+                    fileArray=new File[1];
+                    fileArray[0]=chooser.getSelectedFile();
+                }
                 ArrayList<File> files = new ArrayList<>();
                 boolean lastUploadSaved = false;
                 for (File f : fileArray) {
@@ -3897,20 +3907,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                ThreadUtils.setWaitCursor(this);
-                ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                pi.setShowCancelButton(true);
-                UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null);
-
-                a.start();
+                if(invoice == null) {
+                    ThreadUtils.setWaitCursor(this);
+                    ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                    pi.setShowCancelButton(true);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    a.start();
+                } else {
+                    ThreadUtils.setWaitCursor(this);
+                    ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                    pi.setShowCancelButton(true);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    a.execute();
+                }
+                
 
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmdUploadDocumentActionPerformed
-
+    }
+    
     private void mnuRemoveDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveDocumentActionPerformed
 
         try {
@@ -5943,7 +5961,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null, null);
 
                         a.start();
 
