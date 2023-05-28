@@ -1097,23 +1097,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressBookSync = new javax.swing.JMenuItem();
         mnuAddressBookSyncNow = new javax.swing.JMenuItem();
         mnuArchiveFileOptions = new javax.swing.JMenu();
-        mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
-        mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
+        mnuFormsManager = new javax.swing.JMenuItem();
+        mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
+        mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFields = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
-        mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
-        mnuFormsManager = new javax.swing.JMenuItem();
-        mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
-        mnuMappingTables = new javax.swing.JMenuItem();
-        mnuMappingEntries = new javax.swing.JMenuItem();
-        mnuScanOptions = new javax.swing.JMenuItem();
         mnuWordProcessor = new javax.swing.JMenuItem();
+        mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuScanOptions = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuDocumentPreview = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
+        mnuMappingTables = new javax.swing.JMenuItem();
+        mnuMappingEntries = new javax.swing.JMenuItem();
         mnuCalendarOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuCalendarSetup = new javax.swing.JMenuItem();
@@ -1489,15 +1489,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuArchiveFileOptions.setText("Akten");
 
-        mnuArchiveFileOptionsDictateSign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        mnuArchiveFileOptionsDictateSign.setText(bundle.getString("menu.settings.cases.dictatesigns")); // NOI18N
-        mnuArchiveFileOptionsDictateSign.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuArchiveFileOptionsDictateSignActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuArchiveFileOptionsDictateSign);
-
         mnuArchiveFileOptionsSubjectFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
         mnuArchiveFileOptionsSubjectFields.setText(bundle.getString("menu.settings.cases.subjectfields")); // NOI18N
         mnuArchiveFileOptionsSubjectFields.addActionListener(new java.awt.event.ActionListener() {
@@ -1516,14 +1507,41 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileTags);
 
-        mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuDocumentTags.setText("Dokumenten-Etiketten");
-        mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
+        mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
+        mnuDocumentFolderTemplates.setText("Dokumentordner");
+        mnuDocumentFolderTemplates.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDocumentTagsActionPerformed(evt);
+                mnuDocumentFolderTemplatesActionPerformed(evt);
             }
         });
-        mnuArchiveFileOptions.add(mnuDocumentTags);
+        mnuArchiveFileOptions.add(mnuDocumentFolderTemplates);
+
+        mnuFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png"))); // NOI18N
+        mnuFormsManager.setText("Falldatenblätter");
+        mnuFormsManager.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFormsManagerActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuFormsManager);
+
+        mnuArchiveFileOptionsCaseNumbering.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        mnuArchiveFileOptionsCaseNumbering.setText(bundle.getString("menu.settings.cases.numbering")); // NOI18N
+        mnuArchiveFileOptionsCaseNumbering.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileOptionsCaseNumberingActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileOptionsCaseNumbering);
+
+        mnuArchiveFileOptionsDictateSign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuArchiveFileOptionsDictateSign.setText(bundle.getString("menu.settings.cases.dictatesigns")); // NOI18N
+        mnuArchiveFileOptionsDictateSign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileOptionsDictateSignActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileOptionsDictateSign);
 
         mnuArchiveFileCustomFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
         mnuArchiveFileCustomFields.setText(bundle.getString("menu.settings.cases.customfields")); // NOI18N
@@ -1543,64 +1561,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileCustomFieldsInvolvements);
 
-        mnuArchiveFileOptionsCaseNumbering.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
-        mnuArchiveFileOptionsCaseNumbering.setText(bundle.getString("menu.settings.cases.numbering")); // NOI18N
-        mnuArchiveFileOptionsCaseNumbering.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuArchiveFileOptionsCaseNumberingActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuArchiveFileOptionsCaseNumbering);
-
-        mnuFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png"))); // NOI18N
-        mnuFormsManager.setText("Falldatenblätter");
-        mnuFormsManager.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuFormsManagerActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuFormsManager);
-
-        mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
-        mnuDocumentFolderTemplates.setText("Dokumentordner");
-        mnuDocumentFolderTemplates.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDocumentFolderTemplatesActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuDocumentFolderTemplates);
-
         mnuOptions.add(mnuArchiveFileOptions);
 
         mnuDocumentOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuDocumentOptions.setText("Dokumente");
-
-        mnuMappingTables.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
-        mnuMappingTables.setText("Zuordnungstabellen");
-        mnuMappingTables.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMappingTablesActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuMappingTables);
-
-        mnuMappingEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
-        mnuMappingEntries.setText("Zuordnungsregeln");
-        mnuMappingEntries.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMappingEntriesActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuMappingEntries);
-
-        mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
-        mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
-        mnuScanOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuScanOptionsActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuScanOptions);
 
         mnuWordProcessor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuWordProcessor.setText("Office-Suite");
@@ -1610,6 +1574,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuWordProcessor);
+
+        mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuDocumentTags.setText("Dokumenten-Etiketten");
+        mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentTagsActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuDocumentTags);
+
+        mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
+        mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
+        mnuScanOptions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuScanOptionsActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuScanOptions);
 
         mnuSearchIndex.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         mnuSearchIndex.setText(bundle.getString("menu.settings.documents.search")); // NOI18N
@@ -1637,6 +1619,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuCustomLauncherOptions);
+
+        mnuMappingTables.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingTables.setText("Zuordnungstabellen");
+        mnuMappingTables.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingTablesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingTables);
+
+        mnuMappingEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingEntries.setText("Zuordnungsregeln");
+        mnuMappingEntries.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingEntriesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingEntries);
 
         mnuOptions.add(mnuDocumentOptions);
 
