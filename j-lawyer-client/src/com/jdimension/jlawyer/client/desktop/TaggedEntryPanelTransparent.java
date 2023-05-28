@@ -858,7 +858,11 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
         lblDocument.setFont(lblDocument.getFont().deriveFont(lblDocument.getFont().getStyle() & ~java.awt.Font.BOLD, lblDocument.getFont().getSize()-2));
+        lblDocument.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDocument.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDocumentMouseClicked(evt);
+            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblDocumentMouseEntered(evt);
             }
@@ -996,6 +1000,10 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
     private void lblDocumentMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseExited
         highlight(false);
     }//GEN-LAST:event_lblDocumentMouseExited
+
+    private void lblDocumentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseClicked
+        this.lblDescriptionMouseClicked(evt);
+    }//GEN-LAST:event_lblDocumentMouseClicked
 
     private void highlight(boolean highlight) {
         Color c=NORMAL_COLOR;
