@@ -777,23 +777,24 @@ public class PlaceHolders {
     public static final String TABELLE_1 = "{{TABELLE_1}}";
     
     // invoices
-    public static final String RG_NR = "{{RG_NR}}";
-    public static final String RG_NAME = "{{RG_NAME}}";
-    public static final String RG_BESCHR = "{{RG_BESCHR}}";
-    public static final String RG_DTFAELLIG = "{{RG_DTFAELLIG}}";
-    public static final String RG_DTLZVON = "{{RG_DTLZVON}}";
-    public static final String RG_DTLZBIS = "{{RG_DTLZBIS}}";
-    public static final String RG_DTERSTELLT = "{{RG_DTERSTELLT}}";
-    public static final String RG_TOTAL = "{{RG_TOTAL}}";
-    public static final String RG_WHRG = "{{RG_WHRG}}";
-    public static final String RG_TABELLE = "{{RG_TABELLE}}";
+    public static final String BEL_NR = "{{BEL_NR}}";
+    public static final String BEL_TYP = "{{BEL_TYP}}";
+    public static final String BEL_NAME = "{{BEL_NAME}}";
+    public static final String BEL_BESCHR = "{{BEL_BESCHR}}";
+    public static final String BEL_DTFAELLIG = "{{BEL_DTFAELLIG}}";
+    public static final String BEL_DTLZVON = "{{BEL_DTLZVON}}";
+    public static final String BEL_DTLZBIS = "{{BEL_DTLZBIS}}";
+    public static final String BEL_DTERSTELLT = "{{BEL_DTERSTELLT}}";
+    public static final String BEL_TOTAL = "{{BEL_TOTAL}}";
+    public static final String BEL_WHRG = "{{BEL_WHRG}}";
+    public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
     
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
-        ALLTABLEPLACEHOLDERS.add(RG_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
     }
     
     public static String insertAt(String origin, String insert, int position) {
@@ -923,15 +924,16 @@ public class PlaceHolders {
 
         ALLPLACEHOLDERS.add(DOK_DZ);
         
-        ALLPLACEHOLDERS.add(RG_NR);
-        ALLPLACEHOLDERS.add(RG_NAME);
-        ALLPLACEHOLDERS.add(RG_BESCHR);
-        ALLPLACEHOLDERS.add(RG_DTFAELLIG);
-        ALLPLACEHOLDERS.add(RG_DTLZVON);
-        ALLPLACEHOLDERS.add(RG_DTLZBIS);
-        ALLPLACEHOLDERS.add(RG_DTERSTELLT);
-        ALLPLACEHOLDERS.add(RG_TOTAL);
-        ALLPLACEHOLDERS.add(RG_WHRG);
+        ALLPLACEHOLDERS.add(BEL_NR);
+        ALLPLACEHOLDERS.add(BEL_TYP);
+        ALLPLACEHOLDERS.add(BEL_NAME);
+        ALLPLACEHOLDERS.add(BEL_BESCHR);
+        ALLPLACEHOLDERS.add(BEL_DTFAELLIG);
+        ALLPLACEHOLDERS.add(BEL_DTLZVON);
+        ALLPLACEHOLDERS.add(BEL_DTLZBIS);
+        ALLPLACEHOLDERS.add(BEL_DTERSTELLT);
+        ALLPLACEHOLDERS.add(BEL_TOTAL);
+        ALLPLACEHOLDERS.add(BEL_WHRG);
 
         return ALLPLACEHOLDERS;
     }

@@ -886,6 +886,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdNavigateToDocument.setEnabled(false);
         this.cmdViewDocument.setEnabled(false);
 
+        this.clearPositionsPanel();
+        
         if (invoice == null) {
             this.setTitle("neue Rechnung erstellen");
 
@@ -922,6 +924,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.chkTaxes.setSelected(invoice.isSmallBusiness());
             if (invoice.getInvoiceType() != null) {
                 this.cmbInvoiceType.setSelectedItem(invoice.getInvoiceType());
+            }
+            for(InvoicePool pl: this.invoicePools.values()) {
+                if(pl.getId().equals(invoice.getLastPoolId()))
+                    this.cmbInvoicePool.setSelectedItem(pl.getDisplayName());
             }
             if(invoice.getInvoiceDocument()!=null) {
                 this.cmdNavigateToDocument.setEnabled(true);
@@ -1282,6 +1288,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
+        });
+        lstPositionTemplates.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lstPositionTemplatesMouseClicked(evt);
+            }
         });
         jScrollPane3.setViewportView(lstPositionTemplates);
 
@@ -1683,7 +1694,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 total = total + (u * up * (1 + t / 100f));
                 
                 positionIndex=positionIndex+1;
-                ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
+                ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
                 rowcount = rowcount + 1;
             }
         }
@@ -1704,7 +1715,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.formatFooterRow(ct, footerRowTotal);
 
         //TableLayout
+        ct.setColumnAlignment(0, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(1, Cell.ALIGNMENT_LEFT);
         ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
         ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
         ct.setRowFontSize(0, 12);
         ct.setColumnWidth(0, 25);
@@ -1839,16 +1854,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             JOptionPane.showMessageDialog(this, "Fehler beim Entfernen der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        this.pnlInvoicePositions.removeAll();
-        this.pnlInvoicePositions.doLayout();
-        int dl = this.splitMain.getDividerLocation();
-        this.splitMain.setDividerLocation(dl + 1);
-        this.splitMain.setDividerLocation(dl);
+        this.clearPositionsPanel();
         
         this.updateTotals(null);
 
     }//GEN-LAST:event_cmdRemoveAllPositionsActionPerformed
 
+    private void clearPositionsPanel() {
+        this.pnlInvoicePositions.removeAll();
+        this.pnlInvoicePositions.doLayout();
+        int dl = this.splitMain.getDividerLocation();
+        this.splitMain.setDividerLocation(dl + 1);
+        this.splitMain.setDividerLocation(dl);
+    }
+    
     private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
         this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSearchRecipientMousePressed
@@ -1956,6 +1975,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         }
     }//GEN-LAST:event_cmdUploadInvoiceDocumentActionPerformed
+
+    private void lstPositionTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstPositionTemplatesMouseClicked
+        if(evt.getClickCount()==2) {
+            this.cmdApplyPositionTemplateActionPerformed(null);
+        }
+    }//GEN-LAST:event_lstPositionTemplatesMouseClicked
 
     /**
      * @param args the command line arguments

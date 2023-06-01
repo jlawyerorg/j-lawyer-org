@@ -4743,7 +4743,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             i.setId(idGen.getID().toString());
             i.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-            i.setName("Rechnung " + i.getInvoiceNumber());
+            i.setName(iType.getDisplayName() + " " + i.getInvoiceNumber());
             i.setPeriodFrom(new Date());
             i.setPeriodTo(new Date());
             i.setStatus(Invoice.STATUS_NEW);

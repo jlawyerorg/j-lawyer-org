@@ -1041,37 +1041,41 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         
         if (invoice != null) {
             SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
-            if (placeHolders.containsKey(RG_BESCHR)) {
-                placeHolders.put(RG_BESCHR, val(invoice.getDescription()));
+            if (placeHolders.containsKey(BEL_BESCHR)) {
+                placeHolders.put(BEL_BESCHR, val(invoice.getDescription()));
             }
-            if (placeHolders.containsKey(RG_DTERSTELLT)) {
-                placeHolders.put(RG_DTERSTELLT, df.format(invoice.getCreationDate()));
+            if (placeHolders.containsKey(BEL_DTERSTELLT)) {
+                placeHolders.put(BEL_DTERSTELLT, df.format(invoice.getCreationDate()));
             }
-            if (placeHolders.containsKey(RG_DTFAELLIG)) {
-                placeHolders.put(RG_DTFAELLIG, df.format(invoice.getDueDate()));
+            if (placeHolders.containsKey(BEL_DTFAELLIG)) {
+                placeHolders.put(BEL_DTFAELLIG, df.format(invoice.getDueDate()));
             }
-            if (placeHolders.containsKey(RG_DTLZBIS)) {
-                placeHolders.put(RG_DTLZBIS, df.format(invoice.getPeriodTo()));
+            if (placeHolders.containsKey(BEL_DTLZBIS)) {
+                placeHolders.put(BEL_DTLZBIS, df.format(invoice.getPeriodTo()));
             }
-            if (placeHolders.containsKey(RG_DTLZVON)) {
-                placeHolders.put(RG_DTLZVON, df.format(invoice.getPeriodFrom()));
+            if (placeHolders.containsKey(BEL_DTLZVON)) {
+                placeHolders.put(BEL_DTLZVON, df.format(invoice.getPeriodFrom()));
             }
-            if (placeHolders.containsKey(RG_NAME)) {
-                placeHolders.put(RG_NAME, val(invoice.getName()));
+            if (placeHolders.containsKey(BEL_NAME)) {
+                placeHolders.put(BEL_NAME, val(invoice.getName()));
             }
-            if (placeHolders.containsKey(RG_NR)) {
-                placeHolders.put(RG_NR, val(invoice.getInvoiceNumber()));
+            if (placeHolders.containsKey(BEL_TYP)) {
+                if(invoice!=null && invoice.getInvoiceType()!=null)
+                    placeHolders.put(BEL_TYP, val(invoice.getInvoiceType().getDisplayName()));
             }
-            if (placeHolders.containsKey(RG_TOTAL)) {
-                placeHolders.put(RG_TOTAL, currencyFormat.format(invoice.getTotal()));
+            if (placeHolders.containsKey(BEL_NR)) {
+                placeHolders.put(BEL_NR, val(invoice.getInvoiceNumber()));
             }
-            if (placeHolders.containsKey(RG_WHRG)) {
-                placeHolders.put(RG_WHRG, val(invoice.getCurrency()));
+            if (placeHolders.containsKey(BEL_TOTAL)) {
+                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotal()));
+            }
+            if (placeHolders.containsKey(BEL_WHRG)) {
+                placeHolders.put(BEL_WHRG, val(invoice.getCurrency()));
             }
         }
         
-        if (placeHolders.containsKey(RG_TABELLE) && invoiceTable!=null) {
-            placeHolders.put(RG_TABELLE, invoiceTable);
+        if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable!=null) {
+            placeHolders.put(BEL_TABELLE, invoiceTable);
         }
         
         return placeHolders;
