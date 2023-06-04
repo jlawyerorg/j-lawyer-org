@@ -722,7 +722,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.lblStatus.setText("(" + invoice.getStatusString() + ")");
         StringBuilder tooltip=new StringBuilder();
         tooltip.append("<html>");
-        tooltip.append("Rechnungsdatum: ").append(df.format(invoice.getCreationDate()));
+        tooltip.append("Belegdatum: ").append(df.format(invoice.getCreationDate()));
         tooltip.append("<br/>");
         tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
         tooltip.append("<br/><br/>");
