@@ -50,6 +50,7 @@
     <class>com.jdimension.jlawyer.persistence.InvoicePosition</class>
     <class>com.jdimension.jlawyer.persistence.InvoiceType</class>
     <class>com.jdimension.jlawyer.persistence.InvoicePositionTemplate</class>
+    <class>com.jdimension.jlawyer.persistence.Timesheet</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->

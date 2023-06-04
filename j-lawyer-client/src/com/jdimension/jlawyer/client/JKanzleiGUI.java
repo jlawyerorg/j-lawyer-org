@@ -1124,6 +1124,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuInvoiceCurrencies = new javax.swing.JMenuItem();
         mnuInvoiceTaxRates = new javax.swing.JMenuItem();
         mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
+        mnuTimesheet = new javax.swing.JMenu();
+        mnuTimesheetIntervals = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1724,6 +1726,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance.add(mnuInvoicePositionTemplates);
 
         mnuOptions.add(mnuFinance);
+
+        mnuTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheet.setText("Zeiterfassung");
+
+        mnuTimesheetIntervals.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetIntervals.setText("Intervalle");
+        mnuTimesheetIntervals.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetIntervalsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetIntervals);
+
+        mnuOptions.add(mnuTimesheet);
         mnuOptions.add(jSeparator2);
 
         mnuUserProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png"))); // NOI18N
@@ -2653,11 +2669,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_formComponentMoved
 
     private void mnuInvoiceTaxRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTaxRatesActionPerformed
-        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
-        dlg.setTitle("Steuersätze");
-        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICETAXRATES);
-        FrameUtils.centerDialog(dlg, this);
-        dlg.setVisible(true);
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+            dlg.setTitle("Steuersätze");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICETAXRATES);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuInvoiceTaxRatesActionPerformed
 
     private void mnuInvoicePositionTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePositionTemplatesActionPerformed
@@ -2667,6 +2685,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 dlg.setVisible(true);
             }
     }//GEN-LAST:event_mnuInvoicePositionTemplatesActionPerformed
+
+    private void mnuTimesheetIntervalsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetIntervalsActionPerformed
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true, OptionGroupConfigurationDialog.VALIDATOR_INTEGER);
+            dlg.setTitle("Zeiterfassung: mögliche Intervalle (Minuten)");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuTimesheetIntervalsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -2759,6 +2787,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuSecurity;
     private javax.swing.JMenuItem mnuServerMonitor;
     private javax.swing.JMenu mnuServices;
+    private javax.swing.JMenu mnuTimesheet;
+    private javax.swing.JMenuItem mnuTimesheetIntervals;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;
