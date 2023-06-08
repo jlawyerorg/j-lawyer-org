@@ -875,4 +875,18 @@ public interface ArchiveFileServiceRemote {
 
     Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception;
 
+    Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
+
+    Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception;
+
+    void removeTimesheet(String timesheetId) throws Exception;
+
+    List<Timesheet> getTimesheets(String caseId) throws Exception;
+
+    List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
+
+    List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
+    List<Timesheet> getOpenTimesheets() throws Exception;
+
+    List<TimesheetPosition> getLastTimesheetPositions(String principal) throws Exception;
 }

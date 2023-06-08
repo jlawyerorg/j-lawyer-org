@@ -1164,6 +1164,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.caseFolderPanel1.setReadOnly(readOnly || archived);
 
         this.cmdAddForm.setEnabled(!readOnly && !archived);
+        
+        this.cmdNewTimesheet.setEnabled(!readOnly && !archived);
+        this.cmdEditTimesheet.setEnabled(!readOnly && !archived);
+        this.cmdDeleteTimesheet.setEnabled(!readOnly && !archived);
+        this.cmdSaveTimesheet.setEnabled(!readOnly && !archived);
 
         this.chkArchived.setEnabled(!readOnly && !archived);
         this.lblArchivedSince.setEnabled(!readOnly && !archived);
@@ -1180,6 +1185,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
         this.cmdAddNote.setEnabled(!readOnly && !archived);
         this.cmdHeaderAddNote.setEnabled(!readOnly && !archived);
+        this.cmdTimesheetLog.setEnabled(!readOnly && !archived);
         this.cmdUploadDocument.setEnabled(!readOnly && !archived);
 
         this.cmdSearchClient.setEnabled(!readOnly && !archived);
@@ -1335,7 +1341,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync, this.cmbTimesheets);
 
         a.start();
 
@@ -1745,17 +1751,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        pnlInvoices = new javax.swing.JPanel();
         cmdNewInvoice = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        pnlInvoices = new javax.swing.JPanel();
         jPanel14 = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
         cmdNewTimesheet = new javax.swing.JButton();
-        pnlTimesheets = new javax.swing.JPanel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        cmbTimesheets = new javax.swing.JComboBox<>();
         jSeparator9 = new javax.swing.JSeparator();
         jLabel23 = new javax.swing.JLabel();
         txtTimesheetDescription = new javax.swing.JTextField();
-        jComboBox2 = new javax.swing.JComboBox<>();
+        cmbTimesheetInterval = new javax.swing.JComboBox<>();
         jLabel24 = new javax.swing.JLabel();
         jLabel25 = new javax.swing.JLabel();
         jLabel26 = new javax.swing.JLabel();
@@ -1763,8 +1769,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdDeleteTimesheet = new javax.swing.JButton();
         jLabel29 = new javax.swing.JLabel();
         prgTimesheetStatus = new javax.swing.JProgressBar();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jFormattedTextField1 = new javax.swing.JFormattedTextField();
+        chkTimesheetLimit = new javax.swing.JCheckBox();
+        txtTimesheetLimit = new javax.swing.JFormattedTextField();
+        cmdSaveTimesheet = new javax.swing.JButton();
+        jScrollPane9 = new javax.swing.JScrollPane();
+        pnlTimesheets = new javax.swing.JPanel();
+        cmbTimesheetStatus = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
         txtClaimValue = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
@@ -1821,6 +1831,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
+        cmdTimesheetLog = new javax.swing.JButton();
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -2730,6 +2741,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel7.setText("Belege:");
 
+        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
+        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewInvoiceActionPerformed(evt);
+            }
+        });
+
+        jScrollPane5.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
         org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
         pnlInvoices.setLayout(pnlInvoicesLayout);
         pnlInvoicesLayout.setHorizontalGroup(
@@ -2741,13 +2762,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(0, 591, Short.MAX_VALUE)
         );
 
-        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
-        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewInvoiceActionPerformed(evt);
-            }
-        });
+        jScrollPane5.setViewportView(pnlInvoices);
 
         org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -2761,7 +2776,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewInvoice)
                         .add(0, 744, Short.MAX_VALUE))
-                    .add(pnlInvoices, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jScrollPane5))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
@@ -2772,33 +2787,31 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(cmdNewInvoice))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(pnlInvoices, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jScrollPane5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         subTabsFinance.addTab("Belege", jPanel8);
 
-        jLabel22.setFont(jLabel22.getFont());
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel22.setText("Projekte:");
 
         cmdNewTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewTimesheetActionPerformed(evt);
+            }
+        });
 
-        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
-        pnlTimesheets.setLayout(pnlTimesheetsLayout);
-        pnlTimesheetsLayout.setHorizontalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        pnlTimesheetsLayout.setVerticalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 491, Short.MAX_VALUE)
-        );
-
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Beratung Exportkontrolle" }));
+        cmbTimesheets.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTimesheetsActionPerformed(evt);
+            }
+        });
 
         jLabel23.setText("Beschreibung:");
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "5", "10" }));
+        cmbTimesheetInterval.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "5", "10" }));
 
         jLabel24.setText("Taktung:");
 
@@ -2808,8 +2821,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel26.setText("(netto)");
 
         cmdEditTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEditTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditTimesheetActionPerformed(evt);
+            }
+        });
 
         cmdDeleteTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDeleteTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteTimesheetActionPerformed(evt);
+            }
+        });
 
         jLabel29.setFont(jLabel29.getFont());
         jLabel29.setText("aktuell:");
@@ -2818,11 +2841,36 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         prgTimesheetStatus.setValue(30);
         prgTimesheetStatus.setStringPainted(true);
 
-        jCheckBox1.setFont(jCheckBox1.getFont());
-        jCheckBox1.setSelected(true);
-        jCheckBox1.setText("Limit:");
+        chkTimesheetLimit.setFont(chkTimesheetLimit.getFont());
+        chkTimesheetLimit.setSelected(true);
+        chkTimesheetLimit.setText("Limit:");
 
-        jFormattedTextField1.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##0.##"))));
+        txtTimesheetLimit.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##0.##"))));
+
+        cmdSaveTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSaveTimesheet.setText("Speichern");
+        cmdSaveTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveTimesheetActionPerformed(evt);
+            }
+        });
+
+        jScrollPane9.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
+        pnlTimesheets.setLayout(pnlTimesheetsLayout);
+        pnlTimesheetsLayout.setHorizontalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlTimesheetsLayout.setVerticalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 449, Short.MAX_VALUE)
+        );
+
+        jScrollPane9.setViewportView(pnlTimesheets);
+
+        cmbTimesheetStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "offen", "geschlossen" }));
 
         org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
         jPanel14.setLayout(jPanel14Layout);
@@ -2832,11 +2880,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jSeparator9)
-                    .add(pnlTimesheets, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jLabel22)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jComboBox1, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbTimesheets, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdEditTimesheet)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2847,23 +2894,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel23)
                             .add(jLabel24)
-                            .add(jCheckBox1))
+                            .add(chkTimesheetLimit))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtTimesheetDescription)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(jComboBox2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel25)
-                                .add(0, 0, Short.MAX_VALUE))
-                            .add(jPanel14Layout.createSequentialGroup()
-                                .add(jFormattedTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(txtTimesheetLimit, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jLabel26)
                                 .add(18, 18, 18)
                                 .add(jLabel29)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(prgTimesheetStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)))))
+                                .add(prgTimesheetStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE))
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(cmdSaveTimesheet)
+                                    .add(jPanel14Layout.createSequentialGroup()
+                                        .add(cmbTimesheetInterval, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                        .add(jLabel25)))
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(txtTimesheetDescription)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmbTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                    .add(jScrollPane9))
                 .addContainerGap())
         );
         jPanel14Layout.setVerticalGroup(
@@ -2871,10 +2925,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel14Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdNewTimesheet)
                     .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(cmdNewTimesheet)
-                        .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(cmbTimesheets, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdDeleteTimesheet)
                     .add(cmdEditTimesheet))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2882,10 +2936,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel23)
-                    .add(txtTimesheetDescription, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtTimesheetDescription, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jComboBox2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbTimesheetInterval, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel25))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2893,11 +2948,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel26)
                         .add(jLabel29)
-                        .add(jCheckBox1)
-                        .add(jFormattedTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(chkTimesheetLimit)
+                        .add(txtTimesheetLimit, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(prgTimesheetStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(pnlTimesheets, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmdSaveTimesheet)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jScrollPane9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3445,6 +3502,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdTimesheetLog.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        cmdTimesheetLog.setToolTipText("Zeit erfassen");
+        cmdTimesheetLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTimesheetLogActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -3462,6 +3527,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdTimesheetLog)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(togCaseSync)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3482,7 +3549,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdTimesheetLog))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -5809,6 +5877,129 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdCopyCaseNumberActionPerformed
 
+    private void cmdNewTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewTimesheetActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Projektname: ", "Neues Zeiterfassungsprojekt anlegen:", JOptionPane.QUESTION_MESSAGE, null, null, "Zeiterfassung");
+        if (newNameObject == null) {
+            return;
+        }
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Timesheet newTimesheet = new Timesheet();
+            newTimesheet.setDescription("");
+            newTimesheet.setInterval(5);
+            newTimesheet.setLimit(0);
+            newTimesheet.setLimited(false);
+            newTimesheet.setStatus(Timesheet.STATUS_OPEN);
+            newTimesheet.setName(newNameObject.toString());
+            newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.dto.getId(), newTimesheet);
+            this.cmbTimesheets.addItem(newTimesheet);
+            this.cmbTimesheets.setSelectedItem(newTimesheet);
+            this.setTimesheetEntry(newTimesheet);
+
+        } catch (Exception ex) {
+            log.error("Error creating invoice", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdNewTimesheetActionPerformed
+
+    private void cmbTimesheetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTimesheetsActionPerformed
+        if(this.cmbTimesheets.getSelectedItem()!=null) {
+            if(this.cmbTimesheets.getSelectedItem() instanceof Timesheet) {
+                Timesheet ts=(Timesheet)this.cmbTimesheets.getSelectedItem();
+                this.setTimesheetEntry(ts);
+            }
+            
+        }
+    }//GEN-LAST:event_cmbTimesheetsActionPerformed
+
+    private void cmdSaveTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveTimesheetActionPerformed
+        if(this.cmbTimesheets.getSelectedItem() != null) {
+            try {
+
+                Timesheet ts = (Timesheet) this.cmbTimesheets.getSelectedItem();
+                ts.setDescription(this.txtTimesheetDescription.getText());
+                ts.setInterval(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+                ts.setLimit(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue());
+                ts.setLimited(this.chkTimesheetLimit.isSelected());
+                if(this.cmbTimesheetStatus.getSelectedItem().toString().equals("offen")) {
+                    ts.setStatus(Timesheet.STATUS_OPEN);
+                } else {
+                    ts.setStatus(Timesheet.STATUS_CLOSED);
+                }
+                
+                
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                Timesheet updatedTs = remote.updateTimesheet(dto.getId(), ts);
+                this.setTimesheetEntry(updatedTs);
+            } catch (Exception ioe) {
+                log.error("Error updating timesheet", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Zeiterfassungsprojektes: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdSaveTimesheetActionPerformed
+
+    private void cmdDeleteTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteTimesheetActionPerformed
+        if(this.cmbTimesheets.getSelectedItem()!=null) {
+            Timesheet t=(Timesheet)this.cmbTimesheets.getSelectedItem();
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                remote.removeTimesheet(t.getId());
+                this.cmbTimesheets.removeItem(t);
+            } catch (Exception ioe) {
+                log.error("Error removing timesheet", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Zeiterfassungsprojektes: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdDeleteTimesheetActionPerformed
+
+    private void cmdEditTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditTimesheetActionPerformed
+        if(this.cmbTimesheets.getSelectedItem() != null) {
+            Timesheet t = (Timesheet) this.cmbTimesheets.getSelectedItem();
+            Object newNameObject = JOptionPane.showInputDialog(this, "Projektname: ", "Zeiterfassungsprojekt umbenennen:", JOptionPane.QUESTION_MESSAGE, null, null, t.getName());
+            if (newNameObject == null) {
+                return;
+            }
+            try {
+                t.setName(newNameObject.toString());
+                
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                remote.updateTimesheet(this.dto.getId(), t);
+                this.cmbTimesheets.removeItem(t);
+                this.cmbTimesheets.addItem(t);
+                this.cmbTimesheets.setSelectedItem(t);
+            } catch (Exception ioe) {
+                log.error("Error updating timesheet", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen des Zeiterfassungsprojektes: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdEditTimesheetActionPerformed
+
+    private void cmdTimesheetLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetLogActionPerformed
+        TimesheetLogDialog dlg=new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdTimesheetLogActionPerformed
+
+    private void setTimesheetEntry(Timesheet t) {
+        this.txtTimesheetDescription.setText(t.getDescription());
+        this.txtTimesheetLimit.setText(this.currencyFormat.format(t.getLimit()));
+        ComponentUtils.addComboboxItemIfNecessary(this.cmbTimesheetInterval, "" + t.getInterval());
+        ComponentUtils.selectComboboxItem(this.cmbTimesheetInterval, "" + t.getInterval());
+        this.cmbTimesheetInterval.setSelectedItem("" + t.getInterval());
+        this.chkTimesheetLimit.setSelected(t.isLimited());
+        if(t.getStatus()==Timesheet.STATUS_CLOSED)
+            this.cmbTimesheetStatus.setSelectedItem("geschlossen");
+        else
+            this.cmbTimesheetStatus.setSelectedItem("offen");
+    }
+    
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6171,12 +6362,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.ui.folders.CaseFolderPanel caseFolderPanel1;
     private javax.swing.JCheckBox chkArchived;
+    private javax.swing.JCheckBox chkTimesheetLimit;
     protected javax.swing.JComboBox cmbAssistant;
     private javax.swing.JComboBox<Object> cmbFormType;
     protected javax.swing.JComboBox<String> cmbGroup;
     private javax.swing.JComboBox cmbHistoryTime;
     protected javax.swing.JComboBox cmbLawyer;
     protected javax.swing.JComboBox cmbSubjectField;
+    private javax.swing.JComboBox<String> cmbTimesheetInterval;
+    private javax.swing.JComboBox<String> cmbTimesheetStatus;
+    private javax.swing.JComboBox<Timesheet> cmbTimesheets;
     private javax.swing.JButton cmdAddForm;
     private javax.swing.JButton cmdAddHistory;
     private javax.swing.JButton cmdAddNote;
@@ -6198,17 +6393,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdNewTimesheet;
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdSaveTimesheet;
     private javax.swing.JButton cmdSearchClient;
     private javax.swing.JButton cmdShowHistorySelector;
+    private javax.swing.JButton cmdTimesheetLog;
     protected javax.swing.JButton cmdToEditMode;
     private javax.swing.JButton cmdUploadDocument;
     private javax.swing.JPanel documentTagPanel;
     private javax.swing.JPopupMenu documentsPopup;
     private javax.swing.JPopupMenu drebisPopup;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
-    private javax.swing.JFormattedTextField jFormattedTextField1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -6254,9 +6447,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
+    private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
@@ -6362,6 +6557,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected javax.swing.JTextField txtReason;
     private javax.swing.JTextField txtSearchDocumentNames;
     private javax.swing.JTextField txtTimesheetDescription;
+    private javax.swing.JFormattedTextField txtTimesheetLimit;
     // End of variables declaration//GEN-END:variables
 
     @Override

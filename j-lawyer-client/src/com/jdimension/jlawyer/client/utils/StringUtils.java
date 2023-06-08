@@ -726,4 +726,60 @@ public class StringUtils extends ServerStringUtils {
         }
     }
     
+    public static String formatDuration(long milliseconds) {
+        
+      long seconds=milliseconds/1000l;
+        
+      // your code goes here
+      if (seconds < 10) return "wenige Sekunden";
+      
+      final int secPerYr  = 31_536_000;
+      final int secPerDay = 86_400;
+      final int secPerHr  = 3_600;
+      final int secPerMin = 60;
+      
+      ArrayList<String> stringParts = new ArrayList<>();
+      
+      long years = seconds / secPerYr;
+      if (years != 0) {
+        stringParts.add(years + (years > 1 ? " Jahre" : " Jahr"));
+      }
+       
+      long days = seconds % secPerYr / secPerDay;
+      if (days != 0) {
+        stringParts.add(days + (days > 1 ? " Tage" : " Tag"));
+      }
+      
+      long hours = seconds % secPerYr % secPerDay / secPerHr;
+      if (hours != 0) {
+        stringParts.add(hours + (hours > 1 ? "h" : "h"));
+      }
+      
+      long mins = seconds % secPerYr % secPerDay % secPerHr / secPerMin;
+      if (mins != 0) {
+        stringParts.add(mins + (mins > 1 ? "min" : "min"));
+      }
+      
+      long secs = seconds % secPerYr % secPerDay % secPerHr % secPerMin;
+      if (secs != 0) {
+        stringParts.add(secs + (secs > 1 ? "s" : "s"));
+      }
+      
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < stringParts.size(); i++) {
+        sb.append(stringParts.get(i));
+        if (i != stringParts.size() - 1) {
+          if (i == stringParts.size() - 2) {
+            //sb.append(" und ");
+            sb.append(" ");
+          } else {
+            //sb.append(", ");
+            sb.append(" ");
+          }
+        }
+      }
+      
+      return sb.toString();
+    }
+
 }

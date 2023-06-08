@@ -725,6 +725,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
     private JComboBox cmbFormTypes = null;
+    private JComboBox cmbTimesheets = null;
     private JPanel formsPanel = null;
     private JTabbedPane tabPaneForms = null;
     private JComboBox cmbGroups = null;
@@ -734,7 +735,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync, JComboBox cmbTimesheets) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -747,6 +748,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
         this.cmbFormTypes = formTypes;
+        this.cmbTimesheets = cmbTimesheets;
         this.formsPanel = formsPanel;
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
@@ -914,7 +916,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             events = calService.getReviews(this.archiveFileKey);
             
-            this.progress("Lade Akte: Rechnungen...");
+            this.progress("Lade Akte: Belege und Zeiterfassung...");
             List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
             HashMap <String,Invoice> docToInvoice=new HashMap<>();
             this.invoicesPanel.removeAll();
@@ -924,6 +926,14 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
+            }
+            this.cmbTimesheets.removeAllItems();
+            List<Timesheet> timesheets = fileService.getTimesheets(archiveFileKey);
+            for (Timesheet ts : timesheets) {
+                this.cmbTimesheets.addItem(ts);
+            }
+            if (this.cmbTimesheets.getItemCount() > 0) {
+                this.cmbTimesheets.setSelectedIndex(0);
             }
             
             this.progress("Lade Akte: Dokumente...");

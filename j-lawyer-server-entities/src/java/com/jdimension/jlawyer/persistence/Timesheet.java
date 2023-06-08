@@ -677,11 +677,15 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "Timesheet.findAll", query = "SELECT a FROM Timesheet a"),
     @NamedQuery(name = "Timesheet.findById", query = "SELECT a FROM Timesheet a WHERE a.id = :id"),
+    @NamedQuery(name = "Timesheet.findByStatus", query = "SELECT a FROM Timesheet a WHERE a.status = :status"),
     @NamedQuery(name = "Timesheet.findByArchiveFileKey", query = "SELECT a FROM Timesheet a WHERE a.archiveFileKey = :archiveFileKey")})
 public class Timesheet implements Serializable {
        
     
     protected static long serialVersionUID = 1L;
+    
+    public static final int STATUS_OPEN=10;
+    public static final int STATUS_CLOSED=20;
     
     @Id
     @Basic(optional = false)
@@ -703,6 +707,9 @@ public class Timesheet implements Serializable {
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
+    
+    @Column(name = "status")
+    protected int status=STATUS_OPEN;
     
     
     public Timesheet() {
@@ -758,7 +765,7 @@ public class Timesheet implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.Timesheet[ id=" + getId() + " ]";
+        return this.getName();
     }
 
     /**
@@ -829,6 +836,20 @@ public class Timesheet implements Serializable {
      */
     public void setLimit(float limit) {
         this.limit = limit;
+    }
+
+    /**
+     * @return the status
+     */
+    public int getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(int status) {
+        this.status = status;
     }
 
 }
