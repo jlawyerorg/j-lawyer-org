@@ -5984,6 +5984,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdTimesheetLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetLogActionPerformed
         TimesheetLogDialog dlg=new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdTimesheetLogActionPerformed
 

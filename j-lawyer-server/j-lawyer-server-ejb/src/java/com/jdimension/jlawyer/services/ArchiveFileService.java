@@ -1320,6 +1320,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // remove all existing parties
         List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (addList != null) {
+            log.info("updating case... removing " + addList.size() + " existing parties from case " + aFile.getId());
             for (ArchiveFileAddressesBean add : addList) {
                 this.archiveFileAddressesFacade.remove(add);
             }
@@ -1328,6 +1329,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // create all new addresse with their respective types
         List<ArchiveFileAddressesBean> newAdds = dto.getArchiveFileAddressesBeanList();
         if (newAdds != null) {
+            log.info("updating case... adding " + newAdds.size() + " new parties to case " + aFile.getId());
             for (ArchiveFileAddressesBean add : newAdds) {
                 add.setId(idGen.getID().toString());
                 if (add.getArchiveFileKey() == null) {
@@ -1335,6 +1337,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
                 this.archiveFileAddressesFacade.create(add);
             }
+        } else {
+            log.info("updating case... client did not provide any parties");
         }
 
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
@@ -5462,7 +5466,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<Timesheet> getOpenTimesheets() throws Exception {
         List<Timesheet> allOpen= this.timesheetFacade.findByStatus(Timesheet.STATUS_OPEN);
-        List<Timesheet> allOpenAllowed=new ArrayList<Timesheet>();
+        List<Timesheet> allOpenAllowed=new ArrayList<>();
         
         ArrayList<String> allowedCases = null;
         try {
@@ -5485,10 +5489,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<TimesheetPosition> getLastTimesheetPositions(String principal) throws Exception {
         // returns the timesheet positions last used by the user
-        //   only the latest for a given project
+        //   any open position
+        //   latest closed position for timesheets that have no open position (provide access to last used log)
         //   project must be in status "open"
         //   position must have been logged by the given user
-        // select t1.id, t1.timesheet_id, max(t1.time_started) from (select id, timesheet_id, time_started from timesheet_positions where timesheet_id in (select id from timesheets where status=10) and principal='admin') t1 group by timesheet_id;
         
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
@@ -5497,7 +5501,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<TimesheetPosition> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select t1.id, t1.timesheet_id, max(t1.time_started) from (select id, timesheet_id, time_started from timesheet_positions where timesheet_id in (select id from timesheets where status=10) and principal=?) t1 group by timesheet_id");
+            st = con.prepareStatement("select id, timesheet_id, time_stopped from timesheet_positions where timesheet_id in (select id from timesheets where status=10) and principal=? order by time_stopped desc");
             st.setString(1, principal);
             rs = st.executeQuery();
 
@@ -5535,7 +5539,162 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
         
-        return list;
+        List<TimesheetPosition> returnList=new ArrayList<>();
+        List<String> timesheetIds=new ArrayList<>();
+        
+        // first pass: collect all open
+        for(TimesheetPosition p: list) {
+            if(p.getStopped()==null) {
+                returnList.add(p);
+                timesheetIds.add(p.getTimesheet().getId());
+            }
+                
+        }
+        
+        // second pass: collect all latest for timesheets without an open position
+        for(TimesheetPosition p: list) {
+            if(!timesheetIds.contains(p.getTimesheet().getId())) {
+                returnList.add(p);
+                timesheetIds.add(p.getTimesheet().getId());
+            }
+                
+        }
+        
+        
+        return returnList;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+        
+        if(position.getId()==null) {
+            
+            List openForUserInTimesheet=this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(context.getCallerPrincipal().getName(), sheet);
+            if(openForUserInTimesheet.size()>0) {
+                throw new Exception("In einem Zeiterfassungsprojekt kann immer nur eine offene Position für einen Nutzer existieren!");
+            }
+            
+            // new position
+            StringGenerator idGen=new StringGenerator();
+            String id=idGen.getID().toString();
+            position.setId(id);
+            position.setStarted(new Date());
+            position.setStopped(null);
+            position.setPrincipal(context.getCallerPrincipal().getName());
+            position.setTimesheet(sheet);
+            this.timesheetPositionsFacade.create(position);
+            return this.timesheetPositionsFacade.find(id);
+        } else {
+            // stop existing position
+            TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
+            if(existing==null)
+                throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+            
+            if(existing.getStopped()==null) {
+                existing.setStopped(new Date());
+                existing.setDescription(position.getDescription());
+                existing.setName(position.getName());
+                existing.setTaxRate(position.getTaxRate());
+                existing.setTimesheet(sheet);
+                existing.setUnitPrice(position.getUnitPrice());
+                existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
+                this.timesheetPositionsFacade.edit(existing);
+            }
+            
+            
+            // start new one with same parameters
+            TimesheetPosition newPos=new TimesheetPosition();
+            StringGenerator idGen=new StringGenerator();
+            String id=idGen.getID().toString();
+            newPos.setPrincipal(context.getCallerPrincipal().getName());
+            newPos.setDescription(position.getDescription());
+            newPos.setName(position.getName());
+            newPos.setStarted(new Date());
+            newPos.setStopped(null);
+            newPos.setTaxRate(position.getTaxRate());
+            newPos.setTimesheet(sheet);
+            newPos.setUnitPrice(position.getUnitPrice());
+            newPos.setTotal(0f);
+            newPos.setId(id);
+            this.timesheetPositionsFacade.create(newPos);
+            return this.timesheetPositionsFacade.find(id);
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+        
+        if(position.getId()==null) {
+            throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+        } else {
+            // stop existing position
+            TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
+            if(existing.getStarted()==null)
+                throw new Exception("Zeiterfassungsposition wurde nie gestartet, kann nicht beendet werden!");
+            
+            if(existing.getStopped() != null)
+                throw new Exception("Zeiterfassungsposition ist bereits beendet!");
+
+            existing.setStopped(new Date());
+            existing.setDescription(position.getDescription());
+            existing.setName(position.getName());
+            existing.setTaxRate(position.getTaxRate());
+            existing.setTimesheet(sheet);
+            existing.setUnitPrice(position.getUnitPrice());
+            existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
+            this.timesheetPositionsFacade.edit(existing);
+
+            return this.timesheetPositionsFacade.find(position.getId());
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+        
+        if(position.getId()==null) {
+            throw new Exception("Zeiterfassungsposition muss erst gestartet werden!");
+            
+        } else {
+            // stop existing position
+            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            if (existing == null) {
+                throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+            }
+
+            // only updates metadata, not the actual timestamps (which is done via start and stop methods)
+            existing.setDescription(position.getDescription());
+            existing.setName(position.getName());
+            existing.setTaxRate(position.getTaxRate());
+            existing.setUnitPrice(position.getUnitPrice());
+            this.timesheetPositionsFacade.edit(existing);
+
+            return this.timesheetPositionsFacade.find(position.getId());
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public int hasOpenTimesheetPositions(String principal) throws Exception {
+        List positions=this.getOpenTimesheetPositions(principal);
+        if(positions!=null)
+            return positions.size();
+        else
+            return 0;
     }
 
 }

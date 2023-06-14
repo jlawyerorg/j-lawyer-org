@@ -691,4 +691,6 @@ public interface TimesheetPositionFacadeLocal {
     
     List<TimesheetPosition> findOpenByPrincipal(String principal);
     
+    List<TimesheetPosition> findOpenByPrincipalAndTimesheet(String principal, Timesheet timesheet);
+    
 }

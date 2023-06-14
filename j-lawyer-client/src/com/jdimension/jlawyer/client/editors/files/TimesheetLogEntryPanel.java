@@ -663,11 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -675,6 +680,8 @@ import java.util.Date;
  */
 public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
+    private static final Logger log=Logger.getLogger(TimesheetLogEntryPanel.class.getName());
+    
     ArchiveFileBean entryCase = null;
     TimesheetPosition entry = null;
     Timesheet entrySheet = null;
@@ -684,6 +691,11 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
      */
     public TimesheetLogEntryPanel() {
         initComponents();
+        this.cmdSave.setText("");
+    }
+    
+    public boolean isEntryRunning() {
+        return this.entry.getStarted()!=null && this.entry.getStopped()==null;
     }
 
     public void setEntry(ArchiveFileBean entryCase, Timesheet ts, TimesheetPosition tsp) {
@@ -709,19 +721,26 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         Date stopped = this.entry.getStopped();
 
         if (started != null) {
-            String duration = StringUtils.formatDuration((stopped.getTime() - started.getTime()));
-            this.lblDuration.setText(duration);
+            
             if (stopped == null) {
                 // position is running
-                stopped = new Date();
+
+                String duration = StringUtils.formatDuration((new Date().getTime() - started.getTime()));
+                this.lblDuration.setText(duration);
+                
                 cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
             } else {
                 // position already closed
+                String duration = StringUtils.formatDuration((stopped.getTime() - started.getTime()));
+                this.lblDuration.setText(duration);
+                
                 cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
             }
         } else {
             this.lblDuration.setText("");
         }
+        
+        this.cmdSave.setEnabled(started!=null);
 
     }
 
@@ -758,6 +777,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         cmdStartStop = new javax.swing.JButton();
         lblDuration = new javax.swing.JLabel();
         lblProject = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        cmdSave = new javax.swing.JButton();
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
@@ -792,30 +813,43 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         lblProject.setFont(lblProject.getFont().deriveFont(lblProject.getFont().getStyle() | java.awt.Font.BOLD));
         lblProject.setText("jLabel3");
 
+        cmdSave.setFont(cmdSave.getFont());
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText(" ");
+        cmdSave.setToolTipText("Name und Beschreibung speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(2, 2, 2)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
-                        .addComponent(lblDuration))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jSeparator1)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdStartStop)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(2, 2, 2)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblDuration))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSave))
                             .addComponent(cmbName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
@@ -823,14 +857,15 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
-                            .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(12, 12, 12)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdSave)
+                            .addComponent(lblProject, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(11, 11, 11)
                         .addComponent(cmbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cmdStartStop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdStartStop))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -839,46 +874,106 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     .addComponent(jLabel2)
                     .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblDuration))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
+    public void startStop() {
+        ClientSettings settings = ClientSettings.getInstance();
         if (this.entry.getStarted() == null) {
             // new entry
             Date sta = new Date();
-            this.entry.setStarted(sta);
-            this.txtStart.setValue(sta);
-            cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+//            this.entry.setStarted(sta);
+            this.entry.setDescription(this.taDescription.getText());
+            this.entry.setName(this.cmbName.getEditor().getItem().toString());
+//            this.txtStart.setValue(sta);
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                TimesheetPosition started = afs.timesheetPositionStart(this.entry.getTimesheet().getId(), entry);
+                this.setEntry(entryCase, entrySheet, started);
+                cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+            } catch (Exception ex) {
+                log.error("Error starting timesheet position", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Starten des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            
         } else {
+            
             if (this.entry.getStopped() == null) {
                 // running
-                Date sto = new Date();
-                this.entry.setStopped(sto);
-                this.txtEnd.setValue(sto);
-                cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
+//                Date sto = new Date();
+//                this.entry.setStopped(sto);
+//                this.txtEnd.setValue(sto);
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    TimesheetPosition stopped=afs.timesheetPositionStop(this.entry.getTimesheet().getId(), entry);
+                    this.setEntry(entryCase, entrySheet, stopped);
+                    cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
+                } catch (Exception ex) {
+                    log.error("Error stopping open timesheet position", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Stoppen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                
             } else {
                 // already closed
-                // todo: create new entry here and replace current
-                Date sta = new Date();
-                this.entry.setStarted(sta);
-                this.txtStart.setValue(sta);
-                this.entry.setStopped(null);
-                this.txtEnd.setValue(null);
-                cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+//                Date sta = new Date();
+//                this.entry.setStarted(sta);
+//                this.txtStart.setValue(sta);
+//                this.entry.setStopped(null);
+//                this.txtEnd.setValue(null);
+                
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    TimesheetPosition started=afs.timesheetPositionStart(this.entry.getTimesheet().getId(), entry);
+                    this.setEntry(entryCase, entrySheet, started);
+                    cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+                } catch (Exception ex) {
+                    log.error("Error restarting open timesheet position", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Stoppen/Starten des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                
             }
+        }
+    }
+    
+    private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
+        
+        this.startStop();
+
+    }//GEN-LAST:event_cmdStartStopActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        this.entry.setDescription(this.taDescription.getText());
+        this.entry.setName(this.cmbName.getEditor().getItem().toString());
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            TimesheetPosition updated = afs.timesheetPositionSave(this.entry.getTimesheet().getId(), entry);
+            this.setEntry(entryCase, entrySheet, updated);
+        } catch (Exception ex) {
+            log.error("Error updating timesheet position", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
 
-    }//GEN-LAST:event_cmdStartStopActionPerformed
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbName;
+    private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdStartStop;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblDuration;
     private javax.swing.JLabel lblProject;
     private javax.swing.JTextArea taDescription;

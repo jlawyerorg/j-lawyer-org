@@ -679,7 +679,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "TimesheetPosition.findAll", query = "SELECT a FROM TimesheetPosition a"),
     @NamedQuery(name = "TimesheetPosition.findById", query = "SELECT a FROM TimesheetPosition a WHERE a.id = :id"),
     @NamedQuery(name = "TimesheetPosition.findOpenByPrincipal", query = "SELECT a FROM TimesheetPosition a WHERE a.principal = :principal AND a.stopped is null"),
-    @NamedQuery(name = "TimesheetPosition.findByInvoice", query = "SELECT a FROM TimesheetPosition a WHERE a.timesheet = :timesheet")})
+    @NamedQuery(name = "TimesheetPosition.findOpenByPrincipalAndTimesheet", query = "SELECT a FROM TimesheetPosition a WHERE a.principal = :principal AND a.timesheet = :timesheet AND a.stopped is null"),
+    @NamedQuery(name = "TimesheetPosition.findByTimesheet", query = "SELECT a FROM TimesheetPosition a WHERE a.timesheet = :timesheet")})
 public class TimesheetPosition implements Serializable {
     
     protected static long serialVersionUID = 1L;

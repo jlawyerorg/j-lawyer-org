@@ -725,7 +725,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
     private JComboBox cmbFormTypes = null;
-    private JComboBox cmbTimesheets = null;
+    private JComboBox<Timesheet> cmbTimesheets = null;
     private JPanel formsPanel = null;
     private JTabbedPane tabPaneForms = null;
     private JComboBox cmbGroups = null;

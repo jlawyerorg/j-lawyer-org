@@ -889,4 +889,12 @@ public interface ArchiveFileServiceRemote {
     List<Timesheet> getOpenTimesheets() throws Exception;
 
     List<TimesheetPosition> getLastTimesheetPositions(String principal) throws Exception;
+
+    TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;
+
+    TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception;
+
+    TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
+
+    int hasOpenTimesheetPositions(String principal) throws Exception;
 }

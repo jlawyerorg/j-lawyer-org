@@ -1052,6 +1052,8 @@ public class SplashThread implements Runnable {
                 }
             }
             gui.restoreWindowSize();
+            gui.confirmOpenTimesheetPositions();
+            
         });
     }
 

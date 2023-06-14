@@ -993,7 +993,9 @@
                   <Component id="lblSystemStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="statusLabel" min="-2" pref="385" max="-2" attributes="0"/>
-                  <EmptySpace pref="224" max="32767" attributes="0"/>
+                  <EmptySpace pref="180" max="32767" attributes="0"/>
+                  <Component id="lblTimesheetStatus" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblUpdateStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblNewsStatus" min="-2" max="-2" attributes="0"/>
@@ -1021,6 +1023,7 @@
                   <Component id="statusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblDrebisStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblBeaStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblTimesheetStatus" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <Component id="lblSystemStatus" alignment="1" min="-2" max="-2" attributes="0"/>
           </Group>
@@ -1125,6 +1128,26 @@
             <Property name="toolTipText" type="java.lang.String" value="noch nicht eingeloggt"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblTimesheetStatus">
+          <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="lblTimesheetStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="  "/>
+            <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+              <Color id="Handcursor"/>
+            </Property>
+            <Property name="enabled" type="boolean" value="false"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTimesheetStatusMouseClicked"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

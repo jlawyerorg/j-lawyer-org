@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -686,6 +687,8 @@ import org.apache.log4j.Logger;
 public class TimesheetLogDialog extends javax.swing.JDialog {
     
     private static final Logger log=Logger.getLogger(TimesheetLogDialog.class.getName());
+    
+    private List<Timesheet> openSheets=null;
     
     private Timer timer=new Timer();
 
@@ -719,7 +722,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-            List<Timesheet> openSheets=afs.getOpenTimesheets();
+            this.openSheets=afs.getOpenTimesheets();
             for(Timesheet ts: openSheets) {
                 TimesheetEntryPanel tsep=new TimesheetEntryPanel(this);
                 tsep.setEntry(ts);
@@ -727,7 +730,11 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             }
             
             // will return last positions for the user, independent of status
-            afs.getLastTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            List<TimesheetPosition> lastPositions=afs.getLastTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            for(TimesheetPosition lp: lastPositions) {
+                this.existingTimesheetLogEntry(lp);
+            }
+            
         } catch (Exception ex) {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -750,6 +757,15 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         }, 2000l, 1000l);
     }
 
+    public void existingTimesheetLogEntry(TimesheetPosition tsp) {
+        TimesheetLogEntryPanel tlep=new TimesheetLogEntryPanel();
+        tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
+        
+        this.pnlLogs.add(tlep);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()+1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()-1);
+    }
+    
     public void newTimesheetLogEntry(Timesheet timesheet) {
         TimesheetLogEntryPanel tlep=new TimesheetLogEntryPanel();
         TimesheetPosition tsp=new TimesheetPosition();
@@ -785,6 +801,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         jSeparator1 = new javax.swing.JSeparator();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlOpenTimesheets = new javax.swing.JPanel();
+        cmdResetFilter = new javax.swing.JButton();
+        cmdStopAll = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Zeit erfassen");
@@ -824,6 +842,12 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
         splitTimesheetLog.setRightComponent(jScrollPane1);
 
+        txtSearchTimesheets.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtSearchTimesheetsKeyPressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlOpenTimesheetsLayout = new javax.swing.GroupLayout(pnlOpenTimesheets);
         pnlOpenTimesheets.setLayout(pnlOpenTimesheetsLayout);
         pnlOpenTimesheetsLayout.setHorizontalGroup(
@@ -837,6 +861,13 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
         jScrollPane2.setViewportView(pnlOpenTimesheets);
 
+        cmdResetFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
+        cmdResetFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdResetFilterActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -845,22 +876,35 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane2)
-                    .addComponent(txtSearchTimesheets, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(txtSearchTimesheets)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdResetFilter)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(txtSearchTimesheets, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtSearchTimesheets, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdResetFilter))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE))
         );
 
         splitTimesheetLog.setLeftComponent(jPanel1);
+
+        cmdStopAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_stop_circle_black_48dp.png"))); // NOI18N
+        cmdStopAll.setText("Alle stoppen und schliessen");
+        cmdStopAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdStopAllActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -870,6 +914,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdStopAll)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
                     .addComponent(splitTimesheetLog, javax.swing.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE))
                 .addContainerGap())
@@ -880,7 +926,9 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(splitTimesheetLog, javax.swing.GroupLayout.DEFAULT_SIZE, 301, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdClose)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdClose)
+                    .addComponent(cmdStopAll))
                 .addContainerGap())
         );
 
@@ -899,6 +947,46 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         this.timer.cancel();
     }//GEN-LAST:event_formWindowClosed
+
+    private void filterSheets(String filter) {
+        this.pnlOpenTimesheets.removeAll();
+        filter = filter.toLowerCase();
+        for (Timesheet ts : this.openSheets) {
+            boolean contained=false;
+            if("".equalsIgnoreCase(filter))
+                contained=true;
+            else
+                contained=ts.getDescription().toLowerCase().contains(filter) || ts.getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getFileNumber().toLowerCase().contains(filter) || ts.getArchiveFileKey().getReason().toLowerCase().contains(filter);
+            if (contained) {
+                TimesheetEntryPanel tsep = new TimesheetEntryPanel(this);
+                tsep.setEntry(ts);
+                this.pnlOpenTimesheets.add(tsep);
+            }
+        }
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()+1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()-1);
+    }
+    
+    private void txtSearchTimesheetsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchTimesheetsKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            this.filterSheets(this.txtSearchTimesheets.getText());
+
+        }
+    }//GEN-LAST:event_txtSearchTimesheetsKeyPressed
+
+    private void cmdResetFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetFilterActionPerformed
+        this.txtSearchTimesheets.setText("");
+        this.filterSheets("");
+    }//GEN-LAST:event_cmdResetFilterActionPerformed
+
+    private void cmdStopAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStopAllActionPerformed
+        for(int i=0;i<this.pnlLogs.getComponentCount();i++) {
+            TimesheetLogEntryPanel ep=(TimesheetLogEntryPanel)this.pnlLogs.getComponent(i);
+            if(ep.isEntryRunning())
+                ep.startStop();
+        }
+        this.cmdCloseActionPerformed(evt);
+    }//GEN-LAST:event_cmdStopAllActionPerformed
 
     /**
      * @param args the command line arguments
@@ -928,22 +1016,22 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                TimesheetLogDialog dialog = new TimesheetLogDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            TimesheetLogDialog dialog = new TimesheetLogDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdResetFilter;
+    private javax.swing.JButton cmdStopAll;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

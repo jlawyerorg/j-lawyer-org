@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
@@ -682,6 +683,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
@@ -772,6 +774,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_OPENTIMESHEETPOSITIONS);
 
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
@@ -798,6 +801,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500l, 60000l * 10l);
+        
+        Timer timer2 = new Timer();
+        TimerTask timesheetsTask = new TimesheetsTimerTask();
+        timer2.schedule(timesheetsTask, 7000l, 60000l);
+        
+        Timer timer3 = new Timer();
+        TimerTask timesheetsHintTask = new TimesheetsHintTimerTask(this.lblTimesheetStatus);
+        timer3.schedule(timesheetsHintTask, 7500l, 1000l);
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -1039,6 +1050,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblDrebisStatus.setText("-");
                 this.lblDrebisStatus.setToolTipText("keine ungelesenen Drebis-Nachrichten");
             }
+        } else if (e instanceof OpenTimesheetPositionsEvent) {
+            OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
+            if (ope.getOpenPositions()>0) {
+                this.lblTimesheetStatus.setEnabled(true);
+                this.lblTimesheetStatus.setToolTipText("" + ope.getOpenPositions() + " laufende Zeiterfassung(en)");
+                this.lblTimesheetStatus.setText("Zeit läuft");
+            } else {
+                this.lblTimesheetStatus.setEnabled(false);
+                this.lblTimesheetStatus.setToolTipText(null);
+                this.lblTimesheetStatus.setText("");
+            }
         }
     }
 
@@ -1064,6 +1086,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblNewsStatus = new javax.swing.JLabel();
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
+        lblTimesheetStatus = new javax.swing.JLabel();
         moduleBar = new com.jdimension.jlawyer.client.modulebar.ModuleBar();
         jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1217,6 +1240,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblBeaStatus.setToolTipText("noch nicht eingeloggt");
         lblBeaStatus.setEnabled(false);
 
+        lblTimesheetStatus.setFont(lblTimesheetStatus.getFont().deriveFont(lblTimesheetStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblTimesheetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        lblTimesheetStatus.setText("  ");
+        lblTimesheetStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblTimesheetStatus.setEnabled(false);
+        lblTimesheetStatus.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblTimesheetStatusMouseClicked(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout statusPanelLayout = new org.jdesktop.layout.GroupLayout(statusPanel);
         statusPanel.setLayout(statusPanelLayout);
         statusPanelLayout.setHorizontalGroup(
@@ -1225,7 +1259,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblSystemStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 224, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 180, Short.MAX_VALUE)
+                .add(lblTimesheetStatus)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblUpdateStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
@@ -1250,7 +1286,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblNewsStatus)
                 .add(statusLabel)
                 .add(lblDrebisStatus)
-                .add(lblBeaStatus))
+                .add(lblBeaStatus)
+                .add(lblTimesheetStatus))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblSystemStatus)
         );
 
@@ -2028,6 +2065,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.error(ex);
         }
 
+        // check for open timesheet positions
+        this.confirmOpenTimesheetPositions();
+        
+        // check for open documents
         DocumentObserver observer = DocumentObserver.getInstance();
         boolean cancelled = false;
         if (observer.hasUnsavedDocuments()) {
@@ -2064,6 +2105,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     }//GEN-LAST:event_formWindowClosing
 
+    public void confirmOpenTimesheetPositions() {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            int openPositions = locator.lookupArchiveFileServiceRemote().hasOpenTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if (openPositions>0) {
+                TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
+                tsld.setVisible(true);
+            }
+        } catch (Throwable ex) {
+            log.error("Error checking for open timesheet positions", ex);
+        }
+    }
+    
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         //System.out.println("window closed");
     }//GEN-LAST:event_formWindowClosed
@@ -2696,6 +2752,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuTimesheetIntervalsActionPerformed
 
+    private void lblTimesheetStatusMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTimesheetStatusMouseClicked
+        TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
+        tsld.setVisible(true);
+    }//GEN-LAST:event_lblTimesheetStatusMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -2716,6 +2778,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScanStatus;
     private javax.swing.JLabel lblSystemStatus;
+    private javax.swing.JLabel lblTimesheetStatus;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;

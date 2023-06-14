@@ -700,4 +700,9 @@ public class TimesheetPositionFacade extends AbstractFacade<TimesheetPosition> i
         
     }
     
+    @Override
+    public List<TimesheetPosition> findOpenByPrincipalAndTimesheet(String principal, Timesheet timesheet) {
+        return (List<TimesheetPosition>) em.createNamedQuery("TimesheetPosition.findOpenByPrincipalAndTimesheet").setParameter("principal", principal).setParameter("timesheet", timesheet).getResultList();
+    }
+    
 }
