@@ -1721,13 +1721,9 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
-                                              <Component id="txtTimesheetLimit" min="-2" pref="92" max="-2" attributes="0"/>
+                                              <Component id="txtTimesheetDescription" max="32767" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                                              <Component id="jLabel29" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="prgTimesheetStatus" pref="520" max="32767" attributes="0"/>
+                                              <Component id="cmbTimesheetStatus" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
@@ -1740,10 +1736,14 @@
                                               </Group>
                                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                           </Group>
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="txtTimesheetDescription" max="32767" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <Component id="txtTimesheetLimit" min="-2" pref="150" max="-2" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="cmbTimesheetStatus" min="-2" max="-2" attributes="0"/>
+                                              <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                                              <Component id="jLabel29" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="prgTimesheetStatus" pref="462" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -1953,7 +1953,7 @@
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                       <SubComponents>
-                        <Container class="javax.swing.JPanel" name="pnlTimesheets">
+                        <Container class="javax.swing.JPanel" name="pnlTimesheetPositions">
 
                           <Layout>
                             <DimensionLayout dim="0">

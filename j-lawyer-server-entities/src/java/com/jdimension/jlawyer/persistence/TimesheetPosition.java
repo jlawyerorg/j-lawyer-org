@@ -764,7 +764,7 @@ public class TimesheetPosition implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.InvoicePosition[ id=" + getId() + " ]";
+        return "com.jdimension.jlawyer.persistence.TimesheetPosition[ id=" + getId() + " ]";
     }
 
     /**

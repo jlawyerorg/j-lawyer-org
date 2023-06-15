@@ -1149,6 +1149,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
         mnuTimesheet = new javax.swing.JMenu();
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
+        mnuTimesheetPositions = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1767,6 +1768,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
         mnuTimesheet.setText("Zeiterfassung");
 
+        mnuTimesheetIntervals.setFont(mnuTimesheetIntervals.getFont());
         mnuTimesheetIntervals.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
         mnuTimesheetIntervals.setText("Intervalle");
         mnuTimesheetIntervals.addActionListener(new java.awt.event.ActionListener() {
@@ -1775,6 +1777,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuTimesheet.add(mnuTimesheetIntervals);
+
+        mnuTimesheetPositions.setFont(mnuTimesheetPositions.getFont());
+        mnuTimesheetPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetPositions.setText("Zeiterfassungspositionen (Vorlagen)");
+        mnuTimesheetPositions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetPositionsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetPositions);
 
         mnuOptions.add(mnuTimesheet);
         mnuOptions.add(jSeparator2);
@@ -2758,6 +2770,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         tsld.setVisible(true);
     }//GEN-LAST:event_lblTimesheetStatusMouseClicked
 
+    private void mnuTimesheetPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetPositionsActionPerformed
+        if (checkAdmin()) {
+            TimesheetPositionTemplatesSetupDialog dlg = new TimesheetPositionTemplatesSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuTimesheetPositionsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2852,6 +2872,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuServices;
     private javax.swing.JMenu mnuTimesheet;
     private javax.swing.JMenuItem mnuTimesheetIntervals;
+    private javax.swing.JMenuItem mnuTimesheetPositions;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;

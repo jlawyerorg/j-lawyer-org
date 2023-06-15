@@ -737,6 +737,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
     private static final String MSG_MISSING_INVOICE = "Rechnung kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
+    private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
 
     @Resource
     private SessionContext context;
@@ -5569,12 +5570,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception {
         Timesheet sheet=this.timesheetFacade.find(timesheetId);
         if(sheet==null)
-            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+            throw new Exception(MSG_MISSING_TIMESHEET);
         
         if(position.getId()==null) {
             
             List openForUserInTimesheet=this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(context.getCallerPrincipal().getName(), sheet);
-            if(openForUserInTimesheet.size()>0) {
+            if(!openForUserInTimesheet.isEmpty()) {
                 throw new Exception("In einem Zeiterfassungsprojekt kann immer nur eine offene Position für einen Nutzer existieren!");
             }
             
@@ -5592,7 +5593,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // stop existing position
             TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
             if(existing==null)
-                throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+                throw new Exception(MSG_MISSING_TIMESHEETPOS);
             
             if(existing.getStopped()==null) {
                 existing.setStopped(new Date());
@@ -5631,10 +5632,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception {
         Timesheet sheet=this.timesheetFacade.find(timesheetId);
         if(sheet==null)
-            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+            throw new Exception(MSG_MISSING_TIMESHEET);
         
         if(position.getId()==null) {
-            throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+            throw new Exception(MSG_MISSING_TIMESHEETPOS);
         } else {
             // stop existing position
             TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
@@ -5663,7 +5664,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception {
         Timesheet sheet=this.timesheetFacade.find(timesheetId);
         if(sheet==null)
-            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+            throw new Exception(MSG_MISSING_TIMESHEET);
         
         if(position.getId()==null) {
             throw new Exception("Zeiterfassungsposition muss erst gestartet werden!");
@@ -5672,7 +5673,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // stop existing position
             TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
             if (existing == null) {
-                throw new Exception("Zeiterfassungsposition kann nicht gefunden werden!");
+                throw new Exception(MSG_MISSING_TIMESHEETPOS);
             }
 
             // only updates metadata, not the actual timestamps (which is done via start and stop methods)

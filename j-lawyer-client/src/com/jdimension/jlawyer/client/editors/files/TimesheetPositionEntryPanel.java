@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
 import java.text.DecimalFormat;
@@ -685,17 +686,18 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
 
-    private InvoiceDialog parent=null;
+    private ArchiveFilePanel parent=null;
     
-    private String invoiceId = null;
-    private InvoicePosition position = null;
+    private TimesheetPosition position = null;
     
     private DecimalFormat taxRateFormat=null;
 
     /**
-     * Creates new form InvoicePositionEntryPanel
+     * Creates new form TimesheetPositionEntryPanel
+     * @param parent
+     * @param taxRates
      */
-    public TimesheetPositionEntryPanel(InvoiceDialog parent, List<String> taxRates) {
+    public TimesheetPositionEntryPanel(ArchiveFilePanel parent, List<String> taxRates) {
         initComponents();
         this.parent=parent;
         
@@ -738,21 +740,19 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
     }
 
-    public void setEntry(String invoiceId, InvoicePosition pos) {
-        this.invoiceId = invoiceId;
+    public void setEntry(TimesheetPosition pos) {
         this.position = pos;
         this.txtName.setText(pos.getName());
         this.taDescription.setText(pos.getDescription());
         this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
-        this.txtUnits.setValue(pos.getUnits());
         this.txtUnitPrice.setValue(pos.getUnitPrice());
         this.txtTotal.setValue(pos.getTotal());
         this.updateEntryTotal();
     }
 
-    public InvoicePosition getEntry() {
+    public TimesheetPosition getEntry() {
         
-        InvoicePosition clone=new InvoicePosition();
+        TimesheetPosition clone=new TimesheetPosition();
         clone.setId(this.position.getId());
         
         clone.setName(this.txtName.getText());
@@ -763,7 +763,6 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             clone.setTaxRate(0f);
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        //this.updateEntryTotal();
         clone.setTotal((Float) this.txtTotal.getValue());
         
         if(this.txtUnitPrice.getValue()==null)
@@ -771,10 +770,6 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         else
             clone.setUnitPrice(((Number) this.txtUnitPrice.getValue()).floatValue());
         
-        if(this.txtUnits.getValue()==null)
-            clone.setUnits(1f);
-        else
-            clone.setUnits(((Number) this.txtUnits.getValue()).floatValue());
         return clone;
     }
 
@@ -913,26 +908,26 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                     .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRemovePositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePositionActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().removeInvoicePosition(invoiceId, this.position);
-            Container parentContainer=this.getParent();
-            parentContainer.remove(this);
-            try {
-                parentContainer.doLayout();
-            } catch (Exception ex) {
-                log.warn("unable to layout invoice dialog", ex);
-            }
-        } catch (Exception ex) {
-            log.error("Error updating invoice position", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+//        ClientSettings settings = ClientSettings.getInstance();
+//        try {
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//            locator.lookupArchiveFileServiceRemote().removeInvoicePosition(this.position.getId(), this.position);
+//            Container parentContainer=this.getParent();
+//            parentContainer.remove(this);
+//            try {
+//                parentContainer.doLayout();
+//            } catch (Exception ex) {
+//                log.warn("unable to layout invoice dialog", ex);
+//            }
+//        } catch (Exception ex) {
+//            log.error("Error updating invoice position", ex);
+//            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//        }
 
     }//GEN-LAST:event_cmdRemovePositionActionPerformed
 
@@ -941,16 +936,16 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmbTaxRateActionPerformed
 
     private void updatePosition() {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            InvoicePosition updatedPos = locator.lookupArchiveFileServiceRemote().updateInvoicePosition(this.invoiceId, this.getEntry());
-            this.setEntry(invoiceId, updatedPos);
-
-        } catch (Exception ex) {
-            log.error("Error updating invoice position", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+//        ClientSettings settings = ClientSettings.getInstance();
+//        try {
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//            InvoicePosition updatedPos = locator.lookupArchiveFileServiceRemote().updateInvoicePosition(this.invoiceId, this.getEntry());
+//            this.setEntry(invoiceId, updatedPos);
+//
+//        } catch (Exception ex) {
+//            log.error("Error updating invoice position", ex);
+//            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//        }
     }
     
     public void updateParentTotal() {

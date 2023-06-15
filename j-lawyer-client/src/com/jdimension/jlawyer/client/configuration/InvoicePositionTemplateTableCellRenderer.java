@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import java.awt.Color;
 import java.awt.Component;

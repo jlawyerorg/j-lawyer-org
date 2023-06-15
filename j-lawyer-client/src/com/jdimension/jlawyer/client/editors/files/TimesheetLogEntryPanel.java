@@ -668,9 +668,12 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
+import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -682,28 +685,55 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log=Logger.getLogger(TimesheetLogEntryPanel.class.getName());
     
+    private HashMap<String,TimesheetPositionTemplate> templates=new HashMap<>();
+    
     ArchiveFileBean entryCase = null;
     TimesheetPosition entry = null;
     Timesheet entrySheet = null;
+    TimesheetLogDialog parent=null;
 
     /**
      * Creates new form TimesheetLogEntryPanel
+     * @param posTemplates
+     * @param parent
      */
-    public TimesheetLogEntryPanel() {
+    public TimesheetLogEntryPanel(TimesheetLogDialog parent, List<TimesheetPositionTemplate> posTemplates) {
         initComponents();
         this.cmdSave.setText("");
+        this.parent=parent;
+        
+        this.cmbTemplate.removeAllItems();
+        for(TimesheetPositionTemplate t: posTemplates) {
+            this.templates.put(t.getName(), t);
+            this.cmbTemplate.addItem(t.getName());
+        }
+        
+        
+        
     }
     
     public boolean isEntryRunning() {
         return this.entry.getStarted()!=null && this.entry.getStopped()==null;
     }
 
+    public ArchiveFileBean getEntryCase() {
+        return this.entryCase;
+    }
+    
+    public Timesheet getEntryTimesheet() {
+        return this.entrySheet;
+    }
+    
+    public TimesheetPosition getEntryPosition() {
+        return this.entry;
+    }
+    
     public void setEntry(ArchiveFileBean entryCase, Timesheet ts, TimesheetPosition tsp) {
         this.entry = tsp;
         this.entryCase = entryCase;
         this.entrySheet = ts;
         this.lblProject.setText(entryCase.getFileNumber() + " " + entryCase.getName() + ": " + ts.getName());
-        this.cmbName.setSelectedItem(tsp.getName());
+        this.cmbTemplate.setSelectedItem(tsp.getName());
         this.taDescription.setText(tsp.getDescription());
         if (this.entry.getStarted() != null) {
             this.txtStart.setValue(this.entry.getStarted());
@@ -768,7 +798,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        cmbName = new javax.swing.JComboBox<>();
+        cmbTemplate = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
         txtStart = new javax.swing.JFormattedTextField();
@@ -782,9 +812,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
-        cmbName.setEditable(true);
-        cmbName.setFont(cmbName.getFont());
-        cmbName.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTemplate.setEditable(true);
+        cmbTemplate.setFont(cmbTemplate.getFont());
+        cmbTemplate.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont());
@@ -850,7 +880,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                                 .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSave))
-                            .addComponent(cmbName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(cmbTemplate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -864,7 +894,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                             .addComponent(cmdSave)
                             .addComponent(lblProject, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(11, 11, 11)
-                        .addComponent(cmbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(cmdStartStop))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -884,11 +914,16 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
         if (this.entry.getStarted() == null) {
             // new entry
-            Date sta = new Date();
-//            this.entry.setStarted(sta);
+            this.parent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
             this.entry.setDescription(this.taDescription.getText());
-            this.entry.setName(this.cmbName.getEditor().getItem().toString());
-//            this.txtStart.setValue(sta);
+            this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
+            if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+                this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
+                this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
+            } else {
+                this.entry.setTaxRate(19f);
+                this.entry.setUnitPrice(0f);
+            }
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -904,9 +939,6 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             
             if (this.entry.getStopped() == null) {
                 // running
-//                Date sto = new Date();
-//                this.entry.setStopped(sto);
-//                this.txtEnd.setValue(sto);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -920,12 +952,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 
             } else {
                 // already closed
-//                Date sta = new Date();
-//                this.entry.setStarted(sta);
-//                this.txtStart.setValue(sta);
-//                this.entry.setStopped(null);
-//                this.txtEnd.setValue(null);
                 
+                this.parent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -944,6 +972,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
         
         this.startStop();
+        this.cmdSaveActionPerformed(evt);
 
     }//GEN-LAST:event_cmdStartStopActionPerformed
 
@@ -951,7 +980,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
 
         this.entry.setDescription(this.taDescription.getText());
-        this.entry.setName(this.cmbName.getEditor().getItem().toString());
+        this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
+        if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+            this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
+            this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
+        } else {
+            this.entry.setTaxRate(19f);
+            this.entry.setUnitPrice(0f);
+        }
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -967,7 +1003,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbName;
+    private javax.swing.JComboBox<String> cmbTemplate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdStartStop;
     private javax.swing.JLabel jLabel1;

@@ -928,15 +928,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         BoxLayout boxLayout=new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
         this.pnlInvoices.setLayout(boxLayout);
         
-        BoxLayout boxLayout2=new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
-        this.pnlTimesheets.setLayout(boxLayout2);
-        
-        TimesheetPositionEntryPanel tsp1=new TimesheetPositionEntryPanel(null,new ArrayList<String>());
-        TimesheetPositionEntryPanel tsp2=new TimesheetPositionEntryPanel(null,new ArrayList<String>());
-        TimesheetPositionEntryPanel tsp3=new TimesheetPositionEntryPanel(null,new ArrayList<String>());
-        this.pnlTimesheets.add(tsp1);
-        this.pnlTimesheets.add(tsp2);
-        this.pnlTimesheets.add(tsp3);
+        BoxLayout boxLayout2=new BoxLayout(this.pnlTimesheetPositions, BoxLayout.Y_AXIS);
+        this.pnlTimesheetPositions.setLayout(boxLayout2);
         
         this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
 
@@ -1773,7 +1766,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         txtTimesheetLimit = new javax.swing.JFormattedTextField();
         cmdSaveTimesheet = new javax.swing.JButton();
         jScrollPane9 = new javax.swing.JScrollPane();
-        pnlTimesheets = new javax.swing.JPanel();
+        pnlTimesheetPositions = new javax.swing.JPanel();
         cmbTimesheetStatus = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
         txtClaimValue = new javax.swing.JTextField();
@@ -2857,18 +2850,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jScrollPane9.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
-        pnlTimesheets.setLayout(pnlTimesheetsLayout);
-        pnlTimesheetsLayout.setHorizontalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        org.jdesktop.layout.GroupLayout pnlTimesheetPositionsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheetPositions);
+        pnlTimesheetPositions.setLayout(pnlTimesheetPositionsLayout);
+        pnlTimesheetPositionsLayout.setHorizontalGroup(
+            pnlTimesheetPositionsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(0, 0, Short.MAX_VALUE)
         );
-        pnlTimesheetsLayout.setVerticalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        pnlTimesheetPositionsLayout.setVerticalGroup(
+            pnlTimesheetPositionsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(0, 449, Short.MAX_VALUE)
         );
 
-        jScrollPane9.setViewportView(pnlTimesheets);
+        jScrollPane9.setViewportView(pnlTimesheetPositions);
 
         cmbTimesheetStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "offen", "geschlossen" }));
 
@@ -2898,13 +2891,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(txtTimesheetLimit, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(txtTimesheetDescription)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel26)
-                                .add(18, 18, 18)
-                                .add(jLabel29)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(prgTimesheetStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE))
+                                .add(cmbTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(jPanel14Layout.createSequentialGroup()
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(cmdSaveTimesheet)
@@ -2914,9 +2903,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                         .add(jLabel25)))
                                 .add(0, 0, Short.MAX_VALUE))
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(txtTimesheetDescription)
+                                .add(txtTimesheetLimit, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 150, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmbTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                                .add(jLabel26)
+                                .add(18, 18, 18)
+                                .add(jLabel29)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(prgTimesheetStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE))))
                     .add(jScrollPane9))
                 .addContainerGap())
         );
@@ -5999,6 +5992,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.cmbTimesheetStatus.setSelectedItem("geschlossen");
         else
             this.cmbTimesheetStatus.setSelectedItem("offen");
+        
+        this.pnlTimesheetPositions.removeAll();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            List<TimesheetPosition> positions=remote.getTimesheetPositions(t.getId());
+            for(TimesheetPosition tpos: positions) {
+                TimesheetPositionEntryPanel tsp=new TimesheetPositionEntryPanel(null,new ArrayList<String>());
+                tsp.setEntry(tpos);
+                this.pnlTimesheetPositions.add(tsp);
+            }
+            
+        } catch (Exception ioe) {
+            log.error("Error getting timesheet positions", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Zeiterfassungspositionen: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
     }
     
     private void updateDocumentHighlights(int highlightIndex) {
@@ -6516,7 +6527,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     private javax.swing.JPanel pnlPreview;
-    private javax.swing.JPanel pnlTimesheets;
+    private javax.swing.JPanel pnlTimesheetPositions;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popDocumentFavorites;
     private javax.swing.JPopupMenu popDocumentTagFilter;

@@ -668,10 +668,12 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
+import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -685,61 +687,67 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class TimesheetLogDialog extends javax.swing.JDialog {
+
+    private static final Logger log = Logger.getLogger(TimesheetLogDialog.class.getName());
     
-    private static final Logger log=Logger.getLogger(TimesheetLogDialog.class.getName());
-    
-    private List<Timesheet> openSheets=null;
-    
-    private Timer timer=new Timer();
+    private List<TimesheetPositionTemplate> posTemplates=new ArrayList<>();
+
+    private List<Timesheet> openSheets = null;
+
+    private Timer timer = new Timer();
 
     /**
      * Creates new form TimesheetLogDialog
+     *
      * @param parent
      * @param modal
      */
     public TimesheetLogDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         ComponentUtils.decorateSplitPane(splitTimesheetLog);
         ComponentUtils.persistSplitPane(splitTimesheetLog, TimesheetLogDialog.class, "splitTimesheetLog");
         ComponentUtils.restoreSplitPane(splitTimesheetLog, TimesheetLogDialog.class, "splitTimesheetLog");
-        
+
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlOpenTimesheets, javax.swing.BoxLayout.Y_AXIS);
         this.pnlOpenTimesheets.setLayout(layout);
-        
+
         BoxLayout layout2 = new javax.swing.BoxLayout(this.pnlLogs, javax.swing.BoxLayout.Y_AXIS);
         this.pnlLogs.setLayout(layout2);
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-            this.openSheets=afs.getOpenTimesheets();
-            for(Timesheet ts: openSheets) {
-                TimesheetEntryPanel tsep=new TimesheetEntryPanel(this);
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            
+            this.posTemplates=locator.lookupTimesheetServiceRemote().getAllTimesheetPositionTemplates();
+            
+            this.openSheets = afs.getOpenTimesheets();
+            for (Timesheet ts : openSheets) {
+                TimesheetEntryPanel tsep = new TimesheetEntryPanel(this);
                 tsep.setEntry(ts);
                 this.pnlOpenTimesheets.add(tsep);
             }
-            
+
             // will return last positions for the user, independent of status
-            List<TimesheetPosition> lastPositions=afs.getLastTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            for(TimesheetPosition lp: lastPositions) {
+            List<TimesheetPosition> lastPositions = afs.getLastTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            for (TimesheetPosition lp : lastPositions) {
                 this.existingTimesheetLogEntry(lp);
             }
-            
+
         } catch (Exception ex) {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -753,36 +761,71 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                     }
                 });
             }
-            
+
         }, 2000l, 1000l);
     }
 
-    public void existingTimesheetLogEntry(TimesheetPosition tsp) {
-        TimesheetLogEntryPanel tlep=new TimesheetLogEntryPanel();
-        tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
-        
-        this.pnlLogs.add(tlep);
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()+1);
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()-1);
+    public void checkMultipleEntriesForCase(String caseId, String logEntryId) {
+        int caseCount = 0;
+        for (Component c : pnlLogs.getComponents()) {
+            if (c instanceof TimesheetLogEntryPanel) {
+
+                String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
+                if (entryCaseId.equals(caseId) && ((TimesheetLogEntryPanel) c).isEntryRunning()) {
+                    caseCount++;
+                }
+
+                // at least one is already running
+                if (caseCount > 0) {
+                    break;
+                }
+
+            }
+        }
+
+        if (caseCount > 0) {
+            int response = JOptionPane.showConfirmDialog(this, "Für diese Akte läuft bereits eine Zeiterfassung - soll diese gestoppt werden?", "Mehrere Zeiterfassungen pro Akte", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                for (Component c : pnlLogs.getComponents()) {
+                    if (c instanceof TimesheetLogEntryPanel) {
+
+                        String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
+                        if (entryCaseId.equals(caseId) && ((TimesheetLogEntryPanel) c).isEntryRunning() && !((TimesheetLogEntryPanel) c).getEntryPosition().getId().equals(logEntryId)) {
+                            ((TimesheetLogEntryPanel) c).startStop();
+                        }
+
+                    }
+                }
+            }
+        }
     }
-    
+
+    public void existingTimesheetLogEntry(TimesheetPosition tsp) {
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);
+        tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
+
+        this.pnlLogs.add(tlep);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() + 1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() - 1);
+    }
+
     public void newTimesheetLogEntry(Timesheet timesheet) {
-        TimesheetLogEntryPanel tlep=new TimesheetLogEntryPanel();
-        TimesheetPosition tsp=new TimesheetPosition();
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);
+        TimesheetPosition tsp = new TimesheetPosition();
         tsp.setTimesheet(timesheet);
-        tsp.setDescription("dummy2");
-        tsp.setName("dummy1");
+        tsp.setDescription("");
+        tsp.setName("");
         tsp.setPrincipal(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         tsp.setStarted(null);
         tsp.setStopped(null);
         tsp.setTotal(0f);
         tlep.setEntry(timesheet.getArchiveFileKey(), timesheet, tsp);
-        
+
         this.pnlLogs.add(tlep);
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()+1);
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()-1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() + 1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() - 1);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -952,21 +995,22 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         this.pnlOpenTimesheets.removeAll();
         filter = filter.toLowerCase();
         for (Timesheet ts : this.openSheets) {
-            boolean contained=false;
-            if("".equalsIgnoreCase(filter))
-                contained=true;
-            else
-                contained=ts.getDescription().toLowerCase().contains(filter) || ts.getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getFileNumber().toLowerCase().contains(filter) || ts.getArchiveFileKey().getReason().toLowerCase().contains(filter);
+            boolean contained = false;
+            if ("".equalsIgnoreCase(filter)) {
+                contained = true;
+            } else {
+                contained = ts.getDescription().toLowerCase().contains(filter) || ts.getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getFileNumber().toLowerCase().contains(filter) || ts.getArchiveFileKey().getReason().toLowerCase().contains(filter);
+            }
             if (contained) {
                 TimesheetEntryPanel tsep = new TimesheetEntryPanel(this);
                 tsep.setEntry(ts);
                 this.pnlOpenTimesheets.add(tsep);
             }
         }
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()+1);
-        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation()-1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() + 1);
+        this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() - 1);
     }
-    
+
     private void txtSearchTimesheetsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchTimesheetsKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.filterSheets(this.txtSearchTimesheets.getText());
@@ -980,10 +1024,11 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdResetFilterActionPerformed
 
     private void cmdStopAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStopAllActionPerformed
-        for(int i=0;i<this.pnlLogs.getComponentCount();i++) {
-            TimesheetLogEntryPanel ep=(TimesheetLogEntryPanel)this.pnlLogs.getComponent(i);
-            if(ep.isEntryRunning())
+        for (int i = 0; i < this.pnlLogs.getComponentCount(); i++) {
+            TimesheetLogEntryPanel ep = (TimesheetLogEntryPanel) this.pnlLogs.getComponent(i);
+            if (ep.isEntryRunning()) {
                 ep.startStop();
+            }
         }
         this.cmdCloseActionPerformed(evt);
     }//GEN-LAST:event_cmdStopAllActionPerformed
