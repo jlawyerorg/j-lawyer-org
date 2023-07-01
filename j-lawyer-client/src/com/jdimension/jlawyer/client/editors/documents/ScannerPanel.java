@@ -673,8 +673,6 @@ import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.ScanEntryProcessor;
-import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
-import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -690,12 +688,8 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -710,15 +704,12 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -740,7 +731,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
-    private Hashtable<File, Date> lastEventFileNames = new Hashtable<>();
+    private HashMap<File, Date> lastEventFileNames = new HashMap<>();
 
     @Override
     public void notifyStatusBarReady() {
@@ -758,7 +749,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         if (e instanceof ScannerStatusEvent) {
 
             int selectedRow = tblDirContent.getSelectedRow();
-            Hashtable<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
+            HashMap<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
             String[] colNames = new String[]{"geändert", "Dateiname"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
@@ -794,12 +785,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
             this.lastEventFileNames = fileNames;
         }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
     }
 
     /**
@@ -882,7 +867,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-            Hashtable<File, Date> observedDirContent = is.getObservedDirectoryContent();
+            HashMap<File, Date> observedDirContent = is.getObservedDirectoryContent();
 
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ScannerStatusEvent(observedDirContent));
@@ -1559,18 +1544,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length == 1) {
 
-            int removedCount = 0;
-            IntegrationServiceRemote is = null;
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                is = locator.lookupIntegrationServiceRemote();
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                return false;
-            }
-
             String fileName = this.tblDirContent.getValueAt(selRow[0], 1).toString();
             if(!fileName.toLowerCase().endsWith(".pdf"))
                 return false;
@@ -1595,13 +1568,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Exception ex) {
                 log.error(ex);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            }
-
-            if (removedCount > 0) {
-                Timer timer = new Timer();
-                TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
-                timer.schedule(scannerTask, 1);
-
             }
 
         }

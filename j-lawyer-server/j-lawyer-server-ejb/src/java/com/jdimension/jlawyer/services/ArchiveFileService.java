@@ -5774,7 +5774,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatePos.setUnitPrice(position.getUnitPrice());
             
             this.timesheetPositionsFacade.edit(updatePos);
-            //this.updateInvoiceTotal(invoiceId);
             return this.timesheetPositionsFacade.find(updatePos.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);

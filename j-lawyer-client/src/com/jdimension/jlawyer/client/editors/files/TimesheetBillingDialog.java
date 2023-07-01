@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -698,6 +697,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
      *
      * @param parent
      * @param modal
+     * @param caseId
+     * @param invoice
      */
     public TimesheetBillingDialog(JDialog parent, boolean modal, String caseId, Invoice invoice) {
         super(parent, modal);

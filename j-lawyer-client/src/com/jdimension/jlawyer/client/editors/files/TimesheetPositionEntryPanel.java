@@ -688,7 +688,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     
     private static final Logger log=Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
 
-    private TimesheetDialog parent=null;
+    private TimesheetDialog dlgParent=null;
     
     private TimesheetPosition position = null;
     private String timesheetId = null;
@@ -697,64 +697,73 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form TimesheetPositionEntryPanel
-     * @param parent
+     * @param dlgParent
      * @param taxRates
      */
-    public TimesheetPositionEntryPanel(TimesheetDialog parent, List<String> taxRates) {
+    public TimesheetPositionEntryPanel(TimesheetDialog dlgParent, List<String> taxRates) {
         initComponents();
         
-        this.parent=parent;
+        this.dlgParent=dlgParent;
         
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
         this.taxRateFormat = (DecimalFormat) nf;
         this.taxRateFormat.applyPattern("0.0");
 
         this.txtUnitPrice.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
         });
 
         this.txtStarted.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
         });
         
         this.txtStopped.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
 
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
         });
         
         this.cmbTaxRate.removeAllItems();
-        for(String tr: taxRates) {
+        taxRates.forEach(tr -> {
             this.cmbTaxRate.addItem(tr);
-        }
+        });
 
     }
 
@@ -769,7 +778,6 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.txtUnitPrice.setValue(pos.getUnitPrice());
             this.txtStarted.setValue(pos.getStarted());
             this.txtStopped.setValue(pos.getStopped());
-            //this.txtTotal.setValue(pos.getTotal());
             this.lblPrincipal.setText(pos.getPrincipal());
             this.lblPrincipal.setIcon(UserSettings.getInstance().getUserSmallIcon(pos.getPrincipal()));
             this.updateEntryTotal(intervalMinutes);
@@ -996,7 +1004,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmbTaxRateActionPerformed
     
     public void updateParentTotal() {
-        this.parent.updateTotals(this);
+        this.dlgParent.updateTotals(this);
     }
 
     // always called by the dialog, never by ent entry panel itself

@@ -1793,7 +1793,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }
 
-    public void refreshTree() {
+    public final void refreshTree() {
         DefaultListModel model = new DefaultListModel();
         model.removeAllElements();
         this.lstTemplates.setModel(model);

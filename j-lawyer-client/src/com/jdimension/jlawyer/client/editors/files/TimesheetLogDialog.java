@@ -801,7 +801,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         }
     }
 
-    public void existingTimesheetLogEntry(TimesheetPosition tsp) {
+    public final void existingTimesheetLogEntry(TimesheetPosition tsp) {
         TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);
         tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
 

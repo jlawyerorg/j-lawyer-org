@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import java.io.File;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Remote;
 
@@ -679,7 +679,7 @@ import javax.ejb.Remote;
 @Remote
 public interface IntegrationServiceRemote {
 
-    Hashtable<File,Date> getObservedDirectoryContent();
+    HashMap<File,Date> getObservedDirectoryContent();
 
     boolean removeObservedFile(String fileName);
 

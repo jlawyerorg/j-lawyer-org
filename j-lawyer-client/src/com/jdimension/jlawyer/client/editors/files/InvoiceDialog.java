@@ -881,7 +881,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         return this.currentEntry;
     }
 
-    public void setEntry(Invoice invoice) {
+    public final void setEntry(Invoice invoice) {
         this.currentEntry = invoice;
         
         this.cmdNavigateToDocument.setEnabled(false);
@@ -1700,12 +1700,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addRow("", "", "", "", "");
         }
 
-        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat dfDateTime=new SimpleDateFormat("dd.MM.yyyy HH:mm");
         for (TimesheetPosition pos: posList) {
             float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
             double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
             Float roundedMinutesFloat = new Float(roundedMinutes);
-            ct.addRow(df.format(pos.getStarted()) + " (" + roundedMinutesFloat.intValue() + "min)", pos.getTimesheet().getName(), pos.getName() + ": " + pos.getDescription(), pos.getPrincipal());
+            ct.addRow(dfDateTime.format(pos.getStarted()) + " (" + roundedMinutesFloat.intValue() + "min)", pos.getTimesheet().getName(), pos.getName() + ": " + pos.getDescription(), pos.getPrincipal());
         }
         
 
@@ -1729,7 +1729,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(1, 120);
         ct.setColumnWidth(2, 35);
         ct.setColumnWidth(3, 35);
-        ct.setFontFamily("Arial");
         ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
@@ -1797,7 +1796,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(2, 35);
         ct.setColumnWidth(3, 35);
         ct.setColumnWidth(4, 35);
-        ct.setFontFamily("Arial");
         ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));

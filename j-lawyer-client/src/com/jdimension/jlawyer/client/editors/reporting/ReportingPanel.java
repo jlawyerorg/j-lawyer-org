@@ -676,7 +676,6 @@ import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
-import org.apache.log4j.Logger;
 import org.jlawyer.reporting.Reports;
 
 /**
@@ -684,8 +683,6 @@ import org.jlawyer.reporting.Reports;
  * @author jens
  */
 public class ReportingPanel extends javax.swing.JPanel implements ThemeableEditor {
-
-    private static final Logger log = Logger.getLogger(ReportingPanel.class.getName());
 
     private Image backgroundImage = null;
 

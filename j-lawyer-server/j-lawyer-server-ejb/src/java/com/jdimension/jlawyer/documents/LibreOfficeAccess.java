@@ -663,17 +663,13 @@
  */
 package com.jdimension.jlawyer.documents;
 
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -695,7 +691,6 @@ import org.odftoolkit.odfdom.dom.element.text.TextListElement;
 import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
 import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
-import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawImage;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
@@ -703,8 +698,6 @@ import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
-import org.odftoolkit.simple.draw.FrameRectangle;
-import org.odftoolkit.simple.draw.Image;
 import org.odftoolkit.simple.style.Border;
 import org.odftoolkit.simple.style.Font;
 import org.odftoolkit.simple.style.StyleTypeDefinitions;
@@ -826,7 +819,7 @@ public class LibreOfficeAccess {
                 Node hrefAttr = attributes.getNamedItemNS("http://www.w3.org/1999/xlink", "href");
                 if (hrefAttr != null) {
                     String imagePath = hrefAttr.getNodeValue();
-                    System.out.println("Image path: " + imagePath);
+                    log.debug("Image path: " + imagePath);
                 }
             }
             // If the child node is a graphic frame, extract the graphic information
@@ -850,7 +843,7 @@ public class LibreOfficeAccess {
                 Node styleNameAttr = attributes.getNamedItem("draw:style-name");
                 if (styleNameAttr != null) {
                     String styleName = styleNameAttr.getNodeValue();
-                    System.out.println("Graphic style name: " + styleName);
+                    log.debug("Graphic style name: " + styleName);
                 }
             } else {
                 log.warn("unkown element type: " + childNode.getNodeName());
@@ -1470,8 +1463,6 @@ public class LibreOfficeAccess {
 
             //outputOdt.save("HelloWAC.odt");
             outputOds.close();
-
-            System.out.println(resultList.toString());
 
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
 
