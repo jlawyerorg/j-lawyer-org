@@ -677,6 +677,7 @@ public class InvoicePositionAddedEvent extends Event {
     public InvoicePositionAddedEvent(String invoiceId, InvoicePosition position) {
         super(Event.TYPE_INVOICEPOSITIONADDED);
         this.position=position;
+        this.invoiceId=invoiceId;
         
     }
 

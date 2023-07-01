@@ -869,7 +869,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
         lblError.setText(" ");
 
         jLabel14.setFont(jLabel14.getFont());
-        jLabel14.setText("Einzelpreis:");
+        jLabel14.setText("pro Stunde:");
 
         txtUnitPrice.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
 

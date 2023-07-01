@@ -311,7 +311,7 @@
             <Font component="jLabel14" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="Einzelpreis:"/>
+        <Property name="text" type="java.lang.String" value="pro Stunde:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="txtUnitPrice">

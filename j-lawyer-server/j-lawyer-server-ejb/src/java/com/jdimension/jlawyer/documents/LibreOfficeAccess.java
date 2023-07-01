@@ -663,13 +663,17 @@
  */
 package com.jdimension.jlawyer.documents;
 
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -680,6 +684,8 @@ import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.odftoolkit.odfdom.dom.element.draw.DrawFrameElement;
+import org.odftoolkit.odfdom.dom.element.draw.DrawImageElement;
 import org.odftoolkit.odfdom.dom.element.office.OfficeTextElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableCellElementBase;
 import org.odftoolkit.odfdom.dom.element.table.TableTableElement;
@@ -689,12 +695,16 @@ import org.odftoolkit.odfdom.dom.element.text.TextListElement;
 import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
 import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
+import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawImage;
 import org.odftoolkit.odfdom.pkg.OdfElement;
+import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
+import org.odftoolkit.simple.draw.FrameRectangle;
+import org.odftoolkit.simple.draw.Image;
 import org.odftoolkit.simple.style.Border;
 import org.odftoolkit.simple.style.Font;
 import org.odftoolkit.simple.style.StyleTypeDefinitions;
@@ -703,6 +713,7 @@ import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
 import org.odftoolkit.simple.text.Paragraph;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -732,9 +743,11 @@ public class LibreOfficeAccess {
     private static void merge(String intoDocument, String mergeDocument) throws Exception {
         // Load body document
         TextDocument bodyDoc = TextDocument.loadDocument(new File(mergeDocument));
+        OdfPackage bodyPackage=bodyDoc.getPackage();
 
         // Create a new document to store the merged documents
         TextDocument mergedDoc = TextDocument.loadDocument(new File(intoDocument));
+        OdfPackage mergedPackage = mergedDoc.getPackage();
 
         // Get the content root element of the new document
         OfficeTextElement contentRoot = mergedDoc.getContentRoot();
@@ -742,7 +755,7 @@ public class LibreOfficeAccess {
         // Copy the body document to the new document
         OfficeTextElement bodyContent = bodyDoc.getContentRoot();
 
-        browseAndMergeElements(bodyContent, mergedDoc);
+        browseAndMergeElements(bodyPackage, bodyContent, mergedDoc, mergedPackage);
 
         // Save the merged document
         mergedDoc.save(new FileOutputStream(intoDocument));
@@ -752,7 +765,7 @@ public class LibreOfficeAccess {
     }
 
     // Define a recursive function to browse through all elements in the document
-    public static void browseAndMergeElements(Node parentElement, TextDocument targetDoc) {
+    public static void browseAndMergeElements(OdfPackage bodyPackage, Node parentElement, TextDocument targetDoc, OdfPackage mergedPackage) {
         NodeList childNodes = parentElement.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {
             Node childNode = childNodes.item(i);
@@ -761,7 +774,8 @@ public class LibreOfficeAccess {
             if (childNode.getNodeName().equals("text:p")) {
                 OdfElement odfElement = (OdfElement) childNode;
                 TextPElement pElement = (TextPElement) odfElement;
-                targetDoc.addParagraph(pElement.getTextContent());
+                Paragraph newP=targetDoc.addParagraph(pElement.getTextContent());
+                
                 
             } // If the child node is a table, create a new Table object
             else if (childNode.getNodeName().equals("table:table")) {
@@ -802,14 +816,76 @@ public class LibreOfficeAccess {
                         list.addItem(listItem.getTextContent());
                     }
                 }
-            } else {
-                log.warn("unkown element type: " + childNode.getNodeName());
-                // If the child element has child nodes, recursively call this function on them
-                if (childNode.hasChildNodes()) {
-                    browseAndMergeElements(childNode, targetDoc);
+            }
+            // If the child node is an image, extract the image information
+            else if (childNode.getNodeName().equals("draw:image")) {
+                DrawImageElement imageElement = (DrawImageElement) childNode;
+                NamedNodeMap attributes = imageElement.getAttributes();
+                
+                
+                Node hrefAttr = attributes.getNamedItemNS("http://www.w3.org/1999/xlink", "href");
+                if (hrefAttr != null) {
+                    String imagePath = hrefAttr.getNodeValue();
+                    System.out.println("Image path: " + imagePath);
                 }
             }
+            // If the child node is a graphic frame, extract the graphic information
+            else if (childNode.getNodeName().equals("draw:frame")) {
+                DrawFrameElement frameElement = (DrawFrameElement) childNode;
+                NamedNodeMap attributes = frameElement.getAttributes();
+                
+                if(frameElement.hasChildNodes()) {
+                    Node imageNode=frameElement.getChildNodes().item(0);
+                    if(imageNode instanceof DrawImageElement) {
+                        try {
+                             mergeImage(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
+                        } catch (Exception ex) {
+                            log.error("Can not merge image", ex);
+                        }
+                    }
+                }
+                
+                
+                
+                Node styleNameAttr = attributes.getNamedItem("draw:style-name");
+                if (styleNameAttr != null) {
+                    String styleName = styleNameAttr.getNodeValue();
+                    System.out.println("Graphic style name: " + styleName);
+                }
+            } else {
+                log.warn("unkown element type: " + childNode.getNodeName());
+                
+            }
+            // If the child element has child nodes, recursively call this function on them
+            if (childNode.hasChildNodes()) {
+                browseAndMergeElements(bodyPackage, childNode, targetDoc, mergedPackage);
+            }
 
+        }
+    }
+    
+    private static void mergeImage(org.odftoolkit.odfdom.dom.element.draw.DrawImageElement drawImageElement, OdfPackage bodyPack, TextDocument targetDoc, OdfPackage mergedPack) throws Exception {
+        String href=drawImageElement.getAttributes().getNamedItem("xlink:href").getNodeValue();
+        byte[] bytes=bodyPack.getBytes(href);
+        String mimeType=drawImageElement.getAttributes().getNamedItem("draw:mime-type").getNodeValue();
+        if(bytes!=null) {
+            //mergedPack.insert(new URI("./" + href.substring(href.lastIndexOf("/")+1)), href, mimeType);
+            mergedPack.insert(bytes, href, mimeType);
+                        
+            File tmpImage=File.createTempFile(""+System.currentTimeMillis(), null);
+            FileOutputStream fout=new FileOutputStream(tmpImage);
+            fout.write(bytes);
+            fout.close();
+            
+            // nothing visible
+            //targetDoc.newImage(new URI("./" + href.substring(href.lastIndexOf("/")+1)));
+            //targetDoc.newImage(new URI(href));
+            
+            // works, but image is large and misplaced
+            targetDoc.newImage(tmpImage.toURI());
+            
+            //targetDoc.addParagraph("").getFrameContainerElement().appendChild(drawImageElement.cloneNode(true));
+            
         }
     }
 

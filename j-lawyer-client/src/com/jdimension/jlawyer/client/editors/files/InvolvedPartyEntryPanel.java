@@ -1491,6 +1491,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
 
+    public void close() {
+        EventBroker b=EventBroker.getInstance();
+        b.unsubscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
+    }
+    
     @Override
     public void onEvent(Event e) {
         if (e instanceof ContactUpdatedEvent) {

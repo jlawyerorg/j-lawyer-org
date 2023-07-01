@@ -665,30 +665,33 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
 public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
+    
+    private static final Logger log=Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
 
-    private static final Logger log = Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
-
-    private ArchiveFilePanel parent=null;
+    private TimesheetDialog parent=null;
     
     private TimesheetPosition position = null;
+    private String timesheetId = null;
     
     private DecimalFormat taxRateFormat=null;
 
@@ -697,8 +700,9 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
      * @param parent
      * @param taxRates
      */
-    public TimesheetPositionEntryPanel(ArchiveFilePanel parent, List<String> taxRates) {
+    public TimesheetPositionEntryPanel(TimesheetDialog parent, List<String> taxRates) {
         initComponents();
+        
         this.parent=parent;
         
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
@@ -719,7 +723,21 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        this.txtUnits.getDocument().addDocumentListener(new DocumentListener() {
+        this.txtStarted.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                updateParentTotal();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateParentTotal();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                updateParentTotal();
+            }
+        });
+        
+        this.txtStopped.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 updateParentTotal();
             }
@@ -740,20 +758,55 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
     }
 
-    public void setEntry(TimesheetPosition pos) {
-        this.position = pos;
-        this.txtName.setText(pos.getName());
-        this.taDescription.setText(pos.getDescription());
-        this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
-        this.txtUnitPrice.setValue(pos.getUnitPrice());
-        this.txtTotal.setValue(pos.getTotal());
-        this.updateEntryTotal();
+    public void setEntry(String timesheetId, TimesheetPosition pos, int intervalMinutes) {
+        
+            this.timesheetId=timesheetId;
+        
+            this.position = pos;
+            this.txtName.setText(pos.getName());
+            this.taDescription.setText(pos.getDescription());
+            this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
+            this.txtUnitPrice.setValue(pos.getUnitPrice());
+            this.txtStarted.setValue(pos.getStarted());
+            this.txtStopped.setValue(pos.getStopped());
+            //this.txtTotal.setValue(pos.getTotal());
+            this.lblPrincipal.setText(pos.getPrincipal());
+            this.lblPrincipal.setIcon(UserSettings.getInstance().getUserSmallIcon(pos.getPrincipal()));
+            this.updateEntryTotal(intervalMinutes);
+            
+            if(pos.getInvoice()!=null) {
+                this.lblBilled.setText("abgerechnet");
+                this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber());
+                this.lblBilled.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.txtName.setEnabled(false);
+                this.txtStarted.setEnabled(false);
+                this.txtStopped.setEnabled(false);
+                this.txtUnitPrice.setEnabled(false);
+                this.taDescription.setEnabled(false);
+                this.cmbTaxRate.setEnabled(false);
+            } else {
+                this.lblBilled.setText("");
+                this.txtName.setEnabled(true);
+                this.txtStarted.setEnabled(true);
+                this.txtStopped.setEnabled(true);
+                this.txtUnitPrice.setEnabled(true);
+                this.taDescription.setEnabled(true);
+                this.cmbTaxRate.setEnabled(true);
+            }
+       
     }
 
     public TimesheetPosition getEntry() {
         
+        if(this.position==null)
+            return null;
+        
         TimesheetPosition clone=new TimesheetPosition();
         clone.setId(this.position.getId());
+        clone.setTimesheet(this.position.getTimesheet());
+        clone.setStarted((Date)this.txtStarted.getValue());
+        clone.setStopped((Date)this.txtStopped.getValue());
+        clone.setPrincipal(this.position.getPrincipal());
         
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
@@ -792,10 +845,11 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         cmbTaxRate = new javax.swing.JComboBox<>();
         cmdRemovePosition = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        txtUnits = new javax.swing.JFormattedTextField();
+        txtStarted = new javax.swing.JFormattedTextField();
         jLabel4 = new javax.swing.JLabel();
-        txtUnits1 = new javax.swing.JFormattedTextField();
-        jLabel5 = new javax.swing.JLabel();
+        txtStopped = new javax.swing.JFormattedTextField();
+        lblPrincipal = new javax.swing.JLabel();
+        lblBilled = new javax.swing.JLabel();
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
@@ -838,18 +892,21 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        txtUnits.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtUnits.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtUnits.setFont(txtUnits.getFont().deriveFont(txtUnits.getFont().getSize()-2f));
+        txtStarted.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
+        txtStarted.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtStarted.setFont(txtStarted.getFont().deriveFont(txtStarted.getFont().getSize()-2f));
 
         jLabel4.setText("bis");
 
-        txtUnits1.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtUnits1.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtUnits1.setFont(txtUnits1.getFont().deriveFont(txtUnits1.getFont().getSize()-2f));
+        txtStopped.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
+        txtStopped.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtStopped.setFont(txtStopped.getFont().deriveFont(txtStopped.getFont().getSize()-2f));
 
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar16/Mitarbeiter-Icons-25.png"))); // NOI18N
-        jLabel5.setText("Jens");
+        lblPrincipal.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar16/Mitarbeiter-Icons-25.png"))); // NOI18N
+        lblPrincipal.setText("Jens");
+
+        lblBilled.setFont(lblBilled.getFont().deriveFont(lblBilled.getFont().getStyle() | java.awt.Font.BOLD));
+        lblBilled.setText("abgerechnet");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -875,13 +932,15 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtUnits, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtUnits1, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel5)))
+                        .addComponent(lblBilled)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblPrincipal)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -896,10 +955,11 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtUnits, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4)
-                    .addComponent(txtUnits1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
+                    .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblPrincipal)
+                    .addComponent(lblBilled))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
@@ -913,55 +973,48 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRemovePositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePositionActionPerformed
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            locator.lookupArchiveFileServiceRemote().removeInvoicePosition(this.position.getId(), this.position);
-//            Container parentContainer=this.getParent();
-//            parentContainer.remove(this);
-//            try {
-//                parentContainer.doLayout();
-//            } catch (Exception ex) {
-//                log.warn("unable to layout invoice dialog", ex);
-//            }
-//        } catch (Exception ex) {
-//            log.error("Error updating invoice position", ex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//        }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().removeTimesheetPosition(this.timesheetId, this.position);
+            Container parentContainer=this.getParent();
+            parentContainer.remove(this);
+            try {
+                parentContainer.doLayout();
+            } catch (Exception ex) {
+                log.warn("unable to layout time sheet positions container", ex);
+            }
+        } catch (Exception ex) {
+            log.error("Error removing timsheet position", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
 
     }//GEN-LAST:event_cmdRemovePositionActionPerformed
 
     private void cmbTaxRateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTaxRateActionPerformed
-        updateParentTotal();
+        this.updateParentTotal();
     }//GEN-LAST:event_cmbTaxRateActionPerformed
-
-    private void updatePosition() {
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            InvoicePosition updatedPos = locator.lookupArchiveFileServiceRemote().updateInvoicePosition(this.invoiceId, this.getEntry());
-//            this.setEntry(invoiceId, updatedPos);
-//
-//        } catch (Exception ex) {
-//            log.error("Error updating invoice position", ex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//        }
-    }
     
     public void updateParentTotal() {
-        //this.parent.updateTotals(this);
+        this.parent.updateTotals(this);
     }
 
     // always called by the dialog, never by ent entry panel itself
-    public void updateEntryTotal() {
+    public void updateEntryTotal(int intervalMinutes) {
         Number unitPrice = 0f;
         try {
             unitPrice = (Number) this.txtUnitPrice.getValue();
 
-            if (unitPrice != null) {
+            if (this.txtStarted.getValue()!=null && this.txtStopped.getValue()!=null && unitPrice!=null) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
-                this.txtTotal.setValue(((Number) this.txtUnits.getValue()).floatValue() * unitPrice.floatValue());
+                Date started=(Date)this.txtStarted.getValue();
+                Date stopped=(Date)this.txtStopped.getValue();
+                float totalMinutes=((float)(stopped.getTime()-started.getTime()))/1000f/60f;
+                double roundedMinutes=Math.ceil(totalMinutes/intervalMinutes)*intervalMinutes;
+                float roundedMinutesFloat=new Float(roundedMinutes);
+                float total=roundedMinutesFloat/60f*unitPrice.floatValue();
+                this.txtTotal.setValue(total);
             } else {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
@@ -972,6 +1025,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
             this.txtTotal.setValue(0f);
         }
+        
 
     }
 
@@ -982,14 +1036,15 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel lblBilled;
+    private javax.swing.JLabel lblPrincipal;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
+    private javax.swing.JFormattedTextField txtStarted;
+    private javax.swing.JFormattedTextField txtStopped;
     private javax.swing.JFormattedTextField txtTotal;
     private javax.swing.JFormattedTextField txtUnitPrice;
-    private javax.swing.JFormattedTextField txtUnits;
-    private javax.swing.JFormattedTextField txtUnits1;
     // End of variables declaration//GEN-END:variables
 }

@@ -718,6 +718,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JPanel tagPanel;
     private JPanel documentTagPanel;
     private JPanel invoicesPanel;
+    private JPanel timesheetsPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
@@ -725,7 +726,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
     private JComboBox cmbFormTypes = null;
-    private JComboBox<Timesheet> cmbTimesheets = null;
     private JPanel formsPanel = null;
     private JTabbedPane tabPaneForms = null;
     private JComboBox cmbGroups = null;
@@ -735,7 +735,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync, JComboBox cmbTimesheets) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel timesheetsPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -748,11 +748,11 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
         this.cmbFormTypes = formTypes;
-        this.cmbTimesheets = cmbTimesheets;
         this.formsPanel = formsPanel;
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
+        this.timesheetsPanel = timesheetsPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -927,14 +927,14 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
             }
-            this.cmbTimesheets.removeAllItems();
             List<Timesheet> timesheets = fileService.getTimesheets(archiveFileKey);
+            this.timesheetsPanel.removeAll();
             for (Timesheet ts : timesheets) {
-                this.cmbTimesheets.addItem(ts);
+                TimesheetEntryPanel tp=new TimesheetEntryPanel(this.owner);
+                tp.setEntry(this.caseDto, ts);
+                this.timesheetsPanel.add(tp);
             }
-            if (this.cmbTimesheets.getItemCount() > 0) {
-                this.cmbTimesheets.setSelectedIndex(0);
-            }
+            
             
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);

@@ -663,45 +663,52 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
-import java.text.DecimalFormat;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Container;
+import java.util.List;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
 public class TimesheetEntryPanel extends javax.swing.JPanel {
-
-    private TimesheetLogDialog parent=null;
-    private Timesheet entry=null;
     
+    private static final Logger log=Logger.getLogger(TimesheetEntryPanel.class.getName());
+    
+    private ArchiveFileBean caseDto=null;
+    private ArchiveFilePanel caseView=null;
+    private Timesheet timesheet=null;
+
     /**
-     * Creates new form TimesheetLogEntryPanel
-     * @param parent
+     * Creates new form InvoiceEntryPanel
+     * @param caseView
      */
-    public TimesheetEntryPanel(TimesheetLogDialog parent) {
+    public TimesheetEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
-        this.parent=parent;
+        this.caseView=caseView;
     }
     
-    public void setEntry(Timesheet ts) {
-        this.entry=ts;
-        
-        this.chkLimited.setSelected(ts.isLimited());
-        if(ts.isLimited()) {
-            this.chkLimited.setText("Limit (netto): " + new DecimalFormat("0.00").format(ts.getLimit()));
+    public void setEntry(ArchiveFileBean caseDto, Timesheet timesheet) {
+        this.caseDto=caseDto;
+        this.timesheet=timesheet;
+        if(timesheet.getStatus()==Timesheet.STATUS_CLOSED) {
+            this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
-            this.chkLimited.setText("nicht limitiert");
+            this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         }
-        if(ts.getArchiveFileKey()!=null) {
-            ArchiveFileBean dto=ts.getArchiveFileKey();
-            this.lblCase.setText(dto.getFileNumber() + " " + StringUtils.nonEmpty(dto.getName()) + " " + StringUtils.nonEmpty(dto.getReason()));
-        }
-        this.lblName.setText(ts.getName());
-        this.taDescription.setText(ts.getDescription());
-        this.taDescription.setToolTipText(ts.getDescription());
+        this.lblName.setText(timesheet.getName());
+        this.lblStatus.setText("(" + timesheet.getStatusString() + ")");
+        this.lblDescription.setText(timesheet.getDescription());
+        this.lblDescription.setToolTipText(timesheet.getDescription());
     }
 
     /**
@@ -713,33 +720,38 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblCase = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        taDescription = new javax.swing.JTextArea();
-        chkLimited = new javax.swing.JCheckBox();
+        lblStatus = new javax.swing.JLabel();
+        lblDescription = new javax.swing.JLabel();
+        cmdDelete = new javax.swing.JButton();
 
-        lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD, lblCase.getFont().getSize()+2));
-        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdOpen.setToolTipText("einsehen / bearbeiten");
+        cmdOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                cmdOpenActionPerformed(evt);
             }
         });
 
-        lblName.setFont(lblName.getFont());
-        lblName.setText("jLabel2");
+        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
+        lblName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        lblName.setText("<Name>");
+        lblName.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
-        taDescription.setEditable(false);
-        taDescription.setColumns(20);
-        taDescription.setRows(5);
-        jScrollPane1.setViewportView(taDescription);
+        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));
+        lblStatus.setText("offen");
 
-        chkLimited.setText("jCheckBox1");
-        chkLimited.setEnabled(false);
+        lblDescription.setFont(lblDescription.getFont());
+        lblDescription.setText("<Beschreibung>");
+
+        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDelete.setToolTipText("Beleg löschen");
+        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -747,46 +759,67 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(cmdOpen)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdDelete)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(chkLimited)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jButton1)
+                        .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)
-                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(lblStatus))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblCase, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkLimited)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdOpen)
+                    .addComponent(cmdDelete)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblStatus)
+                            .addComponent(lblName))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblDescription)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        this.parent.newTimesheetLogEntry(this.entry);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
+        TimesheetDialog dlg=new TimesheetDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEntry(this.timesheet);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        this.setEntry(caseDto, dlg.getEntry());
+    }//GEN-LAST:event_cmdOpenActionPerformed
+
+    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Projekt '" + this.timesheet.getName() + "' unwiderruflich löschen?", "Zeiterfassungsprojekt löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removeTimesheet(this.timesheet.getId());
+                Container parent=this.getParent();
+                parent.remove(this);
+                parent.invalidate();
+                parent.repaint();
+            } catch (Exception ex) {
+                log.error("Error deleting invoice", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Projektes: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdDeleteActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkLimited;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblCase;
+    private javax.swing.JButton cmdDelete;
+    private javax.swing.JButton cmdOpen;
+    private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblName;
-    private javax.swing.JTextArea taDescription;
+    private javax.swing.JLabel lblStatus;
     // End of variables declaration//GEN-END:variables
 }

@@ -806,6 +806,6 @@ public interface SystemManagementRemote {
 
     MappingTable updateMappingTable(MappingTable mt) throws Exception;
 
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception;
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception;
     
 }

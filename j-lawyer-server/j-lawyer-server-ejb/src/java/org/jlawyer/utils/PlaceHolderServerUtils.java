@@ -691,7 +691,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
     
     private static final String DATE_FORMAT="dd.MM.yyyy";
 
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable) throws Exception {
+    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -1076,6 +1076,10 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         
         if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable!=null) {
             placeHolders.put(BEL_TABELLE, invoiceTable);
+        }
+        
+        if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable!=null) {
+            placeHolders.put(ZE_TABELLE, timesheetsTable);
         }
         
         return placeHolders;

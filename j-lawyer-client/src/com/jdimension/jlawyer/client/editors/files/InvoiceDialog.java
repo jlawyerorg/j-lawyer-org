@@ -687,6 +687,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -1028,6 +1029,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         lstPositionTemplates = new javax.swing.JList<>();
         cmdApplyPositionTemplate = new javax.swing.JButton();
         cmdUploadInvoiceDocument = new javax.swing.JButton();
+        cmdTimesheetPositions = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         lblInvoiceTotal = new javax.swing.JLabel();
@@ -1311,6 +1313,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         });
 
+        cmdTimesheetPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        cmdTimesheetPositions.setToolTipText("Positionen aus Zeiterfassungsprojekten dieser Akte übernehmen");
+        cmdTimesheetPositions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTimesheetPositionsActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1372,12 +1382,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblInvoicePositions)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(cmdAddPosition)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCalculation)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdRemoveAllPositions))
                             .addComponent(lblInvoiceDocument)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(cmdCreateInvoiceDocument)
@@ -1386,7 +1390,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                 .addGap(18, 18, 18)
                                 .addComponent(cmdViewDocument)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdNavigateToDocument)))
+                                .addComponent(cmdNavigateToDocument))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(cmdAddPosition)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdRemoveAllPositions)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmdCalculation)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdTimesheetPositions)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1438,7 +1450,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(cmdAddPosition)
                     .addComponent(cmdCalculation)
-                    .addComponent(cmdRemoveAllPositions))
+                    .addComponent(cmdRemoveAllPositions)
+                    .addComponent(cmdTimesheetPositions))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(textSearchPositionTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1615,6 +1628,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+    @Override
+    public void dispose() {
+        EventBroker b=EventBroker.getInstance();
+        b.unsubscribeConsumer(this, Event.TYPE_INVOICEPOSITIONADDED);
+        super.dispose();
+    }
+
     private void fillCurrentEntry() throws Exception {
         this.currentEntry.setDescription(this.taDescription.getText());
         this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
@@ -1669,7 +1689,57 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    private StyledCalculationTable getPositionsAsTable() {
+    private StyledCalculationTable getTimesheetPositionsAsTable(List<TimesheetPosition> posList) {
+        
+        if(posList==null || posList.isEmpty())
+            return null;
+        
+        StyledCalculationTable ct = new StyledCalculationTable();
+        ct.addHeaders("Zeit", "Projekt", "Tätigkeit", "Person");
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "", "", "");
+        }
+
+        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        for (TimesheetPosition pos: posList) {
+            float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
+            double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
+            Float roundedMinutesFloat = new Float(roundedMinutes);
+            ct.addRow(df.format(pos.getStarted()) + " (" + roundedMinutesFloat.intValue() + "min)", pos.getTimesheet().getName(), pos.getName() + ": " + pos.getDescription(), pos.getPrincipal());
+        }
+        
+
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "", "", "");
+        }
+        
+        //HeaderRow
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
+
+        //TableLayout
+        ct.setColumnAlignment(0, Cell.ALIGNMENT_LEFT);
+        ct.setColumnAlignment(1, Cell.ALIGNMENT_LEFT);
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_LEFT);
+        ct.setColumnAlignment(3, Cell.ALIGNMENT_LEFT);
+        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 25);
+        ct.setColumnWidth(1, 120);
+        ct.setColumnWidth(2, 35);
+        ct.setColumnWidth(3, 35);
+        ct.setFontFamily("Arial");
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        
+        return ct;
+
+    }
+    
+    private StyledCalculationTable getInvoicePositionsAsTable() {
         float totalTax = 0f;
         float total = 0f;
         
@@ -1877,7 +1947,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if(this.currentEntry!=null) {
                 this.save();
             }
-            ArchiveFileDocumentsBean invoiceDoc=this.caseView.newDocumentDialog(null, currentEntry, this.getPositionsAsTable());
+            
+            StyledCalculationTable timesheetPosTable = null;
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
+                timesheetPosTable = this.getTimesheetPositionsAsTable(times);
+            } catch (Exception ex) {
+                log.error("error getting timesheet positions table", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            
+            ArchiveFileDocumentsBean invoiceDoc=this.caseView.newDocumentDialog(null, currentEntry, this.getInvoicePositionsAsTable(), timesheetPosTable);
             if(this.currentEntry!=null) {
                 this.save();
                 try {
@@ -1982,6 +2063,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
     }//GEN-LAST:event_lstPositionTemplatesMouseClicked
 
+    private void cmdTimesheetPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetPositionsActionPerformed
+        TimesheetBillingDialog dlg=new TimesheetBillingDialog(this, true, this.caseDto.getId(), this.currentEntry);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdTimesheetPositionsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2042,6 +2129,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchRecipient;
+    private javax.swing.JButton cmdTimesheetPositions;
     private javax.swing.JButton cmdUploadInvoiceDocument;
     private javax.swing.JButton cmdViewDocument;
     private javax.swing.JTextField dtCreated;
@@ -2086,7 +2174,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     public void onEvent(Event e) {
         if (e instanceof InvoicePositionAddedEvent) {
             if (this.currentEntry != null) {
-                this.addPosition(((InvoicePositionAddedEvent) e).getPosition());
+                if(this.currentEntry.getId().equals(((InvoicePositionAddedEvent) e).getInvoiceId()))
+                    this.addPosition(((InvoicePositionAddedEvent) e).getPosition());
             }
         }
     }

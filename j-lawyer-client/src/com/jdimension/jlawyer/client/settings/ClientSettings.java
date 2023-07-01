@@ -813,6 +813,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] degreeSuffixes=null;
     private AppOptionGroupBean[] professions=null;
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
+    protected AppOptionGroupBean[] timesheetIntervals=null;
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
@@ -1245,6 +1246,17 @@ public class ClientSettings {
      */
     public void setTitlesInAddress(AppOptionGroupBean[] titlesInAddress) {
         this.titlesInAddress = titlesInAddress;
+    }
+
+    public void setTimesheetIntervals(AppOptionGroupBean[] timesheetIntervals) {
+        this.timesheetIntervals=timesheetIntervals;
+    }
+
+    /**
+     * @return the timesheetIntervals
+     */
+    public AppOptionGroupBean[] getTimesheetIntervals() {
+        return timesheetIntervals;
     }
  
     

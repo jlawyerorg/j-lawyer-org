@@ -2123,7 +2123,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             int openPositions = locator.lookupArchiveFileServiceRemote().hasOpenTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
             if (openPositions>0) {
-                TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
                 FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
                 tsld.setVisible(true);
             }
@@ -2765,7 +2765,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuTimesheetIntervalsActionPerformed
 
     private void lblTimesheetStatusMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTimesheetStatusMouseClicked
-        TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
         FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
         tsld.setVisible(true);
     }//GEN-LAST:event_lblTimesheetStatusMouseClicked

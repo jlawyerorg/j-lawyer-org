@@ -206,13 +206,6 @@
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="lblInvoicePositions" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="cmdAddPosition" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="cmdCalculation" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
-                                  </Group>
                                   <Component id="lblInvoiceDocument" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="cmdCreateInvoiceDocument" min="-2" max="-2" attributes="0"/>
@@ -222,6 +215,15 @@
                                       <Component id="cmdViewDocument" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdNavigateToDocument" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="cmdAddPosition" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="cmdCalculation" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdTimesheetPositions" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -288,6 +290,7 @@
                           <Component id="cmdAddPosition" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdCalculation" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdTimesheetPositions" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="textSearchPositionTemplate" min="-2" max="-2" attributes="0"/>
@@ -845,6 +848,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUploadInvoiceDocumentActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdTimesheetPositions">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Positionen aus Zeiterfassungsprojekten dieser Akte &#xfc;bernehmen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTimesheetPositionsActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>

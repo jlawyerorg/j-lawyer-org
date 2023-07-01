@@ -867,7 +867,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
             
             
-            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null);
+            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null, null);
                         
             
             for(RestfulPlaceholderV6 rph: placeHolderValues) {

@@ -2058,7 +2058,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null);
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders,new ArrayList<>());
@@ -2067,7 +2067,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     ht.put(ph, "");
                 }
                 
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null);
+                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null);
 
                 String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator");
                 int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);

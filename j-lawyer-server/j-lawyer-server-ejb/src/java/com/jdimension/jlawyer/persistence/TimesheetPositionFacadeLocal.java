@@ -688,6 +688,7 @@ public interface TimesheetPositionFacadeLocal {
     int count();
     
     List<TimesheetPosition> findByTimesheet(Timesheet timesheet);
+    List<TimesheetPosition> findByInvoice(Invoice invoice);
     
     List<TimesheetPosition> findOpenByPrincipal(String principal);
     

@@ -670,8 +670,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJBException;
@@ -711,6 +713,9 @@ public class ReportService implements ReportServiceRemote {
         reportPrivs.put(Reports.RPT_INV_ALL, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_INV_OPEN, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_INV_OVERDUE, PRIVILEGE_COMMON);
+        
+        reportPrivs.put(Reports.RPT_TSHEETS_OPEN_OVERVIEW, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_TSHEETS_OPEN_POSITIONS, PRIVILEGE_COMMON);
         
         reportPrivs.put(Reports.RPT_EMPLOYEE_ACTIVITY, PRIVILEGE_CONFIDENTIAL);
         
@@ -840,6 +845,44 @@ public class ReportService implements ReportServiceRemote {
                     + "order by Faelligkeit";
             result.getBarCharts().add(getBarChart("Alle fälligen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 1, 2, 3, params));
             
+        } else if(Reports.RPT_TSHEETS_OPEN_OVERVIEW.equals(reportId)) {
+            String query = "SELECT ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
+                    + "    case \n"
+                    + "        when ts.status = 10 then 'offen'\n"
+                    + "        when ts.status = 20 then 'abgeschlossen'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    case \n"
+                    + "        when ts.limited = 0 then 'unlimitiert'\n"
+                    + "        when ts.limited = 1 then 'limitiert'\n"
+                    + "        else 'unlimitiert'\n"
+                    + "    end as limitiert,\n"
+                    + "    ts.limit_net Projektlimit,\n"
+                    + "    ts.interval_minutes as Taktminuten,\n"
+                    + "    round(sum(tsp.total), 2) gebucht, DATE_FORMAT(min(tsp.time_started),'%Y-%m-%d') as von, DATE_FORMAT(max(tsp.time_started),'%Y-%m-%d') as bis,\n"
+                    + "    cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM timesheet_positions tsp\n"
+                    + "left join timesheets ts on ts.id=tsp.timesheet_id  \n"
+                    + "left join cases cases on ts.case_id=cases.id\n"
+                    + "where ts.status=10 and tsp.time_started >= ? and tsp.time_started <= ?\n"
+                    + "group by tsp.timesheet_id\n"
+                    + "order by von desc";
+            result.getTables().add(getTable("Offene Zeiterfassungsprojekte", query, params));
+        } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
+            String query = "SELECT cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
+                    + "    ts.name as Projektname, ts.description as Projektbeschreibung,  ts.interval_minutes as Taktung,\n"
+                    + "    DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as von, DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as bis, TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) AS Minuten, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)/ts.interval_minutes)*ts.interval_minutes AS MinutenInTaktung, tsp.name as Aktivitaet, tsp.description as Taetigkeiten, tsp.principal as GebuchtDurch, tsp.tax_rate as Steuersatz, tsp.unit_price as Stundensatz\n"
+                    + "    FROM timesheet_positions tsp\n"
+                    + "left join timesheets ts on ts.id=tsp.timesheet_id \n"
+                    + "left join cases cases on ts.case_id=cases.id\n"
+                    + "where ts.status=10 and tsp.time_started >= ? and tsp.time_started <= ?\n"
+                    + "order by Aktenzeichen asc, Projektname asc, von desc";
+            ReportResultTable mainTable=getTable("Alle", query, params);
+            
+            result.getTables().add(mainTable);
+            
+            Collection<ReportResultTable> subTables=this.splitTable(mainTable, "Projektname");
+            result.getTables().addAll(subTables);
+            
         }
         
         return result;
@@ -913,6 +956,32 @@ public class ReportService implements ReportServiceRemote {
             }
         }
         return table;
+    }
+    
+    private Collection<ReportResultTable> splitTable(ReportResultTable mainTable, String groupColumnName) {
+        
+        int columnIndex = 0;
+        for (int i = 0; i < mainTable.getColumnNames().length; i++) {
+            if (mainTable.getColumnNames()[i].equalsIgnoreCase(groupColumnName)) {
+                columnIndex = i;
+                break;
+            }
+        }
+        
+        HashMap<String, ReportResultTable> splitTables=new HashMap<>();
+        for(Object[] row: mainTable.getValues()) {
+            String groupValue=row[columnIndex].toString();
+            if(!splitTables.containsKey(groupValue)) {
+                ReportResultTable newSubTable=new ReportResultTable();
+                newSubTable.setColumnNames(mainTable.getColumnNames());
+                newSubTable.setTableName(groupValue);
+                splitTables.put(groupValue, newSubTable);
+            }
+            ReportResultTable subTable=splitTables.get(groupValue);
+            subTable.getValues().add(row);
+        }
+        
+        return splitTables.values();
     }
     
     private ReportResultBarChart getBarChart(String name, String xTitle, String yTitle, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {

@@ -753,6 +753,44 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesAll.setDateSelectionLabel("erstellt");
         allReports.add(invoicesAll);
         
+        Report timeSheetsOpenOverview=new Report();
+        timeSheetsOpenOverview.setName("Alle offenen Zeiterfassungsprojekte im Überblick");
+        timeSheetsOpenOverview.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> im Überblick, absteigend sortiert nach letzter Buchung</html>");
+        timeSheetsOpenOverview.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsOpenOverview.setCategory("Finanzen");
+        timeSheetsOpenOverview.setSequence(20);
+        timeSheetsOpenOverview.setReportId(Reports.RPT_TSHEETS_OPEN_OVERVIEW);
+        timeSheetsOpenOverview.setTypeChart(false);
+        timeSheetsOpenOverview.setTypeTable(true);
+        timeSheetsOpenOverview.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsOpenOverview.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsOpenOverview.setDefaultEndDate(toDate);
+        timeSheetsOpenOverview.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsOpenOverview);
+        
+        Report timeSheetsOpenPositions=new Report();
+        timeSheetsOpenPositions.setName("Alle offenen Zeiterfassungsprojekte und deren Buchungen");
+        timeSheetsOpenPositions.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> und deren Buchungen, als Gesamtansicht und gruppiert nach Projekt</html>");
+        timeSheetsOpenPositions.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsOpenPositions.setCategory("Finanzen");
+        timeSheetsOpenPositions.setSequence(20);
+        timeSheetsOpenPositions.setReportId(Reports.RPT_TSHEETS_OPEN_POSITIONS);
+        timeSheetsOpenPositions.setTypeChart(false);
+        timeSheetsOpenPositions.setTypeTable(true);
+        timeSheetsOpenPositions.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsOpenPositions.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsOpenPositions.setDefaultEndDate(toDate);
+        timeSheetsOpenPositions.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsOpenPositions);
+        
         Report caseHistory=new Report();
         caseHistory.setName("Aktenhistorie");
         caseHistory.setDescription("<html>Spezialisierte Oberfläche zur <b>aktenübergreifenden Anzeige von Historieneinträge</b></html>");

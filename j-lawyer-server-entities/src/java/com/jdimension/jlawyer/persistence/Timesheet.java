@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -686,6 +688,9 @@ public class Timesheet implements Serializable {
     
     public static final int STATUS_OPEN=10;
     public static final int STATUS_CLOSED=20;
+    
+    private static final String S_STATUS_OPEN="offen";
+    private static final String S_STATUS_CLOSED="geschlossen";
     
     @Id
     @Basic(optional = false)
@@ -850,6 +855,37 @@ public class Timesheet implements Serializable {
      */
     public void setStatus(int status) {
         this.status = status;
+    }
+    
+    public String getStatusString() {
+        switch (this.status) {
+            case STATUS_CLOSED:
+                return S_STATUS_CLOSED;
+            case STATUS_OPEN:
+                return S_STATUS_OPEN;
+            default:
+                return "unbekannt";
+        }
+        
+    }
+    
+    public List<String> getStatusValues() {
+        List<String> statuses=new ArrayList<>();
+        statuses.add(S_STATUS_OPEN);
+        statuses.add(S_STATUS_CLOSED);
+        return statuses;
+    }
+    
+    public int getStatusInt(String statusString) {
+        switch(statusString) {
+            case S_STATUS_OPEN:
+                return STATUS_OPEN;
+            case S_STATUS_CLOSED:
+                return STATUS_CLOSED;
+            default:
+                return STATUS_OPEN;
+                
+        }
     }
 
 }

@@ -701,8 +701,9 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
      *
      * @param parent
      * @param modal
+     * @param caseId the case id for filtering - only projects from this case will be listed. null value means "any case".
      */
-    public TimesheetLogDialog(java.awt.Frame parent, boolean modal) {
+    public TimesheetLogDialog(java.awt.Frame parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
 
@@ -730,15 +731,15 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             
             this.posTemplates=locator.lookupTimesheetServiceRemote().getAllTimesheetPositionTemplates();
             
-            this.openSheets = afs.getOpenTimesheets();
+            this.openSheets = afs.getOpenTimesheets(caseId);
             for (Timesheet ts : openSheets) {
-                TimesheetEntryPanel tsep = new TimesheetEntryPanel(this);
+                TimesheetDialogEntryPanel tsep = new TimesheetDialogEntryPanel(this);
                 tsep.setEntry(ts);
                 this.pnlOpenTimesheets.add(tsep);
             }
 
             // will return last positions for the user, independent of status
-            List<TimesheetPosition> lastPositions = afs.getLastTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            List<TimesheetPosition> lastPositions = afs.getLastTimesheetPositions(caseId, UserSettings.getInstance().getCurrentUser().getPrincipalId());
             for (TimesheetPosition lp : lastPositions) {
                 this.existingTimesheetLogEntry(lp);
             }
@@ -1002,7 +1003,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                 contained = ts.getDescription().toLowerCase().contains(filter) || ts.getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getName().toLowerCase().contains(filter) || ts.getArchiveFileKey().getFileNumber().toLowerCase().contains(filter) || ts.getArchiveFileKey().getReason().toLowerCase().contains(filter);
             }
             if (contained) {
-                TimesheetEntryPanel tsep = new TimesheetEntryPanel(this);
+                TimesheetDialogEntryPanel tsep = new TimesheetDialogEntryPanel(this);
                 tsep.setEntry(ts);
                 this.pnlOpenTimesheets.add(tsep);
             }
@@ -1062,7 +1063,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            TimesheetLogDialog dialog = new TimesheetLogDialog(new javax.swing.JFrame(), true);
+            TimesheetLogDialog dialog = new TimesheetLogDialog(new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

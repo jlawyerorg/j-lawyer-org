@@ -789,12 +789,15 @@ public class PlaceHolders {
     public static final String BEL_WHRG = "{{BEL_WHRG}}";
     public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
     
+    public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
+    
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
         ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(ZE_TABELLE);
     }
     
     public static String insertAt(String origin, String insert, int position) {

@@ -693,6 +693,13 @@ public class TimesheetPositionFacade extends AbstractFacade<TimesheetPosition> i
         return (List<TimesheetPosition>) em.createNamedQuery("TimesheetPosition.findByTimesheet").setParameter("timesheet", timesheet).getResultList();
         
     }
+    
+    @Override
+    public List<TimesheetPosition> findByInvoice(Invoice invoice) {
+        
+        return (List<TimesheetPosition>) em.createNamedQuery("TimesheetPosition.findByInvoice").setParameter("invoice", invoice).getResultList();
+        
+    }
 
     @Override
     public List<TimesheetPosition> findOpenByPrincipal(String principal) {

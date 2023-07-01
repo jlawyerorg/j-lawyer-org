@@ -694,6 +694,8 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form InvoicePositionEntryPanel
+     * @param parent
+     * @param taxRates
      */
     public InvoicePositionEntryPanel(InvoiceDialog parent, List<String> taxRates) {
         initComponents();

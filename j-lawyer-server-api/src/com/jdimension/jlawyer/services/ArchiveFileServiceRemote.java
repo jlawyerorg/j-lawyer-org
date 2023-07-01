@@ -886,9 +886,9 @@ public interface ArchiveFileServiceRemote {
     List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
 
     List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
-    List<Timesheet> getOpenTimesheets() throws Exception;
+    List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
 
-    List<TimesheetPosition> getLastTimesheetPositions(String principal) throws Exception;
+    List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
 
     TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;
 
@@ -897,4 +897,14 @@ public interface ArchiveFileServiceRemote {
     TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
 
     int hasOpenTimesheetPositions(String principal) throws Exception;
+
+    void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
+
+    TimesheetPosition updateTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
+
+    void removeAllTimesheetPositions(String timesheetId) throws Exception;
+
+    TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception;
+
+    List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
 }

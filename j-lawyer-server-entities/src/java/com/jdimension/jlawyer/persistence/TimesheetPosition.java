@@ -680,7 +680,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "TimesheetPosition.findById", query = "SELECT a FROM TimesheetPosition a WHERE a.id = :id"),
     @NamedQuery(name = "TimesheetPosition.findOpenByPrincipal", query = "SELECT a FROM TimesheetPosition a WHERE a.principal = :principal AND a.stopped is null"),
     @NamedQuery(name = "TimesheetPosition.findOpenByPrincipalAndTimesheet", query = "SELECT a FROM TimesheetPosition a WHERE a.principal = :principal AND a.timesheet = :timesheet AND a.stopped is null"),
-    @NamedQuery(name = "TimesheetPosition.findByTimesheet", query = "SELECT a FROM TimesheetPosition a WHERE a.timesheet = :timesheet")})
+    @NamedQuery(name = "TimesheetPosition.findByTimesheet", query = "SELECT a FROM TimesheetPosition a WHERE a.timesheet = :timesheet order by a.started desc"),
+    @NamedQuery(name = "TimesheetPosition.findByInvoice", query = "SELECT a FROM TimesheetPosition a WHERE a.invoice = :invoice order by a.started asc")})
 public class TimesheetPosition implements Serializable {
     
     protected static long serialVersionUID = 1L;
@@ -718,6 +719,10 @@ public class TimesheetPosition implements Serializable {
     @Column(name = "time_stopped")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date stopped;
+    
+    @JoinColumn(name = "invoice", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    protected Invoice invoice;
 
     public TimesheetPosition() {
     }
@@ -764,7 +769,7 @@ public class TimesheetPosition implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.TimesheetPosition[ id=" + getId() + " ]";
+        return this.getName();
     }
 
     /**
@@ -892,6 +897,20 @@ public class TimesheetPosition implements Serializable {
      */
     public void setStopped(Date stopped) {
         this.stopped = stopped;
+    }
+
+    /**
+     * @return the invoice
+     */
+    public Invoice getInvoice() {
+        return invoice;
+    }
+
+    /**
+     * @param invoice the invoice to set
+     */
+    public void setInvoice(Invoice invoice) {
+        this.invoice = invoice;
     }
 
 }
