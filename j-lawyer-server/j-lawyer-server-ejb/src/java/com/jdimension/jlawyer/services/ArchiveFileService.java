@@ -5686,6 +5686,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setName(position.getName());
             existing.setTaxRate(position.getTaxRate());
             existing.setUnitPrice(position.getUnitPrice());
+            existing.setStarted(position.getStarted());
+            existing.setStopped(position.getStopped());
             this.timesheetPositionsFacade.edit(existing);
 
             return this.timesheetPositionsFacade.find(position.getId());
