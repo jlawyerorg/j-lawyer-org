@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
-import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
