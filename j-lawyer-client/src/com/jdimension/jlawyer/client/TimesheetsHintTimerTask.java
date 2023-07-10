@@ -691,7 +691,8 @@ public class TimesheetsHintTimerTask extends java.util.TimerTask {
     @Override
     public void run() {
         SwingUtilities.invokeLater(() -> {
-            if(footerLabel.isEnabled()) {
+            boolean running=!(footerLabel.getText().trim().isEmpty());
+            if(running) {
                 if(blue) {
                     footerLabel.setIcon(greenIcon);
                     footerLabel.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
