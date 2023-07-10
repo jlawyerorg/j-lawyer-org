@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
@@ -708,7 +709,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.cmbTemplate.addItem(t.getName());
         }
         
-        
+        ComponentUtils.addAutoComplete(cmbTemplate);
         
     }
     
@@ -733,7 +734,10 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.entryCase = entryCase;
         this.entrySheet = ts;
         this.lblProject.setText(entryCase.getFileNumber() + " " + entryCase.getName() + ": " + ts.getName());
-        this.cmbTemplate.setSelectedItem(tsp.getName());
+        if(tsp.getName().trim().isEmpty())
+            this.cmbTemplate.setSelectedIndex(0);
+        else
+            this.cmbTemplate.setSelectedItem(tsp.getName());
         this.taDescription.setText(tsp.getDescription());
         if (this.entry.getStarted() != null) {
             this.txtStart.setValue(this.entry.getStarted());
@@ -769,6 +773,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         } else {
             this.lblDuration.setText("");
         }
+        
+        this.txtStart.setEditable(!this.entry.isRunning());
+        this.txtEnd.setEditable(!this.entry.isRunning());
+        
+        this.cmbTemplate.setEnabled(this.entry.getId()==null);
+        
         
         this.cmdSave.setEnabled(started!=null);
 
@@ -812,7 +822,6 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
-        cmbTemplate.setEditable(true);
         cmbTemplate.setFont(cmbTemplate.getFont());
         cmbTemplate.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbTemplate.addActionListener(new java.awt.event.ActionListener() {
@@ -826,12 +835,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         taDescription.setRows(5);
         jScrollPane1.setViewportView(taDescription);
 
+        txtStart.setEditable(false);
         txtStart.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
         txtStart.setFont(txtStart.getFont());
 
         jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("-");
 
+        txtEnd.setEditable(false);
         txtEnd.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
         txtEnd.setFont(txtEnd.getFont());
 
@@ -902,7 +913,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(cmdStartStop))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -911,7 +922,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblDuration))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -972,6 +983,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 
             }
         }
+        this.containingParent.entryStartedOrStopped();
     }
     
     private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
@@ -981,6 +993,10 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdStartStopActionPerformed
 
+    public void save() {
+        this.cmdSaveActionPerformed(null);
+    }
+    
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -990,9 +1006,20 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
             this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
         } else {
+            // should not happen, because the combobox is not editable
             this.entry.setTaxRate(19f);
             this.entry.setUnitPrice(0f);
         }
+        
+        Date dStart=(Date)this.txtStart.getValue();
+        Date dEnd=(Date)this.txtEnd.getValue();
+        if(dStart != null && dEnd != null) {
+            if (dEnd.after(dStart)) {
+                this.entry.setStarted(dStart);
+                this.entry.setStopped(dEnd);
+            }
+        }
+        
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();

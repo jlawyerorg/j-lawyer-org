@@ -66,7 +66,7 @@
                   <Component id="cmdStartStop" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" min="-2" pref="48" max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="61" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="txtStart" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -76,7 +76,7 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -91,7 +91,6 @@
     </Component>
     <Component class="javax.swing.JComboBox" name="cmbTemplate">
       <Properties>
-        <Property name="editable" type="boolean" value="true"/>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
             <Font component="cmbTemplate" property="font" relativeSize="true" size="0"/>
@@ -135,6 +134,7 @@
     </Container>
     <Component class="javax.swing.JFormattedTextField" name="txtStart">
       <Properties>
+        <Property name="editable" type="boolean" value="false"/>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
           <Format format="dd.MM.yy HH:mm" subtype="-1" type="2"/>
         </Property>
@@ -157,6 +157,7 @@
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="txtEnd">
       <Properties>
+        <Property name="editable" type="boolean" value="false"/>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
           <Format format="dd.MM.yy HH:mm" subtype="-1" type="2"/>
         </Property>
