@@ -898,6 +898,10 @@ public class TimesheetPosition implements Serializable {
     public void setStopped(Date stopped) {
         this.stopped = stopped;
     }
+    
+    public boolean isRunning() {
+        return this.started!=null && this.stopped==null;
+    }
 
     /**
      * @return the invoice
