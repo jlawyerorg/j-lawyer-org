@@ -988,6 +988,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().addTimesheetPositionTemplate(tpl);
 
             ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getDescription()});
+            this.tblTemplates.getSelectionModel().setSelectionInterval(this.tblTemplates.getRowCount()-1, this.tblTemplates.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new invoice position template", ex);
@@ -1043,8 +1044,8 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().updateTimesheetPositionTemplate(tpl);
-                row=this.tblTemplates.convertRowIndexToView(row);
+                TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().updateTimesheetPositionTemplate(tpl);;
+                row=this.tblTemplates.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl, row, 0);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl.getDescription(), row, 1);
 
@@ -1067,6 +1068,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupTimesheetServiceRemote().removeTimesheetPositionTemplate(tpl);
+                row=this.tblTemplates.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTemplates.getModel()).removeRow(row);
 
                 this.resetDetails();

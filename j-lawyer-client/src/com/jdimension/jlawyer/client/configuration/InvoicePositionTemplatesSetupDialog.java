@@ -1004,6 +1004,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             InvoicePositionTemplate savedTpl = locator.lookupInvoiceServiceRemote().addInvoicePositionTemplate(tpl);
 
             ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getDescription()});
+            this.tblTemplates.getSelectionModel().setSelectionInterval(this.tblTemplates.getRowCount()-1, this.tblTemplates.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new invoice position template", ex);
@@ -1077,7 +1078,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 InvoicePositionTemplate savedTpl = locator.lookupInvoiceServiceRemote().updateInvoicePositionTemplate(tpl);
-                row=this.tblTemplates.convertRowIndexToView(row);
+                row=this.tblTemplates.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl, row, 0);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl.getDescription(), row, 1);
 
@@ -1100,6 +1101,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupInvoiceServiceRemote().removeInvoicePositionTemplate(tpl);
+                row=this.tblTemplates.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTemplates.getModel()).removeRow(row);
 
                 this.resetDetails();

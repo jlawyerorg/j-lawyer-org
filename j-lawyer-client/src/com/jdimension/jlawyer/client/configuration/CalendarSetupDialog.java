@@ -683,7 +683,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.NextcloudCalendarConnector;
 import org.jlawyer.cloud.calendar.CloudCalendar;
 import themes.colors.DefaultColorTheme;
 
@@ -1118,6 +1117,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
 
             ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{savedCalendar, savedCalendar.getBackground(), null});
+            this.tblCalendars.getSelectionModel().setSelectionInterval(this.tblCalendars.getRowCount()-1, this.tblCalendars.getRowCount()-1);
             JOptionPane.showMessageDialog(this, "Der Kalender ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Kalenderberechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
@@ -1181,7 +1181,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().updateCalendarSetup(cs);
-                row=this.tblCalendars.convertRowIndexToView(row);
+                row=this.tblCalendars.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar, row, 0);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getBackground(), row, 1);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getHref(), row, 2);
@@ -1236,6 +1236,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 }
                 
                 locator.lookupCalendarServiceRemote().removeCalendarSetup(cs);
+                row=this.tblCalendars.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblCalendars.getModel()).removeRow(row);
 
                 this.resetDetails();

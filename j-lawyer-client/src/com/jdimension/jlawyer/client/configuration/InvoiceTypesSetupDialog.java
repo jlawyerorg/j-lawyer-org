@@ -972,6 +972,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
             InvoiceType savedType = locator.lookupInvoiceServiceRemote().addInvoiceType(it);
 
             ((DefaultTableModel) this.tblTypes.getModel()).addRow(new Object[]{savedType, savedType.getDescription()});
+            this.tblTypes.getSelectionModel().setSelectionInterval(this.tblTypes.getRowCount()-1, this.tblTypes.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new invoice type", ex);
@@ -998,7 +999,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 InvoiceType savedType = locator.lookupInvoiceServiceRemote().updateInvoiceType(it);
-                row=this.tblTypes.convertRowIndexToView(row);
+                row=this.tblTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTypes.getModel()).setValueAt(savedType, row, 0);
                 ((DefaultTableModel) this.tblTypes.getModel()).setValueAt(savedType.getDescription(), row, 1);
 
@@ -1021,6 +1022,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupInvoiceServiceRemote().removeInvoiceType(it);
+                row=this.tblTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTypes.getModel()).removeRow(row);
 
                 this.resetDetails();

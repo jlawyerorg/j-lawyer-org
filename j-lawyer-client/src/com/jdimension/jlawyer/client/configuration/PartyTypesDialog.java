@@ -1042,6 +1042,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             PartyTypeBean savedParty = mgmt.addPartyType(newParty);
 
             ((DefaultTableModel) this.tblPartyTypes.getModel()).addRow(new Object[]{savedParty, savedParty.getPlaceHolder(), savedParty.getColor()});
+            this.tblPartyTypes.getSelectionModel().setSelectionInterval(this.tblPartyTypes.getRowCount()-1, this.tblPartyTypes.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new party type", ex);
@@ -1070,7 +1071,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
                 PartyTypeBean savedParty = mgmt.updatePartyType(ptb);
-
+                row=this.tblPartyTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty, row, 0);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getPlaceHolder(), row, 1);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getColor(), row, 2);
@@ -1100,6 +1101,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
                 mgmt.removePartyType(ptb);
+                row=this.tblPartyTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).removeRow(row);
 
                 this.resetDetails();
