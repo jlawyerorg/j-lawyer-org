@@ -756,6 +756,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.lblInvoicePositions.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblInvoiceDocument.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        
+        this.textSearchPositionTemplate.putClientProperty("JTextField.showClearButton", true);
+        this.textSearchPositionTemplate.putClientProperty("JTextField.placeholderText", "Suche: Belegposition / Vorlage");
 
         BoxLayout boxLayout = new BoxLayout(this.pnlInvoicePositions, BoxLayout.Y_AXIS);
         this.pnlInvoicePositions.setLayout(boxLayout);
@@ -882,6 +885,22 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }
 
     public final void setEntry(Invoice invoice) {
+        
+        this.cmdAddPosition.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdSearchRecipient.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdDateCreated.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdDateDue.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdDatePeriodFrom.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdDatePeriodTo.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdRemoveAllPositions.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdCalculation.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdTimesheetPositions.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdApplyPositionTemplate.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdCreateInvoiceDocument.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdUploadInvoiceDocument.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.textSearchPositionTemplate.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.lstPositionTemplates.setEnabled(invoice!=null && invoice.getId()!=null);
+        
         this.currentEntry = invoice;
         
         this.cmdNavigateToDocument.setEnabled(false);
