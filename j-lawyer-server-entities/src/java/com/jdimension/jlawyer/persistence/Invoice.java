@@ -955,7 +955,7 @@ public class Invoice implements Serializable {
         statuses.add(S_STATUS_OPEN);
         statuses.add(S_STATUS_OPEN_REMINDER1);
         statuses.add(S_STATUS_OPEN_REMINDER2);
-        statuses.add(S_STATUS_OPEN_REMINDER1);
+        statuses.add(S_STATUS_OPEN_REMINDER3);
         statuses.add(S_STATUS_OPEN_NONENFORCEABLE);
         statuses.add("bezahlt");
         statuses.add("storniert");
