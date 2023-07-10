@@ -690,7 +690,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Insets;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
