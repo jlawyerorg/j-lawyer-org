@@ -714,7 +714,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblCase = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        cmdAddLog = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
@@ -723,10 +723,10 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
         lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD, lblCase.getFont().getSize()+2));
         lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        cmdAddLog.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
+        cmdAddLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                cmdAddLogActionPerformed(evt);
             }
         });
 
@@ -752,7 +752,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
                         .addComponent(chkLimited)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jButton1)
+                        .addComponent(cmdAddLog)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)
@@ -767,7 +767,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdAddLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -776,14 +776,14 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void cmdAddLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddLogActionPerformed
         this.parent.newTimesheetLogEntry(this.entry);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_cmdAddLogActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkLimited;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton cmdAddLog;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblName;
