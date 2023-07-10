@@ -588,7 +588,7 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Nummernkreise"/>
+                    <Property name="text" type="java.lang.String" value="Belegnummernkreise"/>
                     <Property name="toolTipText" type="java.lang.String" value="Nummernkreise f&#xfc;r alle Belegarten"/>
                   </Properties>
                   <Events>
@@ -664,7 +664,7 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Intervalle"/>
+                    <Property name="text" type="java.lang.String" value="Taktung"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuTimesheetIntervalsActionPerformed"/>
@@ -1164,7 +1164,6 @@
             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
               <Color id="Handcursor"/>
             </Property>
-            <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTimesheetStatusMouseClicked"/>

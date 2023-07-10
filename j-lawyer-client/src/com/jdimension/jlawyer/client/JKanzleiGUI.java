@@ -1053,11 +1053,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else if (e instanceof OpenTimesheetPositionsEvent) {
             OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
             if (ope.getOpenPositions()>0) {
-                this.lblTimesheetStatus.setEnabled(true);
                 this.lblTimesheetStatus.setToolTipText("" + ope.getOpenPositions() + " laufende Zeiterfassung(en)");
                 this.lblTimesheetStatus.setText("Zeit läuft");
             } else {
-                this.lblTimesheetStatus.setEnabled(false);
                 this.lblTimesheetStatus.setToolTipText(null);
                 this.lblTimesheetStatus.setText("");
             }
@@ -1245,7 +1243,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblTimesheetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
         lblTimesheetStatus.setText("  ");
         lblTimesheetStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblTimesheetStatus.setEnabled(false);
         lblTimesheetStatus.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblTimesheetStatusMouseClicked(evt);
@@ -1717,7 +1714,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance.setText("Finanzen");
 
         mnuInvoicePools.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
-        mnuInvoicePools.setText("Nummernkreise");
+        mnuInvoicePools.setText("Belegnummernkreise");
         mnuInvoicePools.setToolTipText("Nummernkreise für alle Belegarten");
         mnuInvoicePools.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1770,7 +1767,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuTimesheetIntervals.setFont(mnuTimesheetIntervals.getFont());
         mnuTimesheetIntervals.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
-        mnuTimesheetIntervals.setText("Intervalle");
+        mnuTimesheetIntervals.setText("Taktung");
         mnuTimesheetIntervals.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuTimesheetIntervalsActionPerformed(evt);
@@ -2757,7 +2754,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private void mnuTimesheetIntervalsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetIntervalsActionPerformed
         if (checkAdmin()) {
             OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true, OptionGroupConfigurationDialog.VALIDATOR_INTEGER);
-            dlg.setTitle("Zeiterfassung: mögliche Intervalle (Minuten)");
+            dlg.setTitle("Zeiterfassung: mögliche Taktung (Minuten)");
             dlg.setOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
