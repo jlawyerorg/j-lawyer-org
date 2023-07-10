@@ -1044,7 +1044,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().updateTimesheetPositionTemplate(tpl);;
+                TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().updateTimesheetPositionTemplate(tpl);
                 row=this.tblTemplates.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl, row, 0);
                 ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl.getDescription(), row, 1);
