@@ -1110,10 +1110,14 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
         
         PieChart chart = new PieChartBuilder().width(this.pnlInvoicesChart.getWidth()).height(this.pnlInvoicesChart.getHeight()).title("Rechnungsbeträge").build();
-        Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
+        Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_RED.darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker().darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker().darker().darker(), DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
         chart.getStyler().setSeriesColors(sliceColors);
         chart.addSeries("neu", cumulatedInvoiceValues.get(Invoice.STATUS_NEW));
         chart.addSeries("offen", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN));
+        chart.addSeries("offen - nicht vollstreckbar", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_NONENFORCEABLE));
+        chart.addSeries("offen - 1. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER1));
+        chart.addSeries("offen - 2. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER2));
+        chart.addSeries("offen - 3. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER3));
         chart.addSeries("bezahlt", cumulatedInvoiceValues.get(Invoice.STATUS_PAID));
         chart.addSeries("storniert", -1f * cumulatedInvoiceValues.get(Invoice.STATUS_CANCELLED));
         chart.getStyler().setLegendVisible(true);
@@ -1156,6 +1160,10 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         HashMap<Integer, Float> cumulatedInvoiceValues=new HashMap<>();
         cumulatedInvoiceValues.put(Invoice.STATUS_NEW, 0f);
         cumulatedInvoiceValues.put(Invoice.STATUS_OPEN, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_NONENFORCEABLE, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER1, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER2, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER3, 0f);
         cumulatedInvoiceValues.put(Invoice.STATUS_PAID, 0f);
         cumulatedInvoiceValues.put(Invoice.STATUS_CANCELLED, 0f);
         for(Invoice inv: invoices) {
