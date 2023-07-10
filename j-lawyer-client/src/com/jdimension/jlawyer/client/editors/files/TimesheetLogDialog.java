@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.TimesheetsTimerTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -706,6 +707,9 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     public TimesheetLogDialog(java.awt.Frame parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
+        
+        this.txtSearchTimesheets.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchTimesheets.putClientProperty("JTextField.placeholderText", "Suche: Zeiterfassungsprojekt");
 
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
@@ -766,6 +770,14 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         }, 2000l, 1000l);
     }
 
+    public void entryStartedOrStopped() {
+        try {
+            SwingUtilities.invokeLater(new TimesheetsTimerTask());
+        } catch (Exception ex) {
+            log.error("could not launch TimesheetsTimerTask to update application footer icon", ex);
+        }
+    }
+    
     public void checkMultipleEntriesForCase(String caseId, String logEntryId) {
         int caseCount = 0;
         for (Component c : pnlLogs.getComponents()) {
@@ -822,7 +834,10 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         tsp.setTotal(0f);
         tlep.setEntry(timesheet.getArchiveFileKey(), timesheet, tsp);
 
-        this.pnlLogs.add(tlep);
+        // add at the very top of the list
+        this.pnlLogs.add(tlep,0);
+        this.pnlLogs.revalidate();
+        
         this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() + 1);
         this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() - 1);
     }
@@ -979,7 +994,19 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void saveAll() {
+        for (Component c : pnlLogs.getComponents()) {
+            if (c instanceof TimesheetLogEntryPanel) {
+
+                ((TimesheetLogEntryPanel) c).save();
+                
+            }
+        }
+    }
+    
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.saveAll();
+        
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
@@ -1025,6 +1052,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdResetFilterActionPerformed
 
     private void cmdStopAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStopAllActionPerformed
+        this.saveAll();
         for (int i = 0; i < this.pnlLogs.getComponentCount(); i++) {
             TimesheetLogEntryPanel ep = (TimesheetLogEntryPanel) this.pnlLogs.getComponent(i);
             if (ep.isEntryRunning()) {
