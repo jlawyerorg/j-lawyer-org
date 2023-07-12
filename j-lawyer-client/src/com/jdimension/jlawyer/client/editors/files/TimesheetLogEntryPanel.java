@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.event.KeyEvent;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -702,6 +703,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         initComponents();
         this.cmdSave.setText("");
         this.containingParent=cParent;
+        
+        this.txtManualEntry.putClientProperty("JTextField.placeholderText", "min");
+        this.txtManualEntry.setToolTipText("Minuten eingeben und mit Enter bestätigen, um Zeit manuell zu buchen");
         
         this.cmbTemplate.removeAllItems();
         for(TimesheetPositionTemplate t: posTemplates) {
@@ -819,6 +823,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         lblProject = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         cmdSave = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        txtManualEntry = new javax.swing.JFormattedTextField();
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
@@ -869,6 +875,17 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel3.setFont(jLabel3.getFont());
+        jLabel3.setText("oder");
+
+        txtManualEntry.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0"))));
+        txtManualEntry.setFont(txtManualEntry.getFont().deriveFont(txtManualEntry.getFont().getStyle() | java.awt.Font.BOLD, txtManualEntry.getFont().getSize()+2));
+        txtManualEntry.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtManualEntryKeyPressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -876,27 +893,29 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmbTemplate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdStartStop)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(2, 2, 2)
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(lblDuration))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdSave))
-                            .addComponent(cmbTemplate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtManualEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSave))
+                    .addComponent(jScrollPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(2, 2, 2)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
+                        .addComponent(lblDuration)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -904,16 +923,19 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdStartStop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(txtManualEntry)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cmdSave)
-                            .addComponent(lblProject, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(11, 11, 11)
-                        .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cmdStartStop))
+                            .addComponent(lblProject, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
+                .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -997,6 +1019,59 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.cmdSaveActionPerformed(null);
     }
     
+    private void saveManualEntry () {
+        
+        int minutes=-1;
+        try {
+            minutes=Integer.parseInt(this.txtManualEntry.getText());
+        } catch (Throwable t) {
+            log.error("invalid minute amount: " + this.txtManualEntry.getText(), t);    
+        }
+        if(minutes<0 || minutes > (24l*60l*60l*1000l))
+            minutes=-1;
+        
+        if(minutes<0) {
+            JOptionPane.showMessageDialog(this, "Ungültige Minutenangabe: " + txtManualEntry.getText(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        ClientSettings settings = ClientSettings.getInstance();
+
+        this.entry.setDescription(this.taDescription.getText());
+        this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
+        if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+            this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
+            this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
+        } else {
+            // should not happen, because the combobox is not editable
+            this.entry.setTaxRate(19f);
+            this.entry.setUnitPrice(0f);
+        }
+        
+        Date start=new Date();
+        this.txtEnd.setValue(start);
+        this.txtStart.setValue(new Date(start.getTime()-minutes*60l*1000l));
+        
+        Date dEnd=(Date)this.txtEnd.getValue();
+        Date dStart=(Date)this.txtStart.getValue();
+        if(dStart != null && dEnd != null) {
+            if (dEnd.after(dStart)) {
+                this.entry.setStarted(dStart);
+                this.entry.setStopped(dEnd);
+            }
+        }
+        
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            TimesheetPosition updated = afs.timesheetPositionAdd(this.entry.getTimesheet().getId(), entry);
+            this.setEntry(entryCase, entrySheet, updated);
+        } catch (Exception ex) {
+            log.error("Error adding timesheet position", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -1039,6 +1114,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmbTemplateActionPerformed
 
+    private void txtManualEntryKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtManualEntryKeyPressed
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.saveManualEntry();
+        }
+    }//GEN-LAST:event_txtManualEntryKeyPressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbTemplate;
@@ -1046,12 +1127,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdStartStop;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblDuration;
     private javax.swing.JLabel lblProject;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JFormattedTextField txtEnd;
+    private javax.swing.JFormattedTextField txtManualEntry;
     private javax.swing.JFormattedTextField txtStart;
     // End of variables declaration//GEN-END:variables
 }

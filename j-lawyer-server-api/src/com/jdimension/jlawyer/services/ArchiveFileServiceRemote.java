@@ -907,4 +907,6 @@ public interface ArchiveFileServiceRemote {
     TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception;
 
     List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
+
+    TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
 }

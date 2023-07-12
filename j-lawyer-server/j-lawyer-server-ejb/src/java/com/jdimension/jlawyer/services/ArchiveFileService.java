@@ -5893,4 +5893,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet = this.timesheetFacade.find(timesheetId);
+        if (sheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        // only updates metadata, not the actual timestamps (which is done via start and stop methods)
+        position.setId(new StringGenerator().getID().toString());
+        position.setDescription(position.getDescription());
+        position.setName(position.getName());
+        position.setTaxRate(position.getTaxRate());
+        position.setUnitPrice(position.getUnitPrice());
+        position.setStarted(position.getStarted());
+        position.setStopped(position.getStopped());
+
+        this.timesheetPositionsFacade.create(position);
+
+        return this.timesheetPositionsFacade.find(position.getId());
+
+    }
+
 }
