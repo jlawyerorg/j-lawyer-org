@@ -806,10 +806,12 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
+        txtName.setToolTipText("Bezeichnung der Position");
 
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont().deriveFont(taDescription.getFont().getSize()-2f));
         taDescription.setRows(5);
+        taDescription.setToolTipText("Beschreibung der Position");
         jScrollPane1.setViewportView(taDescription);
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()-2f));
@@ -834,6 +836,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         cmbTaxRate.setEditable(true);
         cmbTaxRate.setFont(cmbTaxRate.getFont().deriveFont(cmbTaxRate.getFont().getSize()-2f));
         cmbTaxRate.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTaxRate.setToolTipText("Steuersatz");
         cmbTaxRate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTaxRateActionPerformed(evt);
@@ -841,6 +844,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         });
 
         cmdRemovePosition.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemovePosition.setToolTipText("Position löschen");
         cmdRemovePosition.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRemovePositionActionPerformed(evt);
@@ -848,6 +852,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         });
 
         cmdMovePosUp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
+        cmdMovePosUp.setToolTipText("um eine Position nach oben bewegen");
         cmdMovePosUp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMovePosUpActionPerformed(evt);
@@ -855,6 +860,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         });
 
         cmdMovePosDown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"))); // NOI18N
+        cmdMovePosDown.setToolTipText("um eine Position nach unten bewegen");
         cmdMovePosDown.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMovePosDownActionPerformed(evt);
