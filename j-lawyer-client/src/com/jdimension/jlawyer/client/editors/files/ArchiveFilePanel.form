@@ -561,8 +561,8 @@
         <Container class="javax.swing.JPanel" name="tabGeneralData">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="allgemeine Daten">
-                <Property name="tabTitle" type="java.lang.String" value="allgemeine Daten"/>
+              <JTabbedPaneConstraints tabName="Allgemeine Daten">
+                <Property name="tabTitle" type="java.lang.String" value="Allgemeine Daten"/>
                 <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/folder.png"/>
                 </Property>
