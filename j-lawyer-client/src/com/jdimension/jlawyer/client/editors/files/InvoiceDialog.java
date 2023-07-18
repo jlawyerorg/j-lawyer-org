@@ -988,6 +988,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
 
         }
+        
+        this.cmbStatus.setEnabled(invoice!=null);
 
     }
 
