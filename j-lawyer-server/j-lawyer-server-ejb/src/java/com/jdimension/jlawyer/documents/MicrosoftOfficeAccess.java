@@ -1161,6 +1161,17 @@ public class MicrosoftOfficeAccess {
                         partNext.setText("", 0);
                     }
                 }
+            } else {
+                log.warn("script found in paragraph, but finding its position in runs failed");
+                String newParagraphText=fullParagraph.replace(find, repl);
+                for (int runPos = 0; runPos < runs.size(); runPos++) {
+                    XWPFRun replRun = runs.get(runPos);
+                    if(runPos==0) {    
+                        replRun.setText(newParagraphText,0);
+                    } else {
+                        replRun.setText("",0);
+                    }
+                }
             }
         }
 
