@@ -1801,11 +1801,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 totalNet=totalNet + (u * up);
                 
                 positionIndex=positionIndex+1;
-                if(pos.getTaxRate()>0f) {
-                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
-                } else {
+//                if(pos.getTaxRate()>0f) {
+//                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
+//                } else {
                     ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
-                }
+//                }
                 rowcount = rowcount + 1;
             }
         }
