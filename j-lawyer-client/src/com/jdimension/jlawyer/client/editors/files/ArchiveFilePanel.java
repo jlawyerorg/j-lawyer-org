@@ -3746,11 +3746,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
                 JasperReport jasperReport = (JasperReport) report;
 
-                HashMap<String, Object> parameter = new HashMap<String, Object>();
+                HashMap<String, Object> parameter = new HashMap<>();
                 parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
                 JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-                //JasperExportManager.exportReportToPdfFile(jasperPrint, "C:/MyData/netbeansws/ReportDemo/output/report.pdf");
                 JRViewer viewer = new JRViewer(jasperPrint);
                 this.tabPrint.removeAll();
                 this.tabPrint.add(viewer);
