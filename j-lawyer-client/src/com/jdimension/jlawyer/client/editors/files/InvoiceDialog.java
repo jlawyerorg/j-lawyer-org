@@ -877,6 +877,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.setEntry(null);
         
         this.textSearchPositionTemplateKeyReleased(null);
+        this.lstPositionTemplates.setSelectedValue(null, false);
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_INVOICEPOSITIONADDED);
