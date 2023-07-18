@@ -670,7 +670,6 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageHeader;
 
 /**
@@ -717,13 +716,6 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
             if(column==1)
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png")));
         }
-        
-//        if(msgh.isEebRequested()) {
-//            if(column==0) {
-//                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
-//                ((JLabel)((Component)returnRenderer)).setToolTipText("eEB angefordert");
-//            }
-//        }
         
         if(msgh.isConfidential()) {
             if(column==0) {

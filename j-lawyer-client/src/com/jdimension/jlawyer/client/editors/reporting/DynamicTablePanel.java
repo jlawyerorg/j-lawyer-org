@@ -688,6 +688,7 @@ public class DynamicTablePanel extends javax.swing.JPanel {
         initComponents();
         
         this.resultTable=table;
+        this.tblResult.setDefaultRenderer(Object.class, new ReportTableCellRenderer());
         
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         
