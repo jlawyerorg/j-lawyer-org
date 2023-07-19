@@ -708,7 +708,8 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         fromDate.setDate(1);
         invoicesOpen.setDefaultBeginDate(fromDate);
         invoicesOpen.setDateSelectionLabel("erstellt");
-        Date toDate=new Date();
+        // display open invoices for 35 days into the future
+        Date toDate=new Date(System.currentTimeMillis() + 35l*24l*60l*60l*1000l);
         invoicesOpen.setDefaultEndDate(toDate);
         allReports.add(invoicesOpen);
         
