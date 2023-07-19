@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
@@ -754,6 +755,12 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
                 }
             }
         }
+        Collections.sort(returnList, (InvoicePool p1, InvoicePool p2) -> {
+            if(p1!=null && p2!=null && p1.getDisplayName()!=null && p2.getDisplayName()!=null)
+                return p1.getDisplayName().compareTo(p2.getDisplayName());
+            else
+                return -1;
+        });
         return returnList;
     }
 
