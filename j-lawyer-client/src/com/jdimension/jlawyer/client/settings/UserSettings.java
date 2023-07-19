@@ -740,6 +740,7 @@ public class UserSettings {
     
     // invoice related
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
+    public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
     
     public static final String CASE_LASTUSEDLETTERHEAD="user.case.lastletterhead";
     

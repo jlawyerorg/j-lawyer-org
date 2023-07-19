@@ -820,6 +820,16 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             log.error("Error determining invoice types", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegtypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        String lastUsedType=UserSettings.getInstance().getSetting(UserSettings.INVOICE_LASTUSEDTYPE, null);
+        if(lastUsedType!=null) {
+            for(int i=0;i<dmTypes.getSize();i++) {
+                InvoiceType invType=(InvoiceType)dmTypes.getElementAt(i);
+                if(invType.getDisplayName().equals(lastUsedType)) {
+                    this.cmbInvoiceType.setSelectedItem(invType);
+                    break;
+                }
+            }
+        }
 
         this.cmbStatus.removeAllItems();
         for (String s : new Invoice().getStatusValues()) {
@@ -1596,6 +1606,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             // user confirmed invoice creation or update
 
             UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
+            UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDTYPE, ((InvoiceType) this.cmbInvoiceType.getSelectedItem()).getDisplayName());
             if (this.currentEntry == null) {
                 // creation
                 ClientSettings settings = ClientSettings.getInstance();
