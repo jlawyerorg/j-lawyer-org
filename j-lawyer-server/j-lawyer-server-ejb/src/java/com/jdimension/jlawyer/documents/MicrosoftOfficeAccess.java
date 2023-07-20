@@ -1435,18 +1435,18 @@ public class MicrosoftOfficeAccess {
         XWPFDocument mergedDoc = new XWPFDocument(
                 new FileInputStream(intoDocument));
 
-        // Add the body paragraphs to the merged document
-        for (XWPFParagraph paragraph : bodyDoc.getParagraphs()) {
-            XWPFParagraph newParagraph = mergedDoc.createParagraph();
-            copyParagraph(paragraph, newParagraph);
-        }
-        
-        for (XWPFTable tab : bodyDoc.getTables()) {
-            XWPFTable mergedTable1 = mergedDoc.createTable(tab.getRows().size(),
+        for(IBodyElement child: bodyDoc.getBodyElements()) {
+            if(child instanceof XWPFParagraph) {
+                XWPFParagraph newParagraph = mergedDoc.createParagraph();
+                copyParagraph((XWPFParagraph)child, newParagraph);
+            } else if(child instanceof XWPFTable) {
+                XWPFTable tab=(XWPFTable)child;
+                XWPFTable mergedTable1 = mergedDoc.createTable(tab.getRows().size(),
                     tab.getRow(0).getTableCells().size());
-            copyTable(tab, mergedTable1);
+                copyTable(tab, mergedTable1);
+            }
         }
-
+   
         // Save the merged document as a new file
         File mergedFile = new File(intoDocument);
         FileOutputStream fos = new FileOutputStream(mergedFile);
@@ -1476,10 +1476,17 @@ public class MicrosoftOfficeAccess {
     // Helper method to copy a paragraph from one document to another
     private static void copyParagraph(XWPFParagraph sourceParagraph, XWPFParagraph targetParagraph) {
         for (XWPFRun run : sourceParagraph.getRuns()) {
+            int fontSize=run.getFontSize();
+            if(fontSize<0 || fontSize > 100) {
+                try {
+                    // prone to NPE
+                    fontSize=run.getDocument().getStyles().getDefaultRunStyle().getFontSize();
+                } catch (Throwable t) {}
+            }
             XWPFRun newRun = targetParagraph.createRun();
             newRun.setText(run.getText(0));
             newRun.setFontFamily(run.getFontFamily());
-            newRun.setFontSize(run.getFontSize());
+            newRun.setFontSize(fontSize);
             newRun.setBold(run.isBold());
             newRun.setItalic(run.isItalic());
             newRun.setUnderline(run.getUnderline());
