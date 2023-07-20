@@ -801,7 +801,8 @@ public class ReportService implements ReportServiceRemote {
                     + "group by invp.invoice_id";
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
             
-            String query3 = "SELECT inv.case_id, 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
+            // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
+            String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
                     + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
                     + "     FROM invoice_positions invp\n"
                     + "left join invoices inv on inv.id=invp.invoice_id  \n"
@@ -836,7 +837,8 @@ public class ReportService implements ReportServiceRemote {
                     + "group by invp.invoice_id";
             result.getTables().add(getTable(true, "Fällige Rechnungen", query, params));
             
-            String query3 = "SELECT inv.case_id, 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
+            // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
+            String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
                     + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
                     + "     FROM invoice_positions invp\n"
                     + "left join invoices inv on inv.id=invp.invoice_id  \n"
