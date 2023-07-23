@@ -688,11 +688,7 @@ public class ReportTableCellRenderer extends DefaultTableCellRenderer {
         returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.PLAIN));
 
-        if(value instanceof Float) {
-            ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
-        } else if(value instanceof Double) {
-            ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
-        } else if(value instanceof BigDecimal) {
+        if(value instanceof Float || value instanceof Double || value instanceof BigDecimal) {
             ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
         }
         
