@@ -722,6 +722,8 @@ public class ReportService implements ReportServiceRemote {
         
         reportPrivs.put(Reports.RPT_EMPLOYEE_ACTIVITY, PRIVILEGE_CONFIDENTIAL);
         
+        reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
+        
                 
         if(!reportPrivs.containsKey(reportId))
             throw new Exception("Report " + reportId + " ist nicht definiert");
@@ -888,6 +890,25 @@ public class ReportService implements ReportServiceRemote {
             Collection<ReportResultTable> subTables=this.splitTable(mainTable, "Projektname");
             result.getTables().addAll(subTables);
             
+        } else if (Reports.RPT_CASES_BYSIZE.equals(reportId)) {
+            String query = "select cid, Aktenzeichen, Rubrum, wegen, archiviert, round((Megabytes/1024/1024),1) as Megabytes from (\n"
+                    + "select min(c.id) as cid, min(c.fileNumber) as Aktenzeichen, min(c.name) as Rubrum, min(c.reason) as wegen, sum(docs.size) as Megabytes, \n"
+                    + "case \n"
+                    + "when c.archived = 1 then 'archiviert' \n"
+                    + "else '' \n"
+                    + "end as archiviert\n"
+                    + "from cases c\n"
+                    + "left join case_documents docs on docs.archiveFileKey=c.id\n"
+                    + "where c.date_created>=? and c.date_created<=? \n"
+                    + "group by c.id\n"
+                    + ") t1 \n"
+                    + "where Megabytes is not null  \n"
+                    + "order by Megabytes desc\n"
+                    + "limit 500";
+            ReportResultTable mainTable = getTable(true, "Akten nach Speicherbedarf", query, params);
+
+            result.getTables().add(mainTable);
+
         }
         
         return result;

@@ -753,7 +753,7 @@ public class LibreOfficeAccess {
         // Copy the body document to the new document
         OfficeTextElement bodyContent = bodyDoc.getContentRoot();
 
-        browseAndMergeElements(bodyPackage, bodyContent, mergedDoc, mergedPackage, new ArrayList<Node>());
+        browseAndMergeElements(bodyPackage, bodyContent, mergedDoc, mergedPackage, new ArrayList<>());
 
         // Save the merged document
         mergedDoc.save(new FileOutputStream(intoDocument));
@@ -791,7 +791,6 @@ public class LibreOfficeAccess {
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontWeight, pElement.getProperty(StyleTextPropertiesElement.FontWeight));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.Color, pElement.getProperty(StyleTextPropertiesElement.Color));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.BackgroundColor, pElement.getProperty(StyleTextPropertiesElement.BackgroundColor));
-                    //newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontFamily, pElement.getProperty(StyleTextPropertiesElement.FontFamily));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontStyle, pElement.getProperty(StyleTextPropertiesElement.FontStyle));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontStyleName, pElement.getProperty(StyleTextPropertiesElement.FontStyleName));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.LetterSpacing, pElement.getProperty(StyleTextPropertiesElement.LetterSpacing));
@@ -799,16 +798,12 @@ public class LibreOfficeAccess {
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.TextPosition, pElement.getProperty(StyleTextPropertiesElement.TextPosition));
                     
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextAlign, pElement.getProperty(StyleParagraphPropertiesElement.TextAlign));
-//                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.BackgroundColor, pElement.getProperty(StyleParagraphPropertiesElement.BackgroundColor));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineBreak, pElement.getProperty(StyleParagraphPropertiesElement.LineBreak));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineHeight, pElement.getProperty(StyleParagraphPropertiesElement.LineHeight));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineSpacing, pElement.getProperty(StyleParagraphPropertiesElement.LineSpacing));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.Margin, pElement.getProperty(StyleParagraphPropertiesElement.Margin));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextIndent, pElement.getProperty(StyleParagraphPropertiesElement.TextIndent));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.VerticalAlign, pElement.getProperty(StyleParagraphPropertiesElement.VerticalAlign));
-                    
-//                    System.out.println(pElement.getProperty(StyleTextPropertiesElement.FontSize));
-//                    System.out.println(pElement.getProperty(StyleParagraphPropertiesElement.TextAlign));
                         
                 }
                 

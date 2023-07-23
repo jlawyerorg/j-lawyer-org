@@ -683,4 +683,6 @@ public class Reports {
     public static final String RPT_CASES_BYYEAR="cases.byyear";
     public static final String RPT_CASES_BYMONTH="cases.bymonth";
     
+    public static final String RPT_CASES_BYSIZE="cases.bysize";
+    
 }

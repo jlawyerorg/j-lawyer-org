@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.reporting;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -690,6 +691,8 @@ public class ReportTableCellRenderer extends DefaultTableCellRenderer {
         if(value instanceof Float) {
             ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
         } else if(value instanceof Double) {
+            ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
+        } else if(value instanceof BigDecimal) {
             ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));
         }
         
