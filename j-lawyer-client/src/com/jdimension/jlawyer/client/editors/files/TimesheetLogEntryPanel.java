@@ -977,6 +977,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    this.entry.setDescription(this.taDescription.getText());
                     TimesheetPosition stopped=afs.timesheetPositionStop(this.entry.getTimesheet().getId(), entry);
                     this.setEntry(entryCase, entrySheet, stopped);
                     cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
