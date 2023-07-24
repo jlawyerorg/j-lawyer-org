@@ -670,6 +670,8 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -684,6 +686,10 @@ public class TableUtils {
     private static String LINE_BREAK = System.getProperty("line.separator");
 
     public static void exportAndLaunch(String fileName, JTable table) throws Exception {
+        exportAndLaunch(fileName, table, null);
+    }
+    
+    public static void exportAndLaunch(String fileName, JTable table, DecimalFormat df) throws Exception {
 
         int numRows = table.getRowCount();
         int numCols = table.getColumnCount();
@@ -707,6 +713,9 @@ public class TableUtils {
                     } else {
                         cellValue = "ja";
                     }
+                } else if(cellValue instanceof Float || cellValue instanceof Double || cellValue instanceof BigDecimal) {
+                    if(df!=null)
+                        cellValue=df.format(cellValue);
                 }
                 excelStr.append(escape(cellValue));
                 if (j < numCols - 1) {

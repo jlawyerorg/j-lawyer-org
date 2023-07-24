@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.reporting;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
+import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -678,6 +679,7 @@ public class DynamicTablePanel extends javax.swing.JPanel {
     
     private static final Logger log=Logger.getLogger(DynamicTablePanel.class.getName());
     
+    private DecimalFormat decFormat=new DecimalFormat("0.00");
     private ReportResultTable resultTable=null;
 
     /**
@@ -764,7 +766,7 @@ public class DynamicTablePanel extends javax.swing.JPanel {
 
     private void cmdExportTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportTableActionPerformed
         try {
-            TableUtils.exportAndLaunch(this.resultTable.getTableName() + ".csv", this.tblResult);
+            TableUtils.exportAndLaunch(this.resultTable.getTableName() + ".csv", this.tblResult, this.decFormat);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
