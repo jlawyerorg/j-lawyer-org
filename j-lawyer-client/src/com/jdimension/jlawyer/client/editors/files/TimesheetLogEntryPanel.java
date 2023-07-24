@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -950,6 +951,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         if (this.entry.getStarted() == null) {
             // new entry
             this.containingParent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
+            boolean warnOnParallelAcrossCases=ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, false);
+            if(warnOnParallelAcrossCases)
+                this.containingParent.checkMultipleEntriesInDifferentCase(this.entryCase.getId(), this.entry.getId());
             this.entry.setDescription(this.taDescription.getText());
             this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
             if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
@@ -990,6 +994,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 // already closed
                 
                 this.containingParent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
+                boolean warnOnParallelAcrossCases = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, false);
+                if (warnOnParallelAcrossCases)
+                    this.containingParent.checkMultipleEntriesInDifferentCase(this.entryCase.getId(), this.entry.getId());
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();

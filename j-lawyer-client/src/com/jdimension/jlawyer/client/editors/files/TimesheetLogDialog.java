@@ -812,6 +812,41 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             }
         }
     }
+    
+    public void checkMultipleEntriesInDifferentCase(String caseId, String logEntryId) {
+        int caseCount = 0;
+        for (Component c : pnlLogs.getComponents()) {
+            if (c instanceof TimesheetLogEntryPanel) {
+
+                String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
+                if (!(entryCaseId.equals(caseId)) && ((TimesheetLogEntryPanel) c).isEntryRunning()) {
+                    caseCount++;
+                }
+
+                // at least one is already running
+                if (caseCount > 0) {
+                    break;
+                }
+
+            }
+        }
+
+        if (caseCount > 0) {
+            int response = JOptionPane.showConfirmDialog(this, "Es läuft bereits eine Zeiterfassung für eine andere Akte - soll diese gestoppt werden?", "Parallele Erfassungen in verschiedenen Akten", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                for (Component c : pnlLogs.getComponents()) {
+                    if (c instanceof TimesheetLogEntryPanel) {
+
+                        String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
+                        if (!(entryCaseId.equals(caseId)) && ((TimesheetLogEntryPanel) c).isEntryRunning() && !((TimesheetLogEntryPanel) c).getEntryPosition().getId().equals(logEntryId)) {
+                            ((TimesheetLogEntryPanel) c).startStop();
+                        }
+
+                    }
+                }
+            }
+        }
+    }
 
     public final void existingTimesheetLogEntry(TimesheetPosition tsp) {
         TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);

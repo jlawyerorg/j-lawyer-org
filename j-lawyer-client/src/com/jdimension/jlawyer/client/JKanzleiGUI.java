@@ -1148,6 +1148,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuTimesheet = new javax.swing.JMenu();
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
         mnuTimesheetPositions = new javax.swing.JMenuItem();
+        mnuParallelTimesheetLogs = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1784,6 +1785,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuTimesheet.add(mnuTimesheetPositions);
+
+        mnuParallelTimesheetLogs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuParallelTimesheetLogs.setText("parallele Zeiterfassungen");
+        mnuParallelTimesheetLogs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuParallelTimesheetLogsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuParallelTimesheetLogs);
 
         mnuOptions.add(mnuTimesheet);
         mnuOptions.add(jSeparator2);
@@ -2775,6 +2785,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuTimesheetPositionsActionPerformed
 
+    private void mnuParallelTimesheetLogsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuParallelTimesheetLogsActionPerformed
+        if (checkAdmin()) {
+                TimesheetParallelConfigurationDialog dlg = new TimesheetParallelConfigurationDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuParallelTimesheetLogsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2860,6 +2878,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuMappingTables;
     private javax.swing.JMenuItem mnuOnlineHelp;
     private javax.swing.JMenu mnuOptions;
+    private javax.swing.JMenuItem mnuParallelTimesheetLogs;
     private javax.swing.JMenuItem mnuPartyTypes;
     private javax.swing.JMenuItem mnuProfileInfo;
     private javax.swing.JMenuItem mnuScanOptions;
