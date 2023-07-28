@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -1814,11 +1815,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 totalNet=totalNet + (u * up);
                 
                 positionIndex=positionIndex+1;
-//                if(pos.getTaxRate()>0f) {
-//                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
-//                } else {
+                if(StringUtils.isEmpty(pos.getDescription()))
+                    ct.addRow(""+positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
+                else
                     ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
-//                }
+                
                 rowcount = rowcount + 1;
             }
         }
