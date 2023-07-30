@@ -837,25 +837,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
-        
-        
-//        for (Component c : pnlLogs.getComponents()) {
-//            if (c instanceof TimesheetLogEntryPanel) {
-//
-//                String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
-//                if (!(entryCaseId.equals(caseId)) && ((TimesheetLogEntryPanel) c).isEntryRunning()) {
-//                    caseCount++;
-//                }
-//
-//                // at least one is already running
-//                if (caseCount > 0) {
-//                    break;
-//                }
-//
-//            }
-//        }
-
+   
         if (caseCount > 0) {
             int response = JOptionPane.showConfirmDialog(this, "Es läuft bereits eine Zeiterfassung für eine andere Akte - soll diese gestoppt werden?", "Parallele Erfassungen in verschiedenen Akten", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.YES_OPTION) {
