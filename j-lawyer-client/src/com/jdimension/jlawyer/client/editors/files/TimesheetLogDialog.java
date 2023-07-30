@@ -814,26 +814,83 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     }
     
     public void checkMultipleEntriesInDifferentCase(String caseId, String logEntryId) {
+        
         int caseCount = 0;
-        for (Component c : pnlLogs.getComponents()) {
-            if (c instanceof TimesheetLogEntryPanel) {
-
-                String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
-                if (!(entryCaseId.equals(caseId)) && ((TimesheetLogEntryPanel) c).isEntryRunning()) {
+        
+        // can not just iterate the clientside entries, because the dialog might have been
+        // opened from within a specific case, so other cases entries might not be loaded
+        ClientSettings settings = ClientSettings.getInstance();
+        List<TimesheetPosition> openPositions=null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            
+            openPositions = afs.getOpenTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            for (TimesheetPosition op : openPositions) {
+                if(!(op.getTimesheet().getArchiveFileKey().getId().equals(caseId))) {
                     caseCount++;
-                }
-
-                // at least one is already running
-                if (caseCount > 0) {
                     break;
                 }
-
             }
+
+        } catch (Exception ex) {
+            log.error("Error determining open timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        
+        
+        
+//        for (Component c : pnlLogs.getComponents()) {
+//            if (c instanceof TimesheetLogEntryPanel) {
+//
+//                String entryCaseId = ((TimesheetLogEntryPanel) c).getEntryCase().getId();
+//                if (!(entryCaseId.equals(caseId)) && ((TimesheetLogEntryPanel) c).isEntryRunning()) {
+//                    caseCount++;
+//                }
+//
+//                // at least one is already running
+//                if (caseCount > 0) {
+//                    break;
+//                }
+//
+//            }
+//        }
 
         if (caseCount > 0) {
             int response = JOptionPane.showConfirmDialog(this, "Es läuft bereits eine Zeiterfassung für eine andere Akte - soll diese gestoppt werden?", "Parallele Erfassungen in verschiedenen Akten", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.YES_OPTION) {
+                
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                    for (TimesheetPosition op : openPositions) {
+                        if (!(op.getTimesheet().getArchiveFileKey().getId().equals(caseId)) && op.isRunning() && !(op.getId().equals(logEntryId))) {
+                            boolean stopped=false;
+                            
+                            // stop through the client component, if entry is displayed locally
+                            for (Component c : pnlLogs.getComponents()) {
+                                if (c instanceof TimesheetLogEntryPanel) {
+                                    if (((TimesheetLogEntryPanel) c).isEntryRunning() && ((TimesheetLogEntryPanel) c).getEntryPosition().getId().equals(op.getId())) {
+                                        ((TimesheetLogEntryPanel) c).startStop();
+                                        stopped=true;
+                                    }
+
+                                }
+                            }
+                            
+                            // entry not displayed, stop through the server
+                            if(!stopped) {
+                                afs.timesheetPositionStop(op.getTimesheet().getId(), op);
+                            }
+                        }
+                    }
+
+                } catch (Exception ex) {
+                    log.error("Error determining open timesheet positions", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                
                 for (Component c : pnlLogs.getComponents()) {
                     if (c instanceof TimesheetLogEntryPanel) {
 
