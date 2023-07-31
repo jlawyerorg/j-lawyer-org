@@ -5013,7 +5013,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
             
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
             
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
