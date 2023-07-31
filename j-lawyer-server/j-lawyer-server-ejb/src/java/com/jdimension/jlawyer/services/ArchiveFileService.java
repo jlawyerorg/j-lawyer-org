@@ -4756,7 +4756,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setId(idGen.getID().toString());
             i.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
             i.setName(aFile.getName());
-            i.setPeriodFrom(new Date());
+            if(aFile.getDateCreated()!=null)
+                i.setPeriodFrom(aFile.getDateCreated());
+            else
+                i.setPeriodFrom(new Date());
             i.setPeriodTo(new Date());
             i.setStatus(Invoice.STATUS_NEW);
 
