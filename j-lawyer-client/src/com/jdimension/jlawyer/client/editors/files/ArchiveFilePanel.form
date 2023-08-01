@@ -1641,6 +1641,11 @@
                   <SubComponents>
                     <Component class="javax.swing.JLabel" name="jLabel7">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font bold="true" component="jLabel7" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Belege:"/>
                       </Properties>
                     </Component>
