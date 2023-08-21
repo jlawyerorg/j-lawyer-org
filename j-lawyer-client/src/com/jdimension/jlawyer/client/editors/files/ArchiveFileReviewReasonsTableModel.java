@@ -684,7 +684,7 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
         row[1] = event.getEventTypeName();
         row[2] = event.getSummary();
         row[3] = event.getLocation();
-        row[4] = new Boolean(event.getDoneBoolean());
+        row[4] = event.getDoneBoolean();
         row[5] = event.getAssignee();
         row[6] = event.getDescription();
         String calendar="";

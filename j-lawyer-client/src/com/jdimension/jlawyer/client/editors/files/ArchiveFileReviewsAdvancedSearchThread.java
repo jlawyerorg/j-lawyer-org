@@ -702,6 +702,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
      * @param typeSearchMode
      * @param fromDate
      * @param toDate
+     * @param fileNumber
      */
     public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String fileNumber) {
         this.owner = owner;
@@ -742,7 +743,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             if (b.getCalendarSetup() != null) {
                 calendar = b.getCalendarSetup().getDisplayName();
             }
-            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getDoneBoolean(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);

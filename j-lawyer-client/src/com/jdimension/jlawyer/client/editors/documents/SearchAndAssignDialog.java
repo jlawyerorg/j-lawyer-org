@@ -820,13 +820,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 // matching entries at the top
                 for (ArchiveFileBean a : contextMatches) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
 
                 // last changed follow
                 for (ArchiveFileBean a : lastChanged) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
             } else {
@@ -839,7 +839,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 ArchiveFileBean forcedCase = fileService.getArchiveFile(forceCaseId);
                 if (forcedCase != null) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), forcedCase.getArchivedBoolean(), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
                     model.addRow(row);
                 }
             }

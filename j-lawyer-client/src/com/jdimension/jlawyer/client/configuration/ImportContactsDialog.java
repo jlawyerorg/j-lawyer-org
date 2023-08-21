@@ -834,8 +834,6 @@ public class ImportContactsDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportActionPerformed
-        //new Thread(new ImportBanksThread(this, this.progBar, this.cmdClose, this.cmdImport)).start();
-
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = null;
         AddressServiceRemote adSvc = null;
@@ -888,8 +886,7 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                 }
 
                 File vcf = fc.getSelectedFile();
-                //VCard vcard = Ezvcard.parse(vcf).first();
-                List<AddressBean> abList = new ArrayList<AddressBean>();
+                List<AddressBean> abList = new ArrayList<>();
                 List<VCard> vcards = Ezvcard.parse(vcf).all();
                 progBar.setValue(0);
                 progBar.setMaximum(vcards.size());
@@ -928,7 +925,6 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                         }
                     }
 
-                    //ab.setCompany(v.getOrganization()); // firma?
                     if (v.getStructuredName() != null) {
                         if (v.getStructuredName().getFamily() == null) {
                             ab.setCompany(v.getStructuredName().getGiven());
@@ -940,12 +936,12 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                     if (v.getOrganization() != null) {
                         if (v.getOrganization().getValues().size() > 0) {
                             if(v.getOrganization().getValues().get(0)!=null) {
-                                ab.setCompany(v.getOrganization().getValues().get(0).toString());
+                                ab.setCompany(v.getOrganization().getValues().get(0));
                             }
                         }
                         if (v.getOrganization().getValues().size() > 1) {
                             if(v.getOrganization().getValues().get(1)!=null) {
-                                ab.setDepartment(v.getOrganization().getValues().get(1).toString());
+                                ab.setDepartment(v.getOrganization().getValues().get(1));
                             }
                         }
                     }
@@ -1031,7 +1027,7 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                     }
 
                     Vector row2 = new Vector();
-                    row2.add(new Boolean(importFlag));
+                    row2.add(importFlag);
                     row2.addAll(row);
 
                     this.fullList.add(ab);

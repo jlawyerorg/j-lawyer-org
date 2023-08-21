@@ -1080,7 +1080,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                             model.setValueAt(targetReview.getEventTypeName(), i, 1);
                             model.setValueAt(targetReview.getSummary(), i, 2);
                             model.setValueAt(targetReview.getLocation(), i, 3);
-                            model.setValueAt(new Boolean(targetReview.getDoneBoolean()), i, 4);
+                            model.setValueAt(targetReview.getDoneBoolean(), i, 4);
                             model.setValueAt(targetReview.getAssignee(), i, 5);
                             model.setValueAt(targetReview.getDescription(), i, 6);
                             model.setValueAt(targetReview.getCalendarSetup().getDisplayName(), i, 7);
