@@ -1062,6 +1062,9 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
     @Override
     public void valueChanged(ListSelectionEvent arg0) {
         int row = this.tblResults.getSelectedRow();
+        if(row<0)
+            return;
+        
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
         this.resultAddress = id.getAddressDTO();
         if(this.resultAddress.getDefaultRole()!=null && !("".equalsIgnoreCase(this.resultAddress.getDefaultRole()))) {
