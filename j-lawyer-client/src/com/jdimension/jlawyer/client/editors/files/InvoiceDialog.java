@@ -866,6 +866,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             mi.setToolTipText(ad.toDisplayName() + " als Belegempfänger verwenden");
             mi.addActionListener((ActionEvent e) -> {
                 lblRecipient.setText(ad.toDisplayName());
+                lblRecipient.setIcon(null);
                 recipientAddress = ad;
             });
             this.popRecipients.add(mi);
@@ -936,6 +937,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.dtDue.setText("");
             this.dtCreated.setText("");
             this.lblRecipient.setText("");
+            this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             this.chkTaxes.setSelected(true);
 
             this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource(ICON_SUCCESS)));
@@ -970,8 +972,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.recipientAddress = invoice.getContact();
             if (invoice.getContact() != null) {
                 this.lblRecipient.setText(invoice.getContact().toDisplayName());
+                this.lblRecipient.setIcon(null);
             } else {
                 this.lblRecipient.setText("");
+                this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             }
             this.cmbCurrency.setSelectedItem(invoice.getCurrency());
 
@@ -1106,6 +1110,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         jLabel2.setText("Beschreibung:");
 
         lblRecipient.setFont(lblRecipient.getFont());
+        lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
         lblRecipient.setText("Empfänger ...");
 
         dtFrom.setEditable(false);

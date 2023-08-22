@@ -342,6 +342,9 @@
                     <Font component="lblRecipient" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/warning.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Empf&#xe4;nger ..."/>
               </Properties>
             </Component>
