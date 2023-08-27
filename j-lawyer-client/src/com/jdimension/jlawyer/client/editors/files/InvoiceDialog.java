@@ -1856,7 +1856,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             footerRowTotal = ct.addRow("", "Balance Due", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
             footerRowNet=ct.addRow("", "Netto", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTaxes = ct.addRow("", "Umsatzsteuer", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowTaxes = ct.addRow("", "USt.", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
             footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         }
         
