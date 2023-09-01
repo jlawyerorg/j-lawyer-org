@@ -1477,6 +1477,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileBean getArchiveFile(String id) throws Exception {
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(id);
+        if(aFile==null)
+            return null;
+        
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         CaseFolder rootFolder = aFile.getRootFolder();

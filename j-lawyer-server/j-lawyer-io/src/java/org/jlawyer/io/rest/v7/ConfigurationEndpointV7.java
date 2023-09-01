@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v7;
 
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.ejb.Stateless;
@@ -677,6 +678,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 
 /**
  *
@@ -726,10 +728,12 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
 
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            Response res = Response.ok(system.getAllOptionGroups()).build();
+            ArrayList<String> allGroups=new ArrayList<>();
+            allGroups.addAll(system.getAllOptionGroups());
+            Response res = Response.ok(allGroups).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not determine enabled users", ex);
+            log.error("can not determine available option groups", ex);
             Response res = Response.serverError().build();
             return res;
         }
@@ -755,10 +759,18 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             AppOptionGroupBean[] group=system.getOptionGroup(optiongroup);
-            Response res = Response.ok(Arrays.asList(group)).build();
+            ArrayList<RestfulOptionV7> resultList=new ArrayList<>();
+            for(AppOptionGroupBean aog: group) {
+                RestfulOptionV7 o=new RestfulOptionV7();
+                o.setId(aog.getId());
+                o.setOptionGroup(aog.getOptionGroup());
+                o.setValue(aog.getValue());
+                resultList.add(o);
+            }
+            Response res = Response.ok(resultList).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not determine enabled users", ex);
+            log.error("can not determine values for option group " + optiongroup, ex);
             Response res = Response.serverError().build();
             return res;
         }
