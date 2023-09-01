@@ -754,6 +754,12 @@ public class LauncherFactory {
         }
 
         if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
+            
+            String extension = FileUtils.getExtension(lowerFileName);
+            if (CustomLauncher.hasCustomLauncher(extension)) {
+                return new CustomLauncher(url, store);
+            }
+            
             return new EMLInternalLauncher(url, store, parent);
         }
 
