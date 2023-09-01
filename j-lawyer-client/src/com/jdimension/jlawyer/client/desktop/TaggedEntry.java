@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import java.util.ArrayList;
 
 /**
@@ -677,7 +676,8 @@ public class TaggedEntry {
     private String name=null;
     private String fileNumber=null;
     private String reason=null;
-    private String lastChangedBy=null;
+    private String lawyer=null;
+    protected String assistant=null;
     private ArrayList<String> tags=null;
     private String documentName=null;
     
@@ -729,17 +729,17 @@ public class TaggedEntry {
     }
 
     /**
-     * @return the lastChangedBy
+     * @return the lawyer
      */
-    public String getLastChangedBy() {
-        return lastChangedBy;
+    public String getLawyer() {
+        return lawyer;
     }
 
     /**
-     * @param lastChangedBy the lastChangedBy to set
+     * @param lawyer the lawyer to set
      */
-    public void setLastChangedBy(String lastChangedBy) {
-        this.lastChangedBy = lastChangedBy;
+    public void setLawyer(String lawyer) {
+        this.lawyer = lawyer;
     }
 
     /**
@@ -796,6 +796,20 @@ public class TaggedEntry {
      */
     public void setDocumentId(String documentId) {
         this.documentId = documentId;
+    }
+
+    /**
+     * @return the assistant
+     */
+    public String getAssistant() {
+        return assistant;
+    }
+
+    /**
+     * @param assistant the assistant to set
+     */
+    public void setAssistant(String assistant) {
+        this.assistant = assistant;
     }
     
 }

@@ -26,7 +26,6 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel1" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -51,12 +50,15 @@
                   <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="lblTags" max="32767" attributes="0"/>
                       <Group type="102" attributes="0">
                           <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
-                          <Component id="lblChangedBy" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="lblLawyer" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblAssistant" alignment="1" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
+                      <Component id="lblTags" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -67,11 +69,13 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" max="-2" attributes="0">
-                          <Component id="lblDescription" alignment="3" max="32767" attributes="0"/>
-                          <Component id="lblChangedBy" alignment="3" max="32767" attributes="0"/>
-                      </Group>
                       <Component id="jLabel1" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="lblLawyer" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="lblAssistant" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="lblDescription" alignment="0" min="-2" pref="38" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
                   <Component id="lblTags" min="-2" max="-2" attributes="0"/>
@@ -111,14 +115,15 @@
             <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblDescriptionMouseExited"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="lblChangedBy">
+        <Component class="javax.swing.JLabel" name="lblLawyer">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
               <FontInfo relative="true">
-                <Font bold="true" component="lblChangedBy" italic="true" property="font" relativeSize="true" size="0"/>
+                <Font bold="true" component="lblLawyer" italic="true" property="font" relativeSize="true" size="0"/>
               </FontInfo>
             </Property>
-            <Property name="text" type="java.lang.String" value="user"/>
+            <Property name="text" type="java.lang.String" value="lawyer"/>
+            <Property name="toolTipText" type="java.lang.String" value="Anwalt"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblTags">
@@ -134,6 +139,17 @@
             <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTagsMouseEntered"/>
             <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTagsMouseExited"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblAssistant">
+          <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblAssistant" italic="true" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
+            <Property name="text" type="java.lang.String" value="assistant"/>
+            <Property name="toolTipText" type="java.lang.String" value="Sachbearbeiter"/>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>

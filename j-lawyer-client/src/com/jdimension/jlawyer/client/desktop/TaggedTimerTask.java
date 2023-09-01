@@ -962,12 +962,13 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             for (ArchiveFileBean aFile : l1) {
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
 
-                                TaggedEntry lce = new TaggedEntry();
-                                lce.setFileNumber(aFile.getFileNumber());
-                                lce.setCaseId(aFile.getId());
-                                lce.setLastChangedBy(aFile.getLawyer());
-                                lce.setName(aFile.getName());
-                                lce.setReason(aFile.getReason());
+                                TaggedEntry te = new TaggedEntry();
+                                te.setFileNumber(aFile.getFileNumber());
+                                te.setCaseId(aFile.getId());
+                                te.setLawyer(aFile.getLawyer());
+                                te.setAssistant(aFile.getAssistant());
+                                te.setName(aFile.getName());
+                                te.setReason(aFile.getReason());
                                 if (tags.get(aFile.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
@@ -977,14 +978,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    lce.setTags(xTags);
+                                    te.setTags(xTags);
                                 }
-                                ep.setEntry(lce);
+                                ep.setEntry(te);
 
                                 if (tags.get(aFile.getId()) != null) {
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                         TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
-                                        tep.setEntry(lce);
+                                        tep.setEntry(te);
                                         tagToTep.put(aftb.getTagName(), tep);
                                     }
 
@@ -999,14 +1000,15 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                             for (ArchiveFileDocumentsBean aDoc : l2) {
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
-                                TaggedEntry lce = new TaggedEntry();
-                                lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
-                                lce.setCaseId(aDoc.getArchiveFileKey().getId());
-                                lce.setDocumentId(aDoc.getId());
-                                lce.setDocumentName(aDoc.getName());
-                                lce.setLastChangedBy(aDoc.getArchiveFileKey().getLawyer());
-                                lce.setName(aDoc.getArchiveFileKey().getName());
-                                lce.setReason(aDoc.getArchiveFileKey().getReason());
+                                TaggedEntry te = new TaggedEntry();
+                                te.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
+                                te.setCaseId(aDoc.getArchiveFileKey().getId());
+                                te.setDocumentId(aDoc.getId());
+                                te.setDocumentName(aDoc.getName());
+                                te.setLawyer(aDoc.getArchiveFileKey().getLawyer());
+                                te.setAssistant(aDoc.getArchiveFileKey().getAssistant());
+                                te.setName(aDoc.getArchiveFileKey().getName());
+                                te.setReason(aDoc.getArchiveFileKey().getReason());
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
@@ -1016,14 +1018,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    lce.setTags(xTags);
+                                    te.setTags(xTags);
                                 }
-                                ep.setEntry(lce);
+                                ep.setEntry(te);
 
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                         TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
-                                        tep.setEntry(lce);
+                                        tep.setEntry(te);
                                         tagToTep.put(dtb.getTagName(), tep);
                                     }
 
