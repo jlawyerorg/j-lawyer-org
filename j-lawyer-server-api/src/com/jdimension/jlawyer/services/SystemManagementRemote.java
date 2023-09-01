@@ -723,6 +723,8 @@ public interface SystemManagementRemote {
     ServerSettingsBean getSetting(String key);
 
     boolean setSetting(String key, String value);
+    
+    List<String> getAllOptionGroups();
 
     AppUserBean getUser(String principalId);
 

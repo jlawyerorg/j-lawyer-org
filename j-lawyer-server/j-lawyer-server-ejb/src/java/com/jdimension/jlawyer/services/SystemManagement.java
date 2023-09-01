@@ -777,7 +777,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
 
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> getAllOptionGroups() {
+        List<AppOptionGroupBean> fullList=appOptionGroupBeanFacade.findAll();
+        List<String> optionGroups=new ArrayList<>();
+        for(AppOptionGroupBean aog: fullList) {
+            if(!optionGroups.contains(aog.getOptionGroup()))
+                optionGroups.add(aog.getOptionGroup());
+        }
+        return optionGroups;
 
+    }
+   
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {

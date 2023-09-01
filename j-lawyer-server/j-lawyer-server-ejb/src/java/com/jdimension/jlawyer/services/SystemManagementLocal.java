@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -704,6 +705,10 @@ public interface SystemManagementLocal {
     List<MappingTable> getMappingTables();
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
+    
+    List<String> getAllOptionGroups();
+    
+    AppOptionGroupBean[] getOptionGroup(String optionGroup);
     
     GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
