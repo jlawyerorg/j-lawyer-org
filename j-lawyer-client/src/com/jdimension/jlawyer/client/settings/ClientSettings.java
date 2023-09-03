@@ -785,6 +785,7 @@ public class ClientSettings {
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
     
     public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
+    public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
     
     private static final String ARRAY_DELIMITER="#####";
     

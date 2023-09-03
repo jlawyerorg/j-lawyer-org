@@ -720,9 +720,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
     
     protected ArchiveFileDocumentsBean addedDocument=null;
+    
+    private ArchiveFilePanel casePanel=null;
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
-        this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null, null, null, null);
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
+        this(parent, modal, casePanel, targetTable, aFile, involved, tblReviewReasons, null, null, null, null);
     }
 
     /**
@@ -730,6 +732,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      *
      * @param parent
      * @param modal
+     * @param casePanel
      * @param targetTable
      * @param calculationTable
      * @param involved
@@ -739,7 +742,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param invoiceTable
      * @param timesheetsTable
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
@@ -750,6 +753,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
+        
+        this.casePanel=casePanel;
+        
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
@@ -983,6 +989,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         jLabel7 = new javax.swing.JLabel();
         txtFileName = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        chkGeneratePDF = new javax.swing.JCheckBox();
         cmdAddAndOpen = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -1255,7 +1262,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE)
+                    .add(jSplitPane1)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel2)
@@ -1280,11 +1287,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(jLabel3)
                     .add(cmdClearFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Datenübernahme"));
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokumenterstellung"));
 
         cmbDictateSigns.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDictateSigns.addItemListener(new java.awt.event.ItemListener() {
@@ -1303,6 +1310,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         jLabel1.setText("Dateiname:");
 
+        chkGeneratePDF.setFont(chkGeneratePDF.getFont());
+        chkGeneratePDF.setText("zusätzlich als PDF ablegen");
+        chkGeneratePDF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkGeneratePDFActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1314,8 +1329,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDictateSigns, 0, 482, Short.MAX_VALUE)
-                    .add(txtFileName))
+                    .add(cmbDictateSigns, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(txtFileName)
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(chkGeneratePDF)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1326,10 +1344,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkGeneratePDF)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbDictateSigns, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
@@ -1347,14 +1367,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(162, 162, 162))
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         splitMain.setLeftComponent(jPanel6);
@@ -1379,7 +1394,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdCancel)
                 .add(10, 10, 10))
-            .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 790, Short.MAX_VALUE)
+            .add(splitMain)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1520,7 +1535,18 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 model.addRow(row);
                 ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
-
+            
+        }
+        
+        if (this.chkGeneratePDF.isSelected() && this.casePanel != null) {
+            EditorsRegistry.getInstance().updateStatus("Dokument wird in PDF konviertiert...");
+            try {
+                this.casePanel.convertDocumentToPdf(db);
+            } catch (Exception ex) {
+                log.error("Error converting to PDF", ex);
+                JOptionPane.showMessageDialog(this, "Fehler bei der PDF-Konvertierung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            EditorsRegistry.getInstance().updateStatus("PDF-Konvertierung abgeschlossen.", 5000);
         }
 
         if (openAfterAdd) {
@@ -1653,6 +1679,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
+                this.chkGeneratePDF.setSelected(false);
+                String autoGeneratePdf=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "0");
+                if("1".equals(autoGeneratePdf)) {
+                    this.chkGeneratePDF.setSelected(true);
+                }
 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<String> placeHoldersBody = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
@@ -1770,6 +1801,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_cmbLetterHeadsActionPerformed
 
+    private void chkGeneratePDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGeneratePDFActionPerformed
+        if(this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            GenericNode gn = (GenericNode) tn.getUserObject();
+            if (this.chkGeneratePDF.isSelected()) {
+                settings.setConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "1");
+            } else {
+                settings.removeConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString());
+            }
+        }
+    }//GEN-LAST:event_chkGeneratePDFActionPerformed
+
     private void traverseFolders(GenericNode current, DefaultMutableTreeNode currentNode) throws Exception {
 
         ArrayList<GenericNode> children = current.getChildren();
@@ -1871,12 +1915,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null).setVisible(true);
+            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviews;
     private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton1;
+    private javax.swing.JCheckBox chkGeneratePDF;
     private javax.swing.JComboBox cmbDictateSigns;
     private javax.swing.JComboBox<String> cmbLetterHeads;
     private javax.swing.JComboBox cmbReviewAssignee;

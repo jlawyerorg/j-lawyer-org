@@ -3826,7 +3826,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, table, invoice, invoiceTable, timesheetsTable);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, table, invoice, invoiceTable, timesheetsTable);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3865,7 +3865,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, rvgTable, invoice, invoiceTable, timesheetsTable);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, rvgTable, invoice, invoiceTable, timesheetsTable);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -4791,6 +4791,106 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_jScrollPane7ComponentResized
 
+    public void convertDocumentToPdf(ArchiveFileDocumentsBean doc) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+        
+        String currentExt = "";
+        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
+            ext = ext.toLowerCase();
+            if (doc.getName().toLowerCase().endsWith(ext)) {
+                currentExt = ext;
+            }
+        }
+
+        final String curExt = currentExt;
+        ProgressableActionCallback callback = () -> {
+            try {
+                byte[] content = remote.getDocumentContent(doc.getId());
+                String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
+                if (newName.length() == 0) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                boolean replaceDocument = false;
+                while (documentExists && !replaceDocument) {
+                    int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                    replaceDocument = response == JOptionPane.YES_OPTION;
+                    if (!replaceDocument) {
+                        newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
+                        if (newName == null || "".equals(newName)) {
+                            this.lastPopupClosed = System.currentTimeMillis();
+                            return;
+                        }
+                    }
+                    documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                }
+
+                FileConverter conv = FileConverter.getInstance();
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                String tempPdfPath = conv.convertToPDF(tempPath);
+                byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                FileUtils.cleanupTempFile(tempPath);
+                FileUtils.cleanupTempFile(tempPdfPath);
+
+                // To replace document, old one gets removed first, then the new is uploaded
+                if (replaceDocument) {
+                    final String searchName = newName;
+                    // Check documents to find Bean for name
+                    ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
+                            .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                            .findAny()
+                            .orElse(null);
+                    // Check if the document was found
+                    if (document != null) {
+                        // document with that name is part of the "active" documents in the case
+                        // First move document to bin
+                        remote.removeDocument(document.getId());
+                        // Then remove from bin
+                        remote.removeDocumentFromBin(document.getId());
+                        // Then remove from view
+                        caseFolderPanel1.removeDocument(document);
+                    } else {
+                        // document with that name is not present in UI but exists in the trash bin
+                        document = remote.getDocumentsBin().stream()
+                                .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                .findAny()
+                                .orElse(null);
+                        if (document != null) {
+                            remote.removeDocumentFromBin(document.getId());
+                        }
+                    }
+                }
+
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+
+                newDoc.setSize(pdfContent.length);
+
+                if (doc.getFolder() != null) {
+                    newDoc.setFolder(doc.getFolder());
+                    ArrayList<String> documentIds = new ArrayList<>();
+                    documentIds.add(newDoc.getId());
+                    remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                } else {
+                    log.warn("document folder of source document is null when duplicating as PDF/A");
+                }
+                caseFolderPanel1.addDocument(newDoc, null);
+            } catch (Throwable t) {
+                log.error("Could not convert document to PDF", t);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        };
+
+        this.waitForOpenDocument(doc, callback);
+        this.lastPopupClosed = System.currentTimeMillis();
+        
+        
+    }
+    
     private void mnuDuplicateDocumentAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsPdfActionPerformed
         if (LoadDocumentPreviewThread.isRunning()) {
             JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
@@ -4798,103 +4898,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
 
             for (ArchiveFileDocumentsBean doc : selected) {
-                String currentExt = "";
-                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-                    ext = ext.toLowerCase();
-                    if (doc.getName().toLowerCase().endsWith(ext)) {
-                        currentExt = ext;
-                    }
-                }
-
-                final String curExt = currentExt;
-                ProgressableActionCallback callback = () -> {
-                    try {
-                        byte[] content = remote.getDocumentContent(doc.getId());
-                        String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
-                        if (newName.length() == 0) {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                            return;
-                        }
-
-                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                        boolean replaceDocument = false;
-                        while (documentExists && !replaceDocument) {
-                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
-                            replaceDocument = response == JOptionPane.YES_OPTION;
-                            if (!replaceDocument) {
-                                newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
-                                if (newName == null || "".equals(newName)) {
-                                    this.lastPopupClosed = System.currentTimeMillis();
-                                    return;
-                                }
-                            }
-                            documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                        }
-
-                        FileConverter conv = FileConverter.getInstance();
-                        String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                        String tempPdfPath = conv.convertToPDF(tempPath);
-                        byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                        FileUtils.cleanupTempFile(tempPath);
-                        FileUtils.cleanupTempFile(tempPdfPath);
-
-                        // To replace document, old one gets removed first, then the new is uploaded
-                        if (replaceDocument) {
-                            final String searchName = newName;
-                            // Check documents to find Bean for name
-                            ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
-                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                    .findAny()
-                                    .orElse(null);
-                            // Check if the document was found
-                            if (document != null) {
-                                // document with that name is part of the "active" documents in the case
-                                // First move document to bin
-                                remote.removeDocument(document.getId());
-                                // Then remove from bin
-                                remote.removeDocumentFromBin(document.getId());
-                                // Then remove from view
-                                caseFolderPanel1.removeDocument(document);
-                            } else {
-                                // document with that name is not present in UI but exists in the trash bin
-                                document = remote.getDocumentsBin().stream()
-                                        .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                        .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                        .findAny()
-                                        .orElse(null);
-                                if (document != null) {
-                                    remote.removeDocumentFromBin(document.getId());
-                                }
-                            }
-                        }
-
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
-
-                        newDoc.setSize(pdfContent.length);
-
-                        if (doc.getFolder() != null) {
-                            newDoc.setFolder(doc.getFolder());
-                            ArrayList<String> documentIds = new ArrayList<>();
-                            documentIds.add(newDoc.getId());
-                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
-                        } else {
-                            log.warn("document folder of source document is null when duplicating as PDF/A");
-                        }
-                        caseFolderPanel1.addDocument(newDoc, null);
-                    } catch (Throwable t) {
-                        log.error("Could not convert document to PDF", t);
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    }
-                };
-
-                this.waitForOpenDocument(doc, callback);
-                this.lastPopupClosed = System.currentTimeMillis();
+                this.convertDocumentToPdf(doc);
             }
 
         } catch (Exception ioe) {
