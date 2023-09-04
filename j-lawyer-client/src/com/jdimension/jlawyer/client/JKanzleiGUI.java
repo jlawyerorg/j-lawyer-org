@@ -695,8 +695,10 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.BugReportDialog;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -705,6 +707,7 @@ import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -1167,6 +1170,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuWebHooks = new javax.swing.JMenuItem();
+        mnuBugReport = new javax.swing.JMenuItem();
         mnuServices = new javax.swing.JMenu();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
@@ -1924,6 +1928,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuAdministration.add(mnuWebHooks);
 
+        mnuBugReport.setFont(mnuBugReport.getFont());
+        mnuBugReport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_bug_report_black_48dp.png"))); // NOI18N
+        mnuBugReport.setText("Systemreport");
+        mnuBugReport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuBugReportActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuBugReport);
+
         jMenuBar1.add(mnuAdministration);
 
         mnuServices.setText("Services");
@@ -2150,11 +2164,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuExitActionPerformed
 
     private boolean checkAdmin() {
+        return checkAdmin(true);
+    }
+    
+    private boolean checkAdmin(boolean displayWarning) {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (!currentlyAdmin) {
+            if (!currentlyAdmin && displayWarning) {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
             return currentlyAdmin;
@@ -2793,6 +2811,34 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuParallelTimesheetLogsActionPerformed
 
+    private void mnuBugReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBugReportActionPerformed
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator=null;
+            if(checkAdmin(false)) {
+                // user is admin
+                locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            } else {
+                // construct a different security context with admin privileges
+                UserCredentialsDialog dlg = new UserCredentialsDialog(this, true, "Administratoren-Login erforderlich");
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+                
+                if(!StringUtils.isEmpty(dlg.getUsername()) && !StringUtils.isEmpty(dlg.getPassword())) {
+                    locator = JLawyerServiceLocator.getTemporaryInstanceFor(dlg.getUsername(), dlg.getPassword(), settings.getLookupProperties());
+                }
+            }
+            
+            BugReportDialog dlg=new BugReportDialog(this, false, locator);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+            
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "Fehlerprotokolle können nicht bereitgestellt werden: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuBugReportActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2847,6 +2893,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;
     private javax.swing.JMenuItem mnuBeaSettings;
+    private javax.swing.JMenuItem mnuBugReport;
     private javax.swing.JMenu mnuCalculations;
     private javax.swing.JMenu mnuCalendarOptions;
     private javax.swing.JMenuItem mnuCalendarSetup;

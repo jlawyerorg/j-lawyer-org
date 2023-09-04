@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -760,6 +761,10 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @RolesAllowed({"adminRole"})
     public Group createGroup(Group group) throws Exception {
 
+        if(ServerStringUtils.isEmpty(group.getAbbreviation()) || ServerStringUtils.isEmpty(group.getName())) {
+            throw new Exception("Name und Kürzel der Gruppe dürfen nicht leer sein!");
+        }
+        
         Collection<Group> groups = this.getAllGroups();
         for (Group g : groups) {
             if (g.getAbbreviation().equalsIgnoreCase(group.getAbbreviation())) {
