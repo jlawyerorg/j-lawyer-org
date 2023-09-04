@@ -669,6 +669,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -676,6 +678,7 @@ import java.io.IOException;
  */
 public class ServerFileUtils {
 
+    private static final Logger log=Logger.getLogger(ServerFileUtils.class.getName());
     private static ServerFileUtils instance = null;
     
     public static synchronized ServerFileUtils getInstance() {
@@ -716,6 +719,56 @@ public class ServerFileUtils {
             return sb.toString();
         }
         
+    }
+    
+    public static String readLinesFromEnd(File file, int numberOfLines) throws Exception {
+        try {
+            if (!file.exists()) {
+                throw new Exception ("File " + file.getAbsolutePath() + " does not exist!");
+            }
+            
+            StringBuilder sb=new StringBuilder();
+
+            // Open the file in read-only mode using RandomAccessFile
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+
+            // Get the length of the file
+            long fileLength = raf.length();
+
+            // Start reading from the end of the file
+            long pointer = fileLength - 1;
+
+            int linesRead = 0;
+
+            while (pointer >= 0 && linesRead < numberOfLines) {
+                raf.seek(pointer);
+                char c = (char) raf.read();
+                if (c == '\n') {
+                    // Found a line break, read the line
+                    String line = raf.readLine();
+                    if(line!=null)
+                        sb.insert(0, line + System.lineSeparator());
+                    linesRead++;
+                }
+                pointer--;
+            }
+
+            // Add the first line if necessary
+            if (linesRead < numberOfLines) {
+                raf.seek(0);
+                String line = raf.readLine();
+                if(line!=null)
+                    sb.insert(0, line + System.lineSeparator());
+            }
+
+            // Close the file
+            raf.close();
+            
+            return sb.toString();
+        } catch (Exception e) {
+            log.error("Unable to read last " + numberOfLines + " from file " + file.getAbsolutePath(), e);
+            throw e;
+        }
     }
     
     public void deleteRecursively(File f) throws IOException {
