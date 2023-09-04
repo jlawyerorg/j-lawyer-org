@@ -719,6 +719,10 @@ public interface SystemManagementRemote {
     void deleteUser(String principalId);
 
     ServerInformation getServerInformation();
+    
+    Properties getSystemProperties();
+    
+    String getServerLogs(int numberOfLines) throws Exception;
 
     ServerSettingsBean getSetting(String key);
 
