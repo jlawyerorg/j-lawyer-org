@@ -679,6 +679,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.mail.Session;
+import javax.naming.Context;
 
 /**
  *
@@ -878,6 +879,13 @@ public class JLawyerServiceLocator {
             me = new JLawyerServiceLocator(lookupProps);
         }
         return me;
+    }
+    
+    public static synchronized JLawyerServiceLocator getTemporaryInstanceFor(String principal, String password, Properties lookupProps) throws NamingException {
+        Properties tempProps = (Properties) lookupProps.clone();
+        tempProps.put(Context.SECURITY_PRINCIPAL, principal);
+        tempProps.put(Context.SECURITY_CREDENTIALS, password);
+        return new JLawyerServiceLocator(tempProps);
     }
 
     private Object lookup(String jndiName) throws NamingException {
