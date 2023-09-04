@@ -1201,6 +1201,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerInformation si = new ServerInformation();
         return si;
     }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public Properties getSystemProperties() {
+        return System.getProperties();
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public String getServerLogs(int numberOfLines) throws Exception {
+        File logDir = new File(System.getProperty("jboss.server.log.dir"));
+        File wildFlyLog = new File(logDir.getAbsolutePath() + File.separator + "server.log");
+        return ServerFileUtils.readLinesFromEnd(wildFlyLog, numberOfLines);
+        
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
