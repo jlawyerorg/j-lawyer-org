@@ -863,6 +863,10 @@ public class EmailUtils {
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    } else {
+                        if(part.getContentType().toLowerCase().contains("message/rfc822")) {
+                            attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
+                        }
                     }
                 } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
@@ -871,6 +875,8 @@ public class EmailUtils {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                     }
 
+                } else {
+                    log.error("unknown content disposition: " + disposition);
                 }
             }
         }
@@ -913,12 +919,16 @@ public class EmailUtils {
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     return part;
+                } else if(name.equals("Nachricht_"+part.getSize() + ".eml")) {
+                    return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     return part;
                 }
 
+            } else {
+                log.error("unkown content");
             }
         }
         return null;

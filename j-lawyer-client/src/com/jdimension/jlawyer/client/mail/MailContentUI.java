@@ -1232,6 +1232,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     contentUI.setCachedHtml(body);
                     contentUI.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
                 }
+            } else {
+                log.debug("unkown content");
             }
         }
 
