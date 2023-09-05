@@ -169,7 +169,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="labelSearchAZ" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="inputSearchAZ" min="-2" pref="127" max="-2" attributes="0"/>
+                          <Component id="inputFulltextSearch" min="-2" pref="127" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -218,7 +218,7 @@
                   <EmptySpace pref="6" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="labelSearchAZ" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="inputSearchAZ" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="inputFulltextSearch" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
@@ -355,15 +355,15 @@
         </Component>
         <Component class="javax.swing.JLabel" name="labelSearchAZ">
           <Properties>
-            <Property name="text" type="java.lang.String" value="nach Aktenzeichen:"/>
+            <Property name="text" type="java.lang.String" value="enth&#xe4;lt:"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="inputSearchAZ">
+        <Component class="javax.swing.JTextField" name="inputFulltextSearch">
           <Properties>
             <Property name="toolTipText" type="java.lang.String" value=""/>
           </Properties>
           <Events>
-            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="inputSearchAZKeyPressed"/>
+            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="inputFulltextSearchKeyPressed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel6">
