@@ -4746,6 +4746,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (sel == null) {
                 return;
             }
+            
+            CaseUtils.optionalUnarchiveCase(sel, this);
 
             for (ArchiveFileDocumentsBean doc : selected) {
 

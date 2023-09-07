@@ -1760,6 +1760,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
+                
+                CaseUtils.optionalUnarchiveCase(sel, this);
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 

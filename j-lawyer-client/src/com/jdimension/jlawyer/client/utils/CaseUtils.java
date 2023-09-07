@@ -687,6 +687,38 @@ public class CaseUtils {
 
     private static final Logger log = Logger.getLogger(CaseUtils.class.getName());
 
+    /**
+     * Asks the user whether or not to unarchive a case. Returns true if the case has been unarchived. 
+     * Returns false if user answered no or case was/is not archived.
+     * 
+     * @param caseDto
+     * @param parent
+     * @return
+     * @throws Exception 
+     */
+    public static boolean optionalUnarchiveCase(ArchiveFileBean caseDto, Component parent) throws Exception {
+        if (caseDto.getArchivedBoolean()) {
+            int response = JOptionPane.NO_OPTION;
+
+            response = JOptionPane.showConfirmDialog(parent, "Akte " + caseDto.getFileNumber() + " ist abgelegt. Jetzt reaktivieren?", "Akte reaktivieren", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return false;
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().updateArchivedFlag(caseDto.getId(), false);
+                return true;
+            } catch (Exception ex) {
+                log.error("Error unarchiving case [" + caseDto.getId() + " " + caseDto.getFileNumber() + "]", ex);
+                throw ex;
+            }            
+            
+        }
+        return false;
+    }
+
     public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, OpenDocumentAction action) throws Exception {
         openDocumentInCustomLauncher(caseDto, value, readOnly, parent, null, action);
     }
@@ -710,8 +742,9 @@ public class CaseUtils {
                 DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
                 while (contentBucket.hasNext()) {
                     if (action != null) {
-                        if(action.isCancelled())
+                        if (action.isCancelled()) {
                             return;
+                        }
                     }
                     contentBucket.resetPayload();
                     contentBucket = bucketLoader.nextBucket(contentBucket);

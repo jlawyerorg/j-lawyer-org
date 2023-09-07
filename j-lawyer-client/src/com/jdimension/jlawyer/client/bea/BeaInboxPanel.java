@@ -2855,6 +2855,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             if(dlg.getCaseSelection()==null)
                 return;
 
+            CaseUtils.optionalUnarchiveCase(dlg.getCaseSelection(), this);
+            
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();

@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -1857,6 +1858,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
+            
+            try {
+                if (this.contextArchiveFile != null) {
+                    CaseUtils.optionalUnarchiveCase(this.contextArchiveFile, this);
+                }
+            } catch (Exception ex) {
+                log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
+            }
 
             if (this.chkEncryption.isSelected()) {
                 int crypto = 0;

@@ -692,6 +692,8 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
 
     void updateArchiveFile(ArchiveFileBean dto) throws Exception;
+    
+    void updateArchivedFlag(String caseId, boolean archived) throws Exception;
 
     List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit);
 

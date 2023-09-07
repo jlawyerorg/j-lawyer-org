@@ -670,6 +670,7 @@ import com.formdev.flatlaf.fonts.inter.FlatInterFont;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -787,7 +788,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
-            return;
         }
     }
 
@@ -993,12 +993,12 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator2)
                     .addComponent(jScrollPane2)
                     .addComponent(jSeparator1)
                     .addComponent(jScrollPane1)
-                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(32, 32, 32)
                         .addComponent(cmdCaseTags)
@@ -1074,6 +1074,14 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
+        try {
+            if (selectedCase != null) {
+                CaseUtils.optionalUnarchiveCase(selectedCase, this);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to unarchive case " + selectedCase.getFileNumber(), ex);
+        }
+        
         Thread worker = new Thread(() -> {
             try {
                 
@@ -1424,6 +1432,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }
 
     /**
+     * @param rootFolder
      * @param caseFolder the caseFolder to set
      */
     public void setCaseFolder(CaseFolder rootFolder, CaseFolder caseFolder) {

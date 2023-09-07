@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -1891,6 +1892,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             recipient = (Identity) ((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
         }
 
+        try {
+            if(this.contextArchiveFile!=null)
+                CaseUtils.optionalUnarchiveCase(this.contextArchiveFile, this);
+        } catch (Exception ex) {
+            log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
+        }
+        
         if (this.chkSaveAsDocument.isSelected()) {
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
         } else {
@@ -2281,6 +2289,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         ArrayList<BeaAttachmentMetadata> attachmentMetadata = this.getAttachmentMetdata();
 
+        try {
+            if(this.contextArchiveFile!=null)
+                CaseUtils.optionalUnarchiveCase(this.contextArchiveFile, this);
+        } catch (Exception ex) {
+            log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
+        }
+        
         if (this.chkSaveAsDocument.isSelected()) {
             a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
         } else {

@@ -1347,6 +1347,51 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.updatedCaseEvent.fireAsync(evt);
 
     }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void updateArchivedFlag(String caseId, boolean archived) throws Exception {
+
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        boolean archivedOld = aFile.getArchivedBoolean();
+        boolean archivedNew = archived;
+
+        if (archivedOld != archivedNew) {
+            // archive flag was changed
+            String historyDescription;
+            if (archivedNew) {
+                // archived
+                historyDescription = "Akte abgelegt / archiviert";
+                aFile.setDateArchived(new Date());
+                aFile.setArchivedBoolean(true);
+            } else {
+                // de-archived
+                historyDescription = "Akte wieder aufgenommen / dearchiviert";
+                aFile.setDateArchived(null);
+                aFile.setArchivedBoolean(false);
+            }
+
+            this.addCaseHistory(idGen.getID().toString(), aFile, historyDescription);
+            
+            //        // added because of lazy load issue when getting reviews from dto
+//        List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
+//        dto.setArchiveFileReviewsBeanList(reviewList);
+//
+//        dto.setDateCreated(aFile.getDateCreated());
+//        dto.setDateChanged(new Date());
+            this.archiveFileFacade.edit(aFile);
+
+            CaseUpdatedEvent evt = new CaseUpdatedEvent();
+            evt.setCaseId(caseId);
+            this.updatedCaseEvent.fireAsync(evt);
+        }
+
+
+
+    }
 
     private void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
         this.addCaseHistory(newHistoryId, dto, description, context.getCallerPrincipal().getName(), new Date());
