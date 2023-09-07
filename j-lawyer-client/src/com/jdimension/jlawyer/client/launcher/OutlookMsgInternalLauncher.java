@@ -661,22 +661,15 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.documents.viewer;
+package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
-import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.mail.*;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import com.jdimension.jlawyer.persistence.CaseFolder;
+import java.awt.Window;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import javax.mail.Flags.Flag;
-import javax.mail.internet.MimeMessage;
-import javax.swing.JComponent;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
@@ -685,241 +678,60 @@ import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
  *
  * @author jens
  */
-public class DocumentViewerFactory {
+public class OutlookMsgInternalLauncher extends InternalLauncher {
 
-    private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    private static final Logger log = Logger.getLogger(OutlookMsgInternalLauncher.class.getName());
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
+    public OutlookMsgInternalLauncher(String url, ObservedDocumentStore store, Window parent) {
+        super(url, store, parent);
+    }
+    
+    @Override
+    public String getType() {
+        return "Internal Outlook Message Launcher";
     }
 
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-            PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
-            pdfP.setSize(new Dimension(width, height));
-            pdfP.setMaximumSize(new Dimension(width, height));
-            pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(content);
-            return pdfP;
-
-        } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
-            GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
-            return ip;
-
-        } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
-            BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
-            return ip;
-        } else if (fileName.toLowerCase().endsWith(".txt")) {
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.setSize(new Dimension(width, height));
-            ptp.setMaximumSize(new Dimension(width, height));
-            ptp.setPreferredSize(new Dimension(width, height));
-            try {
-                ptp.showContent(previewProvider.getPreview().getBytes());
-            } catch (Exception ex) {
-                ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+    @Override
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
+        
+        if(isDocumentOpen(store.getDocumentIdentifier()))
+            throw new Exception("Nachricht " + store.getFileName() + " ist bereits geöffnet");
+        
+        try {
+            
+            
+            ObservedDocument odoc = new ObservedDocument(url, store, this);
+            DocumentObserver observer = DocumentObserver.getInstance();
+            odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+            observer.addDocument(odoc);
+                        
+            InputStream source = new FileInputStream(url);
+            OutlookMessage message = new OutlookMessageParser().parseMsg(source);
+            
+            ArchiveFileBean archiveFile=null;
+            CaseFolder caseFolder=null;
+            if(this.store instanceof CaseDocumentStore) {
+                archiveFile=((CaseDocumentStore)store).getCase();
+                caseFolder=((CaseDocumentStore)store).getDocumentFolder();
             }
-            return ptp;
-        } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
-            HtmlPanel hp = new HtmlPanel(id, readOnly);
-            hp.setSize(new Dimension(width, height));
-            hp.setFileName(fileName);
-            hp.setMaximumSize(new Dimension(width, height));
-            hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(content);
-            return hp;
-        } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
-            XjustizPanel xjp = new XjustizPanel(id, fileName);
-            xjp.setSize(new Dimension(width, height));
-            xjp.setMaximumSize(new Dimension(width, height));
-            xjp.setPreferredSize(new Dimension(width, height));
-            xjp.showContent(content);
-            return xjp;
-        } else if (fileName.toLowerCase().endsWith(".eml")) {
+            ViewEmailDialog view = null;
+            if(this.parent==null) 
+                view=new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), archiveFile, caseFolder, odoc);
+            else
+                view=new ViewEmailDialog(this.parent, archiveFile, caseFolder, odoc);
+            view.setMessage(message);
             try {
-                InputStream source = new ByteArrayInputStream(content);
-                MimeMessage message = new MimeMessage(null, source);
-                // need to set this to avoid sending read receipts
-                message.setFlag(Flag.SEEN, true);
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
-                ep.setCaseContext(caseDto);
-                return ep;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus("Vorschau kann nicht geladen werden.");
-                return ep;
-            }
-        } else if (fileName.toLowerCase().endsWith(".msg")) {
-            try {
-                
-                
-                InputStream source = new ByteArrayInputStream(content);
-                OutlookMessage om=new OutlookMessageParser().parseMsg(source);
-                
-                
-                OutlookMessagePanel op = new OutlookMessagePanel();
-                op.setSize(new Dimension(width, height));
-                op.setMaximumSize(new Dimension(width, height));
-                op.setPreferredSize(new Dimension(width, height));
-                
-                //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                op.setMessage(om);
-                op.setCaseContext(caseDto);
-                return op;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus("Vorschau kann nicht geladen werden.");
-                return ep;
-            }
-//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-//            try {
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                InputStream in = new FileInputStream(tempPath);
-//                OdfDocument document = OdfDocument.loadDocument(in);
-//
-//                PdfOptions options = PdfOptions.create();
-//
-//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
-//                OutputStream out = new FileOutputStream(tempPdf);
-//                PdfConverter.getInstance().convert(document, out, options);
-//                
-//                byte[] pdfContent=FileUtils.readFile(tempPdf);
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdf.getPath());
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error("could not convert file to PDF: " + fileName, t);
-//            }
-        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-            try {
-                byte[] thumbBytes = null;
-                ZipInputStream zis
-                        = new ZipInputStream(new ByteArrayInputStream(content));
-                //get the zipped file list entry
-                ZipEntry ze = zis.getNextEntry();
-
-                while (ze != null) {
-
-                    String thumbName = ze.getName();
-                    if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
-                        byte[] buffer = new byte[1024];
-                        //create all non exists folders
-                        //else you will hit FileNotFoundException for compressed folder
-
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            bos.write(buffer, 0, len);
-                        }
-
-                        bos.close();
-                        thumbBytes = bos.toByteArray();
-                        break;
-                    }
-
-                    ze = zis.getNextEntry();
-                }
-
-                zis.closeEntry();
-                zis.close();
-
-                if (thumbBytes != null) {
-                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewProvider.getPreview().getBytes());
-                    ip.setSize(width, height);
-                    ip.setMaximumSize(new Dimension(width, height));
-                    ip.setPreferredSize(new Dimension(width, height));
-                    ip.showContent(thumbBytes);
-                    return ip;
-                }
-            } catch (Throwable t) {
-                log.error("Error extracting thumbnail from " + fileName, t);
-            }
-        } else if (fileName.toLowerCase().endsWith(".bea")) {
-            try {
-                BeaPanel bp = new BeaPanel(id);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showContent(content);
-                bp.setCaseContext(caseDto);
-                return bp;
+                view.setTitle(message.getSubject());
             } catch (Throwable t) {
                 log.error(t);
-                BeaPanel bp = new BeaPanel(null);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showStatus("Vorschau kann nicht geladen werden.");
-                return bp;
+                view.setTitle("E-Mail-Ansicht");
             }
-        } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
-
-            // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
-            // this cases LO to launch twice, which seems to fail...
-//            try {
-//                FileConverter conv=FileConverter.getInstance();
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                
-//                try {
-//                    Thread.sleep(1500);
-//                } catch (Throwable t) {
-//
-//                }
-//                
-//                String tempPdfPath=conv.convertToPDF(tempPath);
-//                byte[] pdfContent=FileUtils.readFile(new File(tempPdfPath));
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdfPath);
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error(t);
-//                // fall back to text preview 
-//            }
-        }
-        // plain text preview is default
-        PlaintextPanel ptp = new PlaintextPanel();
-        ptp.setSize(new Dimension(width, height));
-        ptp.setMaximumSize(new Dimension(width, height));
-        ptp.setPreferredSize(new Dimension(width, height));
-
-        //ptp.showStatus("Vorschau wird geladen...");
-        // we just reuse the showStatus method because it is doing the same thing
-        //ptp.showStatus(previewContent);
-        try {
-            ptp.showContent(previewProvider.getPreview().getBytes());
+            view.setVisible(true);
+            odoc.setStatus(ObservedDocument.STATUS_OPEN);
         } catch (Exception ex) {
-            ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+            log.error(ex);
+            throw ex;
         }
-
-        return ptp;
-
+        
     }
-
 }

@@ -696,7 +696,7 @@ public class EMLInternalLauncher extends InternalLauncher {
     public void launch(boolean autoCloseExistingDocument) throws Exception {
         
         if(isDocumentOpen(store.getDocumentIdentifier()))
-            throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
+            throw new Exception("Nachricht " + store.getFileName() + " ist bereits geöffnet");
         
         try {
             
