@@ -698,9 +698,7 @@ public class CaseUtils {
      */
     public static boolean optionalUnarchiveCase(ArchiveFileBean caseDto, Component parent) throws Exception {
         if (caseDto.getArchivedBoolean()) {
-            int response = JOptionPane.NO_OPTION;
-
-            response = JOptionPane.showConfirmDialog(parent, "Akte " + caseDto.getFileNumber() + " ist abgelegt. Jetzt reaktivieren?", "Akte reaktivieren", JOptionPane.YES_NO_OPTION);
+            int response = JOptionPane.showConfirmDialog(parent, "Akte " + caseDto.getFileNumber() + " ist abgelegt. Jetzt reaktivieren?", "Akte reaktivieren", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return false;
             }
@@ -741,10 +739,8 @@ public class CaseUtils {
                 bout.write(contentBucket.getPayload());
                 DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
                 while (contentBucket.hasNext()) {
-                    if (action != null) {
-                        if (action.isCancelled()) {
-                            return;
-                        }
+                    if (action != null && action.isCancelled()) {
+                        return;
                     }
                     contentBucket.resetPayload();
                     contentBucket = bucketLoader.nextBucket(contentBucket);

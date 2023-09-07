@@ -1376,12 +1376,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             this.addCaseHistory(idGen.getID().toString(), aFile, historyDescription);
             
-            //        // added because of lazy load issue when getting reviews from dto
-//        List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
-//        dto.setArchiveFileReviewsBeanList(reviewList);
-//
-//        dto.setDateCreated(aFile.getDateCreated());
-//        dto.setDateChanged(new Date());
             this.archiveFileFacade.edit(aFile);
 
             CaseUpdatedEvent evt = new CaseUpdatedEvent();

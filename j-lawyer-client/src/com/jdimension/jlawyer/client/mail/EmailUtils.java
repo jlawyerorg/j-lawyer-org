@@ -840,6 +840,8 @@ public class EmailUtils {
             }
 
             String from = msg.getFromEmail();
+            if(from==null)
+                from="";
             for (MailboxSetup ms : mailboxes) {
                 if (StringUtils.isEmpty(from)) {
                     if (from.contains(ms.getEmailAddress())) {
