@@ -688,6 +688,8 @@ import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 public class DocumentViewerFactory {
 
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    
+    private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
 
     public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
         return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
@@ -763,7 +765,7 @@ public class DocumentViewerFactory {
                 ep.setSize(new Dimension(width, height));
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus("Vorschau kann nicht geladen werden.");
+                ep.showStatus(STR_PREVIEWFAIL);
                 return ep;
             }
         } else if (fileName.toLowerCase().endsWith(".msg")) {
@@ -788,7 +790,7 @@ public class DocumentViewerFactory {
                 ep.setSize(new Dimension(width, height));
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus("Vorschau kann nicht geladen werden.");
+                ep.showStatus(STR_PREVIEWFAIL);
                 return ep;
             }
 //        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
@@ -873,7 +875,7 @@ public class DocumentViewerFactory {
                 bp.setSize(new Dimension(width, height));
                 bp.setMaximumSize(new Dimension(width, height));
                 bp.setPreferredSize(new Dimension(width, height));
-                bp.showStatus("Vorschau kann nicht geladen werden.");
+                bp.showStatus(STR_PREVIEWFAIL);
                 return bp;
             }
         } else if (LauncherFactory.supportedByLibreOffice(fileName)) {

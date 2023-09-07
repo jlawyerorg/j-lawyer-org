@@ -843,10 +843,8 @@ public class EmailUtils {
             if(from==null)
                 from="";
             for (MailboxSetup ms : mailboxes) {
-                if (StringUtils.isEmpty(from)) {
-                    if (from.contains(ms.getEmailAddress())) {
-                        return ms;
-                    }
+                if (!StringUtils.isEmpty(from) && from.contains(ms.getEmailAddress())) {
+                    return ms;
                 }
                 if (msg.getRecipients() != null) {
                     for (OutlookRecipient to : msg.getRecipients()) {

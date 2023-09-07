@@ -976,7 +976,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.outlookMsgContainer=om;
         
         try {
-            setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, true, fxContainer, webViewId);
+            setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
 
         } catch (Exception ex) {
             log.error("Error getting contents of Outlook message", ex);
@@ -1267,14 +1267,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     }
 
-    public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, boolean edt, JPanel fxContainer, String webViewId) throws Exception {
+    public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
         
-//        if (EmailUtils.isReceiptRequested(msg)) {
-//            int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-//            if (response == JOptionPane.YES_OPTION) {
-//                EmailUtils.sendReceipt(ms, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
-//            }
-//        }
         CidCache cids = CidCache.getInstance();
         cids.clear();       
         Map<String,OutlookFileAttachment> cidAttachments=msg.fetchCIDMap();
@@ -1353,12 +1347,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
             });
 
-//                html = html.replaceAll("<body>", "<p>");
-//                html = html.replaceAll("</body>", "</p>");
-//                html = html.replaceAll("<body ", "<p ");
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
-//                html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
             if (msg.getFromEmail() != null) {
                 ClientSettings s = ClientSettings.getInstance();
                 String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");

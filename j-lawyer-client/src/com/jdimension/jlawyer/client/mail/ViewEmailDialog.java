@@ -684,7 +684,6 @@ import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
-import org.simplejavamail.outlookmessageparser.model.OutlookAttachment;
 import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 
