@@ -665,6 +665,9 @@ package com.jdimension.jlawyer.documents;
 
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1229,18 +1232,36 @@ public class LibreOfficeAccess {
                                     }
                                 }
 
-//                                for (int i = 0; i < t.getColumnCount(); i++) {
-//                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
+
+//                                for (int i = 0; i < tab.getColumnCount(); i++) {
+//                                    if (tab.getColumnWidth(i) > -1) {
+//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+//                                    } else {
+//                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                    }
 //                                }
+                                
+                                int numColumns = t.getColumnCount();
+                                for (int col = 0; col < numColumns; col++) {
+                                    double maxColumnWidth = 0;
 
-                                for (int i = 0; i < tab.getColumnCount(); i++) {
-                                    if (tab.getColumnWidth(i) > -1) {
-                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
-                                    } else {
-                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+                                    // Iterate through all rows in the column
+                                    for (int row = 0; row < t.getRowCount(); row++) {
+                                        org.odftoolkit.simple.table.Cell cell = t.getCellByPosition(col, row);
+                                        String cellText = cell.getStringValue();
+                                        //double cellWidth = cellText.length()*10.0;
+                                        double cellWidth = calculateTextWidth(cell);
+                                        // Add some padding to the width (adjust as needed)
+                                        cellWidth += 2.0; // 2 units of padding
+
+                                        if (cellWidth > maxColumnWidth) {
+                                            maxColumnWidth = cellWidth;
+                                        }
                                     }
-                                }
 
+                                    // Set the column width to the calculated maximum width
+                                    t.getColumnByIndex(col).setWidth(maxColumnWidth);
+                                }
                             }
                         }
                     }
@@ -1332,7 +1353,27 @@ public class LibreOfficeAccess {
         }
 
     }
+    
+    private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
+        // Create a temporary image to obtain FontMetrics
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics graphics = image.getGraphics();
 
+        // Specify the font you are using
+        java.awt.Font font = new java.awt.Font(cell.getFont().getFamilyName(), java.awt.Font.PLAIN, (int) cell.getFont().getSize()); // Replace with your font and size
+
+        // Get FontMetrics for the specified font
+        FontMetrics fontMetrics = graphics.getFontMetrics(font);
+
+        // Calculate the width of the text using FontMetrics
+        int textWidth = fontMetrics.stringWidth(cell.getStringValue());
+
+        // Release resources
+        graphics.dispose();
+
+        return (double) textWidth;
+    }
+    
     public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
