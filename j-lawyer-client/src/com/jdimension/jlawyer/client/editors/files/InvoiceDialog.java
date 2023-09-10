@@ -1835,9 +1835,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 
                 positionIndex=positionIndex+1;
                 if(StringUtils.isEmpty(pos.getDescription()))
-                    ct.addRow(""+positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
+                    ct.addRow(""+positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 else
-                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
+                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 
                 rowcount = rowcount + 1;
             }
@@ -1880,9 +1880,17 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
         ct.setRowFontSize(0, 12);
         
-        ct.setColumnWidth(0, 22);
-        ct.setColumnWidth(1, 170);
-        ct.setColumnWidth(2, 24);
+//        ct.setColumnWidth(0, 22);
+//        ct.setColumnWidth(1, 170);
+//        //ct.setColumnWidth(1, -10);
+//        ct.setColumnWidth(2, 24);
+//        ct.setColumnWidth(3, 50);
+//        ct.setColumnWidth(4, 50);
+
+
+        ct.setColumnWidth(0, 15);
+        //ct.setColumnWidth(1, 120);
+        ct.setColumnWidth(2, 40);
         ct.setColumnWidth(3, 50);
         ct.setColumnWidth(4, 50);
         
