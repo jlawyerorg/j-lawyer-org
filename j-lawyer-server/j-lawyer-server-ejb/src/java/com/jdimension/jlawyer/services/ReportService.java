@@ -749,7 +749,7 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(false, "Akten pro Jahr", query, params));
             
             String query2="select 'Akten', year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
-            result.getBarCharts().add(getBarChart(false, "Akten pro Jahr", "Jahr", "Anzahl Akten", query2, -1, 1, 2, 3, params));
+            result.getBarCharts().add(getBarChart(false, "Akten pro Jahr", "Jahr", "Anzahl Akten", query2, 1, 2, 3, params));
         } else if(Reports.RPT_CASES_BYMONTH.equals(reportId)) {
             String query="select DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getTables().add(getTable(false, "Akten pro Monat", query, params));
@@ -1073,15 +1073,15 @@ public class ReportService implements ReportServiceRemote {
             st = con.prepareStatement(query);
             for(int i=0;i<params.length;i++) {
                 if(params[i] instanceof String) {
-                    st.setString(i+1, (String)params[1]);
+                    st.setString(i+1, (String)params[i]);
                 } else if(params[i] instanceof Date) {
                     st.setTimestamp(i+1, new Timestamp(((Date)params[i]).getTime()));
                 } else if(params[i] instanceof Integer) {
-                    st.setInt(i+1, ((Integer)params[1]));
+                    st.setInt(i+1, ((Integer)params[i]));
                 } else if(params[i] instanceof Float) {
-                    st.setFloat(i+1, ((Float)params[1]));
+                    st.setFloat(i+1, ((Float)params[i]));
                 } else if(params[i] instanceof Double) {
-                    st.setDouble(i+1, ((Double)params[1]));
+                    st.setDouble(i+1, ((Double)params[i]));
                 }
             }
             rs = st.executeQuery();
