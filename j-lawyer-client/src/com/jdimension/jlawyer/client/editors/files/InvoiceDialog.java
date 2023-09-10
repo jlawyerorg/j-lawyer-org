@@ -1879,26 +1879,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
         ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
         ct.setRowFontSize(0, 12);
-        
-//        ct.setColumnWidth(0, 22);
-//        ct.setColumnWidth(1, 170);
-//        //ct.setColumnWidth(1, -10);
-//        ct.setColumnWidth(2, 24);
-//        ct.setColumnWidth(3, 50);
-//        ct.setColumnWidth(4, 50);
-
 
         ct.setColumnWidth(0, 15);
         //ct.setColumnWidth(1, 120);
         ct.setColumnWidth(2, 40);
         ct.setColumnWidth(3, 50);
         ct.setColumnWidth(4, 50);
-        
-//        ct.setColumnWidth(0, 11);
-//        ct.setColumnWidth(1, -1);
-//        ct.setColumnWidth(2, 12);
-//        ct.setColumnWidth(3, 25);
-//        ct.setColumnWidth(4, 25);
 
         // auto width not working
 //        ct.setColumnWidth(0, -1);

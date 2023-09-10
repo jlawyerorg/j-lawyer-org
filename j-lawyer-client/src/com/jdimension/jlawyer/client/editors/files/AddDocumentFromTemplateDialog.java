@@ -1800,7 +1800,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 
         
         if(this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
-            ClientSettings settings = ClientSettings.getInstance();
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             GenericNode gn = (GenericNode) tn.getUserObject();
             if (this.cmbLetterHeads.getSelectedItem() == null || "".equals(this.cmbLetterHeads.getSelectedItem())) {

@@ -1248,7 +1248,6 @@ public class LibreOfficeAccess {
                                     // Iterate through all rows in the column
                                     for (int row = 0; row < t.getRowCount(); row++) {
                                         org.odftoolkit.simple.table.Cell cell = t.getCellByPosition(col, row);
-                                        String cellText = cell.getStringValue();
                                         //double cellWidth = cellText.length()*10.0;
                                         double cellWidth = calculateTextWidth(cell);
                                         // Add some padding to the width (adjust as needed)
