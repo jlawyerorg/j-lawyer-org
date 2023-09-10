@@ -742,9 +742,6 @@ public class UserSettings {
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
     public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
     
-    public static final String CASE_LASTUSEDLETTERHEAD="user.case.lastletterhead";
-    
-
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

@@ -853,10 +853,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         for(String lh: headTemplates)
             this.cmbLetterHeads.addItem(lh);
         
-        String lastSelectedLetterHead=UserSettings.getInstance().getSetting(UserSettings.CASE_LASTUSEDLETTERHEAD, null);
-        if(lastSelectedLetterHead!=null)
-            this.cmbLetterHeads.setSelectedItem(lastSelectedLetterHead);
-
         if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());
         }
@@ -1462,10 +1458,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             String letterHead="";
             if(this.cmbLetterHeads.getSelectedItem()!=null)
                 letterHead=this.cmbLetterHeads.getSelectedItem().toString();
-            
-            // remember last letter head selection
-            UserSettings.getInstance().setSetting(UserSettings.CASE_LASTUSEDLETTERHEAD, letterHead);
-            
+                        
             db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
             this.addedDocument=db;
             targetTable.addDocument(db, this.invoice);
@@ -1662,7 +1655,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_formComponentResized
 
-    private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
+    private void templateSelection() {
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
         }
@@ -1684,7 +1677,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 if("1".equals(autoGeneratePdf)) {
                     this.chkGeneratePDF.setSelected(true);
                 }
-
+                
+                String letterHead=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "");
+                this.cmbLetterHeads.setSelectedItem(letterHead);
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<String> placeHoldersBody = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
                 List<String> placeHoldersHead = new ArrayList<>();
@@ -1766,6 +1762,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
             ThreadUtils.setTableModel(this.tblPlaceHolders, model);
         }
+    }
+    
+    private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
+        this.templateSelection();
     }//GEN-LAST:event_lstTemplatesMouseClicked
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
@@ -1797,8 +1797,20 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdAddAndOpenActionPerformed
 
     private void cmbLetterHeadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbLetterHeadsActionPerformed
+                
         
-        this.lstTemplatesMouseClicked(null);
+        if(this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            GenericNode gn = (GenericNode) tn.getUserObject();
+            if (this.cmbLetterHeads.getSelectedItem() == null || "".equals(this.cmbLetterHeads.getSelectedItem())) {
+                ClientSettings.getInstance().removeConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString());
+            } else {
+                ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString(), this.cmbLetterHeads.getSelectedItem().toString());
+            }
+        }
+
+        this.templateSelection();
     }//GEN-LAST:event_cmbLetterHeadsActionPerformed
 
     private void chkGeneratePDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGeneratePDFActionPerformed
@@ -1811,6 +1823,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             } else {
                 settings.removeConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString());
             }
+            
+            
         }
     }//GEN-LAST:event_chkGeneratePDFActionPerformed
 

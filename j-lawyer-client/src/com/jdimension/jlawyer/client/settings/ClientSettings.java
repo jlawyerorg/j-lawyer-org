@@ -786,6 +786,7 @@ public class ClientSettings {
     
     public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
     public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
+    public static final String CONF_DOCUMENTS_LETTERHEAD="client.documents.letterhead.";
     
     private static final String ARRAY_DELIMITER="#####";
     
