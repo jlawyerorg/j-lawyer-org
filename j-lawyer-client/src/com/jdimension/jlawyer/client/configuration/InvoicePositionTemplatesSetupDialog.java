@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -711,7 +710,17 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
 
             }
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblTemplates.getModel());
-            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            sorter.setComparator(0, (InvoicePositionTemplate arg0, InvoicePositionTemplate arg1) -> {
+                String s1 = arg0.getName();
+                if (s1 == null) {
+                    s1 = "";
+                }
+                String s2 = arg1.getName();
+                if (s2 == null) {
+                    s2 = "";
+                }
+                return s1.toUpperCase().compareTo(s2.toUpperCase());
+            });
             this.tblTemplates.setRowSorter(sorter);
             this.tblTemplates.getRowSorter().toggleSortOrder(0);
 
@@ -728,7 +737,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
 
     private void resetDetails() {
         this.txtName.setText("");
-        this.txtDescription.setText("");
+        this.taDescription.setText("");
         this.txtUnitPrice.setText("0");
         this.txtTaxRate.setText("19");
         this.txtUnits.setText("1");
@@ -753,7 +762,6 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
         txtName = new javax.swing.JTextField();
         cmdSave = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
-        txtDescription = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         lblError = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
@@ -762,6 +770,8 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         txtTaxRate = new javax.swing.JFormattedTextField();
         txtUnits = new javax.swing.JFormattedTextField();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taDescription = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Belegpositionen");
@@ -885,6 +895,10 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
 
         txtUnits.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
 
+        taDescription.setColumns(20);
+        taDescription.setRows(5);
+        jScrollPane2.setViewportView(taDescription);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -906,7 +920,6 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
                             .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtDescription)
                             .addComponent(txtName)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -916,7 +929,8 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
                                     .addComponent(txtUnitPrice, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
                                     .addComponent(txtUnits)
                                     .addComponent(txtTaxRate))
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jScrollPane2)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSave)
@@ -937,10 +951,10 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
                             .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel2))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel14)
                             .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -952,9 +966,9 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
                             .addComponent(txtTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(316, 316, 316)
+                        .addGap(261, 261, 261)
                         .addComponent(lblError)
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(0, 2, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cmdClose)
                             .addComponent(cmdSave))))
@@ -1068,7 +1082,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
 
             InvoicePositionTemplate tpl = (InvoicePositionTemplate) this.tblTemplates.getValueAt(row, 0);
             tpl.setName(this.txtName.getText());
-            tpl.setDescription(this.txtDescription.getText());
+            tpl.setDescription(this.taDescription.getText());
             tpl.setTaxRate(taxRate.floatValue());
             tpl.setUnitPrice(unitPrice.floatValue());
             tpl.setUnits(units.floatValue());
@@ -1127,7 +1141,7 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
     private void updateUI(InvoicePositionTemplate tpl) {
         
         this.txtName.setText(tpl.getName());
-        this.txtDescription.setText(tpl.getDescription());
+        this.taDescription.setText(tpl.getDescription());
         this.txtUnits.setValue(tpl.getUnits());
         this.txtTaxRate.setValue(tpl.getTaxRate());
         this.txtUnitPrice.setValue(tpl.getUnitPrice());
@@ -1191,9 +1205,10 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblError;
+    private javax.swing.JTextArea taDescription;
     private javax.swing.JTable tblTemplates;
-    private javax.swing.JTextField txtDescription;
     private javax.swing.JTextField txtName;
     private javax.swing.JFormattedTextField txtTaxRate;
     private javax.swing.JFormattedTextField txtUnitPrice;

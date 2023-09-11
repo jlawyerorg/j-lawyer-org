@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -711,7 +710,17 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
 
             }
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblTemplates.getModel());
-            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            sorter.setComparator(0, (TimesheetPositionTemplate arg0, TimesheetPositionTemplate arg1) -> {
+                String s1 = arg0.getName();
+                if (s1 == null) {
+                    s1 = "";
+                }
+                String s2 = arg1.getName();
+                if (s2 == null) {
+                    s2 = "";
+                }
+                return s1.toUpperCase().compareTo(s2.toUpperCase());
+            });
             this.tblTemplates.setRowSorter(sorter);
             this.tblTemplates.getRowSorter().toggleSortOrder(0);
 
