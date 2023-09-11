@@ -698,8 +698,10 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -2120,7 +2122,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         String searchTxt=this.textSearchPositionTemplate.getText().toLowerCase();
         ((DefaultListModel)this.lstPositionTemplates.getModel()).removeAllElements();
         boolean match=false;
-        for(String posKey: this.invoicePosTemplates.keySet()) {
+        for(String posKey: this.invoicePosTemplates.keySet().stream().sorted((String arg0, String arg1) -> {
+            if(arg0==null)
+                arg0="";
+            if(arg1==null)
+                arg1="";
+            return arg0.toUpperCase().compareTo(arg1.toUpperCase());
+        }).collect(Collectors.toList())) {
             if(posKey.toLowerCase().contains(searchTxt)) {
                 ((DefaultListModel)this.lstPositionTemplates.getModel()).addElement(this.invoicePosTemplates.get(posKey).getName());
                 match=true;
