@@ -669,7 +669,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.aarboard.nextcloud.api.NextcloudConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -687,10 +686,15 @@ public class NextcloudTest {
             System.setProperty("javax.net.debug", "ssl:handshake");
             NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someone", "somepwd");
             
-            List<CloudCalendar> calendars= nc.getAllCalendars();
-            for(CloudCalendar c: calendars) {
-                
-            }
+//            List<CloudAddressBook> books=nc.getAllAddressBooks();
+//            for(CloudAddressBook ca: books) {
+//                
+//            }
+            
+//            List<CloudCalendar> calendars= nc.getAllCalendars();
+//            for(CloudCalendar c: calendars) {
+//                
+//            }
 
 //            List<CloudCalendar> calendars = nc.getAllCalendars();
 //            for (CloudCalendar cc : calendars) {
