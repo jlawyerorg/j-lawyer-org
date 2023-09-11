@@ -816,6 +816,18 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                             lastChanged.remove(a);
                         }
                     }
+                    if(contextMatches.isEmpty()) {
+                        ArchiveFileBean[] foundByContext = fileService.searchSimple(searchContext);
+                        if (foundByContext != null) {
+                            for (ArchiveFileBean fbc : foundByContext) {
+                                if (fbc.getFileNumber().contains(searchContext)) {
+                                    contextMatches.add(0, fbc);
+                                } else {
+                                    contextMatches.add(fbc);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // matching entries at the top
