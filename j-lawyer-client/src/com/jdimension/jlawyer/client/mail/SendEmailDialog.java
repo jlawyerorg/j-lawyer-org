@@ -1972,10 +1972,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         AddressServiceRemote adr = locator.lookupAddressServiceRemote();
         for (String m : mails) {
             AddressBean[] found = adr.searchSimple(m);
-            if (found.length > 1) {
-                if(!EmailUtils.sameCryptoPassword(found)) {
-                    throw new Exception(m + " ist mehreren Kontakten mit unterschiedlichen Verschlüsselungseinstellungen zugeordnet!");
-                }
+            if (found.length > 1 && !EmailUtils.sameCryptoPassword(found)) {
+                throw new Exception(m + " ist mehreren Kontakten mit unterschiedlichen Verschlüsselungseinstellungen zugeordnet!");
             }
             if (found.length == 0) {
                 continue;
