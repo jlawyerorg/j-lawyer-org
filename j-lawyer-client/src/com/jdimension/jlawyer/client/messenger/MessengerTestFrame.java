@@ -725,10 +725,6 @@ public class MessengerTestFrame extends javax.swing.JFrame implements NewMessage
         pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, im2));
         
         
-//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, "Hi @Jens, Roger!", false));
-//        pnlMessages.add(new JLabel("test"));
-//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, "Brauche dazu den Vertragsentwurf von Dir...", false));
-//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", true, "Kommt in Kürze. Herr Müller meinte, er müsse erst noch die Unterlagen der Versicherung beschaffen.", true));
     }
 
     /**

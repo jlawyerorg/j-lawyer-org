@@ -708,6 +708,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         this.principals = principals;
         this.ownPrincipal=ownPrincipal;
+        this.ownMessage=ownMessage;
         this.setMessage(im);
         
         this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed´
