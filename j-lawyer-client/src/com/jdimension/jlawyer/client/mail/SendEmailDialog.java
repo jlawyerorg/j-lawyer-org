@@ -1973,7 +1973,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         for (String m : mails) {
             AddressBean[] found = adr.searchSimple(m);
             if (found.length > 1) {
-                throw new Exception(m + " ist mehreren Kontakten zugeordnet - Verschlüsselung nicht möglich!");
+                if(!EmailUtils.sameCryptoPassword(found)) {
+                    throw new Exception(m + " ist mehreren Kontakten mit unterschiedlichen Verschlüsselungseinstellungen zugeordnet!");
+                }
             }
             if (found.length == 0) {
                 continue;
@@ -1984,7 +1986,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
         return cryptoSupported;
     }
-
+    
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
 
         String caseId = null;

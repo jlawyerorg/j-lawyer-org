@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
@@ -1209,6 +1210,19 @@ public class EmailUtils {
 
     public static boolean isIMAP(Folder f) {
         return (f instanceof IMAPFolder);
+    }
+    
+    public static boolean sameCryptoPassword(AddressBean[] addresses) throws Exception {
+        ArrayList<String> passwords=new ArrayList<>();
+        for(AddressBean a: addresses) {
+            if(a.supportsCrypto()) {
+                if(!passwords.contains(a.getEncryptionPwd()))
+                    passwords.add(a.getEncryptionPwd());
+            } else {
+                return false;
+            }
+        }
+        return passwords.size()==1;
     }
 
     // will only close the folder if it is IMAP, and do nothing otherwise

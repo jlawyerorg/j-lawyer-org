@@ -845,7 +845,7 @@ public class SendEncryptedAction extends ProgressableAction {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     AddressServiceRemote adr = locator.lookupAddressServiceRemote();
                     AddressBean[] found = adr.searchSimple(currentRecipientMail);
-                    if (found != null && found.length == 1 && found[0].supportsCrypto()) {
+                    if (found != null && found.length>0 && EmailUtils.sameCryptoPassword(found) && found[0].supportsCrypto()) {
                         File fIn = new File(unencrypted);
                         String fInDir = fIn.getParentFile().getPath();
                         String enc = PDFEncryptor.encryptPdf(unencrypted, fInDir, found[0].getEncryptionPwd());
