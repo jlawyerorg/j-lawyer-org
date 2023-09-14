@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.InstantMessage;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -684,28 +686,31 @@ import themes.colors.DefaultColorTheme;
  */
 public class CalloutPanelComponent extends javax.swing.JPanel {
 
+    private static int READ = 10;
+    private static int UNREAD = 20;
+    private static int READ_NOTAPPLICABLE = 30;
+
     /**
      * Creates new form CalloutPanelComponent
      */
     public CalloutPanelComponent() {
-        this(null, "admin", "default message", true);
+        this(null, "admin", new InstantMessage(), true);
     }
-    
-    protected String message="";
-    private String timestamp="xx:xx";
-    private boolean read=false;
-    protected boolean ownMessage=false;
-    protected List<String> principals=null;
-    protected String ownPrincipal=null;
 
-    public CalloutPanelComponent(List<String> principals, String ownPrincipal, String message, boolean ownMessage) {
+    protected InstantMessage message = null;
+    protected boolean ownMessage = false;
+    protected List<AppUserBean> principals = null;
+    protected String ownPrincipal = null;
+    protected int read = READ_NOTAPPLICABLE;
+
+    public CalloutPanelComponent(List<AppUserBean> principals, String ownPrincipal, InstantMessage im, boolean ownMessage) {
         initComponents();
+
+        this.principals = principals;
+        this.ownPrincipal=ownPrincipal;
+        this.setMessage(im);
         
-        this.principals=principals;
-        this.message = message;
-        this.timestamp = getCurrentTimestamp();
-        this.read = false;
-        this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed
+        this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed´
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -714,15 +719,26 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                 int indicatorY = 10;
                 int indicatorSize = 10;
 
-                if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize &&
-                        e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
-                    setRead(!read);
+                if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
+                        && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
+                    if (message.hasMentionFor(getOwnPrincipal())) {
+                        if (message.getMentionFor(getOwnPrincipal()).isDone()) {
+                            message.getMentionFor(getOwnPrincipal()).setDone(false);
+                            setRead(UNREAD);
+                        } else {
+                            message.getMentionFor(getOwnPrincipal()).setDone(true);
+                            setRead(READ);
+                        }
+                    } else {
+                        setRead(READ_NOTAPPLICABLE);
+                    }
+
                 }
             }
         });
     }
 
-    public void setRead(boolean read) {
+    public void setRead(int read) {
         this.read = read;
         repaint();
     }
@@ -740,11 +756,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         int arrowSize = 10;
         int cornerRadius = 10;
 
-        if(this.isOwnMessage())
+        if (this.isOwnMessage()) {
             g2d.setColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        else
+        } else {
             g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        
+        }
+
         g2d.fillRoundRect(0, 0, width - arrowSize, height, cornerRadius, cornerRadius);
 
         int[] xPoints = {width - arrowSize, width, width - arrowSize};
@@ -755,19 +772,26 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         g2d.drawRoundRect(0, 0, width - arrowSize, height, cornerRadius, cornerRadius);
 
-        Font defaultFont=UIManager.getFont( "defaultFont" );
-        Font defaultFontBold=defaultFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD);
-        //g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+        Font defaultFont = UIManager.getFont("defaultFont");
+        if(defaultFont==null)
+            defaultFont=new Font("Arial", Font.PLAIN, 12);
+        
+        Font defaultFontBold = defaultFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD);
         g2d.setFont(defaultFont);
 
         // Calculate wrapped text
         FontMetrics metrics = g2d.getFontMetrics();
-        int messageWidth = width - 20; // Adjusted for padding
+        int messageWidth = width - 40; // Adjusted for padding
         int yOffset = height / 2;
         int lineSpacing = metrics.getHeight();
 
         g2d.setColor(Color.WHITE);
-        String[] lines = getMessage().split("\n");
+        String content=null;
+        if(this.message==null || this.message.getContent()==null)
+            content="";
+        else
+            content=this.message.getContent();
+        String[] lines = content.split("\n");
         for (String line : lines) {
             String[] words = line.split(" ");
             StringBuilder currentLine = new StringBuilder(words[0]);
@@ -800,57 +824,71 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             yOffset += lineSpacing;
         }
 
-        Font miniFont=UIManager.getFont( "mini.font" );
+        Font miniFont = UIManager.getFont("mini.font");
+        if(miniFont==null)
+            miniFont=new Font("Arial", Font.PLAIN, 8);
         g2d.setFont(miniFont);
         g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
         //g2d.drawString(timestamp, 10, yOffset + 15); // Timestamp position
-        g2d.drawString(timestamp, 10, yOffset); // Timestamp position
-        if (read) {
-            g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-            g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
-        } else {
-            g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-            g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
+        Date sent=null;
+        if(this.message==null || this.message.getSent()==null)
+            sent=new Date();
+        else
+            sent=this.message.getSent();
+        g2d.drawString(getFormattedTimestamp(sent), 10, yOffset); // Timestamp position
+        if (this.read != READ_NOTAPPLICABLE) {
+            if (read==READ) {
+                // read
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+                g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
+            } else {
+                // unread
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
+                g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
+            }
         }
-        
+
         this.setPreferredSize(new Dimension(getWidth(), yOffset + lineSpacing));
     }
-    
+
     private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
 
         // find the first occurence of a principal
-        boolean magicTextIsMe=false;
+        boolean magicTextIsMe = false;
         String magicText = null;
-        int magicIndex=Integer.MAX_VALUE;
+        int magicIndex = Integer.MAX_VALUE;
         if (this.getPrincipals() != null) {
-            for (String p : this.getPrincipals()) {
-                int pIndex=line.indexOf("@" + p);
-                if(pIndex>-1 && pIndex<magicIndex) {
-                    magicText="@" + p;
-                    magicIndex=pIndex;
-                    if(p.equals(this.ownPrincipal))
-                        magicTextIsMe=true;
+            for (AppUserBean u : this.getPrincipals()) {
+                int pIndex = line.indexOf("@" + u.getPrincipalId());
+                if (pIndex > -1 && pIndex < magicIndex) {
+                    magicText = "@" + u.getPrincipalId();
+                    magicIndex = pIndex;
+                    if (u.getPrincipalId().equals(this.ownPrincipal)) {
+                        magicTextIsMe = true;
+                    }
                 }
             }
         }
-        
+
         g2d.setColor(Color.WHITE);
-        if(magicText!=null) {
-            String prefix=line.substring(0, magicIndex);
+        if (magicText != null) {
+            String prefix = line.substring(0, magicIndex);
             g2d.setFont(defaultFont);
-            FontMetrics defaultMetrics=g2d.getFontMetrics();
+            FontMetrics defaultMetrics = g2d.getFontMetrics();
             g2d.drawString(prefix, x, y);
-            int prefixLength=defaultMetrics.stringWidth(prefix);
+            int prefixLength = defaultMetrics.stringWidth(prefix);
             g2d.setFont(defaultFontBold);
-            FontMetrics boldMetrics=g2d.getFontMetrics();
-            if(magicTextIsMe)
+            FontMetrics boldMetrics = g2d.getFontMetrics();
+            if (magicTextIsMe) {
                 g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-            g2d.drawString(magicText, x+prefixLength, y);
-            int magicTextLength=boldMetrics.stringWidth(magicText);
-            String suffix=line.substring(magicIndex + magicText.length(), line.length()-1);
-            if(suffix.length()==0)
+            }
+            g2d.drawString(magicText, x + prefixLength, y);
+            int magicTextLength = boldMetrics.stringWidth(magicText);
+            String suffix = line.substring(magicIndex + magicText.length(), line.length());
+            if (suffix.length() == 0) {
                 return;
-            drawWithHighlights(suffix, g2d, x+prefixLength+magicTextLength, y, defaultFont, defaultFontBold);
+            }
+            drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold);
         } else {
             g2d.setFont(defaultFont);
             g2d.drawString(line, x, y);
@@ -863,27 +901,16 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         super.setMaximumSize(preferredSize);
         revalidate();
     }
-    
+
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(250,20);
+        return new Dimension(250, 20);
     }
 
-    private String getCurrentTimestamp() {
+    private String getFormattedTimestamp(Date d) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-        return dateFormat.format(new Date());
+        return dateFormat.format(d);
     }
-
-//    public static void main(String[] args) {
-//        JFrame frame = new JFrame("Callout Component Example");
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//
-//        CalloutComponent callout = new CalloutComponent("Hello, this is a callout!\nThis is a long message that needs to wrap.");
-//        frame.add(callout);
-//
-//        frame.pack();
-//        frame.setVisible(true);
-//    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -909,15 +936,25 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     /**
      * @return the message
      */
-    public String getMessage() {
+    public InstantMessage getMessage() {
         return message;
     }
 
     /**
      * @param message the message to set
      */
-    public void setMessage(String message) {
+    public void setMessage(InstantMessage message) {
         this.message = message;
+        
+        if (message.hasMentionFor(ownPrincipal)) {
+            if (message.getMentionFor(ownPrincipal).isDone()) {
+                setRead(READ);
+            } else {
+                setRead(UNREAD);
+            }
+        } else {
+            setRead(READ_NOTAPPLICABLE);
+        }
     }
 
     /**
@@ -937,14 +974,14 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     /**
      * @return the principals
      */
-    public List<String> getPrincipals() {
+    public List<AppUserBean> getPrincipals() {
         return principals;
     }
 
     /**
      * @param principals the principals to set
      */
-    public void setPrincipals(List<String> principals) {
+    public void setPrincipals(List<AppUserBean> principals) {
         this.principals = principals;
     }
 
@@ -960,6 +997,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
      */
     public void setOwnPrincipal(String ownPrincipal) {
         this.ownPrincipal = ownPrincipal;
+        
+        // need to retrigger calculation of the READ member
+        this.setMessage(this.message);
     }
 
 

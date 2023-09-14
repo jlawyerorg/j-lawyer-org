@@ -666,15 +666,20 @@ package com.jdimension.jlawyer.client.messenger;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.util.ArrayList;
-import javax.swing.JLabel;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-public class MessengerTestFrame extends javax.swing.JFrame {
+public class MessengerTestFrame extends javax.swing.JFrame implements NewMessageConsumer {
 
+    private ArrayList<AppUserBean> principals=new ArrayList<>();
+    
     /**
      * Creates new form MessengerTestFrame
      */
@@ -682,16 +687,48 @@ public class MessengerTestFrame extends javax.swing.JFrame {
         initComponents();
         
         
-        ArrayList<String> principals=new ArrayList<>();
-        principals.add("Matze");
-        principals.add("Jens");
-        principals.add("Timo");
+        principals.add(new AppUserBean("Bodo"));
+        principals.add(new AppUserBean("Hausmeister Krause"));
+        principals.add(new AppUserBean("Präsident"));
+        principals.add(new AppUserBean("Tommie"));
         
-        pnlMessages.add(new MessagePanel(principals, "Jens", "Jens", "@Matze und @Timo könnt Ihr bitte xyz erledigen?\nMandant findet das wichtig.", true));
-        pnlMessages.add(new MessagePanel(principals, "Jens", "Matze", "Hi @Jens, Roger!", false));
-        pnlMessages.add(new JLabel("test"));
-        pnlMessages.add(new MessagePanel(principals, "Jens", "Matze", "Brauche dazu den Vertragsentwurf von Dir...", false));
-        pnlMessages.add(new MessagePanel(principals, "Jens", "Jens", "Kommt in Kürze. Herr Müller meinte, er müsse erst noch die Unterlagen der Versicherung beschaffen.", true));
+        this.messageSendPanel1.setUsers(principals);
+        this.messageSendPanel1.setMessageConsumer(this);
+        
+        
+        InstantMessage im1=new InstantMessage();
+        im1.setSender("Hausmeister Krause");
+        im1.setContent("@Präsident in einer halben Stunde Sitzung bei mir!\n@Bodo's Geburtstag!");
+        im1.setSent(new Date());
+        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
+        InstantMessageMention im1m1=new InstantMessageMention();
+        im1m1.setDone(false);
+        im1m1.setPrincipal("Präsident");
+        im1list.add(im1m1);
+        InstantMessageMention im1m2=new InstantMessageMention();
+        im1m2.setDone(false);
+        im1m2.setPrincipal("Bodo");
+        im1list.add(im1m2);
+        im1.setMentions(im1list);
+        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", true, im1));
+        
+        InstantMessage im2=new InstantMessage();
+        im2.setSender("Präsident");
+        im2.setContent("@Hausmeister Krause alles für den Dackel, alles für den Club!");
+        im2.setSent(new Date());
+        ArrayList<InstantMessageMention> im2list=new ArrayList<>(); 
+        InstantMessageMention im2m1=new InstantMessageMention();
+        im2m1.setDone(false);
+        im2m1.setPrincipal("Hausmeister Krause");
+        im2list.add(im2m1);
+        im2.setMentions(im2list);
+        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, im2));
+        
+        
+//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, "Hi @Jens, Roger!", false));
+//        pnlMessages.add(new JLabel("test"));
+//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, "Brauche dazu den Vertragsentwurf von Dir...", false));
+//        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", true, "Kommt in Kürze. Herr Müller meinte, er müsse erst noch die Unterlagen der Versicherung beschaffen.", true));
     }
 
     /**
@@ -705,6 +742,7 @@ public class MessengerTestFrame extends javax.swing.JFrame {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
+        messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -717,14 +755,18 @@ public class MessengerTestFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 303, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1)
+                    .addComponent(messageSendPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 712, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(messageSendPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -753,13 +795,22 @@ public class MessengerTestFrame extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             MessengerTestFrame mtf=new MessengerTestFrame();
-            mtf.setSize(200, 600);
+            mtf.setSize(800, 600);
             mtf.setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
+    private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JPanel pnlMessages;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void newMessageForSubmission(InstantMessage msg) {
+        pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", true, msg));
+        this.pnlMessages.revalidate();
+        this.pnlMessages.doLayout();
+        this.pnlMessages.repaint();
+    }
 }

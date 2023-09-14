@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,199 +661,16 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.messenger;
 
-import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.jdimension.jlawyer.persistence.InstantMessage;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "instantmessage")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "InstantMessage.findAll", query = "SELECT p FROM InstantMessage p"),
-    @NamedQuery(name = "InstantMessage.findSince", query = "SELECT a FROM InstantMessage a WHERE a.sent >= :since order by a.sent desc"),
-    @NamedQuery(name = "InstantMessage.findByCaseContext", query = "SELECT a FROM InstantMessage a WHERE a.caseContext = :caseContext order by a.sent desc"),
-    @NamedQuery(name = "InstantMessage.findByDocumentContext", query = "SELECT a FROM InstantMessage a WHERE a.documentContext = :documentContext"),
-    @NamedQuery(name = "InstantMessage.findById", query = "SELECT p FROM InstantMessage p WHERE p.id = :id")})
-public class InstantMessage implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public interface NewMessageConsumer {
     
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    
-    @Column(name = "sent")
-    @Temporal(TemporalType.TIMESTAMP)
-    protected Date sent;
-    
-    @Column(name = "sender")
-    protected String sender;
-    
-    @Column(name = "content")
-    protected String content;
-    
-    @JoinColumn(name = "case_id", referencedColumnName = "id")
-    @ManyToOne
-    protected ArchiveFileBean caseContext;
-    
-    @JoinColumn(name = "document_id", referencedColumnName = "id")
-    @ManyToOne
-    protected ArchiveFileDocumentsBean documentContext;
-    
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "message", fetch = FetchType.EAGER)
-    protected List<InstantMessageMention> mentions;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof InstantMessage)) {
-            return false;
-        }
-        InstantMessage other = (InstantMessage) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "com.jdimension.jlawyer.persistence.InstantMessage[ id=" + id + " ]";
-    }
-
-    /**
-     * @return the sent
-     */
-    public Date getSent() {
-        return sent;
-    }
-
-    /**
-     * @param sent the sent to set
-     */
-    public void setSent(Date sent) {
-        this.sent = sent;
-    }
-
-    /**
-     * @return the sender
-     */
-    public String getSender() {
-        return sender;
-    }
-
-    /**
-     * @param sender the sender to set
-     */
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
-    /**
-     * @return the content
-     */
-    public String getContent() {
-        return content;
-    }
-
-    /**
-     * @param content the content to set
-     */
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    /**
-     * @return the caseContext
-     */
-    public ArchiveFileBean getCaseContext() {
-        return caseContext;
-    }
-
-    /**
-     * @param caseContext the caseContext to set
-     */
-    public void setCaseContext(ArchiveFileBean caseContext) {
-        this.caseContext = caseContext;
-    }
-
-    /**
-     * @return the documentContext
-     */
-    public ArchiveFileDocumentsBean getDocumentContext() {
-        return documentContext;
-    }
-
-    /**
-     * @param documentContext the documentContext to set
-     */
-    public void setDocumentContext(ArchiveFileDocumentsBean documentContext) {
-        this.documentContext = documentContext;
-    }
-
-    /**
-     * @return the mentions
-     */
-    public List<InstantMessageMention> getMentions() {
-        return mentions;
-    }
-    
-    public InstantMessageMention getMentionFor(String principalId) {
-        for(InstantMessageMention m: this.getMentions()) {
-            if(m.getPrincipal().equals(principalId))
-                return m;
-        }
-        return null;
-    }
-    
-    public boolean hasMentionFor(String principalId) {
-        if(this.getMentions()==null)
-            return false;
-        return this.getMentionFor(principalId)!=null;
-    }
-
-    /**
-     * @param mentions the mentions to set
-     */
-    public void setMentions(List<InstantMessageMention> mentions) {
-        this.mentions = mentions;
-    }
+    public void newMessageForSubmission(InstantMessage msg);
     
 }

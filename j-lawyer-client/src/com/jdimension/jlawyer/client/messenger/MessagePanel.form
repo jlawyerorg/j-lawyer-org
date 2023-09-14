@@ -18,7 +18,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="calloutPanelComponent1" pref="331" max="32767" attributes="0"/>
+              <Component id="calloutPanelComponent1" pref="329" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblUser" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -30,8 +30,8 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="calloutPanelComponent1" pref="79" max="32767" attributes="0"/>
-                  <Component id="lblUser" pref="79" max="32767" attributes="0"/>
+                  <Component id="calloutPanelComponent1" pref="92" max="32767" attributes="0"/>
+                  <Component id="lblUser" pref="92" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -44,7 +44,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="331" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="329" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">

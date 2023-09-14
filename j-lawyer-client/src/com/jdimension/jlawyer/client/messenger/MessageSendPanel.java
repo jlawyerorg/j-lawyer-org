@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,199 +661,179 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.messenger;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.swing.JMenuItem;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "instantmessage")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "InstantMessage.findAll", query = "SELECT p FROM InstantMessage p"),
-    @NamedQuery(name = "InstantMessage.findSince", query = "SELECT a FROM InstantMessage a WHERE a.sent >= :since order by a.sent desc"),
-    @NamedQuery(name = "InstantMessage.findByCaseContext", query = "SELECT a FROM InstantMessage a WHERE a.caseContext = :caseContext order by a.sent desc"),
-    @NamedQuery(name = "InstantMessage.findByDocumentContext", query = "SELECT a FROM InstantMessage a WHERE a.documentContext = :documentContext"),
-    @NamedQuery(name = "InstantMessage.findById", query = "SELECT p FROM InstantMessage p WHERE p.id = :id")})
-public class InstantMessage implements Serializable {
+public class MessageSendPanel extends javax.swing.JPanel {
 
-    private static final long serialVersionUID = 1L;
+    protected NewMessageConsumer messageConsumer=null;
     
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    
-    @Column(name = "sent")
-    @Temporal(TemporalType.TIMESTAMP)
-    protected Date sent;
-    
-    @Column(name = "sender")
-    protected String sender;
-    
-    @Column(name = "content")
-    protected String content;
-    
-    @JoinColumn(name = "case_id", referencedColumnName = "id")
-    @ManyToOne
-    protected ArchiveFileBean caseContext;
-    
-    @JoinColumn(name = "document_id", referencedColumnName = "id")
-    @ManyToOne
-    protected ArchiveFileDocumentsBean documentContext;
-    
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "message", fetch = FetchType.EAGER)
-    protected List<InstantMessageMention> mentions;
-
-    public String getId() {
-        return id;
+    /**
+     * Creates new form MessageSendPanel
+     */
+    public MessageSendPanel() {
+        initComponents();
     }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof InstantMessage)) {
-            return false;
+    
+    public void setUsers(List<AppUserBean> userCandidates) {
+        this.popUsers.removeAll();
+        
+        for(AppUserBean u: userCandidates) {
+            JMenuItem mi = new JMenuItem();
+            mi.setText(u.getPrincipalId());
+            mi.addActionListener((ActionEvent arg0) -> {
+                try {
+                    
+                    int caret = this.taMessage.getCaretPosition();
+                    this.taMessage.setText(this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + this.taMessage.getText(caret, this.taMessage.getText().length() - caret));
+                    this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+            this.popUsers.add(mi);
+            //mi.setOpaque(true);
         }
-        InstantMessage other = (InstantMessage) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
+        
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        popUsers = new javax.swing.JPopupMenu();
+        cmdSend = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taMessage = new javax.swing.JTextArea();
+
+        cmdSend.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_send.png"))); // NOI18N
+        cmdSend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendActionPerformed(evt);
+            }
+        });
+
+        taMessage.setColumns(20);
+        taMessage.setRows(5);
+        taMessage.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                taMessageKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(taMessage);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jSeparator1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSend)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSend, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void taMessageKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_taMessageKeyReleased
+        try {
+            if(evt.getKeyCode()==KeyEvent.VK_ENTER && evt.isShiftDown()) {
+                // just do the line break
+            } else if (evt.getKeyCode()==KeyEvent.VK_ENTER) {
+                // send message
+                this.sendMessage();
+            } else {
+            int caret = this.taMessage.getCaretPosition();
+            if ((caret == 1 && this.taMessage.getText(0, 1).equals("@")) || (caret > 1 && this.taMessage.getText(caret - 2, 2).equals(" @"))) {
+                Rectangle rect=this.taMessage.modelToView(caret);
+                this.popUsers.show(this.taMessage, rect.x, rect.y);
+            }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
-        return true;
-    }
+    }//GEN-LAST:event_taMessageKeyReleased
 
-    @Override
-    public String toString() {
-        return "com.jdimension.jlawyer.persistence.InstantMessage[ id=" + id + " ]";
-    }
+    private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
+        this.sendMessage();
+    }//GEN-LAST:event_cmdSendActionPerformed
 
-    /**
-     * @return the sent
-     */
-    public Date getSent() {
-        return sent;
-    }
-
-    /**
-     * @param sent the sent to set
-     */
-    public void setSent(Date sent) {
-        this.sent = sent;
-    }
-
-    /**
-     * @return the sender
-     */
-    public String getSender() {
-        return sender;
-    }
-
-    /**
-     * @param sender the sender to set
-     */
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
-    /**
-     * @return the content
-     */
-    public String getContent() {
-        return content;
-    }
-
-    /**
-     * @param content the content to set
-     */
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    /**
-     * @return the caseContext
-     */
-    public ArchiveFileBean getCaseContext() {
-        return caseContext;
-    }
-
-    /**
-     * @param caseContext the caseContext to set
-     */
-    public void setCaseContext(ArchiveFileBean caseContext) {
-        this.caseContext = caseContext;
-    }
-
-    /**
-     * @return the documentContext
-     */
-    public ArchiveFileDocumentsBean getDocumentContext() {
-        return documentContext;
-    }
-
-    /**
-     * @param documentContext the documentContext to set
-     */
-    public void setDocumentContext(ArchiveFileDocumentsBean documentContext) {
-        this.documentContext = documentContext;
-    }
-
-    /**
-     * @return the mentions
-     */
-    public List<InstantMessageMention> getMentions() {
-        return mentions;
-    }
     
-    public InstantMessageMention getMentionFor(String principalId) {
-        for(InstantMessageMention m: this.getMentions()) {
-            if(m.getPrincipal().equals(principalId))
-                return m;
-        }
-        return null;
+    private void sendMessage() {
+        InstantMessage im1=new InstantMessage();
+        im1.setSender("Hausmeister Krause");
+        im1.setContent(this.taMessage.getText().trim());
+        im1.setSent(new Date());
+        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
+        InstantMessageMention im1m1=new InstantMessageMention();
+        im1m1.setDone(false);
+        im1m1.setPrincipal("Präsident");
+        im1list.add(im1m1);
+        InstantMessageMention im1m2=new InstantMessageMention();
+        im1m2.setDone(false);
+        im1m2.setPrincipal("Bodo");
+        im1list.add(im1m2);
+        im1.setMentions(im1list);
+        
+        if(this.messageConsumer!=null)
+            this.messageConsumer.newMessageForSubmission(im1);
+        
+        this.taMessage.setText("");
     }
-    
-    public boolean hasMentionFor(String principalId) {
-        if(this.getMentions()==null)
-            return false;
-        return this.getMentionFor(principalId)!=null;
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdSend;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JPopupMenu popUsers;
+    private javax.swing.JTextArea taMessage;
+    // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the messageConsumer
+     */
+    public NewMessageConsumer getMessageConsumer() {
+        return messageConsumer;
     }
 
     /**
-     * @param mentions the mentions to set
+     * @param messageConsumer the messageConsumer to set
      */
-    public void setMentions(List<InstantMessageMention> mentions) {
-        this.mentions = mentions;
+    public void setMessageConsumer(NewMessageConsumer messageConsumer) {
+        this.messageConsumer = messageConsumer;
     }
-    
 }

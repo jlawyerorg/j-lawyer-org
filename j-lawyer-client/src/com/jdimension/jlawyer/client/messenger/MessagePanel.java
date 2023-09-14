@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.InstantMessage;
 import java.awt.Color;
 import java.util.List;
 import javax.swing.UIManager;
@@ -680,12 +682,13 @@ public class MessagePanel extends javax.swing.JPanel {
     public MessagePanel() {
         initComponents();
         
-        this.calloutPanelComponent1.setMessage("empty message");
+        this.calloutPanelComponent1.setMessage(new InstantMessage());
     }
     
-    public MessagePanel(List<String> principals, String ownPrincipal, String sender, String message, boolean ownMessage) {
+    public MessagePanel(List<AppUserBean> principals, String ownPrincipal, boolean ownMessage, InstantMessage im) {
         initComponents();
         
+        String sender=im.getSender();
         if(StringUtils.isEmpty(sender))
             sender="?";
         
@@ -704,7 +707,7 @@ public class MessagePanel extends javax.swing.JPanel {
         
         
         
-        this.calloutPanelComponent1.setMessage(message);
+        this.calloutPanelComponent1.setMessage(im);
         this.calloutPanelComponent1.setOwnMessage(ownMessage);
         this.calloutPanelComponent1.setPrincipals(principals);
         this.calloutPanelComponent1.setOwnPrincipal(ownPrincipal);
@@ -738,7 +741,7 @@ public class MessagePanel extends javax.swing.JPanel {
         calloutPanelComponent1.setLayout(calloutPanelComponent1Layout);
         calloutPanelComponent1Layout.setHorizontalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 331, Short.MAX_VALUE)
+            .addGap(0, 329, Short.MAX_VALUE)
         );
         calloutPanelComponent1Layout.setVerticalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -754,7 +757,7 @@ public class MessagePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 331, Short.MAX_VALUE)
+                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblUser)
                 .addContainerGap())
@@ -764,8 +767,8 @@ public class MessagePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
-                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE))
+                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE)
+                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
