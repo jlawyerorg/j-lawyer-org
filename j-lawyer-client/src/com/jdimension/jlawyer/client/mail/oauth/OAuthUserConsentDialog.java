@@ -691,6 +691,7 @@ public class OAuthUserConsentDialog extends javax.swing.JDialog {
      *
      * @param parent
      * @param modal
+     * @param tenantId
      * @param clientId
      */
     public OAuthUserConsentDialog(JDialog parent, boolean modal, String tenantId, String clientId) {

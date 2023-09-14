@@ -666,13 +666,17 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.MessagingServiceLocal;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -681,6 +685,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 
 /**
@@ -761,6 +766,49 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
             return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a list of instant messages for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/messages")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseMessages(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            List<InstantMessage> messages=msgService.getMessagesForCase(id);
+
+            ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
+            for (InstantMessage im : messages) {
+                RestfulInstantMessageV7 m = RestfulInstantMessageV7.fromInstantMessage(im);
+                msgList.add(m);
+            }
+
+            Response res = Response.ok(msgList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get message for case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
         }
     }
 

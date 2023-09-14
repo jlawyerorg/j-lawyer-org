@@ -698,7 +698,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -990,9 +989,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
                     this.pnlInvoicePositions.add(posPanel);
                     this.pnlInvoicePositions.doLayout();
-                    int dl = this.splitMain.getDividerLocation();
-                    this.splitMain.setDividerLocation(dl + 1);
-                    this.splitMain.setDividerLocation(dl);
+                    this.bumpSplitPane();
 
                     posPanel.setEntry(this.currentEntry.getId(), pos);
                     posPanel.updateEntryTotal();
@@ -1008,6 +1005,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         
         this.cmbStatus.setEnabled(invoice!=null);
 
+    }
+    
+    public void bumpSplitPane() {
+        int dl = this.splitMain.getDividerLocation();
+        this.splitMain.setDividerLocation(dl + 1);
+        this.splitMain.setDividerLocation(dl);
     }
 
     /**
@@ -1982,9 +1985,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             posPanel.updateEntryTotal();
             this.pnlInvoicePositions.add(posPanel);
             this.pnlInvoicePositions.doLayout();
-            int dl = this.splitMain.getDividerLocation();
-            this.splitMain.setDividerLocation(dl + 1);
-            this.splitMain.setDividerLocation(dl);
+            this.bumpSplitPane();
             this.updateTotals(posPanel);
 
         } catch (Exception ex) {
@@ -2033,9 +2034,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void clearPositionsPanel() {
         this.pnlInvoicePositions.removeAll();
         this.pnlInvoicePositions.doLayout();
-        int dl = this.splitMain.getDividerLocation();
-        this.splitMain.setDividerLocation(dl + 1);
-        this.splitMain.setDividerLocation(dl);
+        this.bumpSplitPane();
     }
     
     private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
