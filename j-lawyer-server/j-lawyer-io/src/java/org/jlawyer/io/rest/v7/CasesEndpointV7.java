@@ -786,12 +786,11 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             ArchiveFileBean currentCase = cases.getArchiveFile(id);
             if (currentCase == null) {
                 log.error("case with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             
             MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
@@ -803,12 +802,10 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 msgList.add(m);
             }
 
-            Response res = Response.ok(msgList).build();
-            return res;
+            return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
