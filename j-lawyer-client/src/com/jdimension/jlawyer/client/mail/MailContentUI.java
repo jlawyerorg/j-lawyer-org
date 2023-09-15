@@ -682,7 +682,9 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -690,6 +692,8 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -700,6 +704,7 @@ import static javafx.concurrent.Worker.State.FAILED;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
+import javax.imageio.ImageIO;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.InternetAddress;
@@ -711,6 +716,8 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import org.apache.log4j.Logger;
+import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
+import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -763,7 +770,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "\n"
             + "        "
             + "</body></html>";
-    private MessageContainer msgContainer = null;
+    private MessageContainer emlMsgContainer = null;
+    private OutlookMessage outlookMsgContainer=null;
     private ArchiveFileBean caseContext = null;
     private String cachedHtml = null;
     private WebView webView = null;
@@ -778,14 +786,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
      */
     public MailContentUI() {
         initComponents();
-        
+
         this.jLabel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jLabel2.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jLabel3.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jLabel4.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jLabel6.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jLabel7.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
+
         this.lblSentDate.setText(" ");
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
@@ -830,11 +838,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                     }
                                     String href = ((Element) thisNode).getAttribute("href");
                                     ev.preventDefault();
-                                    
+
                                     if (href == null) {
                                         return;
                                     }
-                                    
+
                                     final String hrefValue = href;
                                     SwingUtilities.invokeLater(() -> {
                                         if (hrefValue.contains("jlawyer://addtowhitelist")) {
@@ -889,7 +897,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public void clear() {
-        this.msgContainer = null;
+        this.emlMsgContainer = null;
 
         this.lblSentDate.setText(" ");
         this.lblSubject.setText(" ");
@@ -963,9 +971,28 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.caseContext = a;
     }
 
+    public void setMessage(OutlookMessage om) {
+        
+        this.outlookMsgContainer=om;
+        
+        try {
+            setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
+
+        } catch (Exception ex) {
+            log.error("Error getting contents of Outlook message", ex);
+            this.setErrorMessage("Fehler beim Laden der Outlook-Nachricht: " + ex.getMessage());
+            this.lblBCC.setText("");
+            this.lblCC.setText("");
+            this.lblFrom.setText("");
+            this.lblSentDate.setText("");
+            this.lblSubject.setText("");
+            this.lblTo.setText("");
+        }
+    }
+
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
 
-        this.msgContainer = msgC;
+        this.emlMsgContainer = msgC;
         try {
             Message msg = msgC.getMessage();
             if (msg == null) {
@@ -1229,11 +1256,115 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     contentUI.setCachedHtml(body);
                     contentUI.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
                 }
+            } else {
+                log.debug("unkown content");
             }
         }
 
         if (closed) {
             EmailUtils.closeIfIMAP(msg.getFolder());
+        }
+
+    }
+
+    public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
+        
+        CidCache cids = CidCache.getInstance();
+        cids.clear();       
+        Map<String,OutlookFileAttachment> cidAttachments=msg.fetchCIDMap();
+        for(OutlookFileAttachment ofa: cidAttachments.values()) {
+            cids.put(ofa.getContentId(), ofa.getData());
+        }
+        
+        String sentString = "";
+        if (msg.getDate() != null) {
+            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            sentString = df2.format(msg.getDate());
+        }
+        lblSentDate.setText(sentString);
+        lblSubject.setText(msg.getSubject());
+        lblSubject.setToolTipText(lblSubject.getText());
+        lblFrom.setText(msg.getFromName() + "<" + msg.getFromEmail() + ">");
+        lblFrom.setToolTipText(lblFrom.getText());
+
+        String to = "";
+        if (msg.getRecipients() != null && msg.getRecipients().size() > 0) {
+            to = msg.getRecipients().get(0).toString();
+            for (int i = 1; i < msg.getRecipients().size(); i++) {
+                to = to + ", " + msg.getRecipients().get(i).toString();
+            }
+        }
+        lblTo.setText(to);
+        lblTo.setToolTipText(to);
+
+        String cc = "";
+        if (msg.getCcRecipients() != null && msg.getCcRecipients().size() > 0) {
+            cc = msg.getCcRecipients().get(0).toString();
+            for (int i = 1; i < msg.getCcRecipients().size(); i++) {
+                cc = cc + ", " + msg.getCcRecipients().get(i).toString();
+            }
+        }
+        lblCC.setText(cc);
+        lblCC.setToolTipText(cc);
+
+        String bcc = "";
+        if (msg.getBccRecipients() != null && msg.getBccRecipients().size() > 0) {
+            bcc = msg.getBccRecipients().get(0).toString();
+            for (int i = 1; i < msg.getBccRecipients().size(); i++) {
+                bcc = bcc + ", " + msg.getBccRecipients().get(i).toString();
+            }
+        }
+        lblBCC.setText(bcc);
+        lblBCC.setToolTipText(bcc);
+
+        ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
+
+        List<OutlookFileAttachment> attachments = msg.fetchTrueAttachments();
+        for (OutlookFileAttachment att : attachments) {
+            String attFileName=att.getFilename();
+            if(StringUtils.isEmpty(attFileName))
+                attFileName=att.getLongFilename();
+            if(!StringUtils.isEmpty(attFileName))
+                ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
+        }
+
+        String htmlContent = msg.getBodyHTML();
+        if (StringUtils.isEmpty(htmlContent)) {
+            htmlContent = msg.getConvertedBodyHTML();
+        }
+
+        if (htmlContent != null) {
+
+            final String fxHtml = htmlContent;
+            Platform.setImplicitExit(false);
+            Platform.runLater(() -> {
+                try {
+                    WebViewRegister reg = WebViewRegister.getInstance();
+                    WebView webView1 = reg.get(webViewId);
+                    webView1.getEngine().loadContent(fxHtml, ContentTypes.TEXT_HTML);
+                } catch (Throwable t) {
+                    log.error("Unable to display mail content", t);
+                }
+            });
+
+            contentUI.setContentType(ContentTypes.TEXT_HTML);
+
+            if (msg.getFromEmail() != null) {
+                ClientSettings s = ClientSettings.getInstance();
+                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                int index = whitelist.indexOf(msg.getFromEmail());
+                if (index > -1) {
+                    contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
+                } else {
+                    contentUI.setCachedHtml(htmlContent);
+                    contentUI.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
+                }
+            }
+
+        } else {
+
+            String textContent = msg.getBodyText();
+            contentUI.setBody(textContent, ContentTypes.TEXT_PLAIN);
         }
 
     }
@@ -1320,6 +1451,41 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     } catch (Throwable t) {
                         log.error("Unable to load inline image(s)", t);
                     }
+                } else {
+                    if (mimePart.getContentID() != null) {
+                        if (mimePart.getContentType() != null && mimePart.getContentType().toLowerCase().contains("image")) {
+                            String contentId = mimePart.getContentID();
+                            if (contentId.startsWith("<")) {
+                                contentId = contentId.substring(1);
+                            }
+                            if (contentId.endsWith(">")) {
+                                contentId = contentId.substring(0, contentId.length() - 1);
+                            }
+                            InputStream inStream = part.getInputStream();
+                            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                            byte[] tempBuffer = new byte[4096];// 4 KB
+                            int numRead;
+                            while ((numRead = inStream.read(tempBuffer)) != -1) {
+                                outStream.write(tempBuffer);
+                            }
+                            inStream.close();
+                            outStream.close();
+                            byte[] resultBytes = outStream.toByteArray();
+
+                            if (mimePart.getContentType() != null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
+                                // read a jpeg from a inputFile
+                                InputStream is = new ByteArrayInputStream(resultBytes);
+                                BufferedImage bufferedImage = ImageIO.read(is);
+
+                                // this writes the bufferedImage into a byte array called resultingBytes
+                                ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+                                ImageIO.write(bufferedImage, "png", byteArrayOut);
+                                resultBytes = byteArrayOut.toByteArray();
+                            }
+
+                            cids.put(contentId, resultBytes);
+                        }
+                    }
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
@@ -1331,18 +1497,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     }
 
                     //if (content instanceof InputStream) {
-
-                        //InputStream inStream = (InputStream) content;
-                        InputStream inStream = part.getInputStream();
-                        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                        byte[] tempBuffer = new byte[4096];// 4 KB
-                        int numRead;
-                        while ((numRead = inStream.read(tempBuffer)) != -1) {
-                            outStream.write(tempBuffer);
-                        }
-                        inStream.close();
-                        outStream.close();
-                        cids.put(contentId, outStream.toByteArray());
+                    //InputStream inStream = (InputStream) content;
+                    InputStream inStream = part.getInputStream();
+                    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                    byte[] tempBuffer = new byte[4096];// 4 KB
+                    int numRead;
+                    while ((numRead = inStream.read(tempBuffer)) != -1) {
+                        outStream.write(tempBuffer);
+                    }
+                    inStream.close();
+                    outStream.close();
+                    cids.put(contentId, outStream.toByteArray());
 
                     //}
                 } catch (Throwable t) {
@@ -1612,7 +1777,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
-                byte[] data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.msgContainer);
+                byte[] data=null;
+                if(this.emlMsgContainer!=null) {
+                    data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.emlMsgContainer);
+                } else {
+                    for(OutlookFileAttachment ofa: this.outlookMsgContainer.fetchTrueAttachments()) {
+                        if((ofa.getFilename()!=null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename()!=null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString()))))
+                            data=ofa.getData();
+                    }
+                }
+                
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
                 Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
@@ -1643,7 +1817,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.msgContainer);
+                byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
 
                 String useFolder = userHome;
                 if (selectedFolder != null) {
@@ -1721,12 +1895,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
+
+                CaseUtils.optionalUnarchiveCase(sel, this);
+
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
                 for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                    byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.msgContainer);
+                    byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
 
                     String newName = FileUtils.getNewFileName(selected.toString(), true);
                     if (newName == null) {
@@ -1770,15 +1947,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         return whiteListEntry;
     }
-    
+
     private void showHtml() {
         this.setBody(this.cachedHtml, ContentTypes.TEXT_HTML);
         ClientSettings s = ClientSettings.getInstance();
         String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
 
         String whiteListEntry = this.lblFrom.getText();
-        if(this.msgContainer!=null)
-            whiteListEntry = getFromAddress(this.lblFrom.getText(), this.msgContainer.getMessage());
+        if (this.emlMsgContainer != null) {
+            whiteListEntry = getFromAddress(this.lblFrom.getText(), this.emlMsgContainer.getMessage());
+        }
         whitelist = whitelist + ",{" + whiteListEntry + "}";
         s.setConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, whitelist);
     }

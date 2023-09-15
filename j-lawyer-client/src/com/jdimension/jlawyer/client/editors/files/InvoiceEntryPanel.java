@@ -664,15 +664,20 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Container;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -681,17 +686,21 @@ import themes.colors.DefaultColorTheme;
  */
 public class InvoiceEntryPanel extends javax.swing.JPanel {
     
+    private static final Logger log=Logger.getLogger(InvoiceEntryPanel.class.getName());
     private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
     
     private ArchiveFileBean caseDto=null;
+    private ArchiveFilePanel caseView=null;
     private Invoice invoice=null;
     private List<AddressBean> addresses=null;
 
     /**
      * Creates new form InvoiceEntryPanel
+     * @param caseView
      */
-    public InvoiceEntryPanel() {
+    public InvoiceEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
+        this.caseView=caseView;
     }
     
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -700,21 +709,27 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.addresses=addresses;
         this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
         this.lblDueDate.setText(df.format(invoice.getDueDate()));
-        if(invoice.getDueDate().getTime()<new Date().getTime()) {
-            this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        if(invoice.getStatus()==Invoice.STATUS_CANCELLED || invoice.getStatus()==Invoice.STATUS_PAID) {
+            this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
-            this.lblDueDate.setForeground(Color.black);
+            if(invoice.getDueDate().getTime()<new Date().getTime()) {
+                this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            } else {
+                this.lblDueDate.setForeground(Color.black);
+            }
         }
         this.lblName.setText(invoice.getName());
         this.lblStatus.setText("(" + invoice.getStatusString() + ")");
         StringBuilder tooltip=new StringBuilder();
         tooltip.append("<html>");
-        tooltip.append("Rechnungsdatum: ").append(df.format(invoice.getCreationDate()));
+        tooltip.append("Belegdatum: ").append(df.format(invoice.getCreationDate()));
         tooltip.append("<br/>");
         tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
         tooltip.append("<br/><br/>");
-        tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
-        tooltip.append("<br/>");
+        if(!StringUtils.isEmpty(invoice.getDescription())) {
+            tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
+            tooltip.append("<br/>");
+        }
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
         if(invoice.getInvoiceType()!=null)
@@ -744,11 +759,15 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         lblStatus = new javax.swing.JLabel();
         lblRecipient = new javax.swing.JLabel();
         lblInvoiceType = new javax.swing.JLabel();
+        cmdDelete = new javax.swing.JButton();
+        cmdDuplicate = new javax.swing.JButton();
+        cmdCopy = new javax.swing.JButton();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdOpen.setToolTipText("einsehen / bearbeiten");
         cmdOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdOpenActionPerformed(evt);
@@ -772,28 +791,57 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         lblInvoiceType.setFont(lblInvoiceType.getFont());
         lblInvoiceType.setText("Angebot");
 
+        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDelete.setToolTipText("Beleg löschen");
+        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteActionPerformed(evt);
+            }
+        });
+
+        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdDuplicate.setToolTipText("in dieser Akte duplizieren");
+        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateActionPerformed(evt);
+            }
+        });
+
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdCopy.setToolTipText("in andere Akte kopieren");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(cmdOpen)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdDuplicate)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCopy)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdDelete)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblInvoiceType))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblInvoiceNumber)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblStatus)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 176, Short.MAX_VALUE)
-                                .addComponent(lblDueDate)))
+                        .addComponent(lblDueDate)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblInvoiceNumber)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdOpen)))
+                        .addComponent(lblStatus)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblInvoiceType)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -802,15 +850,19 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdOpen)
+                    .addComponent(cmdDelete)
+                    .addComponent(cmdDuplicate)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblInvoiceNumber)
-                            .addComponent(lblDueDate)
-                            .addComponent(lblStatus))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblInvoiceNumber)
+                                .addComponent(lblStatus))
+                            .addComponent(lblDueDate))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblName)
-                            .addComponent(lblInvoiceType))))
+                            .addComponent(lblInvoiceType)
+                            .addComponent(lblName)))
+                    .addComponent(cmdCopy))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRecipient)
                 .addContainerGap())
@@ -818,15 +870,44 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
+        InvoiceDialog dlg=new InvoiceDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
         dlg.setEntry(this.invoice);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.setEntry(caseDto, dlg.getEntry(), addresses);
     }//GEN-LAST:event_cmdOpenActionPerformed
 
+    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Beleg '" + this.invoice.getInvoiceNumber() + "' unwiderruflich löschen?", "Beleg löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removeInvoice(this.invoice.getId());
+                Container parent=this.getParent();
+                parent.remove(this);
+                parent.invalidate();
+                parent.repaint();
+            } catch (Exception ex) {
+                log.error("Error deleting invoice", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdDeleteActionPerformed
+
+    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
+        this.caseView.duplicateInvoice(this.caseDto.getId(), this.invoice.getId());
+    }//GEN-LAST:event_cmdDuplicateActionPerformed
+
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+        this.caseView.duplicateInvoice(null, this.invoice.getId());
+    }//GEN-LAST:event_cmdCopyActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdDelete;
+    private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdOpen;
     private javax.swing.JLabel lblDueDate;
     private javax.swing.JLabel lblInvoiceNumber;

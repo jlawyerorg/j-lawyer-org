@@ -699,6 +699,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
      * Creates new form CalculationPluginDialog
      * @param parent
      * @param modal
+     * @param pluginUi
      */
     public CalculationPluginDialog(JDialog parent, boolean modal, JPanel pluginUi) {
         super(parent, modal);

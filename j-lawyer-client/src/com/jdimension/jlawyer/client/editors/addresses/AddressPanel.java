@@ -718,6 +718,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -750,12 +751,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private String openedFromEditorClass = null;
     private Image backgroundImage = null;
     protected String encryptionPwd = null;
+    
+    private HashMap<String,ArrayList<Invoice>> invoicesPerCase=null;
 
     /**
      * Creates new form AddressPanel
      */
     public AddressPanel() {
         this.dto = null;
+        this.invoicesPerCase=new HashMap<>();
         initComponents();
         this.lblAge.setText("");
 
@@ -811,7 +815,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             @Override
             public void actionPerformed(ActionEvent ae) {
                 cmdChooseBankActionPerformed(null);
-
             }
         });
 
@@ -941,8 +944,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
-    public void setAddressDTO(AddressBean dto) {
+     public void setAddressDTO(AddressBean dto) {
         this.dto = dto;
+        this.invoicesPerCase.clear();
         this.encryptionPwd = this.dto.getEncryptionPwd();
         if (!StringUtils.isEmpty(encryptionPwd)) {
             this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
@@ -1083,27 +1087,39 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         this.jTabbedPane1StateChanged(null);
         
-        
+        List<Invoice> invoices=new ArrayList<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<Invoice> invoices=locator.lookupArchiveFileServiceRemote().getInvoicesForAddress(dto.getId(), false);
-            invoices.size();
+            List<Invoice> existingInvoices=locator.lookupArchiveFileServiceRemote().getInvoicesForAddress(dto.getId(), false);
+            if(existingInvoices!=null && !existingInvoices.isEmpty())
+                invoices.addAll(existingInvoices);
 
-            
         } catch (Exception ex) {
             log.error("Error getting invoices for address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungsbeträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
         
+        this.invoicesPerCase.clear();
+        HashMap<Integer, Float> cumulatedInvoiceValues=this.getCumulatedInvoicesValue(invoices);
+        for(Invoice inv: invoices) {
+            if(!this.invoicesPerCase.containsKey(inv.getArchiveFileKey().getId()))
+                this.invoicesPerCase.put(inv.getArchiveFileKey().getId(), new ArrayList<>());
+            this.invoicesPerCase.get(inv.getArchiveFileKey().getId()).add(inv);
+        }
+        
         PieChart chart = new PieChartBuilder().width(this.pnlInvoicesChart.getWidth()).height(this.pnlInvoicesChart.getHeight()).title("Rechnungsbeträge").build();
-        Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
+        Color[] sliceColors = new Color[]{DefaultColorTheme.COLOR_DARK_GREY, DefaultColorTheme.COLOR_LOGO_RED, DefaultColorTheme.COLOR_LOGO_RED.darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker().darker(), DefaultColorTheme.COLOR_LOGO_RED.darker().darker().darker().darker(), DefaultColorTheme.COLOR_LOGO_GREEN, DefaultColorTheme.COLOR_LOGO_BLUE};
         chart.getStyler().setSeriesColors(sliceColors);
-        chart.addSeries("neu", 0.0);
-        chart.addSeries("offen", 0.0);
-        chart.addSeries("bezahlt", 0.0);
-        chart.addSeries("storniert", 0.0);
+        chart.addSeries("neu", cumulatedInvoiceValues.get(Invoice.STATUS_NEW));
+        chart.addSeries("offen", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN));
+        chart.addSeries("offen - nicht vollstreckbar", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_NONENFORCEABLE));
+        chart.addSeries("offen - 1. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER1));
+        chart.addSeries("offen - 2. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER2));
+        chart.addSeries("offen - 3. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER3));
+        chart.addSeries("bezahlt", cumulatedInvoiceValues.get(Invoice.STATUS_PAID));
+        chart.addSeries("storniert", -1f * cumulatedInvoiceValues.get(Invoice.STATUS_CANCELLED));
         chart.getStyler().setLegendVisible(true);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setSumVisible(true);
@@ -1118,6 +1134,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         chart.getStyler().setBaseFont(new JLabel().getFont());
         chart.getStyler().setLabelsFont(new JLabel().getFont());
         chart.getStyler().setToolTipFont(new JLabel().getFont());
+        chart.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN.darker().darker());
         chart.getStyler().setDefaultSeriesRenderStyle(PieSeriesRenderStyle.Donut);
         
         Color transparentColor=new Color(255, 255, 255, 0);
@@ -1135,7 +1152,28 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         xchartPanel.setPrintString("drucken");
         xchartPanel.setSaveAsString("speichern als...");
         xchartPanel.setBackground(this.pnlInvoicesChart.getBackground());
+        this.pnlInvoicesChart.removeAll();
         this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
+    }
+     
+    private HashMap<Integer, Float> getCumulatedInvoicesValue(List<Invoice> invoices) {
+        HashMap<Integer, Float> cumulatedInvoiceValues=new HashMap<>();
+        cumulatedInvoiceValues.put(Invoice.STATUS_NEW, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_NONENFORCEABLE, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER1, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER2, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER3, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_PAID, 0f);
+        cumulatedInvoiceValues.put(Invoice.STATUS_CANCELLED, 0f);
+        for(Invoice inv: invoices) {
+            if(inv.getInvoiceType().isTurnOver()) {
+                float f=cumulatedInvoiceValues.get(inv.getStatus());
+                f=f+inv.getTotal();
+                cumulatedInvoiceValues.put(inv.getStatus(), f);
+            }
+        }
+        return cumulatedInvoiceValues;
     }
 
     public void reset() {
@@ -1193,6 +1231,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     public void clearInputs() {
         this.dto = null;
+        this.invoicesPerCase.clear();
         this.encryptionPwd = null;
         this.chkEncryption.setSelected(false);
         this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
@@ -1374,9 +1413,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         rdGenderOrg = new javax.swing.JRadioButton();
         rdGenderUndefined = new javax.swing.JRadioButton();
         jPanel22 = new javax.swing.JPanel();
-        jPanel19 = new javax.swing.JPanel();
-        txtNoticePane = new javax.swing.JScrollPane();
-        txtNotice = new javax.swing.JTextArea();
+        jPanel14 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tagPanel = new javax.swing.JPanel();
         pnlInvoicesChart = new javax.swing.JPanel();
         jPanel24 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -1412,6 +1451,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmdSelectBirthday = new javax.swing.JButton();
         cmdSelectDeathday = new javax.swing.JButton();
         lblAge = new javax.swing.JLabel();
+        jPanel25 = new javax.swing.JPanel();
         jPanel20 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         txtCompany = new javax.swing.JTextField();
@@ -1423,6 +1463,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         txtRegCourt = new javax.swing.JTextField();
         jLabel37 = new javax.swing.JLabel();
         jLabel38 = new javax.swing.JLabel();
+        jPanel19 = new javax.swing.JPanel();
+        txtNoticePane = new javax.swing.JScrollPane();
+        txtNotice = new javax.swing.JTextArea();
         jPanel18 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -1501,10 +1544,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jLabel17 = new javax.swing.JLabel();
         cmbSalutation = new javax.swing.JComboBox();
         cmbComplimentaryClose = new javax.swing.JComboBox();
-        jPanel13 = new javax.swing.JPanel();
-        jPanel14 = new javax.swing.JPanel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        tagPanel = new javax.swing.JPanel();
         jPanel15 = new javax.swing.JPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
@@ -1552,33 +1591,25 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jPanel22.setLayout(new java.awt.GridLayout(1, 2));
 
-        jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+        jPanel14.setBorder(javax.swing.BorderFactory.createTitledBorder("Etiketten"));
 
-        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane3.setBorder(null);
 
-        txtNotice.setColumns(20);
-        txtNotice.setLineWrap(true);
-        txtNotice.setRows(5);
-        txtNotice.setWrapStyleWord(true);
-        txtNoticePane.setViewportView(txtNotice);
+        tagPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        jScrollPane3.setViewportView(tagPanel);
 
-        org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
-        jPanel19.setLayout(jPanel19Layout);
-        jPanel19Layout.setHorizontalGroup(
-            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel19Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(txtNoticePane)
-                .addContainerGap())
+        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 546, Short.MAX_VALUE)
         );
-        jPanel19Layout.setVerticalGroup(
-            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel19Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
-                .addContainerGap())
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane3)
         );
 
-        jPanel22.add(jPanel19);
+        jPanel22.add(jPanel14);
 
         pnlInvoicesChart.setOpaque(false);
         pnlInvoicesChart.setLayout(new java.awt.BorderLayout());
@@ -1685,31 +1716,33 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel25)
                             .add(jLabel47))
-                        .add(33, 33, 33)
+                        .add(34, 34, 34)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(cmbTitleInAddress, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(jLabel31)
                             .add(jLabel2)
                             .add(jLabel40)
-                            .add(jLabel30)
-                            .add(jLabel41)
+                            .add(jLabel30, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(jLabel44)
                             .add(jLabel45)
-                            .add(jLabel29)
-                            .add(jLabel32)
-                            .add(jLabel33))
+                            .add(jLabel1)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel41, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel32, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jLabel29, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jLabel33, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(txtName)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(jLabel42)
                                     .add(jLabel43))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(cmbDegreePrefix, 0, 227, Short.MAX_VALUE)
+                                    .add(cmbDegreePrefix, 0, 230, Short.MAX_VALUE)
                                     .add(cmbDegreeSuffix, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .add(txtInitials)
                             .add(txtFirstName)
@@ -1729,11 +1762,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                                             .add(cmdSelectBirthday)
                                             .add(cmdSelectDeathday)))
                                     .add(lblAge))
-                                .add(0, 0, Short.MAX_VALUE))))
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .add(108, 108, 108)
-                        .add(txtName)))
+                                .add(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -1783,32 +1812,31 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel45))
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel29))
+                    .add(cmdSelectBirthday))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(19, 19, 19)
-                        .add(jLabel29)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jLabel32))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel32)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel33))
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(cmdSelectBirthday))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(cmdSelectDeathday))))
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jLabel33)))
+                    .add(cmdSelectDeathday))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAge)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel24.add(jPanel1);
+
+        jPanel25.setLayout(new java.awt.BorderLayout());
 
         jPanel20.setBorder(javax.swing.BorderFactory.createTitledBorder("Juristische Person"));
 
@@ -1829,7 +1857,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jPanel20.setLayout(jPanel20Layout);
         jPanel20Layout.setHorizontalGroup(
             jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel20Layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel20Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel3)
@@ -1838,12 +1866,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel37)
                     .add(jLabel38))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtRegNr, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE)
+                .add(jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtDepartment)
-                    .add(txtRegCourt)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtCompany)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, cmbLegalForm, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, cmbLegalForm, 0, 387, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtRegCourt)
+                    .add(txtCompany)
+                    .add(txtRegNr))
                 .addContainerGap())
         );
         jPanel20Layout.setVerticalGroup(
@@ -1868,10 +1896,40 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtRegCourt, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel38))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
-        jPanel24.add(jPanel20);
+        jPanel25.add(jPanel20, java.awt.BorderLayout.CENTER);
+
+        jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+
+        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        txtNotice.setColumns(20);
+        txtNotice.setLineWrap(true);
+        txtNotice.setRows(5);
+        txtNotice.setWrapStyleWord(true);
+        txtNoticePane.setViewportView(txtNotice);
+
+        org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
+        jPanel19.setLayout(jPanel19Layout);
+        jPanel19Layout.setHorizontalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 516, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel19Layout.setVerticalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jPanel25.add(jPanel19, java.awt.BorderLayout.SOUTH);
+
+        jPanel24.add(jPanel25);
 
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -1882,18 +1940,20 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel22, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel7Layout.createSequentialGroup()
-                        .add(rdGenderFemale)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(rdGenderMale)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(rdGenderDivers)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(rdGenderOrg)
-                        .add(18, 18, 18)
-                        .add(rdGenderUndefined)
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jPanel24, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel24, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jPanel7Layout.createSequentialGroup()
+                                .add(rdGenderFemale)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdGenderMale)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdGenderDivers)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdGenderOrg)
+                                .add(18, 18, 18)
+                                .add(rdGenderUndefined)
+                                .add(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2092,7 +2152,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel19))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtEmail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtEmail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtPhone)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtFax)
                     .add(txtMobile)
@@ -2247,7 +2307,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel20))
                 .add(19, 19, 19)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 861, Short.MAX_VALUE)
+                    .add(txtInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 867, Short.MAX_VALUE)
                     .add(jPanel5Layout.createSequentialGroup()
                         .add(chkLegalProtection)
                         .add(0, 0, Short.MAX_VALUE))
@@ -2488,7 +2548,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel16))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(cmbSalutation, 0, 906, Short.MAX_VALUE)
+                    .add(cmbSalutation, 0, 912, Short.MAX_VALUE)
                     .add(cmbComplimentaryClose, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -2524,49 +2584,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
 
-        jPanel14.setBorder(javax.swing.BorderFactory.createTitledBorder("Etiketten"));
-
-        jScrollPane3.setBorder(null);
-
-        tagPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
-        jScrollPane3.setViewportView(tagPanel);
-
-        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
-        jPanel14.setLayout(jPanel14Layout);
-        jPanel14Layout.setHorizontalGroup(
-            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel14Layout.createSequentialGroup()
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 894, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(0, 190, Short.MAX_VALUE))
-        );
-        jPanel14Layout.setVerticalGroup(
-            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane3)
-        );
-
-        org.jdesktop.layout.GroupLayout jPanel13Layout = new org.jdesktop.layout.GroupLayout(jPanel13);
-        jPanel13.setLayout(jPanel13Layout);
-        jPanel13Layout.setHorizontalGroup(
-            jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 1118, Short.MAX_VALUE)
-            .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(jPanel13Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(jPanel14, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-        jPanel13Layout.setVerticalGroup(
-            jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 619, Short.MAX_VALUE)
-            .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(jPanel13Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(jPanel14, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-
-        jTabbedPane1.addTab("Etiketten", new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")), jPanel13); // NOI18N
-
         jPanel15.setName(""); // NOI18N
 
         lblCustom1.setText("Eigenes Feld 1:");
@@ -2596,7 +2613,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                             .add(lblCustom2)
                             .add(lblCustom3))
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1094, Short.MAX_VALUE))
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1100, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel15Layout.setVerticalGroup(
@@ -2638,7 +2655,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1094, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1100, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -2788,8 +2805,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblHeaderInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jTabbedPane1)
-                    .add(jPanel23, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                    .add(jPanel23, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2858,9 +2874,10 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        if (this.jTabbedPane1.getSelectedIndex() == 6) {
+        if (this.jTabbedPane1.getSelectedIndex() == 5) {
             if (this.dto == null) {
                 this.pnlCasesForContact.removeAll();
+                this.invoicesPerCase.clear();
                 return;
             }
             try {
@@ -3293,6 +3310,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
                 lce.setArchived(aFile.getArchiveFileKey().getArchivedBoolean());
                 lce.setOwnReference(aFile.getReference());
+                
+                if(this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
+                    HashMap<Integer, Float> invoicesForCase=this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
+                    lce.setInvoicesByStatus(invoicesForCase);
+                }
+                
                 ep.setEntry(lce);
 
                 this.pnlCasesForContact.add(ep);
@@ -3412,7 +3435,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
-    private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
@@ -3425,6 +3447,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JPanel jPanel22;
     private javax.swing.JPanel jPanel23;
     private javax.swing.JPanel jPanel24;
+    private javax.swing.JPanel jPanel25;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
@@ -3818,13 +3841,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
 
             String id = null;
+            String externalId = null;
             if (this.dto != null) {
                 id = this.dto.getId();
+                externalId = this.dto.getExternalId();
             }
 
             this.dto = new AddressBean();
             if (id != null) {
                 this.dto.setId(id);
+            }
+            if (externalId != null) {
+                this.dto.setExternalId(externalId);
             }
 
             this.fillDTO(this.dto);

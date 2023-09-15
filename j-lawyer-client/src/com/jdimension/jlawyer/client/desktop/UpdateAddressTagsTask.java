@@ -689,7 +689,9 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
     //private QuickAddressSearchPanel p2;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of UpdateAddressTagsTask
+     * @param owner
+     * @param p1
      */
     public UpdateAddressTagsTask(Component owner, QuickAddressSearchPanel p1) {
         super();
@@ -699,6 +701,7 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
         final List<String> tagsInUse2;
         try {
@@ -725,27 +728,12 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.error"));
             return;
         }
 
         try {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-
-                    p1.populateTags(tagsInUse2);
-                    //p2.populateTags(tagsInUse2);
-
-//                DefaultListModel dm=new DefaultListModel();
-//                myListUI.setModel(dm);
-//                myListUI.setCellRenderer(new MyListCellRenderer());
-//                dm.removeAllElements();
-//                for(ArchiveFileBean aFile:myList) {
-//                    dm.addElement(aFile.getFileNumber() + " - " + aFile.getName());
-//                    
-//                }
-                }
+            SwingUtilities.invokeLater(() -> {
+                p1.populateTags(tagsInUse2);
             });
         } catch (Throwable t) {
             log.error(t);

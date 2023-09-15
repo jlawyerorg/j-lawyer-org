@@ -782,14 +782,9 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         jLabel13 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Rechnungsnummernkreise");
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
-            }
-        });
+        setTitle("Belegnummernkreise");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Nummernkreise"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Belegnummernkreise"));
 
         tblPools.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -815,9 +810,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             }
         });
         tblPools.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                tblPoolsKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 tblPoolsKeyReleased(evt);
             }
@@ -921,7 +913,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
         chkManualAdjust.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
 
         chkSmallBusiness.setFont(chkSmallBusiness.getFont());
-        chkSmallBusiness.setText("Kleinunternehmerregelung");
+        chkSmallBusiness.setText("USt ausweisen");
 
         lstPreview.setFont(lstPreview.getFont());
         lstPreview.setModel(new javax.swing.AbstractListModel<String>() {
@@ -1133,6 +1125,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             InvoicePool savedPool = locator.lookupInvoiceServiceRemote().addInvoicePool(ip);
 
             ((DefaultTableModel) this.tblPools.getModel()).addRow(new Object[]{savedPool, savedPool.getPattern()});
+            this.tblPools.getSelectionModel().setSelectionInterval(this.tblPools.getRowCount()-1, this.tblPools.getRowCount()-1);
             JOptionPane.showMessageDialog(this, "Der Nummernkreis ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Weitere Berechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
@@ -1164,7 +1157,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 InvoicePool savedPool = locator.lookupInvoiceServiceRemote().updateInvoicePool(ip);
-                row=this.tblPools.convertRowIndexToView(row);
+                row=this.tblPools.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPools.getModel()).setValueAt(savedPool, row, 0);
                 ((DefaultTableModel) this.tblPools.getModel()).setValueAt(savedPool.getPattern(), row, 1);
 
@@ -1187,6 +1180,7 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupInvoiceServiceRemote().removeInvoicePool(ip);
+                row=this.tblPools.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPools.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1196,10 +1190,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
-
-    private void tblPoolsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPoolsKeyPressed
-
-    }//GEN-LAST:event_tblPoolsKeyPressed
 
     private void tblPoolsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPoolsKeyReleased
         int row = this.tblPools.getSelectedRow();
@@ -1213,10 +1203,6 @@ public class InvoicePoolsSetupDialog extends javax.swing.JDialog {
             this.updatePreview();
         }
     }//GEN-LAST:event_tblPoolsKeyReleased
-
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        
-    }//GEN-LAST:event_formWindowClosing
 
     private void txtPatternKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPatternKeyReleased
         if(this.tblPools.getSelectedRow()>-1)

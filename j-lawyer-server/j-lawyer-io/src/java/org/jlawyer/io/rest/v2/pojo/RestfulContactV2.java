@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v2.pojo;
 
-import org.jlawyer.io.rest.v1.pojo.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import java.util.Date;
 
@@ -674,6 +673,7 @@ import java.util.Date;
 public class RestfulContactV2 {
     
     private String id=null;
+    protected String externalId=null;
     private String firstName=null;
     private String name=null;
     private String company=null;
@@ -761,6 +761,7 @@ public class RestfulContactV2 {
         ad.setFax(this.getFax());
         ad.setFirstName(this.getFirstName());
         ad.setId(this.getId());
+        ad.setExternalId(this.getExternalId());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
         ad.setLastModifier(this.getLastModifier());
@@ -823,6 +824,7 @@ public class RestfulContactV2 {
         ad.setFax(a.getFax());
         ad.setFirstName(a.getFirstName());
         ad.setId(a.getId());
+        ad.setExternalId(a.getExternalId());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
         ad.setLastModifier(a.getLastModifier());
@@ -1674,6 +1676,20 @@ public class RestfulContactV2 {
      */
     public void setTitleInAddress(String titleInAddress) {
         this.titleInAddress = titleInAddress;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
     

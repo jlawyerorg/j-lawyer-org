@@ -777,7 +777,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
 
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> getAllOptionGroups() {
+        List<AppOptionGroupBean> fullList=appOptionGroupBeanFacade.findAll();
+        List<String> optionGroups=new ArrayList<>();
+        for(AppOptionGroupBean aog: fullList) {
+            if(!optionGroups.contains(aog.getOptionGroup()))
+                optionGroups.add(aog.getOptionGroup());
+        }
+        return optionGroups;
 
+    }
+   
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
@@ -952,9 +965,16 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.appOptionGroupBeanFacade.remove(dto);
     }
 
+    private String getTypedFolderName(int templateType) {
+        if(templateType==SystemManagementRemote.TEMPLATE_TYPE_HEAD)
+            return "letterheads";
+        else
+            return "templates";
+    }
+    
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean addFromMasterTemplate(String fileName, String basedOnFileName) throws Exception {
+    public boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
@@ -962,7 +982,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
-        String localBaseDirTo = localBaseDir + "templates" + System.getProperty("file.separator");
+        String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + System.getProperty("file.separator");
 
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
@@ -1180,6 +1200,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public ServerInformation getServerInformation() {
         ServerInformation si = new ServerInformation();
         return si;
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public Properties getSystemProperties() {
+        return System.getProperties();
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public String getServerLogs(int numberOfLines) throws Exception {
+        File logDir = new File(System.getProperty("jboss.server.log.dir"));
+        File wildFlyLog = new File(logDir.getAbsolutePath() + File.separator + "server.log");
+        return ServerFileUtils.readLinesFromEnd(wildFlyLog, numberOfLines);
+        
     }
 
     @Override
@@ -1722,8 +1757,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean addTemplate(GenericNode folder, String fileName, byte[] data) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
         
         String dst = localBaseDir + File.separator + fileName;
 
@@ -1744,8 +1779,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean addTemplateFromTemplate(GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String src = localBaseDir + File.separator + basedOnTemplateFileName;
         String dst = localBaseDir + File.separator + fileName;
@@ -1757,8 +1792,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean deleteTemplate(GenericNode folder, String fileName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String del = localBaseDir + File.separator + fileName;
 
@@ -1768,8 +1803,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     
     @Override
     @RolesAllowed({"loginRole"})
-    public GenericNode getAllTemplatesTree() throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir();
+    public GenericNode getAllTemplatesTree(int templateType) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType);
 
         GenericNode root = new GenericNode(localBaseDir, null, "/");
         File rootFolder = new File(localBaseDir);
@@ -1816,8 +1851,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public byte[] getTemplateData(GenericNode folder, String fileName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String read = localBaseDir + File.separator + fileName;
 
@@ -1827,8 +1862,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void setTemplateData(GenericNode folder, String fileName, byte[] content) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String upd = localBaseDir + File.separator + fileName;
 
@@ -1838,8 +1873,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean addTemplateFolder(GenericNode parent, String folderName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
+    public boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         return new File(localBaseDir).mkdirs();
 
@@ -1847,8 +1882,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean deleteTemplateFolder(GenericNode parent, String folderName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
+    public boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         ServerFileUtils.getInstance().delete(new File(localBaseDir));
         return true;
@@ -1856,19 +1891,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean renameTemplateFolder(GenericNode parent, String oldFolderName, String newFolderName) throws Exception {
-        String oldName = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(parent) + File.separator + oldFolderName);
-        String newName = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(parent) + File.separator + newFolderName);
+    public boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception {
+        String oldName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + oldFolderName);
+        String newName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + newFolderName);
 
         return new File(oldName).renameTo(new File(newName));
     }
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> getTemplatesByPath(String templatesPath) throws Exception {
+    public List<String> getTemplatesByPath(int templateType, String templatesPath) throws Exception {
         if(!templatesPath.startsWith(File.separator))
             templatesPath=File.separator + templatesPath;
-        String localBaseDir = this.getTemplatesBaseDir(templatesPath);
+        String localBaseDir = this.getTemplatesBaseDir(templateType, templatesPath);
         
         File f = new File(localBaseDir);
         File[] files = f.listFiles();
@@ -1885,13 +1920,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> getTemplatesInFolder(GenericNode folder) throws Exception {
-        return getTemplatesByPath(TreeNodeUtils.buildNodePath(folder));
+    public List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception {
+        return getTemplatesByPath(templateType, TreeNodeUtils.buildNodePath(folder));
     }
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean addFromMasterTemplate(String fileName, String basedOnFileName, GenericNode folder) throws Exception {
+    public boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
@@ -1899,7 +1934,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
-        String localBaseDirTo = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + File.separator;
+        String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + TreeNodeUtils.buildNodePath(folder) + File.separator;
 
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
@@ -1911,11 +1946,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> getPlaceHoldersForTemplate(String templatePath, String templateName, String caseId) throws Exception {
+    public List<String> getPlaceHoldersForTemplate(int templateType, String templatePath, String templateName, String caseId) throws Exception {
         
         if(!templatePath.startsWith(File.separator))
             templatePath=File.separator + templatePath;
-        String localBaseDir = this.getTemplatesBaseDir(templatePath);
+        String localBaseDir = this.getTemplatesBaseDir(templateType, templatePath);
         
         String tpl = localBaseDir + File.separator + templateName;
         
@@ -1932,8 +1967,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName);
+    public List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName);
 
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
@@ -1946,8 +1981,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<GenericNode> searchTemplateFolders(String query) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(System.getProperty("file.separator"));
+    public List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, System.getProperty("file.separator"));
 
         query = query.toLowerCase();
 
@@ -1961,8 +1996,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public String getTemplatePreview(GenericNode folder, String fileName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String read = localBaseDir + File.separator + fileName;
 
@@ -1990,8 +2025,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception {
-        String localBaseDir = this.getTemplatesBaseDir(TreeNodeUtils.buildNodePath(folder));
+    public void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String from = localBaseDir + File.separator + fromName;
         String to = localBaseDir + File.separator + toName;
@@ -2319,14 +2354,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
-    private String getTemplatesBaseDir(String appendDirectories) throws Exception {
+    private String getTemplatesBaseDir(int templateType, String appendDirectories) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        localBaseDir = localBaseDir + "templates";
+        localBaseDir = localBaseDir + getTypedFolderName(templateType);
         if(!ServerStringUtils.isEmpty(appendDirectories)) {
             return localBaseDir + appendDirectories;
         } else {
@@ -2336,14 +2371,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     
     @Override
     @RolesAllowed({"loginRole"})
-    public String getTemplatesBaseDir() throws Exception {
-        return getTemplatesBaseDir(null);
+    public String getTemplatesBaseDir(int templateType) throws Exception {
+        return getTemplatesBaseDir(templateType, null);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
-    public HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception {
-        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author);
+    public HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceTable, timesheetsTable);
     }
 
 }

@@ -691,7 +691,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -723,32 +723,32 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"readArchiveFileRole"})
-    public Hashtable<File, Date> getObservedDirectoryContent() {
+    public HashMap<File, Date> getObservedDirectoryContent() {
 
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.info("directory observation is switched off");
-            return new Hashtable();
+            return new HashMap();
         }
 
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.info("directory observation is switched off");
-            return new Hashtable();
+            return new HashMap();
         }
 
         File scanDirectory = new File(scanDir);
         if (!scanDirectory.exists()) {
             log.error("observed directory does not exist");
-            return new Hashtable();
+            return new HashMap();
         }
 
         if (!scanDirectory.isDirectory()) {
             log.error("observed directory is not a directory");
-            return new Hashtable();
+            return new HashMap();
         }
 
-        Hashtable<File, Date> fileObjects = new Hashtable<>();
+        HashMap<File, Date> fileObjects = new HashMap<>();
         File files[] = scanDirectory.listFiles();
         if (files != null) {
             for (File f : files) {

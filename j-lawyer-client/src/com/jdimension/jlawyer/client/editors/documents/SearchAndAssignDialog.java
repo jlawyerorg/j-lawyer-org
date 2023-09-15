@@ -683,6 +683,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -769,7 +770,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
-        this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
+        QuickArchiveFileSearchCellRenderer renderer=new QuickArchiveFileSearchCellRenderer();
+        this.tblResults.setDefaultRenderer(Object.class, renderer);
+        this.tblResults.setDefaultRenderer(Date.class, renderer);
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getArchiveFileTagsInUse();
@@ -813,17 +816,29 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                             lastChanged.remove(a);
                         }
                     }
+                    if(contextMatches.isEmpty()) {
+                        ArchiveFileBean[] foundByContext = fileService.searchSimple(searchContext);
+                        if (foundByContext != null) {
+                            for (ArchiveFileBean fbc : foundByContext) {
+                                if (fbc.getFileNumber().contains(searchContext)) {
+                                    contextMatches.add(0, fbc);
+                                } else {
+                                    contextMatches.add(fbc);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // matching entries at the top
                 for (ArchiveFileBean a : contextMatches) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
 
                 // last changed follow
                 for (ArchiveFileBean a : lastChanged) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
             } else {
@@ -836,7 +851,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 ArchiveFileBean forcedCase = fileService.getArchiveFile(forceCaseId);
                 if (forcedCase != null) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), forcedCase.getArchivedBoolean(), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
                     model.addRow(row);
                 }
             }

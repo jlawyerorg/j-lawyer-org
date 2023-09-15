@@ -731,7 +731,7 @@ public class FormPluginCallback {
 
                 if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel) {
                     Object editor = EditorsRegistry.getInstance().getCurrentEditor();
-                    ((ArchiveFilePanel) editor).newDocumentDialog(table);
+                    ((ArchiveFilePanel) editor).newDocumentDialog(table, null, null, null);
                 }
 
             } catch (Exception ex) {

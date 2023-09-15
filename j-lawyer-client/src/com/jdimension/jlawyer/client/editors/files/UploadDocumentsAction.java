@@ -693,10 +693,11 @@ public class UploadDocumentsAction extends ProgressableAction {
     private Component owner;
     private CaseFolderPanel docTarget;
     private CaseFolder targetFolder=null;
+    private Invoice invoice=null;
 
     private List<File> files;
 
-    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder) {
+    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder, Invoice invoice) {
         super(i, false);
 
         this.archiveFileKey = archiveFileKey;
@@ -704,6 +705,7 @@ public class UploadDocumentsAction extends ProgressableAction {
         this.docTarget = docTarget;
         this.files = files;
         this.targetFolder=targetFolder;
+        this.invoice=invoice;
 
     }
     
@@ -748,9 +750,14 @@ public class UploadDocumentsAction extends ProgressableAction {
                         }
 
                         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
+                        
+                        if(this.invoice!=null) {
+                            afs.linkInvoiceDocument(doc.getId(), invoice.getId());
+                        }
+                        
 //                        persisting the folder for this document is automatically done by this call (not just UI update)
                         SwingUtilities.invokeLater(() -> {
-                            docTarget.addDocument(doc);
+                            docTarget.addDocument(doc, invoice);
                             if(targetFolder!=null) {
                                 ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
                                 docs.add(doc);

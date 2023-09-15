@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -696,6 +697,7 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -736,6 +738,14 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         
         ComponentUtils.autoSizeColumns(tblResults);
+        
+        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+        ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
+        this.jSplitPane1.setDividerLocation(0.8d);
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        jSplitPane1.setBorder(null);
+        jSplitPane1.setOpaque(false);
         
         
     }
@@ -788,16 +798,17 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         txtSearchString = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         cmdQuickSearch = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lblSummary = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResults = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lblSummary = new javax.swing.JLabel();
 
         mnuOpenSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         mnuOpenSelectedAddress.setText("öffnen");
@@ -835,33 +846,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblResultsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tblResultsKeyReleased(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
         cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdQuickSearch.setToolTipText("Suchen");
         cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
@@ -869,9 +853,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 cmdQuickSearchActionPerformed(evt);
             }
         });
-
-        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jScrollPane2.setViewportView(lblSummary);
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-20.png"))); // NOI18N
 
@@ -914,27 +895,62 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
 
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        tblResults.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResults.getTableHeader().setReorderingAllowed(false);
+        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsMousePressed(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsMouseClicked(evt);
+            }
+        });
+        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblResultsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResults);
+
+        jSplitPane1.setLeftComponent(jScrollPane1);
+
+        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        jScrollPane2.setViewportView(lblSummary);
+
+        jSplitPane1.setRightComponent(jScrollPane2);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
-                    .add(jScrollPane2)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jSplitPane1)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmdTagFilter))
-                    .add(layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(cmdTagFilter)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -952,9 +968,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                     .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 104, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 650, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1194,6 +1208,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSplitPane jSplitPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedAddresses;

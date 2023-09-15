@@ -681,7 +681,15 @@ public class NextcloudTest {
      */
     public static void main(String[] args) {
         try {
-//            NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someone", "somepwd");
+            
+            
+            System.setProperty("javax.net.debug", "ssl:handshake");
+            NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someone", "somepwd");
+            
+//            List<CloudAddressBook> books=nc.getAllAddressBooks();
+//            for(CloudAddressBook ca: books) {
+//                
+//            }
             
 //            List<CloudCalendar> calendars= nc.getAllCalendars();
 //            for(CloudCalendar c: calendars) {

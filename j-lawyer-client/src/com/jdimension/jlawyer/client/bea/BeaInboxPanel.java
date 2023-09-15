@@ -2647,13 +2647,27 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             sortCol = sortKeys.get(0).getColumn();
                         }
                     }
-                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    
+                    DefaultMutableTreeNode tn=null;
+                    if(this.treeFolders.getSelectionPath()==null) {
+                        log.warn("no source folder selected");
+                        tn=this.findFolder((DefaultMutableTreeNode)this.treeFolders.getModel().getRoot(), mh.getFolderId(), mh.getPostBoxSafeId());
+                    } else {
+                        tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    }
+                    
+                    if(tn==null) {
+                        log.error("last path component of source folder is null");
+                    }
                     org.jlawyer.bea.model.Folder sourceFolder = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+                    if(sourceFolder==null) {
+                        log.error("user object of source folder is null");
+                    }
                     Folder importedFolder = BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
                     if (importedFolder != null) {
                         BeaAccess.getInstance().moveMessageToFolder(mh.getId(), sourceFolder.getId(), importedFolder.getId());
                         try {
-                            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+                            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, new TreePath(tn.getPath()), false, null, null), sortCol, scrollToRow);
                         } catch (Throwable t) {
                             log.error("Unable to refresh beA folder after moving message to imported", t);
                         }
@@ -2671,6 +2685,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         }
         return false;
+    }
+    
+    private DefaultMutableTreeNode findFolder(DefaultMutableTreeNode node, long folderId, String safeId) {
+        if(node.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
+            org.jlawyer.bea.model.Folder f=(org.jlawyer.bea.model.Folder)node.getUserObject();
+            if(f.getId()==folderId && f.getSafeId().equals(safeId))
+                return node;
+        }
+        for(int i=0;i<node.getChildCount();i++) {
+            DefaultMutableTreeNode c=findFolder((DefaultMutableTreeNode)node.getChildAt(i), folderId, safeId);
+            if(c!=null)
+                return c;
+        }
+        return null;
     }
 
     @Override
@@ -2827,6 +2855,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             if(dlg.getCaseSelection()==null)
                 return;
 
+            CaseUtils.optionalUnarchiveCase(dlg.getCaseSelection(), this);
+            
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();

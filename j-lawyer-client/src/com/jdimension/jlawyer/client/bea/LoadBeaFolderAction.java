@@ -665,10 +665,8 @@ package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.DateStringComparator;
-import com.jdimension.jlawyer.client.mail.LoadFolderRestriction;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -683,7 +681,6 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.MessageSorterFilter;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.MessageHeader;
 
@@ -778,24 +775,24 @@ public class LoadBeaFolderAction extends ProgressableAction {
                         if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
                             // trash folder - show permanent deletion date
                             if (msgh.getReceptionTime() != null) {
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                             } else {
                                 if (msgh.getSentTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 } else {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 }
                                 
                             }
                         } else {
                             // not the trash folder
                             if (msgh.getReceptionTime() != null) {
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                             } else {
                                 if (msgh.getSentTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                                 } else {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isConfidential()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                                 }
                                 
                             }
@@ -834,7 +831,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
             
             ThreadUtils.setSplitDividerLocation(mainSplitter, mainSplitterPosition);
 
-            //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);
 
         } catch (Exception ex) {

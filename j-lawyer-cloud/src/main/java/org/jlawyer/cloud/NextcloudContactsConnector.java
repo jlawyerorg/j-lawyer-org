@@ -787,10 +787,15 @@ public class NextcloudContactsConnector {
     public List<CloudAddressBook> getAllAddressBooks() throws Exception {
         ArrayList<CloudAddressBook> addressBooks = new ArrayList<>();
         try {
-            HttpClient client = new HttpClient();
+            
+            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
             Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
             // https://cloud.advobox.com/remote.php/dav/addressbooks/users/jens/test/
             client.getState().setCredentials(AuthScope.ANY, creds);
+            
+            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
+            client.getParams().setAuthenticationPreemptive(true);
+            
             PropFindMethod method = new PropFindMethod(this.getBaseUrl(), DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
             method.setRequestBody("<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\">\n"
                     + "  <d:prop>\n"
@@ -799,7 +804,9 @@ public class NextcloudContactsConnector {
                     + "     <cs:getctag />\n"
                     + "  </d:prop>\n"
                     + "</d:propfind>");
-
+            client.getHttpConnectionManager().getParams().setSoTimeout(15000);
+            client.getHttpConnectionManager().getParams().setConnectionTimeout(15000);
+            
             client.executeMethod(method);
 
             MultiStatus multiStatus = method.getResponseBodyAsMultiStatus();

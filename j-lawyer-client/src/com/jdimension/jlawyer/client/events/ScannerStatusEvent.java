@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.client.events;
 
 import java.io.File;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 /**
  *
@@ -673,9 +673,9 @@ import java.util.Hashtable;
  */
 public class ScannerStatusEvent extends Event {
 
-    private Hashtable<File, Date> fileNames=null;
+    private HashMap<File, Date> fileNames=null;
     
-    public ScannerStatusEvent(Hashtable<File, Date> fileNames) {
+    public ScannerStatusEvent(HashMap<File, Date> fileNames) {
         super(Event.TYPE_SCANNERSTATUS);
         this.fileNames=fileNames;
         
@@ -691,14 +691,14 @@ public class ScannerStatusEvent extends Event {
     /**
      * @return the fileNames
      */
-    public Hashtable<File, Date> getFileNames() {
+    public HashMap<File, Date> getFileNames() {
         return fileNames;
     }
 
     /**
      * @param fileNames the fileNames to set
      */
-    public void setFileNames(Hashtable<File, Date> fileNames) {
+    public void setFileNames(HashMap<File, Date> fileNames) {
         this.fileNames = fileNames;
     }
 

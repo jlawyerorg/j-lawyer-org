@@ -789,6 +789,20 @@ public class ComponentUtils {
             }
         }
     }
+    
+    public static void addComboboxItemIfNecessary(JComboBox cmb, Object newItem) {
+        boolean contained=false;
+        for (int i = 0; i < cmb.getItemCount(); i++) {
+            Object current = cmb.getItemAt(i);
+            if (current.equals(newItem)) {
+                contained=true;
+                break;
+            }
+        }
+        if(!contained) {
+            cmb.addItem(newItem);
+        }
+    }
 
     public static void autoSizeColumns(JTable table) {
 

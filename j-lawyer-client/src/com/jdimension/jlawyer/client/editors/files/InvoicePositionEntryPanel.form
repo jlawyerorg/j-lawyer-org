@@ -43,7 +43,7 @@
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtUnitPrice" min="-2" pref="120" max="-2" attributes="0"/>
-                      <EmptySpace pref="40" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtTotal" min="-2" pref="120" max="-2" attributes="0"/>
@@ -96,6 +96,7 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="jTextField1"/>
+        <Property name="toolTipText" type="java.lang.String" value="Bezeichnung der Position"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane1">
@@ -114,6 +115,7 @@
               </FontInfo>
             </Property>
             <Property name="rows" type="int" value="5"/>
+            <Property name="toolTipText" type="java.lang.String" value="Beschreibung der Position"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -192,7 +194,11 @@
             <StringItem index="3" value="Item 4"/>
           </StringArray>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Steuersatz"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbTaxRateActionPerformed"/>
+      </Events>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
@@ -202,6 +208,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/editdelete.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Position l&#xf6;schen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRemovePositionActionPerformed"/>
@@ -212,6 +219,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="um eine Position nach oben bewegen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdMovePosUpActionPerformed"/>
@@ -222,6 +230,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="um eine Position nach unten bewegen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdMovePosDownActionPerformed"/>

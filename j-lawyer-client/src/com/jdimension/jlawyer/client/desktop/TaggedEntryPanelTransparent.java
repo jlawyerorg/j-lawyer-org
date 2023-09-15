@@ -694,8 +694,8 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(TaggedEntryPanelTransparent.class.getName());
     private TaggedEntry e = null;
     
-    private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220);
-    private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+    private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
+    private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
 
     /**
      * Creates new form TaggedEntryPanelTransparent
@@ -707,13 +707,15 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         this.jPanel1.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
         
         this.setOpaque(false);
-        this.lblChangedBy.setOpaque(false);
+        this.lblLawyer.setOpaque(false);
+        this.lblAssistant.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
         this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         
         lblDocument.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        this.lblChangedBy.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblLawyer.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblAssistant.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         
         ClientSettings settings=ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
@@ -753,13 +755,17 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         } else {
             this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b></html>");
         }
-        this.lblChangedBy.setText(e.getLastChangedBy());
-        if (e.getLastChangedBy() != null && !("".equals(e.getLastChangedBy()))) {
-            this.lblChangedBy.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLastChangedBy()));
+        this.lblLawyer.setText(e.getLawyer());
+        if (e.getLawyer() != null && !("".equals(e.getLawyer()))) {
+            this.lblLawyer.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLawyer()));
+        }
+        this.lblAssistant.setText(e.getAssistant());
+        if (e.getAssistant() != null && !("".equals(e.getAssistant()))) {
+            this.lblAssistant.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getAssistant()));
         }
 
         String lawyerCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("attorney");
-        String tooltip = "<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>" + lawyerCaption + ": " + e.getLastChangedBy() + "</html>";
+        String tooltip = "<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>" + lawyerCaption + ": " + e.getLawyer() + "</html>";
         this.lblDescription.setToolTipText(tooltip);
 
         this.lblTags.setText("");
@@ -809,10 +815,11 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
 
         jPanel1 = new javax.swing.JPanel();
         lblDescription = new javax.swing.JLabel();
-        lblChangedBy = new javax.swing.JLabel();
+        lblLawyer = new javax.swing.JLabel();
         lblTags = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         lblDocument = new javax.swing.JLabel();
+        lblAssistant = new javax.swing.JLabel();
 
         setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -841,8 +848,9 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        lblChangedBy.setFont(lblChangedBy.getFont().deriveFont((lblChangedBy.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
-        lblChangedBy.setText("user");
+        lblLawyer.setFont(lblLawyer.getFont().deriveFont((lblLawyer.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
+        lblLawyer.setText("lawyer");
+        lblLawyer.setToolTipText("Anwalt");
 
         lblTags.setFont(lblTags.getFont().deriveFont(lblTags.getFont().getStyle() & ~java.awt.Font.BOLD, lblTags.getFont().getSize()-2));
         lblTags.setText(" ");
@@ -858,7 +866,11 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
         lblDocument.setFont(lblDocument.getFont().deriveFont(lblDocument.getFont().getStyle() & ~java.awt.Font.BOLD, lblDocument.getFont().getSize()-2));
+        lblDocument.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDocument.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDocumentMouseClicked(evt);
+            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblDocumentMouseEntered(evt);
             }
@@ -866,6 +878,10 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
                 lblDocumentMouseExited(evt);
             }
         });
+
+        lblAssistant.setFont(lblAssistant.getFont().deriveFont((lblAssistant.getFont().getStyle() | java.awt.Font.ITALIC)));
+        lblAssistant.setText("assistant");
+        lblAssistant.setToolTipText("Sachbearbeiter");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -876,26 +892,33 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
                 .addComponent(jLabel1)
                 .addGap(5, 5, 5)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDocument, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblDescription)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblChangedBy)))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblLawyer, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lblAssistant, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(lblDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(67, 67, 67))
+                    .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblChangedBy, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(lblLawyer)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblAssistant))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblTags)
                 .addGap(3, 3, 3)
                 .addComponent(lblDocument)
-                .addGap(3, 3, 3)
-                .addComponent(lblTags)
                 .addContainerGap())
         );
 
@@ -917,13 +940,41 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
+    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
         highlight(true);
-    }//GEN-LAST:event_lblDescriptionMouseEntered
+    }//GEN-LAST:event_formMouseEntered
+
+    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
+        highlight(false);
+    }//GEN-LAST:event_formMouseExited
+
+    private void lblDocumentMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseExited
+        highlight(false);
+    }//GEN-LAST:event_lblDocumentMouseExited
+
+    private void lblDocumentMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseEntered
+        highlight(true);
+    }//GEN-LAST:event_lblDocumentMouseEntered
+
+    private void lblDocumentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseClicked
+        this.lblDescriptionMouseClicked(evt);
+    }//GEN-LAST:event_lblDocumentMouseClicked
+
+    private void lblTagsMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseExited
+        highlight(false);
+    }//GEN-LAST:event_lblTagsMouseExited
+
+    private void lblTagsMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseEntered
+        highlight(true);
+    }//GEN-LAST:event_lblTagsMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
         highlight(false);
     }//GEN-LAST:event_lblDescriptionMouseExited
+
+    private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
+        highlight(true);
+    }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
         try {
@@ -973,30 +1024,6 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
-    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_formMouseEntered
-
-    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
-        highlight(false);
-    }//GEN-LAST:event_formMouseExited
-
-    private void lblTagsMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_lblTagsMouseEntered
-
-    private void lblTagsMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseExited
-        highlight(false);
-    }//GEN-LAST:event_lblTagsMouseExited
-
-    private void lblDocumentMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_lblDocumentMouseEntered
-
-    private void lblDocumentMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentMouseExited
-        highlight(false);
-    }//GEN-LAST:event_lblDocumentMouseExited
-
     private void highlight(boolean highlight) {
         Color c=NORMAL_COLOR;
         if(highlight) {
@@ -1009,9 +1036,10 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JLabel lblChangedBy;
+    private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblDocument;
+    private javax.swing.JLabel lblLawyer;
     private javax.swing.JLabel lblTags;
     // End of variables declaration//GEN-END:variables
 }

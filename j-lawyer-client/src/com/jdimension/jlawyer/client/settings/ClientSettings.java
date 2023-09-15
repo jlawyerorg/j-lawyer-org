@@ -703,9 +703,7 @@ public class ClientSettings {
     public static final String CONF_LASTCONNECTION="connection.lastconnection";
     
     public static final String CONF_THEME="client.theme";
-    
-    public static final String CONF_HEIGHT="client.height";
-    public static final String CONF_WIDTH="client.width";
+    public static final String CONF_FRAME_BOUNDS = "client.framebounds";
     
     public static final String CONF_UI_SCALING="client.ui.scaling";
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
@@ -787,6 +785,8 @@ public class ClientSettings {
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
     
     public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
+    public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
+    public static final String CONF_DOCUMENTS_LETTERHEAD="client.documents.letterhead.";
     
     private static final String ARRAY_DELIMITER="#####";
     
@@ -815,6 +815,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] degreeSuffixes=null;
     private AppOptionGroupBean[] professions=null;
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
+    protected AppOptionGroupBean[] timesheetIntervals=null;
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
@@ -1247,6 +1248,17 @@ public class ClientSettings {
      */
     public void setTitlesInAddress(AppOptionGroupBean[] titlesInAddress) {
         this.titlesInAddress = titlesInAddress;
+    }
+
+    public void setTimesheetIntervals(AppOptionGroupBean[] timesheetIntervals) {
+        this.timesheetIntervals=timesheetIntervals;
+    }
+
+    /**
+     * @return the timesheetIntervals
+     */
+    public AppOptionGroupBean[] getTimesheetIntervals() {
+        return timesheetIntervals;
     }
  
     

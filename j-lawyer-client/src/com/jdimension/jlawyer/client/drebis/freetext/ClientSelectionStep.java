@@ -700,12 +700,12 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     public void nextEvent() throws Exception {
         //this.data.put("data1", this.txtFileNumber.getText());
         
-        ArrayList<DrebisPerson> persons=new ArrayList<DrebisPerson>();
+        ArrayList<DrebisPerson> persons=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblClients.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
-            if(enabled.booleanValue()) {
+            if(enabled) {
                 // user chose to submit this client
                 
                 // columns: 0 submit, 1 name, 2 firstname, 3 company, 4 street, 5 zip, 6 city, 7 countrycode, 8 phone, 9 fax, 10 email
@@ -738,7 +738,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
             }
         }
         
-        if(persons.size()==0)
+        if(persons.isEmpty())
             throw new Exception("Es muss mindestens ein zu übertragender Mandant angegeben werden");
         
         if(this.cmbInsurances.getSelectedItem()==null) {
@@ -748,14 +748,6 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
         // default "" insurance (empty insurance) has been selected
         if(this.cmbInsurances.getSelectedItem() instanceof String)
             throw new Exception("Es muss ein von Drebis unterstütztes Versicherungsunternehmen gewählt werden");
-        
-//        if(this.cmbInsurance.getSelectedItem()==null) {
-//            throw new Exception("Es muss ein Versicherungsschein angegeben werden");
-//        }
-//        
-//        if("".equals(this.cmbInsurance.getSelectedItem().toString().trim())) {
-//            throw new Exception("Es muss ein Versicherungsschein angegeben werden");
-//        }
 
         if (!(this.cmbInsurance.getSelectedItem() == null) && !("".equals(this.cmbInsurance.getSelectedItem().toString().trim()))) {
             String regex = ((InsuranceInfo) this.cmbInsurances.getSelectedItem()).getPolicyNumberRegEx();
@@ -782,25 +774,19 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
         this.data.put("clients.insurance", this.cmbInsurances.getSelectedItem());
         this.data.put("clients.insurancepolicy", this.cmbInsurance.getSelectedItem().toString());
         
-        
-        
-        return;
     }
 
     @Override
     public void previousEvent() {
         this.data.put("data1", this.txtFileNumber.getText());
-        return;
     }
 
     @Override
     public void cancelledEvent() {
-        return;
     }
 
     @Override
     public void finishedEvent() {
-        return;
     }
 
     /**
@@ -1101,7 +1087,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
                 }
 
                 Vector row = new Vector();
-                row.add(new Boolean(true));
+                row.add(true);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
@@ -1127,9 +1113,6 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
         this.txtName.setText((String) this.data.get("archiveFile.name"));
 
 
-
-
-        return;
     }
 
     @Override

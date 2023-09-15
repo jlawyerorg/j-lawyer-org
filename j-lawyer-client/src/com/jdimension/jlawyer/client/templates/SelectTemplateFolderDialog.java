@@ -667,10 +667,10 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -686,20 +686,21 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(SelectTemplateFolderDialog.class.getName());
     
     private GenericNode folder=null;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
     
     /**
      * Creates new form SelectTemplateFolderDialog
      * @param parent
      * @param modal
+     * @param templateType
      */
-    public SelectTemplateFolderDialog(java.awt.Frame parent, boolean modal) {
+    public SelectTemplateFolderDialog(java.awt.Frame parent, boolean modal, int templateType) {
         super(parent, modal);
-        this.folder=folder;
+        this.templateType=templateType;
         initComponents();
 
 
         ClientSettings settings = ClientSettings.getInstance();
-        Collection templates=new ArrayList();
         
         TemplatesTreeCellRenderer renderer = new TemplatesTreeCellRenderer();
         renderer.setLeafIcon(renderer.getClosedIcon());
@@ -707,7 +708,7 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
         
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
+            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree(this.templateType);
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
             this.traverseFolders(templateTree, rootNode);
@@ -729,8 +730,8 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
 
         ArrayList<GenericNode> children = current.getChildren();
 
-        Hashtable<String, GenericNode> childHt = new Hashtable<String, GenericNode>();
-        ArrayList<String> htKeys = new ArrayList<String>();
+        HashMap<String, GenericNode> childHt = new HashMap<>();
+        ArrayList<String> htKeys = new ArrayList<>();
         for (GenericNode child : children) {
 
             childHt.put(child.getName(), child);
@@ -850,7 +851,7 @@ public class SelectTemplateFolderDialog extends javax.swing.JDialog {
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new SelectTemplateFolderDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new SelectTemplateFolderDialog(new javax.swing.JFrame(), true, SystemManagementRemote.TEMPLATE_TYPE_BODY).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

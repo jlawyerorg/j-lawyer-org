@@ -690,6 +690,15 @@ public class EventBroker {
 
     }
 
+    public void unsubscribeConsumer(EventConsumer consumer, Integer eventType) {
+        if(consumerMap.containsKey(eventType)) {
+            ArrayList<EventConsumer> consumers = consumerMap.get(eventType);
+            if (consumers.contains(consumer)) {
+                consumers.remove(consumer);
+            }
+        }
+    }
+    
     public void subscribeConsumer(EventConsumer consumer, Integer eventType) {
         if (!consumerMap.containsKey(eventType)) {
             consumerMap.put(eventType, new ArrayList<>());

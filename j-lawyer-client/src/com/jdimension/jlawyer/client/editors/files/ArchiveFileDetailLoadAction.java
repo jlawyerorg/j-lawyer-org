@@ -718,6 +718,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JPanel tagPanel;
     private JPanel documentTagPanel;
     private JPanel invoicesPanel;
+    private JPanel timesheetsPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
@@ -734,7 +735,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel timesheetsPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -751,6 +752,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
+        this.timesheetsPanel = timesheetsPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -913,6 +915,27 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Kalender...");
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             events = calService.getReviews(this.archiveFileKey);
+            
+            this.progress("Lade Akte: Belege und Zeiterfassung...");
+            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
+            HashMap <String,Invoice> docToInvoice=new HashMap<>();
+            this.invoicesPanel.removeAll();
+            for(Invoice inv: invoices) {
+                if(inv.getInvoiceDocument()!=null)
+                    docToInvoice.put(inv.getInvoiceDocument().getId(), inv);
+                InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
+                ip.setEntry(this.caseDto, inv, addressesForCase);
+                this.invoicesPanel.add(ip);
+            }
+            List<Timesheet> timesheets = fileService.getTimesheets(archiveFileKey);
+            this.timesheetsPanel.removeAll();
+            for (Timesheet ts : timesheets) {
+                TimesheetEntryPanel tp=new TimesheetEntryPanel(this.owner);
+                tp.setEntry(this.caseDto, ts);
+                this.timesheetsPanel.add(tp);
+            }
+            
+            
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
             List<String> folderIds = new ArrayList<>();
@@ -923,7 +946,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setReadOnly(readOnly || this.caseDto.getArchivedBoolean());
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCaseId(archiveFileKey);
-            caseFolders.setDocuments(new ArrayList(documents));
+            
+            caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
             caseFolders.sortByDateDesc();
             caseFolders.sort();
 
@@ -937,14 +961,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
             
-            this.progress("Lade Akte: Rechnungen...");
-            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
-            this.invoicesPanel.removeAll();
-            for(Invoice inv: invoices) {
-                InvoiceEntryPanel ip=new InvoiceEntryPanel();
-                ip.setEntry(this.caseDto, inv, addressesForCase);
-                this.invoicesPanel.add(ip);
-            }
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

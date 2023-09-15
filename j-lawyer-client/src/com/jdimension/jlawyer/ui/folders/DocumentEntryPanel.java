@@ -666,9 +666,12 @@ package com.jdimension.jlawyer.ui.folders;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.DocumentsTransferable;
+import com.jdimension.jlawyer.client.editors.files.InvoiceDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -700,12 +703,15 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
 
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
+    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyy, HH:mm");
+    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyy");
+    private final DecimalFormat currencyFormat=new DecimalFormat("0.00");
     private CaseFolderPanel documentsContainer=null;
     private ArchiveFilePanel caseContainer=null;
     private Color defaultBackground=null;
     private boolean readOnly=false;
     protected ArchiveFileDocumentsBean document=null;
+    protected Invoice linkedInvoice=null;
     private Color defaultBackColor=null;
     private boolean highlighted=false;
     
@@ -730,10 +736,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        
     }
     
 
-    public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, boolean readonly) {
+    public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, Invoice invoice, boolean readonly) {
         initComponents();
         initHighlights();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -742,7 +749,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.caseContainer=caseContainer;
         this.readOnly=readonly;
         
-        this.setDocument(doc);
+        this.setDocument(doc, invoice);
         
         this.dragSource = new DragSource();
         DragGestureRecognizer dgr
@@ -754,6 +761,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        
     }
 
     @Override
@@ -851,6 +859,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         lblFolder = new javax.swing.JLabel();
         cmdHighlight1 = new javax.swing.JButton();
         cmdHighlight2 = new javax.swing.JButton();
+        lblInvoice = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -938,6 +947,21 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
         cmdHighlight2.setText(" ");
 
+        lblInvoice.setFont(lblInvoice.getFont().deriveFont(lblInvoice.getFont().getStyle() | java.awt.Font.BOLD, lblInvoice.getFont().getSize()-2));
+        lblInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
+        lblInvoice.setText("RG-1234");
+        lblInvoice.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblInvoiceMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblInvoiceMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblInvoiceMouseExited(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -961,8 +985,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addGap(18, 18, 18)
                         .addComponent(lblDictateSign)
                         .addGap(18, 18, 18)
-                        .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE))
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblInvoice)
+                        .addGap(226, 226, 226))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -978,7 +1005,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
                             .addComponent(lblFolder))
-                        .addGap(0, 4, Short.MAX_VALUE))))
+                        .addGap(3, 3, 3)
+                        .addComponent(lblInvoice))))
             .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblFavorite, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(cmdHighlight1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1129,6 +1157,22 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblFileNameMouseClicked(evt);
     }//GEN-LAST:event_lblFolderMouseClicked
 
+    private void lblInvoiceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceMouseClicked
+        InvoiceDialog dlg=new InvoiceDialog(this.caseContainer, this.caseContainer.getArchiveFileDTO(), EditorsRegistry.getInstance().getMainWindow(), true, this.caseContainer.getInvolvedAddresses());
+        dlg.setEntry(this.linkedInvoice);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        this.setInvoice(dlg.getEntry());
+    }//GEN-LAST:event_lblInvoiceMouseClicked
+
+    private void lblInvoiceMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceMouseEntered
+        this.lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    }//GEN-LAST:event_lblInvoiceMouseEntered
+
+    private void lblInvoiceMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceMouseExited
+        this.lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+    }//GEN-LAST:event_lblInvoiceMouseExited
+
     private void documentUnClicked() {
         this.caseContainer.documentSelectionChanged();
     }
@@ -1188,6 +1232,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblFileSize;
     private javax.swing.JLabel lblFolder;
+    private javax.swing.JLabel lblInvoice;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1197,12 +1242,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         return document;
     }
 
-    void setDocument(ArchiveFileDocumentsBean doc) {
+    void setDocument(ArchiveFileDocumentsBean doc, Invoice linkedInvoice) {
         this.document=doc;
         this.lblFileName.setText(doc.getName());
         this.lblFileName.setToolTipText(doc.getName());
         this.lblFileIcon.setToolTipText(doc.getName());
-        this.lblCreationDate.setText(df.format(doc.getCreationDate()));
+        this.lblCreationDate.setText(dfDateTime.format(doc.getCreationDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
         if(this.document.getFolder()==null) {
             this.lblFolder.setIcon(null);
@@ -1222,6 +1267,26 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(doc.getSize()));
         
         this.updateHighlights();
+        this.setInvoice(linkedInvoice);
+        
+    }
+    
+    private void setInvoice(Invoice linkedInvoice) {
+        this.linkedInvoice = linkedInvoice;
+        if(linkedInvoice!=null) {
+            lblInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png")));
+            String dueDate="";
+            if(linkedInvoice.getDueDate()!=null)
+                dueDate=dfDate.format(linkedInvoice.getDueDate());
+            lblInvoice.setText(linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber());
+            lblInvoice.setToolTipText("<html><b>" + linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber() + "</b><br/>" + linkedInvoice.getStatusString() + "<br/>f&auml;llig: " + dueDate + "<br/>Betrag: " + currencyFormat.format(linkedInvoice.getTotal()) + " " + linkedInvoice.getCurrency()+ "</html>");
+            lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            
+        } else {
+            lblInvoice.setIcon(null);
+            lblInvoice.setText("");
+            lblInvoice.setToolTipText(null);
+        }
     }
     
     private void updateHighlights() {
@@ -1266,4 +1331,5 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
         this.dragSource.startDrag(dge, null, new DocumentsTransferable(selDocs), null);
     }
+
 }

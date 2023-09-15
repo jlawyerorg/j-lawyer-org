@@ -678,6 +678,8 @@ import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
 import org.apache.log4j.Logger;
+import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
+import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 
 /**
  *
@@ -686,13 +688,15 @@ import org.apache.log4j.Logger;
 public class DocumentViewerFactory {
 
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    
+    private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
 
     public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
         return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
     }
-    
+
     public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-        
+
         if (fileName.toLowerCase().endsWith(".pdf")) {
             PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
             pdfP.setSize(new Dimension(width, height));
@@ -723,13 +727,14 @@ public class DocumentViewerFactory {
             ptp.setPreferredSize(new Dimension(width, height));
             try {
                 ptp.showContent(previewProvider.getPreview().getBytes());
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
             }
             return ptp;
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
+            hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(content);
@@ -751,7 +756,7 @@ public class DocumentViewerFactory {
                 ep.setSize(new Dimension(width, height));
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
-                MailboxSetup ms=EmailUtils.getMailboxSetup(message);
+                MailboxSetup ms = EmailUtils.getMailboxSetup(message);
                 ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
                 ep.setCaseContext(caseDto);
                 return ep;
@@ -760,7 +765,32 @@ public class DocumentViewerFactory {
                 ep.setSize(new Dimension(width, height));
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus("Vorschau kann nicht geladen werden.");
+                ep.showStatus(STR_PREVIEWFAIL);
+                return ep;
+            }
+        } else if (fileName.toLowerCase().endsWith(".msg")) {
+            try {
+                
+                
+                InputStream source = new ByteArrayInputStream(content);
+                OutlookMessage om=new OutlookMessageParser().parseMsg(source);
+                
+                
+                OutlookMessagePanel op = new OutlookMessagePanel();
+                op.setSize(new Dimension(width, height));
+                op.setMaximumSize(new Dimension(width, height));
+                op.setPreferredSize(new Dimension(width, height));
+                
+                //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
+                op.setMessage(om);
+                op.setCaseContext(caseDto);
+                return op;
+            } catch (Throwable t) {
+                EmailPanel ep = new EmailPanel();
+                ep.setSize(new Dimension(width, height));
+                ep.setMaximumSize(new Dimension(width, height));
+                ep.setPreferredSize(new Dimension(width, height));
+                ep.showStatus(STR_PREVIEWFAIL);
                 return ep;
             }
 //        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
@@ -845,7 +875,7 @@ public class DocumentViewerFactory {
                 bp.setSize(new Dimension(width, height));
                 bp.setMaximumSize(new Dimension(width, height));
                 bp.setPreferredSize(new Dimension(width, height));
-                bp.showStatus("Vorschau kann nicht geladen werden.");
+                bp.showStatus(STR_PREVIEWFAIL);
                 return bp;
             }
         } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
@@ -886,10 +916,9 @@ public class DocumentViewerFactory {
         //ptp.showStatus(previewContent);
         try {
             ptp.showContent(previewProvider.getPreview().getBytes());
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
         }
-        
 
         return ptp;
 

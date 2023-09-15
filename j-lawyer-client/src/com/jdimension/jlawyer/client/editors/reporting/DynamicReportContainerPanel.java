@@ -893,6 +893,7 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                     this.tabbedCharts.addTab(chart.getChartName(), new DynamicBarChartPanel(chart));
                     objectTypes++;
                 }
+                this.jSplitPane1.setDividerLocation(0.5d);
             }
             if(objectTypes>1) {
                 this.jSplitPane1.setDividerLocation(0.5f);

@@ -691,6 +691,7 @@ public class OAuthUserConsentDialog extends javax.swing.JDialog {
      *
      * @param parent
      * @param modal
+     * @param tenantId
      * @param clientId
      */
     public OAuthUserConsentDialog(JDialog parent, boolean modal, String tenantId, String clientId) {
@@ -770,7 +771,7 @@ public class OAuthUserConsentDialog extends javax.swing.JDialog {
 //&state=12345
 //&code_challenge=YTFjNjI1OWYzMzA3MTI4ZDY2Njg5M2RkNmVjNDE5YmEyZGRhOGYyM2IzNjdmZWFhMTQ1ODg3NDcxY2Nl
 //&code_challenge_method=S256
-            String scopes = "email%20openid%20IMAP.AccessAsUser.All%20offline_access%20Mail.Read%20Mail.ReadWrite%20Mail.Send";
+            String scopes = "email%20openid%20IMAP.AccessAsUser.All%20offline_access%20Mail.Read%20Mail.ReadWrite%20Mail.Send%20SMTP.Send";
             //bei azure sind die irgendwas mit graph, aber angeblich gehen nur mit präfix https://outlook.office365.com/
             //String scopes = "https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All";
             //String scopes = "IMAP.AccessAsUser.All";

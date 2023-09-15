@@ -688,6 +688,7 @@ public interface InvoiceFacadeLocal {
     int count();
     
     List<Invoice> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+    List<Invoice> findByInvoiceDocument(ArchiveFileDocumentsBean invoiceDocument);
 
     List<Invoice> findByAddress(AddressBean address);
     

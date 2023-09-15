@@ -667,6 +667,11 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Container;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -684,13 +689,21 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
     
     private String invoiceId = null;
     private InvoicePosition position = null;
+    
+    private DecimalFormat taxRateFormat=null;
 
     /**
      * Creates new form InvoicePositionEntryPanel
+     * @param parent
+     * @param taxRates
      */
-    public InvoicePositionEntryPanel(InvoiceDialog parent) {
+    public InvoicePositionEntryPanel(InvoiceDialog parent, List<String> taxRates) {
         initComponents();
         this.parent=parent;
+        
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
+        this.taxRateFormat = (DecimalFormat) nf;
+        this.taxRateFormat.applyPattern("0.0");
 
         this.txtUnitPrice.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
@@ -719,6 +732,11 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
                 updateParentTotal();
             }
         });
+        
+        this.cmbTaxRate.removeAllItems();
+        for(String tr: taxRates) {
+            this.cmbTaxRate.addItem(tr);
+        }
 
     }
 
@@ -741,7 +759,12 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
-        clone.setTaxRate(Float.parseFloat(this.cmbTaxRate.getSelectedItem().toString()));
+        try {
+            clone.setTaxRate(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).floatValue());
+        } catch (Exception ex) {
+            clone.setTaxRate(0f);
+            JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
         //this.updateEntryTotal();
         clone.setTotal((Float) this.txtTotal.getValue());
         
@@ -783,10 +806,12 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
+        txtName.setToolTipText("Bezeichnung der Position");
 
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont().deriveFont(taDescription.getFont().getSize()-2f));
         taDescription.setRows(5);
+        taDescription.setToolTipText("Beschreibung der Position");
         jScrollPane1.setViewportView(taDescription);
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()-2f));
@@ -811,8 +836,15 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         cmbTaxRate.setEditable(true);
         cmbTaxRate.setFont(cmbTaxRate.getFont().deriveFont(cmbTaxRate.getFont().getSize()-2f));
         cmbTaxRate.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTaxRate.setToolTipText("Steuersatz");
+        cmbTaxRate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTaxRateActionPerformed(evt);
+            }
+        });
 
         cmdRemovePosition.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemovePosition.setToolTipText("Position löschen");
         cmdRemovePosition.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRemovePositionActionPerformed(evt);
@@ -820,6 +852,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         });
 
         cmdMovePosUp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
+        cmdMovePosUp.setToolTipText("um eine Position nach oben bewegen");
         cmdMovePosUp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMovePosUpActionPerformed(evt);
@@ -827,6 +860,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         });
 
         cmdMovePosDown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"))); // NOI18N
+        cmdMovePosDown.setToolTipText("um eine Position nach unten bewegen");
         cmdMovePosDown.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMovePosDownActionPerformed(evt);
@@ -866,7 +900,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -906,8 +940,14 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().removeInvoicePosition(invoiceId, this.position);
-            this.getParent().remove(this);
-            this.getParent().doLayout();
+            Container parentContainer=this.getParent();
+            parentContainer.remove(this);
+            try {
+                parentContainer.doLayout();
+            } catch (Exception ex) {
+                log.warn("unable to layout invoice dialog", ex);
+            }
+            this.parent.bumpSplitPane();
         } catch (Exception ex) {
             log.error("Error updating invoice position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -934,6 +974,10 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
             this.getParent().doLayout();
         }
     }//GEN-LAST:event_cmdMovePosDownActionPerformed
+
+    private void cmbTaxRateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTaxRateActionPerformed
+        updateParentTotal();
+    }//GEN-LAST:event_cmbTaxRateActionPerformed
 
     private void updatePosition() {
         ClientSettings settings = ClientSettings.getInstance();

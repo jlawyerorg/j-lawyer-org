@@ -678,10 +678,8 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -693,7 +691,6 @@ import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
-import org.jlawyer.bea.model.VerificationResult;
 
 /**
  *
@@ -702,9 +699,7 @@ import org.jlawyer.bea.model.VerificationResult;
 public class SaveBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SaveBeaMessageAction.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private List<BeaAttachmentMetadata> attachments = null;
-    private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
     private Identity to = null;
@@ -722,7 +717,6 @@ public class SaveBeaMessageAction extends ProgressableAction {
     public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
-        this.cu = cu;
         this.readReceipt = readReceipt;
         this.to = to;
         this.subject = subject;

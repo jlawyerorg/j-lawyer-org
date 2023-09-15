@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
@@ -688,6 +690,8 @@ import javax.mail.internet.*;
 import javax.swing.text.Document;
 import javax.swing.text.html.HTMLEditorKit;
 import org.apache.log4j.Logger;
+import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
+import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 
 /**
  *
@@ -715,6 +719,8 @@ public class EmailUtils {
         sentAliases.add("Sent");
         sentAliases.add("Sent Items");
         sentAliases.add("Gesendete Elemente");
+        sentAliases.add("Sent Objects");
+        sentAliases.add("Gesendete Objekte");
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
@@ -825,6 +831,44 @@ public class EmailUtils {
             return null;
         }
     }
+    
+    public static MailboxSetup getMailboxSetup(OutlookMessage msg) throws Exception {
+        try {
+            UserSettings uset = UserSettings.getInstance();
+            List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+            if (mailboxes.isEmpty()) {
+                return null;
+            }
+
+            String from = msg.getFromEmail();
+            if(from==null)
+                from="";
+            for (MailboxSetup ms : mailboxes) {
+                if (!StringUtils.isEmpty(from) && from.contains(ms.getEmailAddress())) {
+                    return ms;
+                }
+                if (msg.getRecipients() != null) {
+                    for (OutlookRecipient to : msg.getRecipients()) {
+                        if (to.getAddress().contains(ms.getEmailAddress())) {
+                            return ms;
+                        }
+                    }
+                }
+            }
+
+            return null;
+
+        } catch (Exception ex) {
+            String subject = "";
+            try {
+                subject = msg.getSubject();
+            } catch (Throwable t) {
+                log.warn("cannot determine message subject", t);
+            }
+            log.error("Error determining mailbox for message " + subject, ex);
+            return null;
+        }
+    }
 
     public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
 
@@ -856,19 +900,25 @@ public class EmailUtils {
 
                     }
 
-                } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    } else {
+                        if(part.getContentType().toLowerCase().contains("message/rfc822")) {
+                            attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
+                        }
                     }
-                } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                     }
 
+                } else {
+                    log.error("unknown content disposition: " + disposition);
                 }
             }
         }
@@ -911,12 +961,16 @@ public class EmailUtils {
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     return part;
+                } else if(name.equals("Nachricht_"+part.getSize() + ".eml")) {
+                    return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     return part;
                 }
 
+            } else {
+                log.error("unkown content");
             }
         }
         return null;
@@ -1157,9 +1211,25 @@ public class EmailUtils {
     public static boolean isIMAP(Folder f) {
         return (f instanceof IMAPFolder);
     }
+    
+    public static boolean sameCryptoPassword(AddressBean[] addresses) throws Exception {
+        ArrayList<String> passwords=new ArrayList<>();
+        for(AddressBean a: addresses) {
+            if(a.supportsCrypto()) {
+                if(!passwords.contains(a.getEncryptionPwd()))
+                    passwords.add(a.getEncryptionPwd());
+            } else {
+                return false;
+            }
+        }
+        return passwords.size()==1;
+    }
 
     // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f) {
+        if(f==null)
+            return;
+        
         try {
             if (isIMAP(f)) {
                 if (f.isOpen()) {
@@ -1172,6 +1242,8 @@ public class EmailUtils {
     }
 
     public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
+        if(StringUtils.isEmpty(decodedTo))
+            decodedTo="Unbekannt";
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
             decodedTo = decodedTo.replaceAll("<", "&lt;");
             decodedTo = decodedTo.replaceAll(">", "&gt;");
@@ -1346,6 +1418,74 @@ public class EmailUtils {
         }
     }
 
+    public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        try {
+            // figure out if the message was sent from one of the users accounts
+            boolean sentByCurrentUser = false;
+            UserSettings usettings = UserSettings.getInstance();
+            AppUserBean cu = usettings.getCurrentUser();
+            List<MailboxSetup> allInboxes = usettings.getMailboxes(cu.getPrincipalId());
+            String fromMail = m.getFromEmail();
+            for (MailboxSetup mbx : allInboxes) {
+                if (fromMail.toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
+                    sentByCurrentUser = true;
+                    break;
+                }
+            }
+
+            MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+            if (ms != null) {
+                dlg.setFrom(ms);
+            }
+            String replyTo = m.getReplyToEmail();
+
+            StringBuilder toString = new StringBuilder();
+            if (sentByCurrentUser) {
+                // sent by the current user - reply to the recipient of the message
+                List<OutlookRecipient> recs= m.getRecipients();
+                for (OutlookRecipient a : recs) {
+                    toString.append(a.getAddress()).append(", ");
+                }
+            } else {
+                // not sent by the current user - reply to the sender of the message
+                
+                String to = null;
+                if(!StringUtils.isEmpty(replyTo)) {
+                    to = replyTo;
+                }
+                if (to == null) {
+                    to = m.getFromEmail();
+                }
+                toString.append(to);
+            }
+            dlg.setTo(toString.toString());
+
+            String subject = m.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            if (!subject.startsWith("Re: ")) {
+                subject = "Re: " + subject;
+            }
+            dlg.setSubject(subject);
+
+            String decodedTo = toString.toString();
+            dlg.setContentType(contentType);
+            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+            } else {
+                dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+            }
+            dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
+
+        } catch (Exception ex) {
+            log.error(ex);
+        }
+
+        return dlg;
+    }
+    
     public static SendEmailDialog reply(Message m, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {

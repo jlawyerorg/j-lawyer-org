@@ -665,14 +665,17 @@ package com.jdimension.jlawyer.documents;
 
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -680,21 +683,40 @@ import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.odftoolkit.odfdom.dom.element.draw.DrawFrameElement;
+import org.odftoolkit.odfdom.dom.element.draw.DrawImageElement;
+import org.odftoolkit.odfdom.dom.element.office.OfficeTextElement;
+import org.odftoolkit.odfdom.dom.element.style.StyleParagraphPropertiesElement;
+import org.odftoolkit.odfdom.dom.element.style.StyleTextPropertiesElement;
+import org.odftoolkit.odfdom.dom.element.table.TableTableCellElement;
+import org.odftoolkit.odfdom.dom.element.table.TableTableCellElementBase;
+import org.odftoolkit.odfdom.dom.element.table.TableTableElement;
+import org.odftoolkit.odfdom.dom.element.table.TableTableRowElement;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
+import org.odftoolkit.odfdom.dom.element.text.TextListElement;
+import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
+import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
+import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawFrame;
+import org.odftoolkit.odfdom.pkg.OdfElement;
+import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
+import org.odftoolkit.simple.draw.Image;
 import org.odftoolkit.simple.style.Border;
 import org.odftoolkit.simple.style.Font;
 import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
+import org.odftoolkit.simple.text.Paragraph;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  *
@@ -704,8 +726,266 @@ public class LibreOfficeAccess {
 
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
+    private static final String EXT_DOCX = ".docx";
 
-    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
+    public static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
+        // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
+        if (mergeDocument.toLowerCase().endsWith(".odt")) {
+            merge(intoDocument, mergeDocument);
+        } else if (mergeDocument.toLowerCase().endsWith(".ods")) {
+            throw new Exception("Keine Briefkopf-Unterstützung für Tabellendokumente!");
+        } else if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
+            MicrosoftOfficeAccess.mergeDocuments(intoDocument, mergeDocument);
+        } else {
+            throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
+        }
+    }
+
+    private static void merge(String intoDocument, String mergeDocument) throws Exception {
+        // Load body document
+        TextDocument bodyDoc = TextDocument.loadDocument(new File(mergeDocument));
+        OdfPackage bodyPackage=bodyDoc.getPackage();
+
+        // Create a new document to store the merged documents
+        TextDocument mergedDoc = TextDocument.loadDocument(new File(intoDocument));
+        OdfPackage mergedPackage = mergedDoc.getPackage();
+
+        // Get the content root element of the new document
+        OfficeTextElement contentRoot = mergedDoc.getContentRoot();
+
+        // Copy the body document to the new document
+        OfficeTextElement bodyContent = bodyDoc.getContentRoot();
+
+        browseAndMergeElements(bodyPackage, bodyContent, mergedDoc, mergedPackage, new ArrayList<>());
+
+        // Save the merged document
+        mergedDoc.save(new FileOutputStream(intoDocument));
+
+        // Close all the documents
+        bodyDoc.close();
+    }
+
+    // Define a recursive function to browse through all elements in the document
+    public static void browseAndMergeElements(OdfPackage bodyPackage, Node parentElement, TextDocument targetDoc, OdfPackage mergedPackage, ArrayList<Node> processedTables) {
+        NodeList childNodes = parentElement.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+
+            // If the child node is a paragraph, create a new Paragraph object
+            if (childNode.getNodeName().equals("text:p")) {
+                // avoid duplication of table placeholders
+                if (parentElement instanceof TableTableCellElement && parentElement.getParentNode() instanceof TableTableRowElement && parentElement.getParentNode().getParentNode() instanceof TableTableElement) {
+                    if (!processedTables.contains(parentElement.getParentNode().getParentNode())) {
+                        OdfElement odfElement = (OdfElement) childNode;
+                        TextPElement pElement = (TextPElement) odfElement;
+                        
+                        Paragraph newP = targetDoc.addParagraph(pElement.getTextContent());
+                        
+                        pElement.getAutomaticStyle().getFamily();
+                        
+                    }
+                } else {
+                    OdfElement odfElement = (OdfElement) childNode;
+                    TextPElement pElement = (TextPElement) odfElement;
+                    Paragraph newP = targetDoc.addParagraph(pElement.getTextContent());
+                    
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontSize, pElement.getProperty(StyleTextPropertiesElement.FontSize));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontName, pElement.getProperty(StyleTextPropertiesElement.FontName));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontWeight, pElement.getProperty(StyleTextPropertiesElement.FontWeight));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.Color, pElement.getProperty(StyleTextPropertiesElement.Color));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.BackgroundColor, pElement.getProperty(StyleTextPropertiesElement.BackgroundColor));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontStyle, pElement.getProperty(StyleTextPropertiesElement.FontStyle));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontStyleName, pElement.getProperty(StyleTextPropertiesElement.FontStyleName));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.LetterSpacing, pElement.getProperty(StyleTextPropertiesElement.LetterSpacing));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.TextEmphasize, pElement.getProperty(StyleTextPropertiesElement.TextEmphasize));
+                    newP.getOdfElement().setProperty(StyleTextPropertiesElement.TextPosition, pElement.getProperty(StyleTextPropertiesElement.TextPosition));
+                    
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextAlign, pElement.getProperty(StyleParagraphPropertiesElement.TextAlign));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineBreak, pElement.getProperty(StyleParagraphPropertiesElement.LineBreak));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineHeight, pElement.getProperty(StyleParagraphPropertiesElement.LineHeight));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineSpacing, pElement.getProperty(StyleParagraphPropertiesElement.LineSpacing));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.Margin, pElement.getProperty(StyleParagraphPropertiesElement.Margin));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextIndent, pElement.getProperty(StyleParagraphPropertiesElement.TextIndent));
+                    newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.VerticalAlign, pElement.getProperty(StyleParagraphPropertiesElement.VerticalAlign));
+                        
+                }
+                
+            } // If the child node is a table, create a new Table object
+            else if (childNode.getNodeName().equals("table:table")) {
+                OdfElement odfElement = (OdfElement) childNode;
+                TableTableElement tableElement = (TableTableElement) odfElement;
+                processedTables.add(childNode);
+
+                Paragraph tableParagraph = targetDoc.addParagraph("");
+
+                TableTableRowElement[] rows = getChildElementsOfType(childNode, TableTableRowElement.class);
+                int numRows = rows.length;
+                int numCols = 0;
+                for (int j = 0; j < numRows; j++) {
+                    TableTableCellElementBase[] cells = getChildElementsOfType(rows[j], TableTableCellElementBase.class);
+                    int numCells = cells.length;
+                    numCols = Math.max(numCols, numCells);
+                }
+                Table table = targetDoc.addTable(numRows, numCols);
+                for (int j = 0; j < numRows; j++) {
+                    TableTableCellElementBase[] cells = getChildElementsOfType(rows[j], TableTableCellElementBase.class);
+                    for (int k = 0; k < cells.length; k++) {
+                        String cellText = cells[k].getTextContent();
+                        table.getCellByPosition(j, k).setDisplayText(cellText);
+                    }
+                }
+
+            } else if (childNode.getNodeName().equals("text:list")) {
+                OdfElement odfElement = (OdfElement) childNode;
+                TextListElement listElement = (TextListElement) odfElement;
+                org.odftoolkit.simple.text.list.List list = targetDoc.addList();
+
+                // Get the list items and add them to the list
+                NodeList listItems = listElement.getElementsByTagName("text:list-item");
+                for (int j = 0; j < listItems.getLength(); j++) {
+                    Node listItemNode = listItems.item(j);
+                    if (listItemNode.getNodeType() == Node.ELEMENT_NODE) {
+                        OdfElement listItemElement = (OdfElement) listItemNode;
+                        TextListItemElement listItem = (TextListItemElement) listItemElement;
+                        list.addItem(listItem.getTextContent());
+                    }
+                }
+            }
+            // If the child node is an image, extract the image information
+            else if (childNode.getNodeName().equals("draw:image")) {
+                DrawImageElement imageElement = (DrawImageElement) childNode;
+                NamedNodeMap attributes = imageElement.getAttributes();
+                
+                
+                Node hrefAttr = attributes.getNamedItemNS("http://www.w3.org/1999/xlink", "href");
+                if (hrefAttr != null) {
+                    String imagePath = hrefAttr.getNodeValue();
+                    log.debug("Image path: " + imagePath);
+                }
+            }
+            // If the child node is a graphic frame, extract the graphic information
+            else if (childNode.getNodeName().equals("draw:frame")) {
+                DrawFrameElement frameElement = (DrawFrameElement) childNode;
+                NamedNodeMap attributes = frameElement.getAttributes();
+                
+                if(frameElement.hasChildNodes()) {
+                    Node imageNode=frameElement.getChildNodes().item(0);
+                    if(imageNode instanceof DrawImageElement) {
+                        try {
+                             mergeImage(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
+                        } catch (Exception ex) {
+                            log.error("Can not merge image", ex);
+                        }
+                    }
+                }
+                
+                
+                
+                Node styleNameAttr = attributes.getNamedItem("draw:style-name");
+                if (styleNameAttr != null) {
+                    String styleName = styleNameAttr.getNodeValue();
+                    log.debug("Graphic style name: " + styleName);
+                }
+            } else {
+                //log.warn("unkown element type: " + childNode.getNodeName());
+                
+            }
+            // If the child element has child nodes, recursively call this function on them
+            if (childNode.hasChildNodes()) {
+                browseAndMergeElements(bodyPackage, childNode, targetDoc, mergedPackage, processedTables);
+            }
+
+        }
+    }
+    
+    private static void mergeImage(org.odftoolkit.odfdom.dom.element.draw.DrawImageElement drawImageElement, OdfPackage bodyPack, TextDocument targetDoc, OdfPackage mergedPack) throws Exception {
+        String href=drawImageElement.getAttributes().getNamedItem("xlink:href").getNodeValue();
+        byte[] bytes=bodyPack.getBytes(href);
+        String mimeType=drawImageElement.getAttributes().getNamedItem("draw:mime-type").getNodeValue();
+        if(bytes!=null) {
+            //mergedPack.insert(new URI("./" + href.substring(href.lastIndexOf("/")+1)), href, mimeType);
+            mergedPack.insert(bytes, href, mimeType);
+                        
+            File tmpImage=File.createTempFile(""+System.currentTimeMillis(), null);
+            FileOutputStream fout=new FileOutputStream(tmpImage);
+            fout.write(bytes);
+            fout.close();
+            
+            // nothing visible
+            //targetDoc.newImage(new URI("./" + href.substring(href.lastIndexOf("/")+1)));
+            //targetDoc.newImage(new URI(href));
+            
+            // works, but image is large and misplaced
+            Paragraph imgParagraph = targetDoc.addParagraph("");
+            Image newImage=Image.newImage(imgParagraph, tmpImage.toURI());
+            //targetDoc.newImage(tmpImage.toURI());
+            
+            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgXAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgXAttribute());
+            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgYAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgYAttribute());
+            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgHeightAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgHeightAttribute());
+            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgWidthAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgWidthAttribute());
+            
+            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setTextAnchorTypeAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getTextAnchorTypeAttribute());
+            
+            
+//            newImage.getRectangle().setHeight(((DrawFrameElement)drawImageElement.getParentNode()).get;
+//            
+//            
+//              DrawFrameElement odfFrame = (DrawFrameElement) drawImageElement.getParentNode();
+//              odfFrame.set
+//            Frame aFrame = Frame.getInstanceof(odfFrame);
+//            
+//            FrameRectangle oldRect = aFrame.getRectangle();
+//            
+//            newImage.getRectangle().setWidth(odfFrame.getProperty
+//            
+//            if (oldRect.getLinearMeasure() != StyleTypeDefinitions.SupportedLinearMeasure.CM) {
+//                oldRect.setLinearMeasure(StyleTypeDefinitions.SupportedLinearMeasure.CM);
+//            }
+//            if (odfFrame != null) {
+//                BufferedImage image = ImageIO.read(is);
+//                int height = image.getHeight(null);
+//                int width = image.getWidth(null);
+//                odfFrame.setSvgHeightAttribute(Length.mapToUnit(String.valueOf(height) + "px", Unit.CENTIMETER));
+//                odfFrame.setSvgWidthAttribute(Length.mapToUnit(String.valueOf(width) + "px", Unit.CENTIMETER));
+//                if (isResetSize) {
+//                    FrameRectangle newRect = aFrame.getRectangle();
+//                    
+//                    newRect.setX(oldRect.getX() + (oldRect.getWidth() - newRect.getWidth()) / 2);
+//                    newRect.setY(oldRect.getY() + (oldRect.getHeight() - newRect.getHeight()) / 2);
+//                    aFrame.setRectangle(newRect);
+//                }
+//            }
+            
+            
+            //targetDoc.addParagraph("").getFrameContainerElement().appendChild(drawImageElement.cloneNode(true));
+            
+        }
+    }
+
+    // Define a utility function to get an array of child elements of a certain type
+    public static <T extends Node> T[] getChildElementsOfType(Node parent, Class<T> type) {
+        NodeList childNodes = parent.getChildNodes();
+        int count = 0;
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+            if (type.isInstance(childNode)) {
+                count++;
+            }
+        }
+        T[] elements = (T[]) java.lang.reflect.Array.newInstance(type, count);
+        int index = 0;
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
+            if (type.isInstance(childNode)) {
+                elements[index] = (T) childNode;
+                index++;
+            }
+        }
+        return elements;
+    }
+
+    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
 
         if (fileName.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
@@ -714,7 +994,7 @@ public class LibreOfficeAccess {
             ArrayList<Node> removalParents = new ArrayList<>();
             ArrayList<Node> removalChildren = new ArrayList<>();
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -892,14 +1172,6 @@ public class LibreOfficeAccess {
                                 }
 
                                 for (int i = 0; i < tab.getColumnCount(); i++) {
-                                    if (tab.getColumnWidth(i) > -1) {
-                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
-                                    } else {
-                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
-                                    }
-                                }
-
-                                for (int i = 0; i < tab.getColumnCount(); i++) {
                                     for (int k = 0; k < tab.getRowCount(); k++) {
                                         // this may fail when running on a headless system
                                         // need to install these packages on Ubuntu: xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0
@@ -960,10 +1232,35 @@ public class LibreOfficeAccess {
                                     }
                                 }
 
-                                for (int i = 0; i < t.getColumnCount(); i++) {
-                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
-                                }
 
+//                                for (int i = 0; i < tab.getColumnCount(); i++) {
+//                                    if (tab.getColumnWidth(i) > -1) {
+//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+//                                    } else {
+//                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                    }
+//                                }
+                                
+                                int numColumns = t.getColumnCount();
+                                for (int col = 0; col < numColumns; col++) {
+                                    double maxColumnWidth = 0;
+
+                                    // Iterate through all rows in the column
+                                    for (int row = 0; row < t.getRowCount(); row++) {
+                                        org.odftoolkit.simple.table.Cell cell = t.getCellByPosition(col, row);
+                                        //double cellWidth = cellText.length()*10.0;
+                                        double cellWidth = calculateTextWidth(cell);
+                                        // Add some padding to the width (adjust as needed)
+                                        cellWidth += 2.0; // 2 units of padding
+
+                                        if (cellWidth > maxColumnWidth) {
+                                            maxColumnWidth = cellWidth;
+                                        }
+                                    }
+
+                                    // Set the column width to the calculated maximum width
+                                    t.getColumnByIndex(col).setWidth(maxColumnWidth);
+                                }
                             }
                         }
                     }
@@ -996,7 +1293,7 @@ public class LibreOfficeAccess {
             SpreadsheetDocument outputOds;
             outputOds = SpreadsheetDocument.loadDocument(fileInFileSystem);
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
 
                 // if the placeholder is followed by one of these characters, do not append a space
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
@@ -1050,12 +1347,32 @@ public class LibreOfficeAccess {
 
             outputOds.save(new File(fileInFileSystem));
             outputOds.close();
-        } else if (fileName.toLowerCase().endsWith(".docx")) {
+        } else if (fileName.toLowerCase().endsWith(EXT_DOCX)) {
             MicrosoftOfficeAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
     }
+    
+    private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
+        // Create a temporary image to obtain FontMetrics
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics graphics = image.getGraphics();
 
+        // Specify the font you are using
+        java.awt.Font font = new java.awt.Font(cell.getFont().getFamilyName(), java.awt.Font.PLAIN, (int) cell.getFont().getSize()); // Replace with your font and size
+
+        // Get FontMetrics for the specified font
+        FontMetrics fontMetrics = graphics.getFontMetrics(font);
+
+        // Calculate the width of the text using FontMetrics
+        int textWidth = fontMetrics.stringWidth(cell.getStringValue());
+
+        // Release resources
+        graphics.dispose();
+
+        return (double) textWidth;
+    }
+    
     public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
@@ -1137,7 +1454,7 @@ public class LibreOfficeAccess {
 
             outputOds.close();
             return resultList;
-        } else if (file.toLowerCase().endsWith(".docx")) {
+        } else if (file.toLowerCase().endsWith(EXT_DOCX)) {
 
             HashMap<Integer, CTR> tfCache = new HashMap<>();
             return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
@@ -1148,7 +1465,7 @@ public class LibreOfficeAccess {
 
     }
 
-    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String,Object> values, ArrayList<String> formsPrefixes) {
+    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String, Object> values, ArrayList<String> formsPrefixes) {
         if (scriptContent.startsWith("[[SCRIPT:")) {
             scriptContent = scriptContent.substring(9);
         }
@@ -1158,19 +1475,21 @@ public class LibreOfficeAccess {
         scriptContent = scriptContent.trim();
 
         Set<String> valueKeys = values.keySet();
-        
+
         // need to sort by key length descending
         // e.g. to prevent MANDANT_ORT from replacing the value for MANDANT_ORTSTEIL
-        List<String> lengthSortedValueKeys=new ArrayList<>(valueKeys);
+        List<String> lengthSortedValueKeys = new ArrayList<>(valueKeys);
         Collections.sort(lengthSortedValueKeys, (Object arg0, Object arg1) -> {
-            if(arg0==null)
-                arg0="";
-            if(arg1==null)
-                arg1="";
+            if (arg0 == null) {
+                arg0 = "";
+            }
+            if (arg1 == null) {
+                arg1 = "";
+            }
             return Integer.compare(arg1.toString().length(), arg0.toString().length());
         });
-        
-        for (String scriptPlaceHolderKey: lengthSortedValueKeys) {
+
+        for (String scriptPlaceHolderKey : lengthSortedValueKeys) {
             if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
                 String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
@@ -1183,7 +1502,6 @@ public class LibreOfficeAccess {
 
         // required for "WENNVORHANDEN"
         // scriptContent = scriptContent.replace("\"\"", "\"");
-
         try ( InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");  InputStreamReader isr = new InputStreamReader(is);  BufferedReader br = new BufferedReader(isr);) {
 
             StringBuilder sb = new StringBuilder();
@@ -1264,15 +1582,13 @@ public class LibreOfficeAccess {
             //outputOdt.save("HelloWAC.odt");
             outputOds.close();
 
-            System.out.println(resultList.toString());
-
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
 
-            HashMap<String,Object> values = new HashMap<>();
+            HashMap<String, Object> values = new HashMap<>();
             values.put("{{PROFIL_EMAIL}}", "jens.kutschke@waat???");
             values.put("{{MANDANT_STRASSE}}", "jens.kutschke strasse");
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}\\.";
                 String value = (String) values.get(key);
                 if (value == null) {

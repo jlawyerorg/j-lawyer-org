@@ -685,7 +685,7 @@ public class IterativeBackupExecutor {
     private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
     
     // these directories will be zipped entirely with each backup run
-    private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates"};
+    private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates", "letterheads"};
     // these directories will be zipped on a per subdirectory basis and only if there are changes
     private final String[] iterativeBackupDirs = new String[]{"archivefiles"};
 

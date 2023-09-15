@@ -42,6 +42,13 @@
                     <exclude>junit.*</exclude>
                   </excludes>
                 </relocation>
+                <relocation>
+                  <pattern>org.apache.logging</pattern>
+                  <shadedPattern>shaded.org.apache.logging</shadedPattern>
+                  <excludes>
+                    <exclude>org.apache.logging.*</exclude>
+                  </excludes>
+                </relocation>
               </relocations>
             </configuration>
           </execution>

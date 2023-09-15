@@ -50,8 +50,10 @@
         <!-- Limit JBoss categories -->
         <Logger name="org.jboss"/>
         
+        <Logger name="org.apache.commons.digester" level="info"/>
+        
         <!-- ======================= -->
-        <Root level="DEBUG">
+        <Root level="INFO">
             <AppenderRef ref="CONSOLE"/>
             <AppenderRef ref="FILE"/>
         </Root>      

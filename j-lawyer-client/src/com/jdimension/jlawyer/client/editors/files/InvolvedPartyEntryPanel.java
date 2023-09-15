@@ -734,6 +734,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
         this.initializing = true;
         initComponents();
+        
         this.openedFromEditorClass = openedFromClassName;
         this.container = container;
         this.casePanel = casePanel;
@@ -749,6 +750,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
+        this.txtReference.setDocument(new JTextFieldLimit(49));
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -1491,6 +1493,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
 
+    public void close() {
+        EventBroker b=EventBroker.getInstance();
+        b.unsubscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
+    }
+    
     @Override
     public void onEvent(Event e) {
         if (e instanceof ContactUpdatedEvent) {

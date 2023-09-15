@@ -675,6 +675,8 @@ import org.jlawyer.io.rest.v2.pojo.RestfulContactV2;
 public interface ContactsEndpointLocalV2 {
 
     Response getContact(String id);
+    
+    Response getContactByExternalId(String extId);
 
     Response createContact(RestfulContactV2 contact);
 

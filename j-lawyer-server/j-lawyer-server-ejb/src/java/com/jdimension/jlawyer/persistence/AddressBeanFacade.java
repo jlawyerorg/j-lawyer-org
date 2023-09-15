@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.persistence;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -693,6 +694,16 @@ public class AddressBeanFacade extends AbstractFacade<AddressBean> implements Ad
             a.getArchiveFileAddressesBeanList();
         }
         return all;
+    }
+    
+    
+    @Override
+    public AddressBean findByExternalId(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId").setParameter("externalId", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
     
 }

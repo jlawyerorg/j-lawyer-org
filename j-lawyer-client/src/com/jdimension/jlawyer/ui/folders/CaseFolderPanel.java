@@ -670,14 +670,15 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseFolderSettings;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -697,6 +698,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     private boolean readonly = false;
     private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+    private HashMap<String,Invoice> linkedInvoices=new HashMap<>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
     private String caseId = null;
@@ -951,7 +953,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
             return -1;
         });
-        this.setDocuments(documents);
+        this.setDocuments(documents, linkedInvoices);
     }
 
     public final void sortByDateDesc() {
@@ -1502,12 +1504,14 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         }
     }
-
+    
     /**
      * @param documents the documents to set
+     * @param invoices
      */
-    public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents) {
+    public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents, HashMap<String,Invoice> invoices) {
         this.documents = documents;
+        this.linkedInvoices=invoices;
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
 
@@ -1537,7 +1541,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         double prefHeight = 0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
-            DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
+            DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.linkedInvoices.get(d.getId()), this.readonly);
             if (i % 2 == 0) {
                 p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
             } else {
@@ -1561,9 +1565,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.foldersListPanel.renderEmptyFullState();
     }
 
-    public void addDocument(ArchiveFileDocumentsBean newDoc) {
+    public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
         this.documents.add(newDoc);
-        DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, this.readonly);
+        if(invoice!=null)
+            this.linkedInvoices.put(newDoc.getId(), invoice);
+        
+        DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, invoice, this.readonly);
         if (this.documents.size() % 2 == 0) {
             p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
         } else {
@@ -1578,6 +1585,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     public void clearDocuments() {
         this.documents.clear();
+        this.linkedInvoices.clear();
         this.pnlDocumentEntries.removeAll();
         this.foldersListPanel.renderEmptyFullState();
     }
@@ -1608,7 +1616,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             if (c instanceof DocumentEntryPanel) {
 
                 if (((DocumentEntryPanel) c).getDocument().getId().equals(doc.getId())) {
-                    ((DocumentEntryPanel) c).setDocument(doc);
+                    ((DocumentEntryPanel) c).setDocument(doc, this.linkedInvoices.get(doc.getId()));
                     break;
                 }
             }
@@ -1668,7 +1676,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     }
 
     void folderSelectionChanged() {
-        this.setDocuments(this.documents);
+        this.setDocuments(this.documents, this.linkedInvoices);
         this.caseContainer.documentSelectionChanged();
     }
 
@@ -1703,7 +1711,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                     if (docFolder.getId().equals(folder.getId())) {
                         ((DocumentEntryPanel) c).getDocument().setFolder(folder);
-                        ((DocumentEntryPanel) c).setDocument(((DocumentEntryPanel) c).getDocument());
+                        ((DocumentEntryPanel) c).setDocument(((DocumentEntryPanel) c).getDocument(), this.linkedInvoices.get(((DocumentEntryPanel) c).getDocument().getId()));
 
                     }
 

@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -687,8 +688,10 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  * @author jens
  */
 public class PlaceHolderServerUtils extends PlaceHolders  {
+    
+    private static final String DATE_FORMAT="dd.MM.yyyy";
 
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) throws Exception {
+    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -700,7 +703,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         }
         
         if (placeHolders.containsKey(KURZDATUM)) {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
             placeHolders.put(KURZDATUM, df.format(new Date()));
         }
 
@@ -1019,7 +1022,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             }
             if (placeHolders.containsKey(AKTE_ERSTELLT)) {
                 if(aFile.getDateCreated()!=null) {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+                    SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
                     placeHolders.put(AKTE_ERSTELLT, df.format(aFile.getDateCreated()));
                 } else {
                     placeHolders.put(AKTE_ERSTELLT, "");
@@ -1034,6 +1037,49 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             } else {
                 placeHolders.put(AUTOR_AN, "");
             }
+        }
+        
+        if (invoice != null) {
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
+            if (placeHolders.containsKey(BEL_BESCHR)) {
+                placeHolders.put(BEL_BESCHR, val(invoice.getDescription()));
+            }
+            if (placeHolders.containsKey(BEL_DTERSTELLT)) {
+                placeHolders.put(BEL_DTERSTELLT, df.format(invoice.getCreationDate()));
+            }
+            if (placeHolders.containsKey(BEL_DTFAELLIG)) {
+                placeHolders.put(BEL_DTFAELLIG, df.format(invoice.getDueDate()));
+            }
+            if (placeHolders.containsKey(BEL_DTLZBIS)) {
+                placeHolders.put(BEL_DTLZBIS, df.format(invoice.getPeriodTo()));
+            }
+            if (placeHolders.containsKey(BEL_DTLZVON)) {
+                placeHolders.put(BEL_DTLZVON, df.format(invoice.getPeriodFrom()));
+            }
+            if (placeHolders.containsKey(BEL_NAME)) {
+                placeHolders.put(BEL_NAME, val(invoice.getName()));
+            }
+            if (placeHolders.containsKey(BEL_TYP)) {
+                if(invoice!=null && invoice.getInvoiceType()!=null)
+                    placeHolders.put(BEL_TYP, val(invoice.getInvoiceType().getDisplayName()));
+            }
+            if (placeHolders.containsKey(BEL_NR)) {
+                placeHolders.put(BEL_NR, val(invoice.getInvoiceNumber()));
+            }
+            if (placeHolders.containsKey(BEL_TOTAL)) {
+                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotal()));
+            }
+            if (placeHolders.containsKey(BEL_WHRG)) {
+                placeHolders.put(BEL_WHRG, val(invoice.getCurrency()));
+            }
+        }
+        
+        if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable!=null) {
+            placeHolders.put(BEL_TABELLE, invoiceTable);
+        }
+        
+        if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable!=null) {
+            placeHolders.put(ZE_TABELLE, timesheetsTable);
         }
         
         return placeHolders;

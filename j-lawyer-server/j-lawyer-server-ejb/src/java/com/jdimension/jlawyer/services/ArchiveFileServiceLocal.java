@@ -690,7 +690,7 @@ import javax.ejb.Local;
 public interface ArchiveFileServiceLocal {
 
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
     public void updateArchiveFile(ArchiveFileBean dto) throws Exception;

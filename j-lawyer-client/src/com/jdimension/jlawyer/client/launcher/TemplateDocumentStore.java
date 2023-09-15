@@ -667,9 +667,9 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.io.File;
 import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 
 /**
@@ -678,31 +678,31 @@ import org.jlawyer.data.tree.GenericNode;
  */
 public class TemplateDocumentStore extends ObservedDocumentStore {
     
-    private static final Logger log=Logger.getLogger(TemplateDocumentStore.class.getName());
-    
     private GenericNode folder=null;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
     
-    public TemplateDocumentStore(GenericNode folder, String documentIdentifier, String fileName, boolean readOnly) {
+    public TemplateDocumentStore(int templateType, GenericNode folder, String documentIdentifier, String fileName, boolean readOnly) {
         super(documentIdentifier, fileName, readOnly);
         this.folder=folder;
+        this.templateType=templateType;
 
     }
 
     @Override
     public void documentChanged(String path) {
         if (!this.isReadOnly()) {
-                    try {
-            byte[] newContent = FileUtils.readFile(new File(path));
-                        
-        ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSystemManagementRemote().setTemplateData(this.folder,this.getFileName(), newContent);
-            
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
+            try {
+                byte[] newContent = FileUtils.readFile(new File(path));
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupSystemManagementRemote().setTemplateData(this.templateType, this.folder, this.getFileName(), newContent);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
-                }
     }
 
     @Override

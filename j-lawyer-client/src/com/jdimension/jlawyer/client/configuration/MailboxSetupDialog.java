@@ -836,9 +836,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         });
         tblMailboxes.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                tblMailboxesKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 tblMailboxesKeyReleased(evt);
             }
@@ -1243,7 +1240,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 MailboxSetup savedMailbox = locator.lookupSecurityServiceRemote().updateMailboxSetup(ms);
-
+                row=this.tblMailboxes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox, row, 0);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox.getEmailAddress(), row, 1);
                 UserSettings.getInstance().invalidateMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -1267,6 +1264,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 locator.lookupSecurityServiceRemote().removeMailboxSetup(ms);
+                row=this.tblMailboxes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1276,10 +1274,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
-
-    private void tblMailboxesKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblMailboxesKeyPressed
-
-    }//GEN-LAST:event_tblMailboxesKeyPressed
 
     private void tblMailboxesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblMailboxesKeyReleased
         int row = this.tblMailboxes.getSelectedRow();

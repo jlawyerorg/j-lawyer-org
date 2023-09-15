@@ -668,13 +668,10 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.DrebisUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -686,12 +683,10 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form OthersSelectionStep
      */
     public OthersSelectionStep() {
         initComponents();
-
-        //this.tblOthers.getColumnModel().getColumn(11).setCellRenderer(new RoleCellRenderer());
 
         JComboBox c = new JComboBox(DrebisPerson.getAllClaimRoles());
 
@@ -712,12 +707,12 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
     }
     
     public void storeData() throws Exception {
-        ArrayList<DrebisPerson> persons=new ArrayList<DrebisPerson>();
+        ArrayList<DrebisPerson> persons=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblOthers.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
-            if(enabled.booleanValue()) {
+            if(enabled) {
                 // user chose to submit this client
                 
                 // columns: 0 submit, 1 name, 2 firstname, 3 company, 4 street, 5 zip, 6 city, 7 countrycode, 8 phone, 9 fax, 10 email, 11 role
@@ -759,12 +754,12 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void cancelledEvent() {
-        return;
+
     }
 
     @Override
     public void finishedEvent() {
-        return;
+
     }
 
     /**
@@ -861,7 +856,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
                 AddressBean cl = others.get(i);
 
                 Vector row = new Vector();
-                row.add(new Boolean(true));
+                row.add(true);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
@@ -882,7 +877,6 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
 
         }
-        return;
     }
 
     @Override

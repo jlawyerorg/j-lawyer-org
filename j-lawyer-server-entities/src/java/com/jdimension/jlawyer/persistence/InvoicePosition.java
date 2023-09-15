@@ -687,9 +687,9 @@ public class InvoicePosition implements Serializable {
     @Column(name = "id")
     protected String id;
     @Column(name = "name")
-    protected String description;
-    @Column(name = "description")
     protected String name;
+    @Column(name = "description")
+    protected String description;
     
     @Column(name = "position")
     protected int position;

@@ -820,7 +820,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 
         cmdCardLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons128/vcard.png"))); // NOI18N
         cmdCardLogin.setText("Karte");
-        cmdCardLogin.setEnabled(false);
         cmdCardLogin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdCardLogin.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         cmdCardLogin.addActionListener(new java.awt.event.ActionListener() {

@@ -680,6 +680,7 @@ public interface AddressServiceLocal {
     public int getAddressCount();
     
     public AddressBean getAddress(String id);
+    public AddressBean getAddressByExternalId(String extId);
     
     public AddressBean createAddress(AddressBean dto);
 

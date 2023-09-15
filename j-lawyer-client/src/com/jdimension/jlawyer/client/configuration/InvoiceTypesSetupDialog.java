@@ -729,7 +729,6 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
         this.txtDisplayName.setText("");
         this.txtDescription.setText("");
         this.chkTurnOver.setSelected(false);
-        this.chkNumberRequired.setSelected(true);
         
 
     }
@@ -756,7 +755,6 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
         txtDescription = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         chkTurnOver = new javax.swing.JCheckBox();
-        chkNumberRequired = new javax.swing.JCheckBox();
         lblError = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -864,11 +862,8 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
         jLabel2.setText("Beschreibung:");
 
         chkTurnOver.setFont(chkTurnOver.getFont());
-        chkTurnOver.setText("umsatzrelevant (wird in Auswertungen berücksichtigt)");
-        chkTurnOver.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
-
-        chkNumberRequired.setFont(chkNumberRequired.getFont());
-        chkNumberRequired.setText("eindeutige Belegnummer erforderlich");
+        chkTurnOver.setText("zur Offene Posten-Liste");
+        chkTurnOver.setToolTipText("Belege dieser Art in der Offene Posten-Liste anzeigen\n(bspw. Rechnungen, Korrekturrechnungen, aber keine Angebote)");
 
         lblError.setFont(lblError.getFont().deriveFont(lblError.getFont().getStyle() | java.awt.Font.BOLD));
         lblError.setForeground(new java.awt.Color(204, 51, 0));
@@ -905,9 +900,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
                                         .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addGap(258, 258, 258))
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(chkNumberRequired)
-                                            .addComponent(chkTurnOver))
+                                        .addComponent(chkTurnOver)
                                         .addGap(0, 0, Short.MAX_VALUE)))))))
                 .addContainerGap())
         );
@@ -929,9 +922,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
                             .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(chkTurnOver)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chkNumberRequired)
-                        .addGap(321, 321, 321)
+                        .addGap(344, 344, 344)
                         .addComponent(lblError)
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -977,11 +968,11 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
             InvoiceType it = new InvoiceType();
             it.setDisplayName(newNameObject.toString());
             it.setDescription("");
-            it.setNumberRequired(false);
             it.setTurnOver(false);
             InvoiceType savedType = locator.lookupInvoiceServiceRemote().addInvoiceType(it);
 
             ((DefaultTableModel) this.tblTypes.getModel()).addRow(new Object[]{savedType, savedType.getDescription()});
+            this.tblTypes.getSelectionModel().setSelectionInterval(this.tblTypes.getRowCount()-1, this.tblTypes.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new invoice type", ex);
@@ -1002,14 +993,13 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
             it.setDisplayName(this.txtDisplayName.getText());
             it.setDescription(this.txtDescription.getText());
             it.setTurnOver(this.chkTurnOver.isSelected());
-            it.setNumberRequired(this.chkNumberRequired.isSelected());
             
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 InvoiceType savedType = locator.lookupInvoiceServiceRemote().updateInvoiceType(it);
-                row=this.tblTypes.convertRowIndexToView(row);
+                row=this.tblTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTypes.getModel()).setValueAt(savedType, row, 0);
                 ((DefaultTableModel) this.tblTypes.getModel()).setValueAt(savedType.getDescription(), row, 1);
 
@@ -1032,6 +1022,7 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupInvoiceServiceRemote().removeInvoiceType(it);
+                row=this.tblTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblTypes.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1059,7 +1050,6 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
         this.txtDisplayName.setText(it.getDisplayName());
         this.txtDescription.setText(it.getDescription());
         this.chkTurnOver.setSelected(it.isTurnOver());
-        this.chkNumberRequired.setSelected(it.isNumberRequired());
 
     }
     
@@ -1108,7 +1098,6 @@ public class InvoiceTypesSetupDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkNumberRequired;
     private javax.swing.JCheckBox chkTurnOver;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;

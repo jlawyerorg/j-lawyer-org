@@ -203,14 +203,14 @@ public class DayCompleteContentPanel extends JPanel {
 
                 final int rectWidth = getWidth() - 4;
 
-                final int rectHeight = 15;
+                final int rectHeight = 17;
 
                 final Rectangle r = new Rectangle(rectXStart, rectYStart, rectWidth, rectHeight);
                 if (r.contains(x, y)) {
                     return event;
                 }
 
-                pos += 17;
+                pos += 19;
 
             }
         }

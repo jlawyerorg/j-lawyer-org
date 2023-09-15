@@ -676,7 +676,6 @@ import javax.enterprise.event.ObservesAsync;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Configuration;
 import org.apache.log4j.Logger;
 import org.json.simple.Jsoner;
 

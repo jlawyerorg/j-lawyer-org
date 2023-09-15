@@ -918,7 +918,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
                         .addComponent(cmdSequenceUp)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdSequenceDown)
-                        .addGap(0, 121, Short.MAX_VALUE)))
+                        .addGap(0, 171, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -986,9 +986,9 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdClose)
@@ -1042,6 +1042,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             PartyTypeBean savedParty = mgmt.addPartyType(newParty);
 
             ((DefaultTableModel) this.tblPartyTypes.getModel()).addRow(new Object[]{savedParty, savedParty.getPlaceHolder(), savedParty.getColor()});
+            this.tblPartyTypes.getSelectionModel().setSelectionInterval(this.tblPartyTypes.getRowCount()-1, this.tblPartyTypes.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new party type", ex);
@@ -1070,7 +1071,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
                 PartyTypeBean savedParty = mgmt.updatePartyType(ptb);
-
+                row=this.tblPartyTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty, row, 0);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getPlaceHolder(), row, 1);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getColor(), row, 2);
@@ -1100,6 +1101,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
                 mgmt.removePartyType(ptb);
+                row=this.tblPartyTypes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPartyTypes.getModel()).removeRow(row);
 
                 this.resetDetails();

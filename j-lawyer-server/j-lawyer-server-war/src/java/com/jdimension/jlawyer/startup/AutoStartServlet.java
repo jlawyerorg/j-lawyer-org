@@ -707,11 +707,12 @@ public class AutoStartServlet extends HttpServlet {
         File templatesFile = new File(localBaseDir + "templates");
         templatesFile.mkdirs();
 
+        File templateHeadsFile = new File(localBaseDir + "letterheads");
+        templateHeadsFile.mkdirs();
+        
         File masterTemplatesFile = new File(localBaseDir + "mastertemplates");
         masterTemplatesFile.mkdirs();
-
-
-
+        
         File archiveFilesFile = new File(localBaseDir + "archivefiles");
         archiveFilesFile.mkdirs();
         

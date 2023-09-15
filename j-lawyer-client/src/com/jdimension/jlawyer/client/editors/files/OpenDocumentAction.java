@@ -713,7 +713,7 @@ public class OpenDocumentAction extends ProgressableAction {
 
         try {
             
-            CaseUtils.openDocument(this.caseDto, this.doc, this.readOnly, this.owner, this);
+            CaseUtils.openDocument(this.caseDto, this.doc, this.readOnly, this.indicator, this);
 
         } catch (Throwable t) {
             log.error("Could not open document", t);

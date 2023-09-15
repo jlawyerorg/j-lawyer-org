@@ -1111,7 +1111,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
-            this.targetTable.addDocument(db);
+            this.targetTable.addDocument(db, null);
 
             if (this.chkCaseTagging.isSelected()) {
                 Object caseTag = this.cmbCaseTag.getSelectedItem();

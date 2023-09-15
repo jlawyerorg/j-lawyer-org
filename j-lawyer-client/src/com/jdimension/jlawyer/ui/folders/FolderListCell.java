@@ -1131,7 +1131,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
 
-                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder, null);
 
                     a.start();
 

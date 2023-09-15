@@ -679,10 +679,14 @@ import org.apache.log4j.Logger;
  */
 public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
 
+    public static final int VALIDATOR_NONE=-1;
+    public static final int VALIDATOR_INTEGER=10;
+    
     private static Logger log = Logger.getLogger(OptionGroupConfigurationDialog.class.getName());
 
     private String optionGroup = null;
     private OptionGroupRenameHandler renameHandler = null;
+    private int validator=VALIDATOR_NONE;
 
     /**
      * Creates new form OptionGroupConfigurationDialog
@@ -691,14 +695,28 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
      */
     public OptionGroupConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
+        validator=VALIDATOR_NONE;
         initComponents();
         this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
         this.lstOptions.setModel(new OptionGroupListModel());
-
+    }
+    
+    /**
+     * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
+     */
+    public OptionGroupConfigurationDialog(java.awt.Frame parent, boolean modal, int validatorMode) {
+        super(parent, modal);
+        validator=validatorMode;
+        initComponents();
+        this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
+        this.lstOptions.setModel(new OptionGroupListModel());
     }
 
     public OptionGroupConfigurationDialog(java.awt.Frame parent, OptionGroupRenameHandler renameHandler, boolean modal) {
         super(parent, modal);
+        validator=VALIDATOR_NONE;
         initComponents();
         this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
         this.lstOptions.setModel(new OptionGroupListModel());
@@ -725,7 +743,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
         txtOption = new javax.swing.JTextField();
 
         mnuRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
-        mnuRename.setText("Umbenennen");
+        mnuRename.setText("Bearbeiten");
         mnuRename.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuRenameActionPerformed(evt);
@@ -849,6 +867,16 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
         if ("".equals(this.txtOption.getText().trim())) {
             return;
         }
+        
+        String newValue=this.txtOption.getText().trim();
+        if(this.validator==VALIDATOR_INTEGER) {
+            try {
+                int checkInt=Integer.parseInt(newValue);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Es sind nur ganzzahlige Werte gültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -857,7 +885,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppOptionGroupBean dto = new AppOptionGroupBean();
             dto.setOptionGroup(this.optionGroup);
-            dto.setValue(this.txtOption.getText());
+            dto.setValue(newValue);
             dto = mgmt.createOptionGroup(dto);
             ((OptionGroupListModel) this.lstOptions.getModel()).addElement(dto);
         } catch (Exception ex) {
@@ -902,12 +930,22 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                 if ("".equals(newName.trim())) {
                     return;
                 }
+                
+                String newValue = newName.trim();
+                if (this.validator == VALIDATOR_INTEGER) {
+                    try {
+                        int checkInt = Integer.parseInt(newValue);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Es sind nur ganzzahlige Werte gültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
 
                 boolean exists = false;
                 Enumeration allElements = ((OptionGroupListModel) this.lstOptions.getModel()).elements();
                 while (allElements.hasMoreElements()) {
                     Object o = allElements.nextElement();
-                    if (((AppOptionGroupBean) o).getValue().equals(newName)) {
+                    if (((AppOptionGroupBean) o).getValue().equals(newValue)) {
                         exists = true;
                         break;
                     }
@@ -923,7 +961,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
 
                 AppOptionGroupBean dto = new AppOptionGroupBean();
                 dto.setOptionGroup(this.optionGroup);
-                dto.setValue(newName);
+                dto.setValue(newValue);
                 dto = mgmt.createOptionGroup(dto);
 
                 ((OptionGroupListModel) this.lstOptions.getModel()).setElementAt(dto, index);
@@ -934,7 +972,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                         return;
                     }
                     this.renameHandler.setParent(this);
-                    this.renameHandler.renameOptionGroup(fromName, newName);
+                    this.renameHandler.renameOptionGroup(fromName, newValue);
                 }
 
             } catch (Exception ex) {

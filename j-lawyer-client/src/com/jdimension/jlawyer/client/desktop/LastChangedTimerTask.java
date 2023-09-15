@@ -769,7 +769,8 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     LastChangedEntry lce = new LastChangedEntry();
                     lce.setFileNumber(aFile.getFileNumber());
                     lce.setId(aFile.getId());
-                    lce.setLastChangedBy(aFile.getLawyer());
+                    lce.setLawyer(aFile.getLawyer());
+                    lce.setAssistant(aFile.getAssistant());
                     lce.setName(aFile.getName());
                     lce.setReason(aFile.getReason());
                     if (tags.get(aFile.getId()) != null) {

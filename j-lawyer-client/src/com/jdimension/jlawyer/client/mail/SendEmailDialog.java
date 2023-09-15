@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -1857,6 +1858,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
+            
+            try {
+                if (this.contextArchiveFile != null) {
+                    CaseUtils.optionalUnarchiveCase(this.contextArchiveFile, this);
+                }
+            } catch (Exception ex) {
+                log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
+            }
 
             if (this.chkEncryption.isSelected()) {
                 int crypto = 0;
@@ -1963,8 +1972,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         AddressServiceRemote adr = locator.lookupAddressServiceRemote();
         for (String m : mails) {
             AddressBean[] found = adr.searchSimple(m);
-            if (found.length > 1) {
-                throw new Exception(m + " ist mehreren Kontakten zugeordnet - Verschlüsselung nicht möglich!");
+            if (found.length > 1 && !EmailUtils.sameCryptoPassword(found)) {
+                throw new Exception(m + " ist mehreren Kontakten mit unterschiedlichen Verschlüsselungseinstellungen zugeordnet!");
             }
             if (found.length == 0) {
                 continue;
@@ -1975,7 +1984,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
         return cryptoSupported;
     }
-
+    
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
 
         String caseId = null;
@@ -2081,7 +2090,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, this.formPlaceHolders);
@@ -2089,7 +2098,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
+                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
 
                 if (this.cloudLink != null) {
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);

@@ -699,10 +699,10 @@ public class EmailTemplate implements Serializable {
     }
     
     public String toXML() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.append("<emailtemplate format=\"" + this.format + "\">");
+        sb.append("<emailtemplate format=\"").append(this.format).append("\">");
         sb.append("<subject>").append("<![CDATA[").append(this.subject).append("]]>").append("</subject>");
         sb.append("<body>").append("<![CDATA[").append(this.body).append("]]>").append("</body>");
 
@@ -720,7 +720,7 @@ public class EmailTemplate implements Serializable {
             dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         } catch (IllegalArgumentException iae) {
             // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
+            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
         }
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(new InputSource(new StringReader(xml)));

@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +686,12 @@ public class InvoiceTypeFacade extends AbstractFacade<InvoiceType> implements In
 
     public InvoiceTypeFacade() {
         super(InvoiceType.class);
+    }
+    
+    @Override
+    @RolesAllowed("loginRole")
+    public List<InvoiceType> findAll() {
+        return em.createNamedQuery("InvoiceType.findAll").getResultList();
     }
     
 }

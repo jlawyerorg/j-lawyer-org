@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.nio.file.Files;
@@ -735,6 +736,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
     private static final String MSG_MISSING_INVOICE = "Rechnung kann nicht gefunden werden";
+    private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
+    private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
 
     @Resource
     private SessionContext context;
@@ -789,6 +792,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private InvoiceServiceLocal invoiceService;
 
+    @EJB
+    private TimesheetFacadeLocal timesheetFacade;
+    @EJB
+    private TimesheetPositionFacadeLocal timesheetPositionsFacade;
+    
+    
     // custom hooks support
     @Inject
     Event<CaseCreatedEvent> newCaseEvent;
@@ -1312,6 +1321,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // remove all existing parties
         List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (addList != null) {
+            log.info("updating case... removing " + addList.size() + " existing parties from case " + aFile.getId());
             for (ArchiveFileAddressesBean add : addList) {
                 this.archiveFileAddressesFacade.remove(add);
             }
@@ -1320,6 +1330,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // create all new addresse with their respective types
         List<ArchiveFileAddressesBean> newAdds = dto.getArchiveFileAddressesBeanList();
         if (newAdds != null) {
+            log.info("updating case... adding " + newAdds.size() + " new parties to case " + aFile.getId());
             for (ArchiveFileAddressesBean add : newAdds) {
                 add.setId(idGen.getID().toString());
                 if (add.getArchiveFileKey() == null) {
@@ -1327,11 +1338,52 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
                 this.archiveFileAddressesFacade.create(add);
             }
+        } else {
+            log.info("updating case... client did not provide any parties");
         }
 
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(dto.getId());
         this.updatedCaseEvent.fireAsync(evt);
+
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void updateArchivedFlag(String caseId, boolean archived) throws Exception {
+
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        boolean archivedOld = aFile.getArchivedBoolean();
+        boolean archivedNew = archived;
+
+        if (archivedOld != archivedNew) {
+            // archive flag was changed
+            String historyDescription;
+            if (archivedNew) {
+                // archived
+                historyDescription = "Akte abgelegt / archiviert";
+                aFile.setDateArchived(new Date());
+                aFile.setArchivedBoolean(true);
+            } else {
+                // de-archived
+                historyDescription = "Akte wieder aufgenommen / dearchiviert";
+                aFile.setDateArchived(null);
+                aFile.setArchivedBoolean(false);
+            }
+
+            this.addCaseHistory(idGen.getID().toString(), aFile, historyDescription);
+            
+            this.archiveFileFacade.edit(aFile);
+
+            CaseUpdatedEvent evt = new CaseUpdatedEvent();
+            evt.setCaseId(caseId);
+            this.updatedCaseEvent.fireAsync(evt);
+        }
+
+
 
     }
 
@@ -1464,6 +1516,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileBean getArchiveFile(String id) throws Exception {
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(id);
+        if(aFile==null)
+            return null;
+        
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         CaseFolder rootFolder = aFile.getRootFolder();
@@ -1799,6 +1854,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
+        // find timesheet linked to this document and unlink it
+        List<Invoice> linkedInvoices=this.invoicesFacade.findByInvoiceDocument(db);
+        for(Invoice inv: linkedInvoices) {
+            inv.setInvoiceDocument(null);
+            this.invoicesFacade.edit(inv);
+        }
+        
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), id, db.getName());
@@ -2125,10 +2187,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        String princ=context.getCallerPrincipal().getName();
+        SecurityUtils.checkGroupsForCase(princ, aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         String histId = idGen.getID().toString();
-        this.addCaseHistory(histId, aFile, history.getChangeDescription(), history.getPrincipal(), history.getChangeDate());
+        this.addCaseHistory(histId, aFile, history.getChangeDescription(), princ, history.getChangeDate());
 
         return this.archiveFileHistoryFacade.find(histId);
     }
@@ -3335,7 +3398,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -3384,9 +3447,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
-        SystemManagement.copyFile(src, dstId);
+        if(ServerStringUtils.isEmpty(letterHead)) {
+            // new document equals the body template
+            SystemManagement.copyFile(src, dstId);
+        } else {
+            // new document equals the head template
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            SystemManagement.copyFile(srcHead, dstId);
+            if (!(new File(srcHead).exists())) {
+                throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
+            }
+            // migrate body template into head template
+            LibreOfficeAccess.mergeDocuments(dstId, src);
+        }
 
-        LibreOfficeAccess.setPlaceHolders(archiveFileId, dstId, fileName, placeHolderValues, formsPrefixes);
+        try {
+            LibreOfficeAccess.setPlaceHolders(archiveFileId, dstId, fileName, placeHolderValues, formsPrefixes);
+        } catch (Exception ex) {
+            log.error("could not set placeholders in file " + dstId, ex);
+        }
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
 
@@ -3443,8 +3522,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
-        return this.addDocumentFromTemplate(archiveFileId, fileName, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
+        return this.addDocumentFromTemplate(archiveFileId, fileName, letterHead, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
     }
 
     @Override
@@ -4664,7 +4743,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception {
+    public Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
@@ -4706,6 +4785,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setDescription("");
             i.setSmallBusiness(pool.isSmallBusiness());
             i.setInvoiceType(iType);
+            i.setTotal(0f);
+            i.setCurrency(currency);
+            i.setLastPoolId(pool.getId());
 
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -4715,12 +4797,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             i.setId(idGen.getID().toString());
             i.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-            i.setName("Rechnung " + i.getInvoiceNumber());
-            i.setPeriodFrom(new Date());
+            i.setName(aFile.getName());
+            if(aFile.getDateCreated()!=null)
+                i.setPeriodFrom(aFile.getDateCreated());
+            else
+                i.setPeriodFrom(new Date());
             i.setPeriodTo(new Date());
             i.setStatus(Invoice.STATUS_NEW);
 
             this.invoicesFacade.create(i);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg erstellt (" + i.getInvoiceNumber() + ", " + i.getInvoiceType().getDisplayName() + ")");
+            
             return this.invoicesFacade.find(i.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4760,10 +4848,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             position.setInvoice(invoice);
 
             this.invoicePositionsFacade.create(position);
+            this.updateInvoiceTotal(invoiceId);
             return this.invoicePositionsFacade.find(position.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
+    }
+    
+    private void updateInvoiceTotal(String invoiceId) throws Exception {
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+        List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(invoice);
+        if(positions==null)
+            positions=new ArrayList<>();
+        float newTotal=0f;
+        for(InvoicePosition p: positions) {
+            newTotal=newTotal+p.getTotal();
+        }
+        invoice.setTotal(newTotal);
+        this.invoicesFacade.edit(invoice);
     }
 
     @Override
@@ -4795,6 +4900,40 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             return this.invoicePositionsFacade.findByInvoice(invoice);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            return invoice.getInvoiceDocument();
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -4836,6 +4975,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatePos.setUnitPrice(position.getUnitPrice());
             updatePos.setUnits(position.getUnits());
             this.invoicePositionsFacade.edit(updatePos);
+            this.updateInvoiceTotal(invoiceId);
             return this.invoicePositionsFacade.find(updatePos.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4871,6 +5011,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             InvoicePosition removePos = this.invoicePositionsFacade.find(position.getId());
             this.invoicePositionsFacade.remove(removePos);
+            this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -4909,8 +5050,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setPeriodTo(invoice.getPeriodTo());
             updatedInvoice.setStatus(invoice.getStatus());
             updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
+            updatedInvoice.setCurrency(invoice.getCurrency());
 
             this.invoicesFacade.edit(updatedInvoice);
+            this.updateInvoiceTotal(invoice.getId());
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
+            
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -4947,6 +5093,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (InvoicePosition pos : this.invoicePositionsFacade.findByInvoice(invoice)) {
                 this.invoicePositionsFacade.remove(pos);
             }
+            this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -4976,24 +5123,41 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             Invoice existingInvoice=this.invoicesFacade.find(invoice.getId());
-            if((existingInvoice.getInvoiceType()!=null && invoiceType==null) ||
+            boolean poolChange=(existingInvoice.getLastPoolId()!=null && invoicePool==null) ||
+                    (existingInvoice.getLastPoolId()==null && invoiceType!=null) ||
+                    (existingInvoice.getLastPoolId()!=null && invoicePool!=null && !(existingInvoice.getLastPoolId().equals(invoicePool.getId())));
+            boolean typeChange=(existingInvoice.getInvoiceType()!=null && invoiceType==null) ||
                     (existingInvoice.getInvoiceType()==null && invoiceType!=null) ||
-                    (existingInvoice.getInvoiceType()!=null && invoiceType!=null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())))) {
+                    (existingInvoice.getInvoiceType()!=null && invoiceType!=null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())));
+            if(poolChange || typeChange) {
                 // types have changed
-                InvoicePool pool = this.invoicesPoolsFacade.find(invoicePool.getId());
-                if (pool == null) {
-                    log.error("Could not find invoice pool with id " + invoicePool.getId());
-                    throw new Exception("Ungültiger Rechnungsnummernkreis");
+                if(typeChange)  {
+                    if (invoiceType != null)
+                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                    else
+                        existingInvoice.setInvoiceType(null);
+                }
+                if(poolChange) {
+                    InvoicePool pool = null;
+                    if(invoicePool!=null)
+                        pool=this.invoicesPoolsFacade.find(invoicePool.getId());
+                    if (pool == null) {
+                        if(invoicePool!=null)
+                            log.error("Could not find invoice pool with id " + invoicePool.getId());
+                        else
+                            log.error("Could not find invoice pool for invoice with id " + invoice.getId());
+                        throw new Exception("Ungültiger Rechnungsnummernkreis");
+                    }
+
+                    existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
+                    existingInvoice.setSmallBusiness(pool.isSmallBusiness());
+                    existingInvoice.setLastPoolId(pool.getId());
                 }
                 
-                existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-                if(invoiceType!=null)
-                    existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
-                else
-                    existingInvoice.setInvoiceType(null);
                 this.invoicesFacade.edit(existingInvoice);
-                
+                this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart oder Nummernkreis geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
             }
+            
             return this.invoicesFacade.find(existingInvoice.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -5043,6 +5207,758 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return result;
         
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeInvoice(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.invoicesFacade.remove(invoice);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg gelöscht (" + invoice.getInvoiceNumber() + ", " + invoice.getInvoiceType().getDisplayName() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void linkInvoiceDocument(String documentId, String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileDocumentsBean document=this.archiveFileDocumentsFacade.find(documentId);
+        if(document==null) {
+            log.error("Document " + documentId + " can not be found and not linked to invoice " + invoiceId);
+            throw new Exception("Dokument kann nicht gefunden werden!");
+        }
+        
+        ArchiveFileBean aFile = document.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            Invoice updatedInvoice = this.invoicesFacade.find(invoiceId);
+            
+            // check for existing linked document
+            if(updatedInvoice.getInvoiceDocument()!=null) {
+                this.removeDocument(updatedInvoice.getInvoiceDocument().getId());
+            }
+            
+            updatedInvoice.setInvoiceDocument(document);
+            this.invoicesFacade.edit(updatedInvoice);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception {
+        
+        Invoice oldInvoice=this.invoicesFacade.find(invoiceId);
+        
+        Invoice newInvoice=this.addInvoice(toCaseId, invoicePool,oldInvoice.getInvoiceType(), oldInvoice.getCurrency());
+        newInvoice.setContact(oldInvoice.getContact());
+        newInvoice.setCreationDate(new Date());
+        newInvoice.setCurrency(oldInvoice.getCurrency());
+        newInvoice.setDescription(oldInvoice.getDescription());
+        
+        Date paymentDate = new Date();
+        LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        localDateTime = localDateTime.plusDays(invoicePool.getPaymentTerm());
+        paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        newInvoice.setDueDate(paymentDate);
+        
+        newInvoice.setName("Kopie von '" + oldInvoice.getName() + "'");
+        newInvoice.setPeriodFrom(oldInvoice.getPeriodFrom());
+        newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
+        newInvoice.setStatus(Invoice.STATUS_NEW);
+        newInvoice.setTotal(oldInvoice.getTotal());
+        this.updateInvoice(toCaseId, newInvoice);
+        
+        List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(oldInvoice);
+        for(InvoicePosition pos: positions) {
+            InvoicePosition clone=new InvoicePosition();
+            clone.setDescription(pos.getDescription());
+            clone.setInvoice(newInvoice);
+            clone.setName(pos.getName());
+            clone.setPosition(pos.getPosition());
+            clone.setTaxRate(pos.getTaxRate());
+            clone.setTotal(pos.getTotal());
+            clone.setUnitPrice(pos.getUnitPrice());
+            clone.setUnits(pos.getUnits());
+            this.addInvoicePosition(newInvoice.getId(), clone);
+        }
+        
+        return this.invoicesFacade.find(newInvoice.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            StringGenerator idGen = new StringGenerator();
+            timesheet.setId(idGen.getID().toString());
+            timesheet.setArchiveFileKey(aFile);
+            
+            this.timesheetFacade.create(timesheet);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt erstellt (" + timesheet.getName() + ")");
+            
+            return this.timesheetFacade.find(timesheet.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            Timesheet updatedTimesheet = this.timesheetFacade.find(timesheet.getId());
+            updatedTimesheet.setDescription(timesheet.getDescription());
+            updatedTimesheet.setInterval(timesheet.getInterval());
+            updatedTimesheet.setLimit(timesheet.getLimit());
+            updatedTimesheet.setLimited(timesheet.isLimited());
+            updatedTimesheet.setName(timesheet.getName());
+            updatedTimesheet.setStatus(timesheet.getStatus());
+
+            this.timesheetFacade.edit(updatedTimesheet);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt geändert (" + updatedTimesheet.getName() + ")");
+            
+            return this.timesheetFacade.find(updatedTimesheet.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeTimesheet(String timesheetId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.timesheetFacade.remove(timesheet);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt gelöscht (" + timesheet.getName() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Timesheet> getTimesheets(String caseId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.timesheetFacade.findByArchiveFileKey(aFile);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            return this.timesheetPositionsFacade.findByTimesheet(timesheet);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception {
+        return this.timesheetPositionsFacade.findOpenByPrincipal(principal);
+            
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Timesheet> getOpenTimesheets(String caseId) throws Exception {
+        List<Timesheet> allOpen= this.timesheetFacade.findByStatus(Timesheet.STATUS_OPEN);
+        List<Timesheet> allOpenAllowed=new ArrayList<>();
+        
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+        
+        for(Timesheet ts: allOpen) {
+            ArchiveFileBean ab=ts.getArchiveFileKey();
+            if(allowedCases.contains(ab.getId())) {
+                if(caseId==null || ab.getId().equals(caseId)) {
+                    allOpenAllowed.add(ts);
+                }
+            }
+        }
+        return allOpenAllowed;
+        
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception {
+        // returns the timesheet positions last used by the user
+        //   any open position
+        //   latest closed position for timesheets that have no open position (provide access to last used log)
+        //   project must be in status "open"
+        //   position must have been logged by the given user
+        
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<TimesheetPosition> list = new ArrayList<>();
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select id, timesheet_id, time_stopped from timesheet_positions where timesheet_id in (select id from timesheets where status=10) and principal=? order by time_stopped desc");
+            st.setString(1, principal);
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                String id = rs.getString(1);
+                
+                    TimesheetPosition dto = this.timesheetPositionsFacade.find(id);
+                    list.add(dto);
+                
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding last timesheet positions", sqle);
+            throw new EJBException("Zuletzt genutzte Zeiterfassungspositionen konnten nicht mermittelt werden.", sqle);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                if (st != null) {
+                    st.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+        
+        List<TimesheetPosition> returnList=new ArrayList<>();
+        List<String> timesheetIds=new ArrayList<>();
+        
+        // first pass: collect all open
+        for(TimesheetPosition p: list) {
+            if(p.getStopped()==null && (caseId==null || caseId.equals(p.getTimesheet().getArchiveFileKey().getId()))) {
+                returnList.add(p);
+                timesheetIds.add(p.getTimesheet().getId());
+            }
+                
+        }
+        
+        // second pass: collect all latest for timesheets without an open position
+        for(TimesheetPosition p: list) {
+            if(!timesheetIds.contains(p.getTimesheet().getId()) && (caseId==null || caseId.equals(p.getTimesheet().getArchiveFileKey().getId()))) {
+                returnList.add(p);
+                timesheetIds.add(p.getTimesheet().getId());
+            }
+                
+        }
+        
+        
+        return returnList;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        
+        if(position.getId()==null) {
+            
+            List openForUserInTimesheet=this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(context.getCallerPrincipal().getName(), sheet);
+            if(!openForUserInTimesheet.isEmpty()) {
+                throw new Exception("In einem Zeiterfassungsprojekt kann immer nur eine offene Position für einen Nutzer existieren!");
+            }
+            
+            // new position
+            StringGenerator idGen=new StringGenerator();
+            String id=idGen.getID().toString();
+            position.setId(id);
+            position.setStarted(new Date());
+            position.setStopped(null);
+            position.setPrincipal(context.getCallerPrincipal().getName());
+            position.setTimesheet(sheet);
+            this.timesheetPositionsFacade.create(position);
+            return this.timesheetPositionsFacade.find(id);
+        } else {
+            // stop existing position
+            TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
+            if(existing==null)
+                throw new Exception(MSG_MISSING_TIMESHEETPOS);
+            
+            if(existing.getStopped()==null) {
+                if(existing.getStarted()==null)
+                    existing.setStarted(new Date());
+                existing.setStopped(new Date());
+                existing.setDescription(position.getDescription());
+                existing.setName(position.getName());
+                existing.setTaxRate(position.getTaxRate());
+                existing.setTimesheet(sheet);
+                existing.setUnitPrice(position.getUnitPrice());
+                existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
+                this.timesheetPositionsFacade.edit(existing);
+            }
+            
+            
+            // start new one with same parameters
+            TimesheetPosition newPos=new TimesheetPosition();
+            StringGenerator idGen=new StringGenerator();
+            String id=idGen.getID().toString();
+            newPos.setPrincipal(context.getCallerPrincipal().getName());
+            newPos.setDescription(position.getDescription());
+            newPos.setName(position.getName());
+            newPos.setStarted(new Date());
+            newPos.setStopped(null);
+            newPos.setTaxRate(position.getTaxRate());
+            newPos.setTimesheet(sheet);
+            newPos.setUnitPrice(position.getUnitPrice());
+            newPos.setTotal(0f);
+            newPos.setId(id);
+            this.timesheetPositionsFacade.create(newPos);
+            return this.timesheetPositionsFacade.find(id);
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        
+        if(position.getId()==null) {
+            throw new Exception(MSG_MISSING_TIMESHEETPOS);
+        } else {
+            // stop existing position
+            TimesheetPosition existing=this.timesheetPositionsFacade.find(position.getId());
+            if(existing.getStarted()==null)
+                throw new Exception("Zeiterfassungsposition wurde nie gestartet, kann nicht beendet werden!");
+            
+            if(existing.getStopped() != null)
+                throw new Exception("Zeiterfassungsposition ist bereits beendet!");
+
+            existing.setStopped(new Date());
+            existing.setDescription(position.getDescription());
+            existing.setName(position.getName());
+            existing.setTaxRate(position.getTaxRate());
+            existing.setTimesheet(sheet);
+            existing.setUnitPrice(position.getUnitPrice());
+            existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
+            this.timesheetPositionsFacade.edit(existing);
+
+            return this.timesheetPositionsFacade.find(position.getId());
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet=this.timesheetFacade.find(timesheetId);
+        if(sheet==null)
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        
+        if(position.getId()==null) {
+            throw new Exception("Zeiterfassungsposition muss erst gestartet werden!");
+            
+        } else {
+            // stop existing position
+            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            if (existing == null) {
+                throw new Exception(MSG_MISSING_TIMESHEETPOS);
+            }
+
+            // only updates metadata, not the actual timestamps (which is done via start and stop methods)
+            existing.setDescription(position.getDescription());
+            existing.setName(position.getName());
+            existing.setTaxRate(position.getTaxRate());
+            existing.setUnitPrice(position.getUnitPrice());
+            existing.setStarted(position.getStarted());
+            existing.setStopped(position.getStopped());
+            this.timesheetPositionsFacade.edit(existing);
+
+            return this.timesheetPositionsFacade.find(position.getId());
+            
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public int hasOpenTimesheetPositions(String principal) throws Exception {
+        List positions=this.getOpenTimesheetPositions(principal);
+        if(positions!=null)
+            return positions.size();
+        else
+            return 0;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            TimesheetPosition removePos = this.timesheetPositionsFacade.find(position.getId());
+            this.timesheetPositionsFacade.remove(removePos);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition updateTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            TimesheetPosition updatePos = this.timesheetPositionsFacade.find(position.getId());
+            updatePos.setDescription(position.getDescription());
+            updatePos.setName(position.getName());
+            updatePos.setStarted(position.getStarted());
+            updatePos.setStopped(position.getStopped());
+            updatePos.setTaxRate(position.getTaxRate());
+            updatePos.setTotal(position.getTotal());
+            updatePos.setUnitPrice(position.getUnitPrice());
+            
+            this.timesheetPositionsFacade.edit(updatePos);
+            return this.timesheetPositionsFacade.find(updatePos.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeAllTimesheetPositions(String timesheetId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            for (TimesheetPosition pos : this.timesheetPositionsFacade.findByTimesheet(timesheet)) {
+                this.timesheetPositionsFacade.remove(pos);
+            }
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Timesheet timesheet = this.timesheetFacade.find(timesheetId);
+        if (timesheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(timesheet.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            TimesheetPosition updatePos = this.timesheetPositionsFacade.find(position.getId());
+            updatePos.setDescription(position.getDescription());
+            if(invoiceId==null) {
+                updatePos.setInvoice(null);
+            } else {
+                updatePos.setInvoice(this.invoicesFacade.find(invoiceId));
+            }
+            
+            this.timesheetPositionsFacade.edit(updatePos);
+            return this.timesheetPositionsFacade.find(updatePos.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice = this.invoicesFacade.find(invoiceId);
+        if (invoice == null) {
+            throw new Exception(MSG_MISSING_INVOICE);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            return this.timesheetPositionsFacade.findByInvoice(invoice);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception {
+        Timesheet sheet = this.timesheetFacade.find(timesheetId);
+        if (sheet == null) {
+            throw new Exception(MSG_MISSING_TIMESHEET);
+        }
+
+        // only updates metadata, not the actual timestamps (which is done via start and stop methods)
+        position.setId(new StringGenerator().getID().toString());
+        position.setDescription(position.getDescription());
+        position.setName(position.getName());
+        position.setTaxRate(position.getTaxRate());
+        position.setUnitPrice(position.getUnitPrice());
+        position.setStarted(position.getStarted());
+        position.setStopped(position.getStopped());
+
+        this.timesheetPositionsFacade.create(position);
+
+        return this.timesheetPositionsFacade.find(position.getId());
+
     }
 
 }

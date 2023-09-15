@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.documents;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -675,8 +676,10 @@ import org.apache.log4j.Logger;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.IRunBody;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.PositionInParagraph;
 import org.apache.poi.xwpf.usermodel.TextSegment;
+import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
 import org.apache.poi.xwpf.usermodel.XWPFHeader;
@@ -688,6 +691,7 @@ import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
 import org.jlawyer.plugins.calculation.CalculationTable;
+import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 
@@ -698,17 +702,18 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 public class MicrosoftOfficeAccess {
 
     private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
-    
-    private static final String CURSOR_TEXTFIELD="declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
 
-    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String,Object> values, ArrayList<String> formsPrefixes) throws Exception {
-        if (fileName.toLowerCase().endsWith(".docx")) {
+    private static final String CURSOR_TEXTFIELD = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
+    private static final String EXT_DOCX = ".docx";
+
+    public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
+        if (fileName.toLowerCase().endsWith(EXT_DOCX)) {
 
             XWPFDocument outputDocx;
             FileInputStream fileIn = new FileInputStream(fileInFileSystem);
             outputDocx = new XWPFDocument(fileIn);
 
-            for (String key: values.keySet()) {
+            for (String key : values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
                 }
@@ -753,7 +758,6 @@ public class MicrosoftOfficeAccess {
                     for (XWPFTable t : allTables) {
                         if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
                             if (key.equals(t.getRow(0).getCell(0).getText())) {
-//                                Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
                                 for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.addNewCol();
 
@@ -767,32 +771,11 @@ public class MicrosoftOfficeAccess {
                                     t.createRow();
                                     for (int i = 0; i < tab.getColumnLabels().size(); i++) {
                                         t.getRow(0).getCell(i).setText(tab.getColumnLabels().get(i));
-//                                        border.setColor(Color.WHITE);
-//                                        t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
-//                                        t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-//                                        Font f = t.getCellByPosition(i, 0).getFont();
-//                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
-//                                        t.getCellByPosition(i, 0).setFont(f);
                                     }
                                 }
                                 for (int i = 0; i < tab.getData()[0].length; i++) {
                                     for (int k = 0; k < tab.getData().length; k++) {
                                         t.getRow(k + firstDataRow).getCell(i).setText(tab.getData()[k][i]);
-//                                        border.setColor(Color.WHITE);
-//                                        t.getCellByPosition(i, k + firstDataRow).setBorders(CellBordersType.NONE, border);
-//                                        // set font to regular
-//                                        Font f = t.getCellByPosition(i, k + firstDataRow).getFont();
-//                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
-//                                        t.getCellByPosition(i, k + firstDataRow).setFont(f);
-                                        // set alignment
-//                                        int alignment = tab.getAlignment(i);
-//                                        if (alignment == CalculationTable.ALIGNMENT_CENTER) {
-//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-//                                        } else if (alignment == CalculationTable.ALIGNMENT_RIGHT) {
-//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
-//                                        } else {
-//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
-//                                        }
                                     }
                                 }
 
@@ -802,105 +785,83 @@ public class MicrosoftOfficeAccess {
                 } else if (values.get(key) instanceof StyledCalculationTable) {
                     List<XWPFTable> allTables = outputDocx.getTables();
                     StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
-                    for (XWPFTable t : allTables) {
-                        if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            if (key.equals(t.getRow(0).getCell(0).getText())) {
-//                                Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
-//                                border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
+                    XWPFTable t = null;
+                    for (XWPFTable tableCandidate : allTables) {
+                        if (tableCandidate.getRow(0).getTableCells().size() == 1 && tableCandidate.getNumberOfRows() == 1) {
+                            if (key.equals(tableCandidate.getRow(0).getCell(0).getText())) {
 
-                                for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
-                                    t.getRow(0).addNewTableCell();
-                                }
-                                for (int i = 0; i < tab.getRowCount() - 1; i++) {
-                                    XWPFTableRow newrow = t.createRow();
-                                    t.addRow(newrow);
+                                t = tableCandidate;
+                                break;
+                            }
+                        }
+                    }
 
-                                }
-//                                for (int i = 0; i < tab.getColumnCount() - 1; i++) {
-//                                    
-//                                    t.addNewCol();
-//                                   
-//                                    
-//                                }
+                    if (t != null) {
+                        if (tab.isLineBorder()) {
+                            t.setTopBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                            t.setBottomBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                            t.setLeftBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                            t.setRightBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                            t.setInsideHBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                            t.setInsideVBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
+                        } else {
+                            t.setBottomBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                        }
 
-//                                for (int i = 0; i < tab.getColumnCount(); i++) {
-//                                    if (tab.getColumnWidth(i) > -1) {
-//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+                        for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
+                            XWPFTableCell cell = t.getRow(0).addNewTableCell();
+//                            if (tab.getColumnWidth(i2) > -1) {
+//                                        cell.setWidth(""+tab.getColumnWidth(i2));
 //                                    } else {
-//                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                        cell.setWidth("auto");
 //                                    }
-//                                }
-                                for (int i = 0; i < tab.getColumnCount(); i++) {
-                                    for (int k = 0; k < tab.getRowCount(); k++) {
-                                        //t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+                        }
 
-                                        List<XWPFParagraph> paragraphs = t.getRow(k).getCell(i).getParagraphs();
-                                        if (paragraphs.size() > 0) {
-//                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).getParagraphArray(0);
-//                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
-                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
-                                        } else {
+                        for (int i = 0; i < tab.getRowCount(); i++) {
+                            XWPFTableRow newrow = t.createRow();
+                            for (int i2 = 0; i2 < tab.getColumnCount(); i2++) {
 
-//                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).addParagraph();
-//                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
-                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+                                Cell styledCell = tab.getCellAt(i, i2);
 
+                                XWPFTableCell cell = newrow.getCell(i2);
+                                //cell.setText(tab.getValueAt(i, i2));
+                                cell.getParagraphs().get(0).createRun().setText(tab.getValueAt(i, i2));
+//                                if (tab.getColumnWidth(i2) > -1) {
+//                                        cell.setWidth(""+tab.getColumnWidth(i2));
+//                                    } else {
+//                                        cell.setWidth("auto");
+//                                    }
+                                cell.setColor(Integer.toHexString(styledCell.getBackGround().getRGB()).substring(2));
+                                for (XWPFParagraph par : cell.getParagraphs()) {
+                                    int alignment = styledCell.getAlignment();
+                                    if (alignment == Cell.ALIGNMENT_CENTER) {
+                                        par.setAlignment(ParagraphAlignment.CENTER);
+                                    } else if (alignment == Cell.ALIGNMENT_RIGHT) {
+                                        par.setAlignment(ParagraphAlignment.RIGHT);
+                                    } else {
+                                        par.setAlignment(ParagraphAlignment.LEFT);
+                                    }
+                                    for (XWPFRun run : par.getRuns()) {
+                                        if (!("".equals(tab.getFontFamily()))) {
+                                            run.setFontFamily(tab.getFontFamily());
                                         }
-//                                        if (tab.isLineBorder()) {
-//                                            Border b = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
-//                                            b.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
-//                                            t.getCellByPosition(i, k).setBorders(CellBordersType.ALL_FOUR, b);
-//                                        } else {
-//                                            t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
-//                                        }
-                                        // set font to regular
-//                                        Font f = t.getCellByPosition(i, k).getFont();
-//                                        Cell c = tab.getCellAt(k, i);
-//                                        if (!("".equals(tab.getFontFamily()))) {
-//                                            f.setFamilyName(tab.getFontFamily());
-//                                        }
-//                                        if (c.isBold()) {
-//                                            if (c.isItalic()) {
-//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLDITALIC);
-//                                            } else {
-//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
-//                                            }
-//                                        } else {
-//                                            if (c.isItalic()) {
-//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.ITALIC);
-//                                            } else {
-//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
-//                                            }
-//                                        }
-//                                        if (c.isUnderline()) {
-//                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.UNDER);
-//                                        } else {
-//                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.REGULAR);
-//                                        }
-//                                        if (c.getFontSize() > 0) {
-//                                            f.setSize(c.getFontSize());
-//                                        }
-//                                        f.setColor(new org.odftoolkit.odfdom.type.Color(c.getForeGround()));
-//                                        t.getCellByPosition(i, k).setFont(f);
-//                                        t.getCellByPosition(i, k).setCellBackgroundColor(new org.odftoolkit.odfdom.type.Color(c.getBackGround()));
-//                                        // set alignment
-//                                        Cell cell = tab.getCellAt(k, i);
-//                                        int alignment = cell.getAlignment();
-//                                        if (alignment == Cell.ALIGNMENT_CENTER) {
-//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-//                                        } else if (alignment == Cell.ALIGNMENT_RIGHT) {
-//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
-//                                        } else {
-//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
-//                                        }
+                                        run.setColor(Integer.toHexString(styledCell.getForeGround().getRGB()).substring(2));
+                                        run.setBold(styledCell.isBold());
+                                        run.setItalic(styledCell.isItalic());
+                                        if (styledCell.isUnderline()) {
+                                            run.setUnderline(UnderlinePatterns.SINGLE);
+                                        }
+
+                                        if (styledCell.getFontSize() > 0) {
+                                            run.setFontSize(styledCell.getFontSize());
+                                        }
+
                                     }
                                 }
 
-//                                for (int i = 0; i < t.getColumnCount(); i++) {
-//                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
-//                                }
                             }
                         }
+                        t.removeRow(0);
                     }
                 }
 
@@ -929,7 +890,7 @@ public class MicrosoftOfficeAccess {
 
     public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, HashMap<Integer, CTR> tfCache) throws Exception {
 
-        if (file.toLowerCase().endsWith(".docx")) {
+        if (file.toLowerCase().endsWith(EXT_DOCX)) {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<>();
@@ -1049,7 +1010,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInBodyElements(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements) {
+    private static void replaceScriptsInBodyElements(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
                 replaceScriptsInParagraph(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
@@ -1112,62 +1073,14 @@ public class MicrosoftOfficeAccess {
 
     private static void replaceInParagraph(String key, String value, XWPFParagraph xwpfParagraph) {
 
-        //for (XWPFParagraph paragraph : xwpfParagraphs) {
-        List<XWPFRun> runs = xwpfParagraph.getRuns();
+        try {
 
-        String find = key;
+            //for (XWPFParagraph paragraph : xwpfParagraphs) {
+            List<XWPFRun> runs = xwpfParagraph.getRuns();
 
-        String repl = value;
-        TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
-        if (found != null) {
-            if (found.getBeginRun() == found.getEndRun()) {
-                // whole search string is in one Run
-                XWPFRun run = runs.get(found.getBeginRun());
-                String runText = run.getText(run.getTextPosition());
-                String replaced = runText.replace(find, repl);
-                run.setText(replaced, 0);
-            } else {
-                // The search string spans over more than one Run
-                // Put the Strings together
-                StringBuilder b = new StringBuilder();
-                for (int runPos = found.getBeginRun(); runPos <= found.getEndRun(); runPos++) {
-                    XWPFRun run = runs.get(runPos);
-                    b.append(run.getText(run.getTextPosition()));
-                }
-                String connectedRuns = b.toString();
-                String replaced = connectedRuns.replace(find, repl);
+            String find = key;
 
-                // The first Run receives the replaced String of all connected Runs
-                XWPFRun partOne = runs.get(found.getBeginRun());
-                partOne.setText(replaced, 0);
-                // Removing the text in the other Runs.
-                for (int runPos = found.getBeginRun() + 1; runPos <= found.getEndRun(); runPos++) {
-                    XWPFRun partNext = runs.get(runPos);
-                    partNext.setText("", 0);
-                }
-            }
-        }
-
-    }
-
-    private static void replaceScriptsInParagraph(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
-
-        ArrayList<String> scriptList=new ArrayList<>();
-        
-        String fullParagraph = xwpfParagraph.getText();
-        Matcher m = pattern.matcher(fullParagraph);
-        while (m.find()) {
-            String itemText = m.group();
-            scriptList.add(itemText);
-        }
-        
-        
-        List<XWPFRun> runs = xwpfParagraph.getRuns();
-
-        for (String script : scriptList) {
-            String find = script;
-            String repl = LibreOfficeAccess.evaluateScript(caseId, script, values, formsPrefixes);
-            
+            String repl = value;
             TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
             if (found != null) {
                 if (found.getBeginRun() == found.getEndRun()) {
@@ -1194,6 +1107,69 @@ public class MicrosoftOfficeAccess {
                     for (int runPos = found.getBeginRun() + 1; runPos <= found.getEndRun(); runPos++) {
                         XWPFRun partNext = runs.get(runPos);
                         partNext.setText("", 0);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Could not replace text in paragraph [key, value, paragraph]: " + key + ", " + value + ", " + xwpfParagraph + " - " + ex.getMessage());
+        }
+
+    }
+
+    private static void replaceScriptsInParagraph(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+
+        ArrayList<String> scriptList = new ArrayList<>();
+
+        String fullParagraph = xwpfParagraph.getText();
+        Matcher m = pattern.matcher(fullParagraph);
+        while (m.find()) {
+            String itemText = m.group();
+            scriptList.add(itemText);
+        }
+
+        List<XWPFRun> runs = xwpfParagraph.getRuns();
+
+        for (String script : scriptList) {
+            String find = script;
+            String repl = LibreOfficeAccess.evaluateScript(caseId, script, values, formsPrefixes);
+
+            TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
+            if (found != null) {
+                if (found.getBeginRun() == found.getEndRun()) {
+                    // whole search string is in one Run
+                    XWPFRun run = runs.get(found.getBeginRun());
+                    String runText = run.getText(run.getTextPosition());
+                    String replaced = runText.replace(find, repl);
+                    run.setText(replaced, 0);
+                } else {
+                    // The search string spans over more than one Run
+                    // Put the Strings together
+                    StringBuilder b = new StringBuilder();
+                    for (int runPos = found.getBeginRun(); runPos <= found.getEndRun(); runPos++) {
+                        XWPFRun run = runs.get(runPos);
+                        b.append(run.getText(run.getTextPosition()));
+                    }
+                    String connectedRuns = b.toString();
+                    String replaced = connectedRuns.replace(find, repl);
+
+                    // The first Run receives the replaced String of all connected Runs
+                    XWPFRun partOne = runs.get(found.getBeginRun());
+                    partOne.setText(replaced, 0);
+                    // Removing the text in the other Runs.
+                    for (int runPos = found.getBeginRun() + 1; runPos <= found.getEndRun(); runPos++) {
+                        XWPFRun partNext = runs.get(runPos);
+                        partNext.setText("", 0);
+                    }
+                }
+            } else {
+                log.warn("script found in paragraph, but finding its position in runs failed");
+                String newParagraphText=fullParagraph.replace(find, repl);
+                for (int runPos = 0; runPos < runs.size(); runPos++) {
+                    XWPFRun replRun = runs.get(runPos);
+                    if(runPos==0) {    
+                        replRun.setText(newParagraphText,0);
+                    } else {
+                        replRun.setText("",0);
                     }
                 }
             }
@@ -1256,7 +1232,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInTable(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFTable table) {
+    private static void replaceScriptsInTable(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFTable table) {
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
                 for (IBodyElement bodyElement : cell.getBodyElements()) {
@@ -1402,7 +1378,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void replaceScriptsInTextfield(String caseId, Pattern pattern, HashMap<String,Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+    private static void replaceScriptsInTextfield(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
         cursor.selectPath(CURSOR_TEXTFIELD);
@@ -1418,17 +1394,17 @@ public class MicrosoftOfficeAccess {
             try {
                 String xmlText = obj.xmlText();
                 CTR ctr = CTR.Factory.parse(xmlText);
-                
+
                 XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
                 String text = bufferrun.getText(0);
                 if (text != null) {
                     Matcher m = pattern.matcher(text);
                     while (m.find()) {
                         String itemText = m.group();
-                        String scriptResult=LibreOfficeAccess.evaluateScript(caseId, itemText, values, formsPrefixes);
+                        String scriptResult = LibreOfficeAccess.evaluateScript(caseId, itemText, values, formsPrefixes);
                         text = text.replace(itemText, scriptResult);
                         bufferrun.setText(text, 0);
-                        
+
                         obj.set(bufferrun.getCTR());
                     }
                 }
@@ -1437,7 +1413,84 @@ public class MicrosoftOfficeAccess {
                 log.error("Unable to iterate text fields", ex);
             }
         }
-        
+
+    }
+
+    static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
+        // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
+        if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
+            merge(intoDocument, mergeDocument);
+        } else {
+            throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
+        }
+    }
+
+    private static void merge(String intoDocument, String mergeDocument) throws Exception {
+
+        // Load the body document
+        XWPFDocument bodyDoc = new XWPFDocument(
+                new FileInputStream(mergeDocument));
+
+        // Create a new merged document
+        XWPFDocument mergedDoc = new XWPFDocument(
+                new FileInputStream(intoDocument));
+
+        for(IBodyElement child: bodyDoc.getBodyElements()) {
+            if(child instanceof XWPFParagraph) {
+                XWPFParagraph newParagraph = mergedDoc.createParagraph();
+                copyParagraph((XWPFParagraph)child, newParagraph);
+            } else if(child instanceof XWPFTable) {
+                XWPFTable tab=(XWPFTable)child;
+                XWPFTable mergedTable1 = mergedDoc.createTable(tab.getRows().size(),
+                    tab.getRow(0).getTableCells().size());
+                copyTable(tab, mergedTable1);
+            }
+        }
+   
+        // Save the merged document as a new file
+        File mergedFile = new File(intoDocument);
+        FileOutputStream fos = new FileOutputStream(mergedFile);
+        mergedDoc.write(fos);
+        fos.close();
+    }
+
+    // Helper method to copy a table from one document to another
+    private static void copyTable(XWPFTable sourceTable, XWPFTable targetTable) {
+        for (int rowIndex = 0; rowIndex < sourceTable.getRows().size(); rowIndex++) {
+            XWPFTableRow sourceRow = sourceTable.getRow(rowIndex);
+            XWPFTableRow targetRow = targetTable.getRow(rowIndex);
+
+            for (int cellIndex = 0; cellIndex < sourceRow.getTableCells().size(); cellIndex++) {
+                XWPFTableCell sourceCell = sourceRow.getCell(cellIndex);
+                XWPFTableCell targetCell = targetRow.getCell(cellIndex);
+
+                targetCell.getCTTc().setTcPr(sourceCell.getCTTc().getTcPr());
+                for (XWPFParagraph paragraph : sourceCell.getParagraphs()) {
+                    XWPFParagraph newParagraph = targetCell.addParagraph();
+                    copyParagraph(paragraph, newParagraph);
+                }
+            }
+        }
+    }
+
+    // Helper method to copy a paragraph from one document to another
+    private static void copyParagraph(XWPFParagraph sourceParagraph, XWPFParagraph targetParagraph) {
+        for (XWPFRun run : sourceParagraph.getRuns()) {
+            int fontSize=run.getFontSize();
+            if(fontSize<0 || fontSize > 100) {
+                try {
+                    // prone to NPE
+                    fontSize=run.getDocument().getStyles().getDefaultRunStyle().getFontSize();
+                } catch (Throwable t) {}
+            }
+            XWPFRun newRun = targetParagraph.createRun();
+            newRun.setText(run.getText(0));
+            newRun.setFontFamily(run.getFontFamily());
+            newRun.setFontSize(fontSize);
+            newRun.setBold(run.isBold());
+            newRun.setItalic(run.isItalic());
+            newRun.setUnderline(run.getUnderline());
+        }
     }
 
 }

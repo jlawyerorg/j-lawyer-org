@@ -738,7 +738,10 @@ public class UserSettings {
     public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
     public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
     
-
+    // invoice related
+    public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
+    public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
+    
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

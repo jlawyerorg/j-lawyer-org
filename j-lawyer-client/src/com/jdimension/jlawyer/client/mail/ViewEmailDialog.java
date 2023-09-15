@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -683,6 +684,8 @@ import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
+import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
+import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 
 /**
  *
@@ -691,13 +694,15 @@ import org.apache.log4j.Logger;
 public class ViewEmailDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(ViewEmailDialog.class.getName());
-    private MessageContainer msgContainer = null;
+    private MessageContainer emlMsg = null;
+    private OutlookMessage outlookMsg = null;
     private ArchiveFileBean contextArchiveFile = null;
-    private CaseFolder contextFolder=null;
+    private CaseFolder contextFolder = null;
     private ObservedDocument odoc = null;
 
     /**
      * Creates new form ViewEmailDialog
+     *
      * @param parent
      * @param contextArchiveFile
      * @param contextFolder
@@ -711,16 +716,21 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         super(parent);
         initComponents();
         this.contextArchiveFile = contextArchiveFile;
-        this.contextFolder=contextFolder;
+        this.contextFolder = contextFolder;
         this.odoc = odoc;
 
         ComponentUtils.restoreDialogSize(this);
 
     }
-    
+
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
         this.content.setMessage(msgC, ms);
-        this.msgContainer = msgC;
+        this.emlMsg = msgC;
+    }
+
+    public void setMessage(OutlookMessage om) {
+        this.content.setMessage(om);
+        this.outlookMsg = om;
     }
 
     /**
@@ -816,9 +826,15 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-        MessageContainer msgC = this.msgContainer;
-        Message m = msgC.getMessage();
-        SendEmailDialog dlg = EmailUtils.reply(m, this.content.getBody(), this.content.getContentType());
+
+        SendEmailDialog dlg = null;
+        if (this.emlMsg != null) {
+            MessageContainer msgC = this.emlMsg;
+            Message m = msgC.getMessage();
+            dlg = EmailUtils.reply(m, this.content.getBody(), this.content.getContentType());
+        } else {
+            dlg = EmailUtils.reply(this.outlookMsg, this.content.getBody(), this.content.getContentType());
+        }
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
@@ -834,61 +850,92 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
 
-        MessageContainer msgC = this.msgContainer;
-        try {
-            Message origM = msgC.getMessage();
-            MailboxSetup ms=EmailUtils.getMailboxSetup(origM);
-            if(ms!=null) {
-                dlg.setFrom(ms);
-            }
-            
-            Message m = origM.reply(true);
-
+        if (this.emlMsg != null) {
+            MessageContainer msgC = this.emlMsg;
             try {
-                Address[] to = m.getRecipients(RecipientType.TO);
-                String toString = EmailUtils.getAddressesAsList(to);
-                
-                Address[] cc = m.getRecipients(RecipientType.CC);
-                String ccString = EmailUtils.getAddressesAsList(cc);
-                
-                Address[] bcc = m.getRecipients(RecipientType.BCC);
-                String bccString = EmailUtils.getAddressesAsList(bcc);
-                
-                dlg.setTo(toString);
-                dlg.setCC(ccString);
-                dlg.setBCC(bccString);
+                Message origM = msgC.getMessage();
+                MailboxSetup ms = EmailUtils.getMailboxSetup(origM);
+                if (ms != null) {
+                    dlg.setFrom(ms);
+                }
 
-            } catch (Throwable t) {
-                log.error(t);
-                dlg.setTo(m.getRecipients(RecipientType.TO)[0].toString());
-            }
+                Message m = origM.reply(true);
 
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Re: ")) {
-                subject = "Re: " + subject;
-            }
-            dlg.setSubject(subject);
+                try {
+                    Address[] to = m.getRecipients(RecipientType.TO);
+                    String toString = EmailUtils.getAddressesAsList(to);
 
-            String decodedTo = origM.getFrom()[0].toString();
+                    Address[] cc = m.getRecipients(RecipientType.CC);
+                    String ccString = EmailUtils.getAddressesAsList(cc);
+
+                    Address[] bcc = m.getRecipients(RecipientType.BCC);
+                    String bccString = EmailUtils.getAddressesAsList(bcc);
+
+                    dlg.setTo(toString);
+                    dlg.setCC(ccString);
+                    dlg.setBCC(bccString);
+
+                } catch (Throwable t) {
+                    log.error(t);
+                    dlg.setTo(m.getRecipients(RecipientType.TO)[0].toString());
+                }
+
+                String subject = m.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Re: ")) {
+                    subject = "Re: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                String decodedTo = origM.getFrom()[0].toString();
+                try {
+                    decodedTo = MimeUtility.decodeText(origM.getFrom()[0].toString());
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                } else {
+                    dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                }
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        } else {
             try {
-                decodedTo = MimeUtility.decodeText(origM.getFrom()[0].toString());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            String contentType = this.content.getContentType();
-            dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
-            } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
-            }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
+                MailboxSetup ms = EmailUtils.getMailboxSetup(this.outlookMsg);
+                if (ms != null) {
+                    dlg.setFrom(ms);
+                }
 
-        } catch (Exception ex) {
-            log.error(ex);
+                String subject = this.outlookMsg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Re: ")) {
+                    subject = "Re: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                String decodedTo = this.outlookMsg.getFromEmail();
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                } else {
+                    dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                }
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
         }
 
         FrameUtils.centerDialog(dlg, null);
@@ -905,13 +952,13 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
-        if(this.contextArchiveFile != null) {
+        if (this.contextArchiveFile != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-                List<ArchiveFileAddressesBean> list=afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
-                for(ArchiveFileAddressesBean aab: list) {
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                List<ArchiveFileAddressesBean> list = afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
+                for (ArchiveFileAddressesBean aab : list) {
                     dlg.addParty(aab);
                 }
             } catch (Throwable t) {
@@ -919,68 +966,117 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         }
 
-        MessageContainer msgC = this.msgContainer;
-        try {
-            Message m = msgC.getMessage();
-            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
-            if(ms!=null) {
-                dlg.setFrom(ms);
-            }
-            Address from = m.getFrom()[0];
-
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Fw: ")) {
-                subject = "Fw: " + subject;
-            }
-            dlg.setSubject(subject);
-
-            String decodedFrom = from.toString();
+        if (this.emlMsg != null) {
+            MessageContainer msgC = this.emlMsg;
             try {
-                decodedFrom = MimeUtility.decodeText(from.toString());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            String contentType = this.content.getContentType();
-            dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
-            } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
-            }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
-            
-            try {
-                // try forwarding attachments
-                if(m.getFolder()!=null) {
-                    if(!m.getFolder().isOpen()) {
-                        m.getFolder().open(Folder.READ_WRITE);
-                    }
+                Message m = msgC.getMessage();
+                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                if (ms != null) {
+                    dlg.setFrom(ms);
                 }
-                ArrayList<String> attachmentNames=EmailUtils.getAttachmentNames(m.getContent());
-                for(String attName: attachmentNames) {
-                    byte[] data=EmailUtils.getAttachmentBytes(attName, msgC);
-                    if(data!=null) {
-                        String attachmentUrl=FileUtils.createTempFile(attName, data);
-                        new File(attachmentUrl).deleteOnExit();
-                        dlg.addAttachment(attachmentUrl, "");
-                    }
-                }
-                
-                if(m.getFolder()!=null) {
-                    if(m.getFolder().isOpen()) {
-                        EmailUtils.closeIfIMAP(m.getFolder());
-                    }
-                }
-                
-            } catch (Throwable t) {
-                log.error("Error forwarding attachments", t);
-            }
+                Address from = m.getFrom()[0];
 
-        } catch (Exception ex) {
-            log.error(ex);
+                String subject = m.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Fw: ")) {
+                    subject = "Fw: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                String decodedFrom = from.toString();
+                try {
+                    decodedFrom = MimeUtility.decodeText(from.toString());
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                } else {
+                    dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                }
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
+
+                try {
+                    // try forwarding attachments
+                    if (m.getFolder() != null) {
+                        if (!m.getFolder().isOpen()) {
+                            m.getFolder().open(Folder.READ_WRITE);
+                        }
+                    }
+                    ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                    for (String attName : attachmentNames) {
+                        byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
+                        if (data != null) {
+                            String attachmentUrl = FileUtils.createTempFile(attName, data);
+                            new File(attachmentUrl).deleteOnExit();
+                            dlg.addAttachment(attachmentUrl, "");
+                        }
+                    }
+
+                    if (m.getFolder() != null) {
+                        if (m.getFolder().isOpen()) {
+                            EmailUtils.closeIfIMAP(m.getFolder());
+                        }
+                    }
+
+                } catch (Throwable t) {
+                    log.error("Error forwarding attachments", t);
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        } else {
+            try {
+                MailboxSetup ms = EmailUtils.getMailboxSetup(this.outlookMsg);
+                if (ms != null) {
+                    dlg.setFrom(ms);
+                }
+                String from = this.outlookMsg.getFromEmail();
+
+                String subject = this.outlookMsg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Fw: ")) {
+                    subject = "Fw: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                } else {
+                    dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                }
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, from, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
+
+                try {
+                    List<OutlookFileAttachment> attachments = this.outlookMsg.fetchTrueAttachments();
+                    for (OutlookFileAttachment ofa : attachments) {
+                        byte[] data = ofa.getData();
+                        if (data != null) {
+                            String fileName=ofa.getFilename();
+                            if(StringUtils.isEmpty(fileName))
+                                fileName=ofa.getLongFilename();
+                            String attachmentUrl = FileUtils.createTempFile(fileName, data);
+                            new File(attachmentUrl).deleteOnExit();
+                            dlg.addAttachment(attachmentUrl, "");
+                        }
+                    }
+
+                } catch (Throwable t) {
+                    log.error("Error forwarding attachments", t);
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
         }
 
         FrameUtils.centerDialog(dlg, null);
@@ -1041,7 +1137,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(() -> {
             ViewEmailDialog dialog = new ViewEmailDialog(new javax.swing.JFrame(), null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                
+
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     System.exit(0);

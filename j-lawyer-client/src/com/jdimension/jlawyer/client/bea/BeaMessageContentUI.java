@@ -1491,9 +1491,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         dlg.dispose();
 
         if (sel != null) {
-
             ClientSettings settings = ClientSettings.getInstance();
             try {
+                
+                CaseUtils.optionalUnarchiveCase(sel, this);
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 

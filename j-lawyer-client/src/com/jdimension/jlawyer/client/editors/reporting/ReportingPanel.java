@@ -676,7 +676,6 @@ import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
-import org.apache.log4j.Logger;
 import org.jlawyer.reporting.Reports;
 
 /**
@@ -684,8 +683,6 @@ import org.jlawyer.reporting.Reports;
  * @author jens
  */
 public class ReportingPanel extends javax.swing.JPanel implements ThemeableEditor {
-
-    private static final Logger log = Logger.getLogger(ReportingPanel.class.getName());
 
     private Image backgroundImage = null;
 
@@ -711,7 +708,8 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         fromDate.setDate(1);
         invoicesOpen.setDefaultBeginDate(fromDate);
         invoicesOpen.setDateSelectionLabel("erstellt");
-        Date toDate=new Date();
+        // display open invoices for 35 days into the future
+        Date toDate=new Date(System.currentTimeMillis() + 35l*24l*60l*60l*1000l);
         invoicesOpen.setDefaultEndDate(toDate);
         allReports.add(invoicesOpen);
         
@@ -752,6 +750,60 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesAll.setDefaultEndDate(toDate);
         invoicesAll.setDateSelectionLabel("erstellt");
         allReports.add(invoicesAll);
+        
+        Report timeSheetsOpenOverview=new Report();
+        timeSheetsOpenOverview.setName("Alle offenen Zeiterfassungsprojekte im Überblick");
+        timeSheetsOpenOverview.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> im Überblick, absteigend sortiert nach letzter Buchung</html>");
+        timeSheetsOpenOverview.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsOpenOverview.setCategory("Zeiten");
+        timeSheetsOpenOverview.setSequence(10);
+        timeSheetsOpenOverview.setReportId(Reports.RPT_TSHEETS_OPEN_OVERVIEW);
+        timeSheetsOpenOverview.setTypeChart(false);
+        timeSheetsOpenOverview.setTypeTable(true);
+        timeSheetsOpenOverview.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsOpenOverview.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsOpenOverview.setDefaultEndDate(toDate);
+        timeSheetsOpenOverview.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsOpenOverview);
+        
+        Report timeSheetsOpenPositions=new Report();
+        timeSheetsOpenPositions.setName("Alle offenen Zeiterfassungsprojekte und deren Buchungen");
+        timeSheetsOpenPositions.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> und deren Buchungen, als Gesamtansicht und gruppiert nach Projekt</html>");
+        timeSheetsOpenPositions.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsOpenPositions.setCategory("Zeiten");
+        timeSheetsOpenPositions.setSequence(20);
+        timeSheetsOpenPositions.setReportId(Reports.RPT_TSHEETS_OPEN_POSITIONS);
+        timeSheetsOpenPositions.setTypeChart(false);
+        timeSheetsOpenPositions.setTypeTable(true);
+        timeSheetsOpenPositions.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsOpenPositions.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsOpenPositions.setDefaultEndDate(toDate);
+        timeSheetsOpenPositions.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsOpenPositions);
+        
+        Report employeeReport=new Report();
+        employeeReport.setName("Mitarbeiterreport");
+        employeeReport.setDescription("<html>Tabellarische Auswertungen zu <b>Aktenaktivitäten</b> einer Mitarbeiterin / eines Mitarbeiters</html>");
+        employeeReport.setReportId(Reports.RPT_EMPLOYEE_ACTIVITY);
+        employeeReport.setClassName(DynamicReportContainerPanel.class.getName());
+        employeeReport.setCategory("Zeiten");
+        employeeReport.setSequence(30);
+        employeeReport.setTypeTable(true);
+        employeeReport.setTypeChart(true);
+        employeeReport.setSecurityType(Report.SECURITY_CONFIDENTIAL);
+        fromDate=new Date(System.currentTimeMillis()-7l*24l*60l*60l*1000l);
+        employeeReport.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        employeeReport.setDefaultEndDate(toDate);
+        allReports.add(employeeReport);
         
         Report caseHistory=new Report();
         caseHistory.setName("Aktenhistorie");
@@ -805,21 +857,24 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesPerYear.setDefaultEndDate(toDate);
         allReports.add(casesPerYear);
         
-        Report employeeReport=new Report();
-        employeeReport.setName("Mitarbeiterreport");
-        employeeReport.setDescription("<html>Tabellarische Auswertungen zu <b>Aktenaktivitäten</b> einer Mitarbeiterin / eines Mitarbeiters</html>");
-        employeeReport.setReportId(Reports.RPT_EMPLOYEE_ACTIVITY);
-        employeeReport.setClassName(DynamicReportContainerPanel.class.getName());
-        employeeReport.setCategory("Zeiten");
-        employeeReport.setSequence(10);
-        employeeReport.setTypeTable(true);
-        employeeReport.setTypeChart(true);
-        employeeReport.setSecurityType(Report.SECURITY_CONFIDENTIAL);
-        fromDate=new Date(System.currentTimeMillis()-7l*24l*60l*60l*1000l);
-        employeeReport.setDefaultBeginDate(fromDate);
+        Report casesBySize=new Report();
+        casesBySize.setName("Akten nach Größe / Speicherbelegung");
+        casesBySize.setDescription("<html>Tabellarische Auswertungen der 500 größten Akten</b></html>");
+        casesBySize.setReportId(Reports.RPT_CASES_BYSIZE);
+        casesBySize.setClassName(DynamicReportContainerPanel.class.getName());
+        casesBySize.setCategory("Systemwartung");
+        casesBySize.setSequence(10);
+        casesBySize.setTypeTable(true);
+        casesBySize.setTypeChart(false);
+        casesBySize.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setYear(fromDate.getYear()-20);
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        casesBySize.setDefaultBeginDate(fromDate);
         toDate=new Date();
-        employeeReport.setDefaultEndDate(toDate);
-        allReports.add(employeeReport);
+        casesBySize.setDefaultEndDate(toDate);
+        allReports.add(casesBySize);
         
         DecimalFormat df=new DecimalFormat("000");
         Collections.sort(allReports, (Object arg0, Object arg1) -> {

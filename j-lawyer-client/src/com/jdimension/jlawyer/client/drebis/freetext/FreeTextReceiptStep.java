@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.DrebisAttachment;
@@ -699,19 +700,17 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void nextEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
-        return;
+
     }
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
-        return;
+
     }
 
     @Override
     public void cancelledEvent() {
-        return;
+
     }
 
     @Override
@@ -732,6 +731,14 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
 
                 String archiveFileId = (String) data.get("archiveFile.id");
                 ArchiveFileBean sel = afs.getArchiveFile(archiveFileId);
+                
+                try {
+                    if (sel != null) {
+                        CaseUtils.optionalUnarchiveCase(sel, this);
+                    }
+                } catch (Exception ex) {
+                    log.error("Unable to unarchive case " + sel.getFileNumber(), ex);
+                }
 
                 String newName = this.getNewFileName(attachment.getName() + "." + attachment.getSuffix());
                 if (newName == null) {
@@ -744,7 +751,6 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
             } catch (Exception ex) {
                 log.error("Error storing drebis attachments", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Drebis-Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }
@@ -832,9 +838,9 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
         if (this.attachment != null) {
             try {
-                byte[] data = attachment.getContent();
+                byte[] attachmentData = attachment.getContent();
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("freetextreceipt-" + attachment.getName() + "." + attachment.getSuffix(), attachment.getName() + "." + attachment.getSuffix());
-                Launcher launcher=LauncherFactory.getLauncher(attachment.getName() + "." + attachment.getSuffix(), data, store, EditorsRegistry.getInstance().getMainWindow());
+                Launcher launcher=LauncherFactory.getLauncher(attachment.getName() + "." + attachment.getSuffix(), attachmentData, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

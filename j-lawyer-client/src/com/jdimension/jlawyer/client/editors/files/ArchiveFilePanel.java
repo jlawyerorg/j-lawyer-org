@@ -727,6 +727,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -741,7 +742,10 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -809,6 +813,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+        
+        this.cmdCopyCaseNumber.setText("");
 
         CustomLauncherOptionsDialog.upgradeSettings();
 
@@ -903,8 +909,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         }
-
-        //this.currencyFormat.setParseIntegerOnly(false);
+        
         this.splitDocuments.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
         ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
@@ -919,7 +924,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
         BoxLayout boxLayout=new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
         this.pnlInvoices.setLayout(boxLayout);
-
+                
+        BoxLayout boxLayout3=new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
+        this.pnlTimesheets.setLayout(boxLayout3);
+        
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
         for (CalculationPlugin cp : plugins) {
@@ -960,6 +968,59 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public long getLastPopupClosed() {
         return this.lastPopupClosed;
+    }
+    
+    public void duplicateInvoice(String caseId, String invoiceId) {
+        if(caseId==null) {
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
+            dlg.setVisible(true);
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            dlg.dispose();
+            if (sel == null) {
+                return;
+            }
+            caseId=sel.getId();
+        }
+        
+        // get invoice pool
+        ClientSettings settings = ClientSettings.getInstance();
+        DefaultComboBoxModel<InvoicePool> dmPools = new DefaultComboBoxModel<>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<InvoicePool> pools = locator.lookupInvoiceServiceRemote().getInvoicePoolsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            for (InvoicePool ip : pools) {
+                dmPools.addElement(ip);
+            }
+        } catch (Exception ex) {
+            log.error("Error determining invoice pools", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        JComboBox<InvoicePool> cmbInvoicePool = new JComboBox<>();
+        cmbInvoicePool.setModel(dmPools);
+        cmbInvoicePool.setSelectedIndex(1);
+        int response=JOptionPane.showConfirmDialog(null, cmbInvoicePool, "Nummernkreis für neuen Beleg",JOptionPane.CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        
+        if(response==JOptionPane.CANCEL_OPTION)
+            return;
+        
+        InvoicePool selectedPool=(InvoicePool)cmbInvoicePool.getSelectedItem();
+        
+        // duplicate and add to view, if same case
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Invoice invoiceCopy=locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool);
+            if(this.dto.getId().equals(caseId)) {
+                InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
+                ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
+                this.pnlInvoices.add(ip);
+            }
+        } catch (Exception ex) {
+            log.error("Error determining invoice pools", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
     }
 
     public void documentSelectionChanged() {
@@ -1091,6 +1152,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.caseFolderPanel1.setReadOnly(readOnly || archived);
 
         this.cmdAddForm.setEnabled(!readOnly && !archived);
+        
+        this.cmdNewTimesheet.setEnabled(!readOnly && !archived);
 
         this.chkArchived.setEnabled(!readOnly && !archived);
         this.lblArchivedSince.setEnabled(!readOnly && !archived);
@@ -1107,6 +1170,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
         this.cmdAddNote.setEnabled(!readOnly && !archived);
         this.cmdHeaderAddNote.setEnabled(!readOnly && !archived);
+        this.cmdTimesheetLog.setEnabled(!readOnly && !archived);
         this.cmdUploadDocument.setEnabled(!readOnly && !archived);
 
         this.cmdSearchClient.setEnabled(!readOnly && !archived);
@@ -1167,6 +1231,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.taCustom3.setEnabled(!readOnly && !archived);
 
     }
+    
+    public ArrayList<AddressBean> getInvolvedAddresses() {
+        ArrayList<AddressBean> clients = new ArrayList<>();
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            clients.add(abean);
+        }
+        return clients;
+    }
+    
+    public ArchiveFileBean getArchiveFileDTO() {
+        return this.dto;
+    }
 
     public void setArchiveFileDTO(ArchiveFileBean inDto) {
         this.setArchiveFileDTO(inDto, null);
@@ -1182,6 +1258,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.newEventPanel.reset();
 
+        this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
 
         DefaultTableModel tm = ((DefaultTableModel) this.tblReviewReasons.getModel());
@@ -1237,6 +1314,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.caseFolderPanel1.clearDocuments();
         this.cmdClearSearchActionPerformed(null);
 
+        this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
@@ -1250,7 +1328,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -1322,6 +1400,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtNotice.setText("");
         this.lblCaseChanged.setText("");
         this.lblCaseCreated.setText("");
+        this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
         //this.cmbDictateSign.setSelectedItem("");
         this.cmbLawyer.setSelectedItem("");
@@ -1621,15 +1700,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel6 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblGroups = new javax.swing.JTable();
-        jLabel4 = new javax.swing.JLabel();
-        txtClaimNumber = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        txtClaimValue = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         lblCaseCreated = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         lblCaseChanged = new javax.swing.JLabel();
+        cmdCopyCaseNumber = new javax.swing.JButton();
         splitNotes = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -1660,11 +1735,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         documentTagPanel = new javax.swing.JPanel();
-        tabClaims = new javax.swing.JPanel();
-        cmdNewRvg = new javax.swing.JButton();
+        tabFinance = new javax.swing.JPanel();
+        subTabsFinance = new javax.swing.JTabbedPane();
+        jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        pnlInvoices = new javax.swing.JPanel();
         cmdNewInvoice = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        pnlInvoices = new javax.swing.JPanel();
+        jPanel14 = new javax.swing.JPanel();
+        jLabel22 = new javax.swing.JLabel();
+        cmdNewTimesheet = new javax.swing.JButton();
+        pnlTimesheets = new javax.swing.JPanel();
+        jLabel5 = new javax.swing.JLabel();
+        txtClaimValue = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        txtClaimNumber = new javax.swing.JTextField();
+        cmdNewRvg = new javax.swing.JButton();
         tabReviews = new javax.swing.JPanel();
         jPanel9 = new javax.swing.JPanel();
         tblReviewReasonsPane = new javax.swing.JScrollPane();
@@ -1715,6 +1802,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
+        cmdTimesheetLog = new javax.swing.JButton();
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -2211,12 +2299,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPrivileges.addTab("Berechtigte", jPanel6);
 
-        jLabel4.setText("Schadennummer:");
-
-        jLabel5.setText("Gegenstandswert:");
-
-        jLabel6.setText("EUR");
-
         jLabel12.setFont(jLabel12.getFont().deriveFont(jLabel12.getFont().getSize()-2f));
         jLabel12.setText("erstellt:");
 
@@ -2229,6 +2311,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblCaseChanged.setFont(lblCaseChanged.getFont().deriveFont(lblCaseChanged.getFont().getSize()-2f));
         lblCaseChanged.setText("jLabel22");
 
+        cmdCopyCaseNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopyCaseNumber.setText(" ");
+        cmdCopyCaseNumber.setToolTipText("Aktenzeichen in Zwischenablage kopieren");
+        cmdCopyCaseNumber.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyCaseNumberActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -2237,50 +2328,37 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel5)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtClaimValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 151, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel6)
-                        .add(348, 348, 348))
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel3)
+                            .add(jLabel8)
+                            .add(jLabel9))
+                        .add(36, 36, 36)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReason)
+                            .add(txtName)
+                            .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(jPanel1Layout.createSequentialGroup()
+                        .add(jLabel1)
+                        .add(26, 26, 26)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel1Layout.createSequentialGroup()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jLabel3)
-                                    .add(jLabel8)
-                                    .add(jLabel9))
-                                .add(36, 36, 36)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReason)
-                                    .add(txtName)
-                                    .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .add(jLabel12)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lblCaseCreated)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jLabel21)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lblCaseChanged))
                             .add(jPanel1Layout.createSequentialGroup()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jPanel1Layout.createSequentialGroup()
-                                        .add(jLabel1)
-                                        .add(26, 26, 26)
-                                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                            .add(jPanel1Layout.createSequentialGroup()
-                                                .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(18, 18, 18)
-                                                .add(chkArchived)
-                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                .add(lblArchivedSince))
-                                            .add(jPanel1Layout.createSequentialGroup()
-                                                .add(jLabel12)
-                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                .add(lblCaseCreated)
-                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                                .add(jLabel21)
-                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                .add(lblCaseChanged))))
-                                    .add(jPanel1Layout.createSequentialGroup()
-                                        .add(jLabel4)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                        .add(txtClaimNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 150, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                                .add(0, 0, Short.MAX_VALUE)))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                                .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdCopyCaseNumber)
+                                .add(18, 18, 18)
+                                .add(chkArchived)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lblArchivedSince)))
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSeparator7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 291, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -2299,7 +2377,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     .add(jLabel1)
                                     .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                     .add(chkArchived)
-                                    .add(lblArchivedSince))
+                                    .add(lblArchivedSince)
+                                    .add(cmdCopyCaseNumber))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(jLabel12)
@@ -2317,16 +2396,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(jLabel9)
-                                    .add(cmbSubjectField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(jLabel5)
-                                    .add(txtClaimValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel6))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtClaimNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel4)))
+                                    .add(cmbSubjectField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                             .add(org.jdesktop.layout.GroupLayout.LEADING, tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(0, 2, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -2379,7 +2449,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 193, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 224, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2393,7 +2463,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(tabGeneralDataLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(splitNotes))
+                    .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1006, Short.MAX_VALUE))
                 .addContainerGap())
         );
         tabGeneralDataLayout.setVerticalGroup(
@@ -2402,11 +2472,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
+                .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData); // NOI18N
+        tabPaneArchiveFile.addTab("Allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData); // NOI18N
 
         cmdSearchClient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdSearchClient.addActionListener(new java.awt.event.ActionListener() {
@@ -2423,7 +2493,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         pnlInvolvedPartiesLayout.setVerticalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 631, Short.MAX_VALUE)
+            .add(0, 662, Short.MAX_VALUE)
         );
 
         jScrollPane8.setViewportView(pnlInvolvedParties);
@@ -2637,6 +2707,120 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Dokumente", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), tabDocuments); // NOI18N
 
+        subTabsFinance.setTabPlacement(javax.swing.JTabbedPane.LEFT);
+        subTabsFinance.setFont(subTabsFinance.getFont());
+
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel7.setText("Belege:");
+
+        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
+        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewInvoiceActionPerformed(evt);
+            }
+        });
+
+        jScrollPane5.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
+        pnlInvoices.setLayout(pnlInvoicesLayout);
+        pnlInvoicesLayout.setHorizontalGroup(
+            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlInvoicesLayout.setVerticalGroup(
+            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 591, Short.MAX_VALUE)
+        );
+
+        jScrollPane5.setViewportView(pnlInvoices);
+
+        org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel8Layout.createSequentialGroup()
+                        .add(jLabel7)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewInvoice)
+                        .add(0, 744, Short.MAX_VALUE))
+                    .add(jScrollPane5))
+                .addContainerGap())
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmdNewInvoice))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        subTabsFinance.addTab("Belege", jPanel8);
+
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel22.setText("Projekte:");
+
+        cmdNewTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewTimesheetActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
+        pnlTimesheets.setLayout(pnlTimesheetsLayout);
+        pnlTimesheetsLayout.setHorizontalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlTimesheetsLayout.setVerticalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 591, Short.MAX_VALUE)
+        );
+
+        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(pnlTimesheets, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel14Layout.createSequentialGroup()
+                        .add(jLabel22)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewTimesheet)
+                        .add(0, 733, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdNewTimesheet)
+                    .add(jLabel22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pnlTimesheets, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        subTabsFinance.addTab("Zeiterfassung", jPanel14);
+
+        jLabel5.setText("Gegenstandswert:");
+
+        jLabel6.setText("EUR");
+
+        jLabel4.setText("Schadennummer:");
+
         cmdNewRvg.setText("neue Berechnung");
         cmdNewRvg.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
@@ -2644,58 +2828,45 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jLabel7.setText("Rechnungen:");
-
-        org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
-        pnlInvoices.setLayout(pnlInvoicesLayout);
-        pnlInvoicesLayout.setHorizontalGroup(
-            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 386, Short.MAX_VALUE)
-        );
-        pnlInvoicesLayout.setVerticalGroup(
-            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 595, Short.MAX_VALUE)
-        );
-
-        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
-        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewInvoice.setEnabled(false);
-        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewInvoiceActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout tabClaimsLayout = new org.jdesktop.layout.GroupLayout(tabClaims);
-        tabClaims.setLayout(tabClaimsLayout);
-        tabClaimsLayout.setHorizontalGroup(
-            tabClaimsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(tabClaimsLayout.createSequentialGroup()
+        org.jdesktop.layout.GroupLayout tabFinanceLayout = new org.jdesktop.layout.GroupLayout(tabFinance);
+        tabFinance.setLayout(tabFinanceLayout);
+        tabFinanceLayout.setHorizontalGroup(
+            tabFinanceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(tabFinanceLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabClaimsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tabClaimsLayout.createSequentialGroup()
-                        .add(cmdNewInvoice)
-                        .add(123, 123, 123)
-                        .add(cmdNewRvg))
-                    .add(jLabel7)
-                    .add(pnlInvoices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(632, Short.MAX_VALUE))
+                .add(tabFinanceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(subTabsFinance)
+                    .add(tabFinanceLayout.createSequentialGroup()
+                        .add(jLabel5)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtClaimValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 151, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel6)
+                        .add(18, 18, 18)
+                        .add(jLabel4)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtClaimNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 151, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdNewRvg)))
+                .addContainerGap())
         );
-        tabClaimsLayout.setVerticalGroup(
-            tabClaimsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, tabClaimsLayout.createSequentialGroup()
+        tabFinanceLayout.setVerticalGroup(
+            tabFinanceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, tabFinanceLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabClaimsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdNewRvg)
-                    .add(cmdNewInvoice))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jLabel7)
+                .add(tabFinanceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtClaimValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel6)
+                    .add(jLabel5)
+                    .add(txtClaimNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel4)
+                    .add(cmdNewRvg))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(pnlInvoices, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(subTabsFinance)
                 .addContainerGap())
         );
 
-        tabPaneArchiveFile.addTab("Finanzen", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), tabClaims); // NOI18N
+        tabPaneArchiveFile.addTab("Finanzen", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), tabFinance); // NOI18N
 
         jPanel9.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlagen, Fristen und Termine"));
 
@@ -2739,7 +2910,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel9Layout.createSequentialGroup()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
                     .add(newEventPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -2808,7 +2979,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(467, Short.MAX_VALUE))
+                .addContainerGap(498, Short.MAX_VALUE))
         );
 
         tabPaneArchiveFile.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel11); // NOI18N
@@ -2827,7 +2998,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         tabPrintLayout.setVerticalGroup(
             tabPrintLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 682, Short.MAX_VALUE)
+            .add(0, 713, Short.MAX_VALUE)
         );
 
         tabPaneArchiveFile.addTab("Handakte", new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png")), tabPrint); // NOI18N
@@ -2921,7 +3092,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(txtFormDescription, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAddForm)
-                .addContainerGap(481, Short.MAX_VALUE))
+                .addContainerGap(512, Short.MAX_VALUE))
         );
 
         tabPaneForms.addTab("<html><b>Falldaten</b><br/>hinzuf&uuml;gen</html>", pnlAddForms);
@@ -3017,11 +3188,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(txtHistoryDesc)
                             .add(jPanel10Layout.createSequentialGroup()
-                                .add(txtHistoryDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 103, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(txtHistoryDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdShowHistorySelector)
-                                .add(18, 18, 18)
-                                .add(cmbHistoryTime, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(cmbHistoryTime, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(0, 0, Short.MAX_VALUE))
                             .add(jPanel10Layout.createSequentialGroup()
                                 .add(cmdAddHistory)
@@ -3037,9 +3208,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(txtHistoryDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(jLabel13))
                     .add(cmdShowHistorySelector)
-                    .add(jPanel10Layout.createSequentialGroup()
-                        .add(cmbHistoryTime, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(1, 1, 1)))
+                    .add(cmbHistoryTime, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel14)
@@ -3049,7 +3218,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(cmdAddHistory)
                     .add(cmdLoadFullHistory))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 552, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3188,6 +3357,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdTimesheetLog.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        cmdTimesheetLog.setToolTipText("Zeit erfassen");
+        cmdTimesheetLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTimesheetLogActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -3205,6 +3382,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdTimesheetLog)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(togCaseSync)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3225,7 +3404,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdTimesheetLog))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3567,11 +3747,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
                 JasperReport jasperReport = (JasperReport) report;
 
-                HashMap<String, Object> parameter = new HashMap<String, Object>();
+                HashMap<String, Object> parameter = new HashMap<>();
                 parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
                 JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-                //JasperExportManager.exportReportToPdfFile(jasperPrint, "C:/MyData/netbeansws/ReportDemo/output/report.pdf");
                 JRViewer viewer = new JRViewer(jasperPrint);
                 this.tabPrint.removeAll();
                 this.tabPrint.add(viewer);
@@ -3622,11 +3801,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    public void newDocumentDialog(GenericCalculationTable table) {
-        this.newDocumentActionPerformedImpl(table);
+    public ArchiveFileDocumentsBean newDocumentDialog(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
+        return this.newDocumentActionPerformedImpl(table, invoice, invoiceTable, timesheetsTable);
     }
 
-    private void newDocumentActionPerformedImpl(GenericCalculationTable table) {
+    private ArchiveFileDocumentsBean newDocumentActionPerformedImpl(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -3647,11 +3826,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, table);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, table, invoice, invoiceTable, timesheetsTable);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-
+        return dlg.getAddedDocument();
     }
 
     public void saveFormData() {
@@ -3661,14 +3840,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
     
-    private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
+    private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
 
         // save all forms to have the latest data available for document creation
         this.saveFormData();
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
-        if (table == null) {
+        if (rvgTable == null) {
             // not called from a plugin
             involved = this.pnlInvolvedParties.getInvolvedParties();
 
@@ -3686,7 +3865,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, table);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, this.tblReviewReasons, rvgTable, invoice, invoiceTable, timesheetsTable);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3695,7 +3874,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
 
-        this.newDocumentActionPerformedImpl(null);
+        this.newDocumentActionPerformedImpl(null, null, null, null);
 
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
@@ -3785,8 +3964,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdPrintActionPerformed
 
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
+        this.uploadDocument(null);
+    }//GEN-LAST:event_cmdUploadDocumentActionPerformed
+
+    public void uploadDocument(Invoice invoice) {
         JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(true);
+        chooser.setMultiSelectionEnabled(invoice==null);
 
         ClientSettings settings = ClientSettings.getInstance();
         String lastUploadDir = settings.getConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, null);
@@ -3802,7 +3985,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
-                File[] fileArray = chooser.getSelectedFiles();
+                File[] fileArray=null;
+                if(chooser.isMultiSelectionEnabled()) {
+                    fileArray = chooser.getSelectedFiles();
+                } else {
+                    fileArray=new File[1];
+                    fileArray[0]=chooser.getSelectedFile();
+                }
                 ArrayList<File> files = new ArrayList<>();
                 boolean lastUploadSaved = false;
                 for (File f : fileArray) {
@@ -3817,20 +4006,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                ThreadUtils.setWaitCursor(this);
-                ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                pi.setShowCancelButton(true);
-                UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null);
-
-                a.start();
+                if(invoice == null) {
+                    ThreadUtils.setWaitCursor(this);
+                    ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                    pi.setShowCancelButton(true);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    a.start();
+                } else {
+                    ThreadUtils.setWaitCursor(this);
+                    ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                    pi.setShowCancelButton(true);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    a.execute();
+                }
+                
 
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmdUploadDocumentActionPerformed
-
+    }
+    
     private void mnuRemoveDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveDocumentActionPerformed
 
         try {
@@ -3904,7 +4101,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
 
                         }
-                        caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()));
+                        caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
                         this.lastPopupClosed = System.currentTimeMillis();
 
                     } catch (Exception ioe) {
@@ -3978,6 +4175,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_tabPrintComponentResized
 
     public void removeInvolvedParty(InvolvedPartyEntryPanel ipep) {
+        ipep.close();
         this.pnlInvolvedParties.remove(ipep);
         this.pnlInvolvedParties.revalidate();
 
@@ -3997,6 +4195,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    private void closeInvolvedPartyEntryPanelSubscriptions() {
+        for (Component c : this.pnlInvolvedParties.getComponents()) {
+            if(c instanceof InvolvedPartyEntryPanel) {
+                ((InvolvedPartyEntryPanel)c).close();
+            }
+        }
+    }
+    
     private void mnuRenameDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameDocumentActionPerformed
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -4540,6 +4746,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (sel == null) {
                 return;
             }
+            
+            CaseUtils.optionalUnarchiveCase(sel, this);
 
             for (ArchiveFileDocumentsBean doc : selected) {
 
@@ -4585,6 +4793,106 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_jScrollPane7ComponentResized
 
+    public void convertDocumentToPdf(ArchiveFileDocumentsBean doc) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+        
+        String currentExt = "";
+        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
+            ext = ext.toLowerCase();
+            if (doc.getName().toLowerCase().endsWith(ext)) {
+                currentExt = ext;
+            }
+        }
+
+        final String curExt = currentExt;
+        ProgressableActionCallback callback = () -> {
+            try {
+                byte[] content = remote.getDocumentContent(doc.getId());
+                String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
+                if (newName.length() == 0) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                boolean replaceDocument = false;
+                while (documentExists && !replaceDocument) {
+                    int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                    replaceDocument = response == JOptionPane.YES_OPTION;
+                    if (!replaceDocument) {
+                        newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
+                        if (newName == null || "".equals(newName)) {
+                            this.lastPopupClosed = System.currentTimeMillis();
+                            return;
+                        }
+                    }
+                    documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                }
+
+                FileConverter conv = FileConverter.getInstance();
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                String tempPdfPath = conv.convertToPDF(tempPath);
+                byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                FileUtils.cleanupTempFile(tempPath);
+                FileUtils.cleanupTempFile(tempPdfPath);
+
+                // To replace document, old one gets removed first, then the new is uploaded
+                if (replaceDocument) {
+                    final String searchName = newName;
+                    // Check documents to find Bean for name
+                    ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
+                            .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                            .findAny()
+                            .orElse(null);
+                    // Check if the document was found
+                    if (document != null) {
+                        // document with that name is part of the "active" documents in the case
+                        // First move document to bin
+                        remote.removeDocument(document.getId());
+                        // Then remove from bin
+                        remote.removeDocumentFromBin(document.getId());
+                        // Then remove from view
+                        caseFolderPanel1.removeDocument(document);
+                    } else {
+                        // document with that name is not present in UI but exists in the trash bin
+                        document = remote.getDocumentsBin().stream()
+                                .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                .findAny()
+                                .orElse(null);
+                        if (document != null) {
+                            remote.removeDocumentFromBin(document.getId());
+                        }
+                    }
+                }
+
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+
+                newDoc.setSize(pdfContent.length);
+
+                if (doc.getFolder() != null) {
+                    newDoc.setFolder(doc.getFolder());
+                    ArrayList<String> documentIds = new ArrayList<>();
+                    documentIds.add(newDoc.getId());
+                    remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                } else {
+                    log.warn("document folder of source document is null when duplicating as PDF/A");
+                }
+                caseFolderPanel1.addDocument(newDoc, null);
+            } catch (Throwable t) {
+                log.error("Could not convert document to PDF", t);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        };
+
+        this.waitForOpenDocument(doc, callback);
+        this.lastPopupClosed = System.currentTimeMillis();
+        
+        
+    }
+    
     private void mnuDuplicateDocumentAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsPdfActionPerformed
         if (LoadDocumentPreviewThread.isRunning()) {
             JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
@@ -4592,103 +4900,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
 
             for (ArchiveFileDocumentsBean doc : selected) {
-                String currentExt = "";
-                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-                    ext = ext.toLowerCase();
-                    if (doc.getName().toLowerCase().endsWith(ext)) {
-                        currentExt = ext;
-                    }
-                }
-
-                final String curExt = currentExt;
-                ProgressableActionCallback callback = () -> {
-                    try {
-                        byte[] content = remote.getDocumentContent(doc.getId());
-                        String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
-                        if (newName.length() == 0) {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                            return;
-                        }
-
-                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                        boolean replaceDocument = false;
-                        while (documentExists && !replaceDocument) {
-                            int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
-                            replaceDocument = response == JOptionPane.YES_OPTION;
-                            if (!replaceDocument) {
-                                newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
-                                if (newName == null || "".equals(newName)) {
-                                    this.lastPopupClosed = System.currentTimeMillis();
-                                    return;
-                                }
-                            }
-                            documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                        }
-
-                        FileConverter conv = FileConverter.getInstance();
-                        String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                        String tempPdfPath = conv.convertToPDF(tempPath);
-                        byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                        FileUtils.cleanupTempFile(tempPath);
-                        FileUtils.cleanupTempFile(tempPdfPath);
-
-                        // To replace document, old one gets removed first, then the new is uploaded
-                        if (replaceDocument) {
-                            final String searchName = newName;
-                            // Check documents to find Bean for name
-                            ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
-                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                    .findAny()
-                                    .orElse(null);
-                            // Check if the document was found
-                            if (document != null) {
-                                // document with that name is part of the "active" documents in the case
-                                // First move document to bin
-                                remote.removeDocument(document.getId());
-                                // Then remove from bin
-                                remote.removeDocumentFromBin(document.getId());
-                                // Then remove from view
-                                caseFolderPanel1.removeDocument(document);
-                            } else {
-                                // document with that name is not present in UI but exists in the trash bin
-                                document = remote.getDocumentsBin().stream()
-                                        .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                        .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                        .findAny()
-                                        .orElse(null);
-                                if (document != null) {
-                                    remote.removeDocumentFromBin(document.getId());
-                                }
-                            }
-                        }
-
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
-
-                        newDoc.setSize(pdfContent.length);
-
-                        if (doc.getFolder() != null) {
-                            newDoc.setFolder(doc.getFolder());
-                            ArrayList<String> documentIds = new ArrayList<>();
-                            documentIds.add(newDoc.getId());
-                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
-                        } else {
-                            log.warn("document folder of source document is null when duplicating as PDF/A");
-                        }
-                        caseFolderPanel1.addDocument(newDoc);
-                    } catch (Throwable t) {
-                        log.error("Could not convert document to PDF", t);
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    }
-                };
-
-                this.waitForOpenDocument(doc, callback);
-                this.lastPopupClosed = System.currentTimeMillis();
+                this.convertDocumentToPdf(doc);
             }
 
         } catch (Exception ioe) {
@@ -4963,7 +5179,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuUseDocumentAsTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUseDocumentAsTemplateActionPerformed
         try {
 
-            SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true, SystemManagementRemote.TEMPLATE_TYPE_BODY);
             FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
             stf.setVisible(true);
             GenericNode targetFolder = stf.getSelectedFolder();
@@ -4991,7 +5207,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         continue;
                     }
 
-                    locator.lookupSystemManagementRemote().addTemplate(targetFolder, newName, content);
+                    locator.lookupSystemManagementRemote().addTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, targetFolder, newName, content);
 
                 }
 
@@ -5164,7 +5380,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
 
-                        caseFolderPanel1.addDocument(newDoc);
+                        caseFolderPanel1.addDocument(newDoc, null);
 
                     } catch (Exception ioe) {
                         log.error("Error duplicating document", ioe);
@@ -5480,11 +5696,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
 
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        InvoiceDialog dlg=new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         
-        InvoiceEntryPanel ip=new InvoiceEntryPanel();
+        InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
         ip.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
         this.pnlInvoices.add(ip);
         
@@ -5524,6 +5740,33 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ComponentUtils.autoSizeColumns(tblHistory);
         }
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
+
+    private void cmdCopyCaseNumberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyCaseNumberActionPerformed
+        if(this.dto != null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringSelection strSel = new StringSelection(this.dto.getFileNumber());
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_cmdCopyCaseNumberActionPerformed
+
+    private void cmdNewTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewTimesheetActionPerformed
+        
+        TimesheetDialog dlg=new TimesheetDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        
+        TimesheetEntryPanel tp=new TimesheetEntryPanel(this);
+        tp.setEntry(this.dto, dlg.getEntry());
+        this.pnlTimesheets.add(tp);
+       
+    }//GEN-LAST:event_cmdNewTimesheetActionPerformed
+
+    private void cmdTimesheetLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetLogActionPerformed
+        TimesheetLogDialog dlg=new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdTimesheetLogActionPerformed
 
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
@@ -5687,7 +5930,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (this.dto.getId() != null) {
                     ArchiveFileDocumentsBean eventDoc = ((DocumentAddedEvent) e).getDocument();
                     if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
-                        caseFolderPanel1.addDocument(eventDoc);
+                        caseFolderPanel1.addDocument(eventDoc, null);
                     }
                 }
             }
@@ -5854,7 +6097,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null, null);
 
                         a.start();
 
@@ -5889,7 +6132,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JCheckBox chkArchived;
     protected javax.swing.JComboBox cmbAssistant;
     private javax.swing.JComboBox<Object> cmbFormType;
-    private javax.swing.JComboBox<String> cmbGroup;
+    protected javax.swing.JComboBox<String> cmbGroup;
     private javax.swing.JComboBox cmbHistoryTime;
     protected javax.swing.JComboBox cmbLawyer;
     protected javax.swing.JComboBox cmbSubjectField;
@@ -5898,6 +6141,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdAddNote;
     protected javax.swing.JButton cmdBackToSearch;
     private javax.swing.JButton cmdClearSearch;
+    private javax.swing.JButton cmdCopyCaseNumber;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDrebis;
     private javax.swing.JButton cmdExportHtml;
@@ -5908,10 +6152,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdNewInvoice;
     private javax.swing.JButton cmdNewRvg;
+    private javax.swing.JButton cmdNewTimesheet;
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchClient;
     private javax.swing.JButton cmdShowHistorySelector;
+    private javax.swing.JButton cmdTimesheetLog;
     protected javax.swing.JButton cmdToEditMode;
     private javax.swing.JButton cmdUploadDocument;
     private javax.swing.JPanel documentTagPanel;
@@ -5931,6 +6177,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -5943,17 +6190,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
+    private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
@@ -6019,6 +6269,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     private javax.swing.JPanel pnlPreview;
+    private javax.swing.JPanel pnlTimesheets;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popDocumentFavorites;
     private javax.swing.JPopupMenu popDocumentTagFilter;
@@ -6026,9 +6277,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JSplitPane splitDocuments;
     private javax.swing.JSplitPane splitDocumentsMain;
     private javax.swing.JSplitPane splitNotes;
+    private javax.swing.JTabbedPane subTabsFinance;
     protected javax.swing.JTextArea taCustom3;
-    private javax.swing.JPanel tabClaims;
     private javax.swing.JPanel tabDocuments;
+    private javax.swing.JPanel tabFinance;
     private javax.swing.JPanel tabGeneralData;
     private javax.swing.JPanel tabHistory;
     private javax.swing.JTabbedPane tabPaneArchiveFile;
@@ -6205,7 +6457,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ClientSettings settings = ClientSettings.getInstance();
-        EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        EditorsRegistry.getInstance().updateStatus("Akte wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -6277,6 +6529,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }));
 
             }
+            
+            this.saveFormData();
+            
             if (this.groupPrivilegesChanged) {
                 ArrayList<Group> allowedGroups = new ArrayList<>();
                 for (int r = 0; r < this.tblGroups.getRowCount(); r++) {

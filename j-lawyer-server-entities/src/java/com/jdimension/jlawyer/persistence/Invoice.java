@@ -680,7 +680,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "Invoice.findAll", query = "SELECT a FROM Invoice a"),
     @NamedQuery(name = "Invoice.findById", query = "SELECT a FROM Invoice a WHERE a.id = :id"),
-    @NamedQuery(name = "Invoice.findByArchiveFileKey", query = "SELECT a FROM Invoice a WHERE a.archiveFileKey = :archiveFileKey"),
+    @NamedQuery(name = "Invoice.findByArchiveFileKey", query = "SELECT a FROM Invoice a WHERE a.archiveFileKey = :archiveFileKey order by a.creationDate desc"),
+    @NamedQuery(name = "Invoice.findByInvoiceDocument", query = "SELECT a FROM Invoice a WHERE a.invoiceDocument = :invoiceDocument"),
     @NamedQuery(name = "Invoice.findByAddress", query = "SELECT a FROM Invoice a WHERE a.contact = :contact")})
 public class Invoice implements Serializable {
     
@@ -688,6 +689,15 @@ public class Invoice implements Serializable {
     public static final int STATUS_NEW=10;
     // when sent to recipient
     public static final int STATUS_OPEN=20;
+    private static final String S_STATUS_OPEN="offen";
+    public static final int STATUS_OPEN_REMINDER1=21;
+    private static final String S_STATUS_OPEN_REMINDER1="offen - 1. Mahnstufe";
+    public static final int STATUS_OPEN_REMINDER2=22;
+    private static final String S_STATUS_OPEN_REMINDER2="offen - 2. Mahnstufe";
+    public static final int STATUS_OPEN_REMINDER3=23;
+    private static final String S_STATUS_OPEN_REMINDER3="offen - 3. Mahnstufe";
+    public static final int STATUS_OPEN_NONENFORCEABLE=24;
+    private static final String S_STATUS_OPEN_NONENFORCEABLE="offen - nicht vollstreckbar";
     // paid
     public static final int STATUS_PAID=30;
     // cancelled
@@ -736,6 +746,19 @@ public class Invoice implements Serializable {
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     protected AddressBean contact;
+    
+    @Column(name = "total")
+    protected float total=0f;
+    
+    @JoinColumn(name = "invoice_document", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    protected ArchiveFileDocumentsBean invoiceDocument;
+    
+    @Column(name = "currency")
+    protected String currency="EUR";
+    
+    @Column(name = "last_pool_id")
+    protected String lastPoolId;
 
     public Invoice() {
     }
@@ -885,7 +908,15 @@ public class Invoice implements Serializable {
             case STATUS_NEW:
                 return "Entwurf";
             case STATUS_OPEN:
-                return "offen";
+                return S_STATUS_OPEN;
+            case STATUS_OPEN_REMINDER1:
+                return S_STATUS_OPEN_REMINDER1;
+            case STATUS_OPEN_REMINDER2:
+                return S_STATUS_OPEN_REMINDER2;
+            case STATUS_OPEN_REMINDER3:
+                return S_STATUS_OPEN_REMINDER3;
+            case STATUS_OPEN_NONENFORCEABLE:
+                return S_STATUS_OPEN_NONENFORCEABLE;
             case STATUS_PAID:
                 return "bezahlt";
             default:
@@ -900,8 +931,16 @@ public class Invoice implements Serializable {
                 return STATUS_CANCELLED;
             case "Entwurf":
                 return STATUS_NEW;
-            case "offen":
+            case S_STATUS_OPEN:
                 return STATUS_OPEN;
+            case S_STATUS_OPEN_REMINDER1:
+                return STATUS_OPEN_REMINDER1;
+            case S_STATUS_OPEN_REMINDER2:
+                return STATUS_OPEN_REMINDER2;
+            case S_STATUS_OPEN_REMINDER3:
+                return STATUS_OPEN_REMINDER3;
+            case S_STATUS_OPEN_NONENFORCEABLE:
+                return STATUS_OPEN_NONENFORCEABLE;
             case "bezahlt":
                 return STATUS_PAID;
             default:
@@ -911,9 +950,13 @@ public class Invoice implements Serializable {
     }
     
     public List<String> getStatusValues() {
-        List<String> statuses=new ArrayList<String>();
+        List<String> statuses=new ArrayList<>();
         statuses.add("Entwurf");
-        statuses.add("offen");
+        statuses.add(S_STATUS_OPEN);
+        statuses.add(S_STATUS_OPEN_REMINDER1);
+        statuses.add(S_STATUS_OPEN_REMINDER2);
+        statuses.add(S_STATUS_OPEN_REMINDER3);
+        statuses.add(S_STATUS_OPEN_NONENFORCEABLE);
         statuses.add("bezahlt");
         statuses.add("storniert");
         return statuses;
@@ -980,6 +1023,62 @@ public class Invoice implements Serializable {
      */
     public void setInvoiceType(InvoiceType invoiceType) {
         this.invoiceType = invoiceType;
+    }
+
+    /**
+     * @return the total
+     */
+    public float getTotal() {
+        return total;
+    }
+
+    /**
+     * @param total the total to set
+     */
+    public void setTotal(float total) {
+        this.total = total;
+    }
+
+    /**
+     * @return the invoiceDocument
+     */
+    public ArchiveFileDocumentsBean getInvoiceDocument() {
+        return invoiceDocument;
+    }
+
+    /**
+     * @param invoiceDocument the invoiceDocument to set
+     */
+    public void setInvoiceDocument(ArchiveFileDocumentsBean invoiceDocument) {
+        this.invoiceDocument = invoiceDocument;
+    }
+
+    /**
+     * @return the currency
+     */
+    public String getCurrency() {
+        return currency;
+    }
+
+    /**
+     * @param currency the currency to set
+     */
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    /**
+     * @return the lastPoolId
+     */
+    public String getLastPoolId() {
+        return lastPoolId;
+    }
+
+    /**
+     * @param lastPoolId the lastPoolId to set
+     */
+    public void setLastPoolId(String lastPoolId) {
+        this.lastPoolId = lastPoolId;
     }
     
 }

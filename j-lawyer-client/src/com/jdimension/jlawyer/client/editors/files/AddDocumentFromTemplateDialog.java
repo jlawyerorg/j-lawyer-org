@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.PartiesTriplet;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
@@ -698,6 +699,7 @@ import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
@@ -710,12 +712,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFileBean aFile = null;
     private JTable tblReviewReasons = null;
     private GenericCalculationTable calculationTable = null;
+    private Invoice invoice=null;
+    private StyledCalculationTable invoiceTable=null;
+    private StyledCalculationTable timesheetsTable=null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
+    
+    protected ArchiveFileDocumentsBean addedDocument=null;
+    
+    private ArchiveFilePanel casePanel=null;
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
-        this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
+        this(parent, modal, casePanel, targetTable, aFile, involved, tblReviewReasons, null, null, null, null);
     }
 
     /**
@@ -723,20 +732,30 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      *
      * @param parent
      * @param modal
+     * @param casePanel
      * @param targetTable
      * @param calculationTable
      * @param involved
      * @param tblReviewReasons
      * @param aFile
+     * @param invoice
+     * @param invoiceTable
+     * @param timesheetsTable
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
+        this.invoice=invoice;
+        this.invoiceTable=invoiceTable;
+        this.timesheetsTable=timesheetsTable;
 
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
+        
+        this.casePanel=casePanel;
+        
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
@@ -815,9 +834,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ComponentUtils.persistSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
+        List<String> headTemplates=new ArrayList<>();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            headTemplates=locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"));
             this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
             this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
 
@@ -826,7 +847,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
-
+        
+        this.cmbLetterHeads.removeAllItems();
+        this.cmbLetterHeads.addItem("");
+        for(String lh: headTemplates)
+            this.cmbLetterHeads.addItem(lh);
+        
         if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());
         }
@@ -952,11 +978,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         jScrollPane3 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
         cmdClearFilter = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        cmbLetterHeads = new javax.swing.JComboBox<>();
         jPanel3 = new javax.swing.JPanel();
         cmbDictateSigns = new javax.swing.JComboBox();
         jLabel7 = new javax.swing.JLabel();
         txtFileName = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        chkGeneratePDF = new javax.swing.JCheckBox();
         cmdAddAndOpen = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -1076,7 +1105,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                                         .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(cmdShowReviewSelector)))
-                                .add(0, 34, Short.MAX_VALUE)))))
+                                .add(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1167,18 +1196,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         splitMain.setRightComponent(jPanel5);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlage"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Briefkopf & Vorlage"));
 
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtTemplateFilterKeyTyped(evt);
-            }
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyPressed(evt);
             }
         });
 
-        jLabel3.setText("Filter:");
+        jLabel3.setText("Vorlage:");
 
         lstTemplates.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -1215,6 +1241,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         });
 
+        jLabel2.setFont(jLabel2.getFont());
+        jLabel2.setText("Briefkopf:");
+
+        cmbLetterHeads.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbLetterHeads.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbLetterHeadsActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1222,11 +1258,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel3)
+                    .add(jSplitPane1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel2)
+                            .add(jLabel3))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtTemplateFilter)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(txtTemplateFilter)
+                            .add(cmbLetterHeads, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdClearFilter)))
                 .addContainerGap())
@@ -1235,15 +1275,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(cmbLetterHeads, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtTemplateFilter, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel3)
                     .add(cmdClearFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 594, Short.MAX_VALUE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Datenübernahme"));
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokumenterstellung"));
 
         cmbDictateSigns.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDictateSigns.addItemListener(new java.awt.event.ItemListener() {
@@ -1262,6 +1306,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         jLabel1.setText("Dateiname:");
 
+        chkGeneratePDF.setFont(chkGeneratePDF.getFont());
+        chkGeneratePDF.setText("zusätzlich als PDF ablegen");
+        chkGeneratePDF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkGeneratePDFActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1273,8 +1325,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDictateSigns, 0, 1, Short.MAX_VALUE)
-                    .add(txtFileName))
+                    .add(cmbDictateSigns, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(txtFileName)
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(chkGeneratePDF)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1285,10 +1340,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkGeneratePDF)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbDictateSigns, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
@@ -1306,14 +1363,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(162, 162, 162))
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         splitMain.setLeftComponent(jPanel6);
@@ -1338,7 +1390,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdCancel)
                 .add(10, 10, 10))
-            .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 790, Short.MAX_VALUE)
+            .add(splitMain)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1379,6 +1431,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdAddActionPerformed
 
     private void addAndOpen(boolean openAfterAdd) {
+        this.addedDocument=null;
+        
         if (this.txtFileName.getText() == null || "".equals(this.txtFileName.getText()) || this.hasFileExtension(this.txtFileName.getText())) {
             JOptionPane.showMessageDialog(this, "Bitte geben Sie einen Dateinamen ohne Erweiterung ein.", "Dokument erstellen", JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -1399,14 +1453,33 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             GenericNode gn = (GenericNode) tn.getUserObject();
 
-            db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
-            targetTable.addDocument(db);
+            
+            
+            String letterHead="";
+            if(this.cmbLetterHeads.getSelectedItem()!=null)
+                letterHead=this.cmbLetterHeads.getSelectedItem().toString();
+                        
+            db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
+            this.addedDocument=db;
+            targetTable.addDocument(db, this.invoice);
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
             return;
+        }
+        
+        if(this.invoice!=null) {
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().linkInvoiceDocument(db.getId(), this.invoice.getId());
+            } catch (Exception ex) {
+                log.error("Error linking invoice document", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Verknüpfen von Rechnung und Dokument: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
         }
 
         if (!(this.radioReviewTypeNone.isSelected())) {
@@ -1455,7 +1528,18 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 model.addRow(row);
                 ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
-
+            
+        }
+        
+        if (this.chkGeneratePDF.isSelected() && this.casePanel != null) {
+            EditorsRegistry.getInstance().updateStatus("Dokument wird in PDF konviertiert...");
+            try {
+                this.casePanel.convertDocumentToPdf(db);
+            } catch (Exception ex) {
+                log.error("Error converting to PDF", ex);
+                JOptionPane.showMessageDialog(this, "Fehler bei der PDF-Konvertierung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            EditorsRegistry.getInstance().updateStatus("PDF-Konvertierung abgeschlossen.", 5000);
         }
 
         if (openAfterAdd) {
@@ -1486,9 +1570,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_txtTemplateFilterKeyPressed
 
-    private void txtTemplateFilterKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateFilterKeyTyped
-    }//GEN-LAST:event_txtTemplateFilterKeyTyped
-
     private void highlightTree(String templateQuery) {
         try {
             int[] selectedRows = this.treeFolders.getSelectionRows();
@@ -1496,7 +1577,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             if (!("".equalsIgnoreCase(templateQuery.trim()))) {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                list = locator.lookupSystemManagementRemote().searchTemplateFolders(this.txtTemplateFilter.getText());
+                list = locator.lookupSystemManagementRemote().searchTemplateFolders(SystemManagementRemote.TEMPLATE_TYPE_BODY, this.txtTemplateFilter.getText());
             }
 
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
@@ -1574,7 +1655,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_formComponentResized
 
-    private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
+    private void templateSelection() {
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
         }
@@ -1591,15 +1672,32 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
-
+                this.chkGeneratePDF.setSelected(false);
+                String autoGeneratePdf=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "0");
+                if("1".equals(autoGeneratePdf)) {
+                    this.chkGeneratePDF.setSelected(true);
+                }
+                
+                String letterHead=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "");
+                this.cmbLetterHeads.setSelectedItem(letterHead);
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
+                List<String> placeHoldersBody = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
+                List<String> placeHoldersHead = new ArrayList<>();
+                if(this.cmbLetterHeads.getSelectedItem()!=null && !("".equalsIgnoreCase(this.cmbLetterHeads.getSelectedItem().toString()))) {
+                    placeHoldersHead=locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"), this.cmbLetterHeads.getSelectedItem().toString(), this.formPlaceHolders);
+                }
+                for(String phh: placeHoldersHead) {
+                    if(!placeHoldersBody.contains(phh))
+                        placeHoldersBody.add(phh);
+                }
+                
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
-                Collections.sort(placeHolders);
+                Collections.sort(placeHoldersBody);
                 HashMap<String, Object> ht = new HashMap<>();
-                for (String ph : placeHolders) {
+                for (String ph : placeHoldersBody) {
                     ht.put(ph, "");
                 }
                 List<PartiesPanelEntry> selectedParties = this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
@@ -1626,7 +1724,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable, this.timesheetsTable);
 
                 for (String key : ht.keySet()) {
                     if (key.startsWith("[[SCRIPT:")) {
@@ -1664,6 +1762,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
             ThreadUtils.setTableModel(this.tblPlaceHolders, model);
         }
+    }
+    
+    private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
+        this.templateSelection();
     }//GEN-LAST:event_lstTemplatesMouseClicked
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
@@ -1694,6 +1796,37 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.addAndOpen(true);
     }//GEN-LAST:event_cmdAddAndOpenActionPerformed
 
+    private void cmbLetterHeadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbLetterHeadsActionPerformed
+                
+        
+        if(this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            GenericNode gn = (GenericNode) tn.getUserObject();
+            if (this.cmbLetterHeads.getSelectedItem() == null || "".equals(this.cmbLetterHeads.getSelectedItem())) {
+                ClientSettings.getInstance().removeConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString());
+            } else {
+                ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString(), this.cmbLetterHeads.getSelectedItem().toString());
+            }
+        }
+
+        this.templateSelection();
+    }//GEN-LAST:event_cmbLetterHeadsActionPerformed
+
+    private void chkGeneratePDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGeneratePDFActionPerformed
+        if(this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            GenericNode gn = (GenericNode) tn.getUserObject();
+            if (this.chkGeneratePDF.isSelected()) {
+                settings.setConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "1");
+            } else {
+                settings.removeConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString());
+            }
+            
+            
+        }
+    }//GEN-LAST:event_chkGeneratePDFActionPerformed
+
     private void traverseFolders(GenericNode current, DefaultMutableTreeNode currentNode) throws Exception {
 
         ArrayList<GenericNode> children = current.getChildren();
@@ -1717,7 +1850,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }
 
-    public void refreshTree() {
+    public final void refreshTree() {
         DefaultListModel model = new DefaultListModel();
         model.removeAllElements();
         this.lstTemplates.setModel(model);
@@ -1726,7 +1859,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
+            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
             this.traverseFolders(templateTree, rootNode);
@@ -1760,12 +1893,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
-            Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(folder);
+            Collection<String> fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, folder);
 
-            for (Object o : fileNames) {
+            for (String o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
+                } else if (o.toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }
@@ -1795,13 +1928,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null).setVisible(true);
+            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviews;
     private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton1;
+    private javax.swing.JCheckBox chkGeneratePDF;
     private javax.swing.JComboBox cmbDictateSigns;
+    private javax.swing.JComboBox<String> cmbLetterHeads;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JButton cmdAdd;
@@ -1811,6 +1946,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -1843,5 +1979,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     public void selectedPartiesUpdated() {
         this.updateFileName();
         this.lstTemplatesMouseClicked(null);
+    }
+
+    /**
+     * @return the addedDocument
+     */
+    public ArchiveFileDocumentsBean getAddedDocument() {
+        return addedDocument;
     }
 }

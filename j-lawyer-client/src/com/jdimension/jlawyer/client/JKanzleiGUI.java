@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
@@ -682,6 +683,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
@@ -693,8 +695,10 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.BugReportDialog;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -703,9 +707,12 @@ import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -735,16 +742,28 @@ import themes.colors.DefaultColorTheme;
 public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jlawyer.client.events.EventConsumer {
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
+    
+    
+    
     private boolean initializing = false;
+    private long initialized=Long.MIN_VALUE;
 
-    //private ModuleBar moduleBar=new ModuleBar();
     /**
      * Creates new form JKanzleiGUI
      */
     public JKanzleiGUI() {
         this.initializing = true;
+        
+        this.restoreWindowSize();
+        
+        this.initialized=System.currentTimeMillis();
+        // for some reason, initComponents resets the bounds
         initComponents();
+        
         this.lblNewsStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        
+        
+
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
@@ -758,9 +777,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_OPENTIMESHEETPOSITIONS);
 
-//        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
-//        this.scrollMain.getHorizontalScrollBar().setUnitIncrement(16);
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         if ("0".equalsIgnoreCase(randomBackgrounds)) {
@@ -768,15 +786,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else {
             this.mnuChkRandomBackground.setSelected(true);
         }
-//        String h = settings.getConfiguration(ClientSettings.CONF_HEIGHT, "600");
-//        String w = settings.getConfiguration(ClientSettings.CONF_WIDTH, "900");
-//        double wd = Double.parseDouble(w);
-//        double hd = Double.parseDouble(h);
-//        this.setSize((int) wd, (int) hd);
-        setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
-//        this.doLayout();
-//        this.pack();
-        //FrameUtils.centerFrame(this, null);
+        //setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 
         ModuleMetadata rootModule = settings.getRootModule();
 
@@ -784,35 +794,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         registry.setMainEditorsPane(this.jPanel1);
 
         DefaultTreeModel model = new DefaultTreeModel(rootModule);
-//        this.treeModules.setModel(model);
-
-//        this.treeModules.setCellRenderer(new ModuleTreeCellRenderer());
-//        NavigationUtils navUtils = NavigationUtils.getInstance();
-//        navUtils.setTreeModules(this.treeModules);
-//        this.treeModules.setSelectionPath(treeModules.getPathForRow(1).getParentPath());
-//        ComponentUtils.expandTree(this.treeModules);
-//        this.moduleBar.addModule(rootModule);
-//        for(int i=0;i<rootModule.getChildCount();i++) {
-//            ModuleMetadata folderMod=(ModuleMetadata)rootModule.getChildAt(i);
-//            for(int k=0;k<folderMod.getChildCount();k++) {
-//                this.moduleBar.addModule((ModuleMetadata)folderMod.getChildAt(k));
-//            }
-//        }
-//        this.moduleBar.doLayout();
-//        
-//        this.scrollModules.add(this.moduleBar);
-//        this.scrollModules.doLayout();
-//        EditorsRegistry registry = EditorsRegistry.getInstance();
-//        registry.setMainEditorsPane(this.scrollMain);
         registry.setStatusLabel(this.statusLabel);
 
-//        try {
-//            MainPanel mainPanel = (MainPanel) EditorsRegistry.getInstance().getEditor(MainPanel.class.getName());
-//            mainPanel.setAddressCount(initialAddressCount);
-//            mainPanel.setArchiveFileCount(initialArchiveFileCount);
-//        } catch (Exception ex) {
-//            log.error(ex);
-//        }
         // will initialize the system tray icon for the first time
         SwingUtilities.invokeLater(() -> {
             SystrayUtils.getInstance();
@@ -821,6 +804,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500l, 60000l * 10l);
+        
+        Timer timer2 = new Timer();
+        TimerTask timesheetsTask = new TimesheetsTimerTask();
+        timer2.schedule(timesheetsTask, 7000l, 60000l);
+        
+        Timer timer3 = new Timer();
+        TimerTask timesheetsHintTask = new TimesheetsHintTimerTask(this.lblTimesheetStatus);
+        timer3.schedule(timesheetsHintTask, 7500l, 1000l);
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -868,6 +859,58 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         }));
 
+    }
+    
+    public void restoreWindowSize() {
+        ClientSettings cs=ClientSettings.getInstance();
+        Rectangle lastBounds = null;
+        String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
+        log.info("restoring windows size (x,y,w,h) to " + lastBoundsString);
+        if (lastBoundsString != null) {
+            lastBounds = this.rectangleFromBoundsString(lastBoundsString);
+        }
+
+        if (lastBounds != null) {
+            Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
+            if(lastBounds.x>screenSize.width)
+                lastBounds.x=0;
+            if(lastBounds.y>screenSize.height)
+                lastBounds.y=0;
+            if(lastBounds.width>screenSize.width)
+                lastBounds.width=screenSize.width;
+            if(lastBounds.height>screenSize.height)
+                lastBounds.height=screenSize.height;
+            this.setBounds(lastBounds);
+            this.setSize(lastBounds.width, lastBounds.height);
+        } else {
+            // Otherwise, maximize window
+            setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
+        }
+        
+
+    }
+    
+    private void saveFrameBounds() {
+        ClientSettings cs=ClientSettings.getInstance();
+        Rectangle bounds = this.getBounds();
+        String boundsString = bounds.x + "," + bounds.y + "," + bounds.width + "," + bounds.height;
+        cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS, boundsString);
+    }
+    
+    private Rectangle rectangleFromBoundsString(String boundsStr) {
+        try {
+            String[] boundsParts = boundsStr.split(",");
+            int x = Integer.parseInt(boundsParts[0]);
+            int y = Integer.parseInt(boundsParts[1]);
+            int width = Integer.parseInt(boundsParts[2]);
+            int height = Integer.parseInt(boundsParts[3]);
+            Rectangle bounds = new Rectangle();
+            bounds.setBounds(x, y, width, height);
+            return bounds;
+        } catch (Exception e) {
+            log.error("unable to get rectangle from string: " + boundsStr, e);
+            return null;
+        }
     }
 
     public void buildModuleBar() {
@@ -1010,6 +1053,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblDrebisStatus.setText("-");
                 this.lblDrebisStatus.setToolTipText("keine ungelesenen Drebis-Nachrichten");
             }
+        } else if (e instanceof OpenTimesheetPositionsEvent) {
+            OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
+            if (ope.getOpenPositions()>0) {
+                this.lblTimesheetStatus.setToolTipText("" + ope.getOpenPositions() + " laufende Zeiterfassung(en)");
+                this.lblTimesheetStatus.setText("Zeit läuft");
+            } else {
+                this.lblTimesheetStatus.setToolTipText(null);
+                this.lblTimesheetStatus.setText("");
+            }
         }
     }
 
@@ -1035,6 +1087,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblNewsStatus = new javax.swing.JLabel();
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
+        lblTimesheetStatus = new javax.swing.JLabel();
         moduleBar = new com.jdimension.jlawyer.client.modulebar.ModuleBar();
         jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1068,23 +1121,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressBookSync = new javax.swing.JMenuItem();
         mnuAddressBookSyncNow = new javax.swing.JMenuItem();
         mnuArchiveFileOptions = new javax.swing.JMenu();
-        mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
-        mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
+        mnuFormsManager = new javax.swing.JMenuItem();
+        mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
+        mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFields = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
-        mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
-        mnuFormsManager = new javax.swing.JMenuItem();
-        mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
-        mnuMappingTables = new javax.swing.JMenuItem();
-        mnuMappingEntries = new javax.swing.JMenuItem();
-        mnuScanOptions = new javax.swing.JMenuItem();
         mnuWordProcessor = new javax.swing.JMenuItem();
+        mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuScanOptions = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuDocumentPreview = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
+        mnuMappingTables = new javax.swing.JMenuItem();
+        mnuMappingEntries = new javax.swing.JMenuItem();
         mnuCalendarOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuCalendarSetup = new javax.swing.JMenuItem();
@@ -1092,6 +1145,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance = new javax.swing.JMenu();
         mnuInvoicePools = new javax.swing.JMenuItem();
         mnuInvoiceTypes = new javax.swing.JMenuItem();
+        mnuInvoiceCurrencies = new javax.swing.JMenuItem();
+        mnuInvoiceTaxRates = new javax.swing.JMenuItem();
+        mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
+        mnuTimesheet = new javax.swing.JMenu();
+        mnuTimesheetIntervals = new javax.swing.JMenuItem();
+        mnuTimesheetPositions = new javax.swing.JMenuItem();
+        mnuParallelTimesheetLogs = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1110,6 +1170,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuWebHooks = new javax.swing.JMenuItem();
+        mnuBugReport = new javax.swing.JMenuItem();
         mnuServices = new javax.swing.JMenu();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
@@ -1123,6 +1184,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         setTitle(bundle.getString("title")); // NOI18N
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
         addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
@@ -1180,6 +1244,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblBeaStatus.setToolTipText("noch nicht eingeloggt");
         lblBeaStatus.setEnabled(false);
 
+        lblTimesheetStatus.setFont(lblTimesheetStatus.getFont().deriveFont(lblTimesheetStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblTimesheetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        lblTimesheetStatus.setText("  ");
+        lblTimesheetStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblTimesheetStatus.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblTimesheetStatusMouseClicked(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout statusPanelLayout = new org.jdesktop.layout.GroupLayout(statusPanel);
         statusPanel.setLayout(statusPanelLayout);
         statusPanelLayout.setHorizontalGroup(
@@ -1188,7 +1262,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblSystemStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 224, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 180, Short.MAX_VALUE)
+                .add(lblTimesheetStatus)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblUpdateStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
@@ -1213,7 +1289,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblNewsStatus)
                 .add(statusLabel)
                 .add(lblDrebisStatus)
-                .add(lblBeaStatus))
+                .add(lblBeaStatus)
+                .add(lblTimesheetStatus))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblSystemStatus)
         );
 
@@ -1454,15 +1531,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuArchiveFileOptions.setText("Akten");
 
-        mnuArchiveFileOptionsDictateSign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        mnuArchiveFileOptionsDictateSign.setText(bundle.getString("menu.settings.cases.dictatesigns")); // NOI18N
-        mnuArchiveFileOptionsDictateSign.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuArchiveFileOptionsDictateSignActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuArchiveFileOptionsDictateSign);
-
         mnuArchiveFileOptionsSubjectFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
         mnuArchiveFileOptionsSubjectFields.setText(bundle.getString("menu.settings.cases.subjectfields")); // NOI18N
         mnuArchiveFileOptionsSubjectFields.addActionListener(new java.awt.event.ActionListener() {
@@ -1481,14 +1549,41 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileTags);
 
-        mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuDocumentTags.setText("Dokumenten-Etiketten");
-        mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
+        mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
+        mnuDocumentFolderTemplates.setText("Dokumentordner");
+        mnuDocumentFolderTemplates.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDocumentTagsActionPerformed(evt);
+                mnuDocumentFolderTemplatesActionPerformed(evt);
             }
         });
-        mnuArchiveFileOptions.add(mnuDocumentTags);
+        mnuArchiveFileOptions.add(mnuDocumentFolderTemplates);
+
+        mnuFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png"))); // NOI18N
+        mnuFormsManager.setText("Falldatenblätter");
+        mnuFormsManager.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFormsManagerActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuFormsManager);
+
+        mnuArchiveFileOptionsCaseNumbering.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        mnuArchiveFileOptionsCaseNumbering.setText(bundle.getString("menu.settings.cases.numbering")); // NOI18N
+        mnuArchiveFileOptionsCaseNumbering.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileOptionsCaseNumberingActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileOptionsCaseNumbering);
+
+        mnuArchiveFileOptionsDictateSign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuArchiveFileOptionsDictateSign.setText(bundle.getString("menu.settings.cases.dictatesigns")); // NOI18N
+        mnuArchiveFileOptionsDictateSign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileOptionsDictateSignActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileOptionsDictateSign);
 
         mnuArchiveFileCustomFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
         mnuArchiveFileCustomFields.setText(bundle.getString("menu.settings.cases.customfields")); // NOI18N
@@ -1508,64 +1603,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileCustomFieldsInvolvements);
 
-        mnuArchiveFileOptionsCaseNumbering.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
-        mnuArchiveFileOptionsCaseNumbering.setText(bundle.getString("menu.settings.cases.numbering")); // NOI18N
-        mnuArchiveFileOptionsCaseNumbering.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuArchiveFileOptionsCaseNumberingActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuArchiveFileOptionsCaseNumbering);
-
-        mnuFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png"))); // NOI18N
-        mnuFormsManager.setText("Falldatenblätter");
-        mnuFormsManager.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuFormsManagerActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuFormsManager);
-
-        mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
-        mnuDocumentFolderTemplates.setText("Dokumentordner");
-        mnuDocumentFolderTemplates.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDocumentFolderTemplatesActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuDocumentFolderTemplates);
-
         mnuOptions.add(mnuArchiveFileOptions);
 
         mnuDocumentOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuDocumentOptions.setText("Dokumente");
-
-        mnuMappingTables.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
-        mnuMappingTables.setText("Zuordnungstabellen");
-        mnuMappingTables.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMappingTablesActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuMappingTables);
-
-        mnuMappingEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
-        mnuMappingEntries.setText("Zuordnungsregeln");
-        mnuMappingEntries.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMappingEntriesActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuMappingEntries);
-
-        mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
-        mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
-        mnuScanOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuScanOptionsActionPerformed(evt);
-            }
-        });
-        mnuDocumentOptions.add(mnuScanOptions);
 
         mnuWordProcessor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuWordProcessor.setText("Office-Suite");
@@ -1575,6 +1616,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuWordProcessor);
+
+        mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuDocumentTags.setText("Dokumenten-Etiketten");
+        mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentTagsActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuDocumentTags);
+
+        mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
+        mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
+        mnuScanOptions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuScanOptionsActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuScanOptions);
 
         mnuSearchIndex.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         mnuSearchIndex.setText(bundle.getString("menu.settings.documents.search")); // NOI18N
@@ -1602,6 +1661,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuCustomLauncherOptions);
+
+        mnuMappingTables.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingTables.setText("Zuordnungstabellen");
+        mnuMappingTables.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingTablesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingTables);
+
+        mnuMappingEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingEntries.setText("Zuordnungsregeln");
+        mnuMappingEntries.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingEntriesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingEntries);
 
         mnuOptions.add(mnuDocumentOptions);
 
@@ -1642,8 +1719,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance.setText("Finanzen");
 
         mnuInvoicePools.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
-        mnuInvoicePools.setText("Rechnungsnummernkreise");
-        mnuInvoicePools.setEnabled(false);
+        mnuInvoicePools.setText("Belegnummernkreise");
+        mnuInvoicePools.setToolTipText("Nummernkreise für alle Belegarten");
         mnuInvoicePools.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuInvoicePoolsActionPerformed(evt);
@@ -1653,7 +1730,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuInvoiceTypes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
         mnuInvoiceTypes.setText("Belegarten");
-        mnuInvoiceTypes.setEnabled(false);
         mnuInvoiceTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuInvoiceTypesActionPerformed(evt);
@@ -1661,7 +1737,69 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuFinance.add(mnuInvoiceTypes);
 
+        mnuInvoiceCurrencies.setFont(mnuInvoiceCurrencies.getFont());
+        mnuInvoiceCurrencies.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoiceCurrencies.setText("Währungen");
+        mnuInvoiceCurrencies.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoiceCurrenciesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoiceCurrencies);
+
+        mnuInvoiceTaxRates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoiceTaxRates.setText("Steuersätze");
+        mnuInvoiceTaxRates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoiceTaxRatesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoiceTaxRates);
+
+        mnuInvoicePositionTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuInvoicePositionTemplates.setText("Belegpositionen (Vorlagen)");
+        mnuInvoicePositionTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuInvoicePositionTemplatesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuInvoicePositionTemplates);
+
         mnuOptions.add(mnuFinance);
+
+        mnuTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheet.setText("Zeiterfassung");
+
+        mnuTimesheetIntervals.setFont(mnuTimesheetIntervals.getFont());
+        mnuTimesheetIntervals.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetIntervals.setText("Taktung");
+        mnuTimesheetIntervals.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetIntervalsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetIntervals);
+
+        mnuTimesheetPositions.setFont(mnuTimesheetPositions.getFont());
+        mnuTimesheetPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetPositions.setText("Zeiterfassungspositionen (Vorlagen)");
+        mnuTimesheetPositions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetPositionsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetPositions);
+
+        mnuParallelTimesheetLogs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuParallelTimesheetLogs.setText("parallele Zeiterfassungen");
+        mnuParallelTimesheetLogs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuParallelTimesheetLogsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuParallelTimesheetLogs);
+
+        mnuOptions.add(mnuTimesheet);
         mnuOptions.add(jSeparator2);
 
         mnuUserProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png"))); // NOI18N
@@ -1789,6 +1927,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAdministration.add(mnuWebHooks);
+
+        mnuBugReport.setFont(mnuBugReport.getFont());
+        mnuBugReport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_bug_report_black_48dp.png"))); // NOI18N
+        mnuBugReport.setText("Systemreport");
+        mnuBugReport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuBugReportActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuBugReport);
 
         jMenuBar1.add(mnuAdministration);
 
@@ -1950,6 +2098,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.error(ex);
         }
 
+        // check for open timesheet positions
+        this.confirmOpenTimesheetPositions();
+        
+        // check for open documents
         DocumentObserver observer = DocumentObserver.getInstance();
         boolean cancelled = false;
         if (observer.hasUnsavedDocuments()) {
@@ -1986,6 +2138,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     }//GEN-LAST:event_formWindowClosing
 
+    public void confirmOpenTimesheetPositions() {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            int openPositions = locator.lookupArchiveFileServiceRemote().hasOpenTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if (openPositions>0) {
+                TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
+                tsld.setVisible(true);
+            }
+        } catch (Throwable ex) {
+            log.error("Error checking for open timesheet positions", ex);
+        }
+    }
+    
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         //System.out.println("window closed");
     }//GEN-LAST:event_formWindowClosed
@@ -1997,11 +2164,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuExitActionPerformed
 
     private boolean checkAdmin() {
+        return checkAdmin(true);
+    }
+    
+    private boolean checkAdmin(boolean displayWarning) {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (!currentlyAdmin) {
+            if (!currentlyAdmin && displayWarning) {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
             return currentlyAdmin;
@@ -2021,10 +2192,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAdminConsoleActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        if (!this.initializing) {
-            ClientSettings s = ClientSettings.getInstance();
-            s.setConfiguration(ClientSettings.CONF_HEIGHT, "" + this.getSize().getHeight());
-            s.setConfiguration(ClientSettings.CONF_WIDTH, "" + this.getSize().getWidth());
+        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+            saveFrameBounds();
         }
     }//GEN-LAST:event_formComponentResized
 
@@ -2578,6 +2747,98 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuInvoiceTypesActionPerformed
 
+    private void mnuInvoiceCurrenciesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceCurrenciesActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Währungen");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuInvoiceCurrenciesActionPerformed
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+            saveFrameBounds();
+        }
+    }//GEN-LAST:event_formComponentMoved
+
+    private void mnuInvoiceTaxRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTaxRatesActionPerformed
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+            dlg.setTitle("Steuersätze");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICETAXRATES);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuInvoiceTaxRatesActionPerformed
+
+    private void mnuInvoicePositionTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePositionTemplatesActionPerformed
+        if (checkAdmin()) {
+                InvoicePositionTemplatesSetupDialog dlg = new InvoicePositionTemplatesSetupDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuInvoicePositionTemplatesActionPerformed
+
+    private void mnuTimesheetIntervalsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetIntervalsActionPerformed
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true, OptionGroupConfigurationDialog.VALIDATOR_INTEGER);
+            dlg.setTitle("Zeiterfassung: mögliche Taktung (Minuten)");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuTimesheetIntervalsActionPerformed
+
+    private void lblTimesheetStatusMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTimesheetStatusMouseClicked
+        TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+        FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
+        tsld.setVisible(true);
+    }//GEN-LAST:event_lblTimesheetStatusMouseClicked
+
+    private void mnuTimesheetPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetPositionsActionPerformed
+        if (checkAdmin()) {
+            TimesheetPositionTemplatesSetupDialog dlg = new TimesheetPositionTemplatesSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuTimesheetPositionsActionPerformed
+
+    private void mnuParallelTimesheetLogsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuParallelTimesheetLogsActionPerformed
+        if (checkAdmin()) {
+                TimesheetParallelConfigurationDialog dlg = new TimesheetParallelConfigurationDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            }
+    }//GEN-LAST:event_mnuParallelTimesheetLogsActionPerformed
+
+    private void mnuBugReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBugReportActionPerformed
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator=null;
+            if(checkAdmin(false)) {
+                // user is admin
+                locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            } else {
+                // construct a different security context with admin privileges
+                UserCredentialsDialog dlg = new UserCredentialsDialog(this, true, "Administratoren-Login erforderlich");
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+                
+                if(!StringUtils.isEmpty(dlg.getUsername()) && !StringUtils.isEmpty(dlg.getPassword())) {
+                    locator = JLawyerServiceLocator.getTemporaryInstanceFor(dlg.getUsername(), dlg.getPassword(), settings.getLookupProperties());
+                }
+            }
+            
+            BugReportDialog dlg=new BugReportDialog(this, false, locator);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+            
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "Fehlerprotokolle können nicht bereitgestellt werden: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuBugReportActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2598,6 +2859,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScanStatus;
     private javax.swing.JLabel lblSystemStatus;
+    private javax.swing.JLabel lblTimesheetStatus;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;
@@ -2631,6 +2893,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;
     private javax.swing.JMenuItem mnuBeaSettings;
+    private javax.swing.JMenuItem mnuBugReport;
     private javax.swing.JMenu mnuCalculations;
     private javax.swing.JMenu mnuCalendarOptions;
     private javax.swing.JMenuItem mnuCalendarSetup;
@@ -2652,13 +2915,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuForum;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JMenuItem mnuInvoiceCurrencies;
     private javax.swing.JMenuItem mnuInvoicePools;
+    private javax.swing.JMenuItem mnuInvoicePositionTemplates;
+    private javax.swing.JMenuItem mnuInvoiceTaxRates;
     private javax.swing.JMenuItem mnuInvoiceTypes;
     private javax.swing.JMenuItem mnuMailboxSettings;
     private javax.swing.JMenuItem mnuMappingEntries;
     private javax.swing.JMenuItem mnuMappingTables;
     private javax.swing.JMenuItem mnuOnlineHelp;
     private javax.swing.JMenu mnuOptions;
+    private javax.swing.JMenuItem mnuParallelTimesheetLogs;
     private javax.swing.JMenuItem mnuPartyTypes;
     private javax.swing.JMenuItem mnuProfileInfo;
     private javax.swing.JMenuItem mnuScanOptions;
@@ -2666,6 +2933,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuSecurity;
     private javax.swing.JMenuItem mnuServerMonitor;
     private javax.swing.JMenu mnuServices;
+    private javax.swing.JMenu mnuTimesheet;
+    private javax.swing.JMenuItem mnuTimesheetIntervals;
+    private javax.swing.JMenuItem mnuTimesheetPositions;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;

@@ -664,6 +664,7 @@
 package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -678,6 +679,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
+import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -811,6 +814,89 @@ public class MicrosoftOfficeDocxTest {
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
+            Reader r = tika.parse(new File("test/data/template-run.docx"));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
+            }
+            bw.close();
+            br.close();
+
+            content = sw.toString();
+            System.out.println(content);
+        } catch (Throwable t) {
+            System.out.println(t.getMessage());
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        Assert.assertEquals(0, content.indexOf("otto. test"));
+        Assert.assertEquals(11, content.indexOf("otto, test"));
+        Assert.assertEquals(22, content.indexOf("otto; test"));
+        Assert.assertEquals(33, content.indexOf("otto: test"));
+        Assert.assertEquals(44, content.indexOf("otto! test"));
+        Assert.assertEquals(55, content.indexOf("otto? test"));
+        Assert.assertEquals(66, content.indexOf("otto' test"));
+        Assert.assertEquals(77, content.indexOf("otto\" test"));
+        Assert.assertEquals(88, content.indexOf("otto test"));
+        Assert.assertEquals(98, content.indexOf("hans otto"));
+        Assert.assertEquals(109, content.indexOf("hans otto 2"));
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
+
+    }
+    
+    @Test
+    public void setPlaceHoldersDOCXTable() {
+        try {
+            File f = new File("test/data/template-run.docx");
+            f.delete();
+            copyFileUsingStream(new File("test/data/template-table.docx"), new File("test/data/template-run.docx"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+
+        }
+
+        HashMap<String,Object> ph = new HashMap<>();
+        ph.put("{{MANDANT_NAME}}", "otto");
+        ph.put("{{MANDANT_VORNAME}}", "hans");
+        ph.put("{{MANDANT_ANREDE}}", "");
+        
+        StyledCalculationTable tab=new StyledCalculationTable();
+        tab.setLineBorder(true);
+        tab.setBorderColor(Color.RED);
+        tab.addHeaders("h1", "h2", "h3");
+        tab.addRow("11", "12", "13");
+        tab.addRow("21", "22", "23");
+        tab.addRow("31", "32", "33");
+        tab.setColumnWidth(1, 50);
+        tab.setRowBold(1, true);
+        tab.setRowItalic(2, true);
+        tab.setRowItalic(3, true);
+        tab.setRowBold(3, true);
+        tab.setRowUnderline(3, true);
+        tab.getCellAt(2, 0).setBold(true);
+        tab.setFontFamily("Ubuntu");
+        tab.setFontSize(24);
+        tab.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        tab.setRowForeGround(2, Color.yellow);
+        tab.setRowBackGround(2, Color.BLUE);
+        ph.put("{{TABELLE_1}}", tab);
+
+        try {
+            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.docx", "test/data/template-run.docx", ph, null);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        String content = "";
+        Tika tika = new Tika();
+        try {
             Reader r = tika.parse(new File("test/data/template-run.docx"));
             BufferedReader br = new BufferedReader(r);
             StringWriter sw = new StringWriter();

@@ -731,13 +731,27 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private DragSource dragSource = null;
     
     private TemplatesTransferable myTransferable=null;
+    
+    private boolean foldersSupported=true;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
 
     /**
-     * Creates new form AddressPanel
+     * Creates new form TemplatesTreePanel
+     * @param templateType
+     * @param panelTitle
+     * @param foldersSupported
+     * @param tablesSupported
      */
-    public TemplatesTreePanel() {
+    public TemplatesTreePanel(int templateType, String panelTitle, boolean foldersSupported, boolean tablesSupported) {
 
+        this.templateType=templateType;
+        
         initComponents();
+        
+        this.foldersSupported=foldersSupported;
+        this.lblPanelTitle.setText(panelTitle);
+        if(!tablesSupported)
+            this.cmdNewODS.setEnabled(false);
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(jSplitPane2);
@@ -778,7 +792,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
+            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree(this.templateType);
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
             this.traverseFolders(templateTree, rootNode);
@@ -812,9 +826,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
-            Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(folder);
-
-            for (Object o : fileNames) {
+            Collection<String> fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(this.templateType, folder);
+            for (String o : fileNames) {
                 model.addElement(o);
             }
 
@@ -1121,7 +1134,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage.odt", folder);
+            locator.lookupSystemManagementRemote().addFromMasterTemplate(this.templateType, fileName, "j-lawyer-allgemeine-Mastervorlage.odt", folder);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -1149,7 +1162,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSystemManagementRemote().addFromMasterTemplate(fileName, "j-lawyer-allgemeine-Mastervorlage-Tabelle.ods", folder);
+            locator.lookupSystemManagementRemote().addFromMasterTemplate(this.templateType, fileName, "j-lawyer-allgemeine-Mastervorlage-Tabelle.ods", folder);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -1181,7 +1194,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 ThreadUtils.setWaitCursor(this);
                 ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 pi.setShowCancelButton(true);
-                UploadTemplatesAction a = new UploadTemplatesAction(pi, this, lstTemplates, files, folder);
+                UploadTemplatesAction a = new UploadTemplatesAction(pi, this, this.templateType, lstTemplates, files, folder);
 
                 a.start();
 
@@ -1204,7 +1217,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean deleted = locator.lookupSystemManagementRemote().deleteTemplateFolder(gn.getParent(), gn.getName());
+            boolean deleted = locator.lookupSystemManagementRemote().deleteTemplateFolder(this.templateType, gn.getParent(), gn.getName());
             if (deleted) {
 
                 this.treeFolders.setSelectionPath(new TreePath(((DefaultMutableTreeNode) tn.getParent()).getPath()));
@@ -1231,7 +1244,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         newFolderName = newNameObject.toString();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean created = locator.lookupSystemManagementRemote().addTemplateFolder(gn, newFolderName);
+            boolean created = locator.lookupSystemManagementRemote().addTemplateFolder(this.templateType, gn, newFolderName);
             if (created) {
                 GenericNode newFolderNode = new GenericNode(null, gn, newFolderName);
                 DefaultMutableTreeNode newTn = new DefaultMutableTreeNode(newFolderNode);
@@ -1268,7 +1281,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         newFolderName = newNameObject.toString();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean renamed = locator.lookupSystemManagementRemote().renameTemplateFolder(gn.getParent(), oldFolderName, newFolderName);
+            boolean renamed = locator.lookupSystemManagementRemote().renameTemplateFolder(this.templateType, gn.getParent(), oldFolderName, newFolderName);
             if (renamed) {
                 gn.setName(newFolderName);
                 tn.setUserObject(gn);
@@ -1317,14 +1330,14 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         byte[] content = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            content = locator.lookupSystemManagementRemote().getTemplateData(folder, this.lstTemplates.getSelectedValue().toString());
+            content = locator.lookupSystemManagementRemote().getTemplateData(this.templateType, folder, this.lstTemplates.getSelectedValue().toString());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         try {
-            TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
+            TemplateDocumentStore store = new TemplateDocumentStore(this.templateType, folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
             Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store, EditorsRegistry.getInstance().getMainWindow());
             launcher.launch(false);
         } catch (Exception ex) {
@@ -1351,7 +1364,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSystemManagementRemote().renameTemplate(folder, this.lstTemplates.getSelectedValue().toString(), newName);
+            locator.lookupSystemManagementRemote().renameTemplate(this.templateType, folder, this.lstTemplates.getSelectedValue().toString(), newName);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
@@ -1373,7 +1386,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             newName=this.lstTemplates.getSelectedValue().toString();
         }
         
-        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, folder, newName);
+        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.templateType, folder, newName);
 
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -1396,7 +1409,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 for (Object delTempl : this.lstTemplates.getSelectedValuesList()) {
-                    locator.lookupSystemManagementRemote().deleteTemplate(folder, delTempl.toString());
+                    locator.lookupSystemManagementRemote().deleteTemplate(this.templateType, folder, delTempl.toString());
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1407,7 +1420,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     }//GEN-LAST:event_mnuDeleteTemplateActionPerformed
 
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
-        if (evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger() && this.foldersSupported) {
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
             if(row<0)
                 return;
@@ -1491,15 +1504,15 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SystemManagementRemote sysMan = locator.lookupSystemManagementRemote();
             for(Object templateName: selectedTemplates) {
-                byte[] templateData=sysMan.getTemplateData(source, templateName.toString());
+                byte[] templateData=sysMan.getTemplateData(this.templateType, source, templateName.toString());
             if(dtde.getDropAction()==DnDConstants.ACTION_COPY) {
                 
-                boolean copied=sysMan.addTemplate(target, templateName.toString(), templateData);
+                sysMan.addTemplate(this.templateType, target, templateName.toString(), templateData);
             } else if(dtde.getDropAction()==DnDConstants.ACTION_MOVE) {
                 
-                boolean copied=sysMan.addTemplate(target, templateName.toString(), templateData);
+                boolean copied=sysMan.addTemplate(this.templateType, target, templateName.toString(), templateData);
                 if(copied) {
-                    boolean deleted=sysMan.deleteTemplate(source, templateName.toString());
+                    sysMan.deleteTemplate(this.templateType, source, templateName.toString());
                     
                 }
             } 
@@ -1597,7 +1610,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadTemplatesAction a = new UploadTemplatesAction(pi, p, lstTemplates, files, folder);
+                        UploadTemplatesAction a = new UploadTemplatesAction(pi, p, templateType, lstTemplates, files, folder);
 
                         a.start();
 
@@ -1682,7 +1695,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
                 GenericNode folder = (GenericNode) selNode.getUserObject();
             
-            new Thread(new LoadTemplatePreviewThread(folder, selectedTemplate, this.pnlPreview, this.jSplitPane2)).start();
+            new Thread(new LoadTemplatePreviewThread(this.templateType, folder, selectedTemplate, this.pnlPreview, this.jSplitPane2)).start();
             
         }
     }

@@ -689,4 +689,9 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_TITLES="address.title";
     public static final String OPTIONGROUP_TITLESINADDRESS="address.titleinaddress";
     
+    public static final String OPTIONGROUP_INVOICECURRENCIES="invoice.currency";
+    public static final String OPTIONGROUP_INVOICETAXRATES="invoice.taxrates";
+    
+    public static final String OPTIONGROUP_TIMESHEETINTERVALMINUTES="timesheet.intervalminutes";
+    
 }
