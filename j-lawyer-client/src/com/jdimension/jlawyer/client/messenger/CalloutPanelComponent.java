@@ -752,6 +752,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int width = getWidth();
+        width=((MessagePanel)getParent()).getCalloutWidth()-60;
         int height = getHeight();
 
         int arrowSize = 10;
@@ -849,7 +850,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         }
 
-        this.setPreferredSize(new Dimension(getWidth(), yOffset + lineSpacing));
+        this.setPreferredSize(new Dimension(width+60, yOffset + lineSpacing));
     }
 
     private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
@@ -905,7 +906,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(250, 20);
+        return super.getPreferredSize();
     }
 
     private String getFormattedTimestamp(Date d) {
@@ -926,11 +927,11 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 143, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 45, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

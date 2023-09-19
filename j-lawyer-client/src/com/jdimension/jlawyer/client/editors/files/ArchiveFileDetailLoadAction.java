@@ -767,7 +767,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 21;
+        return 19;
     }
 
     @Override
@@ -840,7 +840,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                     JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             }
-
+            
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             
@@ -906,7 +906,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.tblGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.getArchivedBoolean());
             this.cmbGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.getArchivedBoolean());
             ComponentUtils.autoSizeColumns(tblGroups);
-
+            
             this.progress("Lade Akte: Beteiligte...");
 
             addressesForCase = fileService.getAddressesForCase(archiveFileKey);
@@ -935,7 +935,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 this.timesheetsPanel.add(tp);
             }
             
-            
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
             List<String> folderIds = new ArrayList<>();
@@ -957,7 +956,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 allTemplateNames.add(t.getName());
             }
             this.caseFolders.setFolderTemplateNames(allTemplateNames);
-
+            
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
             
@@ -969,7 +968,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         }
 
         this.progress("Aktualisiere Dialog...");
-
+        
         this.progress("Aktualisiere Dialog: Historie...");
         SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
@@ -996,19 +995,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             sArchivedSince = "(seit: " + dateTimeFormat.format(caseDto.getDateArchived()) + ")";
         }
         ThreadUtils.setLabel(this.lblArchivedSince, sArchivedSince);
-
+        
         this.progress("Aktualisiere Dialog: Dokumente...");
         if (documents != null && documents.size() > 0) {
 
             ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
 
         }
-
-        this.progress("Aktualisiere Dialog: Mandanten...");
+        
+        this.progress("Aktualisiere Dialog: Beteiligte...");
 
         this.contactsForCasePanel.removeAll();
-        BoxLayout layout = new javax.swing.BoxLayout(this.contactsForCasePanel, javax.swing.BoxLayout.Y_AXIS);
-        this.contactsForCasePanel.setLayout(layout);
+//        BoxLayout layout = new javax.swing.BoxLayout(this.contactsForCasePanel, javax.swing.BoxLayout.Y_AXIS);
+//        this.contactsForCasePanel.setLayout(layout);
         int i = 0;
         for (ArchiveFileAddressesBean afab : involvementForCase) {
             AddressBean address = null;
@@ -1030,11 +1029,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             i++;
 
         }
-
-        this.progress("Aktualisiere Dialog: Gegner...");
-
-        this.progress("Aktualisiere Dialog: Dritte...");
-
+        
         this.progress("Aktualisiere Dialog: Kalender...");
         String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
@@ -1055,7 +1050,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
         rtrs.setSortKeys(list);
         rtrs.sort();
-
+        
         this.progress("Aktualisiere Dialog: Etiketten...");
         ArrayList<String> activeTags = new ArrayList<>();
         this.tagPanel.removeAll();
@@ -1099,7 +1094,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                     ComponentUtils.autoSizeColumns(historyTarget);
                     ComponentUtils.autoSizeColumns(tblReviews);
         }));
-
+        
         this.progress("Aktualisiere Dialog: Dokumentselektion...");
         SwingUtilities.invokeLater(
                 new Thread(() -> {

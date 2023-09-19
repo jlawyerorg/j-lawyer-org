@@ -716,7 +716,6 @@ public class Main {
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
-
         String cmdLineSwitch = ArbitraryCache.binaryContent;
         cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
 
@@ -992,6 +991,18 @@ public class Main {
         ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
         mail.setFullName("Kommunikation");
         root.addChildModule(mail);
+        
+        ModuleMetadata instantMessages = new ModuleMetadata("Nachrichten");
+        instantMessages.setEditorClass("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel");
+        instantMessages.setBackgroundImage("emails.jpg");
+        instantMessages.setFullName("Instant Messaging Center");
+        instantMessages.setEditorName("Messaging");
+        instantMessages.setModuleName("Post");
+        instantMessages.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_blue_48dp.png")));
+        instantMessages.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_green_48dp.png")));
+        //instantMessages.setStatusEventType(Event.TYPE_MAILSTATUS);
+        mail.addChildModule(instantMessages);
+        
         ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
         mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
         mailInbox.setBackgroundImage("emails.jpg");
@@ -1131,16 +1142,16 @@ public class Main {
         ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
         knowledge.setFullName("Historie");
         root.addChildModule(knowledge);
-        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
-        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
-        ug.setBackgroundImage("research.jpg");
-        ug.setIcon("urteile-gesetze.png");
-        ug.setFullName("Urteile & Gesetze");
-        ug.setEditorName("U&G");
-        ug.setModuleName("Recherche");
-        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
-        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
-        knowledge.addChildModule(ug);
+//        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
+//        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
+//        ug.setBackgroundImage("research.jpg");
+//        ug.setIcon("urteile-gesetze.png");
+//        ug.setFullName("Urteile & Gesetze");
+//        ug.setEditorName("U&G");
+//        ug.setModuleName("Recherche");
+//        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
+//        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
+//        knowledge.addChildModule(ug);
 
         settings.setRootModule(root);
 

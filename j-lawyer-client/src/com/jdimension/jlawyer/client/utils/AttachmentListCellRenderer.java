@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
-import com.jdimension.jlawyer.client.configuration.*;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Component;
 import java.io.File;
@@ -704,6 +702,5 @@ public class AttachmentListCellRenderer extends DefaultListCellRenderer {
         }
         
         return ret;
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
 }

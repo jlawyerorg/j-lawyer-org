@@ -663,13 +663,9 @@
  */
 package com.jdimension.jlawyer.client.controls;
 
-import com.jdimension.jlawyer.client.configuration.*;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import java.awt.Color;
 import java.awt.Component;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import themes.colors.DefaultColorTheme;
 
@@ -691,7 +687,6 @@ public class CheckboxListCellRenderer extends DefaultListCellRenderer {
         } else if(o instanceof CheckboxListItem) {
             JCheckBox chk=new JCheckBox();
             chk.setText(o.toString());
-            //chk.setBackground(ret.getBackground());
             chk.setSelected(((CheckboxListItem) o).isSelected());
             
             chk.setEnabled(jlist.isEnabled());
