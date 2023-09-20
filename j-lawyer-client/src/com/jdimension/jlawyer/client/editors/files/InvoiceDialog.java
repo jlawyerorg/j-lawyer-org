@@ -916,6 +916,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdUploadInvoiceDocument.setEnabled(invoice!=null && invoice.getId()!=null);
         this.textSearchPositionTemplate.setEnabled(invoice!=null && invoice.getId()!=null);
         this.lstPositionTemplates.setEnabled(invoice!=null && invoice.getId()!=null);
+        this.cmdSave.setEnabled(invoice!=null && invoice.getId()!=null);
         
         this.currentEntry = invoice;
         
