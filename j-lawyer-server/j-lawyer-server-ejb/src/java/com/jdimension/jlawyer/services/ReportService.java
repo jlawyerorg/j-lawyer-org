@@ -877,7 +877,7 @@ public class ReportService implements ReportServiceRemote {
         } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
             String query = "SELECT cases.id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
                     + "    ts.name as Projektname, ts.description as Projektbeschreibung,  ts.interval_minutes as Taktung,\n"
-                    + "    DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as von, DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as bis, greatest(1, TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)) AS Minuten, greatest(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)/ts.interval_minutes))*ts.interval_minutes DIV 1 AS MinutenInTaktung, tsp.name as Aktivitaet, tsp.description as Taetigkeiten, tsp.principal as GebuchtDurch, tsp.tax_rate as Steuersatz, tsp.unit_price as Stundensatz\n"
+                    + "    DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as von, DATE_FORMAT(tsp.time_stopped,'%Y-%m-%d %H:%i') as bis, greatest(1, TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)) AS Minuten, greatest(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)/ts.interval_minutes))*ts.interval_minutes DIV 1 AS MinutenInTaktung, tsp.name as Aktivitaet, tsp.description as Taetigkeiten, tsp.principal as GebuchtDurch, tsp.tax_rate as Steuersatz, tsp.unit_price as Stundensatz\n"
                     + "    FROM timesheet_positions tsp\n"
                     + "left join timesheets ts on ts.id=tsp.timesheet_id \n"
                     + "left join cases cases on ts.case_id=cases.id\n"
