@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
@@ -794,19 +795,9 @@ public class MessageSendPanel extends javax.swing.JPanel {
     
     private void sendMessage() {
         InstantMessage im1=new InstantMessage();
-        im1.setSender("Hausmeister Krause");
+        im1.setSender(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         im1.setContent(this.taMessage.getText().trim());
         im1.setSent(new Date());
-        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
-        InstantMessageMention im1m1=new InstantMessageMention();
-        im1m1.setDone(false);
-        im1m1.setPrincipal("Präsident");
-        im1list.add(im1m1);
-        InstantMessageMention im1m2=new InstantMessageMention();
-        im1m2.setDone(false);
-        im1m2.setPrincipal("Bodo");
-        im1list.add(im1m2);
-        im1.setMentions(im1list);
         
         if(this.messageConsumer!=null)
             this.messageConsumer.newMessageForSubmission(im1);

@@ -994,7 +994,7 @@ public class Main {
         
         ModuleMetadata instantMessages = new ModuleMetadata("Nachrichten");
         instantMessages.setEditorClass("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel");
-        instantMessages.setBackgroundImage("emails.jpg");
+        instantMessages.setBackgroundImage("messaging.jpg");
         instantMessages.setFullName("Instant Messaging Center");
         instantMessages.setEditorName("Messaging");
         instantMessages.setModuleName("Post");

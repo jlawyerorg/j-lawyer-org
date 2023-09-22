@@ -663,96 +663,34 @@
  */
 package com.jdimension.jlawyer.client.messenger;
 
-import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
-import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
-import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
-import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
-import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
-import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
-import com.jdimension.jlawyer.client.events.EmailStatusEvent;
+import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
-import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
-import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
-import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
-import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
-import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.*;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.InstantMessage;
-import com.jdimension.jlawyer.persistence.InstantMessageMention;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
-import com.jdimension.jlawyer.server.utils.ContentTypes;
-import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.Keyword;
-import com.sun.mail.pop3.POP3Folder;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.Adjustable;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.Point;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import javax.mail.*;
-import javax.mail.Flags.Flag;
-import javax.mail.Message.RecipientType;
-import javax.mail.event.MessageChangedEvent;
-import javax.mail.event.MessageChangedListener;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.internet.MimeUtility;
-import javax.mail.util.SharedByteArrayInputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
-import javax.swing.DropMode;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.RowSorter.SortKey;
+import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -760,7 +698,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class MessagingCenterPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider {
+public class MessagingCenterPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(MessagingCenterPanel.class.getName());
     
@@ -768,6 +706,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    
+    private ArrayList<InstantMessage> currentMessageList=new ArrayList<>();
 
     /**
      * Creates new form EmailInboxPanel
@@ -780,6 +720,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane3.getViewport().setOpaque(false);
+        this.messageSendPanel1.setMessageConsumer(this);
         
         ClientSettings cs = ClientSettings.getInstance();
 
@@ -794,60 +735,68 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
         
-        this.jList1.setCellRenderer(new HashtagListCellRenderer());
-        this.jList1.setSelectionBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        this.lstHashtags.setCellRenderer(new HashtagListCellRenderer());
+        this.lstHashtags.setSelectionBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
         
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
         
-        
-        
-        
-        InstantMessage im1=new InstantMessage();
-        im1.setSender(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        im1.setContent("@Präsident in einer halben Stunde Sitzung bei mir!\n@Bodo's Geburtstag!");
-        im1.setSent(new Date());
-        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
-        InstantMessageMention im1m1=new InstantMessageMention();
-        im1m1.setDone(false);
-        im1m1.setPrincipal("Präsident");
-        im1list.add(im1m1);
-        InstantMessageMention im1m2=new InstantMessageMention();
-        im1m2.setDone(false);
-        im1m2.setPrincipal("Bodo");
-        im1list.add(im1m2);
-        im1.setMentions(im1list);
-        
-        InstantMessage im2=new InstantMessage();
-        im2.setSender("Präsident");
-        im2.setContent("@admin alles für den Dackel, alles für den Club! alles für den Dackel, alles für den Club! alles für den Dackel, alles für den Club! alles für den Dackel, alles für den Club! alles für den Dackel, alles für den Club! alles für den Dackel, alles für den Club!");
-        im2.setSent(new Date());
-        ArrayList<InstantMessageMention> im2list=new ArrayList<>(); 
-        InstantMessageMention im2m1=new InstantMessageMention();
-        im2m1.setDone(false);
-        im2m1.setPrincipal(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        im2list.add(im2m1);
-        im2.setMentions(im2list);
-        
-        double prefHeight = 0;
-        MessagePanel mp1=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, im1);
-        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        pnlMessages.add(mp1);
-        prefHeight = prefHeight + mp1.getPreferredSize().getHeight();
-        
-        MessagePanel mp2=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, im2);
-        mp2.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        pnlMessages.add(mp2);
-        
-        prefHeight = prefHeight + mp2.getPreferredSize().getHeight();
-        
-        if (prefHeight < this.pnlMessages.getHeight()) {
-            JPanel glue = new JPanel();
-            glue.setPreferredSize(new Dimension(3, (this.pnlMessages.getHeight() - (int) prefHeight)));
-            this.pnlMessages.add(glue);
+        long latestMessage=-1;
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis()-(365l*24l*60*60*1000)));
+            if (allMessages != null) {
+                this.currentMessageList.addAll(allMessages);
+                for (InstantMessage m : allMessages) {
+                    this.addMessageToView(m);
+                }
+                if(!allMessages.isEmpty())
+                    latestMessage=allMessages.get(allMessages.size()-1).getSent().getTime();
+            }
+            if(latestMessage<0)
+                latestMessage=System.currentTimeMillis();
+
+
+        } catch (Exception ex) {
+            log.error("Could not submit instant message to server", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
         
+        
+        
+//        double prefHeight = 0;
+//        MessagePanel mp1=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, im1);
+//        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+//        pnlMessages.add(mp1);
+//        this.currentMessageList.add(im1);
+//        
+//        prefHeight = prefHeight + mp1.getPreferredSize().getHeight();
+//        
+//        MessagePanel mp2=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, im2);
+//        mp2.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+//        pnlMessages.add(mp2);
+//        this.currentMessageList.add(im2);
+        
+//        prefHeight = prefHeight + mp2.getPreferredSize().getHeight();
+//        
+//        if (prefHeight < this.pnlMessages.getHeight()) {
+//            JPanel glue = new JPanel();
+//            glue.setPreferredSize(new Dimension(3, (this.pnlMessages.getHeight() - (int) prefHeight)));
+//            this.pnlMessages.add(glue);
+//        }
+        
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
+        
+        EventBroker eb = EventBroker.getInstance();
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        
+        Timer timer = new Timer();
+        TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
+        timer.schedule(instantMessagesTask, 4300, 1000);
         
         this.initializing = false;
         log.info("finished initialization: " + (System.currentTimeMillis()-start));
@@ -880,7 +829,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         cmbDownloadMails = new javax.swing.JComboBox<>();
         cmdRefresh = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        lstHashtags = new javax.swing.JList<>();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
@@ -916,15 +865,20 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jScrollPane1.setBorder(null);
         jScrollPane1.setOpaque(false);
 
-        jList1.setFont(jList1.getFont().deriveFont(jList1.getFont().getStyle() | java.awt.Font.BOLD, jList1.getFont().getSize()+2));
-        jList1.setForeground(new java.awt.Color(255, 255, 255));
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "#Vertrag", "#008/23", "#versenden", "#008/23", "#011/23", "#138/23", "#008/22", " " };
+        lstHashtags.setFont(lstHashtags.getFont().deriveFont(lstHashtags.getFont().getStyle() | java.awt.Font.BOLD, lstHashtags.getFont().getSize()+2));
+        lstHashtags.setForeground(new java.awt.Color(255, 255, 255));
+        lstHashtags.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "#Vertrag", "#008/23", "#versenden", "#008/23", "#011/23", "#138/23", "#008/22", "#Mittagspause", "#Kaffee", "#WTF" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jList1.setOpaque(false);
-        jScrollPane1.setViewportView(jList1);
+        lstHashtags.setOpaque(false);
+        lstHashtags.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstHashtagsValueChanged(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstHashtags);
 
         jTabbedPane1.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
 
@@ -952,7 +906,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 866, Short.MAX_VALUE)
+            .add(0, 842, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -965,7 +919,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 866, Short.MAX_VALUE)
+            .add(0, 842, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -978,7 +932,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 866, Short.MAX_VALUE)
+            .add(0, 842, Short.MAX_VALUE)
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -991,7 +945,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 866, Short.MAX_VALUE)
+            .add(0, 842, Short.MAX_VALUE)
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1004,7 +958,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 866, Short.MAX_VALUE)
+            .add(0, 842, Short.MAX_VALUE)
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1032,7 +986,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                         .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 871, Short.MAX_VALUE)
+                            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 847, Short.MAX_VALUE)
                             .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
@@ -1075,6 +1029,28 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
+    private void lstHashtagsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstHashtagsValueChanged
+        this.pnlMessages.removeAll();
+        List<String> selectedHashtags=this.lstHashtags.getSelectedValuesList();
+        for(InstantMessage msg: this.currentMessageList) {
+            if(selectedHashtags.isEmpty()) {
+                this.addMessageToView(msg);
+                continue;
+            }
+            for(String hashTag: this.lstHashtags.getSelectedValuesList()) {
+                if(msg.getContent().toLowerCase().contains(hashTag.toLowerCase())) {
+                    this.addMessageToView(msg);
+                    break;
+                }
+            }
+            
+        }
+        pnlMessages.repaint();
+        this.jScrollPane3.doLayout();
+        this.jScrollPane3.revalidate();
+        
+    }//GEN-LAST:event_lstHashtagsValueChanged
+
     
 
     @Override
@@ -1097,7 +1073,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JComboBox<String> cmbDownloadMails;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
@@ -1107,7 +1082,70 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JPanel pnlMessages;
     // End of variables declaration//GEN-END:variables
+
+    private void addMessageToView(InstantMessage msg) {
+        MessagePanel mp1=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        pnlMessages.add(mp1);
+        pnlMessages.repaint();
+        this.jScrollPane3.doLayout();
+        mp1.revalidate();
+        this.jScrollPane3.revalidate();
+        
+        
+        JScrollBar vertical = this.jScrollPane3.getVerticalScrollBar();
+        vertical.setValue(vertical.getMaximum());
+
+        AdjustmentListener downScroller = new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                Adjustable adjustable = e.getAdjustable();
+                adjustable.setValue(adjustable.getMaximum());
+                vertical.removeAdjustmentListener(this);
+            }
+        };
+        vertical.addAdjustmentListener(downScroller);
+    }
+    
+    @Override
+    public void newMessageForSubmission(InstantMessage msg) {
+        
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            msg=locator.lookupMessagingServiceRemote().submitMessage(msg);
+
+
+        } catch (Exception ex) {
+            log.error("Could not submit instant message to server", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        this.currentMessageList.add(msg);
+        
+        this.addMessageToView(msg);
+
+    }
+
+    @Override
+    public void onEvent(Event e) {
+        if (e instanceof NewInstantMessagesEvent) {
+
+            SwingUtilities.invokeLater(() -> {
+                if(((NewInstantMessagesEvent) e).getNewMessages()!=null) {
+                    for(InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                        this.currentMessageList.add(msg);
+                        this.addMessageToView(msg);
+                    }
+                }
+            });
+        }
+    }
 }

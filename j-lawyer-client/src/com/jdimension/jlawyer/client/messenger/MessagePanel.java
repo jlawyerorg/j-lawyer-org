@@ -704,15 +704,12 @@ public class MessagePanel extends javax.swing.JPanel {
         this.lblUser.putClientProperty( "JComponent.roundRect", true );
         this.lblUser.setFont(UIManager.getFont( "h1.font" ));
         
-        //this.lblUser.setText("  " + sender + "  ");
         this.lblUser.setIcon(UserSettings.getInstance().getUserBigIcon(im.getSender()));
         this.lblUser.setText("");
         if(ownMessage)
-            //this.lblUser.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + sender +"&nbsp;</p></td></tr></table></html>");
             this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
         else
             this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-            //this.lblUser.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#666666; \">&nbsp;" + sender +"&nbsp;</p></td></tr></table></html>");
         
         
         
@@ -722,8 +719,14 @@ public class MessagePanel extends javax.swing.JPanel {
         this.calloutPanelComponent1.setOwnPrincipal(ownPrincipal);
     }
     
+    public InstantMessage getMessage() {
+        return this.calloutPanelComponent1.getMessage();
+    }
+    
     public int getCalloutWidth() {
         return this.getParent().getWidth() - this.lblUser.getWidth() - 60;
+        //return this.getParent().getWidth() - this.calloutPanelComponent1.getX() - this.lblUser.getWidth();
+        //return this.calloutPanelComponent1.getWidth();
     }
 
     @Override
@@ -756,11 +759,11 @@ public class MessagePanel extends javax.swing.JPanel {
         calloutPanelComponent1.setLayout(calloutPanelComponent1Layout);
         calloutPanelComponent1Layout.setHorizontalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 133, Short.MAX_VALUE)
+            .addGap(0, 229, Short.MAX_VALUE)
         );
         calloutPanelComponent1Layout.setVerticalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 17, Short.MAX_VALUE)
         );
 
         lblUser.setText("jLabel1");
@@ -771,19 +774,17 @@ public class MessagePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 133, Short.MAX_VALUE)
+                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblUser)
-                .addContainerGap())
+                .addComponent(lblUser))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 15, Short.MAX_VALUE)
-                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 17, Short.MAX_VALUE)
                 .addContainerGap())
+            .addComponent(lblUser, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

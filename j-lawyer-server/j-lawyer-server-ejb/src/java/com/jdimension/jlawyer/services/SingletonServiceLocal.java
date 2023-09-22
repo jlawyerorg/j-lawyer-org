@@ -714,6 +714,10 @@ public interface SingletonServiceLocal {
     void setFailedFax(FaxQueueBean failedFax);
 
     void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
+
+    long getLatestInstantMessageReceived();
+
+    void setLatestInstantMessageReceived(long timestamp);
     
     
 }

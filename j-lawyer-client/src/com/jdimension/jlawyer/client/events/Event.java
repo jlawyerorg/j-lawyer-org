@@ -688,6 +688,8 @@ public abstract class Event {
     public static final Integer TYPE_INVOICEPOSITIONADDED=140;
     public static final Integer TYPE_OPENTIMESHEETPOSITIONS=150;
     
+    public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
+    
     
     private Integer type=TYPE_DEFAULT;
     private Object payload=null;

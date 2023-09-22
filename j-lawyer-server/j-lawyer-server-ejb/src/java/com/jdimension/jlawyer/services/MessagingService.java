@@ -704,6 +704,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     private ArchiveFileBeanFacadeLocal caseFacade;
     @EJB
     private SecurityServiceLocal securityFacade;
+    @EJB
+    private SingletonServiceLocal singleton;
     
     @Inject
     Event<InstantMessageCreatedEvent> newMessageEvent;
@@ -714,6 +716,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         StringGenerator idGen = new StringGenerator();
         String messageId=idGen.getID().toString();
         message.setId(messageId);
+        Date sentDate=new Date();
+        message.setSent(sentDate);
         this.messageFacade.create(message);
         InstantMessage newMessage=this.messageFacade.find(messageId);
         
@@ -725,6 +729,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             m.setDone(false);
             this.mentionFacade.create(m);
         }
+        
+        this.singleton.setLatestInstantMessageReceived(sentDate.getTime());
         
         InstantMessageCreatedEvent evt = new InstantMessageCreatedEvent();
         evt.setMessageId(messageId);
@@ -747,7 +753,28 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesSince(Date since) throws Exception {
-        return this.messageFacade.findSince(since);
+        // only query the database if messages are requested 
+        if(this.singleton.getLatestInstantMessageReceived()<0) {
+            // after server startup
+            List<InstantMessage> messages=this.messageFacade.findSince(since);
+            if(messages!=null && !messages.isEmpty()) {
+                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size()-1).getSent().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageReceived(since.getTime());
+            }
+            return messages;
+        } else if(since.getTime()<this.singleton.getLatestInstantMessageReceived()) {
+            // new message have been received
+            List<InstantMessage> messages=this.messageFacade.findSince(since);
+            if(messages!=null && !messages.isEmpty()) {
+                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size()-1).getSent().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageReceived(since.getTime());
+            }
+            return messages;
+        } else {
+            return null;
+        }
     }
 
     @Override

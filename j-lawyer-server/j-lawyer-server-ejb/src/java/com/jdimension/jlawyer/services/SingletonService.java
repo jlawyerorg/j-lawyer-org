@@ -705,6 +705,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     private HashMap<File, Date> observedFileNames = new HashMap<File, Date>();
     private FaxQueueBean failedFax = null;
     private ArrayList<FaxQueueBean> faxQueue = new ArrayList<FaxQueueBean>();
+    
+    private long latestInstantMessageReceived=-1;
 
     @Override
     @RolesAllowed(value = {"loginRole"})
@@ -813,7 +815,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     public FaxQueueBean getFailedFax() {
         return this.failedFax;
     }
-
+    
     @Override
     @RolesAllowed(value = {"loginRole"})
     public ArrayList<FaxQueueBean> getFaxQueue() {
@@ -828,6 +830,18 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @Override
     public void setFaxQueue(ArrayList<FaxQueueBean> faxQueue) {
         this.faxQueue = faxQueue;
+    }
+
+    @Override
+    @PermitAll
+    public long getLatestInstantMessageReceived() {
+        return this.latestInstantMessageReceived;
+    }
+
+    @Override
+    @PermitAll
+    public void setLatestInstantMessageReceived(long timestamp) {
+        this.latestInstantMessageReceived=timestamp;
     }
 
 }
