@@ -1321,9 +1321,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         List<OutlookFileAttachment> attachments = msg.fetchTrueAttachments();
         for (OutlookFileAttachment att : attachments) {
-            String attFileName=att.getFilename();
+            String attFileName=att.getLongFilename();
             if(StringUtils.isEmpty(attFileName))
-                attFileName=att.getLongFilename();
+                attFileName=att.getFilename();
             if(!StringUtils.isEmpty(attFileName))
                 ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
         }

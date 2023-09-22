@@ -3555,7 +3555,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (selectedDocs.size() == 1) {
 
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
-            if (value.getName().toLowerCase().endsWith(".eml")) {
+            if (value.getName().toLowerCase().endsWith(".eml") || value.getName().toLowerCase().endsWith(".msg")) {
                 this.mnuOpenInExternalMailer.setEnabled(true);
             }
 
