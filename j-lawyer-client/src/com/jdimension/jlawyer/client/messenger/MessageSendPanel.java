@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
@@ -698,11 +699,10 @@ public class MessageSendPanel extends javax.swing.JPanel {
             mi.setText(u.getPrincipalId());
             mi.addActionListener((ActionEvent arg0) -> {
                 try {
-                    
-                    int caret = this.taMessage.getCaretPosition();
-                    this.taMessage.setText(this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + this.taMessage.getText(caret, this.taMessage.getText().length() - caret));
-                    this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
-                } catch (Throwable t) {
+                    int caret = MessageSendPanel.this.taMessage.getCaretPosition();
+                    MessageSendPanel.this.taMessage.setText(MessageSendPanel.this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + MessageSendPanel.this.taMessage.getText(caret, MessageSendPanel.this.taMessage.getText().length() - caret));
+                    MessageSendPanel.this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
+                }catch (Throwable t) {
                     t.printStackTrace();
                 }
             });

@@ -676,20 +676,29 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Adjustable;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.AbstractListModel;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -701,27 +710,29 @@ import themes.colors.DefaultColorTheme;
 public class MessagingCenterPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(MessagingCenterPanel.class.getName());
-    
+
     private Image backgroundImage = null;
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
-    
-    private ArrayList<InstantMessage> currentMessageList=new ArrayList<>();
+
+    private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
 
     /**
-     * Creates new form EmailInboxPanel
+     * Creates new form MessagingCenterPanel
      */
     public MessagingCenterPanel() {
-        long start=System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         this.initializing = true;
 
         initComponents();
-        
+
         this.jScrollPane1.getViewport().setOpaque(false);
+        this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
         this.jScrollPane3.getViewport().setOpaque(false);
+        this.jScrollPane3.getHorizontalScrollBar().setUnitIncrement(16);
         this.messageSendPanel1.setMessageConsumer(this);
-        
+
         ClientSettings cs = ClientSettings.getInstance();
 
         this.cmbDownloadMails.removeAllItems();
@@ -734,72 +745,113 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                 break;
             }
         }
-        
+
         this.lstHashtags.setCellRenderer(new HashtagListCellRenderer());
         this.lstHashtags.setSelectionBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        
+        this.lstHashtags.setModel(new DefaultListModel<>());
+
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
-        
-        long latestMessage=-1;
+
+        long latestMessage = -1;
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis()-(365l*24l*60*60*1000)));
+            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (365l * 24l * 60 * 60 * 1000)));
             if (allMessages != null) {
                 this.currentMessageList.addAll(allMessages);
                 for (InstantMessage m : allMessages) {
                     this.addMessageToView(m);
                 }
-                if(!allMessages.isEmpty())
-                    latestMessage=allMessages.get(allMessages.size()-1).getSent().getTime();
+                if (!allMessages.isEmpty()) {
+                    latestMessage = allMessages.get(allMessages.size() - 1).getSent().getTime();
+                }
+                this.updateHashtagsBar(allMessages);
             }
-            if(latestMessage<0)
-                latestMessage=System.currentTimeMillis();
-
+            if (latestMessage < 0) {
+                latestMessage = System.currentTimeMillis();
+            }
 
         } catch (Exception ex) {
             log.error("Could not submit instant message to server", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        
-        
-//        double prefHeight = 0;
-//        MessagePanel mp1=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, im1);
-//        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-//        pnlMessages.add(mp1);
-//        this.currentMessageList.add(im1);
-//        
-//        prefHeight = prefHeight + mp1.getPreferredSize().getHeight();
-//        
-//        MessagePanel mp2=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, im2);
-//        mp2.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-//        pnlMessages.add(mp2);
-//        this.currentMessageList.add(im2);
-        
-//        prefHeight = prefHeight + mp2.getPreferredSize().getHeight();
-//        
-//        if (prefHeight < this.pnlMessages.getHeight()) {
-//            JPanel glue = new JPanel();
-//            glue.setPreferredSize(new Dimension(3, (this.pnlMessages.getHeight() - (int) prefHeight)));
-//            this.pnlMessages.add(glue);
-//        }
-        
+
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
-        
+
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
-        
+
         Timer timer = new Timer();
         TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
         timer.schedule(instantMessagesTask, 4300, 1000);
-        
+
         this.initializing = false;
-        log.info("finished initialization: " + (System.currentTimeMillis()-start));
+        log.info("finished initialization: " + (System.currentTimeMillis() - start));
+    }
+
+    private void updateHashtagsBar(List<InstantMessage> newMessages) {
+        boolean changed = false;
+        if (newMessages != null) {
+            for (InstantMessage m : newMessages) {
+                List<String> newMessageHashtags = this.extractHashtags(m.getContent());
+                for (String ht : newMessageHashtags) {
+                    if (!containsString(lstHashtags, ht)) {
+                        ((DefaultListModel) lstHashtags.getModel()).addElement(ht);
+                        changed = true;
+                    }
+                }
+            }
+        }
+        if (changed) {
+            this.sortJList(lstHashtags);
+        }
+
+    }
+
+    private void sortJList(JList<String> list) {
+        ListModel<String> model = list.getModel();
+        int size = model.getSize();
+        String[] elements = new String[size];
+
+        for (int i = 0; i < size; i++) {
+            elements[i] = model.getElementAt(i);
+        }
+
+        Arrays.sort(elements);
+
+        DefaultListModel<String> sortedModel = new DefaultListModel<>();
+        for (String element : elements) {
+            sortedModel.addElement(element);
+        }
+
+        list.setModel(sortedModel);
+    }
+
+    private boolean containsString(JList<String> list, String searchString) {
+        for (int i = 0; i < list.getModel().getSize(); i++) {
+            if (list.getModel().getElementAt(i).equalsIgnoreCase(searchString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<String> extractHashtags(String input) {
+        List<String> hashtags = new ArrayList<>();
+        String pattern = "#\\w+"; // Regular expression pattern to match hashtags
+
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(input);
+
+        while (m.find()) {
+            hashtags.add(m.group());
+        }
+
+        return hashtags;
     }
 
     @Override
@@ -830,15 +882,11 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         cmdRefresh = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstHashtags = new javax.swing.JList<>();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        tabsPane = new javax.swing.JTabbedPane();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
-        jPanel5 = new javax.swing.JPanel();
-        jPanel6 = new javax.swing.JPanel();
-        jPanel7 = new javax.swing.JPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
+        lblClearHashtagSelection = new javax.swing.JLabel();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_chat_white_48dp.png"))); // NOI18N
 
@@ -880,7 +928,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         });
         jScrollPane1.setViewportView(lstHashtags);
 
-        jTabbedPane1.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabsPane.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
 
         jScrollPane3.setBorder(null);
         jScrollPane3.setOpaque(false);
@@ -900,72 +948,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         jScrollPane3.setViewportView(pnlMessages);
 
-        jTabbedPane1.addTab("alle", jScrollPane3);
+        tabsPane.addTab("alle", jScrollPane3);
 
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 842, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("008/23", jPanel3);
-
-        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 842, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("123/22", jPanel4);
-
-        org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 842, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("9864/23", jPanel5);
-
-        org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 842, Short.MAX_VALUE)
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("8724/21", jPanel6);
-
-        org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 842, Short.MAX_VALUE)
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("123/22", jPanel7);
+        lblClearHashtagSelection.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblClearHashtagSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        lblClearHashtagSelection.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblClearHashtagSelection.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblClearHashtagSelectionMouseClicked(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -983,10 +975,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
-                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(jScrollPane1)
+                            .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 847, Short.MAX_VALUE)
+                            .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
                             .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
@@ -1002,64 +996,73 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 453, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createSequentialGroup()
+                        .add(lblClearHashtagSelection)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 495, Short.MAX_VALUE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        
+
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
-    
 
-    
-    
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
         if (!this.initializing) {
 
             ClientSettings cs = ClientSettings.getInstance();
             cs.setConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + ((LoadFolderRestriction) this.cmbDownloadMails.getSelectedItem()).getRestriction());
 
-            
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
     private void lstHashtagsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstHashtagsValueChanged
-        this.pnlMessages.removeAll();
-        List<String> selectedHashtags=this.lstHashtags.getSelectedValuesList();
-        for(InstantMessage msg: this.currentMessageList) {
-            if(selectedHashtags.isEmpty()) {
+        for(int i=0;i<this.tabsPane.getTabCount();i++) {
+            JScrollPane sp=(JScrollPane)this.tabsPane.getComponentAt(i);
+            ((JPanel)sp.getViewport().getComponent(0)).removeAll();
+        }
+        //this.pnlMessages.removeAll();
+        List<String> selectedHashtags = this.lstHashtags.getSelectedValuesList();
+        for (InstantMessage msg : this.currentMessageList) {
+            if (selectedHashtags.isEmpty()) {
                 this.addMessageToView(msg);
                 continue;
             }
-            for(String hashTag: this.lstHashtags.getSelectedValuesList()) {
-                if(msg.getContent().toLowerCase().contains(hashTag.toLowerCase())) {
+            for (String hashTag : this.lstHashtags.getSelectedValuesList()) {
+                if (msg.getContent().toLowerCase().contains(hashTag.toLowerCase())) {
                     this.addMessageToView(msg);
                     break;
                 }
             }
-            
+
         }
-        pnlMessages.repaint();
-        this.jScrollPane3.doLayout();
-        this.jScrollPane3.revalidate();
         
+        JScrollPane selPane=(JScrollPane)this.tabsPane.getSelectedComponent();
+        selPane.getComponent(0).repaint();
+        selPane.doLayout();
+        selPane.revalidate();
+        
+//        pnlMessages.repaint();
+//        this.jScrollPane3.doLayout();
+//        this.jScrollPane3.revalidate();
+
     }//GEN-LAST:event_lstHashtagsValueChanged
 
-    
+    private void lblClearHashtagSelectionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblClearHashtagSelectionMouseClicked
+        this.lstHashtags.clearSelection();
+    }//GEN-LAST:event_lblClearHashtagSelectionMouseClicked
 
     @Override
     public void notifyStatusBarReady() {
         if (this.statusBarNotified) {
             return;
         }
-
-        
 
     }
 
@@ -1068,35 +1071,30 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         return this.backgroundImage;
     }
 
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbDownloadMails;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblClearHashtagSelection;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JPanel pnlMessages;
+    private javax.swing.JTabbedPane tabsPane;
     // End of variables declaration//GEN-END:variables
 
     private void addMessageToView(InstantMessage msg) {
-        MessagePanel mp1=new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         pnlMessages.add(mp1);
         pnlMessages.repaint();
         this.jScrollPane3.doLayout();
         mp1.revalidate();
         this.jScrollPane3.revalidate();
-        
-        
+
         JScrollBar vertical = this.jScrollPane3.getVerticalScrollBar();
         vertical.setValue(vertical.getMaximum());
 
@@ -1109,29 +1107,89 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         };
         vertical.addAdjustmentListener(downScroller);
+
+        this.addToTabIfRequired(msg);
     }
-    
+
+    private void addToTabIfRequired(InstantMessage msg) {
+
+        if (msg.getCaseContext() == null) {
+            return;
+        }
+
+        boolean hasTab = false;
+        int existingTab = -1;
+        for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
+            if (tabsPane.getTitleAt(i).equals(msg.getCaseContext().getFileNumber())) {
+                existingTab = i;
+                break;
+            }
+        }
+
+        JPanel targetPanel = null;
+        JScrollPane targetScroll = null;
+        if (existingTab < 0) {
+            targetScroll = new JScrollPane();
+            targetScroll.getVerticalScrollBar().setUnitIncrement(16);
+
+            targetPanel = new JPanel();
+            BoxLayout layout = new javax.swing.BoxLayout(targetPanel, javax.swing.BoxLayout.Y_AXIS);
+            targetPanel.setLayout(layout);
+            targetPanel.setOpaque(false);
+
+            targetScroll.getViewport().add(targetPanel);
+            targetScroll.getViewport().setOpaque(false);
+            targetScroll.setBorder(null);
+            targetScroll.setOpaque(false);
+            tabsPane.addTab(msg.getCaseContext().getFileNumber(), targetScroll);
+
+        } else {
+            targetScroll = (JScrollPane) tabsPane.getComponentAt(existingTab);
+            targetPanel = (JPanel) targetScroll.getViewport().getComponent(0);
+        }
+
+        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        targetPanel.add(mp1);
+        targetPanel.repaint();
+        targetScroll.doLayout();
+        mp1.revalidate();
+        targetScroll.revalidate();
+
+        JScrollBar vertical = targetScroll.getVerticalScrollBar();
+        vertical.setValue(vertical.getMaximum());
+
+        AdjustmentListener downScroller = new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                Adjustable adjustable = e.getAdjustable();
+                adjustable.setValue(adjustable.getMaximum());
+                vertical.removeAdjustmentListener(this);
+            }
+        };
+        vertical.addAdjustmentListener(downScroller);
+
+    }
+
     @Override
     public void newMessageForSubmission(InstantMessage msg) {
-        
+
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            msg=locator.lookupMessagingServiceRemote().submitMessage(msg);
-
+            msg = locator.lookupMessagingServiceRemote().submitMessage(msg);
 
         } catch (Exception ex) {
             log.error("Could not submit instant message to server", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        this.currentMessageList.add(msg);
-        
-        this.addMessageToView(msg);
 
+//        this.currentMessageList.add(msg);
+//        
+//        this.addMessageToView(msg);
     }
 
     @Override
@@ -1139,11 +1197,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         if (e instanceof NewInstantMessagesEvent) {
 
             SwingUtilities.invokeLater(() -> {
-                if(((NewInstantMessagesEvent) e).getNewMessages()!=null) {
-                    for(InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
+                    for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
                         this.currentMessageList.add(msg);
                         this.addMessageToView(msg);
                     }
+                    this.updateHashtagsBar(((NewInstantMessagesEvent) e).getNewMessages());
                 }
             });
         }

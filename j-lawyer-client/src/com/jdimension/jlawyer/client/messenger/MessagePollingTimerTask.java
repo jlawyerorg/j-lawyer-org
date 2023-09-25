@@ -712,10 +712,8 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
                         if(!newMessages.isEmpty()) {
                             this.lastMessageTimestamp=newMessages.get(newMessages.size()-1).getSent().getTime();
                         }
-                        for(InstantMessage newMsg: newMessages) {
-                            EventBroker eb = EventBroker.getInstance();
-                            eb.publishEvent(new NewInstantMessagesEvent(newMessages));
-                        }
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new NewInstantMessagesEvent(newMessages));
                     }
 
                 } catch (Throwable ex) {
