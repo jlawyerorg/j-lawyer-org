@@ -1027,7 +1027,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             JScrollPane sp=(JScrollPane)this.tabsPane.getComponentAt(i);
             ((JPanel)sp.getViewport().getComponent(0)).removeAll();
         }
-        //this.pnlMessages.removeAll();
         List<String> selectedHashtags = this.lstHashtags.getSelectedValuesList();
         for (InstantMessage msg : this.currentMessageList) {
             if (selectedHashtags.isEmpty()) {
@@ -1047,10 +1046,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         selPane.getComponent(0).repaint();
         selPane.doLayout();
         selPane.revalidate();
-        
-//        pnlMessages.repaint();
-//        this.jScrollPane3.doLayout();
-//        this.jScrollPane3.revalidate();
 
     }//GEN-LAST:event_lstHashtagsValueChanged
 
@@ -1117,7 +1112,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             return;
         }
 
-        boolean hasTab = false;
         int existingTab = -1;
         for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
             if (tabsPane.getTitleAt(i).equals(msg.getCaseContext().getFileNumber())) {
@@ -1184,12 +1178,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         } catch (Exception ex) {
             log.error("Could not submit instant message to server", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
-
-//        this.currentMessageList.add(msg);
-//        
-//        this.addMessageToView(msg);
     }
 
     @Override

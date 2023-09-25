@@ -777,7 +777,6 @@ public class MessagePanel extends javax.swing.JPanel {
 
     @Override
     public Dimension getMaximumSize() {
-        //return this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         Dimension calloutPreferred= this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
         return calloutPreferred;
@@ -785,7 +784,6 @@ public class MessagePanel extends javax.swing.JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        //return this.calloutPanelComponent1.getPreferredSize();
         Dimension calloutPreferred= this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
         return calloutPreferred;
