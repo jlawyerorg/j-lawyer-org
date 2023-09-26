@@ -1782,8 +1782,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.emlMsgContainer);
                 } else {
                     for(OutlookFileAttachment ofa: this.outlookMsgContainer.fetchTrueAttachments()) {
-                        if((ofa.getFilename()!=null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename()!=null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString()))))
+                        if((ofa.getFilename()!=null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename()!=null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString())))) {
                             data=ofa.getData();
+                            break;
+                        }
                     }
                 }
                 
@@ -1817,7 +1819,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                byte[] data = null;
+                if (this.emlMsgContainer != null) {
+                    data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                } else {
+                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                        if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
+                            data = ofa.getData();
+                            break;
+                        }
+                    }
+                }
 
                 String useFolder = userHome;
                 if (selectedFolder != null) {
@@ -1903,7 +1915,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                    byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                    byte[] data = null;
+                    if (this.emlMsgContainer != null) {
+                        data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                    } else {
+                        for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                            if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
+                                data = ofa.getData();
+                                break;
+                            }
+                        }
+                    }
 
                     String newName = FileUtils.getNewFileName(selected.toString(), true);
                     if (newName == null) {
