@@ -718,7 +718,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
     
-    private Timer timer = new Timer();
+    private transient Timer timer = new Timer();
 
     /**
      * Creates new form MessagingCenterPanel

@@ -726,14 +726,14 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
     /**
      * @return the unseenByUser
      */
-    public synchronized static long getUnseenByUser() {
+    public static synchronized long getUnseenByUser() {
         return unseenByUser;
     }
 
     /**
      * @param aUnseenByUser the unseenByUser to set
      */
-    public synchronized static void setUnseenByUser(long aUnseenByUser) {
+    public static synchronized void setUnseenByUser(long aUnseenByUser) {
         unseenByUser = aUnseenByUser;
     }
 
