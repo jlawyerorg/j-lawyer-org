@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
@@ -707,7 +708,6 @@ import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -778,6 +778,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_OPENTIMESHEETPOSITIONS);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
 
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
@@ -1043,6 +1044,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblBeaStatus.setText("-");
                 this.lblBeaStatus.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
+        } else if (e instanceof NewInstantMessagesEvent) {
+            this.lblUnreadInstantMessages.setEnabled(true);
+            if (((NewInstantMessagesEvent) e).getNewMessages().size() > 0) {
+                this.lblUnreadInstantMessages.setText("" + ((NewInstantMessagesEvent) e).getNewMessages().size());
+                this.lblUnreadInstantMessages.setToolTipText("ungelesene Elemente im Nachrichtencenter");
+            } else {
+                this.lblUnreadInstantMessages.setText("");
+                this.lblUnreadInstantMessages.setToolTipText("keine ungelesenen Elemente im Nachrichtencenter");
+            }
         } else if (e instanceof DrebisStatusEvent) {
 
             if (((DrebisStatusEvent) e).getMessages() > 0) {
@@ -1088,6 +1098,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
         lblTimesheetStatus = new javax.swing.JLabel();
+        lblUnreadInstantMessages = new javax.swing.JLabel();
         moduleBar = new com.jdimension.jlawyer.client.modulebar.ModuleBar();
         jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1210,10 +1221,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblUpdateStatus.setText(" ");
 
+        lblScanStatus.setFont(lblScanStatus.getFont());
         lblScanStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
         lblScanStatus.setText("?");
         lblScanStatus.setEnabled(false);
 
+        lblMailStatus.setFont(lblMailStatus.getFont());
         lblMailStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png"))); // NOI18N
         lblMailStatus.setText("?");
         lblMailStatus.setEnabled(false);
@@ -1225,6 +1238,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
 
+        lblFaxStatus.setFont(lblFaxStatus.getFont());
         lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
         lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
         lblFaxStatus.setText("?");
@@ -1235,10 +1249,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNewsStatus.setText(" ");
 
+        lblDrebisStatus.setFont(lblDrebisStatus.getFont());
         lblDrebisStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
         lblDrebisStatus.setText("?");
         lblDrebisStatus.setEnabled(false);
 
+        lblBeaStatus.setFont(lblBeaStatus.getFont());
         lblBeaStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         lblBeaStatus.setText("?");
         lblBeaStatus.setToolTipText("noch nicht eingeloggt");
@@ -1254,6 +1270,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
 
+        lblUnreadInstantMessages.setFont(lblUnreadInstantMessages.getFont());
+        lblUnreadInstantMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_chat_blue_48dp.png"))); // NOI18N
+        lblUnreadInstantMessages.setText("?");
+        lblUnreadInstantMessages.setEnabled(false);
+
         org.jdesktop.layout.GroupLayout statusPanelLayout = new org.jdesktop.layout.GroupLayout(statusPanel);
         statusPanel.setLayout(statusPanelLayout);
         statusPanelLayout.setHorizontalGroup(
@@ -1262,7 +1283,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblSystemStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 180, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 189, Short.MAX_VALUE)
                 .add(lblTimesheetStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblUpdateStatus)
@@ -1270,7 +1291,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblNewsStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblFaxStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(12, 12, 12)
+                .add(lblUnreadInstantMessages)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblMailStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblScanStatus)
@@ -1290,7 +1313,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(statusLabel)
                 .add(lblDrebisStatus)
                 .add(lblBeaStatus)
-                .add(lblTimesheetStatus))
+                .add(lblTimesheetStatus)
+                .add(lblUnreadInstantMessages))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblSystemStatus)
         );
 
@@ -2860,6 +2884,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JLabel lblScanStatus;
     private javax.swing.JLabel lblSystemStatus;
     private javax.swing.JLabel lblTimesheetStatus;
+    private javax.swing.JLabel lblUnreadInstantMessages;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;

@@ -1041,7 +1041,7 @@
                   <Component id="lblSystemStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="statusLabel" min="-2" pref="385" max="-2" attributes="0"/>
-                  <EmptySpace pref="180" max="32767" attributes="0"/>
+                  <EmptySpace pref="189" max="32767" attributes="0"/>
                   <Component id="lblTimesheetStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblUpdateStatus" min="-2" max="-2" attributes="0"/>
@@ -1049,7 +1049,9 @@
                   <Component id="lblNewsStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblFaxStatus" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                  <Component id="lblUnreadInstantMessages" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="lblMailStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblScanStatus" min="-2" max="-2" attributes="0"/>
@@ -1072,6 +1074,7 @@
                   <Component id="lblDrebisStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblBeaStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblTimesheetStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblUnreadInstantMessages" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <Component id="lblSystemStatus" alignment="1" min="-2" max="-2" attributes="0"/>
           </Group>
@@ -1106,6 +1109,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblScanStatus">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblScanStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/scanner.png"/>
             </Property>
@@ -1115,6 +1123,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblMailStatus">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblMailStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/folder_inbox.png"/>
             </Property>
@@ -1134,6 +1147,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblFaxStatus">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblFaxStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="0" green="0" red="ff" type="rgb"/>
             </Property>
@@ -1160,6 +1178,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblDrebisStatus">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblDrebisStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/drebis16.png"/>
             </Property>
@@ -1169,6 +1192,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lblBeaStatus">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblBeaStatus" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/bea16.png"/>
             </Property>
@@ -1195,6 +1223,20 @@
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblTimesheetStatusMouseClicked"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblUnreadInstantMessages">
+          <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblUnreadInstantMessages" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_chat_blue_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="?"/>
+            <Property name="enabled" type="boolean" value="false"/>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>

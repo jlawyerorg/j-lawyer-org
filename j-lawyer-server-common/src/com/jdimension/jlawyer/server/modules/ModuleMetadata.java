@@ -684,6 +684,7 @@ public class ModuleMetadata implements TreeNode {
     private String moduleName="";
     private String editorName="";
     private boolean settingsEntry=false;
+    protected boolean resetIndicatorOnClick=false;
     
     
     private String editorClass;
@@ -983,6 +984,20 @@ public class ModuleMetadata implements TreeNode {
      */
     public void setRandomBackgroundImage(String randomBackgroundImage) {
         this.randomBackgroundImage = randomBackgroundImage;
+    }
+
+    /**
+     * @return the resetIndicatorOnClick
+     */
+    public boolean isResetIndicatorOnClick() {
+        return resetIndicatorOnClick;
+    }
+
+    /**
+     * @param resetIndicatorOnClick the resetIndicatorOnClick to set
+     */
+    public void setResetIndicatorOnClick(boolean resetIndicatorOnClick) {
+        this.resetIndicatorOnClick = resetIndicatorOnClick;
     }
     
 }

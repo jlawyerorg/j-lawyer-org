@@ -663,21 +663,28 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -686,6 +693,8 @@ import themes.colors.DefaultColorTheme;
  */
 public class CalloutPanelComponent extends javax.swing.JPanel {
 
+    private static final Logger log=Logger.getLogger(CalloutPanelComponent.class.getName());
+    
     private static int READ = 10;
     private static int UNREAD = 20;
     private static int READ_NOTAPPLICABLE = 30;
@@ -742,11 +751,14 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     if (message.hasMentionFor(getOwnPrincipal())) {
                         if (message.getMentionFor(getOwnPrincipal()).isDone()) {
                             message.getMentionFor(getOwnPrincipal()).setDone(false);
+                            markMentionDone(message.getMentionFor(getOwnPrincipal()).getId(), false);
                             setRead(UNREAD);
                         } else {
                             message.getMentionFor(getOwnPrincipal()).setDone(true);
+                            markMentionDone(message.getMentionFor(getOwnPrincipal()).getId(), true);
                             setRead(READ);
                         }
+                        updateTooltip();
                     } else {
                         setRead(READ_NOTAPPLICABLE);
                     }
@@ -755,7 +767,39 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         });
     }
+    
+    private void updateTooltip() {
+        String tt=null;
+        if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Foldende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
+            for (InstantMessageMention imm : this.message.getMentions()) {
+                sb.append("- ").append(imm.getPrincipal());
+                if(imm.isDone())
+                    sb.append(" hat die Nachricht bestätigt");
+                else
+                    sb.append(" hat die Nachricht noch nicht bestätigt");
+                sb.append(System.lineSeparator());
+            }
+            tt = sb.toString();
+        }
+        this.setToolTipText(tt);
+    }
 
+    public void markMentionDone(String mentionId, boolean done) {
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            locator.lookupMessagingServiceRemote().markMentionDone(mentionId, done);
+
+        } catch (Exception ex) {
+            log.error("Could not mark mentionn as done / undone", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Erwähnung konnte nicht erledigt / unerledigt gesetzt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     public void setRead(int read) {
         this.read = read;
         repaint();
@@ -785,9 +829,25 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 //
 //        g2d.fillPolygon(xPoints, yPoints, 3);
 
+        
+        if (this.message != null && this.message.hasMentions()) {
+            if (this.message.hasOpenMentions()) {
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
+            } else {
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            }
+
+            Polygon plgn = new Polygon();
+            plgn.addPoint(0, 0);
+            plgn.addPoint(17, 0);
+            plgn.addPoint(0, 17);
+            g2d.fillPolygon(plgn);
+        }
+
+
         g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         //g2d.drawRoundRect(0, 0, width, height, cornerRadius, cornerRadius);
-        g2d.drawRect(0, 0, width, height);
+        //g2d.drawRect(0, 0, width, height);
 
         g2d.setFont(defaultFont);
 
@@ -955,6 +1015,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         } else {
             setRead(READ_NOTAPPLICABLE);
         }
+        this.updateTooltip();
     }
 
     /**

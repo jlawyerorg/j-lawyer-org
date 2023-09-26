@@ -704,6 +704,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.messenger.SendInstantMessageDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
@@ -1646,6 +1647,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuDocumentHighlight1 = new javax.swing.JMenuItem();
         mnuDocumentHighlight2 = new javax.swing.JMenuItem();
         mnuToggleFavorite = new javax.swing.JMenuItem();
+        mnuSendMessageForDocument = new javax.swing.JMenuItem();
         mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocument = new javax.swing.JMenuItem();
@@ -1803,6 +1805,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
         cmdTimesheetLog = new javax.swing.JButton();
+        cmdSendInstantMessage = new javax.swing.JButton();
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -1991,6 +1994,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuToggleFavorite);
+
+        mnuSendMessageForDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_chat_blue_48dp.png"))); // NOI18N
+        mnuSendMessageForDocument.setText("Nachricht senden");
+        mnuSendMessageForDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendMessageForDocumentActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuSendMessageForDocument);
 
         mnuRemoveDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuRemoveDocument.setText("löschen");
@@ -3365,6 +3377,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdSendInstantMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_chat_blue_48dp.png"))); // NOI18N
+        cmdSendInstantMessage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendInstantMessageActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -3381,15 +3400,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 197, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdTimesheetLog)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(togCaseSync)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdFavoriteDocuments)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdHeaderAddNote)))
+                        .add(cmdHeaderAddNote)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdSendInstantMessage)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -3405,7 +3426,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdTimesheetLog))
+                    .add(cmdTimesheetLog)
+                    .add(cmdSendInstantMessage))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -5768,6 +5790,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdTimesheetLogActionPerformed
 
+    private void mnuSendMessageForDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendMessageForDocumentActionPerformed
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if(selectedDocs.isEmpty())
+            return;
+        
+        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+
+    }//GEN-LAST:event_mnuSendMessageForDocumentActionPerformed
+
+    private void cmdSendInstantMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendInstantMessageActionPerformed
+        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdSendInstantMessageActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6156,6 +6195,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchClient;
+    private javax.swing.JButton cmdSendInstantMessage;
     private javax.swing.JButton cmdShowHistorySelector;
     private javax.swing.JButton cmdTimesheetLog;
     protected javax.swing.JButton cmdToEditMode;
@@ -6257,6 +6297,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSendDocumentFax;
     private javax.swing.JMenuItem mnuSendDocumentPDF;
     private javax.swing.JMenuItem mnuSendMessage;
+    private javax.swing.JMenuItem mnuSendMessageForDocument;
     private javax.swing.JMenuItem mnuSendMotorCoverage;
     private javax.swing.JMenuItem mnuSetDocumentDate;
     private javax.swing.JMenuItem mnuSetReviewDone;

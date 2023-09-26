@@ -717,6 +717,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private boolean statusBarNotified = false;
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
+    
+    private Timer timer = new Timer();
 
     /**
      * Creates new form MessagingCenterPanel
@@ -753,41 +755,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
 
-        long latestMessage = -1;
-        try {
-
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (365l * 24l * 60 * 60 * 1000)));
-            if (allMessages != null) {
-                this.currentMessageList.addAll(allMessages);
-                for (InstantMessage m : allMessages) {
-                    this.addMessageToView(m);
-                }
-                if (!allMessages.isEmpty()) {
-                    latestMessage = allMessages.get(allMessages.size() - 1).getSent().getTime();
-                }
-                this.updateHashtagsBar(allMessages);
-            }
-            if (latestMessage < 0) {
-                latestMessage = System.currentTimeMillis();
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not submit instant message to server", ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        this.refresh();
 
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
-
-        Timer timer = new Timer();
-        TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
-        timer.schedule(instantMessagesTask, 4300, 1000);
 
         this.initializing = false;
         log.info("finished initialization: " + (System.currentTimeMillis() - start));
@@ -1009,9 +982,50 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-
+        this.refresh();
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
+    private void refresh() {
+        this.currentMessageList=new ArrayList<>();
+        if(this.tabsPane.getTabCount()>1) {
+            for(int i=this.tabsPane.getTabCount()-1; i>0;i--) {
+                this.tabsPane.removeTabAt(i);
+            }
+        }
+        this.pnlMessages.removeAll();
+        
+        long latestMessage = -1;
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (365l * 24l * 60 * 60 * 1000)));
+            if (allMessages != null) {
+                this.currentMessageList.addAll(allMessages);
+                for (InstantMessage m : allMessages) {
+                    this.addMessageToView(m);
+                }
+                if (!allMessages.isEmpty()) {
+                    latestMessage = allMessages.get(allMessages.size() - 1).getSent().getTime();
+                }
+                this.updateHashtagsBar(allMessages);
+            }
+            if (latestMessage < 0) {
+                latestMessage = System.currentTimeMillis();
+            }
+
+        } catch (Exception ex) {
+            log.error("Could not submit instant message to server", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        this.timer.cancel();
+        this.timer=new Timer();
+        TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
+        this.timer.schedule(instantMessagesTask, 4300, 1000);
+    }
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
         if (!this.initializing) {

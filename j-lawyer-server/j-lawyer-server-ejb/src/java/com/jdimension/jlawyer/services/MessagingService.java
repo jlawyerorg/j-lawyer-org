@@ -667,12 +667,15 @@ import com.jdimension.jlawyer.events.InstantMessageCreatedEvent;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
@@ -703,6 +706,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @EJB
     private ArchiveFileBeanFacadeLocal caseFacade;
     @EJB
+    private ArchiveFileDocumentsBeanFacadeLocal docFacade;
+    @EJB
     private SecurityServiceLocal securityFacade;
     @EJB
     private SingletonServiceLocal singleton;
@@ -718,6 +723,22 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         message.setId(messageId);
         Date sentDate=new Date();
         message.setSent(sentDate);
+        
+        if(message.getDocumentContext()!=null) {
+            ArchiveFileDocumentsBean docContext=message.getDocumentContext();
+            String docId=docContext.getId();
+            if(docId!=null) {
+                ArchiveFileDocumentsBean foundDoc=this.docFacade.find(docId);
+                if(foundDoc!=null) {
+                    message.setCaseContext(foundDoc.getArchiveFileKey());
+                } else {
+                    throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument kann jedoch nicht gefunden werden!");
+                }
+            } else {
+                throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument hat jedoch keine ID!");
+            }
+        }
+        
         this.messageFacade.create(message);
         InstantMessage newMessage=this.messageFacade.find(messageId);
         
@@ -734,6 +755,18 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         
         InstantMessageCreatedEvent evt = new InstantMessageCreatedEvent();
         evt.setMessageId(messageId);
+        evt.setContent(newMessage.getContent());
+        if(newMessage.getCaseContext()!=null)
+            evt.setCaseContext(newMessage.getCaseContext().getId());
+        if(newMessage.getDocumentContext()!=null)
+            evt.setDocumentContext(newMessage.getDocumentContext().getId());
+        ArrayList<String> mentioned=new ArrayList<>();
+        for(int i=0;i<mentions.size();i++) {
+            mentioned.add(mentions.get(i).getPrincipal());
+        }
+        evt.setMentioned(mentioned);
+        evt.setSender(newMessage.getSender());
+        evt.setSent(newMessage.getSent());
         this.newMessageEvent.fireAsync(evt);
         
         return this.messageFacade.find(messageId);

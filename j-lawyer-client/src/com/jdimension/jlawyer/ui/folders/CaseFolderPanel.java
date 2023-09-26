@@ -1104,16 +1104,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
         cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdActionsMousePressed(evt);
-            }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 cmdActionsMouseReleased(evt);
-            }
-        });
-        cmdActions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdActionsActionPerformed(evt);
             }
         });
 
@@ -1339,14 +1331,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.sort();
     }//GEN-LAST:event_sortSizeMouseClicked
-
-    private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
-
-    }//GEN-LAST:event_cmdActionsMousePressed
-
-    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-
-    }//GEN-LAST:event_cmdActionsActionPerformed
 
     private void sortFolderMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortFolderMouseClicked
         if (this.sortFolder.getSortState() != SortButton.SORT_NONE) {

@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -681,9 +680,10 @@ import org.apache.log4j.Logger;
 public class MessagePollingTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(MessagePollingTimerTask.class.getName());
-    private static ArrayList<String> lastFiles = new ArrayList<String>();
     private long lastPolled = -1;
     private long lastMessageTimestamp=-1;
+    
+    protected static long unseenByUser=0;
 
     /**
      * Creates a new instance of MessagePollingTimerTask
@@ -702,8 +702,6 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
             //   user is currently using the message center and last poll is older than 1s
             if (lastPolled < 0 || (System.currentTimeMillis()-lastPolled >= 15000) || (System.currentTimeMillis()-lastPolled >= 1000 && EditorsRegistry.getInstance().getCurrentEditor() instanceof MessagingCenterPanel)) {
 
-                //log.debug("polling instant messages");
-                
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -723,6 +721,20 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
                 this.lastPolled=System.currentTimeMillis();
             }
         }
+    }
+
+    /**
+     * @return the unseenByUser
+     */
+    public synchronized static long getUnseenByUser() {
+        return unseenByUser;
+    }
+
+    /**
+     * @param aUnseenByUser the unseenByUser to set
+     */
+    public synchronized static void setUnseenByUser(long aUnseenByUser) {
+        unseenByUser = aUnseenByUser;
     }
 
 }

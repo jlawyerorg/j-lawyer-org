@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
@@ -700,6 +701,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private Icon rollOverIcon = null;
     
     private String indicatorValue="";
+    protected boolean resetIndicatorOnClick=false;
 
     /**
      * Creates new form ModuleButton
@@ -709,6 +711,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         initComponents();
         this.defaultBackColor=this.getBackground();
         this.module = m;
+        this.resetIndicatorOnClick=m.isResetIndicatorOnClick();
         
         
         if (m.getStatusEventType() > 0) {
@@ -915,6 +918,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 
             }
             
+            if(this.resetIndicatorOnClick)
+                this.updateIndicator(0);
+            
             setForeground(this.defaultBackColor);
         } else {
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
@@ -978,6 +984,8 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             updateIndicator(((EmailStatusEvent) e).getUnread());
         } else if (e instanceof BeaStatusEvent) {
             updateIndicator(((BeaStatusEvent) e).getUnread());
+        } else if (e instanceof NewInstantMessagesEvent) {
+            updateIndicator(((NewInstantMessagesEvent) e).getNewMessages().size());
         } else if (e instanceof DrebisStatusEvent) {
             updateIndicator(((DrebisStatusEvent) e).getMessages());
         }
@@ -1008,6 +1016,20 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             indicatorValue=""+incomingValue;
         });
 
+    }
+
+    /**
+     * @return the resetIndicatorOnClick
+     */
+    public boolean isResetIndicatorOnClick() {
+        return resetIndicatorOnClick;
+    }
+
+    /**
+     * @param resetIndicatorOnClick the resetIndicatorOnClick to set
+     */
+    public void setResetIndicatorOnClick(boolean resetIndicatorOnClick) {
+        this.resetIndicatorOnClick = resetIndicatorOnClick;
     }
 
 }
