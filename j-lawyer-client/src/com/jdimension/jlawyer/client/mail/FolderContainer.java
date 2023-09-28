@@ -709,7 +709,19 @@ public class FolderContainer {
     }
     
     public int getUnreadMessageCount() {
-        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
+        
+        // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
+        // default 5mins plus up to 5hrs
+        double retentionTime=((5l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        if(this.folder!=null && this.folder.getName()!=null) {
+            String folderName=this.folder.getName();
+            if(EmailUtils.isDrafts(folderName) || EmailUtils.isInbox(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 5mins plus up to 1min
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l));
+            }
+        }
+        
+        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > retentionTime)) {
             if(this.folder!=null) {
                 try {
                     this.cachedUnread=this.folder.getUnreadMessageCount();
@@ -727,8 +739,19 @@ public class FolderContainer {
     */
     @Override
     public String toString() {
-        // refresh after 3mins plus x (because not all folders should refresh at the same time)
-        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
+        
+        // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
+        // default 5mins plus up to 5hrs
+        double retentionTime=((5l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        if(this.folder!=null && this.folder.getName()!=null) {
+            String folderName=this.folder.getName();
+            if(EmailUtils.isDrafts(folderName) || EmailUtils.isInbox(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 5mins plus up to 1min
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l));
+            }
+        }
+        
+        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > retentionTime)) {
             try {
                 String name = this.folder.getName();
 
