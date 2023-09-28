@@ -750,7 +750,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
-        this.txtReference.setDocument(new JTextFieldLimit(49));
+        this.txtReference.setDocument(new JTextFieldLimit(249));
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
