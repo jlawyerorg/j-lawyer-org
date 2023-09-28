@@ -1122,6 +1122,46 @@ public class EmailUtils {
     public static Folder getDraftsFolder(Folder[] folders) throws Exception {
         return getFolderByName(folders, FolderContainer.DRAFTS);
     }
+    
+    public static boolean isDrafts(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(FolderContainer.DRAFTS);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean isInbox(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(FolderContainer.INBOX);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean isSent(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(FolderContainer.SENT);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean isTrash(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(FolderContainer.TRASH);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static Folder getFolderByName(Folder inbox, String name) throws Exception {
         if (!isIMAP(inbox)) {
