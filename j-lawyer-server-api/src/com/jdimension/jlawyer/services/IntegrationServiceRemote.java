@@ -689,7 +689,7 @@ public interface IntegrationServiceRemote {
 
     String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
 
-    Collection getAllEmailTemplateNames();
+    Collection<String> getAllEmailTemplateNames();
 
     void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception;
 

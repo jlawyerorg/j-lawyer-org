@@ -716,16 +716,14 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_LASTUSEDTEMPLATE, null);
-            for (Object t : templates) {
-                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
-                if (etpl != null) {
-                    if (etpl.isText()) {
-                        this.cmbTemplates.addItem(t.toString());
-                    }
+            for (String t : templates) {
+                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t);
+                if (etpl != null && etpl.isText()) {
+                    this.cmbTemplates.addItem(t);
                 }
             }
             if (lastUsedTemplate != null) {
@@ -961,20 +959,19 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
                     log.warn("Unable to load assistant with id " + contextArchiveFile.getAssistant());
                 }
 
-                List<PartiesPanelEntry> selectedParties = this.partiesPanel.getSelectedParties(new ArrayList(allPartyTypes));
+                List<PartiesPanelEntry> selectedParties = this.partiesPanel.getSelectedParties(new ArrayList<>(allPartyTypes));
                 List<PartiesTriplet> partiesTriplets = new ArrayList<>();
                 for (PartiesPanelEntry pe : selectedParties) {
                     PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
-
+                
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
                 ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
 
                 String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues);
                 int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);

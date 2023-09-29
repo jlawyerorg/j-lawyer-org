@@ -850,12 +850,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, null);
-            for (Object t : templates) {
-                this.cmbTemplates.addItem(t.toString());
+            for (String t : templates) {
+                this.cmbTemplates.addItem(t);
             }
             if (lastUsedTemplate != null) {
                 this.cmbTemplates.setSelectedItem(lastUsedTemplate);

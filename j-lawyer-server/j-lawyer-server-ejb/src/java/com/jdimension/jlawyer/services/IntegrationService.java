@@ -903,7 +903,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public Collection getAllEmailTemplateNames() {
+    public Collection<String> getAllEmailTemplateNames() {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {

@@ -823,15 +823,15 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            Collection templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, null);
-            for (Object t : templates) {
-                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
+            for (String t : templates) {
+                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t);
                 if (etpl != null) {
                     if (etpl.isText()) {
-                        this.cmbTemplates.addItem(t.toString());
+                        this.cmbTemplates.addItem(t);
                     }
                 }
 
