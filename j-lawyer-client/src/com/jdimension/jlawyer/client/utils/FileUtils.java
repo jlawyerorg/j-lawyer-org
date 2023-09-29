@@ -1051,11 +1051,8 @@ public class FileUtils extends ServerFileUtils {
             }
         };
 
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, new ClipboardOwner() {
-            @Override
-            public void lostOwnership(Clipboard clipboard, Transferable contents) {
-                log.debug("lost ownership of system clipboard");
-            }
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, (Clipboard clipboard, Transferable contents) -> {
+            log.debug("lost ownership of system clipboard");
         });
         
 //        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
