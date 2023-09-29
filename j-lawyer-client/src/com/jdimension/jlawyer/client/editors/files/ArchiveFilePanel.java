@@ -758,6 +758,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -1631,6 +1632,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuEditReview = new javax.swing.JMenuItem();
         mnuRemoveReview = new javax.swing.JMenuItem();
         documentsPopup = new javax.swing.JPopupMenu();
+        mnuCopyFilesToClipboard = new javax.swing.JMenuItem();
         mnuOpenDocument = new javax.swing.JMenuItem();
         mnuOpenDocumentWith = new javax.swing.JMenu();
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
@@ -1860,6 +1862,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         reviewsPopup.add(mnuRemoveReview);
+
+        mnuCopyFilesToClipboard.setFont(mnuCopyFilesToClipboard.getFont());
+        mnuCopyFilesToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopyFilesToClipboard.setText("in Zwischenablage kopieren");
+        mnuCopyFilesToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyFilesToClipboardActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuCopyFilesToClipboard);
 
         mnuOpenDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuOpenDocument.setText("öffnen");
@@ -5810,6 +5822,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSendInstantMessageActionPerformed
 
+    private void mnuCopyFilesToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyFilesToClipboardActionPerformed
+        try {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            if (selectedDocs.isEmpty()) {
+                return;
+            }
+
+            ThreadUtils.setWaitCursor(this);
+            ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            pi.setShowCancelButton(true);
+            CopyDocumentsToClipboardAction a = new CopyDocumentsToClipboardAction(pi, this, selectedDocs);
+            a.start();
+            
+        } catch (Exception ioe) {
+            log.error("Error copying documents to clipboard", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Kopieren in die Zwischenablage: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuCopyFilesToClipboardActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6268,6 +6299,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblHeaderInfo;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
+    private javax.swing.JMenuItem mnuCopyFilesToClipboard;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
     private javax.swing.JMenuItem mnuDocumentHighlight1;

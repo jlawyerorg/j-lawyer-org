@@ -661,456 +661,90 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URLConnection;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.WindowConstants;
-import javax.swing.filechooser.FileSystemView;
+import javax.swing.*;
 import org.apache.log4j.Logger;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 /**
  *
  * @author jens
  */
-public class FileUtils extends ServerFileUtils {
+public class CopyDocumentsToClipboardAction extends ProgressableAction {
 
-    private static FileUtils instance = null;
-    private static final Logger log = Logger.getLogger(FileUtils.class.getName());
-    private HashMap<String, Icon> iconCache = null;
-    private HashMap<String, Icon> iconCache32 = null;
+    private static final Logger log = Logger.getLogger(CopyDocumentsToClipboardAction.class.getName());
 
-    public static synchronized FileUtils getInstance() {
-        if (instance == null) {
-            instance = new FileUtils();
-        }
+    private Component owner;
+    private List<ArchiveFileDocumentsBean> docs;
 
-        return instance;
-    }
+    public CopyDocumentsToClipboardAction(ProgressIndicator i, Component owner, List<ArchiveFileDocumentsBean> docs) {
+        super(i, false);
 
-    private FileUtils() {
-        super();
-        iconCache = new HashMap<>();
-        iconCache32 = new HashMap<>();
+        this.owner = owner;
+
+        this.docs = docs;
 
     }
 
-    public static String getExtension(String fileName) {
-        int index = fileName.lastIndexOf('.');
-        if (index > -1 && index < fileName.length()) {
-            return fileName.substring(index + 1);
-        }
-        return "url-with-no-extension";
+    @Override
+    public int getMax() {
+        return docs.size()+2;
     }
 
-    public Icon getFileTypeIcon(String fileName) {
+    @Override
+    public int getMin() {
+        return 0;
+    }
 
-        if (fileName == null) {
-            return null;
-        }
-
-        int lastDot = fileName.lastIndexOf('.');
-        String fileExt = ".odt";
-        if (lastDot > -1) {
-            fileExt = fileName.substring(lastDot);
-        }
-
-        if (this.iconCache.containsKey(fileExt)) {
-            return this.iconCache.get(fileExt);
-        }
+    @Override
+    public boolean execute() throws Exception {
 
         try {
 
-            if (fileExt.startsWith(".")) {
-                fileExt = fileExt.substring(1, fileExt.length());
-            }
-            fileExt = fileExt.toLowerCase();
-            ImageIcon image = null;
-            try {
-                image = new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
-            } catch (Throwable t) {
-                log.warn("no file type icon for " + fileExt);
-            }
-            if (image != null) {
-                this.iconCache.put(fileExt, image);
-                return image;
-            } else {
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
-
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = view.getSystemIcon(file);
-                this.iconCache.put(fileExt, icon);
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
-            }
-        } catch (Throwable t) {
-            log.error("Could not determine default file type icon for " + fileName, t);
-            return null;
-        }
-    }
-
-    public Icon getFileTypeIcon32(String fileName) {
-
-        if (fileName == null) {
-            return null;
-        }
-
-        int lastDot = fileName.lastIndexOf('.');
-        String fileExt = ".odt";
-        if (lastDot > -1) {
-            fileExt = fileName.substring(lastDot);
-        }
-
-        if (this.iconCache32.containsKey(fileExt)) {
-            return this.iconCache32.get(fileExt);
-        }
-
-        try {
-
-            if (fileExt.startsWith(".")) {
-                fileExt = fileExt.substring(1, fileExt.length());
-            }
-            fileExt = fileExt.toLowerCase();
-            ImageIcon image = null;
-            try {
-                image = new ImageIcon(getClass().getResource("/icons32/fileicons/file_type_" + fileExt + "@2x.png"));
-            } catch (Throwable t) {
-                log.warn("no file type icon for " + fileExt);
-            }
-            if (image != null) {
-                this.iconCache32.put(fileExt, image);
-                return image;
-            } else {
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
-
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = view.getSystemIcon(file);
-                this.iconCache32.put(fileExt, icon);
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
-            }
-        } catch (Throwable t) {
-            log.error("Could not determine default file type icon for " + fileName, t);
-            return null;
-        }
-    }
-    
-    public static String getFileSizeHumanReadable(long size) {
-        DecimalFormat megaBytes = new DecimalFormat("0");
-        
-        if (size < 1024) {
-            size = 1024l;
-        }
-
-        if (size > (1024 * 1024)) {
-            return megaBytes.format(size / 1024l / 1024l) + " MB";
-        } else {
-            return megaBytes.format(size / 1024l) + " KB";
-        }
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix) {
-        return getNewFileName(currentFileName, datetimePrefix, new java.util.Date());
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
-
-        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
-
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
-
-        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei benennen");
-
-    }
-
-    public static String sanitizeFileName(String fileName) {
-        String name = fileName;
-        name = name.replaceAll(",", " ");
-        name = name.replaceAll("\"", "");
-        name = name.replaceAll("§", " ");
-        name = name.replaceAll("%", " ");
-        name = name.replaceAll("&", "_");
-        name = name.replaceAll("/", "_");
-        name = name.replaceAll("=", "_");
-        name = name.replaceAll("\\?", " ");
-        name = name.replaceAll("\\{", "(");
-        name = name.replaceAll("\\}", ")");
-        name = name.replaceAll("\\[", "(");
-        name = name.replaceAll("\\]", ")");
-        name = name.replaceAll("\\\\", "_");
-        name = name.replaceAll("\\*", "-");
-        name = name.replaceAll("#", "-");
-        name = name.replaceAll("'", "");
-        name = name.replaceAll(":", " ");
-        name = name.replaceAll(";", " ");
-        name = name.replaceAll(">", "");
-        name = name.replaceAll("<", "");
-        name = name.replaceAll("\\|", "_");
-        return name.trim();
-    }
-
-    public static String sanitizeFolderName(String folderName) {
-        String sanitized = sanitizeFileName(folderName);
-        sanitized = sanitized.replaceAll("  ", " ");
-        sanitized = sanitized.replaceAll("  ", " ");
-        return sanitized;
-    }
-
-    public static String preserveExtension(String currentFileName, String newFileName) {
-
-        String currentExt = "";
-        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-            ext = ext.toLowerCase();
-            if (currentFileName.toLowerCase().endsWith(ext)) {
-                currentExt = ext;
-            }
-        }
-        if (currentFileName.toLowerCase().endsWith(".pdf")) {
-            currentExt = ".pdf";
-        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
-            currentExt = ".eml";
-        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
-            currentExt = ".bea";
-        }
-
-        if (!newFileName.endsWith(currentExt)) {
-            newFileName = newFileName + currentExt;
-        }
-
-        return newFileName;
-
-    }
-
-    public static String createTempFile(String fileName, byte[] content) throws Exception {
-        return createTempFile(fileName, content, false);
-    }
-
-    public static String createTempDirectory() throws Exception {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-            tmpDir = tmpDir + System.getProperty("file.separator");
-        }
-        StringGenerator idGen = new StringGenerator();
-        tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
-        new File(tmpDir).mkdirs();
-        return tmpDir;
-    }
-
-    public static void cleanupTempFilesWithRetentionTime() {
-        // cleaning up temp dir must not ever cause the client to fail
-        try {
-
-            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
-            File fTmpDir = new File(tmpDir);
-            if (!(fTmpDir.exists())) {
-                fTmpDir.mkdirs();
-            }
-
-            for (File f : fTmpDir.listFiles()) {
-                if (f.isDirectory()) {
-                    if (f.getName().contains("_")) {
-                        String datePart = f.getName().substring(0, f.getName().indexOf("_"));
-                        try {
-                            long lDeletionTime = Long.parseLong(datePart);
-                            if (lDeletionTime < System.currentTimeMillis()) {
-                                for (File tmpFile : f.listFiles()) {
-                                    tmpFile.delete();
-                                }
-                                f.delete();
-                            }
-                        } catch (Throwable t) {
-                            log.error("Could not check / delete temporary directory " + f.getName());
-                        }
-                    }
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArrayList<File> clipBoardFiles = new ArrayList<>();
+            for (ArchiveFileDocumentsBean doc : this.docs) {
+                if (!this.isCancelled()) {
+                    this.progress("Lade " + doc.getName() + "...");
+                    byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    String fullTmpFileLocation = FileUtils.createTempFile(doc.getName(), content);
+                    clipBoardFiles.add(new File(fullTmpFileLocation));
                 }
             }
-        } catch (Throwable t) {
-            log.error("Errors cleaning up temporary documents", t);
-        }
 
-    }
-
-    public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return createTempFile(fileName, content, readOnly, true, -1);
-    }
-
-    public static String createTempFile(String fileName, byte[] content, boolean readOnly, boolean deleteOnExit, long deleteAfterDays) throws Exception {
-
-        if (deleteAfterDays > -1) {
-            deleteOnExit = false;
-        }
-
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (deleteAfterDays > -1) {
-            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
-        }
-
-        boolean wordOnMac = false;
-
-        if (SystemUtils.isMacOs()) {
-
-            ClientSettings set = ClientSettings.getInstance();
-            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
-
-            if (wordProcessorMicrosoft) {
-                wordOnMac = true;
-                // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
-                tmpDir = "/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
-                if (!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
-                    throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
-                }
+            this.progress("Übernehmen in Zwischenablage...");
+            if (!this.isCancelled()) {
+                FileUtils.copyFileListToClipboard(clipBoardFiles);
             }
+            
+            this.progress("Fertig.");
+            Thread.sleep(1500);
+            
+        } catch (Exception ex) {
+            log.error("Error loading documents from server", ex);
+            JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(true);
+            ThreadUtils.setDefaultCursor(this.owner);
+            return true;
         }
 
-        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-            tmpDir = tmpDir + System.getProperty("file.separator");
-        }
+        EditorsRegistry.getInstance().clearStatus(true);
+        ThreadUtils.setDefaultCursor(this.owner);
 
-        StringGenerator idGen = new StringGenerator();
-        if (deleteAfterDays > -1) {
-            tmpDir = tmpDir + "" + (System.currentTimeMillis() + (deleteAfterDays * 24l * 60l * 60l * 1000l)) + "_" + idGen.getID().toString() + System.getProperty("file.separator");
-        } else {
-            tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
-        }
-        new File(tmpDir).mkdirs();
-        fileName = fileName.replace("\\", "_");
-        fileName = fileName.replace("/", "_");
-        fileName = fileName.replace("\t", "");
-        String tmpFile = tmpDir + fileName;
-        try ( FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
-            fos.write(content);
-        }
+        return true;
 
-        if (readOnly) {
-            try {
-                new File(tmpFile).setReadOnly();
-            } catch (Throwable t) {
-                log.error("Could not set document readonly: " + tmpFile + " (" + t.getMessage() + ")");
-            }
-        }
-
-        if (deleteOnExit || wordOnMac) {
-            cleanupTempFile(tmpFile);
-        }
-
-        return tmpFile;
-    }
-    
-    public static void copyFileListToClipboard(List<File> fileList) {
-        
-        Transferable transferable = new Transferable() {
-            @Override
-            public DataFlavor[] getTransferDataFlavors() {
-                return new DataFlavor[]{DataFlavor.javaFileListFlavor};
-            }
-
-            @Override
-            public boolean isDataFlavorSupported(DataFlavor flavor) {
-                return DataFlavor.javaFileListFlavor.equals(flavor);
-            }
-
-            @Override
-            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-                return fileList;
-            }
-        };
-
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, new ClipboardOwner() {
-            @Override
-            public void lostOwnership(Clipboard clipboard, Transferable contents) {
-                log.debug("lost ownership of system clipboard");
-            }
-        });
-        
-//        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-//        clipboard.setContents(transferable, null);
-    }
-
-    public static void cleanupTempFile(String url) {
-        File f = new File(url);
-
-        f.deleteOnExit();
-
-        String dir = url.substring(0, url.lastIndexOf(System.getProperty("file.separator")));
-        File remDir = new File(dir);
-        remDir.deleteOnExit();
-
-    }
-
-    public static String getNewFileNamePrefix(Date d) {
-        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-        return datePrefix.format(d);
-    }
-    
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
-
-        String dtPrefix = "";
-        if (datetimePrefix) {
-            dtPrefix = getNewFileNamePrefix(d);
-        }
-
-        if (parent == null) {
-            parent = EditorsRegistry.getInstance().getMainWindow();
-        }
-
-        NewFilenameOptionPanel p = new NewFilenameOptionPanel();
-        p.setFilename(dtPrefix + currentFileName);
-        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
-        JDialog dialog = pane.createDialog(parent, title);
-        dialog.doLayout();
-        dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
-        
-        // prevent user from using the 'X' button to close the dialog
-        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        dialog.setVisible(true);
-        if (p.getFilename() != null) {
-
-            String newName = p.getFilename();
-            if ("".equalsIgnoreCase(newName)) {
-                return null;
-            }
-
-            newName = FileUtils.preserveExtension(currentFileName, newName);
-
-            return FileUtils.sanitizeFileName(newName);
-        }
-
-        return null;
     }
 }
