@@ -4620,13 +4620,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         DrebisFreeTextWizardDialog dlg = new DrebisFreeTextWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
 
         WizardSteps steps = new WizardSteps(dlg);
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextReceiptStep());
-
+        
         WizardDataContainer data = steps.getData();
         data.put("archiveFile.id", this.dto.getId());
         data.put("archiveFile.name", this.dto.getName());
@@ -4637,6 +4631,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("clients.addressbeans", clients);
         data.put("documents.documentbeans", docs);
         data.put("documents.documentbeans.selected", selDocs);
+        
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextReceiptStep());
+
+        
 
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());

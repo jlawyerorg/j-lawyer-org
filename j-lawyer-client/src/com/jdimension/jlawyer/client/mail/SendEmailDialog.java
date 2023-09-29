@@ -729,8 +729,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
 
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
-    private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
-
+    
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
     private HashMap<String, String> attachments = new HashMap<>();
@@ -2107,9 +2106,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 if (tpl.isText()) {
                     if (ms != null) {
                         String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature());
-                        int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
+                        int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
-                            t = t.replace(PLACEHOLDER_CURSOR, "");
+                            t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
                         }
                         this.tp.setText(t);
                         this.tp.setCaretPosition(Math.max(0, cursorIndex));
@@ -2125,9 +2124,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                             sig = "";
                         }
                         String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
-                        int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
+                        int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
-                            t = t.replace(PLACEHOLDER_CURSOR, "");
+                            t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
                         }
                         this.hp.setText(t);
                         this.hp.setCaretPosition(Math.max(0, cursorIndex));

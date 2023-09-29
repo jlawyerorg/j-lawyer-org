@@ -726,6 +726,7 @@ public class UserSettings {
     public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
     
     public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
+    public static final String CONF_DREBIS_LASTUSEDTEMPLATE = "user.drebis.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";

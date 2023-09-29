@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DrebisServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
@@ -689,7 +688,7 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form SubmitFreeTextStep
      */
     public SubmitFreeTextStep() {
         initComponents();
@@ -794,89 +793,70 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
         }
         
         this.taLog.setText("");
-//        this.cmdCopy.setEnabled(false);
-//        this.cmdOpenDrebis.setEnabled(false);
-
 
         final String lBreak = System.getProperty("line.separator");
-        //this.taSummary.append("Akte: " + this.data.get("clients.archivefilenumber") + " " + this.data.get("clients.archivefilename"));
         final InsuranceInfo insurance = (InsuranceInfo) this.data.get("clients.insurance");
-        //this.taSummary.append("Versicherung: VS " + this.data.get("clients.insurancepolicy") + " bei der " + insName);
-
+        
         final ArrayList<DrebisPerson> persons = (ArrayList<DrebisPerson>) this.data.get("clients.drebispersons");
 
         final ArrayList<ArchiveFileDocumentsBean> drebDocs = (ArrayList<ArchiveFileDocumentsBean>) this.data.get("documents.drebisdocumentbeans");
 
-        new Thread(new Runnable() {
-
-            public void run() {
-                try {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    FileConverter conv = FileConverter.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-                    DrebisServiceRemote drebis=locator.lookupDrebisServiceRemote();
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                FileConverter conv = FileConverter.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DrebisServiceRemote drebis=locator.lookupDrebisServiceRemote();
+                
+                ArrayList<DrebisDocument> dDocs=new ArrayList<>();
+                for (ArchiveFileDocumentsBean doc: drebDocs) {
                     
-                    ArrayList<DrebisDocument> dDocs=new ArrayList<DrebisDocument>();
-                    //Base64 base64=new Base64();
-                    for (ArchiveFileDocumentsBean doc: drebDocs) {
-                                                
-                        ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                        byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                        String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
-                        if (doc.getName().toLowerCase().endsWith(".pdf")) {
-                            //dlg.addAttachment(tmpUrl, doc.getDictateSign());
-                            //String b64=base64.encode(content);
-                            //DrebisDocument dDoc=new DrebisDocument(doc.getName(), b64.getBytes("UTF-8"));
-                            DrebisDocument dDoc=new DrebisDocument(doc.getName(), content);
-                            dDocs.add(dDoc);
+                    ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
+                    byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                    if (doc.getName().toLowerCase().endsWith(".pdf")) {
+                        DrebisDocument dDoc=new DrebisDocument(doc.getName(), content);
+                        dDocs.add(dDoc);
+                        ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
+                        
+                    } else {
+                        String pdfUrl = conv.convertToPDF(tmpUrl);
+                        File pdfFile=new File(pdfUrl);
+                        byte[] pdfContent=FileUtils.readFile(pdfFile);
+                        DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), pdfContent);
+                        dDocs.add(dDoc);
+                        try {
+                            // give some more time to LibreOfficed to shut down
+                            Thread.sleep(2500);
                             ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
-                            
-                        } else {
-                            String pdfUrl = conv.convertToPDF(tmpUrl);
-                            File pdfFile=new File(pdfUrl);
-                            byte[] pdfContent=FileUtils.readFile(pdfFile);
-                            //String b64=base64.encode(pdfContent);
-                            //DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), b64.getBytes("UTF-8"));
-                            DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), pdfContent);
-                            dDocs.add(dDoc);
-                            try {
-                                // give some more time to LibreOfficed to shut down
-                                Thread.sleep(2500);
-                                ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
-                            } catch (Throwable t) {
-                                ThreadUtils.appendToTextArea("FEHLER: " + t.getMessage() + lBreak, taLog);
-                                log.error(t);
-                                return;
-                            }
-                            
-                            //dlg.addAttachment(pdfUrl, doc.getDictateSign());
-                            new File(tmpUrl).deleteOnExit();
+                        } catch (Throwable t) {
+                            ThreadUtils.appendToTextArea("FEHLER: " + t.getMessage() + lBreak, taLog);
+                            log.error(t);
+                            return;
                         }
 
+                        new File(tmpUrl).deleteOnExit();
                     }
                     
-                    ThreadUtils.appendToTextArea("Sende an Drebis...", taLog);
-                    DrebisMessageReceipt rcpt=drebis.sendMessage((String)data.get("archiveFile.id"), (String)data.get("clients.archivefilenumber"), (String)data.get("clients.archivefilename"), insurance, (String)data.get("clients.insurancepolicy"), persons, dDocs, (String)data.get("freetext.freetext"), (String)data.get("freetext.claimnumber"));
-                    
-                    ThreadUtils.appendToTextArea("fertig", taLog);
-                    ThreadUtils.appendToTextArea(lBreak + lBreak + "Sie können im nächsten Schritt die Empfangsbestätigung prüfen.", taLog);
-                    //ThreadUtils.updateTextField(txtDrebisUrl, url);
-                    //ThreadUtils.enableComponent(cmdCopy, true);
-                    //ThreadUtils.enableComponent(cmdOpenDrebis, true);
-                    
-                    data.put("freetext.receipt", rcpt);
-                    
-                } catch (DrebisException de) {
-                    log.error("Error submitting freetext message", de);
-                    ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
-                    return;
-                    
-                } catch (Exception e) {
-                    log.error("Error submitting freetext message", e);
-                    ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
-                    return;
                 }
+                
+                ThreadUtils.appendToTextArea("Sende an Drebis...", taLog);
+                DrebisMessageReceipt rcpt=drebis.sendMessage((String)data.get("archiveFile.id"), (String)data.get("clients.archivefilenumber"), (String)data.get("clients.archivefilename"), insurance, (String)data.get("clients.insurancepolicy"), persons, dDocs, (String)data.get("freetext.freetext"), (String)data.get("freetext.claimnumber"));
+                
+                ThreadUtils.appendToTextArea("fertig", taLog);
+                ThreadUtils.appendToTextArea(lBreak + lBreak + "Sie können im nächsten Schritt die Empfangsbestätigung prüfen.", taLog);
+                
+                data.put("freetext.receipt", rcpt);
+                
+            } catch (DrebisException de) {
+                log.error("Error submitting freetext message", de);
+                ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
+                return;
+                
+            } catch (Exception e) {
+                log.error("Error submitting freetext message", e);
+                ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
+                return;
             }
         }).start();
 
