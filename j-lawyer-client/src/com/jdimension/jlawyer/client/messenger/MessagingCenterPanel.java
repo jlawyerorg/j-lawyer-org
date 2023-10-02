@@ -670,10 +670,12 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Adjustable;
 import java.awt.Component;
@@ -733,6 +735,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
         this.jScrollPane3.getViewport().setOpaque(false);
         this.jScrollPane3.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane2.getViewport().setOpaque(false);
+        this.jScrollPane2.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane4.getViewport().setOpaque(false);
+        this.jScrollPane4.getHorizontalScrollBar().setUnitIncrement(16);
         this.messageSendPanel1.setMessageConsumer(this);
 
         ClientSettings cs = ClientSettings.getInstance();
@@ -754,6 +760,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
+        
+        BoxLayout layout2 = new javax.swing.BoxLayout(this.pnlMessagesToMe, javax.swing.BoxLayout.Y_AXIS);
+        this.pnlMessagesToMe.setLayout(layout2);
+        
+        BoxLayout layout3 = new javax.swing.BoxLayout(this.pnlMessagesToOthers, javax.swing.BoxLayout.Y_AXIS);
+        this.pnlMessagesToOthers.setLayout(layout3);
 
         this.refresh();
 
@@ -761,6 +773,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
 
         this.initializing = false;
         log.info("finished initialization: " + (System.currentTimeMillis() - start));
@@ -858,6 +871,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         tabsPane = new javax.swing.JTabbedPane();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        pnlMessagesToMe = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        pnlMessagesToOthers = new javax.swing.JPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         lblClearHashtagSelection = new javax.swing.JLabel();
 
@@ -923,6 +940,46 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         tabsPane.addTab("alle", jScrollPane3);
 
+        jScrollPane2.setBorder(null);
+        jScrollPane2.setOpaque(false);
+
+        pnlMessagesToMe.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlMessagesToMeLayout = new org.jdesktop.layout.GroupLayout(pnlMessagesToMe);
+        pnlMessagesToMe.setLayout(pnlMessagesToMeLayout);
+        pnlMessagesToMeLayout.setHorizontalGroup(
+            pnlMessagesToMeLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 870, Short.MAX_VALUE)
+        );
+        pnlMessagesToMeLayout.setVerticalGroup(
+            pnlMessagesToMeLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 426, Short.MAX_VALUE)
+        );
+
+        jScrollPane2.setViewportView(pnlMessagesToMe);
+
+        tabsPane.addTab("an mich", jScrollPane2);
+
+        jScrollPane4.setBorder(null);
+        jScrollPane4.setOpaque(false);
+
+        pnlMessagesToOthers.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlMessagesToOthersLayout = new org.jdesktop.layout.GroupLayout(pnlMessagesToOthers);
+        pnlMessagesToOthers.setLayout(pnlMessagesToOthersLayout);
+        pnlMessagesToOthersLayout.setHorizontalGroup(
+            pnlMessagesToOthersLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 870, Short.MAX_VALUE)
+        );
+        pnlMessagesToOthersLayout.setVerticalGroup(
+            pnlMessagesToOthersLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 426, Short.MAX_VALUE)
+        );
+
+        jScrollPane4.setViewportView(pnlMessagesToOthers);
+
+        tabsPane.addTab("an andere", jScrollPane4);
+
         lblClearHashtagSelection.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblClearHashtagSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         lblClearHashtagSelection.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -987,12 +1044,14 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private void refresh() {
         this.currentMessageList=new ArrayList<>();
-        if(this.tabsPane.getTabCount()>1) {
-            for(int i=this.tabsPane.getTabCount()-1; i>0;i--) {
+        if(this.tabsPane.getTabCount()>3) {
+            for(int i=this.tabsPane.getTabCount()-1; i>2;i--) {
                 this.tabsPane.removeTabAt(i);
             }
         }
         this.pnlMessages.removeAll();
+        this.pnlMessagesToMe.removeAll();
+        this.pnlMessagesToOthers.removeAll();
         
         long latestMessage = -1;
         try {
@@ -1086,12 +1145,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblClearHashtagSelection;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JPanel pnlMessages;
+    private javax.swing.JPanel pnlMessagesToMe;
+    private javax.swing.JPanel pnlMessagesToOthers;
     private javax.swing.JTabbedPane tabsPane;
     // End of variables declaration//GEN-END:variables
 
@@ -1118,6 +1181,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         vertical.addAdjustmentListener(downScroller);
 
         this.addToTabIfRequired(msg);
+        this.addToMentioningTabsIfRequired(msg);
     }
 
     private void addToTabIfRequired(InstantMessage msg) {
@@ -1156,6 +1220,39 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetPanel = (JPanel) targetScroll.getViewport().getComponent(0);
         }
 
+        this.addMessageToContainers(msg, targetPanel, targetScroll);
+
+    }
+    
+    private void addToMentioningTabsIfRequired(InstantMessage msg) {
+
+        if (msg.getMentions() == null || msg.getMentions().isEmpty()) {
+            return;
+        }
+
+        if(msg.hasOpenMentions() && UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender())) {
+            // there are open mentions for a message that was sent by the current user
+            
+            // check sent to self
+            InstantMessageMention mention=msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if(mention!=null && !mention.isDone()) {
+                this.addMessageToContainers(msg, this.pnlMessagesToMe, this.jScrollPane2);
+            } else {
+                this.addMessageToContainers(msg, this.pnlMessagesToOthers, this.jScrollPane4);
+            }
+        } else {
+            // check for messages that have an open mention for the current user
+            InstantMessageMention mention=msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if(mention!=null && !mention.isDone()) {
+                this.addMessageToContainers(msg, this.pnlMessagesToMe, this.jScrollPane2);
+            }
+        }
+        
+        
+
+    }
+    
+    private void addMessageToContainers(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         targetPanel.add(mp1);
@@ -1176,7 +1273,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         };
         vertical.addAdjustmentListener(downScroller);
-
     }
 
     @Override
@@ -1208,6 +1304,18 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                     this.updateHashtagsBar(((NewInstantMessagesEvent) e).getNewMessages());
                 }
             });
+        } else if(e instanceof InstantMessageMentionChangedEvent) {
+            this.updateMentionStatus(pnlMessages, (InstantMessageMentionChangedEvent)e);
+            this.updateMentionStatus(pnlMessagesToMe, (InstantMessageMentionChangedEvent)e);
+            this.updateMentionStatus(pnlMessagesToOthers, (InstantMessageMentionChangedEvent)e);
+        }
+    }
+    
+    private void updateMentionStatus(JPanel messagesPanel, InstantMessageMentionChangedEvent e) {
+        for(int i=0;i<messagesPanel.getComponentCount();i++) {
+            if(messagesPanel.getComponent(i) instanceof MessagePanel) {
+                ((MessagePanel)messagesPanel.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
+            }
         }
     }
 }

@@ -667,73 +667,72 @@ package com.jdimension.jlawyer.client.events;
  *
  * @author jens
  */
-public abstract class Event {
-    
-    public static final Integer TYPE_DEFAULT=0;
-    public static final Integer TYPE_AUTOUPDATE=10;
-    public static final Integer TYPE_SERVICES=11;
-    public static final Integer TYPE_NEWS=20;
-    public static final Integer TYPE_SYSTEMSTATUS=30;
-    public static final Integer TYPE_SCANNERSTATUS=40;
-    public static final Integer TYPE_FAXSTATUS=50;
-    public static final Integer TYPE_FAXFAILED=60;
-    public static final Integer TYPE_MAILSTATUS=70;
-    public static final Integer TYPE_BEASTATUS=80;
-    public static final Integer TYPE_DREBISSTATUS=90;
-    public static final Integer TYPE_ALLCASETAGS=100;
-    public static final Integer TYPE_ALLDOCUMENTTAGS=100;
-    public static final Integer TYPE_DOCUMENTADDED=110;
-    public static final Integer TYPE_CONTACTUPDATED=120;
-    public static final Integer TYPE_REVIEWADDED=130;
-    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
-    public static final Integer TYPE_OPENTIMESHEETPOSITIONS=150;
-    
-    public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
-    public static final Integer TYPE_INSTANTMESSAGING_MENTIONCHANGED=170;
-    
-    
-    private Integer type=TYPE_DEFAULT;
-    private Object payload=null;
-    
-    public Event(Integer type) {
-        this.type=type;
-        
-    }
-    
-    public Event(Integer type, Object payload) {
-        this.type=type;
-        this.payload=payload;
-        
-    }
-    
-    public abstract boolean isUiUpdateTrigger();
+public class InstantMessageMentionChangedEvent extends Event {
 
-    /**
-     * @return the type
-     */
-    public Integer getType() {
-        return type;
+    protected String messageId=null;
+    protected String mentionId=null;
+    protected boolean done=false;
+    
+    
+    public InstantMessageMentionChangedEvent(String messageId, String mentionId, boolean done) {
+        super(Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
+        this.messageId=messageId;
+        this.mentionId=mentionId;
+        this.done=done;
+    }
+
+    
+
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
     }
 
     /**
-     * @param type the type to set
+     * @return the messageId
      */
-    public void setType(Integer type) {
-        this.type = type;
+    public String getMessageId() {
+        return messageId;
     }
 
     /**
-     * @return the payload
+     * @param messageId the messageId to set
      */
-    public Object getPayload() {
-        return payload;
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
     }
 
     /**
-     * @param payload the payload to set
+     * @return the mentionId
      */
-    public void setPayload(Object payload) {
-        this.payload = payload;
+    public String getMentionId() {
+        return mentionId;
     }
+
+    /**
+     * @param mentionId the mentionId to set
+     */
+    public void setMentionId(String mentionId) {
+        this.mentionId = mentionId;
+    }
+
+    /**
+     * @return the done
+     */
+    public boolean isDone() {
+        return done;
+    }
+
+    /**
+     * @param done the done to set
+     */
+    public void setDone(boolean done) {
+        this.done = done;
+    }
+
     
+
+    
+
+
 }

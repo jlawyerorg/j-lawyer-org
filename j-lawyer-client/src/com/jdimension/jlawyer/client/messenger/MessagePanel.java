@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -696,59 +697,59 @@ import themes.colors.DefaultColorTheme;
  */
 public class MessagePanel extends javax.swing.JPanel {
 
-    private static final Logger log=Logger.getLogger(MessagePanel.class.getName());
-    
-    private ImageIcon caseIcon= new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
-    private InstantMessage im=null;
-    
-    protected boolean showCaseContext=true;
-    protected Color contextForeground=Color.WHITE;
-    protected int maxDocumentChars=Integer.MAX_VALUE;
-    
+    private static final Logger log = Logger.getLogger(MessagePanel.class.getName());
+
+    private ImageIcon caseIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
+    private InstantMessage im = null;
+
+    protected boolean showCaseContext = true;
+    protected Color contextForeground = Color.WHITE;
+    protected int maxDocumentChars = Integer.MAX_VALUE;
+
     /**
      * Creates new form MessagePanel
      */
     public MessagePanel() {
         initComponents();
-        
+
         this.calloutPanelComponent1.setMessage(new InstantMessage());
     }
-    
-    
-    
+
     public MessagePanel(List<AppUserBean> principals, String ownPrincipal, boolean ownMessage, InstantMessage im) {
         initComponents();
-        
-        this.im=im;
-        
-        String sender=im.getSender();
-        if(StringUtils.isEmpty(sender))
-            sender="?";
-        
-        if(sender.length()>0)
-            sender=sender.substring(0,1);
-        
-        sender=sender.toUpperCase();
-        
+
+        this.im = im;
+
+        String sender = im.getSender();
+        if (StringUtils.isEmpty(sender)) {
+            sender = "?";
+        }
+
+        if (sender.length() > 0) {
+            sender = sender.substring(0, 1);
+        }
+
+        sender = sender.toUpperCase();
+
         this.lblUser.setForeground(Color.WHITE);
-        this.lblUser.putClientProperty( "JComponent.roundRect", true );
-        this.lblUser.setFont(UIManager.getFont( "h1.font" ));
-        
+        this.lblUser.putClientProperty("JComponent.roundRect", true);
+        this.lblUser.setFont(UIManager.getFont("h1.font"));
+
         this.lblUser.setIcon(UserSettings.getInstance().getUserBigIcon(im.getSender()));
         this.lblUser.setText("");
-        if(ownMessage)
+        this.lblUser.setToolTipText("von: " + im.getSender());
+        if (ownMessage) {
             this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        else
+        } else {
             this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        
-        
-        
+        }
+
         this.calloutPanelComponent1.setMessage(im);
         this.calloutPanelComponent1.setOwnMessage(ownMessage);
         this.calloutPanelComponent1.setPrincipals(principals);
         this.calloutPanelComponent1.setOwnPrincipal(ownPrincipal);
-        
-        if(im.getCaseContext()!=null) {
+
+        if (im.getCaseContext() != null) {
             this.lblCaseContext.setText(im.getCaseContext().getFileNumber());
             this.lblCaseContext.setToolTipText(im.getCaseContext().getFileNumber() + System.lineSeparator() + im.getCaseContext().getName() + System.lineSeparator() + im.getCaseContext().getReason());
             this.lblCaseContext.setIcon(this.caseIcon);
@@ -759,15 +760,15 @@ public class MessagePanel extends javax.swing.JPanel {
         }
         this.displayDocumentContext();
     }
-    
+
     private void displayDocumentContext() {
-        if(im.getDocumentContext()!=null) {
-            
-            String docContextValue=im.getDocumentContext().getName();
-            if(docContextValue.length()>this.maxDocumentChars) {
-                docContextValue=docContextValue.substring(0,this.maxDocumentChars-1) + "...";
+        if (im.getDocumentContext() != null) {
+
+            String docContextValue = im.getDocumentContext().getName();
+            if (docContextValue.length() > this.maxDocumentChars) {
+                docContextValue = docContextValue.substring(0, this.maxDocumentChars - 1) + "...";
             }
-            
+
             this.lblDocumentContext.setText(docContextValue);
             FileUtils fu = FileUtils.getInstance();
             Icon icon = fu.getFileTypeIcon(im.getDocumentContext().getName());
@@ -777,14 +778,14 @@ public class MessagePanel extends javax.swing.JPanel {
             this.lblDocumentContext.setText("");
             this.lblDocumentContext.setToolTipText("");
             this.lblDocumentContext.setIcon(null);
-            
+
         }
     }
-    
+
     public InstantMessage getMessage() {
         return this.calloutPanelComponent1.getMessage();
     }
-    
+
     public int getCalloutWidth() {
         return this.getParent().getWidth() - this.lblUser.getWidth() - 60;
         //return this.getParent().getWidth() - this.calloutPanelComponent1.getX() - this.lblUser.getWidth();
@@ -793,20 +794,18 @@ public class MessagePanel extends javax.swing.JPanel {
 
     @Override
     public Dimension getMaximumSize() {
-        Dimension calloutPreferred= this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
+        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
         return calloutPreferred;
     }
 
     @Override
     public Dimension getPreferredSize() {
-        Dimension calloutPreferred= this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
+        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
         return calloutPreferred;
     }
 
-    
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -895,50 +894,75 @@ public class MessagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDocumentContextMouseClicked
 
     private void contextClicked(boolean toDocument) {
-        try {
-            Object editor = null;
-            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object desktop = EditorsRegistry.getInstance().getEditor(MessagingCenterPanel.class.getName());
-            Image bgi = ((MessagingCenterPanel) desktop).getBackgroundImage();
 
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(bgi);
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
+        if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel && toDocument) {
+            // clicked from within a case
+            ((ArchiveFilePanel)EditorsRegistry.getInstance().getCurrentEditor()).selectDocument(this.lblDocumentContext.getToolTipText());
+        } else {
+            // clicked from within the message center
             try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-                aFile = fileService.getArchiveFile(this.im.getCaseContext().getId());
+                Object editor = null;
+                if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                    editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+                } else {
+                    editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+                }
+                Object desktop = EditorsRegistry.getInstance().getEditor(MessagingCenterPanel.class.getName());
+                Image bgi = ((MessagingCenterPanel) desktop).getBackgroundImage();
+
+                if (editor instanceof ThemeableEditor) {
+                    // inherit the background to newly created child editors
+                    ((ThemeableEditor) editor).setBackgroundImage(bgi);
+                }
+
+                if (editor instanceof PopulateOptionsEditor) {
+                    ((PopulateOptionsEditor) editor).populateOptions();
+                }
+
+                ArchiveFileBean aFile = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                    aFile = fileService.getArchiveFile(this.im.getCaseContext().getId());
+                } catch (Exception ex) {
+                    log.error("Error loading archive file from server", ex);
+                    JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (aFile == null) {
+                    return;
+                }
+
+                if (this.lblDocumentContext.getText() != null && !"".equals(this.lblDocumentContext.getText()) && toDocument) {
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocumentContext.getToolTipText());
+                } else {
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+                }
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(MessagingCenterPanel.class.getName());
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
             } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+                log.error("Error creating editor from class " + this.getClass().getName(), ex);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
             }
-
-            if (aFile == null) {
-                return;
+        }
+    }
+    
+    public void mentionUpdated(String messageId, String mentionId, boolean done) {
+        if(this.calloutPanelComponent1.getMessage()!=null && this.calloutPanelComponent1.getMessage().getId()!=null && this.calloutPanelComponent1.getMessage().getId().equals(messageId)) {
+            InstantMessage msg=this.calloutPanelComponent1.getMessage();
+            for(InstantMessageMention imm: msg.getMentions()) {
+                if(imm.getId()!=null && imm.getId().equals(mentionId)) {
+                    imm.setDone(done);
+                    
+                    // triggers resetting the "read" status
+                    this.calloutPanelComponent1.setMessage(this.calloutPanelComponent1.getMessage());
+                    this.calloutPanelComponent1.repaint();
+                    break;
+                }
+                    
             }
-
-            if (this.lblDocumentContext.getText() != null && !"".equals(this.lblDocumentContext.getText()) && toDocument) {
-                ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocumentContext.getText());
-            } else {
-                ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            }
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(MessagingCenterPanel.class.getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -961,7 +985,7 @@ public class MessagePanel extends javax.swing.JPanel {
      */
     public void setShowCaseContext(boolean showCaseContext) {
         this.showCaseContext = showCaseContext;
-        if(!this.showCaseContext) {
+        if (!this.showCaseContext) {
             this.lblCaseContext.setText("");
             this.lblCaseContext.setIcon(null);
         }

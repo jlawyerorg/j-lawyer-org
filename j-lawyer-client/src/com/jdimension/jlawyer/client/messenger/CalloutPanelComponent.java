@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -754,14 +756,15 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     if (message.hasMentionFor(getOwnPrincipal())) {
                         if (message.getMentionFor(getOwnPrincipal()).isDone()) {
                             message.getMentionFor(getOwnPrincipal()).setDone(false);
-                            markMentionDone(message.getMentionFor(getOwnPrincipal()).getId(), false);
+                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), false);
                             setRead(UNREAD);
                         } else {
                             message.getMentionFor(getOwnPrincipal()).setDone(true);
-                            markMentionDone(message.getMentionFor(getOwnPrincipal()).getId(), true);
+                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), true);
                             setRead(READ);
                         }
                         updateTooltip();
+                        
                     } else {
                         setRead(READ_NOTAPPLICABLE);
                     }
@@ -790,16 +793,20 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.setToolTipText(sb.toString());
     }
 
-    public void markMentionDone(String mentionId, boolean done) {
+    public void markMentionDone(String messageId, String mentionId, boolean done) {
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             locator.lookupMessagingServiceRemote().markMentionDone(mentionId, done);
+            
+            EventBroker eb = EventBroker.getInstance();
+            InstantMessageMentionChangedEvent mce=new InstantMessageMentionChangedEvent(messageId, mentionId, done);
+            eb.publishEvent(mce);
 
         } catch (Exception ex) {
-            log.error("Could not mark mentionn as done / undone", ex);
+            log.error("Could not mark mention as done / undone", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Erwähnung konnte nicht erledigt / unerledigt gesetzt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -972,8 +979,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     }
 
     private String getFormattedTimestamp(Date d) {
-//        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-//        return dateFormat.format(d);
         return DateUtils.getHumanReadableTimeInPast(d);
     }
 

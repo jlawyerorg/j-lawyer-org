@@ -769,9 +769,10 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         evt.setSent(newMessage.getSent());
         this.newMessageEvent.fireAsync(evt);
         
-        return this.messageFacade.find(messageId);
+        InstantMessage reloadedMessage=this.messageFacade.find(messageId);
+        return reloadedMessage;
     }
-
+    
     @Override
     @RolesAllowed({"loginRole"})
     public boolean deleteMessage(String messageId) throws Exception {
@@ -834,6 +835,12 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         m.setDone(done);
         this.mentionFacade.edit(m);
         return true;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public InstantMessage getMessage(String id) throws Exception {
+        return this.messageFacade.find(id);
     }
 
     
