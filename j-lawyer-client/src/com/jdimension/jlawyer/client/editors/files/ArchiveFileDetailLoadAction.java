@@ -718,6 +718,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JPanel tagPanel;
     private JPanel documentTagPanel;
     private JPanel invoicesPanel;
+    private JPanel pnlMessages;
     private JPanel timesheetsPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
@@ -735,7 +736,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel timesheetsPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -753,6 +754,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
         this.timesheetsPanel = timesheetsPanel;
+        this.pnlMessages = pnlMessages;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -767,7 +769,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 19;
+        return 20;
     }
 
     @Override
@@ -801,6 +803,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            this.progress("Lade Akte: Sofortnachrichten...");
+            this.pnlMessages.removeAll();
+            List<InstantMessage> instantMessages=locator.lookupMessagingServiceRemote().getMessagesForCase(this.archiveFileKey);
+            SwingUtilities.invokeLater(() -> {
+                for(InstantMessage im: instantMessages) {
+                    this.owner.addMessageToView(im);
+                }
+            });
+            
             this.progress("Lade Akte: Falldatenblätter...");
             this.cmbFormTypes.removeAllItems();
             List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();

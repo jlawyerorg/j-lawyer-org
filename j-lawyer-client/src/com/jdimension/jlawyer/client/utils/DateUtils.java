@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils;
 
+import java.util.Date;
+
 /**
  *
  * @author jens
@@ -672,4 +674,32 @@ public class DateUtils {
     public static final String DATEFORMAT_DATETIME_FULL="EEE, dd.MM.yyyy HH:mm:ss";
     public static final String DATEFORMAT_DATETIME_DEFAULT="dd.MM.yyyy, HH:mm";
     
+    public static String getHumanReadableTimeInPast(Date d) {
+        
+        if(d==null)
+            return "unbekannt";
+        
+        long jetzt = System.currentTimeMillis();
+        long vergangeneZeitInMs = d.getTime();
+
+        long differenzInMs = jetzt - vergangeneZeitInMs;
+
+        long sekunden = differenzInMs / 1000;
+        long minuten = sekunden / 60;
+        long stunden = minuten / 60;
+        long tage = stunden / 24;
+        long wochen = tage / 7;
+
+        if (wochen > 0) {
+            return "vor " + wochen + (wochen == 1 ? " Woche" : " Wochen");
+        } else if (tage > 0) {
+            return "vor " + tage + (tage == 1 ? " Tag" : " Tagen");
+        } else if (stunden > 0) {
+            return "vor " + stunden + (stunden == 1 ? " Stunde" : " Stunden");
+        } else if (minuten > 0) {
+            return "vor " + minuten + (minuten == 1 ? " Minute" : " Minuten");
+        } else {
+            return "vor " + sekunden + (sekunden == 1 ? " Sekunde" : " Sekunden");
+        }
+    }
 }

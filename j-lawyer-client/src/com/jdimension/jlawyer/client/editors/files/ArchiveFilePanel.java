@@ -704,6 +704,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.messenger.MessagePanel;
 import com.jdimension.jlawyer.client.messenger.SendInstantMessageDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
@@ -735,6 +736,7 @@ import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import java.awt.Adjustable;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -756,6 +758,8 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -777,6 +781,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import themes.colors.DefaultColorTheme;
 import themes.colors.HighlightPicker;
 
 /**
@@ -834,6 +839,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ComponentUtils.decorateSplitPane(this.splitDocuments);
+        ComponentUtils.decorateSplitPane(this.splitMessages);
         this.splitDocuments.setOneTouchExpandable(true);
         ComponentUtils.decorateSplitPane(this.splitDocumentsMain);
         ComponentUtils.decorateSplitPane(this.splitNotes);
@@ -919,6 +925,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.splitDocumentsMain.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
         ComponentUtils.persistSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
+        
+        this.splitMessages.setDividerLocation(0.7d);
+        ComponentUtils.restoreSplitPane(splitMessages, this.getClass(), "splitMessages");
+        ComponentUtils.persistSplitPane(splitMessages, this.getClass(), "splitMessages");
 
         this.splitNotes.setDividerLocation(170);
         ComponentUtils.restoreSplitPane(splitNotes, this.getClass(), "splitNotes");
@@ -929,6 +939,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 
         BoxLayout boxLayout3=new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
         this.pnlTimesheets.setLayout(boxLayout3);
+        
+        BoxLayout msgLayout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
+        this.pnlMessages.setLayout(msgLayout);
         
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -1330,7 +1343,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -1709,6 +1722,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel21 = new javax.swing.JLabel();
         lblCaseChanged = new javax.swing.JLabel();
         cmdCopyCaseNumber = new javax.swing.JButton();
+        splitMessages = new javax.swing.JSplitPane();
         splitNotes = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -1716,6 +1730,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel3 = new javax.swing.JPanel();
         txtNoticePane = new javax.swing.JScrollPane();
         txtNotice = new javax.swing.JTextArea();
+        jScrollPane9 = new javax.swing.JScrollPane();
+        pnlMessages = new javax.swing.JPanel();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
@@ -2381,7 +2397,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .add(chkArchived)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(lblArchivedSince)))
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 81, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSeparator7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2426,6 +2442,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
+        splitMessages.setDividerLocation(400);
+
         splitNotes.setDividerLocation(170);
         splitNotes.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
@@ -2467,17 +2485,36 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(txtNoticePane)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 224, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         splitNotes.setRightComponent(jPanel3);
+
+        splitMessages.setLeftComponent(splitNotes);
+
+        jScrollPane9.setBorder(null);
+
+        org.jdesktop.layout.GroupLayout pnlMessagesLayout = new org.jdesktop.layout.GroupLayout(pnlMessages);
+        pnlMessages.setLayout(pnlMessagesLayout);
+        pnlMessagesLayout.setHorizontalGroup(
+            pnlMessagesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 936, Short.MAX_VALUE)
+        );
+        pnlMessagesLayout.setVerticalGroup(
+            pnlMessagesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+
+        jScrollPane9.setViewportView(pnlMessages);
+
+        splitMessages.setRightComponent(jScrollPane9);
 
         org.jdesktop.layout.GroupLayout tabGeneralDataLayout = new org.jdesktop.layout.GroupLayout(tabGeneralData);
         tabGeneralData.setLayout(tabGeneralDataLayout);
@@ -2487,7 +2524,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(tabGeneralDataLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1006, Short.MAX_VALUE))
+                    .add(splitMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         tabGeneralDataLayout.setVerticalGroup(
@@ -2496,7 +2533,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
+                .add(splitMessages, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3632,6 +3669,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
 
+    }
+    
+    public void addMessageToView(InstantMessage msg) {
+        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        mp1.setContextForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        mp1.setShowCaseContext(false);
+        mp1.setMaxDocumentChars(40);
+        pnlMessages.add(mp1);
+        pnlMessages.repaint();
+        this.jScrollPane9.doLayout();
+        mp1.revalidate();
+        this.jScrollPane9.revalidate();
+
+        JScrollBar vertical = this.jScrollPane9.getVerticalScrollBar();
+        vertical.setValue(vertical.getMaximum());
+
+        AdjustmentListener downScroller = new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                Adjustable adjustable = e.getAdjustable();
+                adjustable.setValue(adjustable.getMaximum());
+                vertical.removeAdjustmentListener(this);
+            }
+        };
+        vertical.addAdjustmentListener(downScroller);
     }
 
     @Override
@@ -6281,6 +6344,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
+    private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
@@ -6344,6 +6408,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlAddForms;
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
+    private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPanel pnlTimesheets;
     private javax.swing.JPopupMenu popCalculations;
@@ -6352,6 +6417,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu reviewsPopup;
     private javax.swing.JSplitPane splitDocuments;
     private javax.swing.JSplitPane splitDocumentsMain;
+    private javax.swing.JSplitPane splitMessages;
     private javax.swing.JSplitPane splitNotes;
     private javax.swing.JTabbedPane subTabsFinance;
     protected javax.swing.JTextArea taCustom3;

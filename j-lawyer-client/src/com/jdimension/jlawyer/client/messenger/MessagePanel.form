@@ -22,12 +22,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="calloutPanelComponent1" max="32767" attributes="0"/>
+                  <Component id="calloutPanelComponent1" pref="213" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lblCaseContext" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="lblDocumentContext" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="154" max="32767" attributes="0"/>
+                      <Component id="lblDocumentContext" pref="159" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -37,10 +36,12 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="lblUser" alignment="1" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="calloutPanelComponent1" pref="63" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="calloutPanelComponent1" pref="63" max="32767" attributes="0"/>
+                  <Component id="lblUser" max="32767" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblCaseContext" alignment="3" min="-2" max="-2" attributes="0"/>

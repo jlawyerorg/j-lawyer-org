@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
@@ -711,6 +712,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     protected List<AppUserBean> principals = null;
     protected String ownPrincipal = null;
     protected int read = READ_NOTAPPLICABLE;
+    
+    private SimpleDateFormat dfSent=new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     /**
      * Creates new form CalloutPanelComponent
@@ -769,9 +772,11 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     }
     
     private void updateTooltip() {
-        String tt=null;
-        if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {
-            StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
+        if(this.message!=null && this.message.getSent()!=null)
+            sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
+        if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {    
+            sb.append(System.lineSeparator()).append(System.lineSeparator());
             sb.append("Foldende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
             for (InstantMessageMention imm : this.message.getMentions()) {
                 sb.append("- ").append(imm.getPrincipal());
@@ -781,9 +786,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     sb.append(" hat die Nachricht noch nicht bestätigt");
                 sb.append(System.lineSeparator());
             }
-            tt = sb.toString();
         }
-        this.setToolTipText(tt);
+        this.setToolTipText(sb.toString());
     }
 
     public void markMentionDone(String mentionId, boolean done) {
@@ -968,8 +972,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     }
 
     private String getFormattedTimestamp(Date d) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-        return dateFormat.format(d);
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+//        return dateFormat.format(d);
+        return DateUtils.getHumanReadableTimeInPast(d);
     }
 
     /**

@@ -701,6 +701,10 @@ public class MessagePanel extends javax.swing.JPanel {
     private ImageIcon caseIcon= new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
     private InstantMessage im=null;
     
+    protected boolean showCaseContext=true;
+    protected Color contextForeground=Color.WHITE;
+    protected int maxDocumentChars=Integer.MAX_VALUE;
+    
     /**
      * Creates new form MessagePanel
      */
@@ -709,6 +713,8 @@ public class MessagePanel extends javax.swing.JPanel {
         
         this.calloutPanelComponent1.setMessage(new InstantMessage());
     }
+    
+    
     
     public MessagePanel(List<AppUserBean> principals, String ownPrincipal, boolean ownMessage, InstantMessage im) {
         initComponents();
@@ -751,8 +757,18 @@ public class MessagePanel extends javax.swing.JPanel {
             this.lblCaseContext.setToolTipText("");
             this.lblCaseContext.setIcon(null);
         }
+        this.displayDocumentContext();
+    }
+    
+    private void displayDocumentContext() {
         if(im.getDocumentContext()!=null) {
-            this.lblDocumentContext.setText(im.getDocumentContext().getName());
+            
+            String docContextValue=im.getDocumentContext().getName();
+            if(docContextValue.length()>this.maxDocumentChars) {
+                docContextValue=docContextValue.substring(0,this.maxDocumentChars-1) + "...";
+            }
+            
+            this.lblDocumentContext.setText(docContextValue);
             FileUtils fu = FileUtils.getInstance();
             Icon icon = fu.getFileTypeIcon(im.getDocumentContext().getName());
             this.lblDocumentContext.setIcon(icon);
@@ -847,21 +863,21 @@ public class MessagePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblCaseContext)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblDocumentContext)
-                        .addGap(0, 154, Short.MAX_VALUE)))
+                        .addComponent(lblDocumentContext, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblUser))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblUser, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
+                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblCaseContext)
@@ -932,4 +948,53 @@ public class MessagePanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblDocumentContext;
     private javax.swing.JLabel lblUser;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the showCaseContext
+     */
+    public boolean isShowCaseContext() {
+        return showCaseContext;
+    }
+
+    /**
+     * @param showCaseContext the showCaseContext to set
+     */
+    public void setShowCaseContext(boolean showCaseContext) {
+        this.showCaseContext = showCaseContext;
+        if(!this.showCaseContext) {
+            this.lblCaseContext.setText("");
+            this.lblCaseContext.setIcon(null);
+        }
+    }
+
+    /**
+     * @return the contextForeground
+     */
+    public Color getContextForeground() {
+        return contextForeground;
+    }
+
+    /**
+     * @param contextForeground the contextForeground to set
+     */
+    public void setContextForeground(Color contextForeground) {
+        this.contextForeground = contextForeground;
+        this.lblCaseContext.setForeground(contextForeground);
+        this.lblDocumentContext.setForeground(contextForeground);
+    }
+
+    /**
+     * @return the maxDocumentChars
+     */
+    public int getMaxDocumentChars() {
+        return maxDocumentChars;
+    }
+
+    /**
+     * @param maxDocumentChars the maxDocumentChars to set
+     */
+    public void setMaxDocumentChars(int maxDocumentChars) {
+        this.maxDocumentChars = maxDocumentChars;
+        this.displayDocumentContext();
+    }
 }
