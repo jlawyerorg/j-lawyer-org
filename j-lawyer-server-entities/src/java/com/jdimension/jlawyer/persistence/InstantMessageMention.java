@@ -677,6 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "InstantMessageMention.findAll", query = "SELECT a FROM InstantMessageMention a"),
     @NamedQuery(name = "InstantMessageMention.findById", query = "SELECT a FROM InstantMessageMention a WHERE a.id = :id"),
+    @NamedQuery(name = "InstantMessageMention.findOpen", query = "SELECT a FROM InstantMessageMention a WHERE a.done = 0"),
     @NamedQuery(name = "InstantMessageMention.findByMessage", query = "SELECT a FROM InstantMessageMention a WHERE a.message = :message")})
 public class InstantMessageMention implements Serializable {
     

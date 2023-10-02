@@ -672,7 +672,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
-import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
@@ -984,8 +984,8 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             updateIndicator(((EmailStatusEvent) e).getUnread());
         } else if (e instanceof BeaStatusEvent) {
             updateIndicator(((BeaStatusEvent) e).getUnread());
-        } else if (e instanceof NewInstantMessagesEvent) {
-            updateIndicator(((NewInstantMessagesEvent) e).getNewMessages().size());
+        } else if (e instanceof OpenMentionsEvent) {
+            updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
         } else if (e instanceof DrebisStatusEvent) {
             updateIndicator(((DrebisStatusEvent) e).getMessages());
         }

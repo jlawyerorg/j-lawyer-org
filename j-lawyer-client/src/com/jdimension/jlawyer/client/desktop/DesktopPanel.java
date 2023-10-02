@@ -678,8 +678,8 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.FaxFailedEvent;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
-import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -792,7 +792,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
 
         Timer timer1 = new Timer();
         TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
@@ -1725,14 +1725,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             
             this.revalidate();
             this.repaint();
-        } else if(e instanceof NewInstantMessagesEvent) {
+        } else if(e instanceof OpenMentionsEvent) {
             this.lblUnreadInstantMessages.setEnabled(true);
-            if (((NewInstantMessagesEvent) e).getNewMessages().size() > 0) {
-                this.lblUnreadInstantMessages.setText("" + ((NewInstantMessagesEvent) e).getNewMessages().size());
-                this.lblUnreadInstantMessages.setToolTipText("ungelesene Elemente im Nachrichtencenter");
+            if (((OpenMentionsEvent) e).getOpenMentions() > 0) {
+                this.lblUnreadInstantMessages.setEnabled(true);
+                this.lblUnreadInstantMessages.setText("" + ((OpenMentionsEvent) e).getOpenMentions());
+                this.lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
             } else {
+                this.lblUnreadInstantMessages.setEnabled(false);
                 this.lblUnreadInstantMessages.setText("");
-                this.lblUnreadInstantMessages.setToolTipText("keine ungelesenen Elemente im Nachrichtencenter");
+                this.lblUnreadInstantMessages.setToolTipText(null);
             }
             
             this.revalidate();

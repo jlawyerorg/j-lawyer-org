@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.FaxStatusEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.events.ServicesEvent;
@@ -778,7 +779,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_OPENTIMESHEETPOSITIONS);
-        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
 
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
@@ -1044,14 +1045,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblBeaStatus.setText("-");
                 this.lblBeaStatus.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
-        } else if (e instanceof NewInstantMessagesEvent) {
+        } else if (e instanceof OpenMentionsEvent) {
             this.lblUnreadInstantMessages.setEnabled(true);
-            if (((NewInstantMessagesEvent) e).getNewMessages().size() > 0) {
-                this.lblUnreadInstantMessages.setText("" + ((NewInstantMessagesEvent) e).getNewMessages().size());
-                this.lblUnreadInstantMessages.setToolTipText("ungelesene Elemente im Nachrichtencenter");
+            if (((OpenMentionsEvent) e).getOpenMentions() > 0) {
+                this.lblUnreadInstantMessages.setEnabled(true);
+                this.lblUnreadInstantMessages.setText("" + ((OpenMentionsEvent) e).getOpenMentions());
+                this.lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
             } else {
+                this.lblUnreadInstantMessages.setEnabled(false);
                 this.lblUnreadInstantMessages.setText("");
-                this.lblUnreadInstantMessages.setToolTipText("keine ungelesenen Elemente im Nachrichtencenter");
+                this.lblUnreadInstantMessages.setToolTipText(null);
             }
         } else if (e instanceof DrebisStatusEvent) {
 

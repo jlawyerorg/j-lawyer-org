@@ -684,6 +684,8 @@ public interface InstantMessageMentionFacadeLocal {
     List<InstantMessageMention> findAll();
 
     List<InstantMessageMention> findRange(int[] range);
+    
+    List<InstantMessageMention> findOpen();
 
     int count();
     

@@ -1000,8 +1000,8 @@ public class Main {
         instantMessages.setModuleName("Post");
         instantMessages.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_blue_48dp.png")));
         instantMessages.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_green_48dp.png")));
-        instantMessages.setStatusEventType(Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
-        instantMessages.setResetIndicatorOnClick(true);
+        instantMessages.setStatusEventType(Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
+        instantMessages.setResetIndicatorOnClick(false);
         mail.addChildModule(instantMessages);
         
         ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));

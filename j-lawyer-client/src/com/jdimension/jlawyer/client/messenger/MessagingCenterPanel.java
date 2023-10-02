@@ -1084,6 +1084,9 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.timer=new Timer();
         TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
         this.timer.schedule(instantMessagesTask, 4300, 1000);
+        
+        TimerTask openMentionsTask = new OpenMessageMentionsTimerTask();
+        this.timer.schedule(openMentionsTask, 6300, 30000);
     }
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed

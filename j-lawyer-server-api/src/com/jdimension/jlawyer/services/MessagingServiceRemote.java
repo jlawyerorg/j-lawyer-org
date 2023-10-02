@@ -686,5 +686,7 @@ public interface MessagingServiceRemote {
     boolean markMentionDone(String mentionId, boolean done) throws Exception;
 
     InstantMessage getMessage(String id) throws Exception;
+
+    int getNumberOfOpenMentions() throws Exception;
     
 }

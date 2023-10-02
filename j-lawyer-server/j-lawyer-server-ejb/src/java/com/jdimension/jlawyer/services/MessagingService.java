@@ -769,8 +769,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         evt.setSent(newMessage.getSent());
         this.newMessageEvent.fireAsync(evt);
         
-        InstantMessage reloadedMessage=this.messageFacade.find(messageId);
-        return reloadedMessage;
+        return this.messageFacade.find(messageId);
     }
     
     @Override
@@ -841,6 +840,17 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @RolesAllowed({"loginRole"})
     public InstantMessage getMessage(String id) throws Exception {
         return this.messageFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public int getNumberOfOpenMentions() throws Exception {
+        List open=this.mentionFacade.findOpen();
+        int openCount=0;
+        if(open!=null) {
+            openCount=open.size();
+        }
+        return openCount;
     }
 
     
