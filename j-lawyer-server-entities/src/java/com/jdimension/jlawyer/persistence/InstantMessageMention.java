@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -676,6 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "InstantMessageMention.findAll", query = "SELECT a FROM InstantMessageMention a"),
+    @NamedQuery(name = "InstantMessageMention.findSince", query = "SELECT a FROM InstantMessageMention a WHERE a.statusChanged > :since order by a.statusChanged asc"),
     @NamedQuery(name = "InstantMessageMention.findById", query = "SELECT a FROM InstantMessageMention a WHERE a.id = :id"),
     @NamedQuery(name = "InstantMessageMention.findOpen", query = "SELECT a FROM InstantMessageMention a WHERE a.done = 0"),
     @NamedQuery(name = "InstantMessageMention.findByMessage", query = "SELECT a FROM InstantMessageMention a WHERE a.message = :message")})
@@ -697,6 +699,10 @@ public class InstantMessageMention implements Serializable {
     
     @Column(name = "done", columnDefinition = "TINYINT DEFAULT 0")
     protected boolean done;
+    
+    @Column(name = "status_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date statusChanged;
     
 
     public InstantMessageMention() {
@@ -793,6 +799,20 @@ public class InstantMessageMention implements Serializable {
      */
     public void setDone(boolean done) {
         this.done = done;
+    }
+
+    /**
+     * @return the statusChanged
+     */
+    public Date getStatusChanged() {
+        return statusChanged;
+    }
+
+    /**
+     * @param statusChanged the statusChanged to set
+     */
+    public void setStatusChanged(Date statusChanged) {
+        this.statusChanged = statusChanged;
     }
 
 }

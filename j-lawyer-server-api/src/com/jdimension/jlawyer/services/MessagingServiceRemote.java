@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Remote;
@@ -688,5 +689,7 @@ public interface MessagingServiceRemote {
     InstantMessage getMessage(String id) throws Exception;
 
     int getNumberOfOpenMentions() throws Exception;
+
+    List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception;
     
 }

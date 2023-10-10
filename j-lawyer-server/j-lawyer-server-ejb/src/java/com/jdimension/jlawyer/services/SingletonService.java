@@ -707,6 +707,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     private ArrayList<FaxQueueBean> faxQueue = new ArrayList<FaxQueueBean>();
     
     private long latestInstantMessageReceived=-1;
+    private long latestInstantMessageStatusUpdated=-1;
 
     @Override
     @RolesAllowed(value = {"loginRole"})
@@ -842,6 +843,18 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @PermitAll
     public void setLatestInstantMessageReceived(long timestamp) {
         this.latestInstantMessageReceived=timestamp;
+    }
+
+    @Override
+    @PermitAll
+    public long getLatestInstantMessageStatusUpdated() {
+        return latestInstantMessageStatusUpdated;
+    }
+
+    @Override
+    @PermitAll
+    public void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated) {
+        this.latestInstantMessageStatusUpdated = latestInstantMessageStatusUpdated;
     }
 
 }

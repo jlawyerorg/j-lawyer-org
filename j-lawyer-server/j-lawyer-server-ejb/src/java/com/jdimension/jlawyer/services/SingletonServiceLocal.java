@@ -719,5 +719,8 @@ public interface SingletonServiceLocal {
 
     void setLatestInstantMessageReceived(long timestamp);
     
+    long getLatestInstantMessageStatusUpdated();
+    void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated);
+    
     
 }

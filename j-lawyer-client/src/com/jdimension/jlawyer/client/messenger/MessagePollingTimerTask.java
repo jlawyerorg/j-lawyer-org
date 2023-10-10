@@ -665,9 +665,11 @@ package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
 import java.util.List;
@@ -682,6 +684,7 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
     private static final Logger log = Logger.getLogger(MessagePollingTimerTask.class.getName());
     private long lastPolled = -1;
     private long lastMessageTimestamp=-1;
+    private long lastMentionStatusChangedTimestamp=-1;
     
     protected static long unseenByUser=0;
 
@@ -712,6 +715,19 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
                         }
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new NewInstantMessagesEvent(newMessages));
+                    }
+                    
+                    List<InstantMessageMention> updatedMentions=locator.lookupMessagingServiceRemote().getUpdatedMentionsSince(new Date(this.lastMentionStatusChangedTimestamp));
+                    if(updatedMentions!=null) {
+                        if(!updatedMentions.isEmpty()) {
+                            this.lastMentionStatusChangedTimestamp=updatedMentions.get(updatedMentions.size()-1).getStatusChanged().getTime();
+                        }
+                        EventBroker eb = EventBroker.getInstance();
+                        for(InstantMessageMention me: updatedMentions) {
+                            InstantMessageMentionChangedEvent meevt=new InstantMessageMentionChangedEvent(me.getMessage().getId(), me.getId(), me.isDone());
+                            eb.publishEvent(meevt);
+                        }
+                        
                     }
 
                 } catch (Throwable ex) {

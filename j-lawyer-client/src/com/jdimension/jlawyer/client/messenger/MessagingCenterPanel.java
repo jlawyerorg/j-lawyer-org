@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.events.Event;
@@ -674,11 +673,11 @@ import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Adjustable;
-import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.AdjustmentEvent;
@@ -691,9 +690,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.AbstractListModel;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -743,16 +740,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         ClientSettings cs = ClientSettings.getInstance();
 
-        this.cmbDownloadMails.removeAllItems();
-        this.cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel(LoadFolderRestriction.ALL_RESTRICTIONS.toArray()));
-        String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
-        for (int i = 0; i < this.cmbDownloadMails.getItemCount(); i++) {
-            LoadFolderRestriction r = (LoadFolderRestriction) ((DefaultComboBoxModel) this.cmbDownloadMails.getModel()).getElementAt(i);
-            if (restriction.equals("" + r.getRestriction())) {
-                this.cmbDownloadMails.setSelectedIndex(i);
-                break;
-            }
-        }
+        String restriction = cs.getConfiguration(ClientSettings.CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION, "30");
+        this.cmbDownloadInstantMessages.setSelectedItem(restriction);
 
         this.lstHashtags.setCellRenderer(new HashtagListCellRenderer());
         this.lstHashtags.setSelectionBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -864,7 +853,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        cmbDownloadMails = new javax.swing.JComboBox<>();
+        cmbDownloadInstantMessages = new javax.swing.JComboBox<>();
         cmdRefresh = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstHashtags = new javax.swing.JList<>();
@@ -877,6 +866,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         pnlMessagesToOthers = new javax.swing.JPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         lblClearHashtagSelection = new javax.swing.JLabel();
+        lblPopoutMessenger = new javax.swing.JLabel();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_chat_white_48dp.png"))); // NOI18N
 
@@ -884,11 +874,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Nachrichten");
 
-        cmbDownloadMails.setFont(cmbDownloadMails.getFont());
-        cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbDownloadMails.addActionListener(new java.awt.event.ActionListener() {
+        cmbDownloadInstantMessages.setFont(cmbDownloadInstantMessages.getFont());
+        cmbDownloadInstantMessages.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "7", "30", "90", "180", "365" }));
+        cmbDownloadInstantMessages.setToolTipText("Anzahl an Tagen, für welche Nachrichten geladen werden");
+        cmbDownloadInstantMessages.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbDownloadMailsActionPerformed(evt);
+                cmbDownloadInstantMessagesActionPerformed(evt);
             }
         });
 
@@ -953,7 +944,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         );
         pnlMessagesToMeLayout.setVerticalGroup(
             pnlMessagesToMeLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
+            .add(0, 428, Short.MAX_VALUE)
         );
 
         jScrollPane2.setViewportView(pnlMessagesToMe);
@@ -973,7 +964,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         );
         pnlMessagesToOthersLayout.setVerticalGroup(
             pnlMessagesToOthersLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 426, Short.MAX_VALUE)
+            .add(0, 428, Short.MAX_VALUE)
         );
 
         jScrollPane4.setViewportView(pnlMessagesToOthers);
@@ -986,6 +977,15 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         lblClearHashtagSelection.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblClearHashtagSelectionMouseClicked(evt);
+            }
+        });
+
+        lblPopoutMessenger.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_open_in_new_white_48dp.png"))); // NOI18N
+        lblPopoutMessenger.setText(" ");
+        lblPopoutMessenger.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblPopoutMessenger.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblPopoutMessengerMouseClicked(evt);
             }
         });
 
@@ -1003,14 +1003,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(lblPopoutMessenger)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(jScrollPane1)
                             .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
+                            .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 875, Short.MAX_VALUE)
                             .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
@@ -1019,21 +1021,22 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmdRefresh))
+                    .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdRefresh)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPopoutMessenger, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 453, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createSequentialGroup()
                         .add(lblClearHashtagSelection)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 495, Short.MAX_VALUE)))
+                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(tabsPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1043,6 +1046,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void refresh() {
+        ((DefaultListModel) lstHashtags.getModel()).removeAllElements();
         this.currentMessageList=new ArrayList<>();
         if(this.tabsPane.getTabCount()>3) {
             for(int i=this.tabsPane.getTabCount()-1; i>2;i--) {
@@ -1059,7 +1063,15 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (365l * 24l * 60 * 60 * 1000)));
+            String restriction = settings.getConfiguration(ClientSettings.CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION, "30");
+            long numOfDays=30;
+            try {
+                numOfDays=Long.parseLong(restriction);
+            } catch (Throwable t) {
+                log.error("Cannot parse instant message number of days to long: " + restriction, t);
+            }
+            
+            List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (numOfDays * 24l * 60 * 60 * 1000)));
             if (allMessages != null) {
                 this.currentMessageList.addAll(allMessages);
                 for (InstantMessage m : allMessages) {
@@ -1089,14 +1101,14 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.timer.schedule(openMentionsTask, 6300, 30000);
     }
 
-    private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
+    private void cmbDownloadInstantMessagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadInstantMessagesActionPerformed
         if (!this.initializing) {
 
             ClientSettings cs = ClientSettings.getInstance();
-            cs.setConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + ((LoadFolderRestriction) this.cmbDownloadMails.getSelectedItem()).getRestriction());
+            cs.setConfiguration(ClientSettings.CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION, "" + this.cmbDownloadInstantMessages.getSelectedItem());
 
         }
-    }//GEN-LAST:event_cmbDownloadMailsActionPerformed
+    }//GEN-LAST:event_cmbDownloadInstantMessagesActionPerformed
 
     private void lstHashtagsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstHashtagsValueChanged
         for(int i=0;i<this.tabsPane.getTabCount();i++) {
@@ -1129,6 +1141,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.lstHashtags.clearSelection();
     }//GEN-LAST:event_lblClearHashtagSelectionMouseClicked
 
+    private void lblPopoutMessengerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblPopoutMessengerMouseClicked
+        PopoutMessenger dlgMessenger=new PopoutMessenger(EditorsRegistry.getInstance().getMainWindow(), false, this.currentMessageList);
+        FrameUtils.centerDialog(dlgMessenger, EditorsRegistry.getInstance().getMainWindow());
+        dlgMessenger.setVisible(true);
+    }//GEN-LAST:event_lblPopoutMessengerMouseClicked
+
     @Override
     public void notifyStatusBarReady() {
         if (this.statusBarNotified) {
@@ -1144,7 +1162,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbDownloadMails;
+    private javax.swing.JComboBox<String> cmbDownloadInstantMessages;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JScrollPane jScrollPane1;
@@ -1153,6 +1171,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblClearHashtagSelection;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JLabel lblPopoutMessenger;
     private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JPanel pnlMessages;
@@ -1217,10 +1236,27 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetScroll.setBorder(null);
             targetScroll.setOpaque(false);
             tabsPane.addTab(msg.getCaseContext().getFileNumber(), targetScroll);
+            existingTab=tabsPane.getTabCount()-1;
 
         } else {
             targetScroll = (JScrollPane) tabsPane.getComponentAt(existingTab);
             targetPanel = (JPanel) targetScroll.getViewport().getComponent(0);
+        }
+        
+        // see if the first case-related tab has a message older than this one
+        // if so, move the current tab to the the left
+        if(tabsPane.getTabCount()>3 && existingTab!=3) {
+            JScrollPane tab4Scroll = (JScrollPane) tabsPane.getComponentAt(4);
+            JPanel tab4Panel = (JPanel) tab4Scroll.getViewport().getComponent(0);
+            if(tab4Panel.getComponentCount() > 0) {
+                MessagePanel mp = (MessagePanel) tab4Panel.getComponent(tab4Panel.getComponentCount() - 1);
+                Date tab4latest = mp.getMessage().getSent();
+                if (msg.getSent().getTime() > tab4latest.getTime()) {
+                    // move tab to the left
+                    tabsPane.removeTabAt(existingTab);
+                    tabsPane.insertTab(msg.getCaseContext().getFileNumber(), null, targetScroll, null, 3);
+                }
+            }
         }
 
         this.addMessageToContainers(msg, targetPanel, targetScroll);

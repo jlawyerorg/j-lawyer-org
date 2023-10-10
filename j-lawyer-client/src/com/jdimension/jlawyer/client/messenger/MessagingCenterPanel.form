@@ -26,7 +26,9 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
-                      <Component id="cmbDownloadMails" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblPopoutMessenger" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmbDownloadInstantMessages" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -35,7 +37,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="tabsPane" pref="858" max="32767" attributes="0"/>
+                          <Component id="tabsPane" pref="875" max="32767" attributes="0"/>
                           <Component id="messageSendPanel1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -49,24 +51,25 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="jLabel18" alignment="1" pref="48" max="32767" attributes="0"/>
-                      <Component id="lblPanelTitle" alignment="1" max="32767" attributes="0"/>
-                      <Component id="cmbDownloadMails" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
+                  <Component id="cmbDownloadInstantMessages" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
+                  <Component id="cmdRefresh" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="lblPopoutMessenger" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
+                      <Component id="jLabel18" alignment="0" pref="42" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="tabsPane" pref="453" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="messageSendPanel1" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" attributes="0">
                       <Component id="lblClearHashtagSelection" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="495" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="520" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="tabsPane" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="messageSendPanel1" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -98,24 +101,26 @@
         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
       </AuxValues>
     </Component>
-    <Component class="javax.swing.JComboBox" name="cmbDownloadMails">
+    <Component class="javax.swing.JComboBox" name="cmbDownloadInstantMessages">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font component="cmbDownloadMails" property="font" relativeSize="true" size="0"/>
+            <Font component="cmbDownloadInstantMessages" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="4">
-            <StringItem index="0" value="Item 1"/>
-            <StringItem index="1" value="Item 2"/>
-            <StringItem index="2" value="Item 3"/>
-            <StringItem index="3" value="Item 4"/>
+          <StringArray count="5">
+            <StringItem index="0" value="7"/>
+            <StringItem index="1" value="30"/>
+            <StringItem index="2" value="90"/>
+            <StringItem index="3" value="180"/>
+            <StringItem index="4" value="365"/>
           </StringArray>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Anzahl an Tagen, f&#xfc;r welche Nachrichten geladen werden"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbDownloadMailsActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbDownloadInstantMessagesActionPerformed"/>
       </Events>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
@@ -254,7 +259,7 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="426" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="428" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -291,7 +296,7 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="426" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="428" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -314,6 +319,20 @@
       </Properties>
       <Events>
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblClearHashtagSelectionMouseClicked"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblPopoutMessenger">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons32/material/baseline_open_in_new_white_48dp.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value=" "/>
+        <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+          <Color id="Handcursor"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblPopoutMessengerMouseClicked"/>
       </Events>
     </Component>
   </SubComponents>

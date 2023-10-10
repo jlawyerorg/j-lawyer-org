@@ -748,6 +748,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             m.setId(idGen.getID().toString());
             m.setMessage(newMessage);
             m.setDone(false);
+            m.setStatusChanged(null);
             this.mentionFacade.create(m);
         }
         
@@ -786,7 +787,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesSince(Date since) throws Exception {
-        // only query the database if messages are requested 
+        // only query the database if mentions are requested 
         if(this.singleton.getLatestInstantMessageReceived()<0) {
             // after server startup
             List<InstantMessage> messages=this.messageFacade.findSince(since);
@@ -832,7 +833,12 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             throw new Exception ("Mention " + mentionId + " existiert nicht!");
         
         m.setDone(done);
+        Date statusChanged=new Date();
+        m.setStatusChanged(statusChanged);
         this.mentionFacade.edit(m);
+        
+        this.singleton.setLatestInstantMessageStatusUpdated(statusChanged.getTime());
+        
         return true;
     }
 
@@ -851,6 +857,33 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             openCount=open.size();
         }
         return openCount;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception {
+        // only query the database if mentions are requested 
+        if(this.singleton.getLatestInstantMessageStatusUpdated()<0) {
+            // after server startup
+            List<InstantMessageMention> mentions=this.mentionFacade.findSince(since);
+            if(mentions!=null && !mentions.isEmpty()) {
+                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size()-1).getStatusChanged().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
+            }
+            return mentions;
+        } else if(since.getTime()<this.singleton.getLatestInstantMessageStatusUpdated()) {
+            // new message have been received
+            List<InstantMessageMention> mentions=this.mentionFacade.findSince(since);
+            if(mentions!=null && !mentions.isEmpty()) {
+                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size()-1).getStatusChanged().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
+            }
+            return mentions;
+        } else {
+            return null;
+        }
     }
 
     

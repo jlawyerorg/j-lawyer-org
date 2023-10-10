@@ -768,6 +768,8 @@ public class ClientSettings {
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
     public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
     
+    public static final String CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION="client.instantmessage.downloadrestriction";
+    
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
     public static final String CONF_VOIP_LASTSIPVOICE="client.voip.lastsipvoice";
