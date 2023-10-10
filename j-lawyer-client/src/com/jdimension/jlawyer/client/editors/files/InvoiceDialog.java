@@ -1372,7 +1372,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         });
 
-        cmbTableHeadersLanguage.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DE", "EN" }));
+        cmbTableHeadersLanguage.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DE", "EN", "FR", "NL" }));
         cmbTableHeadersLanguage.setToolTipText("Sprache der Tabellenspaltenbezeichner");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -1764,6 +1764,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         StyledCalculationTable ct = new StyledCalculationTable();
         if("EN".equalsIgnoreCase(language))
             ct.addHeaders("Duration", "Project", "Description", "Person");
+        else if("FR".equalsIgnoreCase(language))
+            ct.addHeaders("Durée", "Projet", "Activité", "Personne");
+        else if("NL".equalsIgnoreCase(language))
+            ct.addHeaders("Tijd", "Project", "handeling", "Persoon");
         else
             ct.addHeaders("Zeit", "Projekt", "Tätigkeit", "Person");
         
@@ -1819,6 +1823,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         StyledCalculationTable ct = new StyledCalculationTable();
         if("EN".equalsIgnoreCase(language))
             ct.addHeaders("", "Position", "Qty", "Rate", "Amount");
+        else if("FR".equalsIgnoreCase(language))
+            ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "Au total");
+        else if("NL".equalsIgnoreCase(language))
+            ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "Totaal");
         else
             ct.addHeaders("", "Position", "Menge", "Einzel", "Gesamt");
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
@@ -1860,6 +1868,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             footerRowNet=ct.addRow("", "Net", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             footerRowTaxes = ct.addRow("", "Tax", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
             footerRowTotal = ct.addRow("", "Balance Due", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+        } else if("FR".equalsIgnoreCase(language)) {
+            footerRowNet=ct.addRow("", "Sous Total", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowTaxes = ct.addRow("", "TPS", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowTotal = ct.addRow("", "Montant Dû", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+        } else if("NL".equalsIgnoreCase(language)) {
+            footerRowNet=ct.addRow("", "Subtotal", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowTaxes = ct.addRow("", "BTW", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
             footerRowNet=ct.addRow("", "Netto", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             footerRowTaxes = ct.addRow("", "USt.", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
