@@ -963,7 +963,7 @@ public class RestoreExecutor {
             }
         }
         if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates") || !subDirs.contains(DIR_LETTERHEADS)) {
-            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates");
+            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates, letterheads");
         }
 
         if (!dumpExists) {
