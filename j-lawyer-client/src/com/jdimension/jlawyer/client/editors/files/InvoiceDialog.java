@@ -1775,7 +1775,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addRow("", "", "", "", "");
         }
 
-        SimpleDateFormat dfDateTime=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat dfDateTime=new SimpleDateFormat("dd.MM.yyyy");
         for (TimesheetPosition pos: posList) {
             float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
             double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
