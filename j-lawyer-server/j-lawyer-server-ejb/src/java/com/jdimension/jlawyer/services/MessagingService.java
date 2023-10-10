@@ -845,7 +845,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public int getNumberOfOpenMentions() throws Exception {
-        List open=this.mentionFacade.findOpen();
+        List<InstantMessageMention> open=this.mentionFacade.findOpen();
         int openCount=0;
         if(open!=null) {
             openCount=open.size();
