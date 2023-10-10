@@ -1002,6 +1002,12 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 else
                     placeHolders.put(AKTE_ANWALT_AN, "");
             }
+            if (placeHolders.containsKey(AKTE_ANWALT_KRZ)) {
+                if(caseLawyer!=null)
+                    placeHolders.put(AKTE_ANWALT_KRZ, val(caseLawyer.getAbbreviation()));
+                else
+                    placeHolders.put(AKTE_ANWALT_KRZ, "");
+            }
             if (placeHolders.containsKey(AKTE_SACHBEARBEITER)) {
                 placeHolders.put(AKTE_SACHBEARBEITER, val(aFile.getAssistant()));
             }
@@ -1010,6 +1016,12 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                     placeHolders.put(AKTE_SACHBEARBEITER_AN, val(caseAssistant.getDisplayName()));
                 else
                     placeHolders.put(AKTE_SACHBEARBEITER_AN, "");
+            }
+            if (placeHolders.containsKey(AKTE_SACHBEARBEITER_KRZ)) {
+                if(caseAssistant!=null)
+                    placeHolders.put(AKTE_SACHBEARBEITER_KRZ, val(caseAssistant.getAbbreviation()));
+                else
+                    placeHolders.put(AKTE_SACHBEARBEITER_KRZ, "");
             }
             if (placeHolders.containsKey(AKTE_EIGENE1)) {
                 placeHolders.put(AKTE_EIGENE1, val(aFile.getCustom1()));
@@ -1036,6 +1048,13 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(AUTOR_AN, val(author.getDisplayName()));
             } else {
                 placeHolders.put(AUTOR_AN, "");
+            }
+        }
+        if (placeHolders.containsKey(AUTOR_KRZ)) {
+            if (author != null) {
+                placeHolders.put(AUTOR_KRZ, val(author.getAbbreviation()));
+            } else {
+                placeHolders.put(AUTOR_KRZ, "");
             }
         }
         

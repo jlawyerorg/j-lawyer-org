@@ -760,19 +760,28 @@ public class PlaceHolders {
     public static final String AKTE_SCHADENNR = "{{AKTE_SCHADENNR}}";
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
-    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
     public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
+    
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
-    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
-    // Anzeigename
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
+    public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    
+    //Nutzernamen
+    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
+    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    
+    // Kürzel
+    public static final String AKTE_SACHBEARBEITER_KRZ = "{{AKTE_SACHBEARBEITER_KRZ}}";
+    public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
+    public static final String AUTOR_KRZ = "{{AUTOR_KRZ}}";
+    
     public static final String DOK_DZ = "{{DOK_DZ}}";
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
-    public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
     
@@ -918,10 +927,14 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER);
         ALLPLACEHOLDERS.add(AKTE_ANWALT_AN);
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_AN);
+        ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_KRZ);
+        ALLPLACEHOLDERS.add(AKTE_ANWALT_KRZ);
+        ALLPLACEHOLDERS.add(AUTOR_KRZ);
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
         ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
+        
         
         ALLPLACEHOLDERS.add(AUTOR_AN);
 
