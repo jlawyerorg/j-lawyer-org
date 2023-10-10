@@ -2275,7 +2275,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         
         // just knowing the tags is likely not critical, but checking costs time
-        //SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        // therefore, no security check here
 
         return this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
     }
