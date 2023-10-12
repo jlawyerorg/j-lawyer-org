@@ -777,7 +777,7 @@ import java.util.Date;
  *
  * Infos: Reine Information, kein Handlungsbedarf
  *
- * I101 - Zusatzoption: PDF -> PDFA Konvertierung
+ * I101 - Zusatzoption: PDF nach PDFA Konvertierung
  *
  * I501 - API-Status: OK
  *

@@ -690,11 +690,12 @@ public String encode(byte[] bin) {
     return encode(bin,0,bin.length);
     }
 /**
- * Encode an array of bytes as Base64.
- * It will be broken into lines if the line length is not 0.  If broken into lines,
- * the last line is not terminated with a line separator.
- *
- * param ba         The byte array to encode.
+ * Encode an array of bytes as Base64.It will be broken into lines if the line length is not 0.If broken into lines,
+ the last line is not terminated with a line separator.
+ * @param bin The byte array to encode.
+     * @param str
+     * @param len
+     * @return 
  */
 public String encode(byte[] bin, int str, int len) {
     int                                 ol;                                     // output length
@@ -762,9 +763,12 @@ public byte[] decode(String b64) {
     }
 
 /**
- * Decode a Base64 string to an array of bytes.
- * The string must have a length evenly divisible by 4 (not counting line separators and other
- * ignorable characters, like whitespace).
+ * Decode a Base64 string to an array of bytes.The string must have a length evenly divisible by 4 (not counting line separators and other
+ ignorable characters, like whitespace).
+     * @param b64
+     * @param str
+     * @param len
+     * @return 
  */
 public byte[] decode(String b64, int str, int len) {
     byte[]                              ba;                                     // target byte array
