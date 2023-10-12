@@ -663,417 +663,233 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.epost;
 
-import com.jdimension.jlawyer.fax.utils.Base64;
-import java.text.SimpleDateFormat;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonArray;
-import org.json.simple.JsonKey;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsoner;
+import java.util.ArrayList;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-public class EpostAPI {
+public class EpostLetterStatus {
 
-    private static final Logger log = Logger.getLogger(EpostAPI.class.getName());
-    private static final String AUTH_HEADERNAME = "Authorization";
-    private static final String AUTH_HEADERPREFIX = "Bearer ";
-
-    //private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    protected int letterId = -1;
+    protected String fileName = null;
+    protected int statusId = -1;
+    protected String statusDetails = null;
+    protected Date createdDate = null;
+    protected Date processedDate = null;
+    protected Date printUploadDate = null;
+    protected Date printFeedbackDate = null;
+    protected int noOfPages = 0;
+    protected String registeredLetterStatus = null;
+    protected Date registeredLetterStatusDate = null;
+    protected String destinationAreaStatus = null;
+    protected Date destinationAreaStatusDate = null;
     
-    private String baseUri = "https://api.epost.docuguide.com";
+    protected ArrayList<EpostLetterStatusError> errorList=new ArrayList<>();
 
-    private String vendorId = null;
-    private String customerId = null;
+    public EpostLetterStatus() {
 
-    public EpostAPI(String vendorId, String customerId) {
-        this.vendorId = vendorId;
-        this.customerId = customerId;
+    }
+    
+    public boolean isError() {
+        return this.statusId==99;
     }
 
-    public void smsRequest() throws EpostException {
-        log.info("ePost API SMS request");
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/smsRequest");
-
-        String jsonQuery = null;
-
-        jsonQuery = "{\n"
-                + "  \"vendorID\": \"" + this.vendorId + "\",\n"
-                + "  \"ekp\": \"" + this.customerId + "\"\n"
-                + "}";
-
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 202) {
-                log.error("Could not request SMS code for ePost API: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not request SMS code for ePost API: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not request SMS code for ePost API", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
-    }
-
-    public void setPassword(String newPassword, String smsCode) throws EpostException {
-        log.info("ePost API set password request");
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/setPassword");
-
-        String jsonQuery = null;
-
-        jsonQuery = "{\n"
-                + "  \"vendorID\": \"" + this.vendorId + "\",\n"
-                + "  \"ekp\": \"" + this.customerId + "\",\n"
-                + "  \"newPassword\": \"" + newPassword + "\",\n"
-                + "  \"smsCode\": \"" + smsCode + "\"\n"
-                + "}";
-
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not (re-)set password for ePost API: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not (re-)set password for ePost API: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-//            String secret=null;
-//            Object jsonOutput = Jsoner.deserialize(returnValue);
-//            if (jsonOutput instanceof JsonObject) {
-//                JsonObject result = (JsonObject) jsonOutput;
-//                JsonKey sessionKey = Jsoner.mintJsonKey("token", null);
-//                secret = result.getString(sessionKey);
-//
-//            }
-        } catch (Exception ex) {
-            log.error("Could not (re-)set password for ePost API", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
-    }
-
-    public String login(String secret, String password) throws EpostException {
-        log.info("ePost API login");
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login");
-
-        String jsonQuery = null;
-
-        jsonQuery = "{\n"
-                + "  \"vendorID\": \"" + this.vendorId + "\",\n"
-                + "  \"ekp\": \"" + this.customerId + "\",\n"
-                + "  \"secret\": \"" + secret + "\",\n"
-                + "  \"password\": \"" + password + "\"\n"
-                + "}";
-
-        String token = null;
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not authenticate with ePost API: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not authenticate with ePost API: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey sessionKey = Jsoner.mintJsonKey("token", null);
-                token = result.getString(sessionKey);
-
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not authenticate with ePost API", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
-        return token;
-    }
-
-    public String validateLetter(String token, EpostLetter letter, String toEmail) throws EpostException {
-        log.info("ePost API letter validation");
-
-        if (toEmail == null || toEmail.isEmpty()) {
-            throw new EpostException("Es muss eine E-Mailadresse angegeben werden");
-        }
-
-        this.validateLetterAttributes(letter);
-
-        String letterId = this.postLetterToApi(token, letter, true, toEmail);
-        log.info("ePost API letter validation finished, letter ID is " + letterId);
-        return letterId;
-        
-    }
-
-    public String sendLetter(String token, EpostLetter letter) throws EpostException {
-        log.info("ePost API letter sending");
-
-        this.validateLetterAttributes(letter);
-
-        String letterId = this.postLetterToApi(token, letter, false, null);
-        log.info("ePost API letter sending finished, letter ID is " + letterId);
+    /**
+     * @return the letterId
+     */
+    public int getLetterId() {
         return letterId;
     }
 
-    public String sendRegisteredLetter(EpostLetter letter) throws EpostException {
-        return null;
+    /**
+     * @param letterId the letterId to set
+     */
+    public void setLetterId(int letterId) {
+        this.letterId = letterId;
     }
 
-    public EpostApiStatus healthCheck() throws EpostException {
-        log.info("ePost API health check");
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/HealthCheck");
-
-        EpostApiStatus status = new EpostApiStatus("", "", "");
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not check ePost API status: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not check ePost API status: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-            String level = null;
-            // (I501 - API-Status: OK), Warnung (W501 - API-Status: Wartungsankündigung) oder eines Fehlers (E501 - API-Status: Inaktiv)
-            String code = null;
-            String description = null;
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey levelKey = Jsoner.mintJsonKey("level", null);
-                level = result.getString(levelKey);
-
-                JsonKey codeKey = Jsoner.mintJsonKey("code", null);
-                code = result.getString(codeKey);
-
-                JsonKey descriptionKey = Jsoner.mintJsonKey("description", null);
-                description = result.getString(descriptionKey);
-
-                log.debug("level / code / description: " + level + " / " + code + " / " + description);
-                status.setCode(code);
-                status.setDescription(description);
-                status.setLevel(level);
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not check ePost API status", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
-        return status;
-    }
-    
-    public EpostLetterStatus getLetterStatus(String token, String letterId) throws EpostException {
-        log.info("ePost letter status check for letter " + letterId);
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/" + letterId);
-
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not check ePost letter status: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not check ePost letter status: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-            EpostLetterStatus s=new EpostLetterStatus();
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                //JsonKey levelKey = Jsoner.mintJsonKey("level", null);
-
-                s.setLetterId(result.getInteger(Jsoner.mintJsonKey("letterID", null)));
-                s.setFileName(result.getString(Jsoner.mintJsonKey("fileName", null)));
-                s.setStatusId(result.getInteger(Jsoner.mintJsonKey("statusID", null)));
-                s.setStatusDetails(result.getString(Jsoner.mintJsonKey("statusDetails", null)));
-                s.setCreatedDate(df.parse(result.getString(Jsoner.mintJsonKey("createdDate", null))));
-                s.setDestinationAreaStatus(result.getString(Jsoner.mintJsonKey("destinationAreaStatus", null)));
-                if(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))!=null)
-                    s.setDestinationAreaStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
-                
-                if(result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
-                    JsonArray errorList = (JsonArray) result.get(Jsoner.mintJsonKey("errorList", null));
-                    for (Object errorEntry : errorList) {
-                        JsonObject eo = (JsonObject) errorEntry;
-                        EpostLetterStatusError se = new EpostLetterStatusError();
-                        se.setCode(eo.getString(Jsoner.mintJsonKey("code", null)));
-                        se.setDate(df.parse(eo.getString(Jsoner.mintJsonKey("code", null))));
-                        se.setDescription(eo.getString(Jsoner.mintJsonKey("code", null)));
-                        se.setLevel(eo.getString(Jsoner.mintJsonKey("code", null)));
-                        s.getErrorList().add(se);
-                    }
-                }
-                
-                s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
-                if(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))!=null)
-                    s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
-                if(result.getString(Jsoner.mintJsonKey("printUploadDate", null))!=null)
-                    s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
-                if(result.getString(Jsoner.mintJsonKey("processedDate", null))!=null)
-                    s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
-                s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
-                if(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))!=null)
-                    s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
-                
-                return s;
-
-
-            } else {
-                log.error("Could not check ePost letter status - invalid response");
-                throw new EpostException("Could not check ePost letter status - invalid response");
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not check ePost letter status", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
-    }
-    
-    private String postLetterToApi(String token, EpostLetter letter, boolean validateOnly, String validateToEmail) throws EpostException {
-        String content = null;
-        try {
-
-            Base64 encoder = new Base64();
-            content = encoder.encode(letter.getData());
-        } catch (Throwable t) {
-            log.error(t);
-            throw new EpostException("PDF konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
-        }
-
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter");
-
-        StringBuilder jsonQuery = new StringBuilder();
-
-        jsonQuery.append("[{\r\n");
-        jsonQuery.append("  \"fileName\": \"").append(letter.getFileName()).append("\",\r\n");
-        jsonQuery.append("  \"data\": \"").append(content).append("\",\r\n");
-        jsonQuery.append("  \"isColor\": ").append(letter.isColor()).append(",\r\n");
-        jsonQuery.append("  \"isDuplex\": ").append(letter.isDuplex()).append(",\r\n");
-        jsonQuery.append("  \"coverLetter\": ").append(letter.isCoverLetter()).append(",\r\n");
-        //+ "  \"registeredLetter\": \"" + letter + "\",\r\n");
-        if(validateOnly) {
-            jsonQuery.append("  \"testFlag\": " + "true" + ",\r\n");
-            jsonQuery.append("  \"testEMail\": \"").append(validateToEmail).append("\",\r\n");
-            jsonQuery.append("  \"testShowRestrictedArea\": " + "true" + ",\r\n");
-        }
-        jsonQuery.append("  \"addressLine1\": \"").append(letter.getAddressLine1()).append("\",\r\n");
-        if (letter.getAddressLine2() != null) {
-            jsonQuery.append("  \"addressLine2\": \"").append(letter.getAddressLine2()).append("\",\r\n");
-        }
-        if (letter.getAddressLine3() != null) {
-            jsonQuery.append("  \"addressLine3\": \"").append(letter.getAddressLine3()).append("\",\r\n");
-        }
-        if (letter.getAddressLine4() != null) {
-            jsonQuery.append("  \"addressLine4\": \"").append(letter.getAddressLine4()).append("\",\r\n");
-        }
-        if (letter.getAddressLine5() != null) {
-            jsonQuery.append("  \"addressLine5\": \"").append(letter.getAddressLine5()).append("\",\r\n");
-        }
-        jsonQuery.append("  \"zipCode\": \"").append(letter.getZipCode()).append("\",\r\n");
-        jsonQuery.append("  \"city\": \"").append(letter.getCity()).append("\",\r\n");
-        if (letter.getCountry() != null) {
-            jsonQuery.append("  \"country\": \"").append(letter.getCountry()).append("\",\r\n");
-        }
-        if (letter.getSenderAdressLine1() != null) {
-            jsonQuery.append("  \"senderAdressLine1\": \"").append(letter.getSenderAdressLine1()).append("\",\r\n");
-        }
-        if (letter.getSenderStreet() != null) {
-            jsonQuery.append("  \"senderStreet\": \"").append(letter.getSenderStreet()).append("\",\r\n");
-        }
-        if (letter.getSenderZipCode() != null) {
-            jsonQuery.append("  \"senderZipCode\": \"").append(letter.getSenderZipCode()).append("\",\r\n");
-        }
-        if (letter.getSenderCity() != null) {
-            jsonQuery.append("  \"senderCity\": \"").append(letter.getSenderCity()).append("\",\r\n");
-        }
-        if (letter.getCustom1() != null) {
-            jsonQuery.append("  \"custom1\": \"").append(letter.getCustom1()).append("\",\r\n");
-        }
-        if (letter.getCustom2() != null) {
-            jsonQuery.append("  \"custom2\": \"").append(letter.getCustom2()).append("\",\r\n");
-        }
-        if (letter.getCustom3() != null) {
-            jsonQuery.append("  \"custom3\": \"").append(letter.getCustom3()).append("\",\r\n");
-        }
-        if (letter.getCustom4() != null) {
-            jsonQuery.append("  \"custom4\": \"").append(letter.getCustom4()).append("\",\r\n");
-        }
-        if (letter.getCustom5() != null) {
-            jsonQuery.append("  \"custom5\": \"").append(letter.getCustom5()).append("\",\r\n");
-        }
-        jsonQuery.append("  \"vendorSystemInformation\": \"" + "j-lawyer.org" + "\"\r\n");
-        jsonQuery.append("}]");
-
-        try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).post(javax.ws.rs.client.Entity.entity(jsonQuery.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could no validate letter using ePost API: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not validate letter using ePost API: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonArray) {
-                JsonArray letterIdArray=(JsonArray)jsonOutput;
-                if(letterIdArray.isEmpty()) {
-                    log.error("letter endpoint returned an empty array with no letter IDs");
-                    throw new EpostException("letter endpoint returned an empty array with no letter IDs");
-                }
-                JsonObject result = (JsonObject)letterIdArray.get(0);
-                JsonKey sessionKey = Jsoner.mintJsonKey("letterID", null);
-                return result.getString(sessionKey);
-
-            } else {
-                log.error("letter endpoint did not return an array holding letter IDs");
-                throw new EpostException("letter endpoint did not return an array holding letter IDs");
-            }
-
-        } catch (Exception ex) {
-            log.error("Could not validate letter using ePost API", ex);
-            throw new EpostException(ex.getMessage(), ex);
-        }
+    /**
+     * @return the fileName
+     */
+    public String getFileName() {
+        return fileName;
     }
 
-    private void validateLetterAttributes(EpostLetter letter) throws EpostException {
-        if (letter.getData() == null) {
-            throw new EpostException("Briefinhalt muss angegeben werden");
-        }
-
-        if (letter.getData().length > 20000000l) {
-            throw new EpostException("Briefinhalt darf nicht größer als 20MB sein");
-        }
-
-        if (letter.getData().length == 0) {
-            throw new EpostException("Briefinhalt darf nicht leer sein");
-        }
-
-        if (letter.getFileName() == null || letter.getFileName().isEmpty()) {
-            throw new EpostException("Es muss ein Dateiname angegeben werden");
-        }
-
-        if (letter.getAddressLine1() == null || letter.getAddressLine1().isEmpty()) {
-            throw new EpostException("Adresszeile 1 darf nicht leer sein");
-        }
-
-        if (letter.getZipCode() == null || letter.getZipCode().isEmpty()) {
-            throw new EpostException("Postleitzahl darf nicht leer sein");
-        }
-
-        if (letter.getCity() == null || letter.getCity().isEmpty()) {
-            throw new EpostException("Stadt / Ort darf nicht leer sein");
-        }
+    /**
+     * @param fileName the fileName to set
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
-    private WebTarget getWebTarget(String endpoint) {
+    /**
+     * @return the statusId
+     */
+    public int getStatusId() {
+        return statusId;
+    }
 
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        return restClient.target(endpoint);
+    /**
+     * @param statusId the statusId to set
+     */
+    public void setStatusId(int statusId) {
+        this.statusId = statusId;
+    }
+
+    /**
+     * @return the statusDetails
+     */
+    public String getStatusDetails() {
+        return statusDetails;
+    }
+
+    /**
+     * @param statusDetails the statusDetails to set
+     */
+    public void setStatusDetails(String statusDetails) {
+        this.statusDetails = statusDetails;
+    }
+
+    /**
+     * @return the createdDate
+     */
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    /**
+     * @param createdDate the createdDate to set
+     */
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    /**
+     * @return the processedDate
+     */
+    public Date getProcessedDate() {
+        return processedDate;
+    }
+
+    /**
+     * @param processedDate the processedDate to set
+     */
+    public void setProcessedDate(Date processedDate) {
+        this.processedDate = processedDate;
+    }
+
+    /**
+     * @return the printUploadDate
+     */
+    public Date getPrintUploadDate() {
+        return printUploadDate;
+    }
+
+    /**
+     * @param printUploadDate the printUploadDate to set
+     */
+    public void setPrintUploadDate(Date printUploadDate) {
+        this.printUploadDate = printUploadDate;
+    }
+
+    /**
+     * @return the printFeedbackDate
+     */
+    public Date getPrintFeedbackDate() {
+        return printFeedbackDate;
+    }
+
+    /**
+     * @param printFeedbackDate the printFeedbackDate to set
+     */
+    public void setPrintFeedbackDate(Date printFeedbackDate) {
+        this.printFeedbackDate = printFeedbackDate;
+    }
+
+    /**
+     * @return the noOfPages
+     */
+    public int getNoOfPages() {
+        return noOfPages;
+    }
+
+    /**
+     * @param noOfPages the noOfPages to set
+     */
+    public void setNoOfPages(int noOfPages) {
+        this.noOfPages = noOfPages;
+    }
+
+    /**
+     * @return the registeredLetterStatus
+     */
+    public String getRegisteredLetterStatus() {
+        return registeredLetterStatus;
+    }
+
+    /**
+     * @param registeredLetterStatus the registeredLetterStatus to set
+     */
+    public void setRegisteredLetterStatus(String registeredLetterStatus) {
+        this.registeredLetterStatus = registeredLetterStatus;
+    }
+
+    /**
+     * @return the registeredLetterStatusDate
+     */
+    public Date getRegisteredLetterStatusDate() {
+        return registeredLetterStatusDate;
+    }
+
+    /**
+     * @param registeredLetterStatusDate the registeredLetterStatusDate to set
+     */
+    public void setRegisteredLetterStatusDate(Date registeredLetterStatusDate) {
+        this.registeredLetterStatusDate = registeredLetterStatusDate;
+    }
+
+    /**
+     * @return the destinationAreaStatus
+     */
+    public String getDestinationAreaStatus() {
+        return destinationAreaStatus;
+    }
+
+    /**
+     * @param destinationAreaStatus the destinationAreaStatus to set
+     */
+    public void setDestinationAreaStatus(String destinationAreaStatus) {
+        this.destinationAreaStatus = destinationAreaStatus;
+    }
+
+    /**
+     * @return the destinationAreaStatusDate
+     */
+    public Date getDestinationAreaStatusDate() {
+        return destinationAreaStatusDate;
+    }
+
+    /**
+     * @param destinationAreaStatusDate the destinationAreaStatusDate to set
+     */
+    public void setDestinationAreaStatusDate(Date destinationAreaStatusDate) {
+        this.destinationAreaStatusDate = destinationAreaStatusDate;
+    }
+
+    /**
+     * @return the errorList
+     */
+    public ArrayList<EpostLetterStatusError> getErrorList() {
+        return errorList;
+    }
+
+    /**
+     * @param errorList the errorList to set
+     */
+    public void setErrorList(ArrayList<EpostLetterStatusError> errorList) {
+        this.errorList = errorList;
     }
 
 }
