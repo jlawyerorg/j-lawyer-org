@@ -791,4 +791,6 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
     
+    public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
+    
 }
