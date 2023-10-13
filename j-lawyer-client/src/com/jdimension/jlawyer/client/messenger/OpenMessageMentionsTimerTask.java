@@ -663,15 +663,10 @@
  */
 package com.jdimension.jlawyer.client.messenger;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.util.Date;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
