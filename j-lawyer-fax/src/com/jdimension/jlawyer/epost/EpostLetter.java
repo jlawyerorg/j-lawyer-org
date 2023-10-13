@@ -672,6 +672,15 @@ import java.io.Serializable;
 public class EpostLetter implements Serializable {
 
     protected static long serialVersionUID = 1L;
+    
+    
+    public static final String EINSCHREIBEN="Einschreiben";
+    public static final String EINSCHREIBEN_EINWURF="Einwurf Einschreiben";
+    public static final String EINSCHREIBEN_EIGENHAENDIG="Einschreiben eigenhändig";
+    public static final String EINSCHREIBEN_RUECKSCHEIN="Einschreiben Rückschein";
+    public static final String EINSCHREIBEN_EIGENHAENDIG_RUECKSCHEIN="Einschreiben eigenhändig Rückschein";
+    
+    public static final String[] REGISTEREDLETTER_TYPES={EINSCHREIBEN, EINSCHREIBEN_EINWURF, EINSCHREIBEN_EIGENHAENDIG, EINSCHREIBEN_RUECKSCHEIN, EINSCHREIBEN_EIGENHAENDIG_RUECKSCHEIN};
 
     protected String fileName = null;
     protected byte[] data = null;
@@ -698,6 +707,8 @@ public class EpostLetter implements Serializable {
     protected String custom3 = null;
     protected String custom4 = null;
     protected String custom5 = null;
+    
+    protected String registeredLetter=null;
 
     public EpostLetter() {
 
@@ -1023,6 +1034,20 @@ public class EpostLetter implements Serializable {
      */
     public void setCoverLetter(boolean coverLetter) {
         this.coverLetter = coverLetter;
+    }
+
+    /**
+     * @return the registeredLetter
+     */
+    public String getRegisteredLetter() {
+        return registeredLetter;
+    }
+
+    /**
+     * @param registeredLetter the registeredLetter to set
+     */
+    public void setRegisteredLetter(String registeredLetter) {
+        this.registeredLetter = registeredLetter;
     }
 
 }

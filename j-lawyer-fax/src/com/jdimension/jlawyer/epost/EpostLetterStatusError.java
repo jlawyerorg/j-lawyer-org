@@ -789,6 +789,8 @@ import java.util.Date;
  *
  */
 public class EpostLetterStatusError {
+    
+    protected static long serialVersionUID = 1L;
 
     protected String level = null;
     protected String code = null;

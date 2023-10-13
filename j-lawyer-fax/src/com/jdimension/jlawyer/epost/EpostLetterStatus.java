@@ -671,6 +671,8 @@ import java.util.Date;
  * @author jens
  */
 public class EpostLetterStatus {
+    
+    protected static long serialVersionUID = 1L;
 
     protected int letterId = -1;
     protected String fileName = null;

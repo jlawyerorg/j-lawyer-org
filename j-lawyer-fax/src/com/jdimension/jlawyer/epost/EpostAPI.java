@@ -684,7 +684,6 @@ public class EpostAPI {
     private static final String AUTH_HEADERNAME = "Authorization";
     private static final String AUTH_HEADERPREFIX = "Bearer ";
 
-    //private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
     
     private String baseUri = "https://api.epost.docuguide.com";
@@ -822,8 +821,34 @@ public class EpostAPI {
         return letterId;
     }
 
-    public String sendRegisteredLetter(EpostLetter letter) throws EpostException {
-        return null;
+    public String sendRegisteredLetter(String token, EpostLetter letter, String registeredLetterMode) throws EpostException {
+        log.info("ePost API registered letter sending");
+
+        if(registeredLetterMode==null)
+            throw new EpostException("Registered letter mode is required");
+        
+        boolean validType=false;
+        for(String m: EpostLetter.REGISTEREDLETTER_TYPES) {
+            if(m.equals(registeredLetterMode)) {
+                validType=true;
+                break;
+            }
+        }
+        if(!validType) {
+            throw new EpostException("Registered letter mode not supported: " + registeredLetterMode);
+        }
+        
+        letter.setRegisteredLetter(registeredLetterMode);
+        
+        this.validateLetterAttributes(letter);
+
+        String letterId = this.postLetterToApi(token, letter, false, null);
+        log.info("ePost API registered letter sending finished, letter ID is " + letterId);
+        return letterId;
+        
+        
+        
+            
     }
 
     public EpostApiStatus healthCheck() throws EpostException {
@@ -886,7 +911,6 @@ public class EpostAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                //JsonKey levelKey = Jsoner.mintJsonKey("level", null);
 
                 s.setLetterId(result.getInteger(Jsoner.mintJsonKey("letterID", null)));
                 s.setFileName(result.getString(Jsoner.mintJsonKey("fileName", null)));
