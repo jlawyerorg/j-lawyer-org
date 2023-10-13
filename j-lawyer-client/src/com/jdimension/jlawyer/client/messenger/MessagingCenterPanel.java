@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.InstantMessage;
@@ -716,7 +717,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private boolean statusBarNotified = false;
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
-    
+
     private transient Timer timer = new Timer();
 
     /**
@@ -749,10 +750,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
-        
+
         BoxLayout layout2 = new javax.swing.BoxLayout(this.pnlMessagesToMe, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessagesToMe.setLayout(layout2);
-        
+
         BoxLayout layout3 = new javax.swing.BoxLayout(this.pnlMessagesToOthers, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessagesToOthers.setLayout(layout3);
 
@@ -1047,16 +1048,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private void refresh() {
         ((DefaultListModel) lstHashtags.getModel()).removeAllElements();
-        this.currentMessageList=new ArrayList<>();
-        if(this.tabsPane.getTabCount()>3) {
-            for(int i=this.tabsPane.getTabCount()-1; i>2;i--) {
+        this.currentMessageList = new ArrayList<>();
+        if (this.tabsPane.getTabCount() > 3) {
+            for (int i = this.tabsPane.getTabCount() - 1; i > 2; i--) {
                 this.tabsPane.removeTabAt(i);
             }
         }
         this.pnlMessages.removeAll();
         this.pnlMessagesToMe.removeAll();
         this.pnlMessagesToOthers.removeAll();
-        
+
         long latestMessage = -1;
         try {
 
@@ -1064,13 +1065,13 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             String restriction = settings.getConfiguration(ClientSettings.CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION, "30");
-            long numOfDays=30;
+            long numOfDays = 30;
             try {
-                numOfDays=Long.parseLong(restriction);
+                numOfDays = Long.parseLong(restriction);
             } catch (Throwable t) {
                 log.error("Cannot parse instant message number of days to long: " + restriction, t);
             }
-            
+
             List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new Date(System.currentTimeMillis() - (numOfDays * 24l * 60 * 60 * 1000)));
             if (allMessages != null) {
                 this.currentMessageList.addAll(allMessages);
@@ -1091,14 +1092,20 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        this.timer.cancel();
-        this.timer=new Timer();
-        TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
-        this.timer.schedule(instantMessagesTask, 4300, 1000);
-        
-        TimerTask openMentionsTask = new OpenMessageMentionsTimerTask();
-        this.timer.schedule(openMentionsTask, 6300, 30000);
+
+        // polling may put some performance burden on weak hardware
+        ServerSettings sSet = ServerSettings.getInstance();
+        boolean messagingEnabled = sSet.getSettingAsBoolean(ServerSettings.SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED, true);
+        log.info("Instant Messaging polling enabled: " + messagingEnabled);
+        if (messagingEnabled) {
+            this.timer.cancel();
+            this.timer = new Timer();
+            TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
+            this.timer.schedule(instantMessagesTask, 4300, 1000);
+
+            TimerTask openMentionsTask = new OpenMessageMentionsTimerTask();
+            this.timer.schedule(openMentionsTask, 6300, 30000);
+        }
     }
 
     private void cmbDownloadInstantMessagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadInstantMessagesActionPerformed
@@ -1111,9 +1118,9 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }//GEN-LAST:event_cmbDownloadInstantMessagesActionPerformed
 
     private void lstHashtagsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstHashtagsValueChanged
-        for(int i=0;i<this.tabsPane.getTabCount();i++) {
-            JScrollPane sp=(JScrollPane)this.tabsPane.getComponentAt(i);
-            ((JPanel)sp.getViewport().getComponent(0)).removeAll();
+        for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
+            JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(i);
+            ((JPanel) sp.getViewport().getComponent(0)).removeAll();
         }
         List<String> selectedHashtags = this.lstHashtags.getSelectedValuesList();
         for (InstantMessage msg : this.currentMessageList) {
@@ -1129,8 +1136,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
 
         }
-        
-        JScrollPane selPane=(JScrollPane)this.tabsPane.getSelectedComponent();
+
+        JScrollPane selPane = (JScrollPane) this.tabsPane.getSelectedComponent();
         selPane.getComponent(0).repaint();
         selPane.doLayout();
         selPane.revalidate();
@@ -1142,7 +1149,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }//GEN-LAST:event_lblClearHashtagSelectionMouseClicked
 
     private void lblPopoutMessengerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblPopoutMessengerMouseClicked
-        PopoutMessenger dlgMessenger=new PopoutMessenger(EditorsRegistry.getInstance().getMainWindow(), false, this.currentMessageList);
+        PopoutMessenger dlgMessenger = new PopoutMessenger(EditorsRegistry.getInstance().getMainWindow(), false, this.currentMessageList);
         FrameUtils.centerDialog(dlgMessenger, EditorsRegistry.getInstance().getMainWindow());
         dlgMessenger.setVisible(true);
     }//GEN-LAST:event_lblPopoutMessengerMouseClicked
@@ -1236,19 +1243,19 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetScroll.setBorder(null);
             targetScroll.setOpaque(false);
             tabsPane.addTab(msg.getCaseContext().getFileNumber(), targetScroll);
-            existingTab=tabsPane.getTabCount()-1;
+            existingTab = tabsPane.getTabCount() - 1;
 
         } else {
             targetScroll = (JScrollPane) tabsPane.getComponentAt(existingTab);
             targetPanel = (JPanel) targetScroll.getViewport().getComponent(0);
         }
-        
+
         // see if the first case-related tab has a message older than this one
         // if so, move the current tab to the the left
-        if(tabsPane.getTabCount()>3 && existingTab!=3) {
+        if (tabsPane.getTabCount() > 3 && existingTab != 3) {
             JScrollPane tab4Scroll = (JScrollPane) tabsPane.getComponentAt(4);
             JPanel tab4Panel = (JPanel) tab4Scroll.getViewport().getComponent(0);
-            if(tab4Panel.getComponentCount() > 0) {
+            if (tab4Panel.getComponentCount() > 0) {
                 MessagePanel mp = (MessagePanel) tab4Panel.getComponent(tab4Panel.getComponentCount() - 1);
                 Date tab4latest = mp.getMessage().getSent();
                 if (msg.getSent().getTime() > tab4latest.getTime()) {
@@ -1262,35 +1269,33 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.addMessageToContainers(msg, targetPanel, targetScroll);
 
     }
-    
+
     private void addToMentioningTabsIfRequired(InstantMessage msg) {
 
         if (msg.getMentions() == null || msg.getMentions().isEmpty()) {
             return;
         }
 
-        if(msg.hasOpenMentions() && UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender())) {
+        if (msg.hasOpenMentions() && UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender())) {
             // there are open mentions for a message that was sent by the current user
-            
+
             // check sent to self
-            InstantMessageMention mention=msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            if(mention!=null && !mention.isDone()) {
+            InstantMessageMention mention = msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if (mention != null && !mention.isDone()) {
                 this.addMessageToContainers(msg, this.pnlMessagesToMe, this.jScrollPane2);
             } else {
                 this.addMessageToContainers(msg, this.pnlMessagesToOthers, this.jScrollPane4);
             }
         } else {
             // check for messages that have an open mention for the current user
-            InstantMessageMention mention=msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            if(mention!=null && !mention.isDone()) {
+            InstantMessageMention mention = msg.getMentionFor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if (mention != null && !mention.isDone()) {
                 this.addMessageToContainers(msg, this.pnlMessagesToMe, this.jScrollPane2);
             }
         }
-        
-        
 
     }
-    
+
     private void addMessageToContainers(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -1343,17 +1348,17 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                     this.updateHashtagsBar(((NewInstantMessagesEvent) e).getNewMessages());
                 }
             });
-        } else if(e instanceof InstantMessageMentionChangedEvent) {
-            this.updateMentionStatus(pnlMessages, (InstantMessageMentionChangedEvent)e);
-            this.updateMentionStatus(pnlMessagesToMe, (InstantMessageMentionChangedEvent)e);
-            this.updateMentionStatus(pnlMessagesToOthers, (InstantMessageMentionChangedEvent)e);
+        } else if (e instanceof InstantMessageMentionChangedEvent) {
+            this.updateMentionStatus(pnlMessages, (InstantMessageMentionChangedEvent) e);
+            this.updateMentionStatus(pnlMessagesToMe, (InstantMessageMentionChangedEvent) e);
+            this.updateMentionStatus(pnlMessagesToOthers, (InstantMessageMentionChangedEvent) e);
         }
     }
-    
+
     private void updateMentionStatus(JPanel messagesPanel, InstantMessageMentionChangedEvent e) {
-        for(int i=0;i<messagesPanel.getComponentCount();i++) {
-            if(messagesPanel.getComponent(i) instanceof MessagePanel) {
-                ((MessagePanel)messagesPanel.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
+        for (int i = 0; i < messagesPanel.getComponentCount(); i++) {
+            if (messagesPanel.getComponent(i) instanceof MessagePanel) {
+                ((MessagePanel) messagesPanel.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
             }
         }
     }
