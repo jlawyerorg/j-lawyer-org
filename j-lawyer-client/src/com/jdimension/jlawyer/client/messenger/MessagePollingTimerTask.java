@@ -690,6 +690,7 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of MessagePollingTimerTask
+     * @param latestMessage
      */
     public MessagePollingTimerTask(long latestMessage) {
         super();
