@@ -681,6 +681,7 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.io.File;
 import java.util.ArrayList;
@@ -708,12 +709,15 @@ public interface SingletonServiceLocal {
     void setObservedFiles(HashMap<File,Date> fileNames);
 
     FaxQueueBean getFailedFax();
+    EpostQueueBean getFailedLetter();
 
     ArrayList<FaxQueueBean> getFaxQueue();
 
     void setFailedFax(FaxQueueBean failedFax);
+    void setFailedLetter(EpostQueueBean failedLetter);
 
     void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
+    void setEpostQueue(ArrayList<EpostQueueBean> epostQueue);
 
     long getLatestInstantMessageReceived();
 

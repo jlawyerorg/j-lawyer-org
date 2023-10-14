@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
 import com.jdimension.jlawyer.fax.SipUser;
@@ -692,6 +694,7 @@ public interface VoipServiceRemote {
     ArrayList<FaxQueueBean> queueList() throws Exception;
 
     String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
+    EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException;
 
     void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
 

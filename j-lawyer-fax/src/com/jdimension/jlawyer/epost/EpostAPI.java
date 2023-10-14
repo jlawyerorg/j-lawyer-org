@@ -805,8 +805,8 @@ public class EpostAPI {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
-                log.error("Could not check ePost API status: " + returnValue + " [" + response.getStatus() + "]");
-                throw new EpostException("Could not check ePost API status: " + returnValue + " [" + response.getStatus() + "]");
+                log.error("Could not retrieve validated letter: " + returnValue + " [" + response.getStatus() + "]");
+                throw new EpostException("Could not retrieve validated letter: " + returnValue + " [" + response.getStatus() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -819,7 +819,7 @@ public class EpostAPI {
             }
 
         } catch (Exception ex) {
-            log.error("Could not check ePost API status", ex);
+            log.error("Could not retrieve validated letter", ex);
             throw new EpostException(ex.getMessage(), ex);
         }
         
@@ -926,7 +926,7 @@ public class EpostAPI {
         return status;
     }
     
-    public EpostLetterStatus getLetterStatus(String token, String letterId) throws EpostException {
+    public EpostLetterStatus getLetterStatus(String token, int letterId) throws EpostException {
         log.info("ePost letter status check for letter " + letterId);
 
         WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/" + letterId);

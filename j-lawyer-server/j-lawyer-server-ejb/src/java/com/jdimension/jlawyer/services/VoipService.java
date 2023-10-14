@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.epost.EpostAPI;
+import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
@@ -695,6 +698,8 @@ import org.apache.log4j.Logger;
 public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     private static final Logger log = Logger.getLogger(VoipService.class.getName());
+    private static final String EPOST_VENDORID="J0644604401G";
+    
     @Resource
     private SessionContext context;
     @EJB
@@ -861,6 +866,20 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         return sip.getFaxStatus(sessionId);
+    }
+    
+    @Override
+    @PermitAll
+    public EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException {
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(senderPrincipalId);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        
+        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        return ea.getLetterStatus(token, letterId);
     }
 
     @Override

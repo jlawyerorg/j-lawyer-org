@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.fax.SipgateException;
 import javax.ejb.Local;
 
@@ -674,5 +676,6 @@ import javax.ejb.Local;
 public interface VoipServiceLocal {
 
     String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
+    EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException;
     
 }

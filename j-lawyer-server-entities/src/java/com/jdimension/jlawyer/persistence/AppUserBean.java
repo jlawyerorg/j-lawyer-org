@@ -741,6 +741,15 @@ public class AppUserBean implements Serializable {
     @Column(name = "cloudPath")
     protected String cloudPath;
     
+    @Column(name = "epost_customer")
+    protected String epostCustomer;
+    
+    @Column(name = "epost_password")
+    protected String epostPassword;
+    
+    @Column(name = "epost_secret")
+    protected String epostSecret;
+    
     
     public AppUserBean() {
     }
@@ -751,6 +760,10 @@ public class AppUserBean implements Serializable {
     
     public boolean isVoipEnabled() {
         return this.voipPassword!=null && !("".equalsIgnoreCase(this.voipPassword)) && this.voipUser!=null && !("".equalsIgnoreCase(this.voipUser));
+    }
+    
+    public boolean isEpostEnabled() {
+        return this.epostCustomer!=null && !("".equalsIgnoreCase(this.epostCustomer)) && this.epostPassword!=null && !("".equalsIgnoreCase(this.epostPassword)) && this.epostSecret!=null && !("".equalsIgnoreCase(this.epostSecret));
     }
 
     public String getPrincipalId() {
@@ -1058,6 +1071,48 @@ public class AppUserBean implements Serializable {
      */
     public void setVoipId(String voipId) {
         this.voipId = voipId;
+    }
+
+    /**
+     * @return the epostCustomer
+     */
+    public String getEpostCustomer() {
+        return epostCustomer;
+    }
+
+    /**
+     * @param epostCustomer the epostCustomer to set
+     */
+    public void setEpostCustomer(String epostCustomer) {
+        this.epostCustomer = epostCustomer;
+    }
+
+    /**
+     * @return the epostPassword
+     */
+    public String getEpostPassword() {
+        return epostPassword;
+    }
+
+    /**
+     * @param epostPassword the epostPassword to set
+     */
+    public void setEpostPassword(String epostPassword) {
+        this.epostPassword = epostPassword;
+    }
+
+    /**
+     * @return the epostSecret
+     */
+    public String getEpostSecret() {
+        return epostSecret;
+    }
+
+    /**
+     * @param epostSecret the epostSecret to set
+     */
+    public void setEpostSecret(String epostSecret) {
+        this.epostSecret = epostSecret;
     }
     
     

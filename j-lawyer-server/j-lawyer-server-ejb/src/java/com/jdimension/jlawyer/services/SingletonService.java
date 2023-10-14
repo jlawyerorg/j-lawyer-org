@@ -678,6 +678,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -704,7 +705,9 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
     private HashMap<File, Date> observedFileNames = new HashMap<File, Date>();
     private FaxQueueBean failedFax = null;
-    private ArrayList<FaxQueueBean> faxQueue = new ArrayList<FaxQueueBean>();
+    protected EpostQueueBean failedLetter = null;
+    private ArrayList<FaxQueueBean> faxQueue = new ArrayList<>();
+    protected ArrayList<EpostQueueBean> epostQueue = new ArrayList<>();
     
     private long latestInstantMessageReceived=-1;
     private long latestInstantMessageStatusUpdated=-1;
@@ -855,6 +858,36 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @PermitAll
     public void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated) {
         this.latestInstantMessageStatusUpdated = latestInstantMessageStatusUpdated;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public EpostQueueBean getFailedLetter() {
+        return failedLetter;
+    }
+
+    /**
+     * @param failedLetter the failedLetter to set
+     */
+    @Override
+    public void setFailedLetter(EpostQueueBean failedLetter) {
+        this.failedLetter = failedLetter;
+    }
+
+    /**
+     * @return the epostQueue
+     */
+    public ArrayList<EpostQueueBean> getEpostQueue() {
+        return epostQueue;
+    }
+
+    /**
+     * @param epostQueue the epostQueue to set
+     */
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void setEpostQueue(ArrayList<EpostQueueBean> epostQueue) {
+        this.epostQueue = epostQueue;
     }
 
 }

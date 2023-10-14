@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.timer;
 
 import java.util.Timer;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -672,7 +671,6 @@ import org.apache.log4j.Logger;
  */
 public class TransientTimer {
 
-    private static Logger log = Logger.getLogger(TransientTimer.class.getName());
     private static TransientTimer instance = null;
 
     private Timer timerBackup = null;
@@ -680,6 +678,7 @@ public class TransientTimer {
     private Timer timerObserver = null;
     private Timer timerMonitor = null;
     private Timer timerFax = null;
+    private Timer timerEpost = null;
     private Timer timerPurgeBin = null;
 
     private TransientTimer() {
@@ -741,6 +740,14 @@ public class TransientTimer {
 
             // start after 35s and run every 4hrs
             timerPurgeBin.schedule(new PurgeBinTask(), 35000l, 4l * 60l * 60l * 1000l);
+        }
+        
+        if (timerEpost == null) {
+            timerEpost = new Timer();
+
+            // start after 40s and run every 15s
+            timerEpost.schedule(new EpostQueueStatusTask(), 40000l, 15000l);
+
         }
     }
 
