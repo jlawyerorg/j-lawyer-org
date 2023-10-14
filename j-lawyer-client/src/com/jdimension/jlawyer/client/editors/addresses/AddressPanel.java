@@ -2204,7 +2204,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
-        jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder("beA (Anwaltspostfach)"));
+        jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder("beA / EGVP / beBPo / eBO"));
 
         jLabel26.setText("Safe ID:");
 
