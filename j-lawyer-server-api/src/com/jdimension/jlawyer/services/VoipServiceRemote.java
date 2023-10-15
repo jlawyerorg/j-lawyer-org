@@ -663,7 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.epost.EpostApiStatus;
 import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
@@ -697,6 +699,7 @@ public interface VoipServiceRemote {
     EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException;
 
     void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
+    void deleteEpostQueueEntries(List<Integer> letterIds) throws EpostException;
 
     String reInitiateFax(String id) throws SipgateException;
 
@@ -705,5 +708,19 @@ public interface VoipServiceRemote {
     List<SipUser> getUsers(String user, String password) throws SipgateException;
 
     String getNewFaxReportFileName(String sessionId) throws Exception;
+
+    byte[] getValidatedLetter(int letterId) throws EpostException;
+
+    EpostApiStatus epostHealthCheck() throws EpostException;
+
+    int sendLetter(EpostLetter letter, String caseId) throws EpostException;
+
+    int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws EpostException;
+
+    void setEpostPassword(String newPassword, String smsCode, String principal) throws EpostException;
+
+    void epostSmsRequest(String principal) throws EpostException;
+
+    int validateLetter(EpostLetter letter, String toEmail) throws EpostException;
     
 }

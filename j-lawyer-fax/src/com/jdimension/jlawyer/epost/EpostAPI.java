@@ -796,7 +796,7 @@ public class EpostAPI {
         return token;
     }
 
-    public byte[] getValidatedLetter(String token, String letterId) throws EpostException {
+    public byte[] getValidatedLetter(String token, int letterId) throws EpostException {
         log.info("ePost API validated letter retrieval");
 
         byte[] bytes=null;
@@ -828,7 +828,7 @@ public class EpostAPI {
         
     }
     
-    public String validateLetter(String token, EpostLetter letter, String toEmail) throws EpostException {
+    public int validateLetter(String token, EpostLetter letter, String toEmail) throws EpostException {
         log.info("ePost API letter validation");
 
         if (toEmail == null || toEmail.isEmpty()) {
@@ -837,23 +837,23 @@ public class EpostAPI {
 
         this.validateLetterAttributes(letter);
 
-        String letterId = this.postLetterToApi(token, letter, true, toEmail);
+        int letterId = this.postLetterToApi(token, letter, true, toEmail);
         log.info("ePost API letter validation finished, letter ID is " + letterId);
         return letterId;
         
     }
 
-    public String sendLetter(String token, EpostLetter letter) throws EpostException {
+    public int sendLetter(String token, EpostLetter letter) throws EpostException {
         log.info("ePost API letter sending");
 
         this.validateLetterAttributes(letter);
 
-        String letterId = this.postLetterToApi(token, letter, false, null);
+        int letterId = this.postLetterToApi(token, letter, false, null);
         log.info("ePost API letter sending finished, letter ID is " + letterId);
         return letterId;
     }
 
-    public String sendRegisteredLetter(String token, EpostLetter letter, String registeredLetterMode) throws EpostException {
+    public int sendRegisteredLetter(String token, EpostLetter letter, String registeredLetterMode) throws EpostException {
         log.info("ePost API registered letter sending");
 
         if(registeredLetterMode==null)
@@ -874,7 +874,7 @@ public class EpostAPI {
         
         this.validateLetterAttributes(letter);
 
-        String letterId = this.postLetterToApi(token, letter, false, null);
+        int letterId = this.postLetterToApi(token, letter, false, null);
         log.info("ePost API registered letter sending finished, letter ID is " + letterId);
         return letterId;
         
@@ -991,7 +991,7 @@ public class EpostAPI {
         }
     }
     
-    private String postLetterToApi(String token, EpostLetter letter, boolean validateOnly, String validateToEmail) throws EpostException {
+    private int postLetterToApi(String token, EpostLetter letter, boolean validateOnly, String validateToEmail) throws EpostException {
         String content = null;
         try {
 
@@ -1083,7 +1083,7 @@ public class EpostAPI {
                 }
                 JsonObject result = (JsonObject)letterIdArray.get(0);
                 JsonKey sessionKey = Jsoner.mintJsonKey("letterID", null);
-                return result.getString(sessionKey);
+                return result.getInteger(sessionKey);
 
             } else {
                 log.error("letter endpoint did not return an array holding letter IDs");

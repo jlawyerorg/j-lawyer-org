@@ -664,8 +664,11 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.epost.EpostAPI;
+import com.jdimension.jlawyer.epost.EpostApiStatus;
 import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.epost.EpostLetterStatus;
+import com.jdimension.jlawyer.epost.EpostUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
@@ -704,6 +707,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     private SessionContext context;
     @EJB
     private FaxQueueBeanFacadeLocal faxFacade;
+    @EJB
+    private EpostQueueBeanFacadeLocal epostFacade;
     @EJB
     private ArchiveFileBeanFacadeLocal fileFacade;
     @EJB
@@ -844,6 +849,17 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             log.error("could not publish fax queue list", ex);
         }
     }
+    
+    private void publishEpostQueueList() {
+        try {
+
+            ArrayList<EpostQueueBean> list = new ArrayList<>();
+            list.addAll(this.epostFacade.findAll());
+            singleton.setEpostQueue(list);
+        } catch (Exception ex) {
+            log.error("could not publish epost queue list", ex);
+        }
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -900,7 +916,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 String qFile = fb.getPdfQueueFile();
                 if (!SipUtils.isFinalStatus(fb.getLastStatus())) {
                     log.warn("Requested to delete fax queue entry in status " + fb.getLastStatus() + ", which is not a final status");
-                    //throw new SipgateException("Fax " + id + " wird noch verarbeitet (Status: " + fb.getLastStatus() + ") - Status kann nicht gelöscht werden!");
+                    //throw new SipgateException("Fax " + id + " wird noch verarbeitet (Status: " + eb.getLastStatus() + ") - Status kann nicht gelöscht werden!");
                 }
                 this.faxFacade.remove(fb);
                 removed = true;
@@ -920,6 +936,32 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 File oldQueueFile = new File(dst);
                 oldQueueFile.delete();
 
+            }
+        }
+
+        if (removed) {
+            this.publishQueueList();
+        }
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void deleteEpostQueueEntries(List<Integer> letterIds) throws EpostException {
+        if (letterIds == null) {
+            return;
+        }
+
+        boolean removed = false;
+        for (int id : letterIds) {
+            
+
+            EpostQueueBean eb = this.epostFacade.find(id);
+            if (eb != null) {
+                if (!EpostUtils.isFinalStatus(eb.getLastStatusId())) {
+                    log.warn("Requested to delete epost queue entry in status " + eb.getLastStatusId() + ", which is not a final status");
+                }
+                this.epostFacade.remove(eb);
+                removed = true;
             }
         }
 
@@ -1042,6 +1084,157 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     public String getNewFaxReportFileName(String sessionId) throws Exception {
         SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
         return "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".pdf";
+    }
+
+    @Override
+    @PermitAll
+    public byte[] getValidatedLetter(int letterId) throws EpostException {
+        String principal=this.context.getCallerPrincipal().getName();
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        return ea.getValidatedLetter(token, letterId);
+    }
+
+    @Override
+    @PermitAll
+    public EpostApiStatus epostHealthCheck() throws EpostException {
+        String principal=this.context.getCallerPrincipal().getName();
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        return ea.healthCheck();
+    }
+
+    @Override
+    @PermitAll
+    public int sendLetter(EpostLetter letter, String caseId) throws EpostException {
+        String principal=this.context.getCallerPrincipal().getName();
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        int letterId= ea.sendLetter(token, letter);
+        EpostLetterStatus s=ea.getLetterStatus(token, letterId);
+        
+        EpostQueueBean eb = new EpostQueueBean(letterId);
+
+        if (caseId != null) {
+            eb.setArchiveFileKey(this.fileFacade.find(caseId));
+        } else {
+            eb.setArchiveFileKey(null);
+        }
+
+        eb.setCreatedDate(s.getCreatedDate());
+        eb.setDestinationAreaStatus(s.getDestinationAreaStatus());
+        eb.setDestinationAreaStatusDate(s.getDestinationAreaStatusDate());
+        eb.setFileName(s.getFileName());
+        eb.setLastStatusDetails(s.getStatusDetails());
+        eb.setLastStatusId(s.getStatusId());
+        eb.setNoOfPages(s.getNoOfPages());
+        eb.setPrintFeedbackDate(s.getPrintFeedbackDate());
+        eb.setPrintUploadDate(s.getPrintUploadDate());
+        eb.setProcessedDate(s.getProcessedDate());
+        eb.setRegisteredLetterStatus(s.getRegisteredLetterStatus());
+        eb.setRegisteredLetterStatusDate(s.getRegisteredLetterStatusDate());
+        eb.setSentBy(principal);
+
+        this.epostFacade.create(eb);
+
+        this.publishEpostQueueList();
+        
+        return letterId;
+    }
+
+    @Override
+    @PermitAll
+    public int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws EpostException {
+        String principal=this.context.getCallerPrincipal().getName();
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        int letterId = ea.sendRegisteredLetter(token, letter, registeredLetterMode);
+        EpostLetterStatus s=ea.getLetterStatus(token, letterId);
+        
+        EpostQueueBean eb = new EpostQueueBean(letterId);
+
+        if (caseId != null) {
+            eb.setArchiveFileKey(this.fileFacade.find(caseId));
+        } else {
+            eb.setArchiveFileKey(null);
+        }
+
+        eb.setCreatedDate(s.getCreatedDate());
+        eb.setDestinationAreaStatus(s.getDestinationAreaStatus());
+        eb.setDestinationAreaStatusDate(s.getDestinationAreaStatusDate());
+        eb.setFileName(s.getFileName());
+        eb.setLastStatusDetails(s.getStatusDetails());
+        eb.setLastStatusId(s.getStatusId());
+        eb.setNoOfPages(s.getNoOfPages());
+        eb.setPrintFeedbackDate(s.getPrintFeedbackDate());
+        eb.setPrintUploadDate(s.getPrintUploadDate());
+        eb.setProcessedDate(s.getProcessedDate());
+        eb.setRegisteredLetterStatus(s.getRegisteredLetterStatus());
+        eb.setRegisteredLetterStatusDate(s.getRegisteredLetterStatusDate());
+        eb.setSentBy(principal);
+
+        this.epostFacade.create(eb);
+
+        this.publishEpostQueueList();
+        
+        return letterId;
+    }
+
+    @Override
+    @PermitAll
+    public void setEpostPassword(String newPassword, String smsCode, String principal) throws EpostException {
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        ea.setPassword(newPassword, smsCode);
+    }
+
+    @Override
+    @PermitAll
+    public void epostSmsRequest(String principal) throws EpostException {
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        ea.smsRequest();
+    }
+
+    @Override
+    @PermitAll
+    public int validateLetter(EpostLetter letter, String toEmail) throws EpostException {
+        String principal=this.context.getCallerPrincipal().getName();
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        return ea.validateLetter(token, letter, toEmail);
     }
 
 }
