@@ -702,6 +702,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     private static final Logger log = Logger.getLogger(VoipService.class.getName());
     private static final String EPOST_VENDORID="J0644604401G";
+    private static final String EXCEPTION_EPOST_INACTIVE="Voice-over-IP - Integration ist nicht aktiviert!";
     
     @Resource
     private SessionContext context;
@@ -759,7 +760,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
         if (!currentUser.isVoipEnabled()) {
 
-            throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
+            throw new SipgateException(EXCEPTION_EPOST_INACTIVE);
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
@@ -772,7 +773,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
         if (!currentUser.isVoipEnabled()) {
 
-            throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
+            throw new SipgateException(EXCEPTION_EPOST_INACTIVE);
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
@@ -786,7 +787,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
         if (!currentUser.isVoipEnabled()) {
 
-            throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
+            throw new SipgateException(EXCEPTION_EPOST_INACTIVE);
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
@@ -877,7 +878,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(senderPrincipalId);
         if (!currentUser.isVoipEnabled()) {
 
-            throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
+            throw new SipgateException(EXCEPTION_EPOST_INACTIVE);
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
@@ -916,7 +917,6 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 String qFile = fb.getPdfQueueFile();
                 if (!SipUtils.isFinalStatus(fb.getLastStatus())) {
                     log.warn("Requested to delete fax queue entry in status " + fb.getLastStatus() + ", which is not a final status");
-                    //throw new SipgateException("Fax " + id + " wird noch verarbeitet (Status: " + eb.getLastStatus() + ") - Status kann nicht gelöscht werden!");
                 }
                 this.faxFacade.remove(fb);
                 removed = true;
@@ -1055,7 +1055,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(fb.getSentBy());
         if (!currentUser.isVoipEnabled()) {
 
-            throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
+            throw new SipgateException(EXCEPTION_EPOST_INACTIVE);
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
