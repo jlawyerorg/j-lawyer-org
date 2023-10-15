@@ -877,6 +877,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     /**
      * @return the epostQueue
      */
+    @Override
+    @RolesAllowed(value = {"loginRole"})
     public ArrayList<EpostQueueBean> getEpostQueue() {
         return epostQueue;
     }
@@ -885,7 +887,6 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
      * @param epostQueue the epostQueue to set
      */
     @Override
-    @RolesAllowed(value = {"loginRole"})
     public void setEpostQueue(ArrayList<EpostQueueBean> epostQueue) {
         this.epostQueue = epostQueue;
     }

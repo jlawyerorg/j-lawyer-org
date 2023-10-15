@@ -712,6 +712,7 @@ public interface SingletonServiceLocal {
     EpostQueueBean getFailedLetter();
 
     ArrayList<FaxQueueBean> getFaxQueue();
+    ArrayList<EpostQueueBean> getEpostQueue();
 
     void setFailedFax(FaxQueueBean failedFax);
     void setFailedLetter(EpostQueueBean failedLetter);
