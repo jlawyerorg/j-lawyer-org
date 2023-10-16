@@ -693,6 +693,9 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
     private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
     private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
     
+    private Font boldFont=null;
+    private Font plainFont=null;
+    
 
     /**
      * Creates a new instance of EmailFolderTreeCellRenderer
@@ -719,6 +722,11 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             return this;
         }
 
+        if(this.boldFont == null)
+            this.boldFont = this.getFont().deriveFont(Font.BOLD);
+        if (this.plainFont == null)
+            this.plainFont=this.getFont().deriveFont(Font.PLAIN);
+        
         try {
             if (((DefaultMutableTreeNode) object).getUserObject() instanceof FolderContainer) {
                 FolderContainer fc = (FolderContainer) ((DefaultMutableTreeNode) object).getUserObject();
@@ -769,14 +777,14 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 
                 int unread = fc.getUnreadMessageCount();
                 if (unread > 0) {
-                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                    this.setFont(this.boldFont);
                 } else {
-                    this.setFont(this.getFont().deriveFont(Font.PLAIN));
+                    this.setFont(this.plainFont);
                 }
             } else {
                 if (((DefaultMutableTreeNode) object).toString().contains("@")) {
                     this.setIcon(mailboxIcon);
-                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                    this.setFont(this.boldFont);
                     if(selected) {
                         this.setForeground(Color.WHITE);
                     } else {
