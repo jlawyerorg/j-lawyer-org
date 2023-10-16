@@ -775,6 +775,7 @@ public class MessageSendPanel extends javax.swing.JPanel {
         try {
             if(evt.getKeyCode()==KeyEvent.VK_ENTER && evt.isShiftDown()) {
                 // just do the line break
+                this.taMessage.setText(this.taMessage.getText() + System.lineSeparator());
             } else if (evt.getKeyCode()==KeyEvent.VK_ENTER) {
                 // send message
                 this.sendMessage();
