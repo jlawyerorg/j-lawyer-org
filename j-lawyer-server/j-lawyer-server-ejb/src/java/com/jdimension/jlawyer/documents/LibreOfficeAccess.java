@@ -927,6 +927,24 @@ public class LibreOfficeAccess {
             
             ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setTextAnchorTypeAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getTextAnchorTypeAttribute());
             
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawCopyOfAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawCopyOfAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawIdAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawIdAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawLayerAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawLayerAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawNameAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawNameAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawStyleNameAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawStyleNameAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawTextStyleNameAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawTextStyleNameAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawTransformAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawTransformAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawZIndexAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawZIndexAttribute());
+//
+//// problematisch
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setStyleName(((OdfDrawFrame)drawImageElement.getParentNode()).getStyleName());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setStyleRelHeightAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getStyleRelHeightAttribute());
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setStyleRelWidthAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getStyleRelWidthAttribute());
+//// problematisch Ende
+//
+//            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setTextAnchorPageNumberAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getTextAnchorPageNumberAttribute());
+            
+            //newImage.getRectangle().setX(((OdfDrawFrame)drawImageElement.getParentNode()).get);
             
 //            newImage.getRectangle().setHeight(((DrawFrameElement)drawImageElement.getParentNode()).get;
 //            
