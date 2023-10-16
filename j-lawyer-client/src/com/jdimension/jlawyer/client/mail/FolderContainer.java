@@ -711,13 +711,16 @@ public class FolderContainer {
     public int getUnreadMessageCount() {
         
         // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
-        // default 5mins plus up to 5hrs
-        double retentionTime=((5l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        // default 15mins plus up to 5hrs
+        double retentionTime=((15l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
         if(this.folder!=null && this.folder.getName()!=null) {
             String folderName=this.folder.getName();
-            if(EmailUtils.isDrafts(folderName) || EmailUtils.isInbox(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
-                // 5mins plus up to 1min
-                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l));
+            if(EmailUtils.isInbox(folderName)) {
+                // 5mins plus up to 3min for inbox
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*3l));
+            } else if(EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 15mins plus up to 30min for drafts, sent, trash
+                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*30l));
             }
         }
         
@@ -741,13 +744,16 @@ public class FolderContainer {
     public String toString() {
         
         // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
-        // default 5mins plus up to 5hrs
-        double retentionTime=((5l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        // default 15mins plus up to 5hrs
+        double retentionTime=((15l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
         if(this.folder!=null && this.folder.getName()!=null) {
             String folderName=this.folder.getName();
-            if(EmailUtils.isDrafts(folderName) || EmailUtils.isInbox(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
-                // 5mins plus up to 1min
-                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l));
+            if(EmailUtils.isInbox(folderName)) {
+                // 5mins plus up to 3min for inbox
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*3l));
+            } else if(EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 15mins plus up to 30min for drafts, sent, trash
+                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*30l));
             }
         }
         
