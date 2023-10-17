@@ -1402,6 +1402,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 log.error("no folder selected - returning...");
                 return;
             }
+            
+            int response = JOptionPane.showConfirmDialog(this, this.lstTemplates.getSelectedValuesList().size() + " Vorlage(n) löschen?", "Löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+            
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
