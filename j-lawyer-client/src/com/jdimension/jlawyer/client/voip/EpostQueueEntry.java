@@ -663,7 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.epost.EpostUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
+import java.util.Date;
 
 /**
  *
@@ -675,6 +678,80 @@ public class EpostQueueEntry extends MailingQueueEntry {
     
     public EpostQueueEntry(EpostQueueBean e) {
         this.entry=e;
+    }
+
+    @Override
+    public boolean isFailedStatus() {
+        return EpostUtils.isFailStatus(this.entry.getLastStatusId());
+    }
+
+    @Override
+    public String getFailedObjectDescription() {
+        return "Brief " + this.entry.getFileName();
+    }
+
+    @Override
+    public ArchiveFileBean getCase() {
+        return this.entry.getArchiveFileKey();
+    }
+
+    @Override
+    public String getSentBy() {
+        return entry.getSentBy();
+    }
+
+    @Override
+    public String getMailingTypeName() {
+        return "Brief";
+    }
+
+    @Override
+    public String getStatusString() {
+        return entry.getLastStatusDetails();
+    }
+
+    @Override
+    public String getFileName() {
+        return entry.getFileName();
+    }
+
+    @Override
+    public String getRecipientInformation() {
+        return this.getMailingTypeName() + " (?)";
+    }
+    
+    @Override
+    public Date getSentDate() {
+        return this.entry.getCreatedDate();
+    }
+    
+    @Override
+    public String getDisplayableStatus() {
+        return EpostUtils.getDisplayableStatus(this.entry.getLastStatusId());
+    }
+    
+    @Override
+    public int getStatusLevel() {
+        return EpostUtils.getStatusLevel(entry.getLastStatusId());
+    }
+    
+    @Override
+    public String getIdentifier() {
+        return "" + this.entry.getLetterId();
+    }
+    
+    @Override
+    public Date getLastStatusDate() {
+        return this.getLatestDate(this.entry.getCreatedDate(), this.entry.getDestinationAreaStatusDate(), this.entry.getPrintFeedbackDate(), this.entry.getPrintUploadDate(), this.entry.getProcessedDate(), this.entry.getRegisteredLetterStatusDate());
+    }
+    
+    private Date getLatestDate(Date ... d) {
+        long dateTime=0;
+        for(Date dt: d) {
+            if(dt!=null && dt.getTime()>dateTime)
+                dateTime=dt.getTime();
+        }
+        return new Date(dateTime);
     }
     
 }

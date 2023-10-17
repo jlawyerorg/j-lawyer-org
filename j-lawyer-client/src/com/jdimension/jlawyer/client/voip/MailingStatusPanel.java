@@ -663,21 +663,22 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.StatusLevels;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.sip.SipUtils;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
@@ -703,13 +704,13 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private static final Logger log = Logger.getLogger(MailingStatusPanel.class.getName());
     private Image backgroundImage = null;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    private ArrayList<FaxQueueBean> lastFaxList = new ArrayList<FaxQueueBean>();
+    private ArrayList<MailingQueueEntry> lastEntryList = new ArrayList<MailingQueueEntry>();
 
     @Override
     public void notifyStatusBarReady() {
 
         EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new FaxStatusEvent(this.lastFaxList));
+        eb.publishEvent(new MailingStatusEvent(this.lastEntryList));
     }
 
     @Override
@@ -719,19 +720,19 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
 
     @Override
     public void onEvent(Event e) {
-        if (e instanceof FaxStatusEvent) {
+        if (e instanceof MailingStatusEvent) {
             this.clearDetails();
 
-            DefaultTableModel tm = buildTable(((FaxStatusEvent) e).getFaxList());
+            DefaultTableModel tm = buildTable(((MailingStatusEvent) e).getMailingList());
             this.tblQueue.setModel(tm);
             ComponentUtils.autoSizeColumns(tblQueue);
-            this.lastFaxList = ((FaxStatusEvent) e).getFaxList();
+            this.lastEntryList = ((MailingStatusEvent) e).getMailingList();
 
         }
     }
 
     /**
-     * Creates new form AddressPanel
+     * Creates new form MailingStatusPanel
      */
     public MailingStatusPanel() {
 
@@ -740,11 +741,11 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         VoipUtils.initializeSettings();
 
         EventBroker eb = EventBroker.getInstance();
-        eb.subscribeConsumer(this, Event.TYPE_FAXSTATUS);
+        eb.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
 
         this.clearDetails();
 
-        this.tblQueue.setDefaultRenderer(Object.class, new FaxStatusTableRenderer());
+        this.tblQueue.setDefaultRenderer(Object.class, new MailingStatusTableRenderer());
 
         this.refreshList();
 
@@ -764,14 +765,14 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         this.selectAllToggle.setSelected(false);
     }
 
-    private DefaultTableModel buildTable(List<FaxQueueBean> list) {
+    private DefaultTableModel buildTable(List<MailingQueueEntry> list) {
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "von", "an", "Datei", "aktueller Status", "Akte"}, 0);
-        for (FaxQueueBean fb : list) {
+        for (MailingQueueEntry mqe : list) {
             String aFile = "";
-            if (fb.getArchiveFileKey() != null) {
-                aFile = fb.getArchiveFileKey().getFileNumber() + " " + fb.getArchiveFileKey().getName();
+            if (mqe.getCase() != null) {
+                aFile = mqe.getCase().getFileNumber() + " " + mqe.getCase().getName();
             }
-            tm.addRow(new Object[]{fb, fb.getSentBy(), fb.getRemoteName(), fb.getPdfName(), fb.getLastStatus(), aFile});
+            tm.addRow(new Object[]{mqe, mqe.getSentBy(), mqe.getRecipientInformation(), mqe.getFileName(), mqe.getStatusString(), aFile});
         }
         ComponentUtils.autoSizeColumns(this.tblQueue);
         return tm;
@@ -781,9 +782,22 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArrayList<MailingQueueEntry> mq=new ArrayList<>();
+            
             ArrayList<FaxQueueBean> qList = locator.lookupVoipServiceRemote().queueList();
+            for(FaxQueueBean f: qList) {
+                FaxQueueEntry e=new FaxQueueEntry(f);
+                mq.add(e);
+            }
+            
+            ArrayList<EpostQueueBean> qList2 = locator.lookupVoipServiceRemote().epostQueueList();
+            for(EpostQueueBean f: qList2) {
+                EpostQueueEntry e=new EpostQueueEntry(f);
+                mq.add(e);
+            }
+            
             EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new FaxStatusEvent(qList));
+            eb.publishEvent(new MailingStatusEvent(mq));
 
         } catch (Exception ex) {
             log.error(ex);
@@ -929,15 +943,11 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel4)
                             .add(jLabel5))
+                        .add(6, 6, 6)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblSession, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(6, 6, 6)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                            .add(lblSession, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
                         .add(0, 231, Short.MAX_VALUE)
                         .add(selectAllToggle)
@@ -948,8 +958,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdResend))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel2)
-                        .add(49, 49, 49)
+                        .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel7)
@@ -1047,8 +1057,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         HashMap<String,ArchiveFileBean> ids = new HashMap<>();
         // Convert array to list. Extract fax session ids.
         Arrays.stream(selectedRows).boxed().collect(Collectors.toList()).forEach(rowId -> {
-            FaxQueueBean fb = (FaxQueueBean) this.tblQueue.getValueAt(rowId, 0);
-            ids.put(fb.getSessionId(), fb.getArchiveFileKey());
+            MailingQueueEntry mqe = (MailingQueueEntry) this.tblQueue.getValueAt(rowId, 0);
+            ids.put(mqe.getIdentifier(), mqe.getCase());
         });
         return ids;
     }
@@ -1061,19 +1071,20 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         int row = this.tblQueue.rowAtPoint(evt.getPoint());
         
         Object value = this.tblQueue.getValueAt(row, 0);
-        if (value instanceof FaxQueueBean) {
-            FaxQueueBean fb = (FaxQueueBean) value;
-            this.lblSession.setText(fb.getSessionId());
-            this.lblSent.setText(fb.getPdfName() + " gesendet am " + df.format(fb.getSentDate()) + " von " + fb.getSentBy() + " (" + fb.getLocalUri() + ")");
-            this.lblTo.setText("an " + fb.getRemoteName() + " (" + fb.getRemoteUri() + ")");
-            this.lblStatus.setText(SipUtils.getDisplayableStatus(fb.getLastStatus()) + " seit " + df.format(fb.getLastStatusDate()));
-            int level = SipUtils.getStatusLevel(fb.getLastStatus());
+        if (value instanceof MailingQueueEntry) {
+            MailingQueueEntry mqe = (MailingQueueEntry) value;
+            this.lblSession.setText(mqe.getIdentifier());
+            this.lblSent.setText(mqe.getFileName() + " gesendet am " + df.format(mqe.getSentDate()) + " von " + mqe.getSentBy());
+            //this.lblTo.setText("an " + mqe.getRemoteName() + " (" + mqe.getRemoteUri() + ")");
+            this.lblTo.setText(mqe.getRecipientInformation());
+            this.lblStatus.setText(mqe.getDisplayableStatus() + " seit " + df.format(mqe.getLastStatusDate()));
+            int level = mqe.getStatusLevel();
             Icon icon = null;
             switch (level) {
-                case SipUtils.STATUSLEVEL_ERROR:
+                case StatusLevels.STATUSLEVEL_ERROR:
                     icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
                     break;
-                case SipUtils.STATUSLEVEL_INPROGRESS:
+                case StatusLevels.STATUSLEVEL_INPROGRESS:
                     icon = new javax.swing.ImageIcon(getClass().getResource("/icons/yellowled.png"));
                     break;
                 default:
@@ -1083,8 +1094,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
             this.lblStatus.setIcon(icon);
 
             this.lblArchiveFile.setText("");
-            if (fb.getArchiveFileKey() != null) {
-                this.lblArchiveFile.setText(fb.getArchiveFileKey().getFileNumber() + " " + fb.getArchiveFileKey().getName());
+            if (mqe.getCase() != null) {
+                this.lblArchiveFile.setText(mqe.getCase().getFileNumber() + " " + mqe.getCase().getName());
 
             }
         }

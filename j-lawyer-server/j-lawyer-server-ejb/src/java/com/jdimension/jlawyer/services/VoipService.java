@@ -1237,4 +1237,12 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         return ea.validateLetter(token, letter, toEmail);
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public ArrayList<EpostQueueBean> epostQueueList() throws Exception {
+        ArrayList<EpostQueueBean> list = new ArrayList<>();
+        list.addAll(this.epostFacade.findAll());
+        return list;
+    }
+
 }

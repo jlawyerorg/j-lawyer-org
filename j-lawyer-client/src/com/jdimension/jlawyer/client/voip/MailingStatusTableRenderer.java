@@ -663,65 +663,65 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.FaxFailedEvent;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SingletonServiceRemote;
-import java.util.ArrayList;
-import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.StatusLevels;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import java.awt.Component;
+import java.text.SimpleDateFormat;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
  * @author jens
  */
-public class FaxQueueTimerTask extends java.util.TimerTask {
+public class MailingStatusTableRenderer extends DefaultTableCellRenderer {
 
-    private static final Logger log = Logger.getLogger(FaxQueueTimerTask.class.getName());
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+    private FileUtils fu = FileUtils.getInstance();
 
-    private FaxQueueBean lastFailed = null;
-
-    /**
-     * Creates a new instance of SystemStateTimerTask
-     */
-    public FaxQueueTimerTask() {
-        super();
-
+    public MailingStatusTableRenderer() {
     }
 
-    public void run() {
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SingletonServiceRemote singleton = locator.lookupSingletonServiceRemote();
-            FaxQueueBean failed = singleton.getFailedFax();
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-            EventBroker eb = EventBroker.getInstance();
-            if (failed != null) {
-                if (lastFailed != null) {
-                    if (!failed.equals(lastFailed)) {
-                        if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                            eb.publishEvent(new FaxFailedEvent(failed));
-                        }
-                    }
-                } else if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                    eb.publishEvent(new FaxFailedEvent(failed));
-                }
-
+        JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        label.setIcon(null);
+        
+        if(value==null)
+            return label;
+        
+        if (column == 0) {
+            if (!(value instanceof MailingQueueEntry)) {
+                return label;
             }
-            this.lastFailed = failed;
 
-            ArrayList<FaxQueueBean> faxQueue = singleton.getFaxQueue();
-            eb.publishEvent(new FaxStatusEvent(faxQueue));
+            MailingQueueEntry fb = (MailingQueueEntry) value;
+            label.setText(df.format(fb.getSentDate()));
+            label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
 
-        } catch (Throwable ex) {
-            log.error("Error connecting to server", ex);
-
+        } else if (column == 3) {
+            label.setIcon(fu.getFileTypeIcon(value.toString()));
+        } else if (column == 4) {
+            MailingQueueEntry entry=(MailingQueueEntry)table.getValueAt(row, 0);
+            label.setText(entry.getDisplayableStatus());
+            Icon icon = null;
+            int level=entry.getStatusLevel();
+            if (level == StatusLevels.STATUSLEVEL_ERROR) {
+                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
+            } else if (level == StatusLevels.STATUSLEVEL_INPROGRESS) {
+                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/yellowled.png"));
+            } else {
+                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
+            }
+            label.setIcon(icon);
+        } else if(column==5) {
+            if(value!=null && !("".equals(value))) {
+                label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")));
+            }
         }
-
+        return label;
     }
-
 }

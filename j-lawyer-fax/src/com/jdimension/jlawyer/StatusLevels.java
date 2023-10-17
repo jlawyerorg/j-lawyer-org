@@ -661,34 +661,14 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.voip;
-
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import java.util.Date;
+package com.jdimension.jlawyer;
 
 /**
  *
  * @author jens
  */
-public abstract class MailingQueueEntry {
-    
-    public abstract boolean isFailedStatus();
-    public abstract String getFailedObjectDescription();
-    public abstract ArchiveFileBean getCase();
-    public abstract String getSentBy();
-    
-    public abstract String getMailingTypeName();
-    public abstract String getStatusString();
-    public abstract String getFileName();
-    
-    public abstract String getRecipientInformation();
-    public abstract Date getSentDate();
-    
-    public abstract String getDisplayableStatus();
-    public abstract int getStatusLevel();
-    
-    public abstract String getIdentifier();
-    
-    public abstract Date getLastStatusDate();
-    
+public class StatusLevels {
+    public static final int STATUSLEVEL_INPROGRESS=20;
+    public static final int STATUSLEVEL_ERROR=30;
+    public static final int STATUSLEVEL_SUCCESS=10;
 }

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
 import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.fax.SipgateException;
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.util.ArrayList;
 import java.util.List;
@@ -722,5 +723,7 @@ public interface VoipServiceRemote {
     void epostSmsRequest(String principal) throws EpostException;
 
     int validateLetter(EpostLetter letter, String toEmail) throws EpostException;
+
+    ArrayList<EpostQueueBean> epostQueueList() throws Exception;
     
 }

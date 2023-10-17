@@ -663,34 +663,21 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.sip.SipUtils;
-import java.awt.Desktop;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.File;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Hashtable;
-import javax.swing.ImageIcon;
+import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 
 /**
  *
  * @author jens
  */
-public class FaxStatusEvent extends Event {
+public class MailingFailedEvent extends Event {
 
-    private ArrayList<FaxQueueBean> faxList = null;
-
-    public FaxStatusEvent(ArrayList<FaxQueueBean> faxList) {
-        super(Event.TYPE_FAXSTATUS);
-        this.faxList = faxList;
-
+    protected MailingQueueEntry entry;
+    
+    public MailingFailedEvent(MailingQueueEntry e) {
+        super(Event.TYPE_MAILINGFAILED);
+        this.entry=e;
     }
+
 
     @Override
     public boolean isUiUpdateTrigger() {
@@ -698,29 +685,18 @@ public class FaxStatusEvent extends Event {
     }
 
     /**
-     * @return the faxList
+     * @return the entry
      */
-    public ArrayList<FaxQueueBean> getFaxList() {
-        return faxList;
+    public MailingQueueEntry getEntry() {
+        return entry;
     }
 
     /**
-     * @param faxList the faxList to set
+     * @param entry the entry to set
      */
-    public void setFaxList(ArrayList<FaxQueueBean> faxList) {
-        this.faxList = faxList;
+    public void setEntry(MailingQueueEntry entry) {
+        this.entry = entry;
     }
 
-    public int getFailed() {
-        int failed = 0;
-        if (getFaxList() != null) {
-            for (FaxQueueBean fqb : getFaxList()) {
-                if (SipUtils.isFailStatus(fqb.getLastStatus())) {
-                    failed = failed + 1;
-                }
-            }
-        }
-        return failed;
-    }
 
 }
