@@ -675,7 +675,7 @@ import java.io.FileOutputStream;
  *
  * @author jens
  */
-public class EpostClientTest {
+public class EpostClient {
 
     /**
      * @param args the command line arguments
