@@ -722,6 +722,11 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
+import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
+import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
+import com.jdimension.jlawyer.client.voip.EpostPdfMergeStep;
+import com.jdimension.jlawyer.client.voip.EpostPdfOrderingStep;
+import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
@@ -1681,6 +1686,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendDocumentFax = new javax.swing.JMenuItem();
         mnuDirectPrint = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
+        mnuSendEpostLetter = new javax.swing.JMenuItem();
+        jSeparator9 = new javax.swing.JPopupMenu.Separator();
         mnuDrebis = new javax.swing.JMenu();
         mnuCoverage = new javax.swing.JMenuItem();
         mnuMotorCoverage = new javax.swing.JMenuItem();
@@ -2123,6 +2130,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuDirectPrint);
         documentsPopup.add(jSeparator4);
+
+        mnuSendEpostLetter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/voip/DP_Logo_SZ_MF_rgb.png"))); // NOI18N
+        mnuSendEpostLetter.setText("per E-POST versenden");
+        mnuSendEpostLetter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendEpostLetterActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuSendEpostLetter);
+        documentsPopup.add(jSeparator9);
 
         mnuDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
         mnuDrebis.setText("Drebis");
@@ -5928,6 +5945,39 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuCopyFilesToClipboardActionPerformed
 
+    private void mnuSendEpostLetterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEpostLetterActionPerformed
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
+        if (open.size() > 0) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
+        EpostWizardDialog dlg = new EpostWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+
+        WizardSteps steps = new WizardSteps(dlg);
+        
+        WizardDataContainer data = steps.getData();
+        data.put("epost.letter.documents", selectedDocs);
+                
+        steps.addStep(new EpostPdfConversionStep());
+        steps.addStep(new EpostPdfOrderingStep());
+        steps.addStep(new EpostPdfMergeStep());
+        steps.addStep(new EpostLetterValidationStep());
+
+        dlg.setSteps(steps);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        
+    }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6401,6 +6451,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JPopupMenu.Separator jSeparator8;
+    private javax.swing.JPopupMenu.Separator jSeparator9;
     protected javax.swing.JLabel lblArchivedSince;
     private javax.swing.JLabel lblCaseChanged;
     private javax.swing.JLabel lblCaseCreated;
@@ -6444,6 +6495,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSendDocument;
     private javax.swing.JMenuItem mnuSendDocumentFax;
     private javax.swing.JMenuItem mnuSendDocumentPDF;
+    private javax.swing.JMenuItem mnuSendEpostLetter;
     private javax.swing.JMenuItem mnuSendMessage;
     private javax.swing.JMenuItem mnuSendMessageForDocument;
     private javax.swing.JMenuItem mnuSendMotorCoverage;

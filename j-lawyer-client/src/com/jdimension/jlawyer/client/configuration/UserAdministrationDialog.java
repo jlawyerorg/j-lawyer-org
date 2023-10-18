@@ -874,6 +874,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         cmbVoipId = new javax.swing.JComboBox<>();
         cmdGetVoipIds = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        txtEpostCustomer = new javax.swing.JTextField();
+        txtEpostSecret = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        pwdEpostPassword = new javax.swing.JPasswordField();
+        jSeparator2 = new javax.swing.JSeparator();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1429,10 +1439,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
 
-        jLabel2.setText("Sipgate-Token-ID:");
+        jLabel2.setText("Token-ID:");
 
-        jLabel25.setText("Sipgate-Token:");
+        jLabel25.setText("Token:");
 
+        jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
 
@@ -1444,7 +1455,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel6.setText("Sipgate-Nutzer:");
+        jLabel6.setText("Nutzer:");
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("Kundennummer:");
+
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel9.setText("Sipgate");
+
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel10.setText("E-POST");
+
+        jLabel11.setFont(jLabel11.getFont());
+        jLabel11.setText("Passwort:");
+
+        jLabel12.setFont(jLabel12.getFont());
+        jLabel12.setText("Secret:");
+
+        pwdEpostPassword.setText("jPasswordField1");
 
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -1453,26 +1481,45 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel2)
-                    .add(jLabel25)
-                    .add(jLabel6))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jSeparator2)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jSeparator1)
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(cmbVoipId, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel2)
+                            .add(jLabel25)
+                            .add(jLabel6))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdGetVoipIds))
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel11Layout.createSequentialGroup()
+                                .add(cmbVoipId, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdGetVoipIds))
+                            .add(txtVoipUser)
+                            .add(txtVoipPassword)))
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(jLabel26)
-                        .add(0, 417, Short.MAX_VALUE))
-                    .add(txtVoipUser)
-                    .add(txtVoipPassword))
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel8)
+                            .add(jLabel11)
+                            .add(jLabel12))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(txtEpostCustomer)
+                            .add(txtEpostSecret)
+                            .add(pwdEpostPassword)))
+                    .add(jPanel11Layout.createSequentialGroup()
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel9)
+                            .add(jLabel10))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jLabel26, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 930, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
+                .add(jLabel9)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(txtVoipUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1486,12 +1533,30 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmbVoipId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(jLabel6)))
-                .add(18, 18, 18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel10)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtEpostCustomer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel8))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel11)
+                    .add(pwdEpostPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtEpostSecret, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel12))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel26)
-                .addContainerGap(407, Short.MAX_VALUE))
+                .addContainerGap(264, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Sipgate", jPanel11);
+        jTabbedPane1.addTab("Sipgate / E-POST", jPanel11);
 
         jLabel18.setText("Primäre Gruppe:");
 
@@ -1766,6 +1831,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtVoipPassword.setText("");
         this.txtVoipUser.setText("");
         this.txtDisplayName.setText("");
+        this.txtEpostCustomer.setText("");
+        this.pwdEpostPassword.setText("");
+        this.txtEpostSecret.setText("");
+        
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
 
@@ -1873,6 +1942,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 } catch (Exception ex) {
                     log.error("Error connecting to server", ex);
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                
+                this.txtEpostCustomer.setText(u.getEpostCustomer());
+                this.txtEpostSecret.setText(u.getEpostSecret());
+                try {
+                    this.pwdEpostPassword.setText(Crypto.decrypt(u.getEpostPassword()));
+                } catch (Throwable t) {
+                    log.warn("Unable to decrypt E-POST password, might be empty", t);
+                    this.pwdEpostPassword.setText("");
                 }
 
                 this.txtDisplayName.setText(u.getDisplayName());
@@ -2051,6 +2129,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     SipUser su=(SipUser)this.cmbVoipId.getSelectedItem();
                     u.setVoipId(su.getId());
                 }
+                
+                u.setEpostCustomer(this.txtEpostCustomer.getText());
+                u.setEpostPassword(Crypto.encrypt(this.pwdEpostPassword.getText().trim()));
+                u.setEpostSecret(this.txtEpostSecret.getText());
 
                 u.setDisplayName(this.txtDisplayName.getText());
 
@@ -2088,6 +2170,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtVoipPassword.setText("");
         this.txtVoipUser.setText("");
         this.cmbVoipId.removeAllItems();
+        
+        this.txtEpostCustomer.setText("");
+        this.pwdEpostPassword.setText("");
+        this.txtEpostSecret.setText("");
 
         this.txtDisplayName.setText("");
 
@@ -2691,6 +2777,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel18;
@@ -2707,6 +2796,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
@@ -2726,6 +2817,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
@@ -2734,6 +2827,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel pnlCloudConnection;
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
+    private javax.swing.JPasswordField pwdEpostPassword;
     private javax.swing.JRadioButton rdAutoLogin;
     private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
@@ -2743,6 +2837,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtDisplayName;
+    private javax.swing.JTextField txtEpostCustomer;
+    private javax.swing.JTextField txtEpostSecret;
     private javax.swing.JTextField txtUser;
     private javax.swing.JTextField txtVoipPassword;
     private javax.swing.JTextField txtVoipUser;

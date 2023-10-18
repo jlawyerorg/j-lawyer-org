@@ -783,6 +783,10 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    public void reRenderPage() {
+        this.showPage(this.content, this.currentPage);
+    }
+    
     private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
         this.currentPage = this.currentPage - 1;
         this.showPage(this.content, this.currentPage);

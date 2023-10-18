@@ -669,14 +669,23 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFact
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
+import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
+import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
+import com.jdimension.jlawyer.client.wizard.WizardSteps;
+import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.BorderLayout;
@@ -891,6 +900,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         mnuRenameTemplate = new javax.swing.JMenuItem();
         mnuCopyTemplate = new javax.swing.JMenuItem();
         mnuDeleteTemplate = new javax.swing.JMenuItem();
+        mnuEpostValidation = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdNewODT = new javax.swing.JButton();
@@ -967,6 +977,16 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
         popTemplates.add(mnuDeleteTemplate);
+
+        mnuEpostValidation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
+        mnuEpostValidation.setText("E-POST-Eignung prüfen");
+        mnuEpostValidation.setToolTipText("übermittelt das Dokument für eine Layoutprüfung an die E-POST-Schnittstelle");
+        mnuEpostValidation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEpostValidationActionPerformed(evt);
+            }
+        });
+        popTemplates.add(mnuEpostValidation);
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple_big.png"))); // NOI18N
 
@@ -1425,6 +1445,56 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         this.refreshList();
     }//GEN-LAST:event_mnuDeleteTemplateActionPerformed
 
+    private void mnuEpostValidationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEpostValidationActionPerformed
+        if (this.lstTemplates.getSelectedValue() == null) {
+            return;
+        }
+
+        TreePath tp = this.treeFolders.getSelectionPath();
+        if (tp == null) {
+            log.error("no folder selected - returning...");
+            return;
+        }
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+        GenericNode folder = (GenericNode) selNode.getUserObject();
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        byte[] content = null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            content = locator.lookupSystemManagementRemote().getTemplateData(this.templateType, folder, this.lstTemplates.getSelectedValue().toString());
+            
+            FileConverter conv = FileConverter.getInstance();
+
+            String tempPath = FileUtils.createTempFile(this.lstTemplates.getSelectedValue().toString(), content);
+            String tempPdfPath = conv.convertToPDF(tempPath);
+            content = FileUtils.readFile(new File(tempPdfPath));
+            FileUtils.cleanupTempFile(tempPdfPath);
+            FileUtils.cleanupTempFile(tempPath);
+            
+            
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler bei der PDF-Konvertierung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        
+        EpostWizardDialog dlg = new EpostWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+
+        WizardSteps steps = new WizardSteps(dlg);
+        
+        WizardDataContainer data = steps.getData();
+        data.put("pdf.bytes", content);
+        
+        steps.addStep(new EpostLetterValidationStep());
+
+        dlg.setSteps(steps);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        
+    }//GEN-LAST:event_mnuEpostValidationActionPerformed
+
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger() && this.foldersSupported) {
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
@@ -1647,6 +1717,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JMenuItem mnuCopyTemplate;
     private javax.swing.JMenuItem mnuDeleteTemplate;
     private javax.swing.JMenuItem mnuEditTemplate;
+    private javax.swing.JMenuItem mnuEpostValidation;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuRenameFolder;

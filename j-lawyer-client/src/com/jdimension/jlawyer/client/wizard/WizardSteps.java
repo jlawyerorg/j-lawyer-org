@@ -672,7 +672,7 @@ import java.util.ArrayList;
  */
 public class WizardSteps {
     
-    private ArrayList<WizardStepInterface> steps=new ArrayList<WizardStepInterface>();
+    private ArrayList<WizardStepInterface> steps=new ArrayList<>();
     private int currentStep=-1;
     WizardDataContainer data=null;
     
@@ -725,7 +725,7 @@ public class WizardSteps {
     }
     
     public String stepTitlesHtml() {
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         sb.append("<html>");
         for(int i=0;i<steps.size();i++) {
             if(i==currentStep) {

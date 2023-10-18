@@ -697,7 +697,7 @@ public interface VoipServiceRemote {
     ArrayList<FaxQueueBean> queueList() throws Exception;
 
     String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
-    EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException;
+    EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws Exception;
 
     void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
     void deleteEpostQueueEntries(List<Integer> letterIds) throws EpostException;
@@ -710,19 +710,19 @@ public interface VoipServiceRemote {
 
     String getNewFaxReportFileName(String sessionId) throws Exception;
 
-    byte[] getValidatedLetter(int letterId) throws EpostException;
+    byte[] getValidatedLetter(int letterId) throws Exception;
 
     EpostApiStatus epostHealthCheck() throws EpostException;
 
-    int sendLetter(EpostLetter letter, String caseId) throws EpostException;
+    int sendLetter(EpostLetter letter, String caseId) throws Exception;
 
-    int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws EpostException;
+    int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws Exception;
 
     void setEpostPassword(String newPassword, String smsCode, String principal) throws EpostException;
 
     void epostSmsRequest(String principal) throws EpostException;
 
-    int validateLetter(EpostLetter letter, String toEmail) throws EpostException;
+    int validateLetter(EpostLetter letter, String toEmail) throws Exception;
 
     ArrayList<EpostQueueBean> epostQueueList() throws Exception;
     

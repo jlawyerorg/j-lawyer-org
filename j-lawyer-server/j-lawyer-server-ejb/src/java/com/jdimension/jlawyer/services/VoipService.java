@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.fax.SipgateInstance;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.File;
@@ -887,7 +888,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     
     @Override
     @PermitAll
-    public EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws EpostException {
+    public EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws Exception {
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(senderPrincipalId);
         if (!currentUser.isEpostEnabled()) {
             throw new EpostException("ePost - Integration ist nicht aktiviert!");
@@ -895,7 +896,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
         
-        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         return ea.getLetterStatus(token, letterId);
     }
 
@@ -1088,7 +1089,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @PermitAll
-    public byte[] getValidatedLetter(int letterId) throws EpostException {
+    public byte[] getValidatedLetter(int letterId) throws Exception {
         String principal=this.context.getCallerPrincipal().getName();
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
         if (!currentUser.isEpostEnabled()) {
@@ -1096,7 +1097,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         return ea.getValidatedLetter(token, letterId);
     }
 
@@ -1115,7 +1116,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @PermitAll
-    public int sendLetter(EpostLetter letter, String caseId) throws EpostException {
+    public int sendLetter(EpostLetter letter, String caseId) throws Exception {
         String principal=this.context.getCallerPrincipal().getName();
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
         if (!currentUser.isEpostEnabled()) {
@@ -1123,7 +1124,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         int letterId= ea.sendLetter(token, letter);
         EpostLetterStatus s=ea.getLetterStatus(token, letterId);
         
@@ -1158,7 +1159,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @PermitAll
-    public int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws EpostException {
+    public int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws Exception {
         String principal=this.context.getCallerPrincipal().getName();
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
         if (!currentUser.isEpostEnabled()) {
@@ -1166,7 +1167,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         int letterId = ea.sendRegisteredLetter(token, letter, registeredLetterMode);
         EpostLetterStatus s=ea.getLetterStatus(token, letterId);
         
@@ -1225,7 +1226,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @PermitAll
-    public int validateLetter(EpostLetter letter, String toEmail) throws EpostException {
+    public int validateLetter(EpostLetter letter, String toEmail) throws Exception {
         String principal=this.context.getCallerPrincipal().getName();
         AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(principal);
         if (!currentUser.isEpostEnabled()) {
@@ -1233,7 +1234,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), currentUser.getEpostPassword());
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         return ea.validateLetter(token, letter, toEmail);
     }
 
