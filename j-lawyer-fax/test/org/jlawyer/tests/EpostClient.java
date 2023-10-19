@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 
 /**
  *
@@ -687,6 +688,7 @@ public class EpostClient {
         
         String secret = "secret";
         String password = "password";
+        
 
 
         // 1) sms request
@@ -726,41 +728,41 @@ public class EpostClient {
 
 
 // validate letter
-        try {
-            EpostAPI api = new EpostAPI(vendorId, customerId);
-            EpostLetter l=new EpostLetter();
-            l.setFileName("test.pdf");
-            l.setAddressLine1("Jens K.");
-            l.setAddressLine2("Irgendwostrasse 42");
-            l.setCity("Niederau");
-            l.setZipCode("01689");
-            
-            l.setSenderAdressLine1("Jens K.");
-            l.setSenderCity("Niederau");
-            l.setSenderStreet("Irgendwostrasse 43");
-            l.setSenderZipCode("01689");
-            
-            l.setDuplex(false);
-            l.setColor(true);
-            //l.setCoverLetter(true);
-            
-            File f = new File("/home/jens/dev/j-lawyer-org/j-lawyer-fax/test/org/jlawyer/tests/test.pdf");
-            if (f.exists()) {
-                FileInputStream fileInputStream = new FileInputStream(f);
-                byte[] data = new byte[(int) f.length()];
-                fileInputStream.read(data);
-                l.setData(data);
-            }
-            
-            int letterId=api.validateLetter(token, l, "info@j-lawyer.org");
-            byte[] pdf=api.getValidatedLetter(token, letterId);
-            FileOutputStream fout=new FileOutputStream("/home/jens/dev/j-lawyer-org/j-lawyer-fax/test/org/jlawyer/tests/validated.pdf");
-            fout.write(pdf);
-            fout.close();
-            
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        try {
+//            EpostAPI api = new EpostAPI(vendorId, customerId);
+//            EpostLetter l=new EpostLetter();
+//            l.setFileName("test.pdf");
+//            l.setAddressLine1("Jens K.");
+//            l.setAddressLine2("Irgendwostrasse 42");
+//            l.setCity("Niederau");
+//            l.setZipCode("01689");
+//            
+//            l.setSenderAdressLine1("Jens K.");
+//            l.setSenderCity("Niederau");
+//            l.setSenderStreet("Irgendwostrasse 43");
+//            l.setSenderZipCode("01689");
+//            
+//            l.setDuplex(false);
+//            l.setColor(true);
+//            //l.setCoverLetter(true);
+//            
+//            File f = new File("/home/jens/dev/j-lawyer-org/j-lawyer-fax/test/org/jlawyer/tests/test.pdf");
+//            if (f.exists()) {
+//                FileInputStream fileInputStream = new FileInputStream(f);
+//                byte[] data = new byte[(int) f.length()];
+//                fileInputStream.read(data);
+//                l.setData(data);
+//            }
+//            
+//            int letterId=api.validateLetter(token, l, "info@j-lawyer.org");
+//            byte[] pdf=api.getValidatedLetter(token, letterId);
+//            FileOutputStream fout=new FileOutputStream("/home/jens/dev/j-lawyer-org/j-lawyer-fax/test/org/jlawyer/tests/validated.pdf");
+//            fout.write(pdf);
+//            fout.close();
+//            
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
 
 
@@ -810,7 +812,20 @@ public class EpostClient {
 //            }
 //        }
         
-        
+
+// multi letter status
+//        try {
+//            EpostAPI api = new EpostAPI(vendorId, customerId);
+//
+//            ArrayList<Integer> ids=new ArrayList<>();
+//            ids.add(66668288);
+//            ids.add(66669175);
+//            ids.add(666691759);
+//            ArrayList<EpostLetterStatus> statuus = api.getLetterStatus(token, ids);
+//
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
         
 // send registered letter
 //        String letterId = null;

@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
@@ -676,6 +677,7 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -734,6 +736,10 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlConversionList = new javax.swing.JPanel();
+        lblFileSize = new javax.swing.JLabel();
+        lblFileSizeMax = new javax.swing.JLabel();
+        lblPages = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -748,6 +754,18 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
         pnlConversionList.setLayout(new javax.swing.BoxLayout(pnlConversionList, javax.swing.BoxLayout.Y_AXIS));
         jScrollPane1.setViewportView(pnlConversionList);
 
+        lblFileSize.setFont(lblFileSize.getFont().deriveFont(lblFileSize.getFont().getStyle() | java.awt.Font.BOLD));
+        lblFileSize.setText("2MB");
+
+        lblFileSizeMax.setFont(lblFileSizeMax.getFont().deriveFont(lblFileSizeMax.getFont().getStyle() | java.awt.Font.BOLD));
+        lblFileSizeMax.setText("Versandgröße (max. 20MB):");
+
+        lblPages.setFont(lblPages.getFont().deriveFont(lblPages.getFont().getStyle() | java.awt.Font.BOLD));
+        lblPages.setText("42");
+
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel2.setText("Seiten:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -756,7 +774,16 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1))
+                    .addComponent(jScrollPane1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblPages)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblFileSizeMax)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblFileSize)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -765,14 +792,24 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblFileSize)
+                    .addComponent(lblFileSizeMax)
+                    .addComponent(lblPages)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblFileSize;
+    private javax.swing.JLabel lblFileSizeMax;
+    private javax.swing.JLabel lblPages;
     private javax.swing.JPanel pnlConversionList;
     // End of variables declaration//GEN-END:variables
 
@@ -789,12 +826,25 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
         
         List<File> files = (List<File>) data.get("epost.letter.pdffiles");
 
+        long totalSize=0;
+        long totalPages=0;
+        
         for (File f : files) {
 
             EpostPdfPanel pdfPanel=new EpostPdfPanel(f);
-            
             this.pnlConversionList.add(pdfPanel);
+            
+            totalSize+=f.length();
+            totalPages+=pdfPanel.getPageCount();
         }
+        
+        this.lblFileSize.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        if(totalSize>EpostLetter.MAX_FILESIZE) {
+            this.lblFileSize.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        }
+        this.lblFileSize.setText("" + FileUtils.getFileSizeHumanReadable(totalSize));
+        this.lblFileSizeMax.setText("Versandgröße (max. 20MB):");
+        this.lblPages.setText("" + totalPages);
 
     }
 

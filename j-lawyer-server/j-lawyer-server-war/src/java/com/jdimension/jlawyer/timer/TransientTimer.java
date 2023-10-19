@@ -745,8 +745,8 @@ public class TransientTimer {
         if (timerEpost == null) {
             timerEpost = new Timer();
 
-            // start after 40s and run every 15s
-            timerEpost.schedule(new EpostQueueStatusTask(), 40000l, 15000l);
+            // start after 40s and run every 3min
+            timerEpost.schedule(new EpostQueueStatusTask(), 40000l, 3l * 60l * 1000l);
 
         }
     }

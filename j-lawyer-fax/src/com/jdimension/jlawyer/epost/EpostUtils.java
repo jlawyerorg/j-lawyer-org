@@ -709,7 +709,7 @@ public class EpostUtils extends StatusLevels {
      * @return 
      */
     public static boolean isFinalStatus(int status) {
-        return status==API_STATUS_VERARBEITUNGDRUCK;
+        return status==API_STATUS_VERARBEITUNGDRUCK || status==API_STATUS_FAILED;
         
     }
     

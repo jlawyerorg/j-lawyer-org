@@ -698,7 +698,9 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
 
     @Override
     public void nextEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
+        this.data.put("epost.letter.duplex", this.chkDuplex.isSelected());
+        this.data.put("epost.letter.color", this.chkColor.isSelected());
+        this.data.put("epost.letter.coverpage", this.chkDefaultCoverPage.isSelected());
         return;
     }
 

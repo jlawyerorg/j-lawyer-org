@@ -722,6 +722,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
+import com.jdimension.jlawyer.client.voip.EpostLetterSendStep;
 import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfMergeStep;
@@ -5966,11 +5967,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
         WizardDataContainer data = steps.getData();
         data.put("epost.letter.documents", selectedDocs);
+        data.put("epost.letter.caseid", this.dto.getId());
+        
+        List<AddressBean> addresses=new ArrayList<>();
+        for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+            addresses.add(aab.getAddressKey());
+        }
+        data.put("epost.letter.addresses", addresses);
                 
         steps.addStep(new EpostPdfConversionStep());
         steps.addStep(new EpostPdfOrderingStep());
         steps.addStep(new EpostPdfMergeStep());
         steps.addStep(new EpostLetterValidationStep());
+        steps.addStep(new EpostLetterSendStep());
 
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());

@@ -699,7 +699,9 @@ public class MailingStatusTableRenderer extends DefaultTableCellRenderer {
             }
 
             MailingQueueEntry fb = (MailingQueueEntry) value;
-            label.setText(df.format(fb.getSentDate()));
+            label.setText("");
+            if(fb.getSentDate()!=null)
+                label.setText(df.format(fb.getSentDate()));
             label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
 
         } else if (column == 3) {

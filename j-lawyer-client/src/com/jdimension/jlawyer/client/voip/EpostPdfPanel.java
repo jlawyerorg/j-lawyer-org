@@ -679,6 +679,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 public class EpostPdfPanel extends javax.swing.JPanel {
 
     protected File file=null;
+    protected int pageCount=0;
     
     /**
      * Creates new form EpostPdfPanel
@@ -707,7 +708,7 @@ public class EpostPdfPanel extends javax.swing.JPanel {
             
             this.lblPdfPicture.setIcon(imageIcon);
             
-            
+            this.pageCount=document.getNumberOfPages();
             this.lblNumPages.setText("" + document.getNumberOfPages());
 
             document.close();
@@ -859,5 +860,12 @@ public class EpostPdfPanel extends javax.swing.JPanel {
      */
     public void setFile(File file) {
         this.file = file;
+    }
+
+    /**
+     * @return the pageCount
+     */
+    public int getPageCount() {
+        return pageCount;
     }
 }

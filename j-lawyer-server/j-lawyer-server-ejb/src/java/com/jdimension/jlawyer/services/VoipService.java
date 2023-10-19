@@ -899,6 +899,20 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         return ea.getLetterStatus(token, letterId);
     }
+    
+    @Override
+    @PermitAll
+    public List<EpostLetterStatus> getLetterStatus(List<Integer> letterIds, String senderPrincipalId) throws Exception {
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(senderPrincipalId);
+        if (!currentUser.isEpostEnabled()) {
+            throw new EpostException("ePost - Integration ist nicht aktiviert!");
+        }
+
+        EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
+        
+        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        return ea.getLetterStatus(token, letterIds);
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -1126,7 +1140,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         EpostAPI ea=new EpostAPI(EPOST_VENDORID, currentUser.getEpostCustomer());
         String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
         int letterId= ea.sendLetter(token, letter);
-        EpostLetterStatus s=ea.getLetterStatus(token, letterId);
+        // may cause the sending transaction to fail if the status request hits a rate limit directly after sending
+        //EpostLetterStatus s=ea.getLetterStatus(token, letterId);
         
         EpostQueueBean eb = new EpostQueueBean(letterId);
 
@@ -1136,18 +1151,20 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             eb.setArchiveFileKey(null);
         }
 
-        eb.setCreatedDate(s.getCreatedDate());
-        eb.setDestinationAreaStatus(s.getDestinationAreaStatus());
-        eb.setDestinationAreaStatusDate(s.getDestinationAreaStatusDate());
-        eb.setFileName(s.getFileName());
-        eb.setLastStatusDetails(s.getStatusDetails());
-        eb.setLastStatusId(s.getStatusId());
-        eb.setNoOfPages(s.getNoOfPages());
-        eb.setPrintFeedbackDate(s.getPrintFeedbackDate());
-        eb.setPrintUploadDate(s.getPrintUploadDate());
-        eb.setProcessedDate(s.getProcessedDate());
-        eb.setRegisteredLetterStatus(s.getRegisteredLetterStatus());
-        eb.setRegisteredLetterStatusDate(s.getRegisteredLetterStatusDate());
+        eb.setLastStatusId(-1);
+        
+//        eb.setCreatedDate(s.getCreatedDate());
+//        eb.setDestinationAreaStatus(s.getDestinationAreaStatus());
+//        eb.setDestinationAreaStatusDate(s.getDestinationAreaStatusDate());
+//        eb.setFileName(s.getFileName());
+//        eb.setLastStatusDetails(s.getStatusDetails());
+//        eb.setLastStatusId(s.getStatusId());
+//        eb.setNoOfPages(s.getNoOfPages());
+//        eb.setPrintFeedbackDate(s.getPrintFeedbackDate());
+//        eb.setPrintUploadDate(s.getPrintUploadDate());
+//        eb.setProcessedDate(s.getProcessedDate());
+//        eb.setRegisteredLetterStatus(s.getRegisteredLetterStatus());
+//        eb.setRegisteredLetterStatusDate(s.getRegisteredLetterStatusDate());
         eb.setSentBy(principal);
 
         this.epostFacade.create(eb);

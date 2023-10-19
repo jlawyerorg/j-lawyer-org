@@ -743,6 +743,12 @@ public class UserSettings {
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
     public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
     
+    // E-POST related
+    public static final String EPOST_LAST_SENDER_ADRLINE="epost.sender.last.adrline";
+    public static final String EPOST_LAST_SENDER_STREET="epost.sender.last.street";
+    public static final String EPOST_LAST_SENDER_ZIPCODE="epost.sender.last.zipcode";
+    public static final String EPOST_LAST_SENDER_CITY="epost.sender.last.city";
+    
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

@@ -673,6 +673,8 @@ public class EpostLetter implements Serializable {
 
     protected static long serialVersionUID = 1L;
     
+    public static long MAX_FILESIZE=20l * 1024l * 1024l;
+    
     
     public static final String EINSCHREIBEN="Einschreiben";
     public static final String EINSCHREIBEN_EINWURF="Einwurf Einschreiben";
