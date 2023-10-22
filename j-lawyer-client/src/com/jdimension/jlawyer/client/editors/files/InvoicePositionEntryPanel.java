@@ -948,6 +948,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
                 log.warn("unable to layout invoice dialog", ex);
             }
             this.parent.bumpSplitPane();
+            this.updateParentTotal();
         } catch (Exception ex) {
             log.error("Error updating invoice position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
