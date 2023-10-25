@@ -678,17 +678,11 @@ public class WizardMainPanel extends javax.swing.JPanel {
     private WizardSteps steps=null;
     private Window parent=null;
     
-    
-//    public WizardMainPanel() {
-//        this(new WizardSteps());
-//    }
-    
     /**
      * Creates new form WizardMainPanel
      */
     public WizardMainPanel() {
         initComponents();
-        //setSteps(steps);
         
         
     }
@@ -711,9 +705,12 @@ public class WizardMainPanel extends javax.swing.JPanel {
     
     public void setSteps(WizardSteps steps) {
         this.steps=steps;
-        this.cmdPrevious.setEnabled(false);
-        this.cmdNext.setEnabled(steps.stepCount()>0);
-        this.cmdDone.setEnabled(steps.stepCount()==1);
+        
+        this.toggleButtonState();
+        
+        for(WizardStepInterface i: steps.getSteps()) {
+            i.setWizardPanel(this);
+        }
         
         this.stepPanel.removeAll();
         this.stepPanel.add((JComponent)steps.current());
@@ -723,7 +720,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
         this.lblStepTitles.setText(steps.stepTitlesHtml());
         this.lblTitle.setText(steps.current().getStepName());
         
-        this.toggleButtonState();
+        
     }
 
     /**
@@ -914,6 +911,13 @@ public class WizardMainPanel extends javax.swing.JPanel {
         this.cmdPrevious.setEnabled(!steps.isFirstStep(steps.current()));
         this.cmdNext.setEnabled(!steps.isFinalStep(steps.current()));
         this.cmdDone.setEnabled(steps.isFinalStep(steps.current()));
+    }
+    
+    public void enableButtons(boolean previous, boolean next, boolean cancel, boolean done) {
+        this.cmdPrevious.setEnabled(previous);
+        this.cmdNext.setEnabled(next);
+        this.cmdCancel.setEnabled(cancel);
+        this.cmdDone.setEnabled(done);
     }
     
     private void stepPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_stepPanelComponentResized

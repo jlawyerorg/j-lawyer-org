@@ -986,27 +986,32 @@
                                   <Component id="txtVoipPassword" max="32767" attributes="0"/>
                               </Group>
                           </Group>
+                          <Component id="jLabel26" alignment="0" pref="930" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="txtEpostCustomer" max="32767" attributes="0"/>
-                                  <Component id="txtEpostSecret" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="pwdEpostPassword" alignment="0" max="32767" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel10" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="txtEpostSecret" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="txtEpostCustomer" alignment="0" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="lblEpostRegistered" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdRegisterEpost" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="pwdEpostPassword" max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdSetEpostPassword" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
                           </Group>
-                          <Component id="jLabel26" alignment="0" pref="930" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1038,7 +1043,11 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jSeparator1" min="-2" pref="10" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel10" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblEpostRegistered" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdRegisterEpost" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtEpostCustomer" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1048,6 +1057,7 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="pwdEpostPassword" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdSetEpostPassword" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -1058,7 +1068,7 @@
                       <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="264" max="32767" attributes="0"/>
+                      <EmptySpace pref="248" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1170,11 +1180,31 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JPasswordField" name="pwdEpostPassword">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="jPasswordField1"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JSeparator" name="jSeparator2">
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblEpostRegistered">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="jLabel13"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdRegisterEpost">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Freischalten"/>
+                <Property name="toolTipText" type="java.lang.String" value="E-POST freischalten / Freischaltcode zur&#xfc;cksetzen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRegisterEpostActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdSetEpostPassword">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Erstellen"/>
+                <Property name="toolTipText" type="java.lang.String" value="Erstellen eines neuen oder Zur&#xfc;cksetzen eines vorhandenen Passwortes.&#xa;Sie ben&#xf6;tigen Kundennnummer und das Mobiltelefon, &#xa;das Sie bei Anmeldung bei der Deutschen Post angegeben haben."/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSetEpostPasswordActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

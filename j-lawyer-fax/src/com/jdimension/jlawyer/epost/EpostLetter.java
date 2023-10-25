@@ -715,6 +715,33 @@ public class EpostLetter implements Serializable {
     public EpostLetter() {
 
     }
+    
+    public String getRecipientInformation() {
+        StringBuilder sb=new StringBuilder();
+        if(!"".equals(this.getAddressLine1()) && this.getAddressLine1()!=null)
+            sb.append(this.getAddressLine1());
+        
+        if(!"".equals(this.getAddressLine2()) && this.getAddressLine2()!=null)
+            sb.append(", ").append(this.getAddressLine2());
+        
+        if(!"".equals(this.getAddressLine3()) && this.getAddressLine3()!=null)
+            sb.append(", ").append(this.getAddressLine3());
+        
+        if(!"".equals(this.getAddressLine4()) && this.getAddressLine4()!=null)
+            sb.append(", ").append(this.getAddressLine4());
+        
+        if(!"".equals(this.getAddressLine5()) && this.getAddressLine5()!=null)
+            sb.append(", ").append(this.getAddressLine5());
+        
+        if(!"".equals(this.getZipCode()) && this.getZipCode()!=null)
+            sb.append(", ").append(this.getZipCode());
+        
+        if(!"".equals(this.getCity()) && this.getCity()!=null)
+            sb.append(" ").append(this.getCity());
+        
+        return sb.toString();
+        
+    }
 
     /**
      * @return the serialVersionUID

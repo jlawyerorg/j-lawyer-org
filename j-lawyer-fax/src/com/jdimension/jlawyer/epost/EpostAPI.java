@@ -724,7 +724,7 @@ public class EpostAPI {
         }
     }
 
-    public void setPassword(String newPassword, String smsCode) throws EpostException {
+    public String setPassword(String newPassword, String smsCode) throws EpostException {
         log.info("ePost API set password request");
 
         WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/setPassword");
@@ -746,14 +746,7 @@ public class EpostAPI {
                 throw new EpostException("Could not (re-)set password for ePost API: " + returnValue + " [" + response.getStatus() + "]");
             }
 
-//            String secret=null;
-//            Object jsonOutput = Jsoner.deserialize(returnValue);
-//            if (jsonOutput instanceof JsonObject) {
-//                JsonObject result = (JsonObject) jsonOutput;
-//                JsonKey sessionKey = Jsoner.mintJsonKey("token", null);
-//                secret = result.getString(sessionKey);
-//
-//            }
+            return returnValue.trim().replace("\"", "");
         } catch (Exception ex) {
             log.error("Could not (re-)set password for ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);

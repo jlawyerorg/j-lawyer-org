@@ -8,7 +8,7 @@
     </Component>
   </NonVisualComponents>
   <Properties>
-    <Property name="name" type="java.lang.String" value="Versand" noResource="true"/>
+    <Property name="name" type="java.lang.String" value="Empf&#xe4;nger und Versandart" noResource="true"/>
   </Properties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -65,12 +65,10 @@
                                   <Component id="txtSenderCity" alignment="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
-                          <Component id="cmdSend" alignment="1" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="lblProgress" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -81,7 +79,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="10" max="32767" attributes="0"/>
+              <EmptySpace pref="25" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -153,11 +151,7 @@
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="cmdSend" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="lblProgress" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="138" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="196" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -312,19 +306,6 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JLabel" name="lblProgress">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Pr&#xfc;fe..."/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JButton" name="cmdSend">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="E-POST-Brief senden"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSendActionPerformed"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">

@@ -687,6 +687,7 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
     private static final Logger log = Logger.getLogger(EpostPdfConversionStep.class.getName());
 
     private WizardDataContainer data = null;
+    private WizardMainPanel wizard = null;
 
     private ArrayList<File> pdfFiles = new ArrayList<>();
 
@@ -777,6 +778,10 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
 
         this.pdfFiles.clear();
 
+        if (this.wizard != null) {
+            this.wizard.enableButtons(false, false, true, false);
+        }
+
         List<ArchiveFileDocumentsBean> docs = (List<ArchiveFileDocumentsBean>) data.get("epost.letter.documents");
 
         for (ArchiveFileDocumentsBean d : docs) {
@@ -829,6 +834,16 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
 
             }
 
+            try {
+                SwingUtilities.invokeLater(() -> {
+                    if (this.wizard != null) {
+                        this.wizard.enableButtons(false, true, true, false);
+                    }
+                });
+            } catch (Throwable t) {
+                log.error(t);
+            }
+
         }).start();
 
     }
@@ -850,5 +865,10 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        this.wizard = wizard;
     }
 }

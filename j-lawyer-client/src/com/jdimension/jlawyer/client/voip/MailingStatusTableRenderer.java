@@ -702,8 +702,14 @@ public class MailingStatusTableRenderer extends DefaultTableCellRenderer {
             label.setText("");
             if(fb.getSentDate()!=null)
                 label.setText(df.format(fb.getSentDate()));
-            label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
+            
 
+        } else if (column == 2) {
+            label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
+            if (table.getValueAt(row, 0) instanceof EpostQueueEntry) {
+                label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/voip/DP_Logo_SZ_MF_rgb.png")));
+            }
+            
         } else if (column == 3) {
             label.setIcon(fu.getFileTypeIcon(value.toString()));
         } else if (column == 4) {

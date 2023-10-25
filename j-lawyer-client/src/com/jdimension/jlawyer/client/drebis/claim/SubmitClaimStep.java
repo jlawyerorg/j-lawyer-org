@@ -938,4 +938,9 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
     public void setData(WizardDataContainer data) {
         this.data = data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

@@ -718,12 +718,16 @@ public interface VoipServiceRemote {
 
     int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws Exception;
 
-    void setEpostPassword(String newPassword, String smsCode, String principal) throws EpostException;
+    String setEpostPassword(String newPassword, String smsCode, String customerNo) throws EpostException;
 
-    void epostSmsRequest(String principal) throws EpostException;
+    void epostSmsRequest(String customerNo) throws EpostException;
 
     int validateLetter(EpostLetter letter, String toEmail) throws Exception;
 
     ArrayList<EpostQueueBean> epostQueueList() throws Exception;
+
+    String getNewEpostReportFileName(int letterId) throws Exception;
+
+    void saveEpostReport(int letterId, String fileName) throws EpostException;
     
 }

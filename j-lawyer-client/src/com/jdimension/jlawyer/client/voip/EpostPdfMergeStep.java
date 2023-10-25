@@ -671,7 +671,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -687,6 +686,7 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
     private static final Logger log = Logger.getLogger(EpostPdfMergeStep.class.getName());
 
     private WizardDataContainer data = null;
+    private WizardMainPanel wizard=null;
 
     /**
      * Creates new form EpostLetterValidationStep
@@ -790,6 +790,9 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
         this.lblProgress.setText("Dokumente werden zusammengeführt...");
         this.pnlPreview.removeAll();
 
+        if(this.wizard!=null)
+            this.wizard.enableButtons(false, false, true, false);
+        
         new Thread(() -> {
             try {
                 String tempFile = FileUtils.createTempFile("epost-" + System.currentTimeMillis() + ".pdf", new byte[0]);
@@ -827,6 +830,16 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
             }
 
             ThreadUtils.updateLabel(this.lblProgress, "");
+            
+            try {
+                SwingUtilities.invokeLater(() -> {
+                    if (this.wizard != null) {
+                        this.wizard.enableButtons(true, true, true, false);
+                    }
+                });
+            } catch (Throwable t) {
+                log.error(t);
+            }
         }).start();
 
     }
@@ -845,5 +858,10 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
 
         merger.setDestinationFileName(outputFile);
         merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        this.wizard=wizard;
     }
 }

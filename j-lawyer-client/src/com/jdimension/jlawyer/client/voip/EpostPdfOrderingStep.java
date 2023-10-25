@@ -663,20 +663,13 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.epost.EpostLetter;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -685,17 +678,16 @@ import themes.colors.DefaultColorTheme;
  */
 public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardStepInterface {
 
-    private static final Logger log = Logger.getLogger(EpostPdfOrderingStep.class.getName());
-
     private WizardDataContainer data = null;
     
     private ArrayList<File> pdfFiles=new ArrayList<>();
 
     /**
-     * Creates new form EpostLetterValidationStep
+     * Creates new form EpostPdfOrderingStep
      */
     public EpostPdfOrderingStep() {
         initComponents();
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
     }
 
     @Override
@@ -851,5 +843,10 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

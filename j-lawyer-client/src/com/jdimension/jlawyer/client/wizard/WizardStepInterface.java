@@ -676,4 +676,5 @@ public interface WizardStepInterface {
     public void finishedEvent() throws Exception;
     public String getStepName();
     public void setData(WizardDataContainer data);
+    public void setWizardPanel(WizardMainPanel wizard);
 }

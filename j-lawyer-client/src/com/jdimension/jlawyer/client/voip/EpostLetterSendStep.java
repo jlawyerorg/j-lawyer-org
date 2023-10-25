@@ -715,8 +715,27 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void nextEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
-        return;
+        this.data.put("txtAdressLine1", this.txtAdressLine1.getText());
+        this.data.put("txtAdressLine2", this.txtAdressLine2.getText());
+        this.data.put("txtAdressLine3", this.txtAdressLine3.getText());
+        this.data.put("txtAdressLine4", this.txtAdressLine4.getText());
+        this.data.put("txtAdressLine5", this.txtAdressLine5.getText());
+        
+        this.data.put("txtCity", this.txtCity.getText());
+        this.data.put("txtZipCode", this.txtZipCode.getText());
+        this.data.put("txtCountry", this.txtCountry.getText());
+        
+        this.data.put("txtSenderAdressLine", this.txtSenderAdressLine.getText());
+        this.data.put("txtSenderCity", this.txtSenderCity.getText());
+        this.data.put("txtSenderStreet", this.txtSenderStreet.getText());
+        this.data.put("txtSenderZipCode", this.txtSenderZipCode.getText());
+        
+        this.data.put("chkDuplex", this.chkDuplex.isSelected());
+        this.data.put("chkColor", this.chkColor.isSelected());
+        this.data.put("chkDefaultCoverPage", this.chkDefaultCoverPage.isSelected());
+        
+        this.data.put("cmbRegisteredLetter", this.cmbRegisteredLetter.getSelectedItem().toString());
+
     }
 
     @Override
@@ -757,8 +776,6 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
         cmbRegisteredLetter = new javax.swing.JComboBox<>();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
-        lblProgress = new javax.swing.JLabel();
-        cmdSend = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         cmbRecipient = new javax.swing.JComboBox<>();
         txtAdressLine1 = new javax.swing.JTextField();
@@ -787,7 +804,7 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
 
-        setName("Versand"); // NOI18N
+        setName("Empfänger und Versandart"); // NOI18N
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -857,15 +874,6 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
                 .addComponent(cmbRegisteredLetter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        lblProgress.setText("Prüfe...");
-
-        cmdSend.setText("E-POST-Brief senden");
-        cmdSend.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSendActionPerformed(evt);
-            }
-        });
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel2.setText("Empfänger:");
@@ -955,11 +963,9 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
                                     .addComponent(txtSenderAdressLine)
                                     .addComponent(txtSenderStreet)
                                     .addComponent(txtSenderZipCode)
-                                    .addComponent(txtSenderCity)))
-                            .addComponent(cmdSend, javax.swing.GroupLayout.Alignment.TRAILING))
+                                    .addComponent(txtSenderCity))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -967,7 +973,7 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
@@ -1024,80 +1030,9 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(txtSenderCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel15))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdSend)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblProgress)
-                .addGap(138, 138, 138))
+                .addGap(196, 196, 196))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
-
-        UserSettings uset = UserSettings.getInstance();
-        uset.setSetting(UserSettings.EPOST_LAST_SENDER_ADRLINE, this.txtSenderAdressLine.getText());
-        uset.setSetting(UserSettings.EPOST_LAST_SENDER_CITY, this.txtSenderCity.getText());
-        uset.setSetting(UserSettings.EPOST_LAST_SENDER_STREET, this.txtSenderStreet.getText());
-        uset.setSetting(UserSettings.EPOST_LAST_SENDER_ZIPCODE, this.txtSenderZipCode.getText());
-        
-        this.lblProgress.setText("Upload wird vorbereitet...");
-        this.cmdSend.setEnabled(false);
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            String fileName=null;
-            List<File> pdfFiles=(List<File>)this.data.get("epost.letter.sortedpdffiles");
-            if(pdfFiles.size()==1)
-                fileName=pdfFiles.get(0).getName();
-            else
-                fileName="" + pdfFiles.size() + "_Dokumente.pdf";
-            
-            EpostLetter l = new EpostLetter();
-            l.setFileName(fileName);
-            l.setAddressLine1(this.txtAdressLine1.getText());
-            l.setAddressLine2(this.txtAdressLine2.getText());
-            l.setAddressLine3(this.txtAdressLine3.getText());
-            l.setAddressLine4(this.txtAdressLine4.getText());
-            l.setAddressLine5(this.txtAdressLine5.getText());
-            l.setCity(this.txtCity.getText());
-            l.setZipCode(this.txtZipCode.getText());
-            if(!StringUtils.isEmpty(this.txtCountry.getText()))
-                l.setCountry(this.txtCountry.getText());
-            
-
-            l.setSenderAdressLine1(this.txtSenderAdressLine.getText());
-            l.setSenderCity(this.txtSenderCity.getText());
-            l.setSenderStreet(this.txtSenderStreet.getText());
-            l.setSenderZipCode(this.txtSenderZipCode.getText());
-
-            l.setDuplex(this.chkDuplex.isSelected());
-            l.setColor(this.chkColor.isSelected());
-            l.setCoverLetter(this.chkDefaultCoverPage.isSelected());
-
-            l.setData((byte[])this.data.get("pdf.bytes"));
-
-            String caseId=(String)this.data.get("epost.letter.caseid");
-            int letterId=-1;
-            if("".equals(this.cmbRegisteredLetter.getSelectedItem())) {
-                this.lblProgress.setText("Upload als Standardbrief...");
-                letterId=locator.lookupVoipServiceRemote().sendLetter(l, caseId);
-                log.debug("Sent E-POST letter with ID " + letterId);
-            } else {
-                this.lblProgress.setText("Upload als " + this.cmbRegisteredLetter.getSelectedItem().toString() + "...");
-                letterId=locator.lookupVoipServiceRemote().sendRegisteredLetter(l, this.cmbRegisteredLetter.getSelectedItem().toString(), caseId);
-                log.debug("Sent E-POST registered letter with ID " + letterId + " in mode " + this.cmbRegisteredLetter.getSelectedItem().toString());
-            }
-            this.lblProgress.setText("Upload abgeschlossen.");
-            
-        } catch (Exception ex) {
-            this.cmdSend.setEnabled(true);
-            log.error("Error sending letter", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-
-    }//GEN-LAST:event_cmdSendActionPerformed
 
     private void cmbRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRecipientActionPerformed
         if(this.cmbRecipient.getSelectedItem()!=null && this.cmbRecipient.getSelectedItem() instanceof AddressBean) {
@@ -1141,7 +1076,6 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
     private javax.swing.JRadioButton chkSimplex;
     private javax.swing.JComboBox<AddressBean> cmbRecipient;
     private javax.swing.JComboBox<String> cmbRegisteredLetter;
-    private javax.swing.JButton cmdSend;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1161,7 +1095,6 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JLabel lblProgress;
     private javax.swing.JTextField txtAdressLine1;
     private javax.swing.JTextField txtAdressLine2;
     private javax.swing.JTextField txtAdressLine3;
@@ -1184,8 +1117,6 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
     @Override
     public void display() {
 
-        this.lblProgress.setText("");
-        
         this.chkColor.setSelected((Boolean)this.data.get("epost.letter.color"));
         this.chkDuplex.setSelected((Boolean)this.data.get("epost.letter.duplex"));
         this.chkDefaultCoverPage.setSelected((Boolean)this.data.get("epost.letter.coverpage"));
@@ -1204,5 +1135,10 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

@@ -744,5 +744,10 @@ public class FaxQueueEntry extends MailingQueueEntry {
     public Date getLastStatusDate() {
         return this.entry.getLastStatusDate();
     }
+
+    @Override
+    public String getStatusDetailsString() {
+        return "";
+    }
     
 }

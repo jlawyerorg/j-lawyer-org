@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.settings;
 
+import com.jdimension.jlawyer.client.utils.StringGenerator;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -699,6 +700,15 @@ public class ServerSettings extends ServerSettingsKeys {
             instance=new ServerSettings();
         }
         return instance;
+    }
+    
+    public String getInstallationId() {
+        String installationId=this.getSetting(SERVERCONF_INSTALLATION_ID, "");
+        if("".equals(installationId)) {
+            installationId=new StringGenerator().getID().toString();
+            this.setSetting(SERVERCONF_INSTALLATION_ID, installationId);
+        }
+        return installationId;
     }
     
     public String getSetting(String key, String defaultValue) {

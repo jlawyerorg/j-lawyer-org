@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.epost.EpostUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
@@ -674,7 +675,7 @@ import java.util.Date;
  */
 public class EpostQueueEntry extends MailingQueueEntry {
     
-    private EpostQueueBean entry=null;
+    protected EpostQueueBean entry=null;
     
     public EpostQueueEntry(EpostQueueBean e) {
         this.entry=e;
@@ -682,67 +683,74 @@ public class EpostQueueEntry extends MailingQueueEntry {
 
     @Override
     public boolean isFailedStatus() {
-        return EpostUtils.isFailStatus(this.entry.getLastStatusId());
+        return EpostUtils.isFailStatus(this.getEntry().getLastStatusId());
     }
 
     @Override
     public String getFailedObjectDescription() {
-        return "Brief " + this.entry.getFileName();
+        return "E-POST-Brief " + this.getEntry().getFileName();
     }
 
     @Override
     public ArchiveFileBean getCase() {
-        return this.entry.getArchiveFileKey();
+        return this.getEntry().getArchiveFileKey();
     }
 
     @Override
     public String getSentBy() {
-        return entry.getSentBy();
+        return getEntry().getSentBy();
     }
 
     @Override
     public String getMailingTypeName() {
-        return "Brief";
+        String letterType="Standardbrief";
+        if(!StringUtils.isEmpty(this.entry.getLetterType()))
+            letterType=this.getEntry().getLetterType();
+        
+        if(this.getEntry().getRecipientInformation()!=null)
+            return "E-POST-" + letterType + " an " + this.getEntry().getRecipientInformation();
+        else
+            return "E-POST-" + letterType;
     }
 
     @Override
     public String getStatusString() {
-        return entry.getLastStatusDetails();
+        return getEntry().getLastStatusDetails();
     }
 
     @Override
     public String getFileName() {
-        return entry.getFileName();
+        return getEntry().getFileName();
     }
 
     @Override
     public String getRecipientInformation() {
-        return this.getMailingTypeName() + " (?)";
+        return this.getMailingTypeName();
     }
     
     @Override
     public Date getSentDate() {
-        return this.entry.getCreatedDate();
+        return this.getEntry().getCreatedDate();
     }
     
     @Override
     public String getDisplayableStatus() {
-        return EpostUtils.getDisplayableStatus(this.entry.getLastStatusId());
+        return EpostUtils.getDisplayableStatus(this.getEntry().getLastStatusId());
     }
     
     @Override
     public int getStatusLevel() {
-        return EpostUtils.getStatusLevel(entry.getLastStatusId());
+        return EpostUtils.getStatusLevel(getEntry().getLastStatusId());
     }
     
     @Override
     public String getIdentifier() {
-        return "" + this.entry.getLetterId();
+        return "" + this.getEntry().getLetterId();
     }
     
     @Override
     public Date getLastStatusDate() {
-        return this.getLatestDate(this.entry.getCreatedDate(), this.entry.getDestinationAreaStatusDate(), this.entry.getPrintFeedbackDate(), this.entry.getPrintUploadDate(), this.entry.getProcessedDate(), this.entry.getRegisteredLetterStatusDate());
+        return this.getLatestDate(this.getEntry().getCreatedDate(), this.getEntry().getDestinationAreaStatusDate(), this.getEntry().getPrintFeedbackDate(), this.getEntry().getPrintUploadDate(), this.getEntry().getProcessedDate(), this.getEntry().getRegisteredLetterStatusDate());
     }
     
     private Date getLatestDate(Date ... d) {
@@ -752,6 +760,18 @@ public class EpostQueueEntry extends MailingQueueEntry {
                 dateTime=dt.getTime();
         }
         return new Date(dateTime);
+    }
+
+    @Override
+    public String getStatusDetailsString() {
+        return this.getEntry().getLastStatusDetails();
+    }
+
+    /**
+     * @return the entry
+     */
+    public EpostQueueBean getEntry() {
+        return entry;
     }
     
 }

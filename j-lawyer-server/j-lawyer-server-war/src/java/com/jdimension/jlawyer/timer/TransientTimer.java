@@ -781,6 +781,10 @@ public class TransientTimer {
         if (timerPurgeBin != null) {
             timerPurgeBin.cancel();
         }
+        
+        if (timerEpost != null) {
+            timerEpost.cancel();
+        }
     }
 
 }

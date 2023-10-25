@@ -705,6 +705,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private Image backgroundImage = null;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
     private ArrayList<MailingQueueEntry> lastEntryList = new ArrayList<MailingQueueEntry>();
+    
+    private Timer refreshTimer=null;
 
     @Override
     public void notifyStatusBarReady() {
@@ -738,6 +740,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
 
         initComponents();
         
+        this.lblIcon.setText("");
+        
         VoipUtils.initializeSettings();
 
         EventBroker eb = EventBroker.getInstance();
@@ -752,6 +756,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         Timer timer = new Timer();
         TimerTask mailingTask = new MailingQueueTimerTask();
         timer.schedule(mailingTask, 7500, 30000);
+        
+        this.refreshTimer=new Timer();
 
     }
 
@@ -760,6 +766,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         this.lblSent.setText("");
         this.lblSession.setText("");
         this.lblStatus.setText("");
+        this.lblStatusDetails.setText("");
         this.lblStatus.setIcon(null);
         this.lblTo.setText("");
         this.selectAllToggle.setSelected(false);
@@ -846,6 +853,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         cmdSaveReport = new javax.swing.JButton();
         cmdDelete = new javax.swing.JButton();
         selectAllToggle = new javax.swing.JToggleButton();
+        lblStatusDetails = new javax.swing.JLabel();
+        lblIcon = new javax.swing.JLabel();
         cmdRefresh = new javax.swing.JButton();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
@@ -923,7 +932,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         });
 
         selectAllToggle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"))); // NOI18N
-        selectAllToggle.setText("Alle wählen");
+        selectAllToggle.setText("Alle auswählen");
         selectAllToggle.setActionCommand("selectAll");
         selectAllToggle.setAutoscrolls(true);
         selectAllToggle.addActionListener(new java.awt.event.ActionListener() {
@@ -931,6 +940,11 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 selectAll(evt);
             }
         });
+
+        lblStatusDetails.setText("jLabel1");
+
+        lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png"))); // NOI18N
+        lblIcon.setText("jLabel1");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -943,13 +957,14 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel4)
                             .add(jLabel5))
-                        .add(6, 6, 6)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(lblSession, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .add(lblStatusDetails, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .add(0, 231, Short.MAX_VALUE)
+                        .add(0, 208, Short.MAX_VALUE)
                         .add(selectAllToggle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDelete)
@@ -958,16 +973,18 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdResend))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(jLabel6)
+                        .add(30, 30, 30)
+                        .add(lblSent, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel7)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel6)
-                        .add(30, 30, 30)
-                        .add(lblSent, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblIcon)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -976,7 +993,10 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
-                    .add(lblStatus))
+                    .add(lblStatus)
+                    .add(lblIcon))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblStatusDetails)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
@@ -993,7 +1013,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel7)
                     .add(lblArchiveFile))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 29, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdResend)
                     .add(cmdSaveReport)
@@ -1052,15 +1072,25 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
      *
      * @return Fax IDs from selected table items
      */
-    private HashMap<String,ArchiveFileBean> getSelectedEntriesIDs() {
+//    private HashMap<String,ArchiveFileBean> getSelectedEntriesIDs() {
+//        int[] selectedRows = this.tblQueue.getSelectedRows();
+//        HashMap<String,ArchiveFileBean> ids = new HashMap<>();
+//        // Convert array to list. Extract fax session ids.
+//        Arrays.stream(selectedRows).boxed().collect(Collectors.toList()).forEach(rowId -> {
+//            MailingQueueEntry mqe = (MailingQueueEntry) this.tblQueue.getValueAt(rowId, 0);
+//            ids.put(mqe.getIdentifier(), mqe.getCase());
+//        });
+//        return ids;
+//    }
+    
+    private List<MailingQueueEntry> getSelectedEntries() {
         int[] selectedRows = this.tblQueue.getSelectedRows();
-        HashMap<String,ArchiveFileBean> ids = new HashMap<>();
-        // Convert array to list. Extract fax session ids.
+        ArrayList<MailingQueueEntry> entries=new ArrayList<>();
         Arrays.stream(selectedRows).boxed().collect(Collectors.toList()).forEach(rowId -> {
             MailingQueueEntry mqe = (MailingQueueEntry) this.tblQueue.getValueAt(rowId, 0);
-            ids.put(mqe.getIdentifier(), mqe.getCase());
+            entries.add(mqe);
         });
-        return ids;
+        return entries;
     }
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
@@ -1069,15 +1099,23 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
 
     private void tblQueueMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblQueueMouseClicked
         int row = this.tblQueue.rowAtPoint(evt.getPoint());
-        
         Object value = this.tblQueue.getValueAt(row, 0);
+        
+        // enable buttons depending on entry type
+        if(this.tblQueue.getSelectedRowCount()==1) {
+            this.cmdResend.setEnabled(value instanceof FaxQueueEntry);
+        }
+        
+        
         if (value instanceof MailingQueueEntry) {
+            lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
             MailingQueueEntry mqe = (MailingQueueEntry) value;
             this.lblSession.setText(mqe.getIdentifier());
             this.lblSent.setText(mqe.getFileName() + " gesendet am " + df.format(mqe.getSentDate()) + " von " + mqe.getSentBy());
             //this.lblTo.setText("an " + mqe.getRemoteName() + " (" + mqe.getRemoteUri() + ")");
             this.lblTo.setText(mqe.getRecipientInformation());
             this.lblStatus.setText(mqe.getDisplayableStatus() + " seit " + df.format(mqe.getLastStatusDate()));
+            this.lblStatusDetails.setText(mqe.getStatusDetailsString());
             int level = mqe.getStatusLevel();
             Icon icon = null;
             switch (level) {
@@ -1098,6 +1136,10 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 this.lblArchiveFile.setText(mqe.getCase().getFileNumber() + " " + mqe.getCase().getName());
 
             }
+            
+            if(mqe instanceof EpostQueueEntry) {
+                lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/voip/DP_Logo_SZ_MF_rgb.png")));
+            }
         }
 
     }//GEN-LAST:event_tblQueueMouseClicked
@@ -1112,14 +1154,29 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            HashMap<String,ArchiveFileBean> ids = this.getSelectedEntriesIDs();
-            locator.lookupVoipServiceRemote().deleteQueueEntries(new ArrayList<>(ids.keySet()));
+            List<MailingQueueEntry> entries = this.getSelectedEntries();
+            List<String> faxEntries=new ArrayList<>();
+            List<Integer> epostEntries=new ArrayList<>();
+            for(MailingQueueEntry e: entries) {
+                if(e instanceof FaxQueueEntry)
+                    faxEntries.add(((MailingQueueEntry)e).getIdentifier());
+                else
+                    epostEntries.add(((EpostQueueEntry)e).getEntry().getLetterId());
+            }
+            if(faxEntries.size()>0)
+                locator.lookupVoipServiceRemote().deleteQueueEntries(faxEntries);
+            if(epostEntries.size()>0)
+                locator.lookupVoipServiceRemote().deleteEpostQueueEntries(epostEntries);
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Löschen des Eintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
         }
         this.clearDetails();
+        
+        TimerTask mailingTask = new MailingQueueTimerTask();
+        this.refreshTimer.schedule(mailingTask, 100);
+        
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdSaveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveReportActionPerformed
@@ -1127,8 +1184,22 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            HashMap<String,ArchiveFileBean> ids = this.getSelectedEntriesIDs();
-            for (String id : ids.keySet()) {
+            List<MailingQueueEntry> entries = this.getSelectedEntries();
+            List<String> faxEntriesIds=new ArrayList<>();
+            HashMap<String, FaxQueueEntry> faxEntries=new HashMap<>();
+            List<Integer> epostEntriesIds=new ArrayList<>();
+            HashMap<Integer, EpostQueueEntry> epostEntries=new HashMap<>();
+            for(MailingQueueEntry e: entries) {
+                if(e instanceof FaxQueueEntry) {
+                    faxEntriesIds.add(((MailingQueueEntry)e).getIdentifier());
+                    faxEntries.put(((MailingQueueEntry)e).getIdentifier(), (FaxQueueEntry)e);
+                } else {
+                    epostEntriesIds.add(((EpostQueueEntry)e).getEntry().getLetterId());
+                    epostEntries.put(((EpostQueueEntry)e).getEntry().getLetterId(), (EpostQueueEntry)e);
+                }
+            }
+
+            for (String id : faxEntriesIds) {
                 String defaultName = locator.lookupVoipServiceRemote().getNewFaxReportFileName(id);
                 defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
                 if(defaultName==null) {
@@ -1136,23 +1207,47 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                     return;
                 }
                 
-                boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(ids.get(id).getId(), defaultName);
+                boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(faxEntries.get(id).getCase().getId(), defaultName);
                 while (documentExists) {
                     defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
                     if (defaultName == null || "".equals(defaultName)) {
                         this.clearDetails();
                         return;
                     }
-                    documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(ids.get(id).getId(), defaultName);
+                    documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(faxEntries.get(id).getCase().getId(), defaultName);
                 }
 
                 locator.lookupVoipServiceRemote().saveFaxReport(id, defaultName);
             }
+            
+            for (int id : epostEntriesIds) {
+                String defaultName = locator.lookupVoipServiceRemote().getNewEpostReportFileName(id);
+                defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
+                if(defaultName==null) {
+                    this.clearDetails();
+                    return;
+                }
+                
+                boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(epostEntries.get(id).getCase().getId(), defaultName);
+                while (documentExists) {
+                    defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
+                    if (defaultName == null || "".equals(defaultName)) {
+                        this.clearDetails();
+                        return;
+                    }
+                    documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(epostEntries.get(id).getCase().getId(), defaultName);
+                }
+
+                locator.lookupVoipServiceRemote().saveEpostReport(id, defaultName);
+            }
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Erstellen des Reports: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Erstellen des Berichts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         this.clearDetails();
+        
+        TimerTask mailingTask = new MailingQueueTimerTask();
+        this.refreshTimer.schedule(mailingTask, 100);
     }//GEN-LAST:event_cmdSaveReportActionPerformed
 
     private void cmdResendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResendActionPerformed
@@ -1160,8 +1255,14 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            HashMap<String,ArchiveFileBean> ids = this.getSelectedEntriesIDs();
-            for (String id : ids.keySet()) {
+            List<MailingQueueEntry> entries = this.getSelectedEntries();
+            List<String> faxEntries=new ArrayList<>();
+            for(MailingQueueEntry e: entries) {
+                if(e instanceof FaxQueueEntry)
+                    faxEntries.add(((MailingQueueEntry)e).getIdentifier());
+            }
+                        
+            for (String id : faxEntries) {
                 locator.lookupVoipServiceRemote().reInitiateFax(id);
             }
         } catch (Exception ex) {
@@ -1195,10 +1296,12 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblArchiveFile;
+    private javax.swing.JLabel lblIcon;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSent;
     private javax.swing.JLabel lblSession;
     private javax.swing.JLabel lblStatus;
+    private javax.swing.JLabel lblStatusDetails;
     private javax.swing.JLabel lblTo;
     private javax.swing.JToggleButton selectAllToggle;
     private javax.swing.JTable tblQueue;

@@ -672,7 +672,7 @@ import java.util.ArrayList;
  */
 public class WizardSteps {
     
-    private ArrayList<WizardStepInterface> steps=new ArrayList<>();
+    protected ArrayList<WizardStepInterface> steps=new ArrayList<>();
     private int currentStep=-1;
     WizardDataContainer data=null;
     
@@ -691,15 +691,15 @@ public class WizardSteps {
     public void addStep(WizardStepInterface step) {
         if(currentStep==-1)
             currentStep=0;
-        steps.add(step);
+        getSteps().add(step);
         step.setData(this.data);
     }
     
     public WizardStepInterface next() {
         
-        if(currentStep<steps.size()) {
+        if(currentStep<getSteps().size()) {
             currentStep++;
-            return steps.get(currentStep);
+            return getSteps().get(currentStep);
         }
         return null;
             
@@ -709,7 +709,7 @@ public class WizardSteps {
         
         if(currentStep>0) {
             currentStep--;
-            return steps.get(currentStep);
+            return getSteps().get(currentStep);
         }
         return null;
             
@@ -718,7 +718,7 @@ public class WizardSteps {
     public WizardStepInterface current() {
         
         if(currentStep!=-1)
-            return steps.get(currentStep);
+            return getSteps().get(currentStep);
         
         return null;
             
@@ -727,13 +727,13 @@ public class WizardSteps {
     public String stepTitlesHtml() {
         StringBuilder sb=new StringBuilder();
         sb.append("<html>");
-        for(int i=0;i<steps.size();i++) {
+        for(int i=0;i<getSteps().size();i++) {
             if(i==currentStep) {
                 sb.append("<b>");
-                sb.append(steps.get(i).getStepName());
+                sb.append(getSteps().get(i).getStepName());
                 sb.append("</b><br/>");
             } else {
-                sb.append(steps.get(i).getStepName());
+                sb.append(getSteps().get(i).getStepName());
                 sb.append("<br/>");
             }
         }
@@ -742,15 +742,15 @@ public class WizardSteps {
     }
     
     public boolean isFinalStep(WizardStepInterface step) {
-        return step.equals(steps.get(steps.size()-1));
+        return step.equals(getSteps().get(getSteps().size()-1));
     }
     
     public boolean isFirstStep(WizardStepInterface step) {
-        return step.equals(steps.get(0));
+        return step.equals(getSteps().get(0));
     }
     
     public int stepCount() {
-        return steps.size();
+        return getSteps().size();
     }
 
     /**
@@ -765,6 +765,13 @@ public class WizardSteps {
      */
     public void setParent(Window parent) {
         this.parent = parent;
+    }
+
+    /**
+     * @return the steps
+     */
+    public ArrayList<WizardStepInterface> getSteps() {
+        return steps;
     }
     
 }

@@ -679,6 +679,7 @@ public abstract class MailingQueueEntry {
     
     public abstract String getMailingTypeName();
     public abstract String getStatusString();
+    public abstract String getStatusDetailsString();
     public abstract String getFileName();
     
     public abstract String getRecipientInformation();

@@ -688,6 +688,7 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
     private static final Logger log = Logger.getLogger(EpostLetterValidationStep.class.getName());
 
     private WizardDataContainer data = null;
+    private WizardMainPanel wizard = null;
 
     /**
      * Creates new form EpostLetterValidationStep
@@ -863,6 +864,9 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
 
         this.lblProgress.setText("");
         this.cmdValidate.setEnabled(false);
+        
+        this.wizard.enableButtons(false, false, true, false);
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -892,17 +896,26 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                 int letterId = -1;
                 try {
                     ThreadUtils.updateLabel(this.lblProgress, "PDF wird hochgeladen...");
-                    letterId=locator.lookupVoipServiceRemote().validateLetter(l, this.cmbEmail.getEditor().getItem().toString());
+                    letterId = locator.lookupVoipServiceRemote().validateLetter(l, this.cmbEmail.getEditor().getItem().toString());
                 } catch (Exception ex) {
                     log.error("could not validate letter", ex);
                     ThreadUtils.updateLabel(this.lblProgress, "Upload gescheitert.");
                     ThreadUtils.enableComponent(this.cmdValidate, true);
+                    try {
+                        SwingUtilities.invokeLater(() -> {
+                            if (this.wizard != null) {
+                                this.wizard.enableButtons(true, true, true, false);
+                            }
+                        });
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
                     return;
                 }
                 byte[] validatedPdf = null;
                 for (int i = 0; i < 25; i++) {
                     try {
-                        ThreadUtils.updateLabel(this.lblProgress, "Warte auf Ergebnis... " + (i+1) + "/25");
+                        ThreadUtils.updateLabel(this.lblProgress, "Warte auf Ergebnis... " + (i + 1) + "/25");
                         validatedPdf = locator.lookupVoipServiceRemote().getValidatedLetter(letterId);
                         this.data.put("pdf.validated.bytes", validatedPdf);
                         ThreadUtils.updateLabel(this.lblProgress, "Ergebnis wird aufbereitet...");
@@ -912,18 +925,27 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                             log.error("Error getting validated PDF", ex);
                             Thread.sleep(1500);
                         } catch (Throwable t) {
-                            
+
                         }
                     }
                 }
                 if (validatedPdf == null) {
                     ThreadUtils.enableComponent(this.cmdValidate, true);
                     JOptionPane.showMessageDialog(this, "Fehler beim Prüfen des Dokuments - keine Antwort der E-POST-Schnittstelle", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    try {
+                        SwingUtilities.invokeLater(() -> {
+                            if (this.wizard != null) {
+                                this.wizard.enableButtons(true, true, true, false);
+                            }
+                        });
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
                     return;
                 }
 
                 SwingUtilities.invokeLater(() -> {
-                    PdfImagePanel pdfP = new PdfImagePanel("E-POST-Layouttest.pdf", (byte[])this.data.get("pdf.validated.bytes"));
+                    PdfImagePanel pdfP = new PdfImagePanel("E-POST-Layouttest.pdf", (byte[]) this.data.get("pdf.validated.bytes"));
                     this.pnlPreview.removeAll();
                     this.pnlPreview.add(pdfP, BorderLayout.CENTER);
                     this.pnlPreview.revalidate();
@@ -931,15 +953,23 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                     pdfP.setSize(new Dimension(this.pnlPreview.getWidth(), this.pnlPreview.getHeight()));
                     pdfP.setMaximumSize(new Dimension(this.pnlPreview.getWidth(), this.pnlPreview.getHeight()));
                     pdfP.setPreferredSize(new Dimension(this.pnlPreview.getWidth(), this.pnlPreview.getHeight()));
-                    pdfP.showContent((byte[])this.data.get("pdf.validated.bytes"));
+                    pdfP.showContent((byte[]) this.data.get("pdf.validated.bytes"));
 
-                    
-                    
                     ThreadUtils.updateLabel(this.lblProgress, "");
                     ThreadUtils.enableComponent(this.cmdValidate, true);
                 }
                 );
-                
+
+                try {
+                    SwingUtilities.invokeLater(() -> {
+                        if (this.wizard != null) {
+                            this.wizard.enableButtons(true, true, true, false);
+                        }
+                    });
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+
             }).start();
 
         } catch (Exception ex) {
@@ -979,7 +1009,7 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
     public void display() {
 
         this.lblProgress.setText("");
-        
+
         UserSettings usettings = UserSettings.getInstance();
         List<MailboxSetup> mailboxes = usettings.getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         this.cmbEmail.removeAllItems();
@@ -995,5 +1025,10 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        this.wizard = wizard;
     }
 }

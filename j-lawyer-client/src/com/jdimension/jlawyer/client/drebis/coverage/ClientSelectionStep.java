@@ -1117,4 +1117,9 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     public void setData(WizardDataContainer data) {
         this.data = data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

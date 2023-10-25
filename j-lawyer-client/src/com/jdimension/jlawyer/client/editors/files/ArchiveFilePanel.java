@@ -722,6 +722,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
+import com.jdimension.jlawyer.client.voip.EpostLetterSendStatus;
 import com.jdimension.jlawyer.client.voip.EpostLetterSendStep;
 import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
@@ -5980,6 +5981,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         steps.addStep(new EpostPdfMergeStep());
         steps.addStep(new EpostLetterValidationStep());
         steps.addStep(new EpostLetterSendStep());
+        steps.addStep(new EpostLetterSendStatus());
 
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
