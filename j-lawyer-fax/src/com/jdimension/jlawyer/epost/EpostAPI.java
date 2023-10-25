@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.epost;
 
 import com.jdimension.jlawyer.fax.utils.Base64;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
@@ -685,7 +687,7 @@ public class EpostAPI {
     private static final String AUTH_HEADERPREFIX = "Bearer ";
 
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-    
+
     private String baseUri = "https://api.epost.docuguide.com";
 
     private String vendorId = null;
@@ -722,7 +724,7 @@ public class EpostAPI {
         }
     }
 
-    public void setPassword(String newPassword, String smsCode) throws EpostException {
+    public String setPassword(String newPassword, String smsCode) throws EpostException {
         log.info("ePost API set password request");
 
         WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/setPassword");
@@ -744,14 +746,7 @@ public class EpostAPI {
                 throw new EpostException("Could not (re-)set password for ePost API: " + returnValue + " [" + response.getStatus() + "]");
             }
 
-//            String secret=null;
-//            Object jsonOutput = Jsoner.deserialize(returnValue);
-//            if (jsonOutput instanceof JsonObject) {
-//                JsonObject result = (JsonObject) jsonOutput;
-//                JsonKey sessionKey = Jsoner.mintJsonKey("token", null);
-//                secret = result.getString(sessionKey);
-//
-//            }
+            return returnValue.trim().replace("\"", "");
         } catch (Exception ex) {
             log.error("Could not (re-)set password for ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);
@@ -799,7 +794,7 @@ public class EpostAPI {
     public byte[] getValidatedLetter(String token, int letterId) throws EpostException {
         log.info("ePost API validated letter retrieval");
 
-        byte[] bytes=null;
+        byte[] bytes = null;
         WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).get();
@@ -815,19 +810,19 @@ public class EpostAPI {
                 JsonKey levelKey = Jsoner.mintJsonKey("data", null);
                 String base64 = result.getString(levelKey);
                 Base64 decoder = new Base64();
-                bytes=decoder.decode(base64);
+                bytes = decoder.decode(base64);
             }
 
         } catch (Exception ex) {
             log.error("Could not retrieve validated letter", ex);
             throw new EpostException(ex.getMessage(), ex);
         }
-        
+
         log.info("ePost API validated letter retrieval finished, received bytes: " + bytes.length);
         return bytes;
-        
+
     }
-    
+
     public int validateLetter(String token, EpostLetter letter, String toEmail) throws EpostException {
         log.info("ePost API letter validation");
 
@@ -840,7 +835,7 @@ public class EpostAPI {
         int letterId = this.postLetterToApi(token, letter, true, toEmail);
         log.info("ePost API letter validation finished, letter ID is " + letterId);
         return letterId;
-        
+
     }
 
     public int sendLetter(String token, EpostLetter letter) throws EpostException {
@@ -856,31 +851,29 @@ public class EpostAPI {
     public int sendRegisteredLetter(String token, EpostLetter letter, String registeredLetterMode) throws EpostException {
         log.info("ePost API registered letter sending");
 
-        if(registeredLetterMode==null)
+        if (registeredLetterMode == null) {
             throw new EpostException("Registered letter mode is required");
-        
-        boolean validType=false;
-        for(String m: EpostLetter.REGISTEREDLETTER_TYPES) {
-            if(m.equals(registeredLetterMode)) {
-                validType=true;
+        }
+
+        boolean validType = false;
+        for (String m : EpostLetter.REGISTEREDLETTER_TYPES) {
+            if (m.equals(registeredLetterMode)) {
+                validType = true;
                 break;
             }
         }
-        if(!validType) {
+        if (!validType) {
             throw new EpostException("Registered letter mode not supported: " + registeredLetterMode);
         }
-        
+
         letter.setRegisteredLetter(registeredLetterMode);
-        
+
         this.validateLetterAttributes(letter);
 
         int letterId = this.postLetterToApi(token, letter, false, null);
         log.info("ePost API registered letter sending finished, letter ID is " + letterId);
         return letterId;
-        
-        
-        
-            
+
     }
 
     public EpostApiStatus healthCheck() throws EpostException {
@@ -925,7 +918,7 @@ public class EpostAPI {
         }
         return status;
     }
-    
+
     public EpostLetterStatus getLetterStatus(String token, int letterId) throws EpostException {
         log.info("ePost letter status check for letter " + letterId);
 
@@ -939,7 +932,7 @@ public class EpostAPI {
                 throw new EpostException("Could not check ePost letter status: " + returnValue + " [" + response.getStatus() + "]");
             }
 
-            EpostLetterStatus s=new EpostLetterStatus();
+            EpostLetterStatus s = new EpostLetterStatus();
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
@@ -950,10 +943,11 @@ public class EpostAPI {
                 s.setStatusDetails(result.getString(Jsoner.mintJsonKey("statusDetails", null)));
                 s.setCreatedDate(df.parse(result.getString(Jsoner.mintJsonKey("createdDate", null))));
                 s.setDestinationAreaStatus(result.getString(Jsoner.mintJsonKey("destinationAreaStatus", null)));
-                if(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))!=null)
+                if (result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null)) != null) {
                     s.setDestinationAreaStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
-                
-                if(result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
+                }
+
+                if (result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
                     JsonArray errorList = (JsonArray) result.get(Jsoner.mintJsonKey("errorList", null));
                     for (Object errorEntry : errorList) {
                         JsonObject eo = (JsonObject) errorEntry;
@@ -965,20 +959,23 @@ public class EpostAPI {
                         s.getErrorList().add(se);
                     }
                 }
-                
-                s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
-                if(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))!=null)
-                    s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
-                if(result.getString(Jsoner.mintJsonKey("printUploadDate", null))!=null)
-                    s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
-                if(result.getString(Jsoner.mintJsonKey("processedDate", null))!=null)
-                    s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
-                s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
-                if(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))!=null)
-                    s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
-                
-                return s;
 
+                s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
+                if (result.getString(Jsoner.mintJsonKey("printFeedbackDate", null)) != null) {
+                    s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
+                }
+                if (result.getString(Jsoner.mintJsonKey("printUploadDate", null)) != null) {
+                    s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
+                }
+                if (result.getString(Jsoner.mintJsonKey("processedDate", null)) != null) {
+                    s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
+                }
+                s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
+                if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
+                    s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
+                }
+
+                return s;
 
             } else {
                 log.error("Could not check ePost letter status - invalid response");
@@ -990,7 +987,92 @@ public class EpostAPI {
             throw new EpostException(ex.getMessage(), ex);
         }
     }
-    
+
+    public ArrayList<EpostLetterStatus> getLetterStatus(String token, List<Integer> letterIds) throws EpostException {
+        log.info("ePost letter status check for " + letterIds.size() + " letters");
+
+        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/StatusQuery");
+
+        StringBuilder request = new StringBuilder();
+        request.append("[ ");
+        for (int i = 0; i < letterIds.size(); i++) {
+            if (i != 0) {
+                request.append(", ");
+            }
+            request.append(letterIds.get(i));
+        }
+        request.append(" ]");
+        ArrayList<EpostLetterStatus> returnStatusList=new ArrayList<>();
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).post(javax.ws.rs.client.Entity.entity(request.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not check ePost multi-letter status: " + returnValue + " [" + response.getStatus() + "]");
+                throw new EpostException("Could not check ePost multi-letter status: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonArray) {
+                JsonArray statusList = ((JsonArray) jsonOutput);
+                for (int i = 0; i < statusList.size(); i++) {
+                    JsonObject result = (JsonObject)statusList.get(i);
+                    
+                    EpostLetterStatus s = new EpostLetterStatus();
+                    s.setLetterId(result.getInteger(Jsoner.mintJsonKey("letterID", null)));
+                    s.setFileName(result.getString(Jsoner.mintJsonKey("fileName", null)));
+                    s.setStatusId(result.getInteger(Jsoner.mintJsonKey("statusID", null)));
+                    s.setStatusDetails(result.getString(Jsoner.mintJsonKey("statusDetails", null)));
+                    s.setCreatedDate(df.parse(result.getString(Jsoner.mintJsonKey("createdDate", null))));
+                    s.setDestinationAreaStatus(result.getString(Jsoner.mintJsonKey("destinationAreaStatus", null)));
+                    if (result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null)) != null) {
+                        s.setDestinationAreaStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
+                    }
+
+                    if (result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
+                        JsonArray errorList = (JsonArray) result.get(Jsoner.mintJsonKey("errorList", null));
+                        for (Object errorEntry : errorList) {
+                            JsonObject eo = (JsonObject) errorEntry;
+                            EpostLetterStatusError se = new EpostLetterStatusError();
+                            se.setCode(eo.getString(Jsoner.mintJsonKey("code", null)));
+                            se.setDate(df.parse(eo.getString(Jsoner.mintJsonKey("code", null))));
+                            se.setDescription(eo.getString(Jsoner.mintJsonKey("code", null)));
+                            se.setLevel(eo.getString(Jsoner.mintJsonKey("code", null)));
+                            s.getErrorList().add(se);
+                        }
+                    }
+
+                    s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
+                    if (result.getString(Jsoner.mintJsonKey("printFeedbackDate", null)) != null) {
+                        s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
+                    }
+                    if (result.getString(Jsoner.mintJsonKey("printUploadDate", null)) != null) {
+                        s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
+                    }
+                    if (result.getString(Jsoner.mintJsonKey("processedDate", null)) != null) {
+                        s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
+                    }
+                    s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
+                    if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
+                        s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
+                    }
+                    returnStatusList.add(s);
+
+                }
+
+            } else {
+                log.error("Could not check ePost letter status - invalid response");
+                throw new EpostException("Could not check ePost letter status - invalid response");
+            }
+
+        } catch (Exception ex) {
+            log.error("Could not check ePost letter status", ex);
+            throw new EpostException(ex.getMessage(), ex);
+        }
+        
+        return returnStatusList;
+    }
+
     private int postLetterToApi(String token, EpostLetter letter, boolean validateOnly, String validateToEmail) throws EpostException {
         String content = null;
         try {
@@ -1013,7 +1095,7 @@ public class EpostAPI {
         jsonQuery.append("  \"isDuplex\": ").append(letter.isDuplex()).append(",\r\n");
         jsonQuery.append("  \"coverLetter\": ").append(letter.isCoverLetter()).append(",\r\n");
         //+ "  \"registeredLetter\": \"" + letter + "\",\r\n");
-        if(validateOnly) {
+        if (validateOnly) {
             jsonQuery.append("  \"testFlag\": " + "true" + ",\r\n");
             jsonQuery.append("  \"testEMail\": \"").append(validateToEmail).append("\",\r\n");
             jsonQuery.append("  \"testShowRestrictedArea\": " + "true" + ",\r\n");
@@ -1076,12 +1158,12 @@ public class EpostAPI {
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonArray) {
-                JsonArray letterIdArray=(JsonArray)jsonOutput;
-                if(letterIdArray.isEmpty()) {
+                JsonArray letterIdArray = (JsonArray) jsonOutput;
+                if (letterIdArray.isEmpty()) {
                     log.error("letter endpoint returned an empty array with no letter IDs");
                     throw new EpostException("letter endpoint returned an empty array with no letter IDs");
                 }
-                JsonObject result = (JsonObject)letterIdArray.get(0);
+                JsonObject result = (JsonObject) letterIdArray.get(0);
                 JsonKey sessionKey = Jsoner.mintJsonKey("letterID", null);
                 return result.getInteger(sessionKey);
 

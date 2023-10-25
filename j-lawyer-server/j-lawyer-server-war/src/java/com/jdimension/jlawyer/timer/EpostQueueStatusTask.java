@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.EpostQueueBeanFacadeLocal;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import com.jdimension.jlawyer.services.VoipServiceLocal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.security.RunAs;
 import javax.naming.InitialContext;
@@ -694,43 +695,67 @@ public class EpostQueueStatusTask extends java.util.TimerTask {
         try {
             InitialContext ic = new InitialContext();
             SingletonServiceLocal singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
-            
+
             VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/VoipService!com.jdimension.jlawyer.services.VoipServiceLocal");
 
             EpostQueueBeanFacadeLocal epostQ = (EpostQueueBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/EpostQueueBeanFacade!com.jdimension.jlawyer.persistence.EpostQueueBeanFacadeLocal");
             List<EpostQueueBean> entries = epostQ.findAll();
+
+            // need to request grouped by sender id, because they might have different credentials
+            HashMap<String, List<Integer>> unfinishedLetterIds = new HashMap<>();
+            HashMap<Integer, EpostQueueBean> updateCandidates=new HashMap<>();
+
             int failed = 0;
             for (EpostQueueBean eqb : entries) {
-                try {
-                    int currentStatus = eqb.getLastStatusId();
-                    if (!EpostUtils.isFinalStatus(currentStatus)) {
-                        EpostLetterStatus newStatus = voip.getLetterStatus(eqb.getLetterId(), eqb.getSentBy());
-                        if (newStatus.getStatusId()!=currentStatus) {
-                            // update entry
-                            eqb.setLastStatusId(newStatus.getStatusId());
-                            eqb.setDestinationAreaStatus(newStatus.getDestinationAreaStatus());
-                            eqb.setDestinationAreaStatusDate(newStatus.getDestinationAreaStatusDate());
-                            eqb.setFileName(newStatus.getFileName());
-                            eqb.setLastStatusDetails(newStatus.getStatusDetails());
-                            eqb.setNoOfPages(newStatus.getNoOfPages());
-                            eqb.setPrintFeedbackDate(newStatus.getPrintFeedbackDate());
-                            eqb.setPrintUploadDate(newStatus.getPrintUploadDate());
-                            eqb.setProcessedDate(newStatus.getProcessedDate());
-                            eqb.setRegisteredLetterStatus(newStatus.getRegisteredLetterStatus());
-                            eqb.setRegisteredLetterStatusDate(newStatus.getRegisteredLetterStatusDate());
-                            epostQ.edit(eqb);
-
-                            if (EpostUtils.isFailStatus(newStatus.getStatusId())) {
-                                failed = failed + 1;
-                                singleton.setFailedLetter(eqb);
-                            }
-                        }
-
+                updateCandidates.put(eqb.getLetterId(), eqb);
+                
+                int currentStatus = eqb.getLastStatusId();
+                if (!EpostUtils.isFinalStatus(currentStatus)) {
+                    if (!unfinishedLetterIds.containsKey(eqb.getSentBy())) {
+                        unfinishedLetterIds.put(eqb.getSentBy(), new ArrayList<>());
                     }
-                } catch (Throwable t) {
-                    log.error("Could not update status for letter " + eqb.getLetterId() + " - skipping...", t);
+                    unfinishedLetterIds.get(eqb.getSentBy()).add(eqb.getLetterId());
+                }
+
+            }
+
+            List<EpostLetterStatus> newStatuus = new ArrayList<>();
+            try {
+                for (String principal : unfinishedLetterIds.keySet()) {
+                    // todo: different principals might still use the same epost credentials and we still run into the rate limit
+                    List<EpostLetterStatus> allForUser = voip.getLetterStatus(unfinishedLetterIds.get(principal), principal);
+                    newStatuus.addAll(allForUser);
+                }
+            } catch (Throwable t) {
+                log.error("Could not update status for multiple letters, skipping...", t);
+            }
+
+            for (EpostLetterStatus newStatus : newStatuus) {
+                EpostQueueBean eqb=updateCandidates.get(newStatus.getLetterId());
+                int currentStatus=eqb.getLastStatusId();
+                if (newStatus.getStatusId() != currentStatus) {
+                    // update entry
+                    eqb.setCreatedDate(newStatus.getCreatedDate());
+                    eqb.setLastStatusId(newStatus.getStatusId());
+                    eqb.setDestinationAreaStatus(newStatus.getDestinationAreaStatus());
+                    eqb.setDestinationAreaStatusDate(newStatus.getDestinationAreaStatusDate());
+                    eqb.setFileName(newStatus.getFileName());
+                    eqb.setLastStatusDetails(newStatus.getStatusDetails());
+                    eqb.setNoOfPages(newStatus.getNoOfPages());
+                    eqb.setPrintFeedbackDate(newStatus.getPrintFeedbackDate());
+                    eqb.setPrintUploadDate(newStatus.getPrintUploadDate());
+                    eqb.setProcessedDate(newStatus.getProcessedDate());
+                    eqb.setRegisteredLetterStatus(newStatus.getRegisteredLetterStatus());
+                    eqb.setRegisteredLetterStatusDate(newStatus.getRegisteredLetterStatusDate());
+                    epostQ.edit(eqb);
+
+                    if (EpostUtils.isFailStatus(newStatus.getStatusId())) {
+                        failed = failed + 1;
+                        singleton.setFailedLetter(eqb);
+                    }
                 }
             }
+
             if (failed == 0) {
                 singleton.setFailedLetter(null);
             }
@@ -738,9 +763,9 @@ public class EpostQueueStatusTask extends java.util.TimerTask {
             ArrayList<EpostQueueBean> list = new ArrayList<>();
             list.addAll(epostQ.findAll());
             singleton.setEpostQueue(list);
-            
+
         } catch (Throwable ex) {
-            log.error("Error checking ePost letter statuses", ex);
+             log.error("Error checking ePost letter statuses", ex);
         }
     }
 

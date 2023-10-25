@@ -674,7 +674,6 @@ import com.jdimension.jlawyer.drebis.DrebisException;
 import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DrebisServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Toolkit;
@@ -698,7 +697,7 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form SubmitClaimStep
      */
     public SubmitClaimStep() {
         initComponents();
@@ -706,13 +705,11 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
 
     @Override
     public void nextEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 
@@ -852,99 +849,85 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
 
 
         final String lBreak = System.getProperty("line.separator");
-        //this.taSummary.append("Akte: " + this.data.get("clients.archivefilenumber") + " " + this.data.get("clients.archivefilename"));
         Object insTest=this.data.get("claimdetails.insurance");
         InsuranceInfo insTest2=null;
         if(insTest!=null && insTest instanceof InsuranceInfo)
             insTest2=(InsuranceInfo) this.data.get("claimdetails.insurance");
         
-        //final InsuranceInfo insurance = (InsuranceInfo) this.data.get("claimdetails.insurance");
         final InsuranceInfo insurance = insTest2;
-        //this.taSummary.append("Versicherung: VS " + this.data.get("clients.insurancepolicy") + " bei der " + insName);
-
+        
         final ArrayList<DrebisPerson> persons = (ArrayList<DrebisPerson>) this.data.get("clients.drebispersons");
 
         final ArrayList<DrebisPerson> others = (ArrayList<DrebisPerson>) this.data.get("others.drebispersons");
 
         final ArrayList<ArchiveFileDocumentsBean> drebDocs = (ArrayList<ArchiveFileDocumentsBean>) this.data.get("documents.drebisdocumentbeans");
 
-        new Thread(new Runnable() {
-
-            public void run() {
-                try {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    FileConverter conv = FileConverter.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-                    DrebisServiceRemote drebis=locator.lookupDrebisServiceRemote();
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                FileConverter conv = FileConverter.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DrebisServiceRemote drebis=locator.lookupDrebisServiceRemote();
+                
+                ArrayList<DrebisDocument> dDocs=new ArrayList<>();
+                
+                for (ArchiveFileDocumentsBean doc: drebDocs) {
                     
-                    ArrayList<DrebisDocument> dDocs=new ArrayList<DrebisDocument>();
-                    //Base64 base64=new Base64();
-                    for (ArchiveFileDocumentsBean doc: drebDocs) {
-                                                
-                        ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                        byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                        String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                    ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
+                    byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                    
+                    if (doc.getName().toLowerCase().endsWith(".pdf")) {
+                        DrebisDocument dDoc=new DrebisDocument(doc.getName(), content);
+                        dDocs.add(dDoc);
+                        ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
                         
-                        if (doc.getName().toLowerCase().endsWith(".pdf")) {
-                            //dlg.addAttachment(tmpUrl, doc.getDictateSign());
-                            //String b64=base64.encode(content);
-                            //DrebisDocument dDoc=new DrebisDocument(doc.getName(), b64.getBytes("UTF-8"));
-                            DrebisDocument dDoc=new DrebisDocument(doc.getName(), content);
-                            dDocs.add(dDoc);
+                    } else {
+                        String pdfUrl = conv.convertToPDF(tmpUrl);
+                        File pdfFile=new File(pdfUrl);
+                        byte[] pdfContent=FileUtils.readFile(pdfFile);
+                        DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), pdfContent);
+                        dDocs.add(dDoc);
+                        try {
+                            // give some more time to LibreOfficed to shut down
+                            Thread.sleep(2500);
                             ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
-                            
-                        } else {
-                            String pdfUrl = conv.convertToPDF(tmpUrl);
-                            File pdfFile=new File(pdfUrl);
-                            byte[] pdfContent=FileUtils.readFile(pdfFile);
-                            //String b64=base64.encode(pdfContent);
-                            //DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), b64.getBytes("UTF-8"));
-                            DrebisDocument dDoc=new DrebisDocument(pdfFile.getName(), pdfContent);
-                            dDocs.add(dDoc);
-                            try {
-                                // give some more time to LibreOfficed to shut down
-                                Thread.sleep(2500);
-                                ThreadUtils.appendToTextArea("fertig" + lBreak, taLog);
-                            } catch (Throwable t) {
-                                ThreadUtils.appendToTextArea("FEHLER: " + t.getMessage() + lBreak, taLog);
-                                log.error(t);
-                                return;
-                            }
-                            
-                            //dlg.addAttachment(pdfUrl, doc.getDictateSign());
-                            new File(tmpUrl).deleteOnExit();
+                        } catch (Throwable t) {
+                            ThreadUtils.appendToTextArea("FEHLER: " + t.getMessage() + lBreak, taLog);
+                            log.error(t);
+                            return;
                         }
 
+                        new File(tmpUrl).deleteOnExit();
                     }
                     
-                    ThreadUtils.appendToTextArea("Sende an Drebis...", taLog);
-                    
-                    SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-                    Date selectedDate=null;
-                    if(!"".equalsIgnoreCase((String)data.get("claimdetails.claimdate"))) {
-                        selectedDate=df.parse((String)data.get("claimdetails.claimdate"));
-                    }
-                    
-                    //String url=drebis.sendCoverageRequest((String)data.get("archiveFile.id"), (String)data.get("clients.archivefilename"), insurance, (String)data.get("clients.insurancepolicy"), persons, others, dDocs);
-                    String url=drebis.sendClaimNote((String)data.get("archiveFile.id"), (String)data.get("clients.archivefilename"), insurance, (String)data.get("claimdetails.insurancepolicy"), persons, others, dDocs, (String)data.get("claimdetails.licenseplate"), ((Boolean)data.get("claimdetails.registered")).booleanValue(), (String)data.get("claimdetails.claimcity"), (String)data.get("claimdetails.claimtype"), selectedDate, (String)data.get("claimdetails.claimNumber"));
-                    
-                    ThreadUtils.appendToTextArea("fertig", taLog);
-                    ThreadUtils.appendToTextArea(lBreak + lBreak + "Beenden Sie jetzt den Vorgang im Drebis-Portal über den unten angegebenen URL!", taLog);
-                    ThreadUtils.updateTextField(txtDrebisUrl, url);
-                    ThreadUtils.enableComponent(cmdCopy, true);
-                    ThreadUtils.enableComponent(cmdOpenDrebis, true);
-                    
-                } catch (DrebisException de) {
-                    log.error("Error submitting claim note", de);
-                    ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
-                    return;
-                    
-                } catch (Exception e) {
-                    log.error("Error submitting claim note", e);
-                    ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
-                    return;
                 }
+                
+                ThreadUtils.appendToTextArea("Sende an Drebis...", taLog);
+                
+                SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+                Date selectedDate=null;
+                if(!"".equalsIgnoreCase((String)data.get("claimdetails.claimdate"))) {
+                    selectedDate=df.parse((String)data.get("claimdetails.claimdate"));
+                }
+                
+                String url=drebis.sendClaimNote((String)data.get("archiveFile.id"), (String)data.get("clients.archivefilename"), insurance, (String)data.get("claimdetails.insurancepolicy"), persons, others, dDocs, (String)data.get("claimdetails.licenseplate"), ((Boolean)data.get("claimdetails.registered")).booleanValue(), (String)data.get("claimdetails.claimcity"), (String)data.get("claimdetails.claimtype"), selectedDate, (String)data.get("claimdetails.claimNumber"));
+                
+                ThreadUtils.appendToTextArea("fertig", taLog);
+                ThreadUtils.appendToTextArea(lBreak + lBreak + "Beenden Sie jetzt den Vorgang im Drebis-Portal über den unten angegebenen URL!", taLog);
+                ThreadUtils.updateTextField(txtDrebisUrl, url);
+                ThreadUtils.enableComponent(cmdCopy, true);
+                ThreadUtils.enableComponent(cmdOpenDrebis, true);
+                
+            } catch (DrebisException de) {
+                log.error("Error submitting claim note", de);
+                ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
+                return;
+                
+            } catch (Exception e) {
+                log.error("Error submitting claim note", e);
+                ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
+                return;
             }
         }).start();
 
@@ -954,5 +937,10 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

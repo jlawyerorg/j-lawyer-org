@@ -679,7 +679,6 @@ public class FaxClient2 {
      */
     public static void main(String[] args) {
         try {
-            // lino peters
             // SipgateAPI sg=new SipgateAPI("token-", "215");
             
             // ich

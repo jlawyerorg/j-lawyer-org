@@ -663,10 +663,33 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.util.Date;
+
 /**
  *
  * @author jens
  */
-public class MailingQueueEntry {
+public abstract class MailingQueueEntry {
+    
+    public abstract boolean isFailedStatus();
+    public abstract String getFailedObjectDescription();
+    public abstract ArchiveFileBean getCase();
+    public abstract String getSentBy();
+    
+    public abstract String getMailingTypeName();
+    public abstract String getStatusString();
+    public abstract String getStatusDetailsString();
+    public abstract String getFileName();
+    
+    public abstract String getRecipientInformation();
+    public abstract Date getSentDate();
+    
+    public abstract String getDisplayableStatus();
+    public abstract int getStatusLevel();
+    
+    public abstract String getIdentifier();
+    
+    public abstract Date getLastStatusDate();
     
 }

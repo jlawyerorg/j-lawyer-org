@@ -1048,7 +1048,7 @@
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblNewsStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="lblFaxStatus" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblMailingStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                   <Component id="lblUnreadInstantMessages" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -1068,7 +1068,7 @@
                   <Component id="lblUpdateStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblScanStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblMailStatus" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblFaxStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblNewsStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="statusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblDrebisStatus" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1145,11 +1145,11 @@
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblSystemStatusMouseClicked"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="lblFaxStatus">
+        <Component class="javax.swing.JLabel" name="lblMailingStatus">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
               <FontInfo relative="true">
-                <Font component="lblFaxStatus" property="font" relativeSize="true" size="0"/>
+                <Font component="lblMailingStatus" property="font" relativeSize="true" size="0"/>
               </FontInfo>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">

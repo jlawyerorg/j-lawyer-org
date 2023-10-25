@@ -2906,7 +2906,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         Timestamp result = null;
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("SELECT max(changeDate) FROM case_history where archiveFileKey=?;")) {
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("SELECT date_changed FROM cases where id=?")) {
             st.setString(1, archiveFileKey);
             rs = st.executeQuery();
 
@@ -3026,16 +3026,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             st = con.prepareStatement("select distinct(allkeys.archiveFileKey) from (\n"
                     // any cases with relevant tags or having documents with relevan tags
-                    + "    select a1.archiveFileKey, a1.maxChangeDate from      (\n"
-                    + "        SELECT archiveFileKey, MAX(changeDate) as maxChangeDate      \n"
-                    + "        FROM case_history      \n"
-                    + "        GROUP BY archiveFileKey) a1\n"
-                    + "    left join cases a2 on a1.archiveFileKey = a2.id\n"
-                    + "    left join case_tags a3 on a2.id = a3.archiveFileKey\n"
-                    + "    left join case_documents a5 on a5.archiveFileKey=a2.id \n"
+                    + "    SELECT a1.id as archiveFileKey, a1.date_changed, a1.archived from cases a1      \n"
+                    + "    left join case_tags a3 on a1.id = a3.archiveFileKey\n"
+                    + "    left join case_documents a5 on a5.archiveFileKey=a1.id \n"
                     + "    left join document_tags a4 on a4.documentKey=a5.id \n"
                     + "    \n"
-                    + "    where a2.archived=0 and a5.deleted=0 and (\n"
+                    + "    where a1.archived=0 and a5.deleted=0 and (\n"
                     + "            (a3.tagName in (" + inClauseCase + ")) or (\n"
                     + "            (a4.tagName in (" + inClauseDoc + "))\n"
                     + "            \n"
@@ -3043,16 +3039,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     // MySQL does not support FULL OUTER JOIN
                     + "union "
                     // any cases without documents but relevant case tags
-                    + "    select a1.archiveFileKey, a1.maxChangeDate from      (\n"
-                    + "        SELECT archiveFileKey, MAX(changeDate) as maxChangeDate      \n"
-                    + "        FROM case_history      \n"
-                    + "        GROUP BY archiveFileKey) a1\n"
-                    + "    left join cases a2 on a1.archiveFileKey = a2.id\n"
-                    + "    left join case_tags a3 on a2.id = a3.archiveFileKey\n"
+                    + "    select a1.id as archiveFileKey, a1.date_changed, a1.archived from cases a1 \n"
+                    + "    left join case_tags a3 on a1.id = a3.archiveFileKey\n"
                     + "    \n"
-                    + "    where a2.archived=0 and (\n"
+                    + "    where a1.archived=0 and (\n"
                     + "            (a3.tagName in (" + inClauseCase + ")) ) "
-                    + "order by maxChangeDate DESC) allkeys limit 0,?");
+                    + "order by date_changed DESC) allkeys limit 0,?");
 
             int index = 1;
             // first union query, case tags
@@ -3697,11 +3689,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             inClause = inClause.replaceFirst(",", "");
 
             st = con.prepareStatement("select distinct(docid) from (select a5.id as docid from "
-                    + "    (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate "
-                    + "    FROM case_history "
-                    + "    GROUP BY archiveFileKey "
-                    + "    order by maxChangeDate DESC) a1, cases a2, document_tags a4, case_documents a5 "
-                    + "    where a1.archiveFileKey = a2.id and a2.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a2.id))) order by maxChangeDate DESC) allkeys limit 0,?");
+                    + "    (SELECT id, date_changed, archived from cases) a1, "
+                    + "    document_tags a4, case_documents a5 "
+                    + "    where a1.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id))) order by date_changed DESC) allkeys limit 0,?");
 
             int index = 1;
 

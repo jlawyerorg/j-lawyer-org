@@ -664,8 +664,8 @@
 package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.FaxFailedEvent;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingFailedEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
@@ -694,53 +694,65 @@ public class MailingQueueTimerTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
-//        try {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            SingletonServiceRemote singleton = locator.lookupSingletonServiceRemote();
-//            EventBroker eb = EventBroker.getInstance();
-//            
-//            FaxQueueBean failed = singleton.getFailedFax();
-//            if (failed != null) {
-//                if (lastFailedFax != null) {
-//                    if (!failed.equals(lastFailedFax)) {
-//                        if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-//                            eb.publishEvent(new FaxFailedEvent(failed));
-//                        }
-//                    }
-//                } else if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-//                    eb.publishEvent(new FaxFailedEvent(failed));
-//                }
-//
-//            }
-//            this.lastFailedFax = failed;
-//            
-//            EpostQueueBean failed2 = singleton.getFailedLetter();
-//            if (failed2 != null) {
-//                if (lastFailedLetter != null) {
-//                    if (!failed2.equals(lastFailedLetter)) {
-//                        if (failed2.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-//                            eb.publishEvent(new EpostFailedEvent(failed2));
-//                        }
-//                    }
-//                } else if (failed2.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-//                    eb.publishEvent(new EpostFailedEvent(failed2));
-//                }
-//
-//            }
-//            this.lastFailedLetter = failed2;
-//
-//            ArrayList<FaxQueueBean> faxQueue = singleton.getFaxQueue();
-//            eb.publishEvent(new FaxStatusEvent(faxQueue));
-//            
-//            ArrayList<EpostQueueBean> epostQueue = singleton.getEpostQueue();
-//            eb.publishEvent(new EpostStatusEvent(epostQueue));
-//
-//        } catch (Throwable ex) {
-//            log.error("Error connecting to server", ex);
-//
-//        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SingletonServiceRemote singleton = locator.lookupSingletonServiceRemote();
+            EventBroker eb = EventBroker.getInstance();
+            
+            FaxQueueBean failed = singleton.getFailedFax();
+            if (failed != null) {
+                if (lastFailedFax != null) {
+                    if (!failed.equals(lastFailedFax)) {
+                        if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                            eb.publishEvent(new MailingFailedEvent(new FaxQueueEntry(failed)));
+                        }
+                    }
+                } else if (failed.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                    eb.publishEvent(new MailingFailedEvent(new FaxQueueEntry(failed)));
+                }
+
+            }
+            this.lastFailedFax = failed;
+            
+            EpostQueueBean failed2 = singleton.getFailedLetter();
+            if (failed2 != null) {
+                if (lastFailedLetter != null) {
+                    if (!failed2.equals(lastFailedLetter)) {
+                        if (failed2.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                            eb.publishEvent(new MailingFailedEvent(new EpostQueueEntry(failed2)));
+                        }
+                    }
+                } else if (failed2.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                    eb.publishEvent(new MailingFailedEvent(new EpostQueueEntry(failed2)));
+                }
+
+            }
+            this.lastFailedLetter = failed2;
+
+            // combine the two lists for sipgate and epost into one
+            ArrayList<MailingQueueEntry> mq=new ArrayList<>();
+            
+            ArrayList<FaxQueueBean> faxQueue = singleton.getFaxQueue();
+            for(FaxQueueBean f: faxQueue) {
+                FaxQueueEntry e=new FaxQueueEntry(f);
+                mq.add(e);
+            }
+            
+            ArrayList<EpostQueueBean> epostQueue = singleton.getEpostQueue();
+            for(EpostQueueBean f: epostQueue) {
+                EpostQueueEntry e=new EpostQueueEntry(f);
+                mq.add(e);
+            }
+            
+            eb.publishEvent(new MailingStatusEvent(mq));
+
+        } catch (Throwable ex) {
+            log.error("Error connecting to server", ex);
+
+        }
 
     }
 

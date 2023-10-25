@@ -671,7 +671,7 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -978,8 +978,8 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         if (e instanceof ScannerStatusEvent) {
             updateIndicator(((ScannerStatusEvent) e).getFileNames().size());
-        } else if (e instanceof FaxStatusEvent) {
-            updateIndicator(((FaxStatusEvent) e).getFaxList().size());
+        } else if (e instanceof MailingStatusEvent) {
+            updateIndicator(((MailingStatusEvent) e).getMailingList().size());
         } else if (e instanceof EmailStatusEvent) {
             updateIndicator(((EmailStatusEvent) e).getUnread());
         } else if (e instanceof BeaStatusEvent) {

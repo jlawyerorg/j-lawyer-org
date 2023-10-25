@@ -681,7 +681,7 @@ import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
@@ -773,8 +773,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SYSTEMSTATUS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXFAILED);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGFAILED);
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
@@ -1010,25 +1010,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             } else {
                 this.lblScanStatus.setEnabled(false);
             }
-        } else if (e instanceof FaxStatusEvent) {
+        } else if (e instanceof MailingStatusEvent) {
 
-            this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
-            this.lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
-            if (((FaxStatusEvent) e).getFailed() > 0) {
+            this.lblMailingStatus.setText(" " + ((MailingStatusEvent) e).getMailingList().size());
+            this.lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
+            if (((MailingStatusEvent) e).getFailed() > 0) {
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
-                this.lblFaxStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
-                this.lblFaxStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.lblMailingStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
+                this.lblMailingStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             } else {
-                this.lblFaxStatus.setToolTipText("");
-                this.lblFaxStatus.setForeground(Color.black);
+                this.lblMailingStatus.setToolTipText("");
+                this.lblMailingStatus.setForeground(Color.black);
 
             }
-            if (((FaxStatusEvent) e).getFaxList().size() > 0) {
-                this.lblFaxStatus.setEnabled(true);
+            if (((MailingStatusEvent) e).getMailingList().size() > 0) {
+                this.lblMailingStatus.setEnabled(true);
             } else {
-                this.lblFaxStatus.setEnabled(false);
+                this.lblMailingStatus.setEnabled(false);
             }
 
         } else if (e instanceof EmailStatusEvent) {
@@ -1096,7 +1096,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblScanStatus = new javax.swing.JLabel();
         lblMailStatus = new javax.swing.JLabel();
         lblSystemStatus = new javax.swing.JLabel();
-        lblFaxStatus = new javax.swing.JLabel();
+        lblMailingStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
@@ -1241,11 +1241,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
 
-        lblFaxStatus.setFont(lblFaxStatus.getFont());
-        lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
-        lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
-        lblFaxStatus.setText("?");
-        lblFaxStatus.setEnabled(false);
+        lblMailingStatus.setFont(lblMailingStatus.getFont());
+        lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
+        lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
+        lblMailingStatus.setText("?");
+        lblMailingStatus.setEnabled(false);
 
         lblNewsStatus.setFont(lblNewsStatus.getFont().deriveFont(lblNewsStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblNewsStatus.setForeground(new java.awt.Color(255, 153, 0));
@@ -1293,7 +1293,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(12, 12, 12)
                 .add(lblUnreadInstantMessages)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1311,7 +1311,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblUpdateStatus)
                 .add(lblScanStatus)
                 .add(lblMailStatus)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(lblNewsStatus)
                 .add(statusLabel)
                 .add(lblDrebisStatus)
@@ -2881,8 +2881,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JLabel lblBeaStatus;
     private javax.swing.JLabel lblDrebisStatus;
-    private javax.swing.JLabel lblFaxStatus;
     private javax.swing.JLabel lblMailStatus;
+    private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScanStatus;
     private javax.swing.JLabel lblSystemStatus;

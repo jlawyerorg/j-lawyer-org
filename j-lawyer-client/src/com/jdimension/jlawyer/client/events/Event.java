@@ -675,8 +675,8 @@ public abstract class Event {
     public static final Integer TYPE_NEWS=20;
     public static final Integer TYPE_SYSTEMSTATUS=30;
     public static final Integer TYPE_SCANNERSTATUS=40;
-    public static final Integer TYPE_FAXSTATUS=50;
-    public static final Integer TYPE_FAXFAILED=60;
+    public static final Integer TYPE_MAILINGSTATUS=50;
+    public static final Integer TYPE_MAILINGFAILED=60;
     public static final Integer TYPE_MAILSTATUS=70;
     public static final Integer TYPE_BEASTATUS=80;
     public static final Integer TYPE_DREBISSTATUS=90;

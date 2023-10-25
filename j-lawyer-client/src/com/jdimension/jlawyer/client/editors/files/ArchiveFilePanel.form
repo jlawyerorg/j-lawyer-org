@@ -386,6 +386,19 @@
         </MenuItem>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator4">
         </Component>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSendEpostLetter">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/com/jdimension/jlawyer/client/voip/DP_Logo_SZ_MF_rgb.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="per E-POST versenden"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendEpostLetterActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator9">
+        </Component>
         <Menu class="javax.swing.JMenu" name="mnuDrebis">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

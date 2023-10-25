@@ -663,65 +663,482 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.sip.SipUtils;
-import java.awt.Component;
-import java.text.SimpleDateFormat;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
+import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.epost.EpostLetter;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.File;
+import java.util.List;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
- * @author jens
+ * @author Kutschke
  */
-public class FaxStatusTableRenderer extends DefaultTableCellRenderer {
+public class EpostLetterSendStep extends javax.swing.JPanel implements WizardStepInterface {
 
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    private FileUtils fu = FileUtils.getInstance();
+    private static final Logger log = Logger.getLogger(EpostLetterSendStep.class.getName());
 
-    public FaxStatusTableRenderer() {
+    private WizardDataContainer data = null;
+
+    /**
+     * Creates new form EpostLetterSendStep
+     */
+    public EpostLetterSendStep() {
+        initComponents();
+
+        this.cmbRegisteredLetter.removeAllItems();
+        this.cmbRegisteredLetter.addItem("");
+        for (String rl : EpostLetter.REGISTEREDLETTER_TYPES) {
+            this.cmbRegisteredLetter.addItem(rl);
+        }
+        this.cmbRegisteredLetter.setSelectedItem("");
+        
+        UserSettings uset = UserSettings.getInstance();
+        ServerSettings srv=ServerSettings.getInstance();
+        this.txtSenderAdressLine.setText(uset.getSetting(UserSettings.EPOST_LAST_SENDER_ADRLINE, srv.getSetting(ServerSettings.PROFILE_COMPANYNAME, "")));
+        this.txtSenderCity.setText(uset.getSetting(UserSettings.EPOST_LAST_SENDER_CITY, srv.getSetting(ServerSettings.PROFILE_COMPANYCITY, "")));
+        this.txtSenderStreet.setText(uset.getSetting(UserSettings.EPOST_LAST_SENDER_STREET, srv.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "")));
+        this.txtSenderZipCode.setText(uset.getSetting(UserSettings.EPOST_LAST_SENDER_ZIPCODE, srv.getSetting(ServerSettings.PROFILE_COMPANYZIP, "")));
+        
+        this.cmbRecipient.removeAllItems();
+        this.cmbRecipient.setRenderer(new AddressBeanListCellRenderer());
+        
+        
     }
 
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    @Override
+    public void nextEvent() {
+        this.data.put("txtAdressLine1", this.txtAdressLine1.getText());
+        this.data.put("txtAdressLine2", this.txtAdressLine2.getText());
+        this.data.put("txtAdressLine3", this.txtAdressLine3.getText());
+        this.data.put("txtAdressLine4", this.txtAdressLine4.getText());
+        this.data.put("txtAdressLine5", this.txtAdressLine5.getText());
+        
+        this.data.put("txtCity", this.txtCity.getText());
+        this.data.put("txtZipCode", this.txtZipCode.getText());
+        this.data.put("txtCountry", this.txtCountry.getText());
+        
+        this.data.put("txtSenderAdressLine", this.txtSenderAdressLine.getText());
+        this.data.put("txtSenderCity", this.txtSenderCity.getText());
+        this.data.put("txtSenderStreet", this.txtSenderStreet.getText());
+        this.data.put("txtSenderZipCode", this.txtSenderZipCode.getText());
+        
+        this.data.put("chkDuplex", this.chkDuplex.isSelected());
+        this.data.put("chkColor", this.chkColor.isSelected());
+        this.data.put("chkDefaultCoverPage", this.chkDefaultCoverPage.isSelected());
+        
+        this.data.put("cmbRegisteredLetter", this.cmbRegisteredLetter.getSelectedItem().toString());
 
-        JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        label.setIcon(null);
-        
-        if(value==null)
-            return label;
-        
-        if (column == 0) {
-            if (!(value instanceof FaxQueueBean)) {
-                return label;
+    }
+
+    @Override
+    public void previousEvent() {
+//        this.data.put("data1", this.jTextField1.getText());
+        return;
+    }
+
+    @Override
+    public void cancelledEvent() {
+        return;
+    }
+
+    @Override
+    public void finishedEvent() {
+        return;
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        btnGrpDuplex = new javax.swing.ButtonGroup();
+        btnGrpColor = new javax.swing.ButtonGroup();
+        jLabel1 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        chkSimplex = new javax.swing.JRadioButton();
+        chkDuplex = new javax.swing.JRadioButton();
+        chkColor = new javax.swing.JRadioButton();
+        chkDefaultCoverPage = new javax.swing.JCheckBox();
+        chkBlackWhite = new javax.swing.JRadioButton();
+        jSeparator3 = new javax.swing.JSeparator();
+        cmbRegisteredLetter = new javax.swing.JComboBox<>();
+        jSeparator1 = new javax.swing.JSeparator();
+        jSeparator2 = new javax.swing.JSeparator();
+        jLabel2 = new javax.swing.JLabel();
+        cmbRecipient = new javax.swing.JComboBox<>();
+        txtAdressLine1 = new javax.swing.JTextField();
+        txtAdressLine2 = new javax.swing.JTextField();
+        txtAdressLine3 = new javax.swing.JTextField();
+        txtAdressLine4 = new javax.swing.JTextField();
+        txtAdressLine5 = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        txtZipCode = new javax.swing.JTextField();
+        txtCity = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
+        txtCountry = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        txtSenderAdressLine = new javax.swing.JTextField();
+        txtSenderStreet = new javax.swing.JTextField();
+        txtSenderZipCode = new javax.swing.JTextField();
+        txtSenderCity = new javax.swing.JTextField();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+
+        setName("Empfänger und Versandart"); // NOI18N
+
+        jLabel1.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("<html><p>Das Dokument wird zwecks Versand an die E-POST-Schnittstelle übertragen. Der Status ist über &quot;Brief / Fax&quot; in der Hauptnavigation nachvollziehbar.</html>");
+        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jLabel1.setOpaque(true);
+
+        btnGrpDuplex.add(chkSimplex);
+        chkSimplex.setFont(chkSimplex.getFont());
+        chkSimplex.setText("Vorderseite");
+
+        btnGrpDuplex.add(chkDuplex);
+        chkDuplex.setFont(chkDuplex.getFont());
+        chkDuplex.setSelected(true);
+        chkDuplex.setText("Vorder- und Rückseite");
+
+        btnGrpColor.add(chkColor);
+        chkColor.setFont(chkColor.getFont());
+        chkColor.setText("farbig");
+
+        chkDefaultCoverPage.setFont(chkDefaultCoverPage.getFont());
+        chkDefaultCoverPage.setText("Deckblatt generieren");
+        chkDefaultCoverPage.setToolTipText("Es wird ein Deckblatt generiert, das automatisch alle Layoutanforderungen erfüllt.\nFür die Prüfung wird mit Testdaten für die Empfängeradresse gearbeitet. ");
+
+        btnGrpColor.add(chkBlackWhite);
+        chkBlackWhite.setFont(chkBlackWhite.getFont());
+        chkBlackWhite.setSelected(true);
+        chkBlackWhite.setText("schwarz/weiß");
+
+        cmbRegisteredLetter.setEditable(true);
+        cmbRegisteredLetter.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(chkDuplex, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(chkBlackWhite)
+            .addComponent(chkSimplex)
+            .addComponent(chkColor)
+            .addComponent(cmbRegisteredLetter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jSeparator1)
+            .addComponent(jSeparator2)
+            .addComponent(chkDefaultCoverPage)
+            .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkSimplex)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkDuplex)
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(chkColor)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkBlackWhite)
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(chkDefaultCoverPage)
+                .addGap(41, 41, 41)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(39, 39, 39)
+                .addComponent(cmbRegisteredLetter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel2.setText("Empfänger:");
+
+        cmbRecipient.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRecipientActionPerformed(evt);
             }
+        });
 
-            FaxQueueBean fb = (FaxQueueBean) value;
-            label.setText(df.format(fb.getSentDate()));
-            label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png")));
+        jLabel3.setFont(jLabel3.getFont());
+        jLabel3.setText("Adresszeile 1:");
 
-        } else if (column == 3) {
-            label.setIcon(fu.getFileTypeIcon(value.toString()));
-        } else if (column == 4) {
-            label.setText(SipUtils.getDisplayableStatus(value.toString()));
-            Icon icon = null;
-            int level=SipUtils.getStatusLevel(value.toString());
-            if (level == SipUtils.STATUSLEVEL_ERROR) {
-                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
-            } else if (level == SipUtils.STATUSLEVEL_INPROGRESS) {
-                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/yellowled.png"));
+        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setText("Adresszeile 2:");
+
+        jLabel5.setFont(jLabel5.getFont());
+        jLabel5.setText("Adresszeile 3:");
+
+        jLabel6.setFont(jLabel6.getFont());
+        jLabel6.setText("Adresszeile 4:");
+
+        jLabel7.setFont(jLabel7.getFont());
+        jLabel7.setText("Adresszeile 5:");
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("PLZ:");
+
+        jLabel9.setFont(jLabel9.getFont());
+        jLabel9.setText("Ort:");
+
+        jLabel10.setFont(jLabel10.getFont());
+        jLabel10.setText("Land:");
+
+        jLabel11.setFont(jLabel11.getFont().deriveFont(jLabel11.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel11.setText("Absender:");
+
+        jLabel12.setFont(jLabel12.getFont());
+        jLabel12.setText("Adresszeile:");
+
+        jLabel13.setFont(jLabel13.getFont());
+        jLabel13.setText("Strasse:");
+
+        jLabel14.setFont(jLabel14.getFont());
+        jLabel14.setText("PLZ:");
+
+        jLabel15.setFont(jLabel15.getFont());
+        jLabel15.setText("Ort:");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel11)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel4)
+                                    .addComponent(jLabel5)
+                                    .addComponent(jLabel6)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8)
+                                    .addComponent(jLabel9)
+                                    .addComponent(jLabel10)
+                                    .addComponent(jLabel12)
+                                    .addComponent(jLabel13)
+                                    .addComponent(jLabel14)
+                                    .addComponent(jLabel15))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txtAdressLine1)
+                                    .addComponent(txtAdressLine2)
+                                    .addComponent(txtAdressLine3)
+                                    .addComponent(txtAdressLine4)
+                                    .addComponent(txtAdressLine5)
+                                    .addComponent(txtZipCode)
+                                    .addComponent(txtCity)
+                                    .addComponent(txtCountry)
+                                    .addComponent(cmbRecipient, 0, 200, Short.MAX_VALUE)
+                                    .addComponent(txtSenderAdressLine)
+                                    .addComponent(txtSenderStreet)
+                                    .addComponent(txtSenderZipCode)
+                                    .addComponent(txtSenderCity))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(cmbRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtAdressLine1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtAdressLine2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtAdressLine3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtAdressLine4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtAdressLine5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel7))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel8)
+                            .addComponent(txtZipCode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel9))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtCountry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10))
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel12)
+                            .addComponent(txtSenderAdressLine, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtSenderStreet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel13))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtSenderZipCode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel14))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtSenderCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel15))))
+                .addGap(196, 196, 196))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmbRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRecipientActionPerformed
+        if(this.cmbRecipient.getSelectedItem()!=null && this.cmbRecipient.getSelectedItem() instanceof AddressBean) {
+            AddressBean rec=(AddressBean)this.cmbRecipient.getSelectedItem();
+            
+            String company="";
+            if (rec.getCompany() != null && !("".equals(rec.getCompany()))) {
+                company=company+rec.getCompany();
+                if (rec.getDepartment()!= null && !("".equals(rec.getDepartment()))) {
+                    company = company + " (Abt. " + rec.getDepartment()+")";
+                }   
+            }
+            
+            String name = rec.getName();
+            if (rec.getFirstName() != null && !("".equals(rec.getFirstName()))) {
+                name = name + ", " + rec.getFirstName();
+            }
+                
+            if(!StringUtils.isEmpty(company)) {
+                this.txtAdressLine1.setText(company);
+                this.txtAdressLine2.setText(name);
+                this.txtAdressLine3.setText(rec.getAdjunct());
             } else {
-                icon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
+                this.txtAdressLine1.setText(name);
+                this.txtAdressLine2.setText(rec.getAdjunct());
             }
-            label.setIcon(icon);
-        } else if(column==5) {
-            if(value!=null && !("".equals(value))) {
-                label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")));
-            }
+            this.txtCity.setText(rec.getCity());
+            this.txtZipCode.setText(rec.getZipCode());
+            this.txtCountry.setText(rec.getCountry());
+            
         }
-        return label;
+    }//GEN-LAST:event_cmbRecipientActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpColor;
+    private javax.swing.ButtonGroup btnGrpDuplex;
+    private javax.swing.JRadioButton chkBlackWhite;
+    private javax.swing.JRadioButton chkColor;
+    private javax.swing.JCheckBox chkDefaultCoverPage;
+    private javax.swing.JRadioButton chkDuplex;
+    private javax.swing.JRadioButton chkSimplex;
+    private javax.swing.JComboBox<AddressBean> cmbRecipient;
+    private javax.swing.JComboBox<String> cmbRegisteredLetter;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JTextField txtAdressLine1;
+    private javax.swing.JTextField txtAdressLine2;
+    private javax.swing.JTextField txtAdressLine3;
+    private javax.swing.JTextField txtAdressLine4;
+    private javax.swing.JTextField txtAdressLine5;
+    private javax.swing.JTextField txtCity;
+    private javax.swing.JTextField txtCountry;
+    private javax.swing.JTextField txtSenderAdressLine;
+    private javax.swing.JTextField txtSenderCity;
+    private javax.swing.JTextField txtSenderStreet;
+    private javax.swing.JTextField txtSenderZipCode;
+    private javax.swing.JTextField txtZipCode;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public String getStepName() {
+        return this.getName();
+    }
+
+    @Override
+    public void display() {
+
+        this.chkColor.setSelected((Boolean)this.data.get("epost.letter.color"));
+        this.chkDuplex.setSelected((Boolean)this.data.get("epost.letter.duplex"));
+        this.chkDefaultCoverPage.setSelected((Boolean)this.data.get("epost.letter.coverpage"));
+        
+        if(this.cmbRecipient.getItemCount() == 0) {
+            // initial display
+            List<AddressBean> addresses = (List<AddressBean>)this.data.get("epost.letter.addresses");
+            for (AddressBean ab : addresses) {
+                this.cmbRecipient.addItem(ab);
+            }
+
+        }
+
+    }
+
+    @Override
+    public void setData(WizardDataContainer data) {
+        this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

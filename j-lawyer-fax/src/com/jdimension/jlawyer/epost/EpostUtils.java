@@ -663,15 +663,13 @@
  */
 package com.jdimension.jlawyer.epost;
 
+import com.jdimension.jlawyer.StatusLevels;
+
 /**
  *
  * @author jens
  */
-public class EpostUtils {
-    
-    public static final int STATUSLEVEL_INPROGRESS=20;
-    public static final int STATUSLEVEL_ERROR=30;
-    public static final int STATUSLEVEL_SUCCESS=10;
+public class EpostUtils extends StatusLevels {
     
     public static final int API_STATUS_ANNAHME=1;
     public static final int API_STATUS_VERARBEITUNG=2;
@@ -711,7 +709,7 @@ public class EpostUtils {
      * @return 
      */
     public static boolean isFinalStatus(int status) {
-        return status==API_STATUS_VERARBEITUNGDRUCK;
+        return status==API_STATUS_VERARBEITUNGDRUCK || status==API_STATUS_FAILED;
         
     }
     
@@ -737,6 +735,25 @@ public class EpostUtils {
             return EpostUtils.STATUSLEVEL_ERROR;
         
         return EpostUtils.STATUSLEVEL_SUCCESS;
+    }
+    
+    public static String getDisplayableStatus(int status) {
+        if(API_STATUS_ANNAHME==status)
+            return "Angenommen";
+        
+        if(API_STATUS_VERARBEITUNG==status)
+            return "Freigegeben für Druckzentrum";
+        
+        if(API_STATUS_EINLIEFERUNG==status)
+            return "Verarbeitung im Druckzentrum";
+        
+        if(API_STATUS_VERARBEITUNGDRUCK==status)
+            return "Versand erfolgt";
+        
+        if(API_STATUS_FAILED==status)
+            return "Fehler bei der Verarbeitung";
+        
+        return "Unbekannt: " + status;
     }
     
 }

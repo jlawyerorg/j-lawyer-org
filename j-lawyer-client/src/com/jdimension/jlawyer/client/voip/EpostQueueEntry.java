@@ -663,7 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.epost.EpostUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
+import java.util.Date;
 
 /**
  *
@@ -671,10 +675,103 @@ import com.jdimension.jlawyer.persistence.EpostQueueBean;
  */
 public class EpostQueueEntry extends MailingQueueEntry {
     
-    private EpostQueueBean entry=null;
+    protected EpostQueueBean entry=null;
     
     public EpostQueueEntry(EpostQueueBean e) {
         this.entry=e;
+    }
+
+    @Override
+    public boolean isFailedStatus() {
+        return EpostUtils.isFailStatus(this.getEntry().getLastStatusId());
+    }
+
+    @Override
+    public String getFailedObjectDescription() {
+        return "E-POST-Brief " + this.getEntry().getFileName();
+    }
+
+    @Override
+    public ArchiveFileBean getCase() {
+        return this.getEntry().getArchiveFileKey();
+    }
+
+    @Override
+    public String getSentBy() {
+        return getEntry().getSentBy();
+    }
+
+    @Override
+    public String getMailingTypeName() {
+        String letterType="Standardbrief";
+        if(!StringUtils.isEmpty(this.entry.getLetterType()))
+            letterType=this.getEntry().getLetterType();
+        
+        if(this.getEntry().getRecipientInformation()!=null)
+            return "E-POST-" + letterType + " an " + this.getEntry().getRecipientInformation();
+        else
+            return "E-POST-" + letterType;
+    }
+
+    @Override
+    public String getStatusString() {
+        return getEntry().getLastStatusDetails();
+    }
+
+    @Override
+    public String getFileName() {
+        return getEntry().getFileName();
+    }
+
+    @Override
+    public String getRecipientInformation() {
+        return this.getMailingTypeName();
+    }
+    
+    @Override
+    public Date getSentDate() {
+        return this.getEntry().getCreatedDate();
+    }
+    
+    @Override
+    public String getDisplayableStatus() {
+        return EpostUtils.getDisplayableStatus(this.getEntry().getLastStatusId());
+    }
+    
+    @Override
+    public int getStatusLevel() {
+        return EpostUtils.getStatusLevel(getEntry().getLastStatusId());
+    }
+    
+    @Override
+    public String getIdentifier() {
+        return "" + this.getEntry().getLetterId();
+    }
+    
+    @Override
+    public Date getLastStatusDate() {
+        return this.getLatestDate(this.getEntry().getCreatedDate(), this.getEntry().getDestinationAreaStatusDate(), this.getEntry().getPrintFeedbackDate(), this.getEntry().getPrintUploadDate(), this.getEntry().getProcessedDate(), this.getEntry().getRegisteredLetterStatusDate());
+    }
+    
+    private Date getLatestDate(Date ... d) {
+        long dateTime=0;
+        for(Date dt: d) {
+            if(dt!=null && dt.getTime()>dateTime)
+                dateTime=dt.getTime();
+        }
+        return new Date(dateTime);
+    }
+
+    @Override
+    public String getStatusDetailsString() {
+        return this.getEntry().getLastStatusDetails();
+    }
+
+    /**
+     * @return the entry
+     */
+    public EpostQueueBean getEntry() {
+        return entry;
     }
     
 }

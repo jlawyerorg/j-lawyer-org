@@ -873,4 +873,9 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
     public void setData(WizardDataContainer data) {
         this.data = data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

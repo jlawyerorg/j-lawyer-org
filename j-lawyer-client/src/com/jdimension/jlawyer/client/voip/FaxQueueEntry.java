@@ -663,7 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
+import com.jdimension.jlawyer.sip.SipUtils;
+import java.util.Date;
 
 /**
  *
@@ -675,6 +678,76 @@ public class FaxQueueEntry extends MailingQueueEntry {
     
     public FaxQueueEntry(FaxQueueBean e) {
         this.entry=e;
+    }
+
+    @Override
+    public boolean isFailedStatus() {
+        return SipUtils.isFailStatus(this.entry.getLastStatus());
+    }
+    
+    @Override
+    public String getFailedObjectDescription() {
+        return "Fax an " + this.entry.getRemoteName();
+    }
+    
+    @Override
+    public ArchiveFileBean getCase() {
+        return this.entry.getArchiveFileKey();
+    }
+
+    @Override
+    public String getSentBy() {
+        return entry.getSentBy();
+    }
+    
+    @Override
+    public String getMailingTypeName() {
+        return "Fax";
+    }
+    
+    @Override
+    public String getStatusString() {
+        return entry.getLastStatus();
+    }
+    
+    @Override
+    public String getFileName() {
+        return entry.getPdfName();
+    }
+
+    @Override
+    public String getRecipientInformation() {
+        return this.getMailingTypeName() + " (" + this.entry.getRemoteName() + ")";
+    }
+
+    @Override
+    public Date getSentDate() {
+        return this.entry.getSentDate();
+    }
+
+    @Override
+    public String getDisplayableStatus() {
+        return SipUtils.getDisplayableStatus(this.entry.getLastStatus());
+    }
+
+    @Override
+    public int getStatusLevel() {
+        return SipUtils.getStatusLevel(entry.getLastStatus());
+    }
+
+    @Override
+    public String getIdentifier() {
+        return this.entry.getSessionId();
+    }
+
+    @Override
+    public Date getLastStatusDate() {
+        return this.entry.getLastStatusDate();
+    }
+
+    @Override
+    public String getStatusDetailsString() {
+        return "";
     }
     
 }

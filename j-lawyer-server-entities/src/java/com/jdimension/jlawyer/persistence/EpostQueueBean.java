@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -722,6 +723,12 @@ public class EpostQueueBean implements Serializable {
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
+    
+    @Column(name = "letter_type")
+    protected String letterType;
+    
+    @Column(name = "recipient_info")
+    protected String recipientInformation;
 
     public EpostQueueBean() {
     }
@@ -974,6 +981,64 @@ public class EpostQueueBean implements Serializable {
      */
     public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
         this.archiveFileKey = archiveFileKey;
+    }
+
+    /**
+     * @return the letterType
+     */
+    public String getLetterType() {
+        return letterType;
+    }
+
+    /**
+     * @param letterType the letterType to set
+     */
+    public void setLetterType(String letterType) {
+        this.letterType = letterType;
+    }
+
+    /**
+     * @return the recipientInformation
+     */
+    public String getRecipientInformation() {
+        return recipientInformation;
+    }
+
+    /**
+     * @param recipientInformation the recipientInformation to set
+     */
+    public void setRecipientInformation(String recipientInformation) {
+        this.recipientInformation = recipientInformation;
+    }
+
+    public String toReport() {
+        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        StringBuilder sb=new StringBuilder();
+        sb.append("Dateiname: ").append(this.getFileName()).append("\r\n");
+        sb.append("Anzahl Seiten: ").append(this.getNoOfPages()).append("\r\n");
+        sb.append("Sendungsnummer: ").append(this.getLetterId()).append("\r\n");
+        if(this.getLetterType()!=null)
+            sb.append("Einschreiben: ").append(this.getLetterType()).append("\r\n");
+        if(this.getRecipientInformation()!=null)
+            sb.append("Empfaenger: ").append(this.getRecipientInformation()).append("\r\n");
+        sb.append("Gesendet von Nutzer: ").append(this.getSentBy()).append("\r\n");
+        if(this.getArchiveFileKey()!=null) {
+            sb.append("Akte: ").append(this.getArchiveFileKey().getFileNumber()).append("\r\n");
+        }
+        if(this.getLastStatusDetails()!=null)
+            sb.append("letzter Status: ").append(this.getLastStatusDetails()).append("\r\n");
+        if(this.getCreatedDate()!=null)
+            sb.append("erstellt: ").append(df.format(this.getCreatedDate())).append("\r\n");
+        if(this.getProcessedDate()!=null)
+            sb.append("Verarbeitungs-Zeitpunkt: ").append(df.format(this.getProcessedDate())).append("\r\n");
+        if(this.getPrintUploadDate()!=null)
+            sb.append("Einlieferungs-Zeitpunkt in das Druckzentrum: ").append(df.format(this.getPrintUploadDate())).append("\r\n");
+        if(this.getPrintFeedbackDate()!=null)
+            sb.append("Verarbeitungs-Rückmeldung des Druckzentrums: ").append(df.format(this.getPrintFeedbackDate())).append("\r\n");
+        
+        
+        return sb.toString();
+        
     }
 
     

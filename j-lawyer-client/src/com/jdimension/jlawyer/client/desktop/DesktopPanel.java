@@ -676,8 +676,8 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxFailedEvent;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingFailedEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.awt.Color;
 import java.awt.Font;
@@ -736,7 +737,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             lblUnreadMail.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadDrebis.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadInstantMessages.setFont(font.deriveFont(Font.BOLD, 24));
-            lblFaxStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblMailingStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblNewsStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
             lblUpdateStatus.setFont(font.deriveFont(Font.BOLD, 24));
@@ -787,8 +788,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_AUTOUPDATE);
         b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXFAILED);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGFAILED);
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
@@ -946,7 +947,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea = new javax.swing.JLabel();
         lblScans = new javax.swing.JLabel();
         lblUnreadDrebis = new javax.swing.JLabel();
-        lblFaxStatus = new javax.swing.JLabel();
+        lblMailingStatus = new javax.swing.JLabel();
         lblUnreadInstantMessages = new javax.swing.JLabel();
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
@@ -1298,11 +1299,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadDrebis.setText("?");
         lblUnreadDrebis.setEnabled(false);
 
-        lblFaxStatus.setFont(lblFaxStatus.getFont().deriveFont(lblFaxStatus.getFont().getStyle() | java.awt.Font.BOLD, lblFaxStatus.getFont().getSize()+2));
-        lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
-        lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
-        lblFaxStatus.setText("?");
-        lblFaxStatus.setEnabled(false);
+        lblMailingStatus.setFont(lblMailingStatus.getFont().deriveFont(lblMailingStatus.getFont().getStyle() | java.awt.Font.BOLD, lblMailingStatus.getFont().getSize()+2));
+        lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
+        lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
+        lblMailingStatus.setText("?");
+        lblMailingStatus.setEnabled(false);
 
         lblUnreadInstantMessages.setFont(lblUnreadInstantMessages.getFont().deriveFont(lblUnreadInstantMessages.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadInstantMessages.getFont().getSize()+2));
         lblUnreadInstantMessages.setForeground(new java.awt.Color(255, 255, 255));
@@ -1331,7 +1332,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(18, 18, 18)
                 .add(lblScans)
                 .add(18, 18, 18)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(18, 18, 18)
                 .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
@@ -1349,7 +1350,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 .add(lblUnreadMail)
                 .add(lblScans)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(lblUnreadDrebis)
                 .add(lblUnreadBea))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -1629,7 +1630,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblArchiveFileCount;
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
-    private javax.swing.JLabel lblFaxStatus;
+    private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScans;
     private javax.swing.JLabel lblUnreadBea;
@@ -1680,28 +1681,28 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblScans.setEnabled(false);
             this.revalidate();
             this.repaint();
-        } else if (e instanceof FaxFailedEvent) {
-            FaxQueueBean fb = ((FaxFailedEvent) e).getFax();
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fax an " + fb.getRemoteName() + " konnte nicht gesendet werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        } else if (e instanceof FaxStatusEvent) {
+        } else if (e instanceof MailingFailedEvent) {
+            MailingQueueEntry mqe = ((MailingFailedEvent) e).getEntry();
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), mqe.getFailedObjectDescription() + " konnte nicht gesendet werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } else if (e instanceof MailingStatusEvent) {
 
-            this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
-            if (((FaxStatusEvent) e).getFailed() > 0) {
+            this.lblMailingStatus.setText(" " + ((MailingStatusEvent) e).getMailingList().size());
+            if (((MailingStatusEvent) e).getFailed() > 0) {
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
-                this.lblFaxStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
-                this.lblFaxStatus.setForeground(Color.red.darker());
+                this.lblMailingStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
+                this.lblMailingStatus.setForeground(Color.red.darker());
 
             } else {
-                this.lblFaxStatus.setToolTipText("");
-                this.lblFaxStatus.setForeground(Color.white);
+                this.lblMailingStatus.setToolTipText("");
+                this.lblMailingStatus.setForeground(Color.white);
 
             }
             
-            if(((FaxStatusEvent) e).getFaxList().size()>0)
-                this.lblFaxStatus.setEnabled(true);
+            if(((MailingStatusEvent) e).getMailingList().size()>0)
+                this.lblMailingStatus.setEnabled(true);
             else
-                this.lblFaxStatus.setEnabled(false);
+                this.lblMailingStatus.setEnabled(false);
 
             this.revalidate();
             this.repaint();

@@ -1062,4 +1062,9 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
     public void selectedPartiesUpdated() {
         this.cmbTemplatesActionPerformed(null);
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }
