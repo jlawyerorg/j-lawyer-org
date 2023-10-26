@@ -41,7 +41,7 @@
  * source code to the public.
  *
  *   The GNU Affero General Public License is designed specifically to
- * ensure that, in such cases, the modified source code becomes available
+ * ensure that, in such addressCases, the modified source code becomes available
  * to the community.  It requires the operator of a network server to
  * provide the source code of the modified version running there to the
  * users of that server.  Therefore, public use of a modified version, on
@@ -287,7 +287,7 @@
  * tangible personal property which is normally used for personal, family,
  * or household purposes, or (2) anything designed or sold for incorporation
  * into a dwelling.  In determining whether a product is a consumer product,
- * doubtful cases shall be resolved in favor of coverage.  For a particular
+ * doubtful addressCases shall be resolved in favor of coverage.  For a particular
  * product received by a particular user, "normally used" refers to a
  * typical or common use of that class of product, regardless of the status
  * of the particular user or of the way in which the particular user
@@ -343,7 +343,7 @@
  *   When you convey a copy of a covered work, you may at your option
  * remove any additional permissions from that copy, or from any part of
  * it.  (Additional permissions may be written to require their own
- * removal in certain cases when you modify the work.)  You may place
+ * removal in certain addressCases when you modify the work.)  You may place
  * additional permissions on material, added by you to a covered work,
  * for which you have or can give appropriate copyright permission.
  *
@@ -2425,6 +2425,34 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             } catch (Throwable t) {
                 log.error("Could not extract keywords from email", t);
             }
+            
+            // find any potential cases by looking for file numbers in subject and body
+            ArrayList<String> allFileNumbers = afs.getAllArchiveFileNumbers();
+            ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
+            ArrayList<String> actionableFileNumbers = new ArrayList<>();
+            String subject = msgC.getMessage().getSubject().toLowerCase();
+            String body = this.mailContentUI.getBody().toLowerCase();
+            for (String fn : allFileNumbers) {
+                String fnLower = fn.toLowerCase();
+                if (subject.contains(fnLower)) {
+                    actionableFileNumbers.add(fn);
+                    ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+                    if (a != null) {
+                        subjectBodyCases.add(a);
+                    }
+                    continue;
+                } else {
+                    if (body.contains(fnLower)) {
+                        actionableFileNumbers.add(fn);
+                        ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+                        if (a != null) {
+                            subjectBodyCases.add(a);
+                        }
+                    }
+                }
+            }
+            
+            ArrayList<ArchiveFileBean> addressRelatedCases=new ArrayList<>();
             Address[] senders = msgC.getMessage().getFrom();
             if (senders != null) {
                 if (senders.length > 0) {
@@ -2458,7 +2486,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             pnp.setPhoneNumbers(phoneNumbers);
                             actionPanelEntries.add(pnp);
                         }
-
+                        
+                        // find cases that might be relevant for the sender of the mail
                         for (AddressBean h : hits) {
                             NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
                             ap.setAddress(h);
@@ -2466,14 +2495,20 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             actionPanelEntries.add(ap);
 
                             Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
-                            int i = 0;
-                            ArrayList cases = new ArrayList(caseCol);
-                            Collections.sort(cases, (Object o1, Object o2) -> {
-                                ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
-                                ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
-                                
-                                ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
-                                ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
+                            
+                            
+                            for(Object o: caseCol) {
+                                ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
+                                ArchiveFileBean a=afab.getArchiveFileKey();
+                                if(!actionableFileNumbers.contains(a.getFileNumber())) {
+                                    actionableFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
+                                    addressRelatedCases.add(a);
+                                }
+                            }
+                            
+                            Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
+                                ArchiveFileBean aFile1 = (ArchiveFileBean)o1;
+                                ArchiveFileBean aFile2 = (ArchiveFileBean)o2;
                                 
                                 if (aFile2.getArchivedBoolean()) {
                                     if (aFile1.getArchivedBoolean()) {
@@ -2495,31 +2530,34 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                     return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                 }
                             });
-                            for (Object c : cases) {
-                                ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
-                                ArchiveFileBean aFile = afab.getArchiveFileKey();
-                                SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-                                if (i % 2 == 0) {
-                                    ep.setBackground(ep.getBackground().darker());
-                                }
-                                ep.setBackground(ep.getBackground().brighter());
-                                CaseForContactEntry lce = new CaseForContactEntry();
-                                lce.setFileNumber(aFile.getFileNumber());
-                                lce.setId(aFile.getId());
-                                lce.setRole("");
-                                lce.setName(aFile.getName());
-                                lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-                                lce.setArchived(aFile.getArchivedBoolean());
-                                ep.setEntry(lce, this);
-
-                                actionPanelEntries.add(ep);
-                                i++;
-                            }
+                            
 
                         }
                     }
 
                 }
+            }
+            
+            subjectBodyCases.addAll(addressRelatedCases);
+            int i = 0;
+            for (Object c : subjectBodyCases) {
+                ArchiveFileBean aFile = (ArchiveFileBean) c;
+                SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                if (i % 2 == 0) {
+                    ep.setBackground(ep.getBackground().darker());
+                }
+                ep.setBackground(ep.getBackground().brighter());
+                CaseForContactEntry lce = new CaseForContactEntry();
+                lce.setFileNumber(aFile.getFileNumber());
+                lce.setId(aFile.getId());
+                lce.setRole("");
+                lce.setName(aFile.getName());
+                lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+                lce.setArchived(aFile.getArchivedBoolean());
+                ep.setEntry(lce, this);
+
+                actionPanelEntries.add(ep);
+                i++;
             }
 
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
