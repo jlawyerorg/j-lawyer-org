@@ -41,7 +41,7 @@
  * source code to the public.
  *
  *   The GNU Affero General Public License is designed specifically to
- * ensure that, in such addressCases, the modified source code becomes available
+ * ensure that, in such cases, the modified source code becomes available
  * to the community.  It requires the operator of a network server to
  * provide the source code of the modified version running there to the
  * users of that server.  Therefore, public use of a modified version, on
@@ -287,7 +287,7 @@
  * tangible personal property which is normally used for personal, family,
  * or household purposes, or (2) anything designed or sold for incorporation
  * into a dwelling.  In determining whether a product is a consumer product,
- * doubtful addressCases shall be resolved in favor of coverage.  For a particular
+ * doubtful cases shall be resolved in favor of coverage.  For a particular
  * product received by a particular user, "normally used" refers to a
  * typical or common use of that class of product, regardless of the status
  * of the particular user or of the way in which the particular user
@@ -343,7 +343,7 @@
  *   When you convey a copy of a covered work, you may at your option
  * remove any additional permissions from that copy, or from any part of
  * it.  (Additional permissions may be written to require their own
- * removal in certain addressCases when you modify the work.)  You may place
+ * removal in certain cases when you modify the work.)  You may place
  * additional permissions on material, added by you to a covered work,
  * for which you have or can give appropriate copyright permission.
  *
@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
+import com.jdimension.jlawyer.client.mail.sidebar.CreateNewCasePanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
@@ -2451,6 +2452,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
                 }
             }
+            
+            CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName());
+            actionPanelEntries.add(cncp);
             
             ArrayList<ArchiveFileBean> addressRelatedCases=new ArrayList<>();
             Address[] senders = msgC.getMessage().getFrom();
