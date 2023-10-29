@@ -913,4 +913,6 @@ public interface ArchiveFileServiceRemote {
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
 
     ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+
+    List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
 }

@@ -5974,4 +5974,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return list;
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<String> getCaseIdsSyncedForUser(String principalId) throws Exception {
+        AppUserBean au = this.userFacade.find(principalId);
+        if (au == null) {
+            return new ArrayList<>();
+        }
+
+        List<String> resultList=new ArrayList<>();
+        List<CaseSyncSettings> syncList = this.caseSyncFacade.findByUser(au);
+        for (CaseSyncSettings s : syncList) {
+            ArchiveFileBean afb = s.getArchiveFileKey();
+            resultList.add(afb.getId());
+        }
+        return resultList;
+    }
+
 }

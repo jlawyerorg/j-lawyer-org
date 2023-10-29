@@ -710,6 +710,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
+    
+    private QuickArchiveFileSearchCellRenderer renderer=null;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -737,7 +739,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
-        QuickArchiveFileSearchCellRenderer renderer=new QuickArchiveFileSearchCellRenderer();
+        this.renderer=new QuickArchiveFileSearchCellRenderer();
+        this.renderer.setLoadSyncStatus(true);
         this.tblResults.setDefaultRenderer(Object.class, renderer);
         this.tblResults.setDefaultRenderer(Date.class, renderer);
 
@@ -1159,7 +1162,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        
+        this.renderer.setCaseIdsSyncedForUser(null);
         new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
@@ -1322,6 +1325,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             JOptionPane.showMessageDialog(this, "Fehler beim Konfigurieren der Synchronisation: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
         }
+        this.renderer.setCaseIdsSyncedForUser(null);
     }
     
     
