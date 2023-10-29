@@ -1155,30 +1155,13 @@ public class CalendarPanel extends javax.swing.JPanel {
             dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());
+            dlg2.setReviewAssignee(sel.getAssistant());
+            
             FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
             dlg2.setVisible(true);
 
         });
 
-//        popup.addPopupMenuListener(new PopupMenuListener() {
-//
-//            @Override
-//            public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
-////				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
-//            }
-//
-//            @Override
-//            public void popupMenuWillBecomeInvisible(PopupMenuEvent arg0) {
-//
-//
-//            }
-//
-//            @Override
-//            public void popupMenuCanceled(PopupMenuEvent arg0) {
-//
-//
-//            }
-//        });
     }
 
     /**

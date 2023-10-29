@@ -2881,6 +2881,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     }
 
+    
+    
     @Override
     //@RolesAllowed({"readArchiveFileRole"})
     public ArrayList<String> getAllArchiveFileIds() {
@@ -5951,6 +5953,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return this.timesheetPositionsFacade.find(position.getId());
 
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
+        JDBCUtils utils = new JDBCUtils();
+        ArrayList<String> list = new ArrayList<>();
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select fileNumber from cases");  ResultSet rs = st.executeQuery()) {
+
+            while (rs.next()) {
+                String fileNumber = rs.getString(1);
+                list.add(fileNumber);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files", sqle);
+            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
+        }
+
+        return list;
     }
 
 }
