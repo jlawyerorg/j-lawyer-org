@@ -856,6 +856,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         }
         String dueCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.due");
         tooltip.append("<b>").append(dueCaption).append(": ").append(dueDate).append("</b><br/>").append(StringUtils.nonEmpty(e.getReviewReason()));
+        if(!StringUtils.isEmpty(e.getReview().getDescription()))
+            tooltip.append(HTML_BR).append(e.getReview().getDescription());
         String caseCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.case");
         tooltip.append(HTML_BR).append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
         String responsibleCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
