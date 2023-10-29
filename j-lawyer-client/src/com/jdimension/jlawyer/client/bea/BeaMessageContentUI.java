@@ -1458,7 +1458,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         } catch (Exception ex) {
             log.error("Error saving attachment", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs (fehlende Berechtigungen oder unzulässige Zeichen im Namen): " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         }
     }//GEN-LAST:event_mnuSaveAsFileActionPerformed
