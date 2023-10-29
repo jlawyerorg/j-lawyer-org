@@ -710,6 +710,8 @@ import themes.colors.DefaultColorTheme;
 public class MessagingCenterPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(MessagingCenterPanel.class.getName());
+    
+    private static final int SCROLLPANE_VERTICAL_INCREMENT=16;
 
     private Image backgroundImage = null;
 
@@ -730,13 +732,13 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         initComponents();
 
         this.jScrollPane1.getViewport().setOpaque(false);
-        this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
         this.jScrollPane3.getViewport().setOpaque(false);
-        this.jScrollPane3.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane3.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
         this.jScrollPane2.getViewport().setOpaque(false);
-        this.jScrollPane2.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
         this.jScrollPane4.getViewport().setOpaque(false);
-        this.jScrollPane4.getHorizontalScrollBar().setUnitIncrement(16);
+        this.jScrollPane4.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
         this.messageSendPanel1.setMessageConsumer(this);
 
         ClientSettings cs = ClientSettings.getInstance();
@@ -1231,7 +1233,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         JScrollPane targetScroll = null;
         if (existingTab < 0) {
             targetScroll = new JScrollPane();
-            targetScroll.getVerticalScrollBar().setUnitIncrement(16);
+            targetScroll.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
 
             targetPanel = new JPanel();
             BoxLayout layout = new javax.swing.BoxLayout(targetPanel, javax.swing.BoxLayout.Y_AXIS);
