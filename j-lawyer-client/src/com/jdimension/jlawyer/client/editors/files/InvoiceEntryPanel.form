@@ -32,7 +32,9 @@
                       <Component id="lblDueDate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblInvoiceNumber" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="lblTotal" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblStatus" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
@@ -59,6 +61,7 @@
                           <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                               <Component id="lblInvoiceNumber" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="lblStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblTotal" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="lblDueDate" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -185,6 +188,16 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblTotal">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblTotal" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" value="0,75"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

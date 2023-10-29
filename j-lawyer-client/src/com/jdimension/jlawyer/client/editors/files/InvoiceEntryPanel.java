@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Container;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -688,6 +689,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     
     private static final Logger log=Logger.getLogger(InvoiceEntryPanel.class.getName());
     private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+    private final DecimalFormat totalFormat=new DecimalFormat("#0.00");
     
     private ArchiveFileBean caseDto=null;
     private ArchiveFilePanel caseView=null;
@@ -741,6 +743,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             this.lblRecipient.setText(invoice.getContact().toDisplayName());
         else
             this.lblRecipient.setText("");
+        
+        this.lblTotal.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
+        
+        
     }
 
     /**
@@ -762,6 +768,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         cmdDelete = new javax.swing.JButton();
         cmdDuplicate = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
+        lblTotal = new javax.swing.JLabel();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -815,6 +822,9 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblTotal.setFont(lblTotal.getFont().deriveFont(lblTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTotal.setText("0,75");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -835,7 +845,9 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                         .addComponent(lblDueDate)
                         .addGap(18, 18, 18)
                         .addComponent(lblInvoiceNumber)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblTotal)
+                        .addGap(18, 18, 18)
                         .addComponent(lblStatus)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
@@ -856,7 +868,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblInvoiceNumber)
-                                .addComponent(lblStatus))
+                                .addComponent(lblStatus)
+                                .addComponent(lblTotal))
                             .addComponent(lblDueDate))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -915,5 +928,6 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblStatus;
+    private javax.swing.JLabel lblTotal;
     // End of variables declaration//GEN-END:variables
 }
