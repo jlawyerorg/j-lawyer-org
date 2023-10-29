@@ -703,13 +703,13 @@ public class ConflictOfInterestUtils {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
             Collection col = afRem.getArchiveFileAddressesForAddress(address.getId());
-            Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<PartyTypeBean, List<ArchiveFileBean>>();
+            Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<>();
             ArrayList<String> caseIds=new ArrayList<>();
             for (Object o : col) {
                 ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
                 if (!(afb.getReferenceType().getId().equals(selectedType.getId()))) {
                     if(!(casesWithDifferentPartyType.containsKey(afb.getReferenceType())))
-                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<ArchiveFileBean>());
+                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<>());
                     
                     casesWithDifferentPartyType.get(afb.getReferenceType()).add(afb.getArchiveFileKey());
                     if(!caseIds.contains(afb.getArchiveFileKey().getId())) {
@@ -741,7 +741,6 @@ public class ConflictOfInterestUtils {
             log.error("Error getting archive files for address", ex);
             JOptionPane.showMessageDialog(parent, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
-            return;
         }
     }
     
