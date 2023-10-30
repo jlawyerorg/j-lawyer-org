@@ -976,6 +976,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         lblClearHashtagSelection.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblClearHashtagSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        lblClearHashtagSelection.setToolTipText("Hashtag-Filter zurücksetzen");
         lblClearHashtagSelection.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblClearHashtagSelection.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
