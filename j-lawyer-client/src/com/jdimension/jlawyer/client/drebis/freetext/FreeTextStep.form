@@ -192,6 +192,7 @@
                     <StringItem index="3" value="Item 4"/>
                   </StringArray>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Unterst&#xfc;tzt werden Vorlagen im Format text/plain (unformatierter Text)"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbTemplatesActionPerformed"/>
@@ -210,6 +211,7 @@
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Vorlage:"/>
+                <Property name="toolTipText" type="java.lang.String" value="Unterst&#xfc;tzt werden Vorlagen im Format text/plain (unformatierter Text)"/>
               </Properties>
             </Component>
           </SubComponents>

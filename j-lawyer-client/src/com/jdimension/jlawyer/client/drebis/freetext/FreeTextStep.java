@@ -862,6 +862,7 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
 
         cmbTemplates.setFont(cmbTemplates.getFont());
         cmbTemplates.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTemplates.setToolTipText("Unterstützt werden Vorlagen im Format text/plain (unformatierter Text)");
         cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTemplatesActionPerformed(evt);
@@ -870,6 +871,7 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
 
         jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Vorlage:");
+        jLabel2.setToolTipText("Unterstützt werden Vorlagen im Format text/plain (unformatierter Text)");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
