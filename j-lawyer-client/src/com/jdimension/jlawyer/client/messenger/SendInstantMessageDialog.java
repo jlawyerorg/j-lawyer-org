@@ -685,6 +685,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
     private ArrayList<ArchiveFileDocumentsBean> documentContexts = null;
     private ArchiveFileBean caseContext=null;
 
+    
     /**
      * Creates new form SendInstantMessageDialog
      *
@@ -694,13 +695,29 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
      * @param documentContexts
      */
     public SendInstantMessageDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean caseContext, ArrayList<ArchiveFileDocumentsBean> documentContexts) {
+        this(parent, modal, caseContext, documentContexts, null);
+    }
+    
+    /**
+     * Creates new form SendInstantMessageDialog
+     *
+     * @param parent
+     * @param modal
+     * @param caseContext
+     * @param documentContexts
+     * @param messageConsumer
+     */
+    public SendInstantMessageDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean caseContext, ArrayList<ArchiveFileDocumentsBean> documentContexts, NewMessageConsumer messageConsumer) {
         super(parent, modal);
         initComponents();
         this.documentContexts = documentContexts;
         this.caseContext=caseContext;
 
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
-        this.messageSendPanel1.setMessageConsumer(this);
+        if(messageConsumer==null)
+            this.messageSendPanel1.setMessageConsumer(this);
+        else
+            this.messageSendPanel1.setMessageConsumer(messageConsumer);
 
         StringBuilder sb = new StringBuilder();
         if (documentContexts != null && !documentContexts.isEmpty()) {
