@@ -1088,6 +1088,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         }
 
     }
+    
+    public void triggerNewReviewAction() {
+        this.cmdNewReviewActionPerformed(null);
+    }
 
     private void cmdNewReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewReviewActionPerformed
         if (this.txtEventBeginDateField.getText().length() == 10) {

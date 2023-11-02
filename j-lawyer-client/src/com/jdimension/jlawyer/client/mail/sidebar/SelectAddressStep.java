@@ -663,34 +663,92 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
-import com.jdimension.jlawyer.client.bea.BeaAccess;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import java.awt.Component;
-import javax.swing.JOptionPane;
+import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 
 /**
  *
- * @author jens
+ * @author Kutschke
  */
-public class CreateNewAddressPanel extends javax.swing.JPanel {
+public class SelectAddressStep extends javax.swing.JPanel implements WizardStepInterface {
 
-    private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
-    private String email = null;
-    private String beaSafeId = null;
-    private String senderName = null;
-    private String editorClass = null;
+    private static final Logger log = Logger.getLogger(SelectAddressStep.class.getName());
+
+    private WizardDataContainer data = null;
+    
+    private List<PartyTypeBean> partyTypes=null;
 
     /**
-     * Creates new form CreateNewAddressPanel
+     * Creates new form SelectAddressStep
      */
-    public CreateNewAddressPanel(String editorClassName) {
+    public SelectAddressStep() {
         initComponents();
-        this.editorClass = editorClassName;
+        
+        this.cmbRecipient.removeAllItems();
+        this.cmbRecipient.setRenderer(new AddressBeanListCellRenderer());
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes=sys.getPartyTypes();
+            
+            this.cmbRefType.removeAllItems();
+            ArrayList<String> refTypeNames = new ArrayList<>();
+            for (PartyTypeBean p : this.partyTypes) {
+                refTypeNames.add(p.getName());
+            }
+            Collections.sort(refTypeNames);
+            for (String s : refTypeNames) {
+                this.cmbRefType.addItem(s);
+            }
+
+        } catch (Throwable t) {
+            log.error("Unable to get party types", t);
+        }
+        
+    }
+
+    @Override
+    public void nextEvent() {
+        
+        String refType=this.cmbRefType.getSelectedItem().toString();
+        PartyTypeBean selectedType=null;
+        for(PartyTypeBean ptb: this.partyTypes) {
+            if(refType.equals(ptb.getName())) {
+                selectedType=ptb;
+            }
+        }
+        
+        this.data.put("newaddress.partytype", selectedType);
+        this.data.put("newaddress.selectedaddress", this.cmbRecipient.getSelectedItem());
+
+    }
+
+    @Override
+    public void previousEvent() {
+
+    }
+
+    @Override
+    public void cancelledEvent() {
+        
+    }
+
+    @Override
+    public void finishedEvent() {
+        
     }
 
     /**
@@ -702,37 +760,26 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblAddress = new javax.swing.JLabel();
-        cmdSaveCompany = new javax.swing.JButton();
-        cmdSavePerson = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        cmbRecipient = new javax.swing.JComboBox<>();
+        cmbRefType = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
 
-        lblAddress.setFont(lblAddress.getFont());
-        lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        lblAddress.setText("neue Adresse erstellen");
-        lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        setName("Beteiligte auswählen"); // NOI18N
 
-        cmdSaveCompany.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSaveCompany.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveCompanyActionPerformed(evt);
-            }
-        });
+        jLabel1.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("<html><p>Beteiligten auswählen oder erstellen. Die wichtigsten Daten zu einer neuen Adresse k&ouml;nnen hier direkt eingegeben werden. Nach Erstellung sollte eine Detaillierung separat erfolgen.</html>");
+        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jLabel1.setOpaque(true);
 
-        cmdSavePerson.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSavePerson.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSavePersonActionPerformed(evt);
-            }
-        });
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel2.setText("Beteiligte:");
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel1.setText("als Organisation");
+        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel2.setText("als Person");
+        jLabel3.setText("als:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -741,131 +788,72 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblAddress)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSaveCompany)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel1))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSavePerson)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblAddress)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSaveCompany)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSavePerson)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addContainerGap(556, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setSenderName(String name) {
-        this.senderName = name;
-    }
-
-    private void cmdSaveCompanyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveCompanyActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setCompany(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSaveCompanyActionPerformed
-
-    private void loadFromBea(Object editor, String beaSafeId) throws Exception {
-        if (beaSafeId != null) {
-            BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(beaSafeId);
-            ((NewAddressPanel) editor).setCity(i.getCity());
-            ((NewAddressPanel) editor).setCountry(i.getCountry());
-            ((NewAddressPanel) editor).setEmail(i.getEmail());
-            ((NewAddressPanel) editor).setFax(i.getFax());
-            ((NewAddressPanel) editor).setFirstName(i.getFirstName());
-            ((NewAddressPanel) editor).setMobile(i.getMobile());
-            ((NewAddressPanel) editor).setCompany(i.getOrganization());
-            ((NewAddressPanel) editor).setPhone(i.getPhone());
-            ((NewAddressPanel) editor).setStreet((StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber())).trim());
-            ((NewAddressPanel) editor).setName(i.getSurName());
-            ((NewAddressPanel) editor).setTitle(i.getTitle());
-            ((NewAddressPanel) editor).setZipCode(i.getZipCode());
-        }
-    }
-
-    private void cmdSavePersonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSavePersonActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setName(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSavePersonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSaveCompany;
-    private javax.swing.JButton cmdSavePerson;
+    private javax.swing.JComboBox<AddressBean> cmbRecipient;
+    private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel lblAddress;
+    private javax.swing.JLabel jLabel3;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the beaSafeId
-     */
-    public String getBeaSafeId() {
-        return beaSafeId;
+    @Override
+    public String getStepName() {
+        return this.getName();
     }
 
-    /**
-     * @param beaSafeId the beaSafeId to set
-     */
-    public void setBeaSafeId(String beaSafeId) {
-        this.beaSafeId = beaSafeId;
+    @Override
+    public void display() {
+        
+        this.cmbRecipient.removeAllItems();
+        AddressBean[] relevantAddresses=(AddressBean[])this.data.get("newcase.addresses");
+        if(relevantAddresses!=null) {
+            for(AddressBean ab: relevantAddresses) {
+                this.cmbRecipient.addItem(ab);
+            }
+        }
+        if(this.data.get("newaddress.addressbean")!=null) {
+            AddressBean newAddress=(AddressBean)this.data.get("newaddress.addressbean");
+            this.cmbRecipient.addItem(newAddress);
+        }
+
+    }
+    
+    @Override
+    public void setData(WizardDataContainer data) {
+        this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

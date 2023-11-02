@@ -1656,6 +1656,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
     }
 
+    public void tblMailsMouseClicked() {
+        java.awt.event.MouseEvent me=new java.awt.event.MouseEvent(this.tblMails, -1, System.currentTimeMillis(), -1, -1, -1, 1, false, MouseEvent.BUTTON1);
+        
+        this.tblMailsMouseClicked(me);
+    }
+    
     private void tblMailsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseClicked
 
         int selected = this.tblMails.getSelectedRowCount();
@@ -2453,11 +2459,34 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
             
-            CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName());
+            Address[] senders = msgC.getMessage().getFrom();
+            AddressBean[] relevantAddresses=null;
+            String senderName="";
+            String senderAddress="";
+            if (senders != null) {
+                if (senders.length > 0) {
+                    Address sender = senders[0];
+                    if (sender instanceof javax.mail.internet.InternetAddress) {
+                        relevantAddresses = ads.searchSimple(((javax.mail.internet.InternetAddress) sender).getAddress());
+                        senderName=((javax.mail.internet.InternetAddress) sender).getPersonal();
+                        if(senderName==null)
+                            senderName="";
+                        senderAddress=((javax.mail.internet.InternetAddress) sender).getAddress();
+                        if(senderAddress==null)
+                            senderAddress="";
+                    }
+
+                }
+            }
+            body=this.mailContentUI.getBody();
+            if(this.mailContentUI.getContentType()!=null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
+                body=EmailUtils.Html2Text(this.mailContentUI.getBody());
+            }
+            
+            CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), body, senderName, senderAddress);
             actionPanelEntries.add(cncp);
             
             ArrayList<ArchiveFileBean> addressRelatedCases=new ArrayList<>();
-            Address[] senders = msgC.getMessage().getFrom();
             if (senders != null) {
                 if (senders.length > 0) {
                     Address sender = senders[0];

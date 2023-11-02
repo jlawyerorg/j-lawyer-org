@@ -663,34 +663,157 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
-import com.jdimension.jlawyer.client.bea.BeaAccess;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
+import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Component;
-import javax.swing.JOptionPane;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 
 /**
  *
- * @author jens
+ * @author Kutschke
  */
-public class CreateNewAddressPanel extends javax.swing.JPanel {
+public class CreateAddressDetailsStep extends javax.swing.JPanel implements WizardStepInterface {
 
-    private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
-    private String email = null;
-    private String beaSafeId = null;
-    private String senderName = null;
-    private String editorClass = null;
+    private static final Logger log = Logger.getLogger(CreateAddressDetailsStep.class.getName());
+
+    private WizardDataContainer data = null;
 
     /**
-     * Creates new form CreateNewAddressPanel
+     * Creates new form EpostLetterSendStep
      */
-    public CreateNewAddressPanel(String editorClassName) {
+    public CreateAddressDetailsStep() {
         initComponents();
-        this.editorClass = editorClassName;
+
+        this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbTitle.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbTitleInAddress.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbProfession.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbRole.setRenderer(new OptionGroupListCellRenderer());
+        this.txtStreetNo.setDocument(new JTextFieldLimit(19));
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        AppOptionGroupBean[] salutations = settings.getSalutationDtos();
+        AppOptionGroupBean[] complimentaryCloses = settings.getComplimentaryCloseDtos();
+        AppOptionGroupBean[] titles = settings.getTitles();
+        AppOptionGroupBean[] titlesInAddress = settings.getTitlesInAddress();
+        AppOptionGroupBean[] countries = settings.getCountries();
+        AppOptionGroupBean[] professions = settings.getProfessions();
+        AppOptionGroupBean[] roles = settings.getRoles();
+
+        populateOptionsCombobox(salutations, this.cmbSalutation);
+        populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
+        populateOptionsCombobox(titles, this.cmbTitle);
+        populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
+        populateOptionsCombobox(countries, this.cmbCountry);
+        populateOptionsCombobox(professions, this.cmbProfession);
+        populateOptionsCombobox(roles, this.cmbRole);
+
+        ComponentUtils.addAutoComplete(this.cmbSalutation);
+        ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
+        ComponentUtils.addAutoComplete(this.cmbTitle);
+        ComponentUtils.addAutoComplete(this.cmbTitleInAddress);
+        ComponentUtils.addAutoComplete(this.cmbCountry);
+        ComponentUtils.addAutoComplete(this.cmbProfession);
+        ComponentUtils.addAutoComplete(this.cmbRole);
+        
+    }
+    
+    private void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
+        String[] items = new String[options.length + 1];
+        items[0] = "";
+        for (int i = 0; i < options.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
+            items[i + 1] = aogb.getValue();
+
+        }
+        StringUtils.sortIgnoreCase(items);
+        OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
+        cmb.setModel(cModel);
+    }
+
+    @Override
+    public void nextEvent() {
+        
+        
+        boolean create=(Boolean)this.data.get("newaddress.create");
+        if(!create)
+            return;
+        
+        HashMap<String,String> attributes=(HashMap<String,String>)this.data.get("newaddress.attributes");
+        
+        attributes.put(AttributeCellEditor.ATTRIBUTE_ABTEILUNG, this.txtDepartment.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_BERUF, this.cmbProfession.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_FUNKTION, this.cmbRole.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_EMAIL, this.txtEmail.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_FAX, this.txtFax.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_HAUSNR, this.txtStreetNo.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_LAND, this.cmbCountry.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_MOBIL, this.txtMobile.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_NAME, this.txtName.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_ORT, this.txtCity.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_PLZ, this.txtZip.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_STRASSE, this.txtStreet.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_TEL, this.txtPhone.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN, this.txtCompany.getText());
+        attributes.put(AttributeCellEditor.ATTRIBUTE_VORNAME, this.txtFirstName.getText());
+        
+        attributes.put(AttributeCellEditor.DETAIL_ANREDE, this.cmbTitle.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.DETAIL_ANREDEBRIEFKOPF, this.cmbTitleInAddress.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.DETAIL_BEGRUESSUNG, this.cmbSalutation.getEditor().getItem().toString());
+        attributes.put(AttributeCellEditor.DETAIL_GRUSSFORMEL, this.cmbComplimentaryClose.getEditor().getItem().toString());
+        
+        AddressBean newAddress=new AddressBean();
+        newAddress.setCity(this.txtCity.getText());
+        newAddress.setCompany(this.txtCompany.getText());
+        newAddress.setComplimentaryClose(this.cmbComplimentaryClose.getEditor().getItem().toString());
+        newAddress.setCountry(this.cmbCountry.getEditor().getItem().toString());
+        newAddress.setDepartment(this.txtDepartment.getText());
+        newAddress.setEmail(this.txtEmail.getText());
+        newAddress.setFax(this.txtFax.getText());
+        newAddress.setFirstName(this.txtFirstName.getText());
+        newAddress.setMobile(this.txtMobile.getText());
+        newAddress.setName(this.txtName.getText());
+        newAddress.setPhone(this.txtPhone.getText());
+        newAddress.setProfession(this.cmbProfession.getEditor().getItem().toString());
+        newAddress.setRole(this.cmbRole.getEditor().getItem().toString());
+        newAddress.setSalutation(this.cmbSalutation.getEditor().getItem().toString());
+        newAddress.setStreet(this.txtStreet.getText());
+        newAddress.setStreetNumber(this.txtStreetNo.getText());
+        newAddress.setTitle(this.cmbTitle.getEditor().getItem().toString());
+        newAddress.setTitleInAddress(this.cmbTitleInAddress.getEditor().getItem().toString());
+        newAddress.setZipCode(this.txtZip.getText());
+        this.data.put("newaddress.addressbean", newAddress);
+
+    }
+
+    @Override
+    public void previousEvent() {
+
+    }
+
+    @Override
+    public void cancelledEvent() {
+
+    }
+
+    @Override
+    public void finishedEvent() {
+
     }
 
     /**
@@ -702,37 +825,105 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblAddress = new javax.swing.JLabel();
-        cmdSaveCompany = new javax.swing.JButton();
-        cmdSavePerson = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        cmbTitleInAddress = new javax.swing.JComboBox<>();
+        cmbTitle = new javax.swing.JComboBox<>();
+        txtName = new javax.swing.JTextField();
+        txtFirstName = new javax.swing.JTextField();
+        txtCompany = new javax.swing.JTextField();
+        cmbProfession = new javax.swing.JComboBox<>();
+        cmbRole = new javax.swing.JComboBox<>();
+        txtDepartment = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        txtStreet = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        txtStreetNo = new javax.swing.JTextField();
+        txtZip = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
+        txtCity = new javax.swing.JTextField();
+        jLabel13 = new javax.swing.JLabel();
+        cmbCountry = new javax.swing.JComboBox<>();
+        jLabel14 = new javax.swing.JLabel();
+        txtPhone = new javax.swing.JTextField();
+        txtFax = new javax.swing.JTextField();
+        txtMobile = new javax.swing.JTextField();
+        txtEmail = new javax.swing.JTextField();
+        jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        cmbSalutation = new javax.swing.JComboBox<>();
+        cmbComplimentaryClose = new javax.swing.JComboBox<>();
+        jLabel19 = new javax.swing.JLabel();
+        jLabel20 = new javax.swing.JLabel();
 
-        lblAddress.setFont(lblAddress.getFont());
-        lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        lblAddress.setText("neue Adresse erstellen");
-        lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        setName("Beteiligte vervollständigen"); // NOI18N
 
-        cmdSaveCompany.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSaveCompany.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveCompanyActionPerformed(evt);
-            }
-        });
+        jLabel1.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("<html><p>Vervollst&auml;ndigen Sie hier die wichtigsten Adressinformationen.</html>");
+        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jLabel1.setOpaque(true);
 
-        cmdSavePerson.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSavePerson.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSavePersonActionPerformed(evt);
-            }
-        });
+        jLabel2.setText("Anrede:");
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel1.setText("als Organisation");
+        jLabel3.setText("Anrede Briefkopf:");
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel2.setText("als Person");
+        jLabel4.setText("Name:");
+
+        jLabel5.setText("Vorname:");
+
+        jLabel6.setText("Firma:");
+
+        jLabel7.setText("Beruf:");
+
+        jLabel8.setText("Funktion:");
+
+        cmbTitleInAddress.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbTitle.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbProfession.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel9.setText("Abteilung");
+
+        jLabel10.setText("Strasse:");
+
+        jLabel11.setText("Hausnr.:");
+
+        jLabel12.setText("PLZ:");
+
+        jLabel13.setText("Ort:");
+
+        cmbCountry.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel14.setText("Land:");
+
+        jLabel15.setText("Telefon:");
+
+        jLabel16.setText("Fax:");
+
+        jLabel17.setText("Mobil:");
+
+        jLabel18.setText("E-Mail:");
+
+        cmbSalutation.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbComplimentaryClose.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel19.setText("Anrede:");
+
+        jLabel20.setText("Grussformel:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -741,131 +932,282 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblAddress)
+                    .addComponent(jLabel1)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSaveCompany)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel2))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel1))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSavePerson)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmbTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbTitleInAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbCountry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbSalutation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbComplimentaryClose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtMobile, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtFax, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtPhone, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(txtCity, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(txtStreet, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel11)
+                                            .addComponent(jLabel12))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(txtStreetNo, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(txtZip, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel4)
+                                            .addComponent(jLabel5)
+                                            .addComponent(jLabel6)
+                                            .addComponent(jLabel9)
+                                            .addComponent(jLabel7)
+                                            .addComponent(jLabel8)
+                                            .addComponent(jLabel10))
+                                        .addGap(60, 60, 60))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.LEADING))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtCompany, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtDepartment, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbProfession, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtFirstName, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(323, 323, 323)))
+                        .addGap(0, 147, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblAddress)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(cmbTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSaveCompany)
-                    .addComponent(jLabel1))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(cmbTitleInAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSavePerson)
-                    .addComponent(jLabel2))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(txtFirstName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtCompany, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtDepartment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbProfession, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(txtStreet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11)
+                    .addComponent(txtStreetNo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtZip, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel12)
+                    .addComponent(txtCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel13))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbCountry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel14))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPhone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel15))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtFax, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtMobile, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel17))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel18))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbSalutation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel19))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbComplimentaryClose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel20))
+                .addContainerGap(102, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setSenderName(String name) {
-        this.senderName = name;
-    }
-
-    private void cmdSaveCompanyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveCompanyActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setCompany(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSaveCompanyActionPerformed
-
-    private void loadFromBea(Object editor, String beaSafeId) throws Exception {
-        if (beaSafeId != null) {
-            BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(beaSafeId);
-            ((NewAddressPanel) editor).setCity(i.getCity());
-            ((NewAddressPanel) editor).setCountry(i.getCountry());
-            ((NewAddressPanel) editor).setEmail(i.getEmail());
-            ((NewAddressPanel) editor).setFax(i.getFax());
-            ((NewAddressPanel) editor).setFirstName(i.getFirstName());
-            ((NewAddressPanel) editor).setMobile(i.getMobile());
-            ((NewAddressPanel) editor).setCompany(i.getOrganization());
-            ((NewAddressPanel) editor).setPhone(i.getPhone());
-            ((NewAddressPanel) editor).setStreet((StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber())).trim());
-            ((NewAddressPanel) editor).setName(i.getSurName());
-            ((NewAddressPanel) editor).setTitle(i.getTitle());
-            ((NewAddressPanel) editor).setZipCode(i.getZipCode());
-        }
-    }
-
-    private void cmdSavePersonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSavePersonActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setName(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSavePersonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSaveCompany;
-    private javax.swing.JButton cmdSavePerson;
+    private javax.swing.JComboBox<String> cmbComplimentaryClose;
+    private javax.swing.JComboBox<String> cmbCountry;
+    private javax.swing.JComboBox<String> cmbProfession;
+    private javax.swing.JComboBox<String> cmbRole;
+    private javax.swing.JComboBox<String> cmbSalutation;
+    private javax.swing.JComboBox<String> cmbTitle;
+    private javax.swing.JComboBox<String> cmbTitleInAddress;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel lblAddress;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JTextField txtCity;
+    private javax.swing.JTextField txtCompany;
+    private javax.swing.JTextField txtDepartment;
+    private javax.swing.JTextField txtEmail;
+    private javax.swing.JTextField txtFax;
+    private javax.swing.JTextField txtFirstName;
+    private javax.swing.JTextField txtMobile;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtPhone;
+    private javax.swing.JTextField txtStreet;
+    private javax.swing.JTextField txtStreetNo;
+    private javax.swing.JTextField txtZip;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the beaSafeId
-     */
-    public String getBeaSafeId() {
-        return beaSafeId;
+    @Override
+    public String getStepName() {
+        return this.getName();
     }
 
-    /**
-     * @param beaSafeId the beaSafeId to set
-     */
-    public void setBeaSafeId(String beaSafeId) {
-        this.beaSafeId = beaSafeId;
+    @Override
+    public void display() {
+        
+        HashMap<String,String> attributes=(HashMap<String,String>)this.data.get("newaddress.attributes");
+        boolean create=(Boolean)this.data.get("newaddress.create");
+        for(Component c: this.getComponents()) {
+            if(!(c instanceof JLabel) && c!=null)
+                c.setEnabled(create);
+        }
+        
+        for(String att: attributes.keySet()) {
+            if(att.equals(AttributeCellEditor.ATTRIBUTE_ABTEILUNG)) {
+                this.txtDepartment.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_BERUF)) {
+                this.cmbProfession.setSelectedItem(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
+                this.txtEmail.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
+                this.txtFax.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FUNKTION)) {
+                this.cmbRole.setSelectedItem(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
+                this.txtStreetNo.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
+                this.cmbCountry.setSelectedItem(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
+                this.txtMobile.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
+                this.txtName.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
+                this.txtCity.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
+                this.txtZip.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
+                this.txtStreet.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
+                this.txtPhone.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
+                this.txtCompany.setText(attributes.get(att));
+            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
+                this.txtFirstName.setText(attributes.get(att));
+            }
+                
+        }
+
+    }
+    
+    public static List<String> extrahiereAdressen(String text) {
+        List<String> adressen = new ArrayList<>();
+        
+        // Regulärer Ausdruck zum Erkennen von Adressen
+        String regex = "\\d+\\s+\\w+\\s+\\w+\\s*[,\\.]?\\s*\\w*\\s*,?\\s*\\d{5}\\s+\\w+";
+        
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(text);
+        
+        StringBuilder aktuelleAdresse = new StringBuilder();
+        
+        while (matcher.find()) {
+            if (aktuelleAdresse.length() > 0) {
+                adressen.add(aktuelleAdresse.toString());
+                aktuelleAdresse.setLength(0); // Leeren für die nächste Adresse
+            }
+            adressen.add(matcher.group());
+        }
+        
+        return adressen;
+    }
+
+
+    @Override
+    public void setData(WizardDataContainer data) {
+        this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
+    
+    final class OptionsComboBoxModel extends DefaultComboBoxModel {
+
+        public OptionsComboBoxModel(Object[] items) {
+            super(items);
+        }
     }
 }

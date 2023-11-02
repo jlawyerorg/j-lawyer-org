@@ -663,34 +663,91 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
-import com.jdimension.jlawyer.client.bea.BeaAccess;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import java.awt.Component;
-import javax.swing.JOptionPane;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.wizard.*;
+import java.util.HashMap;
+import javax.swing.event.CaretEvent;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 
 /**
  *
- * @author jens
+ * @author Kutschke
  */
-public class CreateNewAddressPanel extends javax.swing.JPanel {
-
-    private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
-    private String email = null;
-    private String beaSafeId = null;
-    private String senderName = null;
-    private String editorClass = null;
+public class CreateAddressStep extends javax.swing.JPanel implements WizardStepInterface {
+    
+    private static final Logger log = Logger.getLogger(CreateAddressStep.class.getName());
+    
+    private WizardDataContainer data = null;
 
     /**
-     * Creates new form CreateNewAddressPanel
+     * Creates new form CreateAddressStep
      */
-    public CreateNewAddressPanel(String editorClassName) {
+    public CreateAddressStep() {
         initComponents();
-        this.editorClass = editorClassName;
+        
+        this.taBody.addCaretListener((CaretEvent e) -> {
+            int dot = e.getDot();
+            int mark = e.getMark();
+            
+            if (dot != mark) {
+                System.out.println("Selection Start: " + Math.min(dot, mark));
+                System.out.println("Selection End: " + Math.max(dot, mark));
+                
+                try {
+                    String text = this.taBody.getText(Math.min(dot, mark), Math.max(dot, mark) - Math.min(dot, mark));
+                    text = text.replace(", ", "\n");
+                    extractAttributes(text);
+                } catch (Exception ex) {
+                    log.error("Unable to extract attributes", ex);
+                }
+                
+            } else {
+                System.out.println("Caret Position: " + dot);
+            }
+        });
+
+        DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
+        tm.setRowCount(0);
+        this.tblAttributes.setDefaultEditor(Object.class, new AttributeCellEditor());
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
+        
+    }
+    
+    @Override
+    public void nextEvent() {
+
+        this.tblAttributes.clearSelection();
+        this.tblAttributes.revalidate();
+        this.tblAttributes.doLayout();
+        this.tblAttributes.updateUI();
+        
+        HashMap<String, String> attributes=new HashMap<>();
+        
+        for(int i=0;i<this.tblAttributes.getRowCount();i++) {
+            if(!this.tblAttributes.getValueAt(i, 1).toString().isEmpty())
+                attributes.put(this.tblAttributes.getValueAt(i, 1).toString(), this.tblAttributes.getValueAt(i, 0).toString());
+        }
+        
+        this.data.put("newaddress.attributes", attributes);
+        this.data.put("newaddress.create", this.chkGenerateAddress.isSelected());
+    }
+    
+    @Override
+    public void previousEvent() {
+//        this.data.put("data1", this.jTextField1.getText());
+        return;
+    }
+    
+    @Override
+    public void cancelledEvent() {
+        return;
+    }
+    
+    @Override
+    public void finishedEvent() {
+        return;
     }
 
     /**
@@ -702,37 +759,58 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblAddress = new javax.swing.JLabel();
-        cmdSaveCompany = new javax.swing.JButton();
-        cmdSavePerson = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taBody = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblAttributes = new javax.swing.JTable();
+        chkGenerateAddress = new javax.swing.JCheckBox();
 
-        lblAddress.setFont(lblAddress.getFont());
-        lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        lblAddress.setText("neue Adresse erstellen");
-        lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        setName("Beteiligte aus Signatur erstellen"); // NOI18N
 
-        cmdSaveCompany.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSaveCompany.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveCompanyActionPerformed(evt);
+        jLabel1.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("<html><p>Optionale Erstellung einer Adresse aus dem Text der E-Mail, bspw. einer Signatur.<br/>Die relevante Textpassage wird so angepasst, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.<br/>Die Daten k&ouml;nnen im nächsten Schritt vervollst&auml;ndigt werden.</html>");
+        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jLabel1.setOpaque(true);
+
+        taBody.setColumns(20);
+        taBody.setRows(5);
+        jScrollPane1.setViewportView(taBody);
+
+        jSplitPane1.setLeftComponent(jScrollPane1);
+
+        tblAttributes.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "Wert", "Attributname"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
             }
         });
+        jScrollPane2.setViewportView(tblAttributes);
 
-        cmdSavePerson.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSavePerson.addActionListener(new java.awt.event.ActionListener() {
+        jSplitPane1.setRightComponent(jScrollPane2);
+
+        chkGenerateAddress.setSelected(true);
+        chkGenerateAddress.setText("Adresse aus Nachricht extrahieren");
+        chkGenerateAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSavePersonActionPerformed(evt);
+                chkGenerateAddressActionPerformed(evt);
             }
         });
-
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel1.setText("als Organisation");
-
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel2.setText("als Person");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -741,131 +819,120 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblAddress)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSaveCompany)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel1))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSavePerson)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(chkGenerateAddress)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jSplitPane1))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblAddress)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkGenerateAddress)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSaveCompany)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdSavePerson)
-                    .addComponent(jLabel2))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setSenderName(String name) {
-        this.senderName = name;
-    }
-
-    private void cmdSaveCompanyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveCompanyActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setCompany(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSaveCompanyActionPerformed
-
-    private void loadFromBea(Object editor, String beaSafeId) throws Exception {
-        if (beaSafeId != null) {
-            BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(beaSafeId);
-            ((NewAddressPanel) editor).setCity(i.getCity());
-            ((NewAddressPanel) editor).setCountry(i.getCountry());
-            ((NewAddressPanel) editor).setEmail(i.getEmail());
-            ((NewAddressPanel) editor).setFax(i.getFax());
-            ((NewAddressPanel) editor).setFirstName(i.getFirstName());
-            ((NewAddressPanel) editor).setMobile(i.getMobile());
-            ((NewAddressPanel) editor).setCompany(i.getOrganization());
-            ((NewAddressPanel) editor).setPhone(i.getPhone());
-            ((NewAddressPanel) editor).setStreet((StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber())).trim());
-            ((NewAddressPanel) editor).setName(i.getSurName());
-            ((NewAddressPanel) editor).setTitle(i.getTitle());
-            ((NewAddressPanel) editor).setZipCode(i.getZipCode());
-        }
-    }
-
-    private void cmdSavePersonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSavePersonActionPerformed
-        try {
-            Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-            ((NewAddressPanel) editor).setName(this.senderName);
-            ((NewAddressPanel) editor).setEmail(this.email);
-            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
-            if (this.beaSafeId != null) {
-                this.loadFromBea(editor, beaSafeId);
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdSavePersonActionPerformed
+    private void chkGenerateAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGenerateAddressActionPerformed
+        this.taBody.setEnabled(this.chkGenerateAddress.isSelected());
+        this.tblAttributes.setEnabled(this.chkGenerateAddress.isSelected());
+    }//GEN-LAST:event_chkGenerateAddressActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSaveCompany;
-    private javax.swing.JButton cmdSavePerson;
+    private javax.swing.JCheckBox chkGenerateAddress;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel lblAddress;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JTextArea taBody;
+    private javax.swing.JTable tblAttributes;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the beaSafeId
-     */
-    public String getBeaSafeId() {
-        return beaSafeId;
+    @Override
+    public String getStepName() {
+        return this.getName();
     }
+    
+    @Override
+    public void display() {
+        
+        this.taBody.setText(this.data.get("newcase.body").toString());
 
-    /**
-     * @param beaSafeId the beaSafeId to set
-     */
-    public void setBeaSafeId(String beaSafeId) {
-        this.beaSafeId = beaSafeId;
+        this.jSplitPane1.setDividerLocation(0.5d);
+    }
+    
+    private void extractAttributes(String text) {
+
+        DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
+        tm.setRowCount(0);
+        
+        boolean addressProvided=false;
+        
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            line=line.trim();
+            if(line.isEmpty())
+                continue;
+            
+            
+            String field="";
+            if(line.contains("@")) {
+                field=AttributeCellEditor.ATTRIBUTE_EMAIL;
+                line=line.replace("E-Mail:", "");
+                line=line.replace("Email:", "");
+                line=line.replace("Mail:", "");
+                line=line.replace(":", "");
+                line=line.trim();
+                addressProvided=true;
+            } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
+                field=AttributeCellEditor.ATTRIBUTE_TEL;
+                line=line.replace("Telefon", "");
+                line=line.replace("telefon", "");
+                line=line.replace("Tel", "");
+                line=line.replace("tel", "");
+                line=line.replace("Tel.", "");
+                line=line.replace("tel.", "");
+                line=line.replace(":", "");
+                line=line.trim();
+            } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:")) {
+                field=AttributeCellEditor.ATTRIBUTE_FAX;
+                line=line.replace("Fax", "");
+                line=line.replace("fax", "");
+                line=line.replace(":", "");
+                line=line.trim();
+            } else if(line.matches("\\d{5}")) {
+                field=AttributeCellEditor.ATTRIBUTE_PLZ;
+            } else if(line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße")) {
+                field=AttributeCellEditor.ATTRIBUTE_STRASSE;
+            } else if(line.matches("\\d{1,3}[abc]?")) {
+                field=AttributeCellEditor.ATTRIBUTE_HAUSNR;
+            }
+            
+            tm.addRow(new String[]{line, field});
+        }
+        
+        // if user did not provide an email, use the one of the sender
+        if(!addressProvided) {
+            String senderAddress=(String)this.data.get("newcase.senderaddress");
+            if(senderAddress!=null)
+                tm.addRow(new String[]{senderAddress, AttributeCellEditor.ATTRIBUTE_EMAIL});
+        }
+        
+    }
+    
+    @Override
+    public void setData(WizardDataContainer data) {
+        this.data = data;
+    }
+    
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

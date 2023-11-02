@@ -661,612 +661,107 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.cloud;
+package com.jdimension.jlawyer.client.mail.sidebar;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.Component;
-import net.fortuna.ical4j.model.ComponentList;
-import net.fortuna.ical4j.model.TimeZoneRegistry;
-import net.fortuna.ical4j.model.component.VEvent;
-import net.fortuna.ical4j.model.component.VTimeZone;
-import net.fortuna.ical4j.model.property.CalScale;
-import net.fortuna.ical4j.model.property.Description;
-import net.fortuna.ical4j.model.property.Location;
-import net.fortuna.ical4j.model.property.ProdId;
-import net.fortuna.ical4j.model.property.Uid;
-import net.fortuna.ical4j.model.property.Version;
-import net.fortuna.ical4j.model.property.XProperty;
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.jackrabbit.webdav.DavConstants;
-import org.apache.jackrabbit.webdav.MultiStatus;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
-import org.apache.jackrabbit.webdav.Status;
-import org.apache.jackrabbit.webdav.client.methods.DeleteMethod;
-import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
-import org.apache.jackrabbit.webdav.client.methods.PutMethod;
-import org.apache.jackrabbit.webdav.property.DavProperty;
-import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
-import org.apache.jackrabbit.webdav.property.DavPropertyName;
-import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
-import org.apache.jackrabbit.webdav.property.DavPropertySet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jlawyer.cloud.calendar.CloudCalendar;
-import org.osaf.caldav4j.CalDAVCollection;
-import org.osaf.caldav4j.CalDAVConstants;
-import org.osaf.caldav4j.exceptions.CalDAV4JException;
-import org.osaf.caldav4j.exceptions.ResourceNotFoundException;
-import org.osaf.caldav4j.methods.CalDAV4JMethodFactory;
-import org.osaf.caldav4j.methods.CalDAVReportMethod;
-import org.osaf.caldav4j.model.request.CalendarData;
-import org.osaf.caldav4j.model.request.CalendarQuery;
-import org.osaf.caldav4j.model.request.CompFilter;
-import org.osaf.caldav4j.util.GenerateQuery;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Arrays;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.TableCellEditor;
 
 /**
  *
  * @author jens
  */
-public class NextcloudCalendarConnector {
+public class AttributeCellEditor extends AbstractCellEditor implements ActionListener, TableCellEditor {
 
-    private static final Logger log = LogManager.getLogger(NextcloudCalendarConnector.class.getName());
+    public static final String ATTRIBUTE_NONE = "";
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    public static final String ATTRIBUTE_NAME = "Name";
+    public static final String ATTRIBUTE_VORNAME = "Vorname";
+    public static final String ATTRIBUTE_STRASSE = "Strasse";
+    public static final String ATTRIBUTE_HAUSNR = "Hausnummer";
+    public static final String ATTRIBUTE_TEL = "Telefon";
+    public static final String ATTRIBUTE_FAX = "Fax";
+    public static final String ATTRIBUTE_MOBIL = "Mobil";
+    public static final String ATTRIBUTE_UNTERNEHMEN = "Unternehmen";
+    public static final String ATTRIBUTE_BERUF = "Beruf";
+    public static final String ATTRIBUTE_FUNKTION = "Funktion";
+    public static final String ATTRIBUTE_ABTEILUNG = "Abteilung";
+    public static final String ATTRIBUTE_EMAIL = "E-Mail";
+    public static final String ATTRIBUTE_ORT = "Ort";
+    public static final String ATTRIBUTE_PLZ = "PLZ";
+    public static final String ATTRIBUTE_LAND = "Land";
 
-    protected String subpathPrefix = null;
-    protected String serverName = null;
-    protected boolean useHTTPS = true;
-    protected int port = 443;
-    protected String userName = null;
-    protected String password = null;
+    public static String[] ATTRIBUTE_NAMES = new String[]{ATTRIBUTE_NONE, ATTRIBUTE_NAME, ATTRIBUTE_VORNAME, ATTRIBUTE_STRASSE, ATTRIBUTE_HAUSNR, ATTRIBUTE_TEL, ATTRIBUTE_FAX, ATTRIBUTE_MOBIL, ATTRIBUTE_UNTERNEHMEN, ATTRIBUTE_BERUF, ATTRIBUTE_FUNKTION, ATTRIBUTE_ABTEILUNG, ATTRIBUTE_EMAIL, ATTRIBUTE_ORT, ATTRIBUTE_PLZ, ATTRIBUTE_LAND};
 
-    public NextcloudCalendarConnector(String serverName, boolean useHTTPS, int port, String userName, String password) {
-        this.serverName = serverName;
-        this.useHTTPS = useHTTPS;
-        this.port = port;
-        this.userName = userName;
-        this.password = password;
+    public static final String DETAIL_ANREDE = "Anrede";
+    public static final String DETAIL_ANREDEBRIEFKOPF = "Anrede Briefkopf";
+    public static final String DETAIL_BEGRUESSUNG = "Begrüßung";
+    public static final String DETAIL_GRUSSFORMEL = "Grussformel";
+
+    private JComponent jcb;
+
+    private String editorValue = null;
+
+    public AttributeCellEditor() {
+        Arrays.sort(ATTRIBUTE_NAMES);
     }
 
-    public List<CloudCalendar> getAllCalendars() throws Exception {
-        ArrayList<CloudCalendar> calendars = new ArrayList<>();
-        try {
-            
-            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-            Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-            client.getState().setCredentials(AuthScope.ANY, creds);
-            
-            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-            client.getParams().setAuthenticationPreemptive(true);
-            
-            PropFindMethod method = new PropFindMethod(this.getBaseUrl(), DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
-            method.setRequestBody("<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\">\n"
-                    + "  <d:prop>\n"
-                    + "     <d:displayname />\n"
-                    + "     <cs:getctag />\n"
-                    + "  </d:prop>\n"
-                    + "</d:propfind>");
-            client.getHttpConnectionManager().getParams().setSoTimeout(15000);
-            client.getHttpConnectionManager().getParams().setConnectionTimeout(15000);
-            
-            client.executeMethod(method);
+    @Override
+    public JComponent getTableCellEditorComponent(JTable table, Object item, boolean isSelected, int row, int column) {
 
-            MultiStatus multiStatus = method.getResponseBodyAsMultiStatus();
-            MultiStatusResponse[] responses = multiStatus.getResponses();
+        this.editorValue = item.toString();
 
-            for (MultiStatusResponse response : responses) {
-                String cHref = response.getHref();
-                String cCtag = null;
-                String cDisplayName = null;
-                Status[] statuses = response.getStatus();
-                for (Status s : statuses) {
-                    if (s.getStatusCode() == 200) {
-                        DavPropertySet ps = response.getProperties(s.getStatusCode());
+        if (column == 1) {
 
-                        DavPropertyIterator it = ps.iterator();
-                        while (it.hasNext()) {
-                            DavProperty p = it.nextProperty();
-                            String propName = p.getName().getName();
-                            String propValue = null;
-                            if (p.getValue() != null) {
-                                propValue = p.getValue().toString();
-                            }
-                            if ("getctag".equalsIgnoreCase(propName)) {
-                                cCtag = propValue;
-                            } else if ("displayname".equalsIgnoreCase(propName)) {
-                                cDisplayName = propValue;
-                            }
+            this.jcb = new JComboBox(ATTRIBUTE_NAMES);
+            ((JComboBox) jcb).setEditable(false);
 
-                        }
-                    }
-                }
-                if (cHref != null && cCtag != null && cDisplayName != null) {
-                    CloudCalendar c = new CloudCalendar();
-                    c.setDisplayName(cDisplayName);
-                    c.setHref(cHref);
-                    c.setcTag(cCtag);
-                    calendars.add(c);
-                }
+            ((JComboBox) jcb).addActionListener(this);
 
-            }
-            return calendars;
-
-        } catch (Throwable ex) {
-            log.error("Error listing calendars", ex);
-            throw ex;
-        }
-
-    }
-
-    public List<VEvent> getAllEvents(String calendarHref, Date from, Date to) {
-        ArrayList<VEvent> events = new ArrayList<>();
-        try {
-            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-            Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-            client.getState().setCredentials(AuthScope.ANY, creds);
-            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-
-            //httpClient.getHostConfiguration().setHost("CALDAVHOST", 443, "https");
-            client.getParams().setAuthenticationPreemptive(true);
-            // Need a proxy?
-            //httpClient.getHostConfiguration().setProxy("phost", 8080);
-
-            CalDAVCollection collection = new CalDAVCollection(
-                    calendarHref,
-                    (HostConfiguration) client.getHostConfiguration().clone(),
-                    new CalDAV4JMethodFactory(),
-                    CalDAVConstants.PROC_ID_DEFAULT
-            );
-
-            GenerateQuery gq = new GenerateQuery();
-            gq.setFilter("VEVENT [" + dateFormat.format(from) + "T000000Z;" + dateFormat.format(to) + "T000000Z] : STATUS!=CANCELLED");
-            // Get the raw caldav query
-            // System.out.println("Query: "+ gq.prettyPrint());
-            CalendarQuery calendarQuery = gq.generate();
-            List<Calendar> calendars = collection.queryCalendars(client, calendarQuery);
-            for (Calendar calendar : calendars) {
-                ComponentList componentList = calendar.getComponents().getComponents(Component.VEVENT);
-                Iterator<VEvent> eventIterator = componentList.iterator();
-                while (eventIterator.hasNext()) {
-                    VEvent ve = eventIterator.next();
-                    events.add(ve);
-
-                }
+            if (item != null) {
+                ((JComboBox) jcb).setSelectedItem(item);
             }
 
-        } catch (Throwable ex) {
-            log.error("Error listing calendars", ex);
-        }
-
-        return events;
-    }
-
-    public String getEtag(String uid, String calendarHref) throws Exception {
-        if (uid == null || calendarHref == null || calendarHref.isEmpty() || uid.isEmpty()) {
-            return null;
-        }
-
-        DavPropertyNameSet properties = new DavPropertyNameSet();
-        properties.add(DavPropertyName.GETETAG);
-
-        // Create a Component filter for VCALENDAR and VEVENT
-        CompFilter vcalendar = new CompFilter(Calendar.VCALENDAR);
-        vcalendar.addCompFilter(new CompFilter(Component.VEVENT));
-
-        // Create a Query XML object with the above properties
-        CalendarQuery query = new CalendarQuery(properties, vcalendar, new CalendarData(), false, false);
-
-        org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-        Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-        client.getState().setCredentials(AuthScope.ANY, creds);
-        client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-
-        //httpClient.getHostConfiguration().setHost("CALDAVHOST", 443, "https");
-        client.getParams().setAuthenticationPreemptive(true);
-
-        String href=calendarHref + uid + ".ics";
-        
-        CalDAVReportMethod reportMethod = new CalDAV4JMethodFactory().createCalDAVReportMethod(href);
-        reportMethod.setPath(href);
-        reportMethod.setReportRequest(query);
-        try {
-            client.executeMethod(reportMethod);
-        } catch (Exception he) {
-            throw new CalDAV4JException("Problem executing method", he);
-        }
-
-        MultiStatus m = reportMethod.getResponseBodyAsMultiStatus();
-        if (m.getResponses() != null) {
-            if (m.getResponses().length > 0) {
-                try {
-                    return m.getResponses()[0].getProperties(200).get("getetag").getValue().toString();
-                } catch (Throwable t) {
-                    log.error("unable to get etag for " + calendarHref, t);
-                }
-            }
-        }
-        return null;
-//                m.
-//		if (!e.hasMoreElements()) {
-//			throw new ResourceNotFoundException(
-//					ResourceNotFoundException.IdentifierType.UID, uid);
-//		}
-//
-//		calDAVResource = new CalDAVResource(e.nextElement());
-//		cache.putResource(calDAVResource);
-//		return calDAVResource;
-
-//        try {
-//            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-//            Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-//            client.getState().setCredentials(AuthScope.ANY, creds);
-//            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-//
-//            client.getParams().setAuthenticationPreemptive(true);
-//            
-//            HttpHead headMethod = new HttpHead(calendarHref + uid + ".ics");
-//            Head head;
-//
-//        
-//            HttpResponse response =
-//                    client.execute(headMethod);
-////            int statusCode = response.getStatusLine().getStatusCode();
-////
-////            if (statusCode == CalDAVStatus.SC_NOT_FOUND) {
-////                throw new ResourceNotFoundException(
-////                        ResourceNotFoundException.IdentifierType.PATH, path);
-////            }
-////
-////            if (statusCode != CalDAVStatus.SC_OK) {
-////                throw new BadStatusException(headMethod, response);
-////            }
-//        
-//
-//        Header h = headMethod.getFirstHeader(CalDAVConstants.HEADER_ETAG);
-//        String etag = nul                            l;
-//        if (h != null) {
-//            etag = h.getValue();
-//        } else etag = getETagbyMultiget(httpClient, path);
-//
-//        return etag;
-    }
-
-    public VEvent getEventByUid(String uid, String calendarHref) throws Exception {
-        if (uid == null || calendarHref == null || calendarHref.isEmpty() || uid.isEmpty()) {
-            return null;
-        }
-
-        try {
-            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-            Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-            client.getState().setCredentials(AuthScope.ANY, creds);
-            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-
-            //httpClient.getHostConfiguration().setHost("CALDAVHOST", 443, "https");
-            client.getParams().setAuthenticationPreemptive(true);
-            // Need a proxy?
-            //httpClient.getHostConfiguration().setProxy("phost", 8080);
-
-            CalDAVCollection collection = new CalDAVCollection(
-                    calendarHref,
-                    (HostConfiguration) client.getHostConfiguration().clone(),
-                    new CalDAV4JMethodFactory(),
-                    CalDAVConstants.PROC_ID_DEFAULT
-            );
-
-            if (uid.toLowerCase().startsWith("uid:")) {
-                uid = uid.substring(4);
-            }
-
-            try {
-                //Calendar event = collection.getCalendarForEventUID(client, uid);
-                Calendar event = collection.getCalendar(client, uid + ".ics");
-                ComponentList componentList = event.getComponents().getComponents(Component.VEVENT);
-                Iterator<VEvent> eventIterator = componentList.iterator();
-                while (eventIterator.hasNext()) {
-                    VEvent ve = eventIterator.next();
-                    return ve;
-
-                }
-            } catch (ResourceNotFoundException rnfe) {
-                log.info("no calendar event with UID " + uid + " in calendar " + calendarHref + "; " + rnfe.getMessage());
-            }
-
-        } catch (CalDAV4JException ex) {
-            if (ex.getCause() instanceof ResourceNotFoundException) {
-                return null;
-            } else {
-                log.error("Error getting calendar event " + uid, ex);
-                throw ex;
-            }
-
-        } catch (Throwable t) {
-            log.error("Error getting calendar event " + uid, t);
-            throw t;
-        }
-        return null;
-
-    }
-
-//    public void getETag() {
-//        // Create a set of Dav Properties to query
-//		DavPropertyNameSet properties = new DavPropertyNameSet();
-//		properties.add(DavPropertyName.GETETAG);
-//
-//		// Create a Component filter for VCALENDAR and VEVENT
-//		CompFilter vcalendar = new CompFilter(Calendar.VCALENDAR);
-//		vcalendar.addCompFilter(new CompFilter(Component.VEVENT));
-//
-//		// Create a Query XML object with the above properties
-//		CalendarQuery query = new CalendarQuery(properties, vcalendar, new CalendarData(), false, false);
-//
-//		/*
-//		<C:calendar-query xmlns:C="urn:ietf:params:xml:ns:caldav">
-//		  <D:prop xmlns:D="DAV:">
-//		    <D:getetag/>
-//		    <C:calendar-data/>
-//		  </D:prop>
-//		  <C:filter>
-//		    <C:comp-filter name="VCALENDAR">
-//		      <C:comp-filter name="VEVENT"/>
-//		    </C:comp-filter>
-//		  </C:filter>
-//		</C:calendar-query>
-//		*/
-//		// Print to STDOUT the generated Query
-//		System.out.println(XMLUtils.prettyPrint(query));
-//
-//		HttpCalDAVReportMethod method = null;
-//
-//		try {
-//			method = new HttpCalDAVReportMethod("path://to/caldav/calendar", query, CalDAVConstants.DEPTH_1);
-//                        CloseableHttpClient client = HttpClients.createDefault();
-//
-//			// Execute the method
-//			HttpResponse httpResponse = client.execute(method);
-//
-//			// If successful
-//			if (method.succeeded(httpResponse)) {
-//				// Retrieve all multistatus responses
-//				MultiStatusResponse[] multiStatusResponses = method.getResponseBodyAsMultiStatus(httpResponse).getResponses();
-//
-//				// Iterate through all responses
-//				for (MultiStatusResponse response : multiStatusResponses) {
-//					// If the individual calendar request was succesful
-//					if (response.getStatus()[0].getStatusCode() == SC_OK) {
-//						// Retrieve ETag and  Calendar from response
-//						String etag = CalendarDataProperty.getEtagfromResponse(response);
-//						Calendar ical = CalendarDataProperty.getCalendarfromResponse(response);
-//
-//						// Print to output
-//						System.out.println("Calendar at " + response.getHref() + " with ETag: " + etag);
-//						System.out.println(ical);
-//					}
-//				}
-//			}
-//		} catch (Exception e) {
-//			// No-op
-//		} finally {
-//			if (method != null) {
-//				method.reset();
-//			}
-//		}
-//    }
-    public String createEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-        return this.putEvent(uid, calendarHref, null, summary, description, location, start, end, allDayEvent);
-    }
-
-    public String updateEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-        String etag = null;
-        try {
-            etag = this.getEtag(uid, calendarHref);
-        } catch (Throwable t) {
-            log.error("unable to get etag for " + calendarHref, t);
-        }
-        return this.putEvent(uid, calendarHref, etag, summary, description, location, start, end, allDayEvent);
-    }
-
-    // create or update
-    private String putEvent(String uid, String calendarHref, String etag, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-
-        org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-        Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-        client.getState().setCredentials(AuthScope.ANY, creds);
-        client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-
-        //httpClient.getHostConfiguration().setHost("CALDAVHOST", 443, "https");
-        client.getParams().setAuthenticationPreemptive(true);
-        PutMethod put = null;
-        try {
-            CalendarBuilder builder = new CalendarBuilder();
-            net.fortuna.ical4j.model.Calendar c = new net.fortuna.ical4j.model.Calendar();
-            c.getProperties().add(new ProdId("-//j-lawyer.org//iCal4j 1.0//EN"));
-            c.getProperties().add(Version.VERSION_2_0);
-            c.getProperties().add(CalScale.GREGORIAN);
-            TimeZoneRegistry registry = builder.getRegistry();
-            VTimeZone tz = registry.getTimeZone("Europe/Berlin").getVTimeZone();
-            c.getComponents().add(tz);
-//            VEvent vevent = new VEvent(new net.fortuna.ical4j.model.Date(),
-//                    new Dur(0, 1, 0, 0), summary);
-            VEvent vevent = null;
-            if (allDayEvent) {
-                // required to use a string as input, because due to the timezones it might be added for one day earlier
-                String dateString = dateFormat.format(start);
-                vevent = new VEvent(new net.fortuna.ical4j.model.Date(dateString), summary);
-            } else {
-                vevent = new VEvent(new net.fortuna.ical4j.model.DateTime(start), new net.fortuna.ical4j.model.DateTime(end), summary);
-            }
-
-            vevent.getProperties().add(new Location(location));
-            vevent.getProperties().add(new Description(description));
-            vevent.getProperties().add(new Uid(uid));
-
-            XProperty jlp = new XProperty("X-ALT-JLAWYERORG");
-            jlp.setValue("1");
-            vevent.getProperties().add(jlp);
-
-            //vevent.getProperties().add(new Uid(uid));
-            c.getComponents().add(vevent);
-            String href = calendarHref + uid + ".ics";
-            put = new PutMethod(href);
-            if (etag==null) {
-                //put.addRequestHeader("If-None-Match", "*");
-            } else {
-                put.addRequestHeader("If-Match", etag);
-            }
-            put.setRequestEntity(new StringRequestEntity(c.toString(), "text/calendar", "UTF-8"));
-            int httpStatus = client.executeMethod(put);
-            //etag: put.getResponseHeader("ETag").getValue();
-            log.info("   HTTP " + httpStatus);
-            return href;
-        } catch (Exception ex) {
-            log.error(ex);
-        } finally {
-            if (put != null) {
-                put.releaseConnection();
-            }
-        }
-        return null;
-    }
-
-    public void deleteEvent(String uid, String calendarHref) throws Exception {
-        org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
-        Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
-        client.getState().setCredentials(AuthScope.ANY, creds);
-        client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
-
-        client.getParams().setAuthenticationPreemptive(true);
-        DeleteMethod delete = null;
-        try {
-            String href = calendarHref + uid + ".ics";
-            delete = new DeleteMethod(href);
-            client.executeMethod(delete);
-        } catch (Exception ex) {
-            log.error(ex);
-            throw ex;
-        } finally {
-            if (delete != null) {
-                delete.releaseConnection();
-            }
+            return jcb;
+        } else {
+            this.jcb = new JTextField();
+            ((JTextField) jcb).setText(item.toString());
+            return jcb;
         }
     }
 
-    protected String getBaseUrl() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("http");
-        if (useHTTPS) {
-            sb.append("s");
+    @Override
+    public boolean stopCellEditing() {
+
+        if (this.jcb instanceof JComboBox) {
+            this.editorValue = ((JComboBox) jcb).getEditor().getItem().toString();
+        } else {
+            this.editorValue = ((JTextField) jcb).getText();
+
         }
-        sb.append("://");
-        sb.append(serverName);
-        sb.append(":");
-        sb.append("").append(port);
-        sb.append("/");
-        if (subpathPrefix != null) {
-            sb.append(this.subpathPrefix);
-            if (!subpathPrefix.endsWith("/")) {
-                sb.append("/");
-            }
+
+        return super.stopCellEditing();
+    }
+
+    @Override
+    public Object getCellEditorValue() {
+        if (this.jcb instanceof JComboBox) {
+            return this.editorValue;
+        } else {
+            this.editorValue = ((JTextField) jcb).getText();
+            return ((JTextField) jcb).getText();
         }
-        sb.append("remote.php/dav/calendars/");
-        sb.append(this.userName);
-        sb.append("/");
-        return sb.toString();
-
     }
 
-    /**
-     * @return the subpathPrefix
-     */
-    public String getSubpathPrefix() {
-        return subpathPrefix;
-    }
-
-    /**
-     * @param subpathPrefix the subpathPrefix to set
-     */
-    public void setSubpathPrefix(String subpathPrefix) {
-        this.subpathPrefix = subpathPrefix;
-    }
-
-    /**
-     * @return the serverName
-     */
-    public String getServerName() {
-        return serverName;
-    }
-
-    /**
-     * @param serverName the serverName to set
-     */
-    public void setServerName(String serverName) {
-        this.serverName = serverName;
-    }
-
-    /**
-     * @return the useHTTPS
-     */
-    public boolean isUseHTTPS() {
-        return useHTTPS;
-    }
-
-    /**
-     * @param useHTTPS the useHTTPS to set
-     */
-    public void setUseHTTPS(boolean useHTTPS) {
-        this.useHTTPS = useHTTPS;
-    }
-
-    /**
-     * @return the port
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * @param port the port to set
-     */
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    /**
-     * @return the userName
-     */
-    public String getUserName() {
-        return userName;
-    }
-
-    /**
-     * @param userName the userName to set
-     */
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    /**
-     * @return the password
-     */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * @param password the password to set
-     */
-    public void setPassword(String password) {
-        this.password = password;
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        this.editorValue = ((JComboBox) jcb).getEditor().getItem().toString();
     }
 
 }
