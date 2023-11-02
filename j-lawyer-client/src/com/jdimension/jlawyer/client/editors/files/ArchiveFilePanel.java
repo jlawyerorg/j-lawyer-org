@@ -687,6 +687,7 @@ import com.jdimension.jlawyer.client.editors.SaveableEditor;
 import com.jdimension.jlawyer.client.editors.SelfValidatingEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
+import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.addresses.ViewAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.documents.*;
@@ -3797,6 +3798,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.repaint();
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
+        
     }//GEN-LAST:event_cmdSearchClientActionPerformed
 
     public boolean confirmSave(String question, String tagToActivate) {
@@ -5916,14 +5918,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if(selectedDocs.isEmpty())
             return;
         
-        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs);
+        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs, this);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
     }//GEN-LAST:event_mnuSendMessageForDocumentActionPerformed
 
     private void cmdSendInstantMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendInstantMessageActionPerformed
-        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null);
+        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null, this);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSendInstantMessageActionPerformed
