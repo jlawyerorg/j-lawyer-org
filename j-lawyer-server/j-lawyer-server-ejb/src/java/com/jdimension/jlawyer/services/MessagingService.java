@@ -718,6 +718,10 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public InstantMessage submitMessage(InstantMessage message) throws Exception {
+        
+        if(message.getContent()==null || message.getContent().trim().isEmpty())
+            throw new Exception("Nachricht ohne Inhalt");
+        
         StringGenerator idGen = new StringGenerator();
         String messageId=idGen.getID().toString();
         message.setId(messageId);
