@@ -683,8 +683,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer {
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    protected List<String> caseIdsSyncedForUser = null;
-    protected boolean loadSyncStatus = false;
+    private List<String> caseIdsSyncedForUser = null;
+    private boolean loadSyncStatus = false;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
