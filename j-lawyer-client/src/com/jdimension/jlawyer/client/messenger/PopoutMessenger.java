@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -693,38 +694,43 @@ import org.apache.log4j.Logger;
 public class PopoutMessenger extends javax.swing.JDialog implements NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(PopoutMessenger.class.getName());
-    
+
     /**
      * Creates new form PopoutMessenger
+     *
      * @param parent
      * @param modal
      * @param initialMessages
+     * @param deletedMessageIds
      */
-    public PopoutMessenger(java.awt.Frame parent, boolean modal, ArrayList<InstantMessage> initialMessages) {
+    public PopoutMessenger(java.awt.Frame parent, boolean modal, ArrayList<InstantMessage> initialMessages, ArrayList<String> deletedMessageIds) {
         super(parent, modal);
         initComponents();
-        
+
         ComponentUtils.restoreDialogSize(this);
-        
+
         this.jScrollPane1.getViewport().setOpaque(false);
-        this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
-        
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
         this.messageSendPanel1.setMessageConsumer(this);
-        
+
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
-        
+
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
-        
+
         if (initialMessages != null) {
             for (InstantMessage m : initialMessages) {
-                this.addMessageToView(m);
+                if (!deletedMessageIds.contains(m.getId())) {
+                    this.addMessageToView(m);
+                }
             }
         }
-        
+
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
     }
 
     /**
@@ -835,7 +841,7 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            PopoutMessenger dialog = new PopoutMessenger(new javax.swing.JFrame(), true, null);
+            PopoutMessenger dialog = new PopoutMessenger(new javax.swing.JFrame(), true, null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -891,7 +897,7 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
         vertical.addAdjustmentListener(downScroller);
 
     }
-    
+
     @Override
     public void onEvent(Event e) {
         if (e instanceof NewInstantMessagesEvent) {
@@ -903,16 +909,34 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
                     }
                 }
             });
-        } else if(e instanceof InstantMessageMentionChangedEvent) {
-            this.updateMentionStatus((InstantMessageMentionChangedEvent)e);
+        } else if (e instanceof InstantMessageMentionChangedEvent) {
+            this.updateMentionStatus((InstantMessageMentionChangedEvent) e);
+        } else if (e instanceof InstantMessageDeletedEvent) {
+            this.deleteMessage((InstantMessageDeletedEvent) e);
         }
     }
-    
+
     private void updateMentionStatus(InstantMessageMentionChangedEvent e) {
-        for(int i=0;i<this.pnlMessages.getComponentCount();i++) {
-            if(this.pnlMessages.getComponent(i) instanceof MessagePanel) {
-                ((MessagePanel)this.pnlMessages.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
+        for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+            if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                ((MessagePanel) this.pnlMessages.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
             }
+        }
+    }
+
+    private void deleteMessage(InstantMessageDeletedEvent e) {
+        boolean removed = false;
+        for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+            if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                if (((MessagePanel) this.pnlMessages.getComponent(i)).getMessage().getId().equals(e.getMessageId())) {
+                    this.pnlMessages.remove(this.pnlMessages.getComponent(i));
+                    removed = true;
+                    break;
+                }
+            }
+        }
+        if(removed) {
+            this.pnlMessages.revalidate();
         }
     }
 }

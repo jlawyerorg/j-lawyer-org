@@ -787,7 +787,7 @@ public class MessagePanel extends javax.swing.JPanel {
     }
 
     public int getCalloutWidth() {
-        return this.getParent().getWidth() - this.lblUser.getWidth() - 60;
+        return this.getParent().getWidth() - this.lblUser.getWidth() - 30;
         //return this.getParent().getWidth() - this.calloutPanelComponent1.getX() - this.lblUser.getWidth();
         //return this.calloutPanelComponent1.getWidth();
     }

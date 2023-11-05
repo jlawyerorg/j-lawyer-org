@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -710,8 +711,8 @@ import themes.colors.DefaultColorTheme;
 public class MessagingCenterPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(MessagingCenterPanel.class.getName());
-    
-    private static final int SCROLLPANE_VERTICAL_INCREMENT=16;
+
+    private static final int SCROLLPANE_VERTICAL_INCREMENT = 16;
 
     private Image backgroundImage = null;
 
@@ -719,6 +720,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private boolean statusBarNotified = false;
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
+    private ArrayList<String> deletedMessageIds = new ArrayList<>();
 
     private transient Timer timer = new Timer();
 
@@ -766,6 +768,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
 
         this.initializing = false;
         log.info("finished initialization: " + (System.currentTimeMillis() - start));
@@ -1152,7 +1155,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }//GEN-LAST:event_lblClearHashtagSelectionMouseClicked
 
     private void lblPopoutMessengerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblPopoutMessengerMouseClicked
-        PopoutMessenger dlgMessenger = new PopoutMessenger(EditorsRegistry.getInstance().getMainWindow(), false, this.currentMessageList);
+        PopoutMessenger dlgMessenger = new PopoutMessenger(EditorsRegistry.getInstance().getMainWindow(), false, this.currentMessageList, this.deletedMessageIds);
         FrameUtils.centerDialog(dlgMessenger, EditorsRegistry.getInstance().getMainWindow());
         dlgMessenger.setVisible(true);
     }//GEN-LAST:event_lblPopoutMessengerMouseClicked
@@ -1352,9 +1355,35 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                 }
             });
         } else if (e instanceof InstantMessageMentionChangedEvent) {
-            this.updateMentionStatus(pnlMessages, (InstantMessageMentionChangedEvent) e);
-            this.updateMentionStatus(pnlMessagesToMe, (InstantMessageMentionChangedEvent) e);
-            this.updateMentionStatus(pnlMessagesToOthers, (InstantMessageMentionChangedEvent) e);
+            for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
+                JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(i);
+                this.updateMentionStatus(((JPanel) sp.getViewport().getComponent(0)), (InstantMessageMentionChangedEvent) e);
+            }
+            
+        } else if (e instanceof InstantMessageDeletedEvent) {
+            this.deletedMessageIds.add(((InstantMessageDeletedEvent) e).getMessageId());
+            
+            for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
+                JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(i);
+                this.deleteMessage(((JPanel) sp.getViewport().getComponent(0)), (InstantMessageDeletedEvent) e);
+            }
+            
+        }
+    }
+
+    private void deleteMessage(JPanel messagesPanel, InstantMessageDeletedEvent e) {
+        boolean removed=false;
+        for (int i = 0; i < messagesPanel.getComponentCount(); i++) {
+            if (messagesPanel.getComponent(i) instanceof MessagePanel) {
+                if (((MessagePanel) messagesPanel.getComponent(i)).getMessage().getId().equals(e.getMessageId())) {
+                    messagesPanel.remove(messagesPanel.getComponent(i));
+                    removed=true;
+                    break;
+                }
+            }
+        }
+        if(removed) {
+            messagesPanel.revalidate();
         }
     }
 

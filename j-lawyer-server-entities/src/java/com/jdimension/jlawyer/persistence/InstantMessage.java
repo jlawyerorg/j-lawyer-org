@@ -857,6 +857,18 @@ public class InstantMessage implements Serializable {
         return false;
     }
     
+    public int getOpenMentionsCount() {
+        int open=0;
+        if(this.mentions != null && !this.mentions.isEmpty()) {
+            for (InstantMessageMention m : this.getMentions()) {
+                if (!m.isDone()) {
+                    open++;
+                }
+            }
+        }
+        return open;
+    }
+    
     public boolean hasMentionFor(String principalId) {
         if(this.getMentions()==null)
             return false;

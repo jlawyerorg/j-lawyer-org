@@ -691,6 +691,7 @@ public abstract class Event {
     public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
     public static final Integer TYPE_INSTANTMESSAGING_MENTIONCHANGED=170;
     public static final Integer TYPE_INSTANTMESSAGING_OPENMENTIONS=180;
+    public static final Integer TYPE_INSTANTMESSAGING_MESSAGEDELETED=190;
     
     
     private Integer type=TYPE_DEFAULT;
