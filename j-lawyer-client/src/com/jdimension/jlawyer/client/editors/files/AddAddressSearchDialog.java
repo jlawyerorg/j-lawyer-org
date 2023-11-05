@@ -706,15 +706,19 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
     private AddressBean resultAddress = null;
     private ArchiveFileAddressesBean resultInvolvement = null;
     private List<PartyTypeBean> partyTypes = null;
+    
+    private String targetCaseId=null;
 
     /**
      * Creates new form AddAddressSearchDialog
      * @param parent
      * @param modal
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal) {
+    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, String targetCaseId) {
         super(parent, modal);
         initComponents();
+        
+        this.targetCaseId=targetCaseId;
 
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
@@ -948,7 +952,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         int row = this.tblResults.getSelectedRow();
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this);
+        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this.targetCaseId, this);
 
         this.resultAddress = id.getAddressDTO();
         ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
@@ -1042,7 +1046,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new AddAddressSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
