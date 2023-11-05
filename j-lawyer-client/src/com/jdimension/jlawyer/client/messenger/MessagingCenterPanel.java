@@ -1221,6 +1221,11 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private void addToTabIfRequired(InstantMessage msg) {
 
+        int selectedTabIndex=this.tabsPane.getSelectedIndex();
+        String selectedTabCaption=null;
+        if(selectedTabIndex>-1)
+            selectedTabCaption=this.tabsPane.getTitleAt(selectedTabIndex);
+        
         if (msg.getCaseContext() == null) {
             return;
         }
@@ -1273,6 +1278,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         }
 
         this.addMessageToContainers(msg, targetPanel, targetScroll);
+        
+        // if a case-related tab was selected when the message was received
+        if(selectedTabIndex > 2) {
+            for (int i = 3; i < this.tabsPane.getTabCount(); i++) {
+                if (tabsPane.getTitleAt(i).equals(selectedTabCaption)) {
+                    tabsPane.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
 
     }
 
@@ -1328,6 +1343,23 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     @Override
     public void newMessageForSubmission(InstantMessage msg) {
 
+        int tabIndex=this.tabsPane.getSelectedIndex();
+        // preserve case context of the current tab
+        if(tabIndex > 2) {
+            JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(tabIndex);
+            JPanel messagesInTab = (JPanel) sp.getViewport().getComponent(0);
+
+            for (int i = 0; i < messagesInTab.getComponentCount(); i++) {
+                if (messagesInTab.getComponent(i) instanceof MessagePanel) {
+                    if (((MessagePanel) messagesInTab.getComponent(i)).getMessage().getCaseContext()!=null) {
+                        msg.setCaseContext(((MessagePanel) messagesInTab.getComponent(i)).getMessage().getCaseContext());
+                        break;
+                    }
+                }
+            }
+        }
+        
+        
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
