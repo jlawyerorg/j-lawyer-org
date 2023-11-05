@@ -1230,7 +1230,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblType.setBackground(c);
 
         if (!this.initializing) {
-            ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
+            ConflictOfInterestUtils.checkForConflicts(a, ptb, this.caseDto.getId(), EditorsRegistry.getInstance().getMainWindow());
         }
 
         if (!this.initializing && this.a != null) {
