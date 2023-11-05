@@ -1171,29 +1171,6 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
 
     }
     
-    public static List<String> extrahiereAdressen(String text) {
-        List<String> adressen = new ArrayList<>();
-        
-        // Regulärer Ausdruck zum Erkennen von Adressen
-        String regex = "\\d+\\s+\\w+\\s+\\w+\\s*[,\\.]?\\s*\\w*\\s*,?\\s*\\d{5}\\s+\\w+";
-        
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(text);
-        
-        StringBuilder aktuelleAdresse = new StringBuilder();
-        
-        while (matcher.find()) {
-            if (aktuelleAdresse.length() > 0) {
-                adressen.add(aktuelleAdresse.toString());
-                aktuelleAdresse.setLength(0); // Leeren für die nächste Adresse
-            }
-            adressen.add(matcher.group());
-        }
-        
-        return adressen;
-    }
-
-
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;

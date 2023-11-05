@@ -706,7 +706,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
     private ArrayList<MailingQueueEntry> lastEntryList = new ArrayList<MailingQueueEntry>();
     
-    private Timer refreshTimer=null;
+    private transient Timer refreshTimer=null;
 
     @Override
     public void notifyStatusBarReady() {

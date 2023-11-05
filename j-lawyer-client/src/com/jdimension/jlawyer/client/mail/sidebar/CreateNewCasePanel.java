@@ -684,7 +684,7 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
     private String senderAddress=null;
     private String textBody=null;
     private String senderName=null;
-    private EmailInboxPanel parent=null;
+    private EmailInboxPanel panelParent=null;
 
     /**
      * Creates new form CreateNewCasePanel
@@ -703,7 +703,7 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
         this.subject=subject;
         this.textBody=body;
         this.senderName=senderName;
-        this.parent=parent;
+        this.panelParent=parent;
         this.senderAddress=senderAddress;
         
         setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -783,8 +783,8 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
         dlg.setVisible(true);
         
         // reload sidebar
-        if(this.parent!=null)
-            this.parent.tblMailsMouseClicked();
+        if(this.panelParent!=null)
+            this.panelParent.tblMailsMouseClicked();
         
     }//GEN-LAST:event_cmdNewCaseActionPerformed
 
