@@ -687,7 +687,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form ClientSelectionStep
      */
     public ClientSelectionStep() {
         initComponents();
@@ -698,7 +698,6 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void nextEvent() throws Exception {
-        //this.data.put("data1", this.txtFileNumber.getText());
         
         ArrayList<DrebisPerson> persons=new ArrayList<>();
         
@@ -1086,7 +1085,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 //                }
 
                 Vector row = new Vector();
-                row.add(true);
+                row.add(false);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());

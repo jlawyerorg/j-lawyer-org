@@ -854,7 +854,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
                 AddressBean cl = others.get(i);
 
                 Vector row = new Vector();
-                row.add(true);
+                row.add(false);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
