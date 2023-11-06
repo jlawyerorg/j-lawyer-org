@@ -969,9 +969,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
         
         // delete button
-//        g2d.setFont(miniFont);
-//        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
-//        g2d.drawString("x", 10, 20); // Timestamp position
         this.deleteX=width-60;
         g2d.setFont(miniFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD));
         g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
