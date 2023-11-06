@@ -1181,6 +1181,19 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
 
     }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception {
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+        if (context.getCallerPrincipal().getName() != null) {
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+        }
+
+        return this.archiveFileReviewsFacade.findByArchiveFileKeyAndDone(aFile, done);
+
+    }
 
     private Collection<ArchiveFileReviewsBean> getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);

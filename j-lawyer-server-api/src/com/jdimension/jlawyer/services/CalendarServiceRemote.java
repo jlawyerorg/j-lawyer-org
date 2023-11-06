@@ -703,6 +703,7 @@ public interface CalendarServiceRemote {
     ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     
     Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
+    Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception;
 
     List<CalendarSetup> getAllCalendarSetups();
     

@@ -670,11 +670,13 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -687,6 +689,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1134,18 +1137,35 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         html.append("<table>");
         html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
         html.append("<tr><td>").append("Kurzrubrum: ").append("</td><td>").append(afb.getName()).append("</td></tr>");
-        if (afb.getReason() != null) {
+        if (!StringUtils.isEmpty(afb.getReason())) {
             html.append("<tr><td>").append("wegen: ").append("</td><td>").append(afb.getReason()).append("</td></tr>");
         }
-        if (afb.getNotice() != null) {
+        if (!StringUtils.isEmpty(afb.getNotice())) {
             html.append("<tr><td>").append("Notiz: ").append("</td><td>").append(afb.getNotice()).append("</td></tr>");
         }
-        if (afb.getLawyer() != null) {
+        if (!StringUtils.isEmpty(afb.getLawyer())) {
             html.append("<tr><td>").append("Anwalt: ").append("</td><td>").append(afb.getLawyer()).append("</td></tr>");
         }
-        if (afb.getAssistant() != null) {
+        if (!StringUtils.isEmpty(afb.getAssistant())) {
             html.append("<tr><td>").append("Sachbearbeiter: ").append("</td><td>").append(afb.getAssistant()).append("</td></tr>");
         }
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), true);
+            if (!reviews.isEmpty()) {
+                html.append("<tr><td>").append("Unerledigte Kalendereintr&auml;ge: ").append("</td><td>").append(reviews.size()).append("</td></tr>");
+                SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+                for (ArchiveFileReviewsBean r : reviews) {
+                    html.append("<tr><td></td><td>").append(df.format(r.getBeginDate())).append(" ").append(r.getSummary()).append(" (").append(r.getEventTypeName()).append(")").append("</td></tr>");
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error getting calendar entries", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Kalendereinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
 
         html.append("</table>");
         html.append("</body></html>");

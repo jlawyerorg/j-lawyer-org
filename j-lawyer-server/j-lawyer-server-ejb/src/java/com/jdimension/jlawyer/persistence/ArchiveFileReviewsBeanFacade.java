@@ -694,6 +694,17 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
     }
     
     @Override
+    public List<ArchiveFileReviewsBean> findByArchiveFileKeyAndDone(ArchiveFileBean archiveFileKey, boolean done) {
+
+        short isDone = 0;
+        if (done) {
+            isDone = 1;
+        }
+        
+        return getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1 and done = ?2 order by beginDate asc").setParameter(1, archiveFileKey).setParameter(2, isDone).getResultList();
+    }
+    
+    @Override
     public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup setup) {
 
         return getEntityManager().createQuery("from ArchiveFileReviewsBean where calendarSetup = ?1").setParameter(1, setup).getResultList();
