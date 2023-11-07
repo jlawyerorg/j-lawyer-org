@@ -676,6 +676,8 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -713,6 +715,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private static final Logger log = Logger.getLogger(MessagingCenterPanel.class.getName());
 
     private static final int SCROLLPANE_VERTICAL_INCREMENT = 16;
+    private static final String CLIENTPROPERTY_CASECONTEXT="tab.casecontext";
 
     private Image backgroundImage = null;
 
@@ -732,6 +735,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.initializing = true;
 
         initComponents();
+        
+        this.tabsPane.putClientProperty("JTabbedPane.maximumTabWidth", 200);
 
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
@@ -916,6 +921,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         jScrollPane1.setViewportView(lstHashtags);
 
         tabsPane.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabsPane.setFont(tabsPane.getFont());
 
         jScrollPane3.setBorder(null);
         jScrollPane3.setOpaque(false);
@@ -1015,7 +1021,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                         .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jScrollPane1)
+                            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)
                             .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1232,9 +1238,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         int existingTab = -1;
         for (int i = 0; i < this.tabsPane.getTabCount(); i++) {
-            if (tabsPane.getTitleAt(i).equals(msg.getCaseContext().getFileNumber())) {
-                existingTab = i;
-                break;
+            Object caseContext=((JScrollPane)tabsPane.getComponentAt(i)).getClientProperty(CLIENTPROPERTY_CASECONTEXT);
+            if(caseContext!=null && caseContext instanceof ArchiveFileBean) {
+                if(((ArchiveFileBean)caseContext).getId().equals(msg.getCaseContext().getId())) {
+                    existingTab = i;
+                    break;
+                }
             }
         }
 
@@ -1253,7 +1262,9 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetScroll.getViewport().setOpaque(false);
             targetScroll.setBorder(null);
             targetScroll.setOpaque(false);
-            tabsPane.addTab(msg.getCaseContext().getFileNumber(), targetScroll);
+            targetScroll.putClientProperty(CLIENTPROPERTY_CASECONTEXT, msg.getCaseContext());
+            tabsPane.addTab(getTabTitleForMessage(msg), targetScroll);
+            tabsPane.setToolTipTextAt(tabsPane.getTabCount()-1, this.getTooltipForTab(msg.getCaseContext()));
             existingTab = tabsPane.getTabCount() - 1;
 
         } else {
@@ -1272,7 +1283,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                 if (msg.getSent().getTime() > tab4latest.getTime()) {
                     // move tab to the left
                     tabsPane.removeTabAt(existingTab);
-                    tabsPane.insertTab(msg.getCaseContext().getFileNumber(), null, targetScroll, null, 3);
+                    tabsPane.insertTab(getTabTitleForMessage(msg), null, targetScroll, null, 3);
                 }
             }
         }
@@ -1289,6 +1300,23 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
 
+    }
+    
+    private String getTabTitleForMessage(InstantMessage m) {
+        StringBuilder sb=new StringBuilder();
+        String name=m.getCaseContext().getName();
+        name=StringUtils.cutoff(name,20);
+        sb.append("<html><b>").append(m.getCaseContext().getFileNumber()).append("</b><br/>").append(name).append("</html>");
+        return sb.toString();
+    }
+    
+    private String getTooltipForTab(ArchiveFileBean caseContext) {
+        if(caseContext==null)
+            return null;
+        StringBuilder sb=new StringBuilder();
+        //sb.append("<html><b>").append(caseContext.getFileNumber()).append("</b><br/>").append(caseContext.getName()).append("<br/>").append(caseContext.getReason()).append("</html>");
+        sb.append(caseContext.getFileNumber()).append(System.lineSeparator()).append(caseContext.getName()).append(System.lineSeparator()).append(caseContext.getReason());
+        return sb.toString();
     }
 
     private void addToMentioningTabsIfRequired(InstantMessage msg) {
@@ -1349,14 +1377,11 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(tabIndex);
             JPanel messagesInTab = (JPanel) sp.getViewport().getComponent(0);
 
-            for (int i = 0; i < messagesInTab.getComponentCount(); i++) {
-                if (messagesInTab.getComponent(i) instanceof MessagePanel) {
-                    if (((MessagePanel) messagesInTab.getComponent(i)).getMessage().getCaseContext()!=null) {
-                        msg.setCaseContext(((MessagePanel) messagesInTab.getComponent(i)).getMessage().getCaseContext());
-                        break;
-                    }
-                }
+            Object caseContext=sp.getClientProperty(CLIENTPROPERTY_CASECONTEXT);
+            if(caseContext!=null) {
+                msg.setCaseContext((ArchiveFileBean)caseContext);
             }
+            
         }
         
         

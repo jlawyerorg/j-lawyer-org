@@ -686,8 +686,6 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
     private long lastMessageTimestamp=-1;
     private long lastMentionStatusChangedTimestamp=-1;
     
-    protected static long unseenByUser=0;
-
     /**
      * Creates a new instance of MessagePollingTimerTask
      * @param latestMessage
@@ -738,20 +736,6 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
                 this.lastPolled=System.currentTimeMillis();
             }
         }
-    }
-
-    /**
-     * @return the unseenByUser
-     */
-    public static synchronized long getUnseenByUser() {
-        return unseenByUser;
-    }
-
-    /**
-     * @param aUnseenByUser the unseenByUser to set
-     */
-    public static synchronized void setUnseenByUser(long aUnseenByUser) {
-        unseenByUser = aUnseenByUser;
     }
 
 }

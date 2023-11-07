@@ -800,7 +800,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             } else {
                 this.singleton.setLatestInstantMessageReceived(since.getTime());
             }
-            return messages;
+            
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName());
         } else if(since.getTime()<this.singleton.getLatestInstantMessageReceived()) {
             // new message have been received
             List<InstantMessage> messages=this.messageFacade.findSince(since);
@@ -809,10 +810,40 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             } else {
                 this.singleton.setLatestInstantMessageReceived(since.getTime());
             }
-            return messages;
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName());
         } else {
             return null;
         }
+    }
+    
+    private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId) {
+        ArrayList<InstantMessage> filtered=new ArrayList<>();
+        for(InstantMessage m: unfiltered) {
+            if(messageRelevantForUser(m, principalId))
+                filtered.add(m);
+        }
+        return filtered;
+    }
+    
+    private boolean messageRelevantForUser(InstantMessage m, String principalId) {
+        // message sent in a case context
+        if(m.getCaseContext()!=null)
+            return true;
+
+        // message sent by the user
+        if(m.getSender()!=null && m.getSender().equals(principalId))
+            return true;
+        
+        // user has been mentioned
+        if(m.getMentionFor(principalId)!=null)
+            return true;
+        
+        // no case context, sent to all
+        if(m.getCaseContext()==null && !m.hasMentions())
+            return true;
+        
+        return false;
+        
     }
 
     @Override
@@ -856,6 +887,17 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @RolesAllowed({"loginRole"})
     public int getNumberOfOpenMentions() throws Exception {
         List<InstantMessageMention> open=this.mentionFacade.findOpen();
+        int openCount=0;
+        if(open!=null) {
+            openCount=open.size();
+        }
+        return openCount;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public int getNumberOfOpenMentions(String principalId) throws Exception {
+        List<InstantMessageMention> open=this.mentionFacade.findOpen(principalId);
         int openCount=0;
         if(open!=null) {
             openCount=open.size();

@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.messenger;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import org.apache.log4j.Logger;
 
@@ -691,7 +692,7 @@ public class OpenMessageMentionsTimerTask extends java.util.TimerTask {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                int openMentions = locator.lookupMessagingServiceRemote().getNumberOfOpenMentions();
+                int openMentions = locator.lookupMessagingServiceRemote().getNumberOfOpenMentions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new OpenMentionsEvent(openMentions));

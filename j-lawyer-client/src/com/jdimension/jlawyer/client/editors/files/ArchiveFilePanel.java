@@ -696,6 +696,8 @@ import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.CustomLauncher;
@@ -989,6 +991,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
 
     }
 
@@ -3715,6 +3719,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
     
     public void addMessageToView(InstantMessage msg) {
+        // check if message has already been added
+        for(Component c: this.pnlMessages.getComponents()) {
+            if(c instanceof MessagePanel) {
+                InstantMessage existingMessage=((MessagePanel)c).getMessage();
+                if(existingMessage.getId().equals(msg.getId())) {
+                    return;
+                }
+            }
+        }
+        
+        
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         mp1.setContextForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -5917,9 +5932,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if(selectedDocs.isEmpty())
             return;
         
-        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs, this);
+        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        
 
     }//GEN-LAST:event_mnuSendMessageForDocumentActionPerformed
 
@@ -6169,6 +6185,36 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
             }
+        } else if (e instanceof InstantMessageDeletedEvent) {
+            
+                boolean removed = false;
+                for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+                    if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                        if (((MessagePanel) this.pnlMessages.getComponent(i)).getMessage().getId().equals(((InstantMessageDeletedEvent)e).getMessageId())) {
+                            this.pnlMessages.remove(this.pnlMessages.getComponent(i));
+                            removed = true;
+                            break;
+                        }
+                    }
+                }
+                if (removed) {
+                    this.pnlMessages.revalidate();
+                }
+                
+            
+            
+        } else if (e instanceof NewInstantMessagesEvent) {
+            SwingUtilities.invokeLater(() -> {
+                if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
+                    for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                        if(msg.getCaseContext() != null && this.dto!=null) {
+                            if (msg.getCaseContext().getId().equals(this.dto.getId())) {
+                                this.addMessageToView(msg);
+                            }
+                        }
+                    }
+                }
+            });
         }
     }
 

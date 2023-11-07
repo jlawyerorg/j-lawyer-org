@@ -680,6 +680,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "InstantMessageMention.findSince", query = "SELECT a FROM InstantMessageMention a WHERE a.statusChanged > :since order by a.statusChanged asc"),
     @NamedQuery(name = "InstantMessageMention.findById", query = "SELECT a FROM InstantMessageMention a WHERE a.id = :id"),
     @NamedQuery(name = "InstantMessageMention.findOpen", query = "SELECT a FROM InstantMessageMention a WHERE a.done = 0"),
+    @NamedQuery(name = "InstantMessageMention.findOpenByPrincipal", query = "SELECT a FROM InstantMessageMention a WHERE a.done = 0 and a.principal = :principal"),
     @NamedQuery(name = "InstantMessageMention.findByMessage", query = "SELECT a FROM InstantMessageMention a WHERE a.message = :message")})
 public class InstantMessageMention implements Serializable {
     

@@ -685,7 +685,6 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
     private ArrayList<ArchiveFileDocumentsBean> documentContexts = null;
     private ArchiveFileBean caseContext=null;
 
-    
     /**
      * Creates new form SendInstantMessageDialog
      *
@@ -846,4 +845,5 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
         this.setVisible(false);
         this.dispose();
     }
+
 }

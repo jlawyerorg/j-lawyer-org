@@ -188,6 +188,11 @@
     <Container class="javax.swing.JTabbedPane" name="tabsPane">
       <Properties>
         <Property name="tabLayoutPolicy" type="int" value="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="tabsPane" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
