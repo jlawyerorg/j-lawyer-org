@@ -672,6 +672,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import javax.annotation.Resource;
@@ -876,7 +878,7 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(true, "Offene Zeiterfassungsprojekte", query, params));
         } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
             String query = "SELECT cases.id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
-                    + "    ts.name as Projektname, ts.description as Projektbeschreibung,  ts.interval_minutes as Taktung,\n"
+                    + "    concat(cases.fileNumber, ' ', cases.name, ': ', ts.name) as Projektname, ts.description as Projektbeschreibung,  ts.interval_minutes as Taktung,\n"
                     + "    DATE_FORMAT(tsp.time_started,'%Y-%m-%d %H:%i') as von, DATE_FORMAT(tsp.time_stopped,'%Y-%m-%d %H:%i') as bis, greatest(1, TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)) AS Minuten, greatest(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)/ts.interval_minutes))*ts.interval_minutes DIV 1 AS MinutenInTaktung, tsp.name as Aktivitaet, tsp.description as Taetigkeiten, tsp.principal as GebuchtDurch, tsp.tax_rate as Steuersatz, tsp.unit_price as Stundensatz, (greatest(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)/ts.interval_minutes))*ts.interval_minutes DIV 1) / 60 * tsp.unit_price as Positionsbetrag\n"
                     + "    FROM timesheet_positions tsp\n"
                     + "left join timesheets ts on ts.id=tsp.timesheet_id \n"
@@ -888,7 +890,18 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(mainTable);
             
             Collection<ReportResultTable> subTables=this.splitTable(mainTable, "Projektname");
-            result.getTables().addAll(subTables);
+            ArrayList<ReportResultTable> sortedSubTables=new ArrayList<>();
+            sortedSubTables.addAll(subTables);
+            Collections.sort(sortedSubTables, (ReportResultTable o1, ReportResultTable o2) -> {
+                String s1=o1.getTableName();
+                String s2=o2.getTableName();
+                if(s1==null)
+                    s1="";
+                if(s2==null)
+                    s2="";
+                return s1.compareTo(s2);
+            });
+            result.getTables().addAll(sortedSubTables);
             
         } else if (Reports.RPT_CASES_BYSIZE.equals(reportId)) {
             String query = "select cid, Aktenzeichen, Rubrum, wegen, archiviert, round((Megabytes/1024/1024),1) as Megabytes from (\n"

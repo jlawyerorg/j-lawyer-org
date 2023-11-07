@@ -738,7 +738,11 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
         });
 
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        tabbedCharts.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         jSplitPane1.setLeftComponent(tabbedCharts);
+
+        tabbedTables.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         jSplitPane1.setRightComponent(tabbedTables);
 
         dtFrom.setEditable(false);
