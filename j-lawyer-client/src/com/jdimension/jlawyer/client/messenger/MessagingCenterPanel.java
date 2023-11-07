@@ -1314,7 +1314,6 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         if(caseContext==null)
             return null;
         StringBuilder sb=new StringBuilder();
-        //sb.append("<html><b>").append(caseContext.getFileNumber()).append("</b><br/>").append(caseContext.getName()).append("<br/>").append(caseContext.getReason()).append("</html>");
         sb.append(caseContext.getFileNumber()).append(System.lineSeparator()).append(caseContext.getName()).append(System.lineSeparator()).append(caseContext.getReason());
         return sb.toString();
     }
@@ -1375,8 +1374,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         // preserve case context of the current tab
         if(tabIndex > 2) {
             JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(tabIndex);
-            JPanel messagesInTab = (JPanel) sp.getViewport().getComponent(0);
-
+            
             Object caseContext=sp.getClientProperty(CLIENTPROPERTY_CASECONTEXT);
             if(caseContext!=null) {
                 msg.setCaseContext((ArchiveFileBean)caseContext);
