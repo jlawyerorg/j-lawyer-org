@@ -733,6 +733,9 @@ public class ArchiveFileDocumentsBean implements Serializable {
     
     @Column(name = "document_type", columnDefinition = "INTEGER DEFAULT 10")
     protected long documentType=TYPE_GENERIC;
+    @Column(name = "date_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date changeDate;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -928,6 +931,7 @@ public class ArchiveFileDocumentsBean implements Serializable {
     
     public void bumpVersion() {
         this.setVersion(this.version+1);
+        this.setChangeDate(new Date());
     }
 
     /**
@@ -970,6 +974,20 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setDocumentType(long documentType) {
         this.documentType = documentType;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
     }
     
 }

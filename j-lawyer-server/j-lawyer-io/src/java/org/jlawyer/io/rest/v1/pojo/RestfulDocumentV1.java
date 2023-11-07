@@ -674,6 +674,7 @@ public class RestfulDocumentV1 {
     private String id=null;
     private String name=null;
     private Date creationDate=null;
+    private Date changeDate=null;
     private long size=0l;
     private boolean favorite=false;
     protected String folderId=null;
@@ -808,6 +809,20 @@ public class RestfulDocumentV1 {
      */
     public void setHighlight2(int highlight2) {
         this.highlight2 = highlight2;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
     }
     
     

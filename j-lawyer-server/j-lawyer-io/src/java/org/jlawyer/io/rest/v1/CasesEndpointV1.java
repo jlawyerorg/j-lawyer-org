@@ -990,6 +990,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 d.setVersion(doc.getVersion());
                 d.setName(doc.getName());
                 d.setCreationDate(doc.getCreationDate());
+                d.setChangeDate(doc.getChangeDate());
                 d.setFavorite(doc.isFavorite());
                 d.setSize(doc.getSize());
                 d.setHighlight1(doc.getHighlight1());

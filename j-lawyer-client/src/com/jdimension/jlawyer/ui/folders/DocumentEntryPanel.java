@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.files.InvoiceDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -733,7 +734,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         DnDConstants.ACTION_MOVE,
                         this);
         
-        this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblChangeDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         
@@ -758,7 +759,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         DnDConstants.ACTION_MOVE,
                         this);
         
-        this.lblCreationDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblChangeDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         
@@ -851,7 +852,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
         lblFileIcon = new javax.swing.JLabel();
         lblFileName = new javax.swing.JLabel();
-        lblCreationDate = new javax.swing.JLabel();
+        lblChangeDate = new javax.swing.JLabel();
         lblDictateSign = new javax.swing.JLabel();
         lblFileSize = new javax.swing.JLabel();
         chkSelected = new javax.swing.JCheckBox();
@@ -888,11 +889,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
-        lblCreationDate.setFont(lblCreationDate.getFont().deriveFont(lblCreationDate.getFont().getStyle() | java.awt.Font.BOLD, lblCreationDate.getFont().getSize()-2));
-        lblCreationDate.setText("10.10.2020");
-        lblCreationDate.addMouseListener(new java.awt.event.MouseAdapter() {
+        lblChangeDate.setFont(lblChangeDate.getFont().deriveFont(lblChangeDate.getFont().getStyle() | java.awt.Font.BOLD, lblChangeDate.getFont().getSize()-2));
+        lblChangeDate.setText("10.10.2020");
+        lblChangeDate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblCreationDateMouseClicked(evt);
+                lblChangeDateMouseClicked(evt);
             }
         });
 
@@ -979,7 +980,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblCreationDate)
+                        .addComponent(lblChangeDate)
                         .addGap(18, 18, 18)
                         .addComponent(lblFileSize)
                         .addGap(18, 18, 18)
@@ -1001,7 +1002,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addComponent(lblFileName)
                         .addGap(2, 2, 2)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblCreationDate)
+                            .addComponent(lblChangeDate)
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
                             .addComponent(lblFolder))
@@ -1141,9 +1142,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
     }//GEN-LAST:event_chkSelectedKeyReleased
 
-    private void lblCreationDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCreationDateMouseClicked
+    private void lblChangeDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblChangeDateMouseClicked
         this.lblFileNameMouseClicked(evt);
-    }//GEN-LAST:event_lblCreationDateMouseClicked
+    }//GEN-LAST:event_lblChangeDateMouseClicked
 
     private void lblFileSizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileSizeMouseClicked
         this.lblFileNameMouseClicked(evt);
@@ -1225,7 +1226,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private javax.swing.JCheckBox chkSelected;
     private javax.swing.JButton cmdHighlight1;
     private javax.swing.JButton cmdHighlight2;
-    private javax.swing.JLabel lblCreationDate;
+    private javax.swing.JLabel lblChangeDate;
     private javax.swing.JLabel lblDictateSign;
     private javax.swing.JLabel lblFavorite;
     private javax.swing.JLabel lblFileIcon;
@@ -1247,7 +1248,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblFileName.setText(doc.getName());
         this.lblFileName.setToolTipText(doc.getName());
         this.lblFileIcon.setToolTipText(doc.getName());
-        this.lblCreationDate.setText(dfDateTime.format(doc.getCreationDate()));
+        this.lblChangeDate.setText(DateUtils.getHumanReadableTime(doc.getChangeDate()));
+        this.lblChangeDate.setToolTipText("erstellt: " + dfDateTime.format(doc.getCreationDate()) + System.lineSeparator() + "geändert: " + dfDateTime.format(doc.getChangeDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
         if(this.document.getFolder()==null) {
             this.lblFolder.setIcon(null);

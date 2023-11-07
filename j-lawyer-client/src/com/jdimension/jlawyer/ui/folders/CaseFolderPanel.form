@@ -194,7 +194,7 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDate">
           <Properties>
             <Property name="text" type="java.lang.String" value="Datum"/>
-            <Property name="toolTipText" type="java.lang.String" value="nach Erstellungsdatum sortieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach &#xc4;nderungsdatum sortieren"/>
             <Property name="iconTextGap" type="int" value="2"/>
             <Property name="inheritsPopupMenu" type="boolean" value="true"/>
           </Properties>

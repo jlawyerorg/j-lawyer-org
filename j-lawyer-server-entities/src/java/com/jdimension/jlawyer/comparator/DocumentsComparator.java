@@ -691,8 +691,8 @@ public class DocumentsComparator implements java.util.Comparator {
         ArchiveFileDocumentsBean dto1=(ArchiveFileDocumentsBean)obj1;
         ArchiveFileDocumentsBean dto2=(ArchiveFileDocumentsBean)obj2;
         
-        Date d1=dto1.getCreationDate();
-        Date d2=dto2.getCreationDate();
+        Date d1=dto1.getChangeDate();
+        Date d2=dto2.getChangeDate();
         if(d1!=null)
             return d1.compareTo(d2);
         

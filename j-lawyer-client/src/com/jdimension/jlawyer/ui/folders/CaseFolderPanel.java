@@ -868,12 +868,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             ArchiveFileDocumentsBean d2 = (ArchiveFileDocumentsBean) t2;
 
             if (sortDate.getSortState() == SortButton.SORT_ASC) {
-                Date date1 = d1.getCreationDate();
-                Date date2 = d2.getCreationDate();
+                Date date1 = d1.getChangeDate();
+                Date date2 = d2.getChangeDate();
                 return date1.compareTo(date2);
             } else if (sortDate.getSortState() == SortButton.SORT_DESC) {
-                Date date1 = d1.getCreationDate();
-                Date date2 = d2.getCreationDate();
+                Date date1 = d1.getChangeDate();
+                Date date2 = d2.getChangeDate();
                 return date2.compareTo(date1);
             } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
                 long l1 = d1.getSize();
@@ -1066,7 +1066,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         );
 
         sortDate.setText("Datum");
-        sortDate.setToolTipText("nach Erstellungsdatum sortieren");
+        sortDate.setToolTipText("nach Änderungsdatum sortieren");
         sortDate.setIconTextGap(2);
         sortDate.setInheritsPopupMenu(true);
         sortDate.addMouseListener(new java.awt.event.MouseAdapter() {

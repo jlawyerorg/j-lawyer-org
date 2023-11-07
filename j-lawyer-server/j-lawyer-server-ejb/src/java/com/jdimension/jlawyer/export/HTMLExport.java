@@ -924,8 +924,8 @@ public class HTMLExport {
                         docOut.write(docContent);
                     }
                     File docOutFile = new File(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName);
-                    if (db.getCreationDate() != null) {
-                        docOutFile.setLastModified(db.getCreationDate().getTime());
+                    if (db.getChangeDate() != null) {
+                        docOutFile.setLastModified(db.getChangeDate().getTime());
                     }
                 } catch (Throwable t) {
                     log.error("Could not export document " + db.getName() + " from case " + dto.getFileNumber(), t);
@@ -934,7 +934,7 @@ public class HTMLExport {
 
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(df, db.getCreationDate()));
+                sb.append(toDate(df, db.getChangeDate()));
                 sb.append("</p></td><td><p class=\"post_info\"><a href=\"documents/");
                 sb.append(dbNewName);
                 sb.append("\">");

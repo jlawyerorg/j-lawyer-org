@@ -702,4 +702,41 @@ public class DateUtils {
             return "vor " + sekunden + (sekunden == 1 ? " Sekunde" : " Sekunden");
         }
     }
+    
+    public static String getHumanReadableTime(Date d) {
+        
+        if(d==null)
+            return "unbekannt";
+        
+        long jetzt = System.currentTimeMillis();
+        long vergangeneZeitInMs = d.getTime();
+
+        long differenzInMs = jetzt - vergangeneZeitInMs;
+        String prefix="vor ";
+        if(differenzInMs<0) {
+            prefix="in ";
+            differenzInMs=differenzInMs*-1l;
+        }
+
+        long sekunden = differenzInMs / 1000;
+        long minuten = sekunden / 60;
+        long stunden = minuten / 60;
+        long tage = stunden / 24;
+        long wochen = tage / 7;
+        long jahre=wochen / 52;
+
+        if(jahre>0) {
+            return prefix + jahre + (jahre == 1 ? " Jahr" : " Jahren");
+        } else if (wochen > 0) {
+            return prefix + wochen + (wochen == 1 ? " Woche" : " Wochen");
+        } else if (tage > 0) {
+            return prefix + tage + (tage == 1 ? " Tag" : " Tagen");
+        } else if (stunden > 0) {
+            return prefix + stunden + (stunden == 1 ? " Stunde" : " Stunden");
+        } else if (minuten > 0) {
+            return prefix + minuten + (minuten == 1 ? " Minute" : " Minuten");
+        } else {
+            return prefix + sekunden + (sekunden == 1 ? " Sekunde" : " Sekunden");
+        }
+    }
 }

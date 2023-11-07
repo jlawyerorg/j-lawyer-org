@@ -688,13 +688,17 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
     private CaseFolderPanel table = null;
 
     /**
-     * Creates new form ShowURLDialog
+     * Creates new form DateTimePickerDialog
+     * @param parent
+     * @param modal
+     * @param d
+     * @param table
      */
     public DateTimePickerDialog(java.awt.Frame parent, boolean modal, ArchiveFileDocumentsBean d, CaseFolderPanel table) {
         super(parent, modal);
         initComponents();
         this.doc = d;
-        this.setDate(d.getCreationDate());
+        this.setDate(d.getChangeDate());
         this.spinDateTime.setValue(this.date);
         this.table = table;
         try {
@@ -807,7 +811,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             remote.setDocumentDate(doc.getId(), d);
-            doc.setCreationDate(d);
+            doc.setChangeDate(d);
             this.table.updateDocument(doc);
 
             this.setVisible(false);
@@ -847,17 +851,15 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                DateTimePickerDialog dialog = new DateTimePickerDialog(new javax.swing.JFrame(), true, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            DateTimePickerDialog dialog = new DateTimePickerDialog(new javax.swing.JFrame(), true, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
