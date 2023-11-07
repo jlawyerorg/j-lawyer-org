@@ -714,7 +714,7 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String emailOutPort;
     @Column(name = "emailSenderName")
     protected String emailSenderName;
-    @Column(name = "emailSignature")
+    @Column(name = "emailSignature", columnDefinition = "TEXT")
     protected String emailSignature;
     @Column(name = "emailInSsl", columnDefinition = "TINYINT")
     protected boolean emailInSsl;
