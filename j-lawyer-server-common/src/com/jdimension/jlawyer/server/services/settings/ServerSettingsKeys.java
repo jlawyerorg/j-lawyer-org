@@ -700,7 +700,6 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_DREBISTECHUSER="jlawyer.server.drebis.techuser";
     public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
     
-    
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";

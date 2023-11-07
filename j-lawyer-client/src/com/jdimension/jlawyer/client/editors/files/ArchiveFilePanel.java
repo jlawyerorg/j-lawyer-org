@@ -4596,6 +4596,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCoverageActionPerformed
 
+        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
+        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
+            allParties.add(abean);
+        }
+        
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -4623,6 +4628,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("archiveFile.name", this.dto.getName());
         data.put("archiveFile.fileNumber", this.dto.getFileNumber());
         data.put("insurances", ClientSettings.getInstance().getInsurances());
+        data.put("clients.allparties", allParties);
         data.put("clients.addressbeans", clients);
         data.put("others.addressbeans", others);
         data.put("documents.documentbeans", docs);
@@ -4636,6 +4642,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMotorCoverageActionPerformed
 
+        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
+        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
+            allParties.add(abean);
+        }
+        
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -4664,6 +4675,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("archiveFile.fileNumber", this.dto.getFileNumber());
         data.put("archiveFile.claimNumber", this.dto.getClaimNumber());
         data.put("insurances", ClientSettings.getInstance().getMotorInsurances());
+        data.put("clients.allparties", allParties);
         data.put("clients.addressbeans", clients);
         data.put("others.addressbeans", others);
         data.put("documents.documentbeans", docs);
@@ -4744,6 +4756,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuFreeTextMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFreeTextMessageActionPerformed
 
+        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
+        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
+            allParties.add(abean);
+        }
+        
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -4763,6 +4780,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("insurances", ClientSettings.getInstance().getInsurances());
         data.put("motorinsurances", ClientSettings.getInstance().getMotorInsurances());
         data.put("clients.addressbeans", clients);
+        data.put("clients.allparties", allParties);
         data.put("documents.documentbeans", docs);
         data.put("documents.documentbeans.selected", selDocs);
         

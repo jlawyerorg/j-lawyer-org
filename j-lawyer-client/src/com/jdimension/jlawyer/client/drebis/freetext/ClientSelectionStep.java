@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.drebis.freetext;
 
 import com.jdimension.jlawyer.client.drebis.HelpDetailsDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -673,6 +674,8 @@ import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.DrebisUtils;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.JDialog;
@@ -700,12 +703,22 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     public void nextEvent() throws Exception {
         
         ArrayList<DrebisPerson> persons=new ArrayList<>();
+        ArrayList<AddressBean> clients = (ArrayList<AddressBean>) data.get("clients.addressbeans");
+        ArrayList<ArchiveFileAddressesBean> allParties=(ArrayList<ArchiveFileAddressesBean>) data.get("clients.allparties");
+        if(allParties==null)
+            allParties=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblClients.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
             if(enabled) {
                 // user chose to submit this client
+                AddressBean ab=clients.get(i);
+                PartyTypeBean ptb=com.jdimension.jlawyer.client.drebis.DrebisUtils.getType(ab, allParties);
+                if(ptb != null) {
+                    // will only store ONE type of party
+                    ServerSettings.getInstance().setSetting("drebis." + this.getClass().getName() + ".selectedtype", ptb.getId());
+                }
                 
                 // columns: 0 submit, 1 name, 2 firstname, 3 company, 4 street, 5 zip, 6 city, 7 countrycode, 8 phone, 9 fax, 10 email
                 DrebisPerson p=new DrebisPerson();
@@ -1050,12 +1063,18 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void display() {
+        
+        ArrayList<ArchiveFileAddressesBean> allParties=(ArrayList<ArchiveFileAddressesBean>) data.get("clients.allparties");
+        if(allParties==null)
+            allParties=new ArrayList<>();
 
         Object test = data.get("clients.drebispersons");
         if (test != null) {
             // user navigated back - do not reset but use what is there
         } else {
             // initial display
+            String enabledParty=ServerSettings.getInstance().getSetting("drebis." + this.getClass().getName() + ".selectedtype", null);
+            
             ArrayList<InsuranceInfo> ins = (ArrayList<InsuranceInfo>) data.get("insurances");
             this.cmbInsurances.removeAllItems();
             this.cmbInsurances.addItem("");
@@ -1074,6 +1093,11 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
             ArrayList<AddressBean> clients = (ArrayList<AddressBean>) data.get("clients.addressbeans");
             for (int i = 0; i < clients.size(); i++) {
                 AddressBean cl = clients.get(i);
+                
+                boolean selected=false;
+                PartyTypeBean ptb=com.jdimension.jlawyer.client.drebis.DrebisUtils.getType(cl, allParties);
+                if(ptb!=null)
+                    selected=ptb.getId().equals(enabledParty);
 
                 String t = cl.getInsuranceNumber();
                 if (t != null && !("".equalsIgnoreCase(t))) {
@@ -1086,7 +1110,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
                 }
 
                 Vector row = new Vector();
-                row.add(false);
+                row.add(selected);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
