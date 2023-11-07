@@ -1190,7 +1190,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
         mnuForum = new javax.swing.JMenuItem();
-        mnuXjustizViewer = new javax.swing.JMenuItem();
         mnuAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -1999,15 +1998,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuHelp.add(mnuForum);
 
-        mnuXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
-        mnuXjustizViewer.setText("XJustizViewer herunterladen");
-        mnuXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuXjustizViewerActionPerformed(evt);
-            }
-        });
-        mnuHelp.add(mnuXjustizViewer);
-
         mnuAbout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         mnuAbout.setText(bundle.getString("menu.?.about")); // NOI18N
         mnuAbout.addActionListener(new java.awt.event.ActionListener() {
@@ -2497,62 +2487,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuFormsManagerActionPerformed
 
-    private void mnuXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuXjustizViewerActionPerformed
-
-        if (!(SystemUtils.isWindows())) {
-            JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist aktuell nur für Windowssysteme verfügbar.", "XJustiz-Viewer herunterladen", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        String downloadUrl = ClientSettings.getInstance().getUrlXjustiz();
-        if (downloadUrl == null) {
-            log.warn("download url for XJustiz Viewer is null");
-            return;
-        }
-
-        JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist ein Softwareprodukt von Uwe Möller / Henning Müller ervjustiz.de." + System.lineSeparator() + "Er ist ausschließlich für die Nutzung durch Rechtsanwältinnen und Rechtsanwälte sowie deren Mitarbeiterinnen und Mitarbeiter freigegeben." + System.lineSeparator() + "Jede darüberhinausgehende Nutzung ist nicht erlaubt.", "XJustiz-Viewer Nutzungsbedingungen", JOptionPane.INFORMATION_MESSAGE);
-
-        try {
-            String home = System.getProperty("user.home");
-            File dir = new File(home + "/Downloads/");
-            dir.mkdirs();
-
-            File file = new File(home + "/Downloads/xjustiz.exe");
-            if (file.exists()) {
-                file.delete();
-            }
-
-            new Thread(() -> {
-                try (FileOutputStream fout = new FileOutputStream(file)) {
-                    ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer wird im Hintergrund heruntergeladen...", "Download gestartet");
-                    URL updateURL = new URL(downloadUrl);
-                    URLConnection urlCon = updateURL.openConnection();
-                    urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-                    
-                    
-                    InputStream is = urlCon.getInputStream();
-                    byte[] buffer = new byte[1024];
-                    int len = 0;
-                    while ((len = is.read(buffer)) > -1) {
-                        fout.write(buffer, 0, len);
-                    }
-                    is.close();
-                    ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
-                    
-                } catch (Exception ex) {
-                    log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler");
-                    
-                }
-            }).start();
-
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler", JOptionPane.INFORMATION_MESSAGE);
-
-        }
-    }//GEN-LAST:event_mnuXjustizViewerActionPerformed
-
     private void mnuGroupsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuGroupsActionPerformed
         
             if (checkAdmin()) {
@@ -2970,7 +2904,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuVoipSoftphoneSettings;
     private javax.swing.JMenuItem mnuWebHooks;
     private javax.swing.JMenuItem mnuWordProcessor;
-    private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;
     private javax.swing.JLabel statusLabel;

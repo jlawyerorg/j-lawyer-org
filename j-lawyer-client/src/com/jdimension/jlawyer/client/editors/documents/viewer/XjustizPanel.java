@@ -728,6 +728,7 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         cmdOpenXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_xml.png"))); // NOI18N
         cmdOpenXjustizViewer.setText("XJustiz-Viewer");
         cmdOpenXjustizViewer.setToolTipText("XJustiz-Viewer öffnen");
+        cmdOpenXjustizViewer.setEnabled(false);
         cmdOpenXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdOpenXjustizViewerActionPerformed(evt);

@@ -63,6 +63,7 @@
         </Property>
         <Property name="text" type="java.lang.String" value="XJustiz-Viewer"/>
         <Property name="toolTipText" type="java.lang.String" value="XJustiz-Viewer &#xf6;ffnen"/>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdOpenXjustizViewerActionPerformed"/>

@@ -828,7 +828,6 @@ public class ClientSettings {
     
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
-    private String urlXjustiz=null;
     
     /**
      * Creates a new instance of ClientSettings
@@ -1130,14 +1129,6 @@ public class ClientSettings {
      */
     public void setUrlHelp(String urlHelp) {
         this.urlHelp = urlHelp;
-    }
-
-    public String getUrlXjustiz() {
-        return this.urlXjustiz;
-    }
-    
-    public void setUrlXjustiz(String url) {
-        this.urlXjustiz=url;
     }
 
     /**

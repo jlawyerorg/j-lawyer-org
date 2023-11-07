@@ -825,10 +825,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String urlHelp = nl.item(0).getTextContent();
             settings.setUrlHelp(urlHelp);
 
-            nl = doc.getElementsByTagName("urlxjustiz");
-            String urlXjustiz = nl.item(0).getTextContent();
-            settings.setUrlXjustiz(urlXjustiz);
-
             nl = doc.getElementsByTagName("bea-enabled-versions");
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
