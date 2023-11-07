@@ -706,7 +706,6 @@ import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *

@@ -702,8 +702,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
     @Override
-    @Schedule(dayOfWeek = "*", hour = "13,20", minute = "41", second = "0", persistent = false)
-    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
+    @Schedule(dayOfWeek = "1-5", hour = "12,23", minute = "21", second = "0", persistent = false)
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public void fullCalendarSync() {
 
         // interval syncs seem to cause duplicate display of events on iOS / macOS
