@@ -1263,10 +1263,10 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         this.rebuildExtensionsPanel();
         this.checkForDuplicateFileNames();
         
-        this.cmdCommonTags.setEnabled(this.entryList.size()>1);
-        this.cmdCommonFolder.setEnabled(this.entryList.size()>1);
-        this.cmdTagAll.setEnabled(this.entryList.size()>1);
-        this.cmdFolderAll.setEnabled(this.entryList.size()>1);
+        this.cmdCommonTags.setEnabled(this.entryList.size()>0);
+        this.cmdCommonFolder.setEnabled(this.entryList.size()>0);
+        this.cmdTagAll.setEnabled(this.entryList.size()>0);
+        this.cmdFolderAll.setEnabled(this.entryList.size()>0);
     }
 
     public void updateTotals() {
