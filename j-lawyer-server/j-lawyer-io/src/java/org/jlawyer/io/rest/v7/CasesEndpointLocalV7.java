@@ -677,5 +677,9 @@ public interface CasesEndpointLocalV7 {
     Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
     
     Response getCaseMessages(String id);
+    
+    Response getCaseByExternalId(String extId);
+    
+    Response getDocumentByExternalId(String extId);
         
 }

@@ -670,6 +670,7 @@ package org.jlawyer.io.rest.v1.pojo;
 public class RestfulDocumentContentV1 {
     
     private String id=null;
+    private String externalId=null;
     private String caseId=null;
     private String fileName=null;
     private String base64content=null;
@@ -761,6 +762,20 @@ public class RestfulDocumentContentV1 {
      */
     public void setVersion(long version) {
         this.version = version;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
     

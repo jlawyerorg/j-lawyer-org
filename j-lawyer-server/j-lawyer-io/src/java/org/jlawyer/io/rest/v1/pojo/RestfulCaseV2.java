@@ -675,13 +675,14 @@ public class RestfulCaseV2 extends RestfulCaseV1 {
     private String group=null;
     protected Date dateCreated=null;
     protected Date dateUpdated=null;
+    private String externalId=null;
 
     public RestfulCaseV2() {
     }
     
     public ArchiveFileBean toArchiveFileBean(ArchiveFileBean afb) {
         ArchiveFileBean result= super.toArchiveFileBean(afb);
-        
+        result.setExternalId(this.externalId);
         return result;
         
     }
@@ -697,6 +698,7 @@ public class RestfulCaseV2 extends RestfulCaseV1 {
             c.setCustom3(afb.getCustom3());
             c.setFileNumber(afb.getFileNumber());
             c.setId(afb.getId());
+            c.setExternalId(afb.getExternalId());
             c.setLawyer(afb.getLawyer());
             c.setName(afb.getName());
             c.setNotice(afb.getNotice());
@@ -749,6 +751,20 @@ public class RestfulCaseV2 extends RestfulCaseV1 {
      */
     public void setDateUpdated(Date dateUpdated) {
         this.dateUpdated = dateUpdated;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
    

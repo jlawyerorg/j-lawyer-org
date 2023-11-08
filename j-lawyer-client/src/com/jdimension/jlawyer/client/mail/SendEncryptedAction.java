@@ -941,7 +941,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                         if (newName != null) {
 
-                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "", null);
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);

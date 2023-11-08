@@ -680,6 +680,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileDocumentsBean.findAll", query = "SELECT a FROM ArchiveFileDocumentsBean a"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findById", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileDocumentsBean.findByExternalId", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByName", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByCreationDate", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.creationDate = :creationDate")})
 public class ArchiveFileDocumentsBean implements Serializable {
@@ -736,6 +737,9 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @Column(name = "date_changed")
     @Temporal(TemporalType.TIMESTAMP)
     private Date changeDate;
+    
+    @Column(name = "ext_id")
+    private String externalId;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -988,6 +992,20 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setChangeDate(Date changeDate) {
         this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
 }

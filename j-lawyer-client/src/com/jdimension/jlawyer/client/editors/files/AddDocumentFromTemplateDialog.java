@@ -1459,7 +1459,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             if(this.cmbLetterHeads.getSelectedItem()!=null)
                 letterHead=this.cmbLetterHeads.getSelectedItem().toString();
                         
-            db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
+            db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString(), null);
             this.addedDocument=db;
             targetTable.addDocument(db, this.invoice);
 

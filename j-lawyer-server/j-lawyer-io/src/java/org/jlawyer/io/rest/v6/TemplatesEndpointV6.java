@@ -883,13 +883,14 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
                     key=key+"}}";
                 placeHoldersInTemplateMap.put(key, rph.getPlaceHolderValue());
             }
-            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "");
+            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "", null);
             RestfulDocumentV1 rdoc=new RestfulDocumentV1();
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setChangeDate(newDoc.getChangeDate());
             rdoc.setFavorite(rdoc.isFavorite());
             rdoc.setFolderId(newDoc.getFolder().getId());
             rdoc.setId(newDoc.getId());
+            rdoc.setExternalId(newDoc.getExternalId());
             rdoc.setVersion(newDoc.getVersion());
             rdoc.setName(newDoc.getName());
             rdoc.setSize(newDoc.getSize());

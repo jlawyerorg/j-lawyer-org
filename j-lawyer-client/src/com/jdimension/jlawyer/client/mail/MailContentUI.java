@@ -1932,7 +1932,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();

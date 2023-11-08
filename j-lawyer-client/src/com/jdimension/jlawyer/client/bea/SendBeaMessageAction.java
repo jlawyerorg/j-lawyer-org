@@ -887,7 +887,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                         if (newName != null) {
 
-                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null);
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);

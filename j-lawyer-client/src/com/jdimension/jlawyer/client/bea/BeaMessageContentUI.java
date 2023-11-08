@@ -1508,7 +1508,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();

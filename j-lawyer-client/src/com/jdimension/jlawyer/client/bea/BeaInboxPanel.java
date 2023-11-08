@@ -2868,7 +2868,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
             newName = FileUtils.sanitizeFileName(newName);
             newName = FileUtils.getNewFileNamePrefix(new Date()) + newName;
-            ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "");
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "", null);
 
             if (targetFolder != null) {
                 ArrayList<String> docId = new ArrayList<>();

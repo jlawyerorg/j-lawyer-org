@@ -731,6 +731,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 ArchiveFileBean afb=s.getArchiveFileKey();
                 RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(afb.getId());
+                rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
                 rco.setFileNumber(afb.getFileNumber());
                 rcoList.add(rco);

@@ -1105,7 +1105,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         try {
             byte[] reportData=sip.getFaxReport(sessionId);
             if(reportData!=null)
-                this.fileSvc.addDocument(afb.getId(), fileName, reportData, "");
+                this.fileSvc.addDocument(afb.getId(), fileName, reportData, "", null);
         } catch (Exception ex) {
             throw new SipgateException(ex);
         }
@@ -1326,7 +1326,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         String reportText=eb.toReport();
         
         try {
-            this.fileSvc.addDocument(afb.getId(), fileName, reportText.getBytes(), "");
+            this.fileSvc.addDocument(afb.getId(), fileName, reportText.getBytes(), "", null);
         } catch (Exception ex) {
             throw new EpostException(ex);
         }

@@ -749,7 +749,7 @@ public class UploadDocumentsAction extends ProgressableAction {
 
                         }
 
-                        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
+                        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null, null);
                         
                         if(this.invoice!=null) {
                             afs.linkInvoiceDocument(doc.getId(), invoice.getId());

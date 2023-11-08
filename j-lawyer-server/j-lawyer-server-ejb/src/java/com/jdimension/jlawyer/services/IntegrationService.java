@@ -893,7 +893,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     byte[] data = SystemManagement.readFile(f);
-                    ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
+                    ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "", null);
                     return d.getId();
                 }
             }

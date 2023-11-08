@@ -858,7 +858,7 @@ public class FormFileDownloadDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                ArchiveFileDocumentsBean newDoc=afs.addDocument(this.caseId, df.format(new Date()) + url.substring(url.lastIndexOf('/') + 1), content, "");
+                ArchiveFileDocumentsBean newDoc=afs.addDocument(this.caseId, df.format(new Date()) + url.substring(url.lastIndexOf('/') + 1), content, "", null);
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new DocumentAddedEvent(newDoc));
 

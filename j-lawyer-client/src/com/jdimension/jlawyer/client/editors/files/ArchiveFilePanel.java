@@ -4249,7 +4249,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
                         }
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
 
                         if (orgDoc.getFolder() != null) {
                             ArrayList<String> docId = new ArrayList<>();
@@ -4943,7 +4943,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             return;
                         }
 
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign(), null);
                         if (folder != null) {
                             ArrayList<String> docList = new ArrayList<>();
                             docList.add(newDoc.getId());
@@ -5045,7 +5045,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign(), null);
 
                 newDoc.setSize(pdfContent.length);
 
@@ -5546,7 +5546,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
 
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign(), null);
 
                         if (doc.getFolder() != null) {
                             newDoc.setFolder(doc.getFolder());
@@ -6791,8 +6791,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             Date dCr=null;
             Date dCh=null;
             Date dAr=null;
+            String externalId = null;
             if (this.dto != null) {
                 id = this.dto.getId();
+                externalId = this.dto.getExternalId();
                 fileNumberMain = this.dto.getFileNumberMain();
                 fileNumberExt = this.dto.getFileNumberExtension();
                 rootFolder = this.dto.getRootFolder();
@@ -6811,7 +6813,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.dto.setDateChanged(dCh);
                 this.dto.setDateArchived(dAr);
             }
-
+            if (externalId != null) {
+                this.dto.setExternalId(externalId);
+            }
+            
             this.fillDTO(this.dto, true);
 
             String caseId = null;

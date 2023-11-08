@@ -745,7 +745,7 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
                     newName = attachment.getName() + "." + attachment.getSuffix();
                 }
 
-                afs.addDocument(sel.getId(), newName, attachment.getContent(), "");
+                afs.addDocument(sel.getId(), newName, attachment.getContent(), "", null);
 
 
             } catch (Exception ex) {

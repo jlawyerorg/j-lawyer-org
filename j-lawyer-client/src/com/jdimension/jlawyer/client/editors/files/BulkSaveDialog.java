@@ -1113,7 +1113,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                             if(getEntryProcessor()!=null && getEntryProcessor().isSaveProcessor()) {
                                 newDocId=getEntryProcessor().save(e, selectedCase);
                             } else {
-                                ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "");
+                                ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "", null);
                                 newDocId=newlyAddedDocument.getId();
                             }
                             

@@ -1110,7 +1110,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "", null);
             this.targetTable.addDocument(db, null);
 
             if (this.chkCaseTagging.isSelected()) {

@@ -691,6 +691,8 @@ public interface ArchiveFileDocumentsBeanFacadeLocal {
     
     public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder);
     
+    ArchiveFileDocumentsBean findByExternalId(String externalId);
+    
     public List<ArchiveFileDocumentsBean> findDeleted();
 
     int count();

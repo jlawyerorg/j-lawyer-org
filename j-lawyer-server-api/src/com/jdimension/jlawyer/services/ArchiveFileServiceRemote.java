@@ -705,7 +705,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
 
-    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
+    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
 
     int getArchiveFileArchivedCount();
 
@@ -771,7 +771,7 @@ public interface ArchiveFileServiceRemote {
 
     HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
+    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
 
     List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
 

@@ -1697,7 +1697,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception {
+    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -1734,6 +1734,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         db.setId(docId);
+        db.setExternalId(externalId);
         db.setVersion(1);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
@@ -3396,7 +3397,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign, String externalId) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -3468,6 +3469,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
 
         db.setId(docId);
+        db.setExternalId(externalId);
         db.setVersion(1);
         db.setDictateSign(dictateSign);
         db.setArchiveFileKey(aFile);
@@ -3522,8 +3524,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign) throws Exception {
-        return this.addDocumentFromTemplate(archiveFileId, fileName, letterHead, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign);
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String, Object> placeHolderValues, String dictateSign, String externalId) throws Exception {
+        return this.addDocumentFromTemplate(archiveFileId, fileName, letterHead, TreeNodeUtils.buildNodePath(templateFolder), templateName, placeHolderValues, dictateSign, externalId);
     }
 
     @Override
@@ -5993,6 +5995,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             resultList.add(afb.getId());
         }
         return resultList;
+    }
+
+    @Override
+    public ArchiveFileBean getCaseByExternalId(String extId) {
+        return this.archiveFileFacade.findByExternalId(extId);
+    }
+
+    @Override
+    public ArchiveFileDocumentsBean getDocumentByExternalId(String extId) {
+        return this.archiveFileDocumentsFacade.findByExternalId(extId);
     }
 
 }

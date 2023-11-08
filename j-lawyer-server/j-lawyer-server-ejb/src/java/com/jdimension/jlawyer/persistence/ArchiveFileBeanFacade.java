@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.persistence;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -704,6 +705,15 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
     @Override
     public List<ArchiveFileBean> findByGroup(Group g) {
         return (List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByGroup").setParameter("group", g).getResultList();
+    }
+    
+    @Override
+    public ArchiveFileBean findByExternalId(String externalId) {
+        try {
+            return (ArchiveFileBean) em.createNamedQuery("ArchiveFileBean.findByExternalId").setParameter("externalId", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
     
 }

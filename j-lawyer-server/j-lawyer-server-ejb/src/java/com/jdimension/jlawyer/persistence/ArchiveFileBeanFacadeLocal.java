@@ -692,6 +692,8 @@ public interface ArchiveFileBeanFacadeLocal {
     List<ArchiveFileBean> findLastChangedNonArchived(int limit);
     
     List<ArchiveFileBean> findByGroup(Group g);
+    
+    ArchiveFileBean findByExternalId(String externalId);
 
     int count();
     

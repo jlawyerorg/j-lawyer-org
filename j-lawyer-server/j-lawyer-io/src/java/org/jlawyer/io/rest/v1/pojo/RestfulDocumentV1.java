@@ -672,6 +672,7 @@ import java.util.Date;
 public class RestfulDocumentV1 {
     
     private String id=null;
+    private String externalId=null;
     private String name=null;
     private Date creationDate=null;
     private Date changeDate=null;
@@ -823,6 +824,20 @@ public class RestfulDocumentV1 {
      */
     public void setChangeDate(Date changeDate) {
         this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
     

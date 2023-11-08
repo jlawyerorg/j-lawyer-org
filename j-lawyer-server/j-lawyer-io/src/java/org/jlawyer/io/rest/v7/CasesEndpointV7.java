@@ -684,6 +684,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
@@ -699,66 +701,70 @@ import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
-    private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
-     * Checks whether or not a document (as specified in the request) may currently be added to the given case.
-     * Note that a client should then add the document directly after performing the check, otherwise there may
-     * be other clients who add same-named documents in the meantime.
-     * Checks are performed in a case-insensitive manner, even if some operating systems allow that.
+     * Checks whether or not a document (as specified in the request) may
+     * currently be added to the given case. Note that a client should then add
+     * the document directly after performing the check, otherwise there may be
+     * other clients who add same-named documents in the meantime. Checks are
+     * performed in a case-insensitive manner, even if some operating systems
+     * allow that.
      *
      * @param id case ID
-     * @param request the request object describing a document to be added to the case
-     * @return validation response as an instance of RestfulStatusResponseV7 - a JSON structure with "status" and "message" attributes. Status may have one of the values STATUS_OK, STATUS_WARNING, STATUS_ERROR.
+     * @param request the request object describing a document to be added to
+     * the case
+     * @return validation response as an instance of RestfulStatusResponseV7 - a
+     * JSON structure with "status" and "message" attributes. Status may have
+     * one of the values STATUS_OK, STATUS_WARNING, STATUS_ERROR.
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/documents/validate")
     @RolesAllowed({"readArchiveFileRole"})
     public Response validateDocumentName(@PathParam("id") String id, RestfulDocumentValidationRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
-            
+
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal");
-            
+
             RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
-            
-            if(ServerStringUtils.isEmpty(request.getDocumentName())) {
+
+            if (ServerStringUtils.isEmpty(request.getDocumentName())) {
                 response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
                 response.setMessage("A document must have a non-empty file name!");
                 return Response.ok(response).build();
             }
-            
-            ArchiveFileBean afb=cases.getArchiveFile(id);
-            if(afb==null) {
+
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
                 response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
                 response.setMessage("There is no case with id " + id);
                 return Response.ok(response).build();
             }
-            
-            String newNameLowerCase=request.getDocumentName().toLowerCase();
-            List<ArchiveFileDocumentsBean> activeDocs=docs.findByArchiveFileKey(afb, false);
-            for(ArchiveFileDocumentsBean d: activeDocs) {
-                if(d.getName().toLowerCase().equals(newNameLowerCase)) {
+
+            String newNameLowerCase = request.getDocumentName().toLowerCase();
+            List<ArchiveFileDocumentsBean> activeDocs = docs.findByArchiveFileKey(afb, false);
+            for (ArchiveFileDocumentsBean d : activeDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
                     response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
-                    response.setMessage("There is already a document with name " + request.getDocumentName() + " in case with ID "+ id);
+                    response.setMessage("There is already a document with name " + request.getDocumentName() + " in case with ID " + id);
                     return Response.ok(response).build();
                 }
             }
-            
-            List<ArchiveFileDocumentsBean> binDocs=docs.findByArchiveFileKey(afb, true);
-            for(ArchiveFileDocumentsBean d: binDocs) {
-                if(d.getName().toLowerCase().equals(newNameLowerCase)) {
+
+            List<ArchiveFileDocumentsBean> binDocs = docs.findByArchiveFileKey(afb, true);
+            for (ArchiveFileDocumentsBean d : binDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
                     response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
-                    response.setMessage("There is a deleted document with name " + request.getDocumentName() + " in the paper bin for case with ID "+ id);
+                    response.setMessage("There is a deleted document with name " + request.getDocumentName() + " in the paper bin for case with ID " + id);
                     return Response.ok(response).build();
                 }
             }
-            
 
             response.setStatus(RestfulStatusResponseV7.STATUS_OK);
             response.setMessage("A document with name " + request.getDocumentName() + " may currently be added to case with ID " + id);
@@ -768,7 +774,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
     /**
      * Returns a list of instant messages for a given case
      *
@@ -778,7 +784,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/messages")
     @RolesAllowed({"readArchiveFileRole"})
@@ -792,9 +798,9 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 log.error("case with id " + id + " does not exist");
                 return Response.serverError().build();
             }
-            
+
             MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
-            List<InstantMessage> messages=msgService.getMessagesForCase(id);
+            List<InstantMessage> messages = msgService.getMessagesForCase(id);
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
             for (InstantMessage im : messages) {
@@ -806,6 +812,78 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
             return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a cases metadata given its external ID
+     *
+     * @param extId the cases external ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No case found with this external ID
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseByExternalId(@PathParam("extId") String extId) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean afb = cases.getCaseByExternalId(extId);
+            if (afb != null) {
+                return Response.ok(RestfulCaseV2.fromArchiveFileBean(afb)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get case by external id " + extId, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentByExternalId(@PathParam("extId") String extId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileDocumentsBean doc = cases.getDocumentByExternalId(extId);
+            if (doc == null) {
+                log.error("can not get document for external id " + extId);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            RestfulDocumentV1 d = new RestfulDocumentV1();
+            d.setId(doc.getId());
+            d.setExternalId(doc.getExternalId());
+            d.setVersion(doc.getVersion());
+            d.setName(doc.getName());
+            d.setCreationDate(doc.getCreationDate());
+            d.setChangeDate(doc.getChangeDate());
+            d.setFavorite(doc.isFavorite());
+            d.setSize(doc.getSize());
+            d.setHighlight1(doc.getHighlight1());
+            d.setHighlight2(doc.getHighlight2());
+            if (doc.getFolder() != null) {
+                d.setFolderId(doc.getFolder().getId());
+            }
+            Response res = Response.ok(d).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get document for external id " + extId, ex);
+            Response res = Response.serverError().build();
+            return res;
         }
     }
 

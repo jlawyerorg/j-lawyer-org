@@ -912,7 +912,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
 
                             if (newName != null) {
                                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "");
+                                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "", null);
 
                                 ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                                 historyDto.setChangeDate(new Date());

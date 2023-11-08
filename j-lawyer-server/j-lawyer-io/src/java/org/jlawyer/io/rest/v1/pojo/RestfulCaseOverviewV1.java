@@ -670,6 +670,7 @@ package org.jlawyer.io.rest.v1.pojo;
 public class RestfulCaseOverviewV1 {
     
     private String id=null;
+    private String externalId=null;
     private String name=null;
     private String fileNumber=null;
 
@@ -716,6 +717,20 @@ public class RestfulCaseOverviewV1 {
      */
     public void setFileNumber(String fileNumber) {
         this.fileNumber = fileNumber;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
     

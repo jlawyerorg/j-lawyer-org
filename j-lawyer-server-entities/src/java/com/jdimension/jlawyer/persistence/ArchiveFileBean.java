@@ -683,6 +683,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "ArchiveFileBean.findAllSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a ORDER BY a.dateChanged DESC"),
     @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = 0 ORDER BY a.dateChanged DESC"),
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileBean.findByExternalId", query = "SELECT a FROM ArchiveFileBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileBean.findByGroup", query = "SELECT a FROM ArchiveFileBean a WHERE a.group = :group"),
     @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumberMain = :fileNumber"),
@@ -738,6 +739,9 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "date_archived")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date dateArchived;
+    
+    @Column(name = "ext_id")
+    private String externalId;
     
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
@@ -1146,6 +1150,20 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setDateArchived(Date dateArchived) {
         this.dateArchived = dateArchived;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
 }

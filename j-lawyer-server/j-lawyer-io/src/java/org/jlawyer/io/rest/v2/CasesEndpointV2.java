@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
@@ -851,6 +852,12 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>) reviews);
             List<ArchiveFileAddressesBean> adds = cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
+            
+            // only overwrite external ID if the client provided one
+            if(!ServerStringUtils.isEmpty(caseData.getExternalId())) {
+                currentCase.setExternalId(caseData.getExternalId());
+            }
+            
             // file number must not be changed
 
             currentCase.setArchived(caseData.getArchived());

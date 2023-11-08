@@ -748,6 +748,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 }
                 RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(id);
+                rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
                 rco.setFileNumber(afb.getFileNumber());
                 rcoList.add(rco);
@@ -929,6 +930,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
             List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
+            
             // file number must not be changed
 
             currentCase.setArchived(caseData.getArchived());
@@ -987,6 +989,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             for (ArchiveFileDocumentsBean doc : documents) {
                 RestfulDocumentV1 d = new RestfulDocumentV1();
                 d.setId(doc.getId());
+                d.setExternalId(doc.getExternalId());
                 d.setVersion(doc.getVersion());
                 d.setName(doc.getName());
                 d.setCreationDate(doc.getCreationDate());
@@ -1044,6 +1047,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             String base64 = new Base64().encode(content);
             RestfulDocumentContentV1 rdc = new RestfulDocumentContentV1();
             rdc.setId(id);
+            rdc.setExternalId(doc.getExternalId());
             rdc.setVersion(doc.getVersion());
             rdc.setFileName(doc.getName());
             rdc.setCaseId(doc.getArchiveFileKey().getId());
@@ -1186,10 +1190,12 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             byte[] data = new Base64().decode(document.getBase64content());
 
-            ArchiveFileDocumentsBean newDoc = cases.addDocument(document.getCaseId(), document.getFileName(), data, "");
+            ArchiveFileDocumentsBean newDoc = cases.addDocument(document.getCaseId(), document.getFileName(), data, "", document.getExternalId());
+            
 
             RestfulDocumentContentV1 doc = new RestfulDocumentContentV1();
             doc.setCaseId(document.getCaseId());
+            doc.setExternalId(newDoc.getExternalId());
             doc.setFileName(newDoc.getName());
             doc.setId(newDoc.getId());
             doc.setVersion(newDoc.getVersion());
@@ -1209,7 +1215,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
      * Updates a document. This method can be used for both renaming a document
      * as well as for uploading new content. For renaming, the request does not
      * need to provide content. For uploading new content, there is no need to
-     * provide a file name.
+     * provide a file name. Will not update an external ID.
      *
      * @param document the documents new data
      * @response 401 User not authorized
