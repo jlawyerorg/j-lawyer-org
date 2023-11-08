@@ -761,7 +761,7 @@ public class ImportContactsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Importieren", "Unternehmen", "Abteilung", "Name", "Vorname", "Land", "Ort", "PLZ", "Strasse", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
+                "Importieren", "Unternehmen", "Abteilung", "Name", "Vorname", "Land", "Ort", "PLZ", "Straße", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
             }
         ) {
             Class[] types = new Class [] {

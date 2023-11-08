@@ -460,7 +460,7 @@
             <Font component="jLabel13" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="Strasse:"/>
+        <Property name="text" type="java.lang.String" value="Stra&#xdf;e:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel14">

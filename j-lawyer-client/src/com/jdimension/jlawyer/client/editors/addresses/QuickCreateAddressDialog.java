@@ -848,7 +848,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
 
-        jLabel4.setText("Strasse:");
+        jLabel4.setText("Straße:");
 
         jLabel5.setText("PLZ:");
 
@@ -877,7 +877,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     .add(jLabel7))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 513, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
                     .add(txtCountry)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel2Layout.createSequentialGroup()

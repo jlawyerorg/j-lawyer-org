@@ -1976,7 +1976,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
 
-        jLabel4.setText("Strasse:");
+        jLabel4.setText("Straße:");
 
         jLabel5.setText("PLZ:");
 
@@ -2293,7 +2293,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         chkLegalProtection.setMargin(new java.awt.Insets(0, 0, 0, 0));
 
         cmbInsurance.setEditable(true);
-        cmbInsurance.setMaximumRowCount(15);
 
         jLabel20.setText("Versicherungsunternehmen:");
 
@@ -2427,7 +2426,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jLabel23.setText("Versicherungsschein:");
 
         cmbMotorInsurance.setEditable(true);
-        cmbMotorInsurance.setMaximumRowCount(15);
 
         jLabel24.setText("Versicherungsunternehmen:");
 

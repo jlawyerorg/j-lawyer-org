@@ -985,7 +985,7 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="jLabel4">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Strasse:"/>
+                    <Property name="text" type="java.lang.String" value="Stra&#xdf;e:"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel5">
@@ -1511,7 +1511,6 @@
                 <Component class="javax.swing.JComboBox" name="cmbInsurance">
                   <Properties>
                     <Property name="editable" type="boolean" value="true"/>
-                    <Property name="maximumRowCount" type="int" value="15"/>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="0"/>
                     </Property>
@@ -1777,7 +1776,6 @@
                 <Component class="javax.swing.JComboBox" name="cmbMotorInsurance">
                   <Properties>
                     <Property name="editable" type="boolean" value="true"/>
-                    <Property name="maximumRowCount" type="int" value="15"/>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="0"/>
                     </Property>

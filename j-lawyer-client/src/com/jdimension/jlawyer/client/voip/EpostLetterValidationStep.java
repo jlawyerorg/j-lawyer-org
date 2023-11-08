@@ -875,7 +875,7 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
             String fileName = "E-POST-Layouttest.pdf";
             l.setFileName(fileName);
             l.setAddressLine1("Max Mustermann");
-            l.setAddressLine2("Musterstrasse 42");
+            l.setAddressLine2("Musterstraße 42");
             l.setCity("Musterstadt");
             l.setZipCode("12345");
 
@@ -883,7 +883,7 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
 
             l.setSenderAdressLine1(srv.getSetting(ServerSettings.PROFILE_COMPANYNAME, "Unternehmen 42 GmbH"));
             l.setSenderCity(srv.getSetting(ServerSettings.PROFILE_COMPANYCITY, "Musterstadt"));
-            l.setSenderStreet(srv.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "Musterstrasse 42"));
+            l.setSenderStreet(srv.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "Musterstraße 42"));
             l.setSenderZipCode(srv.getSetting(ServerSettings.PROFILE_COMPANYZIP, "12345"));
 
             l.setDuplex(this.chkDuplex.isSelected());

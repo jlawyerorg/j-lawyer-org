@@ -41,7 +41,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane2" pref="146" max="32767" attributes="0"/>
+              <Component id="jScrollPane2" pref="166" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -68,7 +68,7 @@
                 <Column editable="true" title="Nachname" type="java.lang.Object"/>
                 <Column editable="true" title="Vorname" type="java.lang.Object"/>
                 <Column editable="true" title="Unternehmen" type="java.lang.Object"/>
-                <Column editable="true" title="Strasse" type="java.lang.Object"/>
+                <Column editable="true" title="Stra&#xdf;e" type="java.lang.Object"/>
                 <Column editable="true" title="PLZ" type="java.lang.Object"/>
                 <Column editable="true" title="Ort" type="java.lang.Object"/>
                 <Column editable="true" title="LKZ" type="java.lang.Object"/>
@@ -93,7 +93,7 @@
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;p&gt;W&#xe4;hlen Sie weitere zu &#xfc;bermittelnde Beteiligte aus. Pflichtangaben:&lt;/p&gt;  &lt;ul&gt; &lt;li&gt;Firma oder Vor- und Nachname, Strasse und Hausnr, PLZ, Ort und L&#xe4;nderkennzeichen&lt;/li&gt; &lt;li&gt;Rolle des Beteiligten: &#x201e;GEGNER&#x201c;, &#x201e;ZEUGE&#x201c;, &#x201e;FAHRER&#x201c;, &#x201e;FAHRZEUGHALTER&#x201c;, &#x201e;ANSPRUCHSTELLER&#x201c;, &#x201e;GEGNERVERTRETER&#x201c; oder &#x201e;INSASSE&#x201c;&lt;/li&gt;  &lt;/ul&gt;  Alle anderen Angaben sind optional. Daten k&amp;ouml;nnen direkt in der Tabelle bearbeitet werden.&lt;/html&gt;"/>
+        <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;p&gt;W&#xe4;hlen Sie weitere zu &#xfc;bermittelnde Beteiligte aus. Pflichtangaben:&lt;/p&gt;  &lt;ul&gt; &lt;li&gt;Firma oder Vor- und Nachname, Stra&amp;szlig;e und Hausnr, PLZ, Ort und L&#xe4;nderkennzeichen&lt;/li&gt; &lt;li&gt;Rolle des Beteiligten: &#x201e;GEGNER&#x201c;, &#x201e;ZEUGE&#x201c;, &#x201e;FAHRER&#x201c;, &#x201e;FAHRZEUGHALTER&#x201c;, &#x201e;ANSPRUCHSTELLER&#x201c;, &#x201e;GEGNERVERTRETER&#x201c; oder &#x201e;INSASSE&#x201c;&lt;/li&gt;  &lt;/ul&gt;  Alle anderen Angaben sind optional. Daten k&amp;ouml;nnen direkt in der Tabelle bearbeitet werden.&lt;/html&gt;"/>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
             <LineBorder roundedCorners="true"/>

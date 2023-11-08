@@ -683,7 +683,7 @@ public class AttributeCellEditor extends AbstractCellEditor implements ActionLis
 
     public static final String ATTRIBUTE_NAME = "Name";
     public static final String ATTRIBUTE_VORNAME = "Vorname";
-    public static final String ATTRIBUTE_STRASSE = "Strasse";
+    public static final String ATTRIBUTE_STRASSE = "Straße";
     public static final String ATTRIBUTE_HAUSNR = "Hausnummer";
     public static final String ATTRIBUTE_TEL = "Telefon";
     public static final String ATTRIBUTE_FAX = "Fax";

@@ -723,7 +723,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
 
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Straße", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

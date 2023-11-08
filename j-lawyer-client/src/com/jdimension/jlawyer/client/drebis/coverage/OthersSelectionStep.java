@@ -783,7 +783,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
             },
             new String [] {
-                "übertragen", "Nachname", "Vorname", "Unternehmen", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
+                "übertragen", "Nachname", "Vorname", "Unternehmen", "Straße", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
             }
         ) {
             Class[] types = new Class [] {
@@ -799,7 +799,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("<html><p>Wählen Sie weitere zu übermittelnde Beteiligte aus. Pflichtangaben:</p>  <ul> <li>Firma oder Vor- und Nachname, Strasse und Hausnr, PLZ, Ort und Länderkennzeichen</li> <li>Rolle des Beteiligten: „GEGNER“, „ZEUGE“, „FAHRER“, „FAHRZEUG-HALTER“, „ANSPRUCHSTELLER“, „VERSICHERTER“, „VERSICHERUNGSNEHMER“ oder „MANDANT“</li>  </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
+        jLabel1.setText("<html><p>Wählen Sie weitere zu übermittelnde Beteiligte aus. Pflichtangaben:</p>  <ul> <li>Firma oder Vor- und Nachname, Stra&szlig;e und Hausnr, PLZ, Ort und Länderkennzeichen</li> <li>Rolle des Beteiligten: „GEGNER“, „ZEUGE“, „FAHRER“, „FAHRZEUG-HALTER“, „ANSPRUCHSTELLER“, „VERSICHERTER“, „VERSICHERUNGSNEHMER“ oder „MANDANT“</li>  </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
