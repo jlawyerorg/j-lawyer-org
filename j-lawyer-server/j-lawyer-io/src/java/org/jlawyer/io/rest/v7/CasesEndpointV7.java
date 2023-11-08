@@ -842,8 +842,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not get case by external id " + extId, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }
@@ -856,12 +855,11 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     public Response getDocumentByExternalId(@PathParam("extId") String extId) {
         try {
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             ArchiveFileDocumentsBean doc = cases.getDocumentByExternalId(extId);
             if (doc == null) {
                 log.error("can not get document for external id " + extId);
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             RestfulDocumentV1 d = new RestfulDocumentV1();
@@ -878,12 +876,10 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             if (doc.getFolder() != null) {
                 d.setFolderId(doc.getFolder().getId());
             }
-            Response res = Response.ok(d).build();
-            return res;
+            return Response.ok(d).build();
         } catch (Exception ex) {
             log.error("can not get document for external id " + extId, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
