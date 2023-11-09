@@ -682,11 +682,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
@@ -699,6 +703,8 @@ import themes.colors.DefaultColorTheme;
 public class CalloutPanelComponent extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(CalloutPanelComponent.class.getName());
+    private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
+    private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
 
     private static int READ = 10;
     private static int UNREAD = 20;
@@ -708,7 +714,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private int indicatorY = 10;
     private int indicatorSize = 15;
     private int deleteX=1000;
-    private int deleteY=20;
+    private int deleteY=10;
+    private int copyX=1000;
+    private int copyY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
     private Font miniFont = null;
@@ -776,12 +784,18 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     return;
 
                 }
-                if (e.getX() >= (deleteX-15) && e.getX() <= deleteX + 20
-                        && e.getY() >= (deleteY-15) && e.getY() <= deleteY + 20) {
+                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
+                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
                     deleteMessage(message.getId());
 
                 }
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
+                    copyMessageToClipboard();
+                }
             }
+
+            
         });
         
         addMouseMotionListener(new MouseAdapter() {
@@ -793,14 +807,26 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                     return;
                 }
-                if (e.getX() >= (deleteX-15) && e.getX() <= deleteX + 20
-                        && e.getY() >= (deleteY-15) && e.getY() <= deleteY + 20) {
+                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
+                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    return;
+                }
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                     return;
                 }
                 setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
             }
         });
+    }
+    
+    private void copyMessageToClipboard() {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.message.getContent());
+        clipboard.setContents(strSel, null);
     }
 
     private void updateTooltip() {
@@ -911,7 +937,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         // Calculate wrapped text
         FontMetrics metrics = g2d.getFontMetrics();
-        int messageWidth = width - 90; // Adjusted for padding
+        int messageWidth = width - 130; // Adjusted for padding
         //int yOffset = height / 2;
         int yOffset = 10 + metrics.getHeight();
         int lineSpacing = metrics.getHeight();
@@ -969,10 +995,16 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
         
         // delete button
-        this.deleteX=width-60;
-        g2d.setFont(miniFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD));
-        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
-        g2d.drawString("x", this.deleteX,this.deleteY); // Timestamp position
+        this.deleteX=width-70;
+//        g2d.setFont(miniFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD));
+//        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
+//        g2d.drawString("x", this.deleteX,this.deleteY); // Timestamp position
+        
+        // delete icon
+        ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
+        // copy icon
+        this.copyX=this.deleteX-20;
+        ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
 
         this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
     }
