@@ -827,8 +827,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             
             userData = RestfulUserV6.fromAppUserBean(u);
 
-            Response res = Response.ok(userData).build();
-            return res;
+            return Response.ok(userData).build();
         } catch (Exception ex) {
             log.error("can not create new user " + userData.getPrincipalId(), ex);
             return Response.serverError().build();
