@@ -768,7 +768,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         this.refresh();
 
-        this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
+        this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);

@@ -689,6 +689,8 @@ public interface AppUserBeanFacadeLocal {
 
     AppUserBean findByPrincipalId(String principalId);
     AppUserBean findByPrincipalIdUnrestricted(String principalId);
+    
+    AppUserBean findByExternalId(String externalId);
 
     boolean hasPrincipalId(String principalId);
 }

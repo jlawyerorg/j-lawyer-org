@@ -712,7 +712,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
         this.documentContexts = documentContexts;
         this.caseContext=caseContext;
 
-        this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
+        this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
         if(messageConsumer==null)
             this.messageSendPanel1.setMessageConsumer(this);
         else

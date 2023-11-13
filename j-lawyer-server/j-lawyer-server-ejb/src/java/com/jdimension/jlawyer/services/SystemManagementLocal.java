@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -701,6 +702,10 @@ public interface SystemManagementLocal {
     PartyTypeBean getPartyType(String id);
     
     AppUserBean getUser(String principalId);
+    
+    List<AppUserBean> getUsers();
+    
+    AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
 
     List<MappingTable> getMappingTables();
 

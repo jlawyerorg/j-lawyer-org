@@ -717,7 +717,7 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
 
-        this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
+        this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
 
         if (initialMessages != null) {
             for (InstantMessage m : initialMessages) {

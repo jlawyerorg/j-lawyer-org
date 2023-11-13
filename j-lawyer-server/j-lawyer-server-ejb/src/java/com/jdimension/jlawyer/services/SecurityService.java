@@ -909,6 +909,8 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         return calendars;
     }
 
+    
+    
     @Override
     @RolesAllowed({"loginRole"})
     public List<AppUserBean> getUsersHavingRole(String role) throws Exception {
@@ -924,6 +926,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             }
         }
         return resultList;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public AppUserBean getUserByExternalId(String extId) {
+        return this.userBeanFacade.findByExternalId(extId);
     }
 
     @Override
@@ -1013,6 +1021,30 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             this.invoicePoolAccessFacade.create(newPa);
         }
         return true;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<AppUserBean> getMessagingEnabledUsers() throws Exception {
+        List<AppUserBean> allUsers=this.userBeanFacade.findAll();
+        List<AppUserBean> resultList=new ArrayList<>();
+        for(AppUserBean u: allUsers) {
+            if(u.getExternalId()!=null && !"".equals(u.getExternalId())) {
+                // external users are always enabled for messaging
+                resultList.add(u);
+            } else {
+                // if not an external user, check for login permission
+                List<AppRoleBean> userRoles = this.roleBeanFacade.findByPrincipalId(u.getPrincipalId());
+                for (AppRoleBean r : userRoles) {
+                    if (r.getRole().equalsIgnoreCase("loginRole")) {
+                        resultList.add(u);
+                        break;
+                    }
+                }
+            }
+            
+        }
+        return resultList;
     }
 
 }

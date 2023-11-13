@@ -668,6 +668,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -703,6 +704,16 @@ public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements Ap
         
         
         return u;
+    }
+    
+    
+    @Override
+    public AppUserBean findByExternalId(String externalId) {
+        try {
+            return (AppUserBean) em.createNamedQuery("AppUserBean.findByExternalId").setParameter("externalId", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
 
     @Override
