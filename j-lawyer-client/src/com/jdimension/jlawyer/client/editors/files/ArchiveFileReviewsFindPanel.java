@@ -766,7 +766,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         cmdReset = new javax.swing.JButton();
         rdTypeEvent = new javax.swing.JRadioButton();
         labelSearchAZ = new javax.swing.JLabel();
-        inputSearchAZ = new javax.swing.JTextField();
+        inputFulltextSearch = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
@@ -906,12 +906,12 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             }
         });
 
-        labelSearchAZ.setText("nach Aktenzeichen:");
+        labelSearchAZ.setText("enthält:");
 
-        inputSearchAZ.setToolTipText("");
-        inputSearchAZ.addKeyListener(new java.awt.event.KeyAdapter() {
+        inputFulltextSearch.setToolTipText("");
+        inputFulltextSearch.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                inputSearchAZKeyPressed(evt);
+                inputFulltextSearchKeyPressed(evt);
             }
         });
 
@@ -963,7 +963,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                         .addContainerGap()
                         .add(labelSearchAZ)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(inputFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -997,17 +997,17 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                             .add(rdDoneStatus)
                             .add(rdAllStatuses)))
                     .add(cmdReset))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 6, Short.MAX_VALUE)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(labelSearchAZ)
-                    .add(inputSearchAZ, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(inputFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel6))
                 .addContainerGap())
         );
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-15.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblPanelTitle.setText("Wiedervorlagen, Fristen und Termine suchen");
@@ -1092,7 +1092,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1174,7 +1174,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         if(this.rdTypeEvent.isSelected())
             type=ArchiveFileConstants.REVIEWTYPE_EVENT;
         
-        new Thread(new ArchiveFileReviewsAdvancedSearchThread(this, this.tblResults, status, type, fromDate, toDate, inputSearchAZ.getText())).start();
+        new Thread(new ArchiveFileReviewsAdvancedSearchThread(this, this.tblResults, status, type, fromDate, toDate, inputFulltextSearch.getText())).start();
         
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
@@ -1271,11 +1271,11 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         this.cmdRefreshActionPerformed(null);
     }//GEN-LAST:event_rdTypeEventActionPerformed
 
-    private void inputSearchAZKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inputSearchAZKeyPressed
+    private void inputFulltextSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inputFulltextSearchKeyPressed
         if(evt.getKeyCode() == KeyEvent.VK_ENTER){            
             this.cmdRefreshActionPerformed(null);            
         }
-    }//GEN-LAST:event_inputSearchAZKeyPressed
+    }//GEN-LAST:event_inputFulltextSearchKeyPressed
     
     private ReviewsStub getPrintValues() {
         ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<>();
@@ -1334,7 +1334,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JButton cmdReset;
     private javax.swing.ButtonGroup grpStatus;
     private javax.swing.ButtonGroup grpType;
-    private javax.swing.JTextField inputSearchAZ;
+    private javax.swing.JTextField inputFulltextSearch;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;

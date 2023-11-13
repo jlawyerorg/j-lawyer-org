@@ -663,49 +663,106 @@
  */
 package com.jdimension.jlawyer.client.drebis.freetext;
 
+import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
+import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
+import com.jdimension.jlawyer.client.mail.EmailTemplateAccess;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.wizard.*;
-import com.jdimension.jlawyer.drebis.DrebisPerson;
-import com.jdimension.jlawyer.drebis.DrebisUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import java.awt.Component;
+import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import java.util.ArrayList;
-import java.util.Vector;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComboBox;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author Kutschke
  */
-public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterface {
+public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterface, PartiesSelectionListener {
+
+    private static final Logger log = Logger.getLogger(FreeTextStep.class.getName());
 
     private WizardDataContainer data = null;
 
+    private ArchiveFileBean contextArchiveFile = null;
+    private List<PartyTypeBean> allPartyTypes = new ArrayList<>();
+    private List<String> allPartyTypesPlaceholders = new ArrayList<>();
+    private Collection<String> formPlaceHolders = new ArrayList<>();
+    private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
+
     /**
-     * Creates new form SampleStep1
+     * Creates new form FreeTextStep
      */
     public FreeTextStep() {
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
 
-        //this.tblOthers.getColumnModel().getColumn(11).setCellRenderer(new RoleCellRenderer());
+        this.partiesPanel.initialize(new ArrayList<>());
+        this.partiesPanel.setListener(this);
 
-        JComboBox c = new JComboBox(DrebisPerson.getAllCoverageRoles());
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-        c.setSelectedItem(DrebisPerson.getDefaultRole());
+            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            this.cmbTemplates.removeAllItems();
+            this.cmbTemplates.addItem("");
+            String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_LASTUSEDTEMPLATE, null);
+            for (String t : templates) {
+                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t);
+                if (etpl != null && etpl.isText()) {
+                    this.cmbTemplates.addItem(t);
+                }
+            }
+            if (lastUsedTemplate != null) {
+                this.cmbTemplates.setSelectedItem(lastUsedTemplate);
+            } else {
+                this.cmbTemplates.setSelectedIndex(0);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            this.allPartyTypesPlaceholders = new ArrayList<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
     }
 
     @Override
     public void nextEvent() throws Exception {
-        
-        if(StringUtils.isEmpty(this.txtClaimNumber.getText())) {
+
+        if (StringUtils.isEmpty(this.txtClaimNumber.getText())) {
             throw new Exception("Es muss eine Schadennummer angegeben werden");
         }
-        
+
+        if (this.cmbTemplates.getSelectedItem() != null) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DREBIS_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
+        }
+
         this.storeData();
     }
 
@@ -713,23 +770,22 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
     public void previousEvent() throws Exception {
         this.storeData();
     }
-    
+
     public void storeData() throws Exception {
-        
-        
+
         this.data.put("freetext.freetext", this.taFreeText.getText());
         this.data.put("freetext.claimnumber", this.txtClaimNumber.getText());
-        
+
     }
 
     @Override
     public void cancelledEvent() {
-        return;
+
     }
 
     @Override
     public void finishedEvent() {
-        return;
+
     }
 
     /**
@@ -741,22 +797,28 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel4 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         txtClaimNumber = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         taFreeText = new javax.swing.JTextArea();
+        jPanel2 = new javax.swing.JPanel();
+        cmbTemplates = new javax.swing.JComboBox<>();
+        partiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
+        jLabel2 = new javax.swing.JLabel();
 
         setName("Freitext bearbeiten"); // NOI18N
-
-        jLabel4.setText("Ihre Nachricht:");
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("<html><p>Geben Sie hier Ihre Nachricht an das Versicherungsunternehmen ein. Es muss kein Freitext angegeben werden, bspw. wenn Sie ein Dokument mitsenden. Pflichtangaben:</p>\n\n<ul>\n<li>Schadennummer</li>\n\n</ul>.\n</html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
+
+        jLabel4.setText("Ihre Nachricht:");
 
         jLabel5.setText("Schadennummer:");
 
@@ -766,22 +828,88 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
         taFreeText.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taFreeText);
 
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtClaimNumber)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtClaimNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setLeftComponent(jPanel1);
+
+        cmbTemplates.setFont(cmbTemplates.getFont());
+        cmbTemplates.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTemplates.setToolTipText("Unterstützt werden Vorlagen im Format text/plain (unformatierter Text)");
+        cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTemplatesActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setFont(jLabel2.getFont());
+        jLabel2.setText("Vorlage:");
+        jLabel2.setToolTipText("Unterstützt werden Vorlagen im Format text/plain (unformatierter Text)");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(partiesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)
+                    .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(partiesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setRightComponent(jPanel2);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 512, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtClaimNumber)
-                            .addComponent(jScrollPane1))))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jSplitPane1)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -789,24 +917,91 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(txtClaimNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(jSplitPane1)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        Object selected = this.cmbTemplates.getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        
+        if(this.contextArchiveFile==null)
+            return;
+
+        String tplName = selected.toString();
+        if (!"".equals(tplName)) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
+
+                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, formPlaceHolders);
+                HashMap<String, Object> ht = new HashMap<>();
+                for (String ph : placeHolderNames) {
+                    ht.put(ph, "");
+                }
+
+                AppUserBean caseLawyer = null;
+                AppUserBean caseAssistant = null;
+                AppUserBean author = UserSettings.getInstance().getCurrentUser();
+
+                try {
+                    caseLawyer = locator.lookupSystemManagementRemote().getUser(contextArchiveFile.getLawyer());
+                } catch (Exception ex) {
+                    log.warn("Unable to load lawyer with id " + contextArchiveFile.getLawyer());
+                }
+                try {
+                    caseAssistant = locator.lookupSystemManagementRemote().getUser(contextArchiveFile.getAssistant());
+                } catch (Exception ex) {
+                    log.warn("Unable to load assistant with id " + contextArchiveFile.getAssistant());
+                }
+
+                List<PartiesPanelEntry> selectedParties = this.partiesPanel.getSelectedParties(new ArrayList<>(allPartyTypes));
+                List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                for (PartiesPanelEntry pe : selectedParties) {
+                    PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                    partiesTriplets.add(triplet);
+                }
+                
+                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
+                ht = new HashMap<>();
+                for (String ph : placeHolderNames) {
+                    ht.put(ph, "");
+                }
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null);
+
+                String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues);
+                int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
+                if (cursorIndex > -1) {
+                    t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
+                }
+                this.taFreeText.setText(t);
+                this.taFreeText.setCaretPosition(Math.max(0, cursorIndex));
+                this.taFreeText.requestFocus();
+
+            } catch (Exception ex) {
+                log.error("Error initiating template", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmbTemplatesActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbTemplates;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSplitPane jSplitPane1;
+    private com.jdimension.jlawyer.client.editors.files.PartiesPanel partiesPanel;
     private javax.swing.JTextArea taFreeText;
     private javax.swing.JTextField txtClaimNumber;
     // End of variables declaration//GEN-END:variables
@@ -824,15 +1019,54 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
         } else {
             // initial display
             this.txtClaimNumber.setText(data.get("archiveFile.claimNumber").toString());
+            this.cmbTemplatesActionPerformed(null);
             // use empty values
 
-
         }
-        return;
     }
 
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+
+        String caseId = (String) data.get("archiveFile.id");
+        if (caseId == null) {
+            log.warn("missing case context, cancelling template selection...");
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            contextArchiveFile = locator.lookupArchiveFileServiceRemote().getArchiveFile(caseId);
+            if (contextArchiveFile == null) {
+                log.warn("no case with id " + caseId + ", cancelling template selection...");
+                return;
+            }
+            
+            List<ArchiveFileAddressesBean> involved=locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(caseId);
+            for(ArchiveFileAddressesBean aab: involved) {
+                this.partiesPanel.addParty(new PartiesPanelEntry(aab));
+            }
+
+            this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(contextArchiveFile.getId());
+            this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(contextArchiveFile.getId());
+        } catch (Exception ex) {
+            log.error("Unable to load case or form placeholders for case " + caseId);
+        }
+
+        
+        
+        
+    }
+
+    @Override
+    public void selectedPartiesUpdated() {
+        this.cmbTemplatesActionPerformed(null);
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

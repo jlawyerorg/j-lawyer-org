@@ -665,31 +665,18 @@ package com.jdimension.jlawyer.client.configuration;
 
 //import bsh.This;
 import com.jdimension.jlawyer.calendar.CalendarRegion;
-import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.AppRoleBean;
-import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
-import java.util.List;
 //import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
 //import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
 //import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
 //import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import com.jdimension.jlawyer.client.calendar.CalendarUtils;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
-import java.io.File;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFileChooser;
 
 /**
  *
@@ -706,7 +693,9 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
     private byte[] currentCertificate = null;
 
     /**
-     * Creates new form OptionGroupConfigurationDialog
+     * Creates new form GroupAdministrationDialog
+     * @param parent
+     * @param modal
      */
     public GroupAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -729,7 +718,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -928,7 +916,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
             Group g=new Group();
             g.setAbbreviation(this.txtAbbreviation.getText());
@@ -939,7 +926,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
             this.lstGroups.setSelectedIndex(this.lstGroups.getMaxSelectionIndex());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1035,10 +1021,8 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new GroupAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new GroupAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
 

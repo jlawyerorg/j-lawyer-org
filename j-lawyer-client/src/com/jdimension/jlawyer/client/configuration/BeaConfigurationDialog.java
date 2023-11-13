@@ -673,19 +673,21 @@ public class BeaConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form BackupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public BeaConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         
         ServerSettings set=ServerSettings.getInstance();
-        String mode=set.getSetting(set.SERVERCONF_BEAMODE, "on");
+        String mode=set.getSetting(ServerSettings.SERVERCONF_BEAMODE, "on");
         if("on".equalsIgnoreCase(mode))
             this.optBeaOn.setSelected(true);
         if("off".equalsIgnoreCase(mode))
             this.optBeaOff.setSelected(true);
         
-        String endpoint=set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://ksw.bea-brak.de");
+        String endpoint=set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://ksw.bea-brak.de");
         this.txtEndpoint.setText(endpoint);
         
     }
@@ -788,12 +790,12 @@ public class BeaConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set=ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_BEAENDPOINT, this.txtEndpoint.getText());
+        set.setSetting(ServerSettings.SERVERCONF_BEAENDPOINT, this.txtEndpoint.getText());
         
         if(this.optBeaOn.isSelected())
-            set.setSetting(set.SERVERCONF_BEAMODE, "on");
+            set.setSetting(ServerSettings.SERVERCONF_BEAMODE, "on");
         else 
-            set.setSetting(set.SERVERCONF_BEAMODE, "off");
+            set.setSetting(ServerSettings.SERVERCONF_BEAMODE, "off");
         
         this.setVisible(false);
         this.dispose();
@@ -839,19 +841,16 @@ public class BeaConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                BeaConfigurationDialog dialog = new BeaConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            BeaConfigurationDialog dialog = new BeaConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

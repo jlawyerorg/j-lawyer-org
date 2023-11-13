@@ -663,11 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.cloud.calendar;
 
+import java.io.Serializable;
+
 /**
  *
  * @author jens
  */
-public class CloudCalendar {
+public class CloudCalendar implements Serializable {
     
     protected String href=null;
     protected String displayName=null;

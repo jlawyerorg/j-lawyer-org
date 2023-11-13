@@ -666,13 +666,8 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -691,7 +686,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     private String editorClass = null;
 
     /**
-     * Creates new form HitPanel
+     * Creates new form CreateNewAddressPanel
      */
     public CreateNewAddressPanel(String editorClassName) {
         initComponents();
@@ -713,8 +708,9 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
 
+        lblAddress.setFont(lblAddress.getFont());
         lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        lblAddress.setText("neue Adresse erstellen:");
+        lblAddress.setText("neue Adresse erstellen");
         lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
@@ -732,10 +728,10 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("als Organisation");
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("als Person");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -801,7 +797,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             if (this.beaSafeId != null) {
                 this.loadFromBea(editor, beaSafeId);
             }
-            //((NewAddressPanel) editor).enableBackButton();
+            
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -844,7 +840,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             if (this.beaSafeId != null) {
                 this.loadFromBea(editor, beaSafeId);
             }
-            //((NewAddressPanel) editor).enableBackButton();
+            
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

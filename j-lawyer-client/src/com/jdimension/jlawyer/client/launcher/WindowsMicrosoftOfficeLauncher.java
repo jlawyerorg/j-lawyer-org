@@ -680,7 +680,7 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
     private static final String POWERPOINT_BINARY = "powerpnt.exe";
     private static final String EXCEL_BINARY = "excel.exe";
     
-    private static final String[] BINARY_SEARCHPATHS={"C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office16\\", "C:\\Program Files\\Microsoft Office 16\\ClientX64\\Root\\Office16\\", "C:\\Program Files (x86)\\Microsoft Office 16\\ClientX86\\Root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office\\Office15\\", "C:\\Program Files\\Microsoft Office 15\\ClientX64\\Root\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office 15\\ClientX86\\Root\\Office15\\"};
+    private static final String[] BINARY_SEARCHPATHS={"C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office16\\", "C:\\Program Files\\Microsoft Office 16\\ClientX64\\Root\\Office16\\", "C:\\Program Files (x86)\\Microsoft Office 16\\ClientX86\\Root\\Office16\\", "C:\\Program Files\\Microsoft Office\\root\\Office16\\", "C:\\Program Files\\Microsoft Office\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office\\Office15\\", "C:\\Program Files\\Microsoft Office 15\\ClientX64\\Root\\Office15\\", "C:\\Program Files (x86)\\Microsoft Office 15\\ClientX86\\Root\\Office15\\"};
 
     public WindowsMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);

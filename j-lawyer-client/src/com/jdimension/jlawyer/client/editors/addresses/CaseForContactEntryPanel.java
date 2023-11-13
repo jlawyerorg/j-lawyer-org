@@ -671,13 +671,18 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -692,7 +697,8 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
     private String openedFromEditorClass=null;
     
     /**
-     * Creates new form HitPanel
+     * Creates new form CaseForContactEntryPanel
+     * @param openedFromClassName
      */
     public CaseForContactEntryPanel(String openedFromClassName) {
         initComponents();
@@ -715,13 +721,14 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             reason=reason.substring(0,45) + "...";
         
         
-        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
+        String ownReference="";
+        if(!StringUtils.isEmpty(e.getOwnReference())) {
+            ownReference="<br/>Zeichen: " + e.getOwnReference();
+        }
+        
+        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + ownReference + "</html>");
         this.lblRole.setText(e.getRole());
         this.lblRole.setForeground(e.getRoleForeground());
-        
         
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
         String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
@@ -735,14 +742,25 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             this.lblArchived.setText("");
         }
         
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
-
+        HashMap<Integer,Float> invoices=e.getInvoicesByStatus();
+        this.lblTotal.setText("");
+        DecimalFormat df=new DecimalFormat("0.00");
+        if(invoices!=null) {
+            float total=invoices.get(Invoice.STATUS_NEW) + invoices.get(Invoice.STATUS_OPEN) + invoices.get(Invoice.STATUS_PAID) - invoices.get(Invoice.STATUS_CANCELLED);
+            StringBuilder sb=new StringBuilder();
+            sb.append("<html><b>Umsatzrelevante Werte gesamt: ").append(df.format(total)).append("</b><br/>");
+            sb.append("<table><tr><td>neu:</td><td>").append(df.format(invoices.get(Invoice.STATUS_NEW))).append("</td></tr>");
+            sb.append("<tr><td>offen:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN))).append("</td></tr>");
+            sb.append("<tr><td>bezahlt:</td><td>").append(df.format(invoices.get(Invoice.STATUS_PAID))).append("</td></tr>");
+            sb.append("<tr><td>storniert:</td><td>").append(df.format(invoices.get(Invoice.STATUS_CANCELLED))).append("</td></tr></table></html>");
+            this.lblTotal.setText(df.format(total));
+            if(invoices.get(Invoice.STATUS_OPEN)>0)
+                this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            else
+                this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.lblTotal.setToolTipText(sb.toString());
+        }
+        
     }
 
     /**
@@ -754,14 +772,21 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
         lblDescription = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        lblTotal = new javax.swing.JLabel();
         lblRole = new javax.swing.JLabel();
         lblArchived = new javax.swing.JLabel();
 
-        lblDescription.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel1.setText("jLabel1");
+
+        jLabel2.setText("jLabel2");
+
+        lblDescription.setFont(lblDescription.getFont().deriveFont(lblDescription.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
-        lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
+        lblDescription.setText("<html>Akte xxx/yy<br/>Rubrum<br/>Zeichen</html>");
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -775,12 +800,38 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblRole.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        jPanel1.setOpaque(false);
+
+        lblTotal.setFont(lblTotal.getFont().deriveFont((lblTotal.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
+        lblTotal.setText("0,00");
+
+        lblRole.setFont(lblRole.getFont().deriveFont((lblRole.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
         lblRole.setForeground(new java.awt.Color(0, 0, 255));
         lblRole.setText("user");
 
-        lblArchived.setFont(new java.awt.Font("Dialog", 2, 10)); // NOI18N
+        lblArchived.setFont(lblArchived.getFont().deriveFont((lblArchived.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblArchived.getFont().getSize()-2));
         lblArchived.setText("archiviert");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(0, 24, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblRole, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblTotal, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblArchived, javax.swing.GroupLayout.Alignment.TRAILING)))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(lblRole)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblTotal)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblArchived))
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -788,27 +839,18 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addComponent(lblArchived)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
-                        .addComponent(lblRole)
-                        .addContainerGap())))
+                .addComponent(lblDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(231, 231, 231)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRole, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblArchived)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblDescription)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -868,8 +910,12 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblArchived;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblRole;
+    private javax.swing.JLabel lblTotal;
     // End of variables declaration//GEN-END:variables
 }

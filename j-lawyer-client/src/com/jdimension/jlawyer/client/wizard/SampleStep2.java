@@ -775,4 +775,9 @@ public class SampleStep2 extends javax.swing.JPanel implements WizardStepInterfa
     public void setData(WizardDataContainer data) {
         this.data=data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

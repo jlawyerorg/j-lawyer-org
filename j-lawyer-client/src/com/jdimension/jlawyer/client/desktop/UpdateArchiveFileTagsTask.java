@@ -689,7 +689,9 @@ public class UpdateArchiveFileTagsTask extends java.util.TimerTask {
     private QuickArchiveFileSearchPanel p1;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of UpdateArchiveFileTagsTask
+     * @param owner
+     * @param p1
      */
     public UpdateArchiveFileTagsTask(Component owner, QuickArchiveFileSearchPanel p1) {
         super();

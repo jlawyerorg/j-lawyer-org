@@ -669,9 +669,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
@@ -730,8 +728,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private ArchiveFileServiceLocal archiveFileService;
     @EJB
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
-    @EJB
-    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
     @EJB
     private CalendarSyncServiceLocal calendarSync;
     @EJB
@@ -866,7 +862,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
 
         try {
             this.calendarSync.eventAdded(aFile, review);
@@ -976,7 +972,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription(rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
 
         this.archiveFileReviewsFacade.remove(rb);
 
@@ -1151,7 +1147,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
         newHistEntry.setChangeDescription(review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
 
         review.setArchiveFileKey(aFile);
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
@@ -1182,6 +1178,19 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception {
 
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
+
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception {
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+        if (context.getCallerPrincipal().getName() != null) {
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+        }
+
+        return this.archiveFileReviewsFacade.findByArchiveFileKeyAndDone(aFile, done);
 
     }
 
@@ -1251,7 +1260,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void runFullCalendarSync() {
         this.calendarSync.runFullCalendarSync();
     }
-
+    
     @Override
     @RolesAllowed({"loginRole"})
     public boolean hasEvents(CalendarSetup calendar) throws Exception {
@@ -1404,6 +1413,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return list;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
+        return this.calendarSync.listCalendars(host, ssl, port, user, password, path);
     }
 
 }

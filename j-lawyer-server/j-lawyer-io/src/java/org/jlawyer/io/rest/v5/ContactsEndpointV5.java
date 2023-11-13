@@ -709,7 +709,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/tags")
     @RolesAllowed({"readAddressRole"})
     public Response getContactTags(@PathParam("id") String id) {
@@ -749,7 +749,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeAddressRole"})
@@ -780,7 +780,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeAddressRole"})
@@ -815,7 +815,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/cases")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCasesForContact(@PathParam("id") String id) {
@@ -836,6 +836,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 ArchiveFileBean afb=aab.getArchiveFileKey();
                 RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(afb.getId());
+                rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
                 rco.setFileNumber(afb.getFileNumber());
                 caseList.add(rco);

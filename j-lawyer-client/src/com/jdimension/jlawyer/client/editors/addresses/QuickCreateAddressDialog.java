@@ -689,6 +689,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form QuickCreateAddressDialog
+     * @param parent
+     * @param modal
      */
     public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
@@ -846,7 +848,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
 
-        jLabel4.setText("Strasse:");
+        jLabel4.setText("Straße:");
 
         jLabel5.setText("PLZ:");
 
@@ -875,7 +877,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     .add(jLabel7))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 513, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
                     .add(txtCountry)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel2Layout.createSequentialGroup()
@@ -919,12 +921,6 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         jLabel9.setText("Fax:");
 
         jLabel10.setText("E-Mail:");
-
-        txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtEmailKeyPressed(evt);
-            }
-        });
 
         jLabel11.setText("Homepage:");
 
@@ -1088,19 +1084,12 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdChooseCityActionPerformed
 
-    private void txtEmailKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailKeyPressed
-        
-    }//GEN-LAST:event_txtEmailKeyPressed
-
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new QuickCreateAddressDialog(null, true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new QuickCreateAddressDialog(null, true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -688,7 +688,7 @@ import org.apache.log4j.Logger;
 public class QuickArchiveFileSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(QuickArchiveFileSearchThread.class.getName());
-
+    
     private final String query;
     private final Component owner;
     private final JTable target;
@@ -739,15 +739,19 @@ public class QuickArchiveFileSearchThread implements Runnable {
             tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
+            ThreadUtils.setDefaultCursor(this.owner);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
+        // the search and loading data from the server is what takes the most time
+        // reset cursor
+        ThreadUtils.setDefaultCursor(this.owner);
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert","","", "Anwalt", "Sachbearbeiter", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
         for (int i = 0; i < dtos.length; i++) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
+            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getDateCreated(), dtos[i].getName(), dtos[i].getReason(), dtos[i].getArchivedBoolean(), dtos[i].getDateArchived(), "", dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
             model.addRow(row);
         }
         if (dtos.length > 0) {
@@ -766,7 +770,6 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model);
         }
         EditorsRegistry.getInstance().clearStatus(true);
-        ThreadUtils.setDefaultCursor(this.owner);
         
         if(this.callback!=null) {
             SwingUtilities.invokeLater(() -> {

@@ -671,7 +671,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import org.apache.log4j.Logger;
 
 /**
@@ -686,6 +686,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
     
     /**
      * Creates a new instance of SystemStateTimerTask
+     * @param bypassCache
      */
     public ScannerDocumentsTimerTask(boolean bypassCache) {
         super();
@@ -693,12 +694,13 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
         synchronized (this) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                Hashtable<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
+                HashMap<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
                 ArrayList<String> currentFiles = new ArrayList<>();
                 for (File f : files.keySet()) {
@@ -711,7 +713,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ScannerStatusEvent(files));
                 }
-                this.lastFiles = currentFiles;
+                lastFiles = currentFiles;
 
             } catch (Throwable ex) {
                 log.error("Error connecting to server", ex);

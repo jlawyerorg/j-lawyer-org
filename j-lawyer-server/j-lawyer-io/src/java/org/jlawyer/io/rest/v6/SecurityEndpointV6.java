@@ -699,7 +699,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Override
     @Path("/users")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     public Response getEnabledUsers() {
 
         try {

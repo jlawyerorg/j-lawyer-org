@@ -15,7 +15,6 @@
  */
 package de.costache.calendar.ui;
 
-import de.costache.calendar.model.EventType;
 import de.costache.calendar.ui.strategy.Config;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.model.CalendarEvent;
@@ -35,7 +34,7 @@ import java.util.List;
  * @author theodorcostache
  */
 public class DayContentPanel extends JPanel {
-
+    
     /**
      *
      */
@@ -49,6 +48,7 @@ public class DayContentPanel extends JPanel {
 
     /**
      * Creates a new instance of {@link DayContentPanel}
+     * @param owner
      */
     public DayContentPanel(final DayPanel owner) {
         super(true);
@@ -83,19 +83,28 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseReleased(final MouseEvent e) {
-
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
                 } else {
+                    final boolean isSelectedStrategyMonth = calendar
+                        .getDisplayStrategy() == Type.MONTH;
+                    final CalendarEvent event = isSelectedStrategyMonth ? getEventForMonth(
+                        e.getX(), e.getY()) : getNotMonthEvent(e.getX(),
+                        e.getY());
+                    
+                    if(event==null) {
+                    
                     if (startDate != null && endDate != null)
                         EventRepository.get().triggerIntervalSelection(calendar,
                                 startDate, endDate);
+                    
+                    }
                 }
-                for (final MouseListener ml : DayContentPanel.this.owner
-                        .getOwner().getMouseListeners()) {
-                    ml.mouseReleased(e);
-                }
+//                for (final MouseListener ml : DayContentPanel.this.owner
+//                        .getOwner().getMouseListeners()) {
+//                    ml.mouseReleased(e);
+//                }
             }
 
             @Override
@@ -131,10 +140,11 @@ public class DayContentPanel extends JPanel {
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
-                }
-                for (final MouseListener ml : DayContentPanel.this.owner
-                        .getOwner().getMouseListeners()) {
-                    ml.mousePressed(e);
+                } else {
+//                for (final MouseListener ml : DayContentPanel.this.owner
+//                        .getOwner().getMouseListeners()) {
+//                    ml.mousePressed(e);
+//                }
                 }
             }
 
@@ -348,6 +358,10 @@ public class DayContentPanel extends JPanel {
 
         final Config config = owner.getOwner().getConfig();
         if (events.size() > 0) {
+            
+            JLabel dummyLabel = new JLabel();
+            final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
+            
             for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
                 if (event.isAllDay() || event.isHoliday())
                     continue;
@@ -392,9 +406,12 @@ public class DayContentPanel extends JPanel {
                 final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
 
-                graphics2d.setFont(new Font("Verdana", Font.BOLD, 12));
+                graphics2d.setFont(font);
                 graphics2d
                         .setColor(!event.isSelected() ? fgColor : Color.white);
+                RenderingHints hints = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics2d.setRenderingHints(hints);
 
                 GraphicsUtil.drawString(graphics2d, eventString, conflictIndex
                                 * (getWidth() - 4) / conflictingEventsSize + 3,

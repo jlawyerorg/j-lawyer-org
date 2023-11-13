@@ -764,7 +764,7 @@ public class UgHitPanel extends javax.swing.JPanel {
 
         setBackground(new java.awt.Color(255, 255, 255));
 
-        lblFileName.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblFileName.setText("Treffertitel");
         lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -785,7 +785,6 @@ public class UgHitPanel extends javax.swing.JPanel {
         lblType.setOpaque(true);
 
         taDetails.setColumns(20);
-        taDetails.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         taDetails.setLineWrap(true);
         taDetails.setRows(5);
         taDetails.setWrapStyleWord(true);

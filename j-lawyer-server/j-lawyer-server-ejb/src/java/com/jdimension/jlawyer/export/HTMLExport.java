@@ -699,11 +699,11 @@ public class HTMLExport {
 
     private static final Logger log = Logger.getLogger(HTMLExport.class.getName());
 
-    private SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private final SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
-    private static String CELL_BREAK = "\t";
-    private static String LINE_BREAK = System.getProperty("line.separator");
+    private static final String CELL_BREAK = "\t";
+    private static final String LINE_BREAK = System.getProperty("line.separator");
 
     private File targetDirectory = null;
 
@@ -748,7 +748,7 @@ public class HTMLExport {
             revCsv.delete();
         }
 
-        StringBuffer excelStr = new StringBuffer();
+        StringBuilder excelStr = new StringBuilder();
 
         // faellig, Typ, Aktenzeichen, Kurzrubrum, Grund
         excelStr.append("faellig");
@@ -760,6 +760,16 @@ public class HTMLExport {
         excelStr.append("Kurzrubrum");
         excelStr.append(CELL_BREAK);
         excelStr.append("Grund");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("archiviert");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 1");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 2");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 3");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Etiketten");
         excelStr.append(LINE_BREAK);
 
         for (ArchiveFileReviewsBean rev : reviews) {
@@ -773,6 +783,30 @@ public class HTMLExport {
             excelStr.append(escape(rev.getArchiveFileKey().getName()));
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getSummary()));
+            excelStr.append(CELL_BREAK);
+            if(rev.getArchiveFileKey().getArchivedBoolean()) {
+                excelStr.append("ja");
+            } else {
+                excelStr.append("nein");
+            }
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom1()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom2()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom3()));
+            excelStr.append(CELL_BREAK);
+            Collection<ArchiveFileTagsBean> tags=this.caseFacade.getTagsUnrestricted(rev.getArchiveFileKey().getId());
+            StringBuilder tagBuffer=new StringBuilder();
+            for(ArchiveFileTagsBean tag: tags) {
+                tagBuffer.append(tag);
+                tagBuffer.append(" / ");
+            }
+            String tagString=tagBuffer.toString();
+            if(tagString.endsWith(" / ")) {
+                tagString=tagString.substring(0, tagString.length()-3);
+            }
+            excelStr.append(escape(tagString));
             excelStr.append(LINE_BREAK);
 
         }
@@ -832,11 +866,7 @@ public class HTMLExport {
         Collection documents = null;
         Collection parties = null;
         Collection reviews = null;
-        //ClientSettings settings = ClientSettings.getInstance();
-        //JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-        //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
-        //ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        
         history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
         parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
         reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
@@ -894,8 +924,8 @@ public class HTMLExport {
                         docOut.write(docContent);
                     }
                     File docOutFile = new File(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName);
-                    if (db.getCreationDate() != null) {
-                        docOutFile.setLastModified(db.getCreationDate().getTime());
+                    if (db.getChangeDate() != null) {
+                        docOutFile.setLastModified(db.getChangeDate().getTime());
                     }
                 } catch (Throwable t) {
                     log.error("Could not export document " + db.getName() + " from case " + dto.getFileNumber(), t);
@@ -904,7 +934,7 @@ public class HTMLExport {
 
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(df, db.getCreationDate()));
+                sb.append(toDate(df, db.getChangeDate()));
                 sb.append("</p></td><td><p class=\"post_info\"><a href=\"documents/");
                 sb.append(dbNewName);
                 sb.append("\">");
@@ -994,7 +1024,7 @@ public class HTMLExport {
 
     private String getPartiesList(Collection parties) {
         ArrayList partiesList = new ArrayList(parties);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Object p : partiesList) {
             if (p instanceof ArchiveFileAddressesBean) {
                 AddressBean ab = ((ArchiveFileAddressesBean) p).getAddressKey();
@@ -1013,10 +1043,10 @@ public class HTMLExport {
                     }
                 }
                 if (ab.getPhone() != null) {
-                    sb.append(", Tel: " + ab.getPhone());
+                    sb.append(", Tel: ").append(ab.getPhone());
                 }
                 if (ab.getMobile() != null) {
-                    sb.append(", Mob: " + ab.getMobile());
+                    sb.append(", Mob: ").append(ab.getMobile());
                 }
                 sb.append("</p>");
             }

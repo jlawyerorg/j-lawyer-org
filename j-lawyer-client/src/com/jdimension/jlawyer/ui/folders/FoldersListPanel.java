@@ -815,7 +815,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
             Collections.sort(allChildren, (Object t, Object t1) -> {
                 CaseFolder f1 = (CaseFolder) t;
                 CaseFolder f2 = (CaseFolder) t1;
-                return f1.getName().compareTo(f2.getName());
+                return f1.getName().toLowerCase().compareTo(f2.getName().toLowerCase());
             });
             for (CaseFolder child : allChildren) {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);

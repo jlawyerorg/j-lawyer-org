@@ -668,13 +668,10 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.DrebisUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -686,12 +683,10 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form OthersSelectionStep
      */
     public OthersSelectionStep() {
         initComponents();
-
-        //this.tblOthers.getColumnModel().getColumn(11).setCellRenderer(new RoleCellRenderer());
 
         JComboBox c = new JComboBox(DrebisPerson.getAllCoverageRoles());
 
@@ -712,12 +707,12 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
     }
     
     public void storeData() throws Exception {
-        ArrayList<DrebisPerson> persons=new ArrayList<DrebisPerson>();
+        ArrayList<DrebisPerson> persons=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblOthers.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
-            if(enabled.booleanValue()) {
+            if(enabled) {
                 // user chose to submit this client
                 
                 // columns: 0 submit, 1 name, 2 firstname, 3 company, 4 street, 5 zip, 6 city, 7 countrycode, 8 phone, 9 fax, 10 email, 11 role
@@ -759,12 +754,10 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void cancelledEvent() {
-        return;
     }
 
     @Override
     public void finishedEvent() {
-        return;
     }
 
     /**
@@ -790,7 +783,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
             },
             new String [] {
-                "übertragen", "Nachname", "Vorname", "Unternehmen", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
+                "übertragen", "Nachname", "Vorname", "Unternehmen", "Straße", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
             }
         ) {
             Class[] types = new Class [] {
@@ -806,7 +799,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("<html><p>Wählen Sie weitere zu übermittelnde Beteiligte aus. Pflichtangaben:</p>  <ul> <li>Firma oder Vor- und Nachname, Strasse und Hausnr, PLZ, Ort und Länderkennzeichen</li> <li>Rolle des Beteiligten: „GEGNER“, „ZEUGE“, „FAHRER“, „FAHRZEUG-HALTER“, „ANSPRUCHSTELLER“, „VERSICHERTER“, „VERSICHERUNGSNEHMER“ oder „MANDANT“</li>  </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
+        jLabel1.setText("<html><p>Wählen Sie weitere zu übermittelnde Beteiligte aus. Pflichtangaben:</p>  <ul> <li>Firma oder Vor- und Nachname, Stra&szlig;e und Hausnr, PLZ, Ort und Länderkennzeichen</li> <li>Rolle des Beteiligten: „GEGNER“, „ZEUGE“, „FAHRER“, „FAHRZEUG-HALTER“, „ANSPRUCHSTELLER“, „VERSICHERTER“, „VERSICHERUNGSNEHMER“ oder „MANDANT“</li>  </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
@@ -861,7 +854,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
                 AddressBean cl = others.get(i);
 
                 Vector row = new Vector();
-                row.add(new Boolean(true));
+                row.add(false);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
@@ -882,11 +875,15 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
 
         }
-        return;
     }
 
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

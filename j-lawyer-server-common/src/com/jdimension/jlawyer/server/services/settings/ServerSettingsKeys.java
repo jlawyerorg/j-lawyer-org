@@ -700,7 +700,6 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_DREBISTECHUSER="jlawyer.server.drebis.techuser";
     public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
     
-    
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
@@ -788,5 +787,12 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_CALENDAR_CONFLICTCHECK="jlawyer.server.calendar.conflictcheck";
     
     public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
+    
+    public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
+    
+    public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
+    
+    public static final String SERVERCONF_INSTALLATION_ID="jlawyer.server.installation.id";
+    public static final String SERVERCONF_EPOSTVENDORID_ENCRYPTED="jlawyer.server.epost.vendorid";
     
 }

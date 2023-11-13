@@ -664,13 +664,8 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.util.Collection;
-import javax.swing.DefaultListModel;
+import com.jdimension.jlawyer.persistence.Group;
 
 /**
  *
@@ -717,7 +712,7 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
         if (!StringUtils.isEmpty((String) this.cmbSubjectField.getSelectedItem())) {
             return true;
         }
-        
+                
         if (!StringUtils.isEmpty(this.txtCustom1.getText())) {
             return true;
         }
@@ -728,8 +723,11 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
             return true;
         }
         
+        if(!this.pnlInvolvedParties.getInvolvedParties().isEmpty()) {
+            return true;
+        }
+        
         try {
-            //claimValueFloat = Float.parseFloat(this.txtClaimValue.getText());
             Number claimValueFloat = ((Number)this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
             if(claimValueFloat.floatValue()!=0)
                 return true;
@@ -741,11 +739,6 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
                 return true;
             }
         }
-        
-        if(!(this.pnlInvolvedParties.getInvolvedParties().size()==0)) {
-            return true;
-        }
-        
         
         return false;
         

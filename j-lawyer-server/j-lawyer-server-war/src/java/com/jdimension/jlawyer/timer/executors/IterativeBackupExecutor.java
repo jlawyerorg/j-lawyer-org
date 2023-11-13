@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.timer.executors;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -686,7 +685,7 @@ public class IterativeBackupExecutor {
     private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
     
     // these directories will be zipped entirely with each backup run
-    private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates"};
+    private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates", "letterheads"};
     // these directories will be zipped on a per subdirectory basis and only if there are changes
     private final String[] iterativeBackupDirs = new String[]{"archivefiles"};
 
@@ -908,7 +907,7 @@ public class IterativeBackupExecutor {
         }
     }
 
-    private static File dumpDatabase(String user, String password, String port, String backupDir) {
+    private static File dumpDatabase(String user, String password, String port, String backupDir) throws Exception {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
@@ -950,6 +949,7 @@ public class IterativeBackupExecutor {
         Process process = null;
 
         File f = new File(backupFilePath);
+        int exitCode=0;
         try {
 
             if (f.exists()) {
@@ -957,7 +957,7 @@ public class IterativeBackupExecutor {
             }
 
             process = shell.exec(cmd);
-            process.waitFor();
+            exitCode=process.waitFor();
 
             f.setLastModified(System.currentTimeMillis());
             
@@ -966,6 +966,12 @@ public class IterativeBackupExecutor {
             log.error(ex);
             
         }
+        
+        if(exitCode!=0) {
+            log.error("mysqldump returned with exit code " + exitCode);
+            throw new Exception("Datenbank-Dump fehlgeschlagen - Rückgabewert " + exitCode);
+        }
+        
         return f;
     }
 

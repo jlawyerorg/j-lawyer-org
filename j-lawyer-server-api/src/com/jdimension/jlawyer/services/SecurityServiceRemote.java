@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.util.Collection;
@@ -697,16 +698,19 @@ public interface SecurityServiceRemote {
     
     boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
     boolean addUserToMailbox(String principalId, String mailboxId) throws Exception;
+    boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;
 
     boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
     
     boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception;
     boolean removeUserFromMailbox(String principalId, String mailboxId) throws Exception;
+    boolean removeUserFromInvoicePool(String principalId, String poolId) throws Exception;
     
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
     
     List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception;
     List<MailboxAccess> getMailboxAccessForUser(String principalId) throws Exception;
+    List<InvoicePoolAccess> getInvoicePoolAccessForUser(String principalId) throws Exception;
 
     List<Group> getGroupsForUser(String principalId) throws Exception;
     

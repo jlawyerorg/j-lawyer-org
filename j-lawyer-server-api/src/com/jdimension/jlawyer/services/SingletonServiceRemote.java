@@ -681,11 +681,12 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.ejb.Remote;
 
 /**
@@ -699,17 +700,19 @@ public interface SingletonServiceRemote {
 
     void setSystemStatus(int status);
 
-    Hashtable<File,Date> getObservedFiles();
+    HashMap<File,Date> getObservedFiles();
     
-    Hashtable<File,Date> getObservedFiles(boolean bypassCache);
+    HashMap<File,Date> getObservedFiles(boolean bypassCache);
     
     void updateObservedFiles();
 
-    void setObservedFiles(Hashtable<File,Date> fileNames);
+    void setObservedFiles(HashMap<File,Date> fileNames);
 
     FaxQueueBean getFailedFax();
+    EpostQueueBean getFailedLetter();
 
     ArrayList<FaxQueueBean> getFaxQueue();
+    ArrayList<EpostQueueBean> getEpostQueue();
 
     void setFailedFax(FaxQueueBean failedFax);
 

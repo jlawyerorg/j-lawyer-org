@@ -30,7 +30,8 @@
                       <Component id="tagToggleButton1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="tagToggleButton2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="142" max="32767" attributes="0"/>
+                      <EmptySpace pref="121" max="32767" attributes="0"/>
+                      <Component id="jToggleButton1" min="-2" pref="142" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -45,21 +46,22 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="tagToggleButton1" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="tagToggleButton2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jToggleButton1" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="120" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="431" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="com.jdimension.jlawyer.ui.tagging.TagToggleButton" name="tagToggleButton1">
+    <Component class="com.jdimension.jlawyer.ui.tagging.TagToggleRectButton" name="tagToggleButton1">
       <Events>
         <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="tagToggleButton1ItemStateChanged"/>
       </Events>
     </Component>
-    <Component class="com.jdimension.jlawyer.ui.tagging.TagToggleButton" name="tagToggleButton2">
+    <Component class="com.jdimension.jlawyer.ui.tagging.TagToggleRectButton" name="tagToggleButton2">
       <Properties>
         <Property name="text" type="java.lang.String" value="ei verbibbsch!!!"/>
       </Properties>
@@ -84,5 +86,18 @@
         </Container>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JToggleButton" name="jToggleButton1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="jToggleButton1"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+            <LineBorder thickness="3"/>
+          </Border>
+        </Property>
+        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+          <Insets value="[3, 14, 3, 14]"/>
+        </Property>
+      </Properties>
+    </Component>
   </SubComponents>
 </Form>

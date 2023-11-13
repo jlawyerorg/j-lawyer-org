@@ -703,11 +703,10 @@ public class ClientSettings {
     public static final String CONF_LASTCONNECTION="connection.lastconnection";
     
     public static final String CONF_THEME="client.theme";
-    
-    public static final String CONF_HEIGHT="client.height";
-    public static final String CONF_WIDTH="client.width";
+    public static final String CONF_FRAME_BOUNDS = "client.framebounds";
     
     public static final String CONF_UI_SCALING="client.ui.scaling";
+    public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT="client.desktop.myappointments.height";
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_WIDTH="client.desktop.myappointments.width";
@@ -743,8 +742,6 @@ public class ClientSettings {
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     public static final String CONF_SCANS_OBSERVELOCALDIR="client.scans.observelocaldir";
     
-    public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
-    public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
     
     public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
@@ -755,6 +752,7 @@ public class ClientSettings {
     public static final String CONF_BEA_LASTTAG="client.bea.lasttag";
     public static final String CONF_BEA_LASTDOCUMENTTAG="client.bea.lastdocumenttag";
     public static final String CONF_BEA_MOVETOIMPORTEDENABLED="client.bea.movetoimportedenabled";
+    public static final String CONF_BEA_DOWNLOADRESTRICTION="client.bea.downloadrestriction";
     
     public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
     public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
@@ -768,9 +766,9 @@ public class ClientSettings {
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
-    public static final String CONF_MAIL_LASTTAG="client.mail.lasttag";
-    public static final String CONF_MAIL_LASTDOCUMENTTAG="client.mail.lastdocumenttag";
     public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
+    
+    public static final String CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION="client.instantmessage.downloadrestriction";
     
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
@@ -789,12 +787,13 @@ public class ClientSettings {
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
     
     public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
+    public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
+    public static final String CONF_DOCUMENTS_LETTERHEAD="client.documents.letterhead.";
     
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
-   
     
     
     private ModuleMetadata rootModule=null;
@@ -818,6 +817,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] degreeSuffixes=null;
     private AppOptionGroupBean[] professions=null;
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
+    protected AppOptionGroupBean[] timesheetIntervals=null;
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
@@ -828,7 +828,6 @@ public class ClientSettings {
     
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
-    private String urlXjustiz=null;
     
     /**
      * Creates a new instance of ClientSettings
@@ -1132,14 +1131,6 @@ public class ClientSettings {
         this.urlHelp = urlHelp;
     }
 
-    public String getUrlXjustiz() {
-        return this.urlXjustiz;
-    }
-    
-    public void setUrlXjustiz(String url) {
-        this.urlXjustiz=url;
-    }
-
     /**
      * @return the countries
      */
@@ -1250,6 +1241,17 @@ public class ClientSettings {
      */
     public void setTitlesInAddress(AppOptionGroupBean[] titlesInAddress) {
         this.titlesInAddress = titlesInAddress;
+    }
+
+    public void setTimesheetIntervals(AppOptionGroupBean[] timesheetIntervals) {
+        this.timesheetIntervals=timesheetIntervals;
+    }
+
+    /**
+     * @return the timesheetIntervals
+     */
+    public AppOptionGroupBean[] getTimesheetIntervals() {
+        return timesheetIntervals;
     }
  
     

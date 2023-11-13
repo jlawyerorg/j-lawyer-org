@@ -663,12 +663,15 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -683,32 +686,15 @@ public class TableUtils {
     private static String LINE_BREAK = System.getProperty("line.separator");
 
     public static void exportAndLaunch(String fileName, JTable table) throws Exception {
+        exportAndLaunch(fileName, table, null);
+    }
+    
+    public static void exportAndLaunch(String fileName, JTable table, DecimalFormat df) throws Exception {
 
-//        int numCols = table.getSelectedColumnCount();
-//        int numRows = table.getSelectedRowCount();
-//        int[] rowsSelected = table.getSelectedRows();
-//        int[] colsSelected = table.getSelectedColumns();
-//        if (numRows != rowsSelected[rowsSelected.length - 1] - rowsSelected[0] + 1 || numRows != rowsSelected.length
-//                || numCols != colsSelected[colsSelected.length - 1] - colsSelected[0] + 1 || numCols != colsSelected.length) {
-//
-//            //JOptionPane.showMessageDialog(null, "Invalid Copy Selection", "Invalid Copy Selection", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        StringBuffer excelStr = new StringBuffer();
-//        for (int i = 0; i < numRows; i++) {
-//            for (int j = 0; j < numCols; j++) {
-//                excelStr.append(escape(table.getValueAt(rowsSelected[i], colsSelected[j])));
-//                if (j < numCols - 1) {
-//                    excelStr.append(CELL_BREAK);
-//                }
-//            }
-//            excelStr.append(LINE_BREAK);
-//        }
         int numRows = table.getRowCount();
         int numCols = table.getColumnCount();
 
-        StringBuffer excelStr = new StringBuffer();
+        StringBuilder excelStr = new StringBuilder();
 
         for (int i = 0; i < numCols; i++) {
             excelStr.append(escape(table.getColumnName(i)));
@@ -727,6 +713,9 @@ public class TableUtils {
                     } else {
                         cellValue = "ja";
                     }
+                } else if(cellValue instanceof Float || cellValue instanceof Double || cellValue instanceof BigDecimal) {
+                    if(df!=null)
+                        cellValue=df.format(cellValue);
                 }
                 excelStr.append(escape(cellValue));
                 if (j < numCols - 1) {
@@ -737,7 +726,7 @@ public class TableUtils {
         }
 
         ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("jtableexport-" + fileName, fileName);
-        Launcher launcher = LauncherFactory.getLauncher(fileName, excelStr.toString().getBytes(), store);
+        Launcher launcher = LauncherFactory.getLauncher(fileName, excelStr.toString().getBytes(), store, EditorsRegistry.getInstance().getMainWindow());
         launcher.launch(false);
 
     }
@@ -777,11 +766,9 @@ public class TableUtils {
 
                 if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                     // Shift + CTRL
-                    //selectionModel.addSelectionInterval(maxSelect, clickedRow);
                     selectionModel.addSelectionInterval(from, to);
                 } else {
                     // Shift
-                    //selectionModel.setSelectionInterval(maxSelect, clickedRow);
                     selectionModel.setSelectionInterval(from, to);
                 }
             } else if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {

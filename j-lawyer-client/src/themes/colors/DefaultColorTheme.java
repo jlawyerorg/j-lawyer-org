@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package themes.colors;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -671,15 +673,57 @@ import java.awt.Color;
  */
 public class DefaultColorTheme {
     
-    public static Color COLOR_LOGO_RED=new Color(222, 49, 59);
-    public static Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
-    public static Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
+    private static final ArrayList<Color> highlightColors=new ArrayList<>();
     
-    public static Color COLOR_DARK_GREY=new Color(102, 102, 102);
-    public static Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
+    public static final Color COLOR_LOGO_RED=new Color(222, 49, 59);
+    public static final Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
+    public static final Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
+    
+    public static final Color COLOR_DARK_GREY=new Color(102, 102, 102);
+    public static final Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
     
     public static final float DESKTOP_ALPHA_DEFAULT=0.8f;
     public static final float DESKTOP_ALPHA_HIGHLIGHT=0.99f;
     public static final Color DESKTOP_ENTRY_BACKGROUND=new Color(238,238,238);
+    
+    static {
+        
+        
+        highlightColors.add(new Color(-3407821));
+        highlightColors.add(new Color(-13312));
+        highlightColors.add(COLOR_LOGO_GREEN);
+        
+        // red-ish
+        //highlightColors.add(COLOR_LOGO_RED);
+        //highlightColors.add(new Color(-3407821));
+        highlightColors.add(new Color(170,30,202));
+        //highlightColors.add(new Color(191,13,152));
+        
+        // yellow-ish
+        //highlightColors.add(new Color(-13312));
+        //highlightColors.add(new Color(207,133,30));
+        highlightColors.add(new Color(181,81,14));
+        
+        // green-ish
+        //highlightColors.add(COLOR_LOGO_GREEN);
+//        highlightColors.add(new Color(14,186,68));
+//        highlightColors.add(new Color(57,222,49));
+        
+        // blue-ish
+        highlightColors.add(new Color(51,13,191));
+        //highlightColors.add(COLOR_LOGO_BLUE);
+        highlightColors.add(new Color(49,222,213));
+        
+        
+        
+        highlightColors.add(Color.WHITE);
+        //highlightColors.add(COLOR_LIGHT_GREY);
+        highlightColors.add(COLOR_DARK_GREY);
+        highlightColors.add(Color.BLACK);
+    }
+    
+    public static List<Color> getHighlightColors() {
+        return highlightColors;
+    }
     
 }

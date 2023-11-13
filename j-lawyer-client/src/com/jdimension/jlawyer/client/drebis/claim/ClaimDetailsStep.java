@@ -1100,4 +1100,9 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
     public void setData(WizardDataContainer data) {
         this.data = data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

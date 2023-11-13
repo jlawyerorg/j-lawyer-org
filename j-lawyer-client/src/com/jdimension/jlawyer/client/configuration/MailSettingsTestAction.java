@@ -663,48 +663,13 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.files.*;
-import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
-import com.jdimension.jlawyer.comparator.DocumentsComparator;
-import com.jdimension.jlawyer.comparator.ReviewsComparator;
-import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.plugins.form.FormInstancePanel;
-import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
-import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Locale;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 
 /**
@@ -730,8 +695,13 @@ public class MailSettingsTestAction extends ProgressableAction {
     private String inPwd = null;
     private boolean inSsl = false;
     private String inType = "imaps";
+    
+    private boolean isMsExchange=false;
+    private String authToken=null;
+    private String clientId=null;
+    private String clientSecret=null;
 
-    public MailSettingsTestAction(ProgressIndicator i, JDialog owner, JButton cmdTestMail, String address, String outServer, String outPort, String outUser, String outPwd, boolean outSsl, boolean outStartTls, String inServer, String inUser, String inPwd, boolean inSsl, String inType) {
+    public MailSettingsTestAction(ProgressIndicator i, JDialog owner, JButton cmdTestMail, String address, String outServer, String outPort, String outUser, String outPwd, boolean outSsl, boolean outStartTls, String inServer, String inUser, String inPwd, boolean inSsl, String inType, boolean isMsExchange, String clientId, String clientSecret, String authToken) {
         super(i, false);
         this.owner = owner;
         this.cmdTestMail = cmdTestMail;
@@ -748,6 +718,11 @@ public class MailSettingsTestAction extends ProgressableAction {
         this.inPwd = inPwd;
         this.inSsl = inSsl;
         this.inType = inType;
+        
+        this.isMsExchange=isMsExchange;
+        this.authToken=authToken;
+        this.clientId=clientId;
+        this.clientSecret=clientSecret;
     }
 
     @Override
@@ -788,17 +763,11 @@ public class MailSettingsTestAction extends ProgressableAction {
             Thread.sleep(5000);
             process="Empfang / Posteingang";
             this.progress("Test läuft (Empfang)...");
-            sysMan.testReceiveMail(this.address, this.inServer, this.inType, this.inSsl, this.inUser, this.inPwd);
+            sysMan.testReceiveMail(this.address, this.inServer, this.inType, this.inSsl, this.inUser, this.inPwd, this.isMsExchange, this.clientId, this.clientSecret, this.authToken);
             this.progress("EMPFANG: Posteingang erfolgreich geprüft");
             Thread.sleep(3000);
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-
-                    indicator.setProgressStringSuccess("E-Mail-Einstellungen erfolgreich getestet.");
-
-                }
-
+            SwingUtilities.invokeLater(() -> {
+                indicator.setProgressStringSuccess("E-Mail-Einstellungen erfolgreich getestet.");
             });
             Thread.sleep(3000);
         } catch (Exception ex) {

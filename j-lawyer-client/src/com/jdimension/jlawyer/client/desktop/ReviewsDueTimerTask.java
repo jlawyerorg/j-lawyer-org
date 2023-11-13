@@ -673,12 +673,10 @@ import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Component;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -695,6 +693,12 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of ReviewsDueTimerTask
+     *
+     * @param owner
+     * @param eventPane
+     * @param resultPanel
+     * @param split
+     * @param ignoreCurrentEditor
      */
     public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
@@ -759,6 +763,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setReviewReason(ar.getSummary());
                     e.setType(ar.getEventType());
                     e.setReview(ar);
+                    if(ar.getCalendarSetup()!=null)
+                        e.setCalendarSetupColor(ar.getCalendarSetup().getBackground());
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
                     ArrayList<String> xTags = new ArrayList<>();
                     if (tags != null) {
@@ -771,6 +777,37 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     entries.add(e);
                 }
             }
+
+            Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
+                Date d1 = arg1.getDue();
+                Date d2 = arg2.getDue();
+
+                if (d1 == null) {
+                    return -1;
+                }
+
+                if (d2 == null) {
+                    return 1;
+                }
+
+                if (arg1.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    if (arg2.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        return d1.compareTo(d2);
+                    } else {
+                        return -1;
+                    }
+                }
+
+                if (arg2.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    if (arg1.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        return d1.compareTo(d2);
+                    } else {
+                        return 1;
+                    }
+                }
+
+                return d1.compareTo(d2);
+            });
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
@@ -800,25 +837,19 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         eventPane.removeTabAt(i);
                     }
 
-                    int i = 0;
                     int maxCount = Math.min(list.size(), 200);
                     for (int k = 0; k < maxCount; k++) {
                         try {
-                            Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                            if (i % 2 == 0) {
-                                background = background.brighter();
-                            }
-                            ReviewDueEntryPanel ep = new ReviewDueEntryPanel(background);
+                            ReviewDueEntryPanelTransparent ep = new ReviewDueEntryPanelTransparent();
 
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
                             addEventTypeTab(list.get(k).getReview().getEventTypeName());
 
                             // need new identical child, one child component cannot have two parents
-                            ReviewDueEntryPanel ep2 = new ReviewDueEntryPanel(background);
+                            ReviewDueEntryPanelTransparent ep2 = new ReviewDueEntryPanelTransparent();
                             ep2.setEntry(list.get(k));
                             addEntryToTab(list.get(k).getReview().getEventTypeName(), ep2);
-                            i++;
                         } catch (Throwable t) {
                             log.error("Error adding review entry to desktop", t);
                         }
@@ -847,12 +878,14 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                         scroll.getViewport().add(tPanel);
                         scroll.getViewport().setOpaque(false);
+                        scroll.setBorder(null);
+                        scroll.setOpaque(false);
                         eventPane.addTab(eventTypeName, scroll);
                     }
 
                 }
 
-                private void addEntryToTab(String eventTypeName, ReviewDueEntryPanel ep) {
+                private void addEntryToTab(String eventTypeName, ReviewDueEntryPanelTransparent ep) {
 
                     for (int i = 0; i < eventPane.getTabCount(); i++) {
                         if (eventPane.getTitleAt(i).equals(eventTypeName)) {

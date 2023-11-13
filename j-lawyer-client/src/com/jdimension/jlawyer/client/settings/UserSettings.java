@@ -721,21 +721,39 @@ public class UserSettings {
     public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
     public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
     
+    public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
+    
     public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
     
     public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
+    public static final String CONF_DREBIS_LASTUSEDTEMPLATE = "user.drebis.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
-
+    
+    
+    // for new bulk save dialog
+    public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
+    public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
+    
+    // invoice related
+    public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
+    public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
+    
+    // E-POST related
+    public static final String EPOST_LAST_SENDER_ADRLINE="epost.sender.last.adrline";
+    public static final String EPOST_LAST_SENDER_STREET="epost.sender.last.street";
+    public static final String EPOST_LAST_SENDER_ZIPCODE="epost.sender.last.zipcode";
+    public static final String EPOST_LAST_SENDER_CITY="epost.sender.last.city";
+    
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
-
+    
     private AppUserBean currentUser = null;
 
     private AppUserBean[] lawyerUsers = null;

@@ -732,7 +732,7 @@ public class HitPanel extends javax.swing.JPanel {
         lblScore = new javax.swing.JLabel();
         cmdEditArchiveFile = new javax.swing.JButton();
 
-        lblFileName.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblFileName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
         lblFileName.setText("Dokumentname und Icon");
         lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -748,7 +748,7 @@ public class HitPanel extends javax.swing.JPanel {
             }
         });
 
-        lblScore.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
+        lblScore.setFont(lblScore.getFont().deriveFont((lblScore.getFont().getStyle() | java.awt.Font.ITALIC)));
         lblScore.setForeground(new java.awt.Color(0, 0, 255));
         lblScore.setText("87%");
 
@@ -858,7 +858,7 @@ public class HitPanel extends javax.swing.JPanel {
         try {
             ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("hitpanel-" + hit.getFileName(), hit.getFileName());
                 
-            Launcher launcher=LauncherFactory.getLauncher(hit.getFileName(), content, store);
+            Launcher launcher=LauncherFactory.getLauncher(hit.getFileName(), content, store, EditorsRegistry.getInstance().getMainWindow());
             launcher.launch(false);
 
         } catch (Exception ex) {

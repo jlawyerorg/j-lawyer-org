@@ -671,7 +671,8 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
@@ -700,14 +701,17 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private Icon rollOverIcon = null;
     
     private String indicatorValue="";
+    protected boolean resetIndicatorOnClick=false;
 
     /**
      * Creates new form ModuleButton
+     * @param m
      */
     public ModuleButton(ModuleMetadata m) {
         initComponents();
         this.defaultBackColor=this.getBackground();
         this.module = m;
+        this.resetIndicatorOnClick=m.isResetIndicatorOnClick();
         
         
         if (m.getStatusEventType() > 0) {
@@ -727,9 +731,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         boolean ed = m.getEditorName().length() > 0;
 
         if (mod && ed) {
-            //setText("<html><b>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</b></html>");
             setText("<html><b>" + m.getEditorName() + "</b></html>");
-            //setText("<html><table><tr><td>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</td><td>56</td></tr></table></html>");
         } else if (mod) {
             setText("<html><b>" + m.getModuleName() + "</b></html>");
         } else if (ed) {
@@ -781,7 +783,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         jLabel2.setText("jLabel2");
 
-        iconButton.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        iconButton.setFont(iconButton.getFont().deriveFont(iconButton.getFont().getStyle() & ~java.awt.Font.BOLD, iconButton.getFont().getSize()-2));
         iconButton.setForeground(new java.awt.Color(255, 255, 255));
         iconButton.setBorder(null);
         iconButton.setBorderPainted(false);
@@ -801,6 +803,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             }
         });
 
+        lblModuleName.setFont(lblModuleName.getFont().deriveFont(lblModuleName.getFont().getStyle() | java.awt.Font.BOLD));
         lblModuleName.setText("jLabel1");
         lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblModuleName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -815,8 +818,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             }
         });
 
-        lblIndicator.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblIndicator.setFont(lblIndicator.getFont().deriveFont(lblIndicator.getFont().getStyle() | java.awt.Font.BOLD, lblIndicator.getFont().getSize()-2));
         lblIndicator.setForeground(new java.awt.Color(102, 102, 102));
+        lblIndicator.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         lblIndicator.setText("3");
         lblIndicator.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -914,6 +918,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 
             }
             
+            if(this.resetIndicatorOnClick)
+                this.updateIndicator(0);
+            
             setForeground(this.defaultBackColor);
         } else {
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
@@ -971,12 +978,14 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         if (e instanceof ScannerStatusEvent) {
             updateIndicator(((ScannerStatusEvent) e).getFileNames().size());
-        } else if (e instanceof FaxStatusEvent) {
-            updateIndicator(((FaxStatusEvent) e).getFaxList().size());
+        } else if (e instanceof MailingStatusEvent) {
+            updateIndicator(((MailingStatusEvent) e).getMailingList().size());
         } else if (e instanceof EmailStatusEvent) {
             updateIndicator(((EmailStatusEvent) e).getUnread());
         } else if (e instanceof BeaStatusEvent) {
             updateIndicator(((BeaStatusEvent) e).getUnread());
+        } else if (e instanceof OpenMentionsEvent) {
+            updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
         } else if (e instanceof DrebisStatusEvent) {
             updateIndicator(((DrebisStatusEvent) e).getMessages());
         }
@@ -1007,6 +1016,20 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             indicatorValue=""+incomingValue;
         });
 
+    }
+
+    /**
+     * @return the resetIndicatorOnClick
+     */
+    public boolean isResetIndicatorOnClick() {
+        return resetIndicatorOnClick;
+    }
+
+    /**
+     * @param resetIndicatorOnClick the resetIndicatorOnClick to set
+     */
+    public void setResetIndicatorOnClick(boolean resetIndicatorOnClick) {
+        this.resetIndicatorOnClick = resetIndicatorOnClick;
     }
 
 }

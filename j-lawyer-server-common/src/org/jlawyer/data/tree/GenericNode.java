@@ -665,7 +665,6 @@ package org.jlawyer.data.tree;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Objects;
 
 /**
  *
@@ -682,14 +681,14 @@ public class GenericNode implements Serializable {
     public GenericNode(String id, GenericNode parent) {
         this.parent = parent;
         this.id = id;
-        this.children = new ArrayList<GenericNode>();
+        this.children = new ArrayList<>();
     }
 
     public GenericNode(String id, GenericNode parent, String name) {
         this.parent = parent;
         this.name = name;
         this.id = id;
-        this.children = new ArrayList<GenericNode>();
+        this.children = new ArrayList<>();
     }
 
     /**

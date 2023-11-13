@@ -704,7 +704,10 @@ public class RestfulCaseV1 {
         afb.setId(id);
         afb.setLawyer(lawyer);
         afb.setName(name);
-        afb.setNotice(notice);
+        if(notice==null)
+            afb.setNotice("");
+        else
+            afb.setNotice(notice);
         afb.setReason(reason);
         afb.setSubjectField(subjectField);
         return afb;

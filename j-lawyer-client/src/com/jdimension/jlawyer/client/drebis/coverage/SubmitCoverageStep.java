@@ -937,4 +937,9 @@ public class SubmitCoverageStep extends javax.swing.JPanel implements WizardStep
     public void setData(WizardDataContainer data) {
         this.data = data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

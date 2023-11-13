@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -677,7 +678,13 @@ import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.search.BodyTerm;
 import javax.mail.search.FlagTerm;
+import javax.mail.search.FromStringTerm;
+import javax.mail.search.OrTerm;
+import javax.mail.search.RecipientStringTerm;
+import javax.mail.search.SearchTerm;
+import javax.mail.search.SubjectTerm;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -696,13 +703,15 @@ public class LoadFolderAction extends ProgressableAction {
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
+    private String searchTerm=null;
 
-    public LoadFolderAction(ProgressIndicator i, Folder f, JTable table, int sortCol, int scrollToRow) {
+    public LoadFolderAction(ProgressIndicator i, Folder f, JTable table, int sortCol, int scrollToRow, String searchTerm) {
         super(i, false);
         this.f = f;
         this.table = table;
         this.sortCol = sortCol;
         this.scrollToRow = scrollToRow;
+        this.searchTerm=searchTerm;
     }
 
     @Override
@@ -748,26 +757,38 @@ public class LoadFolderAction extends ProgressableAction {
 
             int fromIndex = 1;
             int toIndex = f.getMessageCount();
+            int maxQuantity=Integer.MAX_VALUE;
             switch (currentRestriction.getRestriction()) {
                 case LoadFolderRestriction.RESTRICTION_20:
                     fromIndex = Math.max(1, toIndex - 20);
+                    maxQuantity=20;
                     break;
                 case LoadFolderRestriction.RESTRICTION_50:
                     fromIndex = Math.max(1, toIndex - 50);
+                    maxQuantity=50;
                     break;
                 case LoadFolderRestriction.RESTRICTION_100:
                     fromIndex = Math.max(1, toIndex - 100);
+                    maxQuantity=100;
                     break;
                 case LoadFolderRestriction.RESTRICTION_500:
                     fromIndex = Math.max(1, toIndex - 500);
+                    maxQuantity=500;
                     break;
                 default:
                     break;
             }
 
-            Message[] messages = f.getMessages(fromIndex, toIndex);
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
-                messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
+            Message[] messages =null;
+            if(StringUtils.isEmpty(this.searchTerm)) {
+                messages = f.getMessages(fromIndex, toIndex);
+                if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
+                    messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
+                }
+            } else {
+                maxQuantity=Integer.MAX_VALUE;
+                OrTerm orTerm=new OrTerm(new SearchTerm[] {new SubjectTerm(this.searchTerm), new FromStringTerm(this.searchTerm), new RecipientStringTerm(Message.RecipientType.TO, this.searchTerm), new RecipientStringTerm(Message.RecipientType.CC, this.searchTerm), new RecipientStringTerm(Message.RecipientType.BCC, this.searchTerm), new BodyTerm(this.searchTerm)});
+                messages=f.search(orTerm);
             }
             
             FetchProfile fp = new FetchProfile();
@@ -789,8 +810,7 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
                 }
 
-                // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
-                if ((i % 20) == 0 || i == (messages.length - 1)) {
+                if ((i % 100) == 0 || i == (messages.length - 1)) {
                     this.progress("Lade Nachrichten... " + (i + 1));
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
@@ -850,7 +870,8 @@ public class LoadFolderAction extends ProgressableAction {
                 Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
                 tableRows.add(newRow);
 
-                if (((i % 25) == 0 && i > 0) || i == (messages.length - 1)) {
+                //if (((i % 100) == 0 && i > 0) || i == (messages.length - 1) || (i == (messages.length - 1) && i<100 && messages.length>maxQuantity)) {
+                if (((i % 100) == 0 && i > 0) || i == (messages.length - 1)) {
 
                     final int currentIndex = i;
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
@@ -876,13 +897,7 @@ public class LoadFolderAction extends ProgressableAction {
 
                 }
 
-                if (i == 20 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
-                    break;
-                } else if (i == 50 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
-                    break;
-                } else if (i == 100 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
-                    break;
-                } else if (i == 500 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
+                if (i == maxQuantity) {
                     break;
                 }
             }

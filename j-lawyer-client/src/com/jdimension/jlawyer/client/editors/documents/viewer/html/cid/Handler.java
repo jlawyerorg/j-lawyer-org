@@ -5,7 +5,6 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer.html.cid;
 
-import com.jdimension.jlawyer.client.editors.documents.viewer.html.data.*;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;

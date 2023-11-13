@@ -668,10 +668,19 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -811,6 +820,20 @@ public class FileUtils extends ServerFileUtils {
             return null;
         }
     }
+    
+    public static String getFileSizeHumanReadable(long size) {
+        DecimalFormat megaBytes = new DecimalFormat("0");
+        
+        if (size < 1024) {
+            size = 1024l;
+        }
+
+        if (size > (1024 * 1024)) {
+            return megaBytes.format(size / 1024l / 1024l) + " MB";
+        } else {
+            return megaBytes.format(size / 1024l) + " KB";
+        }
+    }
 
     public static String getNewFileName(String currentFileName, boolean datetimePrefix) {
         return getNewFileName(currentFileName, datetimePrefix, new java.util.Date());
@@ -874,6 +897,8 @@ public class FileUtils extends ServerFileUtils {
             currentExt = ".pdf";
         } else if (currentFileName.toLowerCase().endsWith(".eml")) {
             currentExt = ".eml";
+        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
+            currentExt = ".bea";
         }
 
         if (!newFileName.endsWith(currentExt)) {
@@ -999,6 +1024,33 @@ public class FileUtils extends ServerFileUtils {
 
         return tmpFile;
     }
+    
+    public static void copyFileListToClipboard(List<File> fileList) {
+        
+        Transferable transferable = new Transferable() {
+            @Override
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[]{DataFlavor.javaFileListFlavor};
+            }
+
+            @Override
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                return DataFlavor.javaFileListFlavor.equals(flavor);
+            }
+
+            @Override
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+                return fileList;
+            }
+        };
+
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, (Clipboard clipboard, Transferable contents) -> {
+            log.debug("lost ownership of system clipboard");
+        });
+        
+//        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//        clipboard.setContents(transferable, null);
+    }
 
     public static void cleanupTempFile(String url) {
         File f = new File(url);
@@ -1011,12 +1063,16 @@ public class FileUtils extends ServerFileUtils {
 
     }
 
+    public static String getNewFileNamePrefix(Date d) {
+        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
+        return datePrefix.format(d);
+    }
+    
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
 
         String dtPrefix = "";
         if (datetimePrefix) {
-            SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-            dtPrefix = datePrefix.format(d);
+            dtPrefix = getNewFileNamePrefix(d);
         }
 
         if (parent == null) {
@@ -1029,7 +1085,7 @@ public class FileUtils extends ServerFileUtils {
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
         dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
-        //dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
+        
         // prevent user from using the 'X' button to close the dialog
         dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         dialog.setVisible(true);

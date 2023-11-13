@@ -696,7 +696,7 @@ public class DataBucketEndpointV6 implements DataBucketEndpointLocalV6 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/next")
     @RolesAllowed({"readArchiveFileRole"})

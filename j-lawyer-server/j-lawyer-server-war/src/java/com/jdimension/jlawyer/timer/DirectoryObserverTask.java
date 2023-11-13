@@ -663,14 +663,8 @@
  */
 package com.jdimension.jlawyer.timer;
 
-import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -681,120 +675,23 @@ import org.apache.log4j.Logger;
 public class DirectoryObserverTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(DirectoryObserverTask.class.getName());
-    //private ArrayList<String> formerList = null;
 
     public DirectoryObserverTask() {
     }
 
     @Override
     public void run() {
-        //Calendar now = Calendar.getInstance();
-
-        //ServerSettingsBean mode = null;
         SingletonServiceLocal singleton = null;
         try {
             InitialContext ic = new InitialContext();
-            //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
-            // ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal	
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
             singleton.updateObservedFiles();
-//            mode = settings.find("jlawyer.server.observe.directory");
-//            if (mode == null || "".equals(mode.getSettingValue())) {
-//                log.info("directory observation is switched off");
-//                return;
-//            }
         } catch (Throwable ex) {
             log.error("Error refreshing observed directory", ex);
             return;
         }
 
-//        //String scanDir = System.getProperty("jlawyer.server.observe.directory");
-//        String scanDir = mode.getSettingValue();
-//        if (scanDir == null || "".equals(scanDir)) {
-//            log.info("directory observation is switched off");
-//            return;
-//        }
-//
-//        File scanDirectory = new File(scanDir);
-//        if (!scanDirectory.exists()) {
-//            log.error("observed directory does not exist");
-//            return;
-//        }
-//
-//        if (!scanDirectory.isDirectory()) {
-//            log.error("observed directory is not a directory");
-//            return;
-//        }
-//
-//        ArrayList<String> fileNames = new ArrayList<String>();
-//        Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
-//        File files[] = scanDirectory.listFiles();
-//        if (files != null) {
-//            for (File f : files) {
-//                if (!f.isDirectory()) {
-//                    // file might still be copying - skip if last modified is less than 3s in the past
-//                    if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
-//                        String name = f.getName();
-//                        fileNames.add(name);
-//                        fileObjects.put(f, new Date(f.lastModified()));
-//                    } else {
-//                        
-//                        long size = f.length();
-//                        try {
-//                            Thread.sleep(300);
-//                        } catch (Throwable t) {
-//
-//                        }
-//                        if (size != f.length()) {
-//                            // skip file - still copying...
-//                        } else {
-//                            String name = f.getName();
-//                            fileNames.add(name);
-//                            fileObjects.put(f, new Date(f.lastModified()));
-//                        }
-//
-//                    }
-//                }
-//            }
-//            Collections.sort(fileNames);
-//        } else {
-//            log.error("observed directory returns null for #listFiles");
-//        }
-//
-//        if (formerList != null) {
-//            if (!fileNames.equals(formerList)) {
-//                // distribute to JMS topic
-//                try {
-//                    //this.publishList(fileObjects);
-//                    singleton.setObservedFiles(fileObjects);
-//                } catch (Throwable ex) {
-//                    log.error("Errors publishing observed directory content", ex);
-//                }
-//            }
-//        } else {
-//            singleton.setObservedFiles(fileObjects);
-//        }
-//        formerList = fileNames;
-
     }
 
-//    private void publishList(Hashtable<File,Date> fileNames) throws Exception {
-//        InitialContext ic = new InitialContext();
-//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-//        Topic observerTopic = (Topic) ic.lookup("/topic/dirObserverTopic");
-//        Connection connection = cf.createConnection();
-//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//        MessageProducer producer = session.createProducer(observerTopic);
-//        connection.start();
-//        //TextMessage message = session.createTextMessage("This is an order");
-//        ObjectMessage msg=session.createObjectMessage(fileNames);
-//        producer.send(msg);
-//        
-//        connection.stop();
-//        producer.close();
-//        session.close();
-//        connection.close();
-//
-//    }
 }

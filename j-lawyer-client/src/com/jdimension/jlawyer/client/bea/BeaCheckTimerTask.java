@@ -663,13 +663,16 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.List;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
+import org.jlawyer.bea.MessageSorterFilter;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageHeader;
@@ -686,48 +689,67 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
     private Collection<PostBox> postboxes = null;
     private Hashtable<PostBox, Folder> inboxFolders = new Hashtable<PostBox, Folder>();
 
+    private MessageSorterFilter filter = null;
+
     /**
      * Creates a new instance of SystemStateTimerTask
      */
     public BeaCheckTimerTask() {
         super();
-
+        this.filter = new MessageSorterFilter();
+        this.filter.setOnlyNew(true);
     }
 
+    @Override
     public void run() {
 
-        boolean unread = false;
+        int unread = 0;
         try {
             if (BeaAccess.hasInstance()) {
-                BeaAccess bea = BeaAccess.getInstance();
-                if (bea.isLoggedIn()) {
-                    if (this.postboxes == null) {
-                        this.postboxes = bea.getPostBoxes();
-                    }
-                    for (PostBox box : this.postboxes) {
-                        Folder inbox = this.getInbox(bea, box);
+                try {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    if (bea.isLoggedIn()) {
+                        if (this.postboxes == null) {
+                            this.postboxes = bea.getPostBoxes();
+                        }
+                        for (PostBox box : this.postboxes) {
+                            Folder inbox = this.getInbox(bea, box);
 
-                        ArrayList<MessageHeader> messages = bea.getFolderOverview(inbox);
-                        for (MessageHeader mh : messages) {
-                            Message m = bea.getMessage(mh.getId(), mh.getPostBoxSafeId());
-                            if (!m.isRead()) {
-                                unread = true;
-                                break;
+                            List<String> messages = bea.getFolderOverviewMessageIdsWithoutCache(inbox, this.filter);
+                            unread = messages.size();
+                        }
+
+                    }
+                } catch (Exception ex) {
+                    log.error("beA: potential session loss", ex);
+
+                    // de.brak.bea.application.dto.soap.types6.BeaFault: 0001 - The entered session was invalid!
+                    boolean reconnect = false;
+                    if (ex.getMessage() != null && ex.getMessage().contains("0001")) {
+                        reconnect = true;
+                    } else {
+                        if (ex.getCause() != null && ex.getCause().getMessage() != null && ex.getCause().getMessage().contains("0001")) {
+                            reconnect = true;
+                        }
+                    }
+                    if (reconnect) {
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                Object editor = EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                                if (editor instanceof BeaInboxPanel) {
+                                    ((BeaInboxPanel) editor).logout();
+                                    ((BeaInboxPanel) editor).reset(true);
+                                }
+                            } catch (Exception rex) {
+                                log.error("unable to reconnect to beA", rex);
+
                             }
-                        }
-                        if (unread) {
-                            break;
-                        }
+                        });
 
                     }
-
                 }
                 EventBroker eb = EventBroker.getInstance();
-                if (unread) {
-                    eb.publishEvent(new BeaStatusEvent(1));
-                } else {
-                    eb.publishEvent(new BeaStatusEvent(0));
-                }
+                eb.publishEvent(new BeaStatusEvent(unread));
             }
 
         } catch (Throwable t) {

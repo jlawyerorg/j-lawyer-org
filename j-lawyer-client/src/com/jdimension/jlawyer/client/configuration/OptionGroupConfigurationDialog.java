@@ -663,16 +663,13 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-//import bsh.This;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Enumeration;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -682,24 +679,44 @@ import org.apache.log4j.Logger;
  */
 public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
 
+    public static final int VALIDATOR_NONE=-1;
+    public static final int VALIDATOR_INTEGER=10;
+    
     private static Logger log = Logger.getLogger(OptionGroupConfigurationDialog.class.getName());
 
     private String optionGroup = null;
     private OptionGroupRenameHandler renameHandler = null;
+    private int validator=VALIDATOR_NONE;
 
     /**
      * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public OptionGroupConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
+        validator=VALIDATOR_NONE;
         initComponents();
         this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
         this.lstOptions.setModel(new OptionGroupListModel());
-
+    }
+    
+    /**
+     * Creates new form OptionGroupConfigurationDialog
+     * @param parent
+     * @param modal
+     */
+    public OptionGroupConfigurationDialog(java.awt.Frame parent, boolean modal, int validatorMode) {
+        super(parent, modal);
+        validator=validatorMode;
+        initComponents();
+        this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
+        this.lstOptions.setModel(new OptionGroupListModel());
     }
 
     public OptionGroupConfigurationDialog(java.awt.Frame parent, OptionGroupRenameHandler renameHandler, boolean modal) {
         super(parent, modal);
+        validator=VALIDATOR_NONE;
         initComponents();
         this.lstOptions.setCellRenderer(new OptionGroupListCellRenderer());
         this.lstOptions.setModel(new OptionGroupListModel());
@@ -726,7 +743,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
         txtOption = new javax.swing.JTextField();
 
         mnuRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
-        mnuRename.setText("Umbenennen");
+        mnuRename.setText("Bearbeiten");
         mnuRename.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuRenameActionPerformed(evt);
@@ -818,7 +835,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtOptionKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtOptionKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddActionPerformed(null);
         }
     }//GEN-LAST:event_txtOptionKeyPressed
@@ -829,7 +846,6 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                 for (int i = 0; i < this.lstOptions.getSelectedValues().length; i++) {
                     mgmt.removeOptionGroup(((AppOptionGroupBean) this.lstOptions.getSelectedValues()[i]).getId());
@@ -839,12 +855,9 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                 for (int i = 0; i < selectedValues.length; i++) {
                     ((OptionGroupListModel) this.lstOptions.getModel()).removeElement(selectedValues[i]);
                 }
-                //mgmt.remove();
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_mnuDeleteActionPerformed
@@ -854,22 +867,29 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
         if ("".equals(this.txtOption.getText().trim())) {
             return;
         }
+        
+        String newValue=this.txtOption.getText().trim();
+        if(this.validator==VALIDATOR_INTEGER) {
+            try {
+                int checkInt=Integer.parseInt(newValue);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Es sind nur ganzzahlige Werte gültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppOptionGroupBean dto = new AppOptionGroupBean();
             dto.setOptionGroup(this.optionGroup);
-            dto.setValue(this.txtOption.getText());
+            dto.setValue(newValue);
             dto = mgmt.createOptionGroup(dto);
-            //mgmt.remove();
             ((OptionGroupListModel) this.lstOptions.getModel()).addElement(dto);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -878,7 +898,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdAddActionPerformed
 
     private void lstOptionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOptionsMousePressed
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+        if (evt.getModifiers() == InputEvent.BUTTON2_MASK || evt.getModifiers() == InputEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == InputEvent.BUTTON3_MASK || evt.getModifiers() == InputEvent.BUTTON3_DOWN_MASK) {
             if (this.lstOptions.getSelectedValues().length > 0) {
                 if (this.lstOptions.getSelectedValues().length == 1) {
                     this.mnuRename.setEnabled(true);
@@ -901,7 +921,6 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                 String fromName = ((AppOptionGroupBean) this.lstOptions.getSelectedValues()[0]).getValue();
                 String newName = JOptionPane.showInputDialog(this, "neuer Name: ", fromName);
@@ -911,12 +930,22 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                 if ("".equals(newName.trim())) {
                     return;
                 }
+                
+                String newValue = newName.trim();
+                if (this.validator == VALIDATOR_INTEGER) {
+                    try {
+                        int checkInt = Integer.parseInt(newValue);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Es sind nur ganzzahlige Werte gültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
 
                 boolean exists = false;
                 Enumeration allElements = ((OptionGroupListModel) this.lstOptions.getModel()).elements();
                 while (allElements.hasMoreElements()) {
                     Object o = allElements.nextElement();
-                    if (((AppOptionGroupBean) o).getValue().equals(newName)) {
+                    if (((AppOptionGroupBean) o).getValue().equals(newValue)) {
                         exists = true;
                         break;
                     }
@@ -932,7 +961,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
 
                 AppOptionGroupBean dto = new AppOptionGroupBean();
                 dto.setOptionGroup(this.optionGroup);
-                dto.setValue(newName);
+                dto.setValue(newValue);
                 dto = mgmt.createOptionGroup(dto);
 
                 ((OptionGroupListModel) this.lstOptions.getModel()).setElementAt(dto, index);
@@ -943,14 +972,12 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                         return;
                     }
                     this.renameHandler.setParent(this);
-                    this.renameHandler.renameOptionGroup(fromName, newName);
+                    this.renameHandler.renameOptionGroup(fromName, newValue);
                 }
 
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_mnuRenameActionPerformed
@@ -959,10 +986,8 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new OptionGroupConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new OptionGroupConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
 

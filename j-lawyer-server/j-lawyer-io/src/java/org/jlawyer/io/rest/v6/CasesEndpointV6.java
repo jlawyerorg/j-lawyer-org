@@ -715,7 +715,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/history")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -743,7 +743,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     }
 
     /**
-     * Returns a a documents content in the form of a data bucket, given its
+     * Returns a documents content in the form of a data bucket, given its
      * ID.The return value is Base64 encoded.
      *
      * @param id document ID
@@ -753,7 +753,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/contentbucket")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDocumentContentBucket(@PathParam("id") String id) {
@@ -799,7 +799,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/duedate/create")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -879,7 +879,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/duedate/update")
     @RolesAllowed({"writeArchiveFileRole"})

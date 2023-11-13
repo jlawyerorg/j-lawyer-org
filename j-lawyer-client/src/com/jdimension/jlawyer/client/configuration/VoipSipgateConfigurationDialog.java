@@ -671,6 +671,8 @@ public class VoipSipgateConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form BackupConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public VoipSipgateConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -770,19 +772,16 @@ public class VoipSipgateConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                VoipSipgateConfigurationDialog dialog = new VoipSipgateConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            VoipSipgateConfigurationDialog dialog = new VoipSipgateConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

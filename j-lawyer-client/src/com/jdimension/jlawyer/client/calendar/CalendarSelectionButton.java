@@ -682,7 +682,7 @@ import org.apache.log4j.Logger;
  */
 public class CalendarSelectionButton extends javax.swing.JPanel {
     
-    private static final Logger log = Logger.getLogger(CalendarSelectionButton.class.getName());
+    private static final Logger log=Logger.getLogger(CalendarSelectionButton.class.getName());
     
     private List<CalendarSetup> allSetups = null;
     protected CalendarSetup selectedSetup = null;
@@ -780,7 +780,7 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
             });
             
         } catch (Exception ex) {
-            log.error("Error getting calendar setups", ex);
+            log.error("Could not load calendar setups", ex);
             JOptionPane.showMessageDialog(this, "Kalender können nicht geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }

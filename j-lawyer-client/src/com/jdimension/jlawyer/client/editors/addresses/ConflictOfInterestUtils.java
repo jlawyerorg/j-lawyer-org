@@ -676,7 +676,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -691,9 +691,9 @@ public class ConflictOfInterestUtils {
     
     private static final Logger log=Logger.getLogger(ConflictOfInterestUtils.class.getName());
     
-    public static void checkForConflicts(AddressBean address, PartyTypeBean selectedType, Window parent) {
+    public static void checkForConflicts(AddressBean address, PartyTypeBean requestedType, String requestedCaseId, Window parent) {
         
-        if(address==null || selectedType==null || parent==null) {
+        if(address==null || requestedType==null || parent==null) {
             
             return;
         }
@@ -703,13 +703,13 @@ public class ConflictOfInterestUtils {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
             Collection col = afRem.getArchiveFileAddressesForAddress(address.getId());
-            Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<PartyTypeBean, List<ArchiveFileBean>>();
+            HashMap<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new HashMap<>();
             ArrayList<String> caseIds=new ArrayList<>();
             for (Object o : col) {
                 ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                if (!(afb.getReferenceType().getId().equals(selectedType.getId()))) {
+                if (!(afb.getReferenceType().getId().equals(requestedType.getId()))) {
                     if(!(casesWithDifferentPartyType.containsKey(afb.getReferenceType())))
-                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<ArchiveFileBean>());
+                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<>());
                     
                     casesWithDifferentPartyType.get(afb.getReferenceType()).add(afb.getArchiveFileKey());
                     if(!caseIds.contains(afb.getArchiveFileKey().getId())) {
@@ -719,14 +719,27 @@ public class ConflictOfInterestUtils {
                 }
             }
             
+            boolean conflict=false;
             
             // if caseIds.size = 1 that is okay - the person is in different roles, but within the same case
-            if(casesWithDifferentPartyType.size()>0 && caseIds.size()>1) {
+            if(!casesWithDifferentPartyType.isEmpty() && caseIds.size()>1) {
+                conflict=true;
+            } else if(caseIds.size()==1 && !caseIds.contains(requestedCaseId)) {
+                // party requested for different case and party only present in one case currently - check whether it is requested for a different type
+                for(PartyTypeBean p: casesWithDifferentPartyType.keySet()) {
+                    if(!(p.equals(requestedType))) {
+                        conflict=true;
+                        break;
+                    }
+                }
+            }
+            
+            if(conflict) {
                 ConflictOfInterestDialog dlg=null;
                 if(parent instanceof JDialog) {
-                    dlg=new ConflictOfInterestDialog((JDialog)parent, true, address, selectedType, casesWithDifferentPartyType);
+                    dlg=new ConflictOfInterestDialog((JDialog)parent, true, address, requestedType, casesWithDifferentPartyType);
                 } else if(parent instanceof JFrame) {
-                    dlg=new ConflictOfInterestDialog((JFrame)parent, true, address, selectedType, casesWithDifferentPartyType);
+                    dlg=new ConflictOfInterestDialog((JFrame)parent, true, address, requestedType, casesWithDifferentPartyType);
                 }
                 if(dlg != null) {
                     FrameUtils.centerDialog(dlg, parent);
@@ -734,14 +747,12 @@ public class ConflictOfInterestUtils {
                 } else {
                     log.error("unknown parent type for ConflictOfInterestDialog");
                 }
-                
             }
 
         } catch (Exception ex) {
             log.error("Error getting archive files for address", ex);
             JOptionPane.showMessageDialog(parent, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
-            return;
         }
     }
     

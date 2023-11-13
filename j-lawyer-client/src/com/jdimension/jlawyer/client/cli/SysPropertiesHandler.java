@@ -694,10 +694,10 @@ public class SysPropertiesHandler extends CommandHandler {
         
         Properties p=System.getProperties();
         Enumeration e=p.keys();
-        ArrayList<String> keyList=new ArrayList<String>();
+        ArrayList<String> keyList=new ArrayList<>();
         while(e.hasMoreElements()) {
             String key=e.nextElement().toString();
-            if(!(key.indexOf("ssl")>-1))
+            if(!key.contains("ssl"))
                 keyList.add(key);
             
         }

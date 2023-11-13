@@ -781,11 +781,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Web Hooks");
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
-            }
-        });
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Web Hooks"));
 
@@ -813,9 +808,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             }
         });
         tblHooks.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                tblHooksKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 tblHooksKeyReleased(evt);
             }
@@ -881,11 +873,11 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setForeground(new java.awt.Color(153, 153, 153));
         jLabel4.setText("HTTP Basic - Authentifizierung (optional)");
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Web Hook - Konfiguration");
 
@@ -1066,6 +1058,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             IntegrationHook savedHook = locator.lookupIntegrationServiceRemote().addIntegrationHook(ih);
 
             ((DefaultTableModel) this.tblHooks.getModel()).addRow(new Object[]{savedHook, savedHook.getHookType(), savedHook.getUrl()});
+            this.tblHooks.getSelectionModel().setSelectionInterval(this.tblHooks.getRowCount()-1, this.tblHooks.getRowCount()-1);
 
         } catch (Exception ex) {
             log.error("Error creating new integration hook", ex);
@@ -1105,7 +1098,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 IntegrationHook savedHook = locator.lookupIntegrationServiceRemote().updateIntegrationHook(ih);
-                row = this.tblHooks.convertRowIndexToView(row);
+                row = this.tblHooks.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook, row, 0);
                 ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook.getHookType(), row, 1);
                 ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook.getUrl(), row, 2);
@@ -1130,6 +1123,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 locator.lookupIntegrationServiceRemote().removeIntegrationHook(ih);
+                row = this.tblHooks.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblHooks.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1139,10 +1133,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
-
-    private void tblHooksKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblHooksKeyPressed
-
-    }//GEN-LAST:event_tblHooksKeyPressed
 
     private void tblHooksKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblHooksKeyReleased
         int row = this.tblHooks.getSelectedRow();
@@ -1155,10 +1145,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             this.updatedUI(ih);
         }
     }//GEN-LAST:event_tblHooksKeyReleased
-
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-
-    }//GEN-LAST:event_formWindowClosing
 
     private void updatedUI(IntegrationHook ih) {
         this.cmbType.setSelectedItem(ih.getHookType());

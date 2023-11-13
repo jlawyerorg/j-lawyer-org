@@ -714,7 +714,7 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String emailOutPort;
     @Column(name = "emailSenderName")
     protected String emailSenderName;
-    @Column(name = "emailSignature")
+    @Column(name = "emailSignature", columnDefinition = "TEXT")
     protected String emailSignature;
     @Column(name = "emailInSsl", columnDefinition = "TINYINT")
     protected boolean emailInSsl;
@@ -722,6 +722,16 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected boolean emailOutSsl;
     @Column(name = "emailStartTls", columnDefinition = "TINYINT")
     protected boolean emailStartTls;
+    
+    // Office 365 / Exchange
+    @Column(name = "client_id")
+    protected String clientId;
+    @Column(name = "client_secret")
+    protected String clientSecret;
+    @Column(name = "msexchange", columnDefinition = "TINYINT")
+    protected boolean msExchange;
+    @Column(name = "tenant_id")
+    protected String tenantId;
 
     public String getId() {
         return id;
@@ -979,6 +989,62 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setEmailStartTls(boolean emailStartTls) {
         this.emailStartTls = emailStartTls;
+    }
+
+    /**
+     * @return the clientId
+     */
+    public String getClientId() {
+        return clientId;
+    }
+
+    /**
+     * @param clientId the clientId to set
+     */
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    /**
+     * @return the clientSecret
+     */
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    /**
+     * @param clientSecret the clientSecret to set
+     */
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    /**
+     * @return the msExchange
+     */
+    public boolean isMsExchange() {
+        return msExchange;
+    }
+
+    /**
+     * @param msExchange the msExchange to set
+     */
+    public void setMsExchange(boolean msExchange) {
+        this.msExchange = msExchange;
+    }
+
+    /**
+     * @return the tenantId
+     */
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    /**
+     * @param tenantId the tenantId to set
+     */
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     

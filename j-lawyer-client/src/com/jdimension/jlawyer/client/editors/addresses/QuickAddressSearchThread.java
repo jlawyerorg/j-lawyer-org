@@ -689,7 +689,11 @@ public class QuickAddressSearchThread implements Runnable {
     private JTable target;
     private String[] tag;
     
-    /** Creates a new instance of QuickAddressSearchThread */
+    /** Creates a new instance of QuickAddressSearchThread
+     * @param owner
+     * @param query
+     * @param tag
+     * @param target */
     public QuickAddressSearchThread(Component owner, String query, String[] tag, JTable target) {
         this.query=query;
         this.owner=owner;
@@ -710,11 +714,13 @@ public class QuickAddressSearchThread implements Runnable {
             tags=addressService.searchTagsEnhanced(query, tag);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
+            ThreadUtils.setDefaultCursor(this.owner);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
+        ThreadUtils.setDefaultCursor(this.owner);
         
-        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
+        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Straße", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
             Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getDepartment(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getStreet(), dtos[i].getStreetNumber(), dtos[i].getCountry(), TagUtils.getTagList(dtos[i].getId(), tags)};
@@ -728,7 +734,7 @@ public class QuickAddressSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model);
         }
         EditorsRegistry.getInstance().clearStatus(true);
-        ThreadUtils.setDefaultCursor(this.owner);
+        
     }
     
 }

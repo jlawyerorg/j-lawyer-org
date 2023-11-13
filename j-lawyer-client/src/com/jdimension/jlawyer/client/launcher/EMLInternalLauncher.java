@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
+import java.awt.Window;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import javax.mail.Flags.Flag;
@@ -682,8 +683,8 @@ public class EMLInternalLauncher extends InternalLauncher {
 
     private static final Logger log = Logger.getLogger(EMLInternalLauncher.class.getName());
 
-    public EMLInternalLauncher(String url, ObservedDocumentStore store) {
-        super(url, store);
+    public EMLInternalLauncher(String url, ObservedDocumentStore store, Window parent) {
+        super(url, store, parent);
     }
     
     @Override
@@ -695,17 +696,15 @@ public class EMLInternalLauncher extends InternalLauncher {
     public void launch(boolean autoCloseExistingDocument) throws Exception {
         
         if(isDocumentOpen(store.getDocumentIdentifier()))
-            throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
+            throw new Exception("Nachricht " + store.getFileName() + " ist bereits geöffnet");
         
         try {
             
             
-            ObservedDocument odoc=null;
-//                    if (!readOnly) {
-                        odoc = new ObservedDocument(url, store, this);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
+            ObservedDocument odoc = new ObservedDocument(url, store, this);
+            DocumentObserver observer = DocumentObserver.getInstance();
+            odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+            observer.addDocument(odoc);
                         
             InputStream source = new FileInputStream(url);
             MimeMessage message = new MimeMessage(null, source);
@@ -717,7 +716,11 @@ public class EMLInternalLauncher extends InternalLauncher {
                 archiveFile=((CaseDocumentStore)store).getCase();
                 caseFolder=((CaseDocumentStore)store).getDocumentFolder();
             }
-            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, archiveFile, caseFolder, odoc);
+            ViewEmailDialog view = null;
+            if(this.parent==null) 
+                view=new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), archiveFile, caseFolder, odoc);
+            else
+                view=new ViewEmailDialog(this.parent, archiveFile, caseFolder, odoc);
             MailboxSetup ms=EmailUtils.getMailboxSetup(message);
             view.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
             try {

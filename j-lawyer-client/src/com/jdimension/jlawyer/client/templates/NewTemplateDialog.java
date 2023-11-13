@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JOptionPane;
@@ -682,17 +683,20 @@ public class NewTemplateDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(NewTemplateDialog.class.getName());
     
     private GenericNode folder=null;
+    private int templateType=SystemManagementRemote.TEMPLATE_TYPE_BODY;
     
     /**
      * Creates new form BankSearchDialog
      * @param parent
      * @param modal
+     * @param templateType
      * @param folder
      * @param newName
      */
-    public NewTemplateDialog(java.awt.Frame parent, boolean modal, GenericNode folder, String newName) {
+    public NewTemplateDialog(java.awt.Frame parent, boolean modal, int templateType, GenericNode folder, String newName) {
         super(parent, modal);
         this.folder=folder;
+        this.templateType=templateType;
         initComponents();
 
         this.cmbTemplates.removeAllItems();
@@ -702,7 +706,7 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            templates=locator.lookupSystemManagementRemote().getTemplatesInFolder(folder);
+            templates=locator.lookupSystemManagementRemote().getTemplatesInFolder(this.templateType, folder);
             
         } catch (Exception ex) {
             log.error(ex);
@@ -755,12 +759,6 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setText("Dateiname ohne Verzeichnis und Erweiterung:");
-
-        txtFileName.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtFileNameKeyPressed(evt);
-            }
-        });
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         jButton1.setText("Abbrechen");
@@ -825,9 +823,6 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtFileNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameKeyPressed
-    }//GEN-LAST:event_txtFileNameKeyPressed
-
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         this.setVisible(false);
         this.dispose();
@@ -857,7 +852,7 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSystemManagementRemote().addTemplateFromTemplate(folder,fileName, this.cmbTemplates.getSelectedItem().toString());
+            locator.lookupSystemManagementRemote().addTemplateFromTemplate(this.templateType, folder,fileName, this.cmbTemplates.getSelectedItem().toString());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -872,7 +867,7 @@ public class NewTemplateDialog extends javax.swing.JDialog {
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new NewTemplateDialog(new javax.swing.JFrame(), true, null,"").setVisible(true);
+            new NewTemplateDialog(new javax.swing.JFrame(), true, SystemManagementRemote.TEMPLATE_TYPE_BODY, null,"").setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

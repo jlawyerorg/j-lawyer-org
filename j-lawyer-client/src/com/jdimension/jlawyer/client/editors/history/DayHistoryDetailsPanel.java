@@ -722,7 +722,7 @@ public class DayHistoryDetailsPanel extends javax.swing.JPanel {
         lblArchiveFile = new javax.swing.JLabel();
         tblUserActivities = new javax.swing.JTable();
 
-        lblArchiveFile.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblArchiveFile.setFont(lblArchiveFile.getFont().deriveFont(lblArchiveFile.getFont().getSize()+2f));
         lblArchiveFile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         lblArchiveFile.setText("der ./. den");

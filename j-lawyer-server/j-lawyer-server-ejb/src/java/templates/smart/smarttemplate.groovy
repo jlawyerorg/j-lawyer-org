@@ -139,6 +139,19 @@ class SmartTemplate {
         return s1;
     }
     
+    /*
+    * E.g. when string is taken from a mapping table and the term is used within a sentence.
+    */
+    String KLEIN(String s1) {
+        if(s1==null)
+            s1="";
+            
+        if(s1.length()>0)
+            s1=s1.substring(0, 1).toLowerCase() + s1.substring(1);
+            
+        return s1;
+    }
+    
     String FRIST(String fromDate, String addDays) {
         return FRIST(fromDate, addDays, null);
     }

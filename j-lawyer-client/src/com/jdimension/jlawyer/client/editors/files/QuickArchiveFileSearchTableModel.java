@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import java.util.Date;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -688,8 +689,12 @@ public class QuickArchiveFileSearchTableModel extends DefaultTableModel {
     @Override
     public Class<?> getColumnClass(int index) {
         switch (index) {
-            case 3:
+            case 1:
+                return Date.class;
+            case 4:
                 return Boolean.class;
+            case 5:
+                return Date.class;
             case 0:
                 return QuickArchiveFileSearchRowIdentifier.class;
             default:

@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.processing;
 import java.awt.Font;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -674,11 +676,12 @@ import themes.colors.DefaultColorTheme;
  */
 public class ProgressIndicator extends javax.swing.JDialog {
 
+    private static final Logger log=Logger.getLogger(ProgressIndicator.class.getName());
+        
     private JFrame fParent=null;
     private JDialog dParent=null;
     private GlassPane glass=null;
     private ProgressableAction action=null;
-//    private boolean clearParent=false;
     
     /**
      * Creates new form ProgressIndicator
@@ -725,7 +728,14 @@ public class ProgressIndicator extends javax.swing.JDialog {
     }
     
     public void setMax(int max) {
-        this.progress.setMaximum(max);
+        try {
+            if(!SwingUtilities.isEventDispatchThread())
+                SwingUtilities.invokeAndWait(()->progress.setMaximum(max));
+            else
+                progress.setMaximum(max);
+        } catch (Throwable t) {
+            log.error("Unable to update max of progress indicator", t);
+        }
     }
     
     public void setMin(int min) {

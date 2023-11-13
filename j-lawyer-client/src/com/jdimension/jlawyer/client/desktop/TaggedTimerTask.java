@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.nio.channels.ClosedChannelException;
 import java.util.*;
@@ -878,7 +879,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTags, null, 200);
+            myNewList = fileService.getTagged(lastFilterTags, null, 1000);
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
@@ -898,7 +899,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             tags = fileService.getTags(myNewListIds);
 
-            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 200);
+            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
@@ -957,20 +958,17 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             int i = 0;
 
                             List<String> allTags = new ArrayList<>();
-                            ListMultimap<String, TaggedEntryPanel> tagToTep = ArrayListMultimap.create();
+                            ListMultimap<String, TaggedEntryPanelTransparent> tagToTep = ArrayListMultimap.create();
                             for (ArchiveFileBean aFile : l1) {
-                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                                if (i % 2 == 0) {
-                                    background = background.brighter();
-                                }
-                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                                TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
 
-                                TaggedEntry lce = new TaggedEntry();
-                                lce.setFileNumber(aFile.getFileNumber());
-                                lce.setCaseId(aFile.getId());
-                                lce.setLastChangedBy(aFile.getLawyer());
-                                lce.setName(aFile.getName());
-                                lce.setReason(aFile.getReason());
+                                TaggedEntry te = new TaggedEntry();
+                                te.setFileNumber(aFile.getFileNumber());
+                                te.setCaseId(aFile.getId());
+                                te.setLawyer(aFile.getLawyer());
+                                te.setAssistant(aFile.getAssistant());
+                                te.setName(aFile.getName());
+                                te.setReason(aFile.getReason());
                                 if (tags.get(aFile.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
@@ -980,14 +978,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    lce.setTags(xTags);
+                                    te.setTags(xTags);
                                 }
-                                ep.setEntry(lce);
+                                ep.setEntry(te);
 
                                 if (tags.get(aFile.getId()) != null) {
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
-                                        tep.setEntry(lce);
+                                        TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
+                                        tep.setEntry(te);
                                         tagToTep.put(aftb.getTagName(), tep);
                                     }
 
@@ -1001,19 +999,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             }
 
                             for (ArchiveFileDocumentsBean aDoc : l2) {
-                                Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                                if (i % 2 == 0) {
-                                    background = background.brighter();
-                                }
-                                TaggedEntryPanel ep = new TaggedEntryPanel(background);
-                                TaggedEntry lce = new TaggedEntry();
-                                lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
-                                lce.setCaseId(aDoc.getArchiveFileKey().getId());
-                                lce.setDocumentId(aDoc.getId());
-                                lce.setDocumentName(aDoc.getName());
-                                lce.setLastChangedBy(aDoc.getArchiveFileKey().getLawyer());
-                                lce.setName(aDoc.getArchiveFileKey().getName());
-                                lce.setReason(aDoc.getArchiveFileKey().getReason());
+                                TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
+                                TaggedEntry te = new TaggedEntry();
+                                te.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
+                                te.setCaseId(aDoc.getArchiveFileKey().getId());
+                                te.setDocumentId(aDoc.getId());
+                                te.setDocumentName(aDoc.getName());
+                                te.setLawyer(aDoc.getArchiveFileKey().getLawyer());
+                                te.setAssistant(aDoc.getArchiveFileKey().getAssistant());
+                                te.setName(aDoc.getArchiveFileKey().getName());
+                                te.setReason(aDoc.getArchiveFileKey().getReason());
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
@@ -1023,14 +1018,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    lce.setTags(xTags);
+                                    te.setTags(xTags);
                                 }
-                                ep.setEntry(lce);
+                                ep.setEntry(te);
 
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
-                                        TaggedEntryPanel tep = new TaggedEntryPanel(background);
-                                        tep.setEntry(lce);
+                                        TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
+                                        tep.setEntry(te);
                                         tagToTep.put(dtb.getTagName(), tep);
                                     }
 
@@ -1074,12 +1069,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                     scroll.getViewport().add(tPanel);
                                     scroll.getViewport().setOpaque(false);
+                                    scroll.setBorder(null);
+                                    scroll.setOpaque(false);
                                     tagsPane.addTab(tagName, scroll);
                                 }
                             }
                         }
 
-                        private void addEntryToTab(String tagName, TaggedEntryPanel tep) {
+                        private void addEntryToTab(String tagName, TaggedEntryPanelTransparent tep) {
 
                             for (int i = 0; i < tagsPane.getTabCount(); i++) {
                                 if (tagsPane.getTitleAt(i).equals(tagName)) {

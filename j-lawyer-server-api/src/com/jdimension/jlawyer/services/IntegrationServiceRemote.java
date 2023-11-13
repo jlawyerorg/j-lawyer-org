@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import java.io.File;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Remote;
 
@@ -679,17 +679,17 @@ import javax.ejb.Remote;
 @Remote
 public interface IntegrationServiceRemote {
 
-    Hashtable<File,Date> getObservedDirectoryContent();
+    HashMap<File,Date> getObservedDirectoryContent();
 
     boolean removeObservedFile(String fileName);
 
-    boolean assignObservedFile(String fileName, String archiveFileId) throws Exception;
+    String assignObservedFile(String fileName, String archiveFileId) throws Exception;
 
     byte[] getObservedFile(String fileName) throws Exception;
 
-    boolean assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
+    String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
 
-    Collection getAllEmailTemplateNames();
+    Collection<String> getAllEmailTemplateNames();
 
     void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception;
 
@@ -710,5 +710,13 @@ public interface IntegrationServiceRemote {
     IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
 
     void removeIntegrationHook(IntegrationHook hook) throws Exception;
+
+    boolean renameObservedFile(String fromName, String toName) throws Exception;
+
+    boolean addObservedFile(String fileName, byte[] data) throws Exception;
+
+    void renameEmailTemplate(String oldName, String newName) throws Exception;
+
+    void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
     
 }

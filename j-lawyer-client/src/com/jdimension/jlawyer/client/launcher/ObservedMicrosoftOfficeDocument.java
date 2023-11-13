@@ -675,22 +675,19 @@ public class ObservedMicrosoftOfficeDocument extends ObservedDocument {
     private static final Logger log = Logger.getLogger(ObservedMicrosoftOfficeDocument.class.getName());
 
     private long lastLocked = -1;
-    //private String lockFile=null;
     private String lockDir = null;
 
     public ObservedMicrosoftOfficeDocument(String path, ObservedDocumentStore store, Launcher l) {
         super(path, store, l);
-        //this.lockFile=path.substring(0, path.lastIndexOf(System.getProperty("file.separator")) + 1) + "~$" + path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1, path.length());
         this.lockDir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
     }
 
     @Override
     public boolean isClosed() {
-        //File lock=new File(this.lockFile);
-        File lockDir = new File(this.lockDir);
+        File lockDirFile = new File(this.lockDir);
         boolean lockExists = false;
-        if (lockDir.isDirectory()) {
-            File[] fileList = lockDir.listFiles();
+        if (lockDirFile.isDirectory()) {
+            File[] fileList = lockDirFile.listFiles();
             if (fileList != null) {
                 for (File l : fileList) {
                     if (l.getName().startsWith("~$")) {
@@ -700,7 +697,6 @@ public class ObservedMicrosoftOfficeDocument extends ObservedDocument {
                 }
             }
         }
-        //if(lock.exists()) {
         if (lockExists) {
             if (this.lastLocked == -1) {
                 log.debug("file received lock: " + this.path);

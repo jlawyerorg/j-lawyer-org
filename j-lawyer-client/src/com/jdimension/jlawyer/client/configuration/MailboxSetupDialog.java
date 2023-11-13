@@ -664,10 +664,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.mail.oauth.MissingConsentException;
+import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
+import com.jdimension.jlawyer.client.mail.oauth.OAuthUserConsentDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -677,7 +681,6 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -700,8 +703,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.lblTestProgress.setText("");
 
         this.resetDetails();
-
-        //this.tblMailboxes.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -740,6 +741,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.chkEmailInSsl.setSelected(true);
         this.chkEmailOutSsl.setSelected(true);
         this.chkEmailStartTls.setSelected(false);
+        
+        this.chkMsExchange.setSelected(false);
+        this.txtClientId.setText("");
+        this.txtClientSecret.setText("");
+        this.txtTenantId.setText("");
 
     }
 
@@ -793,6 +799,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         cmdTestMail = new javax.swing.JButton();
         lblTestProgress = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
+        chkMsExchange = new javax.swing.JCheckBox();
+        jLabel2 = new javax.swing.JLabel();
+        txtClientId = new javax.swing.JTextField();
+        txtClientSecret = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        txtTenantId = new javax.swing.JTextField();
+        jLabel18 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("E-Mail - Postfächer");
@@ -823,9 +836,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         });
         tblMailboxes.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                tblMailboxesKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 tblMailboxesKeyReleased(evt);
             }
@@ -864,7 +874,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 681, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cmdAdd)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -891,11 +901,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setForeground(new java.awt.Color(153, 153, 153));
         jLabel4.setText("Verbindungsdaten");
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Postfach");
 
@@ -918,7 +928,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         cmbAccountType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "imap", "pop3" }));
 
         chkEmailInSsl.setSelected(true);
-        chkEmailInSsl.setText("SSL");
+        chkEmailInSsl.setText("SSL/TLS");
 
         jLabel15.setText("Passwort:");
 
@@ -927,7 +937,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         chkEmailStartTls.setText("StartTLS");
 
         chkEmailOutSsl.setSelected(true);
-        chkEmailOutSsl.setText("SSL");
+        chkEmailOutSsl.setText("SSL/TLS");
 
         jLabel16.setText("Passwort:");
 
@@ -944,6 +954,15 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
         jLabel11.setText("Zugriff auf neue Postfächer ggf. in der Nutzerverwaltung freischalten.");
 
+        chkMsExchange.setText("Office 365");
+        chkMsExchange.setToolTipText("");
+
+        jLabel2.setText("Client-ID:");
+
+        jLabel3.setText("Client-Secret:");
+
+        jLabel18.setText("Mandanten-ID:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -953,6 +972,16 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(126, 126, 126)
+                        .addComponent(cmdTestMail)
+                        .addGap(7, 7, 7)
+                        .addComponent(lblTestProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -966,75 +995,71 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                         .addComponent(jLabel1)
                         .addGap(21, 21, 21)
                         .addComponent(txtDisplayName))
+                    .addComponent(jSeparator2)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jLabel9)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel13)
+                            .addComponent(jLabel8))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtInServer)
+                            .addComponent(txtInUser)
+                            .addComponent(txtOutServer)
+                            .addComponent(txtOutUsername)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(chkMsExchange)
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel14)
+                                    .addComponent(jLabel15))
+                                .addGap(41, 41, 41)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(cmbAccountType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(pwdInPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkEmailInSsl))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel17)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtOutPort, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(chkEmailStartTls)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkEmailOutSsl))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(jLabel16)
+                                        .addGap(48, 48, 48))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addGap(12, 12, 12))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel18)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(pwdOutPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
+                                    .addComponent(txtClientId)
+                                    .addComponent(txtClientSecret)
+                                    .addComponent(txtTenantId)))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 587, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel12)
                         .addGap(14, 14, 14)
                         .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jSeparator2)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(jLabel9)
-                                    .addGap(20, 20, 20))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                    .addComponent(jLabel8)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(jLabel13))
-                                .addGap(17, 17, 17)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdTestMail)
-                                .addGap(7, 7, 7)
-                                .addComponent(lblTestProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtOutServer)
-                                    .addComponent(txtOutUsername))
-                                .addGap(393, 393, 393))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtInServer)
-                                    .addComponent(txtInUser))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addComponent(jLabel16)
-                                        .addGap(48, 48, 48)
-                                        .addComponent(pwdOutPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel14)
-                                            .addComponent(jLabel15))
-                                        .addGap(41, 41, 41)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(cmbAccountType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(pwdInPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(chkEmailInSsl))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel17)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(txtOutPort, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(chkEmailStartTls)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(chkEmailOutSsl))))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 587, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdClose)))
+                        .addComponent(cmdSave)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1070,11 +1095,15 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                     .addComponent(chkEmailOutSsl)
                                     .addComponent(chkEmailStartTls)
                                     .addComponent(jLabel17)
-                                    .addComponent(txtOutPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(txtOutPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtOutServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel16)
-                                    .addComponent(pwdOutPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(pwdOutPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtOutUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel9)))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel7)
@@ -1087,26 +1116,32 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                     .addComponent(txtInUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel13)
                                     .addComponent(jLabel15)
-                                    .addComponent(pwdInPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(txtOutServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel8))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(txtOutUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel9))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(cmdTestMail)
-                                    .addComponent(lblTestProgress))))
+                                    .addComponent(pwdInPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkMsExchange)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel2)
+                                .addComponent(txtClientId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtClientSecret, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtTenantId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel18))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdTestMail)
+                            .addComponent(lblTestProgress))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(htmlEmailSig, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel12))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1192,6 +1227,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setEmailInSsl(this.chkEmailInSsl.isSelected());
             ms.setEmailOutSsl(this.chkEmailOutSsl.isSelected());
             ms.setEmailStartTls(this.chkEmailStartTls.isSelected());
+            ms.setMsExchange(this.chkMsExchange.isSelected());
+            ms.setClientId(this.txtClientId.getText());
+            ms.setClientSecret(this.txtClientSecret.getText());
+            ms.setTenantId(this.txtTenantId.getText());
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1201,7 +1240,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 MailboxSetup savedMailbox = locator.lookupSecurityServiceRemote().updateMailboxSetup(ms);
-
+                row=this.tblMailboxes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox, row, 0);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox.getEmailAddress(), row, 1);
                 UserSettings.getInstance().invalidateMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -1225,6 +1264,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 locator.lookupSecurityServiceRemote().removeMailboxSetup(ms);
+                row=this.tblMailboxes.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1234,10 +1274,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
-
-    private void tblMailboxesKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblMailboxesKeyPressed
-
-    }//GEN-LAST:event_tblMailboxesKeyPressed
 
     private void tblMailboxesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblMailboxesKeyReleased
         int row = this.tblMailboxes.getSelectedRow();
@@ -1255,7 +1291,36 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString());
+        
+        String authToken = null;
+        if (this.chkMsExchange.isSelected()) {
+            try {
+                authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
+            } catch (MissingConsentException ex) {
+                log.error("Consent required for client id " + this.txtClientId.getText(), ex);
+                // get consent and then proceed to test action
+                OAuthUserConsentDialog oDlg=new OAuthUserConsentDialog(this, true, this.txtTenantId.getText(), this.txtClientId.getText());
+                FrameUtils.centerDialog(oDlg, EditorsRegistry.getInstance().getMainWindow());
+                oDlg.setTitle("Zustimmung zum Postfachzugriff");
+                oDlg.setVisible(true);
+                
+                // retry getting an auth token
+                try {
+                    authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
+                } catch (Exception exc) {
+                    log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), exc);
+                    JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " + exc.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    // no sense in executing the test
+                    return;
+                }
+            } catch (Exception ex) {
+                log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), ex);
+                JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " +ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                // no sense in executing the test
+                return;
+            }
+        }
+        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), this.txtClientId.getText(), this.txtClientSecret.getText(), authToken);
 
         a.start();
 
@@ -1300,6 +1365,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.chkEmailInSsl.setSelected(ms.isEmailInSsl());
         this.chkEmailOutSsl.setSelected(ms.isEmailOutSsl());
         this.chkEmailStartTls.setSelected(ms.isEmailStartTls());
+        
+        this.chkMsExchange.setSelected(ms.isMsExchange());
+        this.txtClientId.setText(ms.getClientId());
+        this.txtClientSecret.setText(ms.getClientSecret());
+        this.txtTenantId.setText(ms.getTenantId());
 
     }
 
@@ -1347,6 +1417,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkEmailInSsl;
     private javax.swing.JCheckBox chkEmailOutSsl;
     private javax.swing.JCheckBox chkEmailStartTls;
+    private javax.swing.JCheckBox chkMsExchange;
     private javax.swing.JComboBox cmbAccountType;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
@@ -1363,6 +1434,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1377,6 +1451,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPasswordField pwdInPassword;
     private javax.swing.JPasswordField pwdOutPassword;
     private javax.swing.JTable tblMailboxes;
+    private javax.swing.JTextField txtClientId;
+    private javax.swing.JTextField txtClientSecret;
     private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtEmailAddress;
     private javax.swing.JTextField txtEmailSender;
@@ -1385,5 +1461,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtOutPort;
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
+    private javax.swing.JTextField txtTenantId;
     // End of variables declaration//GEN-END:variables
 }

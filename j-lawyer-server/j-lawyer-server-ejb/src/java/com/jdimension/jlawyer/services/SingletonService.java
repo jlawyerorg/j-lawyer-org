@@ -678,15 +678,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Singleton;
@@ -700,14 +700,17 @@ import org.apache.log4j.Logger;
 @Singleton
 public class SingletonService implements SingletonServiceRemote, SingletonServiceLocal {
     
-    private static Logger log = Logger.getLogger(SingletonService.class.getName());
+    private static final Logger log = Logger.getLogger(SingletonService.class.getName());
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
-    private Hashtable<File, Date> observedFileNames = new Hashtable<File, Date>();
+    private HashMap<File, Date> observedFileNames = new HashMap<File, Date>();
     private FaxQueueBean failedFax = null;
-    private ArrayList<FaxQueueBean> faxQueue = new ArrayList<FaxQueueBean>();
+    protected EpostQueueBean failedLetter = null;
+    private ArrayList<FaxQueueBean> faxQueue = new ArrayList<>();
+    protected ArrayList<EpostQueueBean> epostQueue = new ArrayList<>();
+    
+    private long latestInstantMessageReceived=-1;
+    private long latestInstantMessageStatusUpdated=-1;
 
     @Override
     @RolesAllowed(value = {"loginRole"})
@@ -723,7 +726,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public Hashtable<File, Date> getObservedFiles() {
+    public HashMap<File, Date> getObservedFiles() {
         return this.getObservedFiles(false);
     }
     
@@ -731,13 +734,9 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @PermitAll
     public void updateObservedFiles() {
         ServerSettingsBean mode = null;
-            SingletonServiceLocal singleton = null;
             try {
                 InitialContext ic = new InitialContext();
-                //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
-                // ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal	
                 ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-                singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
                 mode = settings.find("jlawyer.server.observe.directory");
                 if (mode == null || "".equals(mode.getSettingValue())) {
                     log.info("directory observation is switched off");
@@ -748,7 +747,6 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
                 return;
             }
 
-            //String scanDir = System.getProperty("jlawyer.server.observe.directory");
             String scanDir = mode.getSettingValue();
             if (scanDir == null || "".equals(scanDir)) {
                 log.info("directory observation is switched off");
@@ -766,7 +764,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
                 return;
             }
 
-            Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
+            HashMap<File, Date> fileObjects = new HashMap<>();
             File files[] = scanDirectory.listFiles();
             if (files != null) {
                 for (File f : files) {
@@ -803,7 +801,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public Hashtable<File, Date> getObservedFiles(boolean bypassCache) {
+    public HashMap<File, Date> getObservedFiles(boolean bypassCache) {
         if (bypassCache) {
             this.updateObservedFiles();
         }
@@ -812,7 +810,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @PermitAll
-    public void setObservedFiles(Hashtable<File, Date> fileNames) {
+    public void setObservedFiles(HashMap<File, Date> fileNames) {
         this.observedFileNames = fileNames;
     }
 
@@ -821,7 +819,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     public FaxQueueBean getFailedFax() {
         return this.failedFax;
     }
-
+    
     @Override
     @RolesAllowed(value = {"loginRole"})
     public ArrayList<FaxQueueBean> getFaxQueue() {
@@ -836,6 +834,61 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @Override
     public void setFaxQueue(ArrayList<FaxQueueBean> faxQueue) {
         this.faxQueue = faxQueue;
+    }
+
+    @Override
+    @PermitAll
+    public long getLatestInstantMessageReceived() {
+        return this.latestInstantMessageReceived;
+    }
+
+    @Override
+    @PermitAll
+    public void setLatestInstantMessageReceived(long timestamp) {
+        this.latestInstantMessageReceived=timestamp;
+    }
+
+    @Override
+    @PermitAll
+    public long getLatestInstantMessageStatusUpdated() {
+        return latestInstantMessageStatusUpdated;
+    }
+
+    @Override
+    @PermitAll
+    public void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated) {
+        this.latestInstantMessageStatusUpdated = latestInstantMessageStatusUpdated;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public EpostQueueBean getFailedLetter() {
+        return failedLetter;
+    }
+
+    /**
+     * @param failedLetter the failedLetter to set
+     */
+    @Override
+    public void setFailedLetter(EpostQueueBean failedLetter) {
+        this.failedLetter = failedLetter;
+    }
+
+    /**
+     * @return the epostQueue
+     */
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public ArrayList<EpostQueueBean> getEpostQueue() {
+        return epostQueue;
+    }
+
+    /**
+     * @param epostQueue the epostQueue to set
+     */
+    @Override
+    public void setEpostQueue(ArrayList<EpostQueueBean> epostQueue) {
+        this.epostQueue = epostQueue;
     }
 
 }

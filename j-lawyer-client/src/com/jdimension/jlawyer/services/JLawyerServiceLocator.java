@@ -679,6 +679,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.mail.Session;
+import javax.naming.Context;
 
 /**
  *
@@ -716,6 +717,15 @@ public class JLawyerServiceLocator {
     public AddressServiceRemote lookupAddressServiceRemote() {
         try {
             return (AddressServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public MessagingServiceRemote lookupMessagingServiceRemote() {
+        try {
+            return (MessagingServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//MessagingService!com.jdimension.jlawyer.services.MessagingServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
             throw new RuntimeException(ne);
@@ -770,6 +780,36 @@ public class JLawyerServiceLocator {
     public CalendarServiceRemote lookupCalendarServiceRemote() {
         try {
             return (CalendarServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CalendarService!com.jdimension.jlawyer.services.CalendarServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public InvoiceServiceRemote lookupInvoiceServiceRemote() {
+        try {
+            return (InvoiceServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public TimesheetServiceRemote lookupTimesheetServiceRemote() {
+        try {
+            return (TimesheetServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//TimesheetService!com.jdimension.jlawyer.services.TimesheetServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
+    public ReportServiceRemote lookupReportServiceRemote() {
+        try {
+            return (ReportServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ReportService!com.jdimension.jlawyer.services.ReportServiceRemote");
             
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
@@ -848,6 +888,13 @@ public class JLawyerServiceLocator {
             me = new JLawyerServiceLocator(lookupProps);
         }
         return me;
+    }
+    
+    public static synchronized JLawyerServiceLocator getTemporaryInstanceFor(String principal, String password, Properties lookupProps) throws NamingException {
+        Properties tempProps = (Properties) lookupProps.clone();
+        tempProps.put(Context.SECURITY_PRINCIPAL, principal);
+        tempProps.put(Context.SECURITY_CREDENTIALS, password);
+        return new JLawyerServiceLocator(tempProps);
     }
 
     private Object lookup(String jndiName) throws NamingException {

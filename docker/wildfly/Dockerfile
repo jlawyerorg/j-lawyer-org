@@ -18,6 +18,8 @@ RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
 RUN chmod -R 777 /opt/jboss/j-lawyer-data
 RUN yum -y install mysql
 
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+
 # ugly as hell
 # ADD sleep.sh /tmp/sleep.sh
 # RUN chmod +x /tmp/sleep.sh
@@ -44,6 +46,9 @@ RUN chmod 777 /opt/jboss/startup.sh
 
 
 USER jboss
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 

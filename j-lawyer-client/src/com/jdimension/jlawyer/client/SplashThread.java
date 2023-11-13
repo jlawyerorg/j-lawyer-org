@@ -793,6 +793,7 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] degreeSuffixes = null;
         AppOptionGroupBean[] professions = null;
         AppOptionGroupBean[] roles = null;
+        AppOptionGroupBean[] timesheetIntervals = null;
 
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
@@ -811,6 +812,7 @@ public class SplashThread implements Runnable {
             this.updateProgress(false, 9, 3, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.3"), true);
             dictateSignDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DICTATESIGNS);
+            timesheetIntervals = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
             this.updateProgress(false, 9, 4, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.4"), true);
             subjectFieldDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
@@ -872,6 +874,7 @@ public class SplashThread implements Runnable {
         settings.setArchiveFileTagDtos(afTagDtos);
         settings.setAddressTagDtos(adrTagDtos);
         settings.setDocumentTagDtos(docTagDtos);
+        settings.setTimesheetIntervals(timesheetIntervals);
         UserSettings.getInstance().setLawyerUsers(lawyerUsers);
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
@@ -1051,6 +1054,9 @@ public class SplashThread implements Runnable {
                     serverSettings1.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                 }
             }
+            gui.restoreWindowSize();
+            gui.confirmOpenTimesheetPositions();
+            
         });
     }
 

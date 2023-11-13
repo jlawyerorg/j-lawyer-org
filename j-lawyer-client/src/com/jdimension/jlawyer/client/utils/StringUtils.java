@@ -664,13 +664,19 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class StringUtils extends ServerStringUtils {
+    
+    private static final Logger log=Logger.getLogger(StringUtils.class);
     
     public static boolean equals(String s1, String s2) {
         if(s1==null) {
@@ -694,6 +700,12 @@ public class StringUtils extends ServerStringUtils {
             s="";
         return s;
     }
+
+    public static String cutoff(String name, int maxLength) {
+        if(name.length()>maxLength)
+            name=name.substring(0,maxLength-1) + "...";
+        return name;
+    }
     
     static class SortIgnoreCase implements Comparator<Object> {
         public int compare(Object o1, Object o2) {
@@ -703,4 +715,77 @@ public class StringUtils extends ServerStringUtils {
         }
     }
     
+    public static String md5(String plaintext) {
+
+        try {
+
+            MessageDigest m = MessageDigest.getInstance("MD5");
+            m.reset();
+            m.update(plaintext.getBytes(StandardCharsets.UTF_8));
+            byte[] digest = m.digest();
+            BigInteger bigInt = new BigInteger(1, digest);
+            return bigInt.toString(16);
+
+        } catch (Throwable t) {
+            log.error(t);
+            return "" + plaintext.hashCode();
+        }
+    }
+    
+    public static String formatDuration(long milliseconds) {
+        
+      long seconds=milliseconds/1000l;
+        
+      // your code goes here
+      if (seconds < 10) return "wenige Sekunden";
+      
+      final int secPerYr  = 31_536_000;
+      final int secPerDay = 86_400;
+      final int secPerHr  = 3_600;
+      final int secPerMin = 60;
+      
+      ArrayList<String> stringParts = new ArrayList<>();
+      
+      long years = seconds / secPerYr;
+      if (years != 0) {
+        stringParts.add(years + (years > 1 ? " Jahre" : " Jahr"));
+      }
+       
+      long days = seconds % secPerYr / secPerDay;
+      if (days != 0) {
+        stringParts.add(days + (days > 1 ? " Tage" : " Tag"));
+      }
+      
+      long hours = seconds % secPerYr % secPerDay / secPerHr;
+      if (hours != 0) {
+        stringParts.add(hours + (hours > 1 ? "h" : "h"));
+      }
+      
+      long mins = seconds % secPerYr % secPerDay % secPerHr / secPerMin;
+      if (mins != 0) {
+        stringParts.add(mins + (mins > 1 ? "min" : "min"));
+      }
+      
+      long secs = seconds % secPerYr % secPerDay % secPerHr % secPerMin;
+      if (secs != 0) {
+        stringParts.add(secs + (secs > 1 ? "s" : "s"));
+      }
+      
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < stringParts.size(); i++) {
+        sb.append(stringParts.get(i));
+        if (i != stringParts.size() - 1) {
+          if (i == stringParts.size() - 2) {
+            //sb.append(" und ");
+            sb.append(" ");
+          } else {
+            //sb.append(", ");
+            sb.append(" ");
+          }
+        }
+      }
+      
+      return sb.toString();
+    }
+
 }

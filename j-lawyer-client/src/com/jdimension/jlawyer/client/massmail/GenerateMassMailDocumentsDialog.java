@@ -673,10 +673,11 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
-import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -703,7 +704,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
     private CampaignController controller = new CampaignController();
 
     /**
-     * Creates new form AddDocumentDialog
+     * Creates new form GenerateMassMailDocumentsDialog
      * @param campaign
      * @param addresses
      * @param parent
@@ -790,9 +791,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyPressed(evt);
-            }
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtTemplateFilterKeyTyped(evt);
             }
         });
 
@@ -956,9 +954,9 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
                 List<String> placeHolders = null;
-                Collection<PartyTypeBean> allPartyTypes=null;
+                List<PartyTypeBean> allPartyTypes=null;
                 try {
-                    placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<>());
+                    placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, lstTemplates.getSelectedValue().toString(), new ArrayList<>());
                     allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 } catch (Exception ex) {
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -988,8 +986,14 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                         for (PartyTypeBean ptb : allPartyTypes) {
                             ht2.add(new PartiesPanelEntry(ad, ptb));
                         }
-                        
-                        ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
+
+                        List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                        for (PartiesPanelEntry pe : ht2) {
+                            PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                            partiesTriplets.add(triplet);
+                        }
+
+                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null);
                         
                         for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
@@ -1031,9 +1035,6 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_txtTemplateFilterKeyPressed
 
-    private void txtTemplateFilterKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateFilterKeyTyped
-    }//GEN-LAST:event_txtTemplateFilterKeyTyped
-
     private void highlightTree(String templateQuery) {
         try {
             int[] selectedRows = this.treeFolders.getSelectionRows();
@@ -1041,7 +1042,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             if (!("".equalsIgnoreCase(templateQuery.trim()))) {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                list = locator.lookupSystemManagementRemote().searchTemplateFolders(this.txtTemplateFilter.getText());
+                list = locator.lookupSystemManagementRemote().searchTemplateFolders(SystemManagementRemote.TEMPLATE_TYPE_BODY, this.txtTemplateFilter.getText());
             }
 
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
@@ -1082,7 +1083,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 GenericNode gn = (GenericNode) tn.getUserObject();
 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), new ArrayList<>());
+                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, this.lstTemplates.getSelectedValue().toString(), new ArrayList<>());
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
@@ -1092,13 +1093,18 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     ht.put(ph, "");
                 }
 
-                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 List<PartiesPanelEntry> ht2 = new ArrayList<>();
                 for (PartyTypeBean ptb : allPartyTypes) {
                     ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<>(), null, null, null);
+                List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+                for (PartiesPanelEntry pe : ht2) {
+                    PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+                    partiesTriplets.add(triplet);
+                }
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null);
 
                 for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
@@ -1165,7 +1171,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
+            GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
 
             DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
             this.traverseFolders(templateTree, rootNode);
@@ -1199,12 +1205,12 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
             GenericNode folder = (GenericNode) selNode.getUserObject();
 
-            Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(folder);
+            Collection<String> fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, folder);
 
-            for (Object o : fileNames) {
+            for (String o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
+                } else if (o.toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }

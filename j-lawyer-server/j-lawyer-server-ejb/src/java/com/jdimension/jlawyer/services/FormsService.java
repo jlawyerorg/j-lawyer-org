@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
@@ -682,7 +681,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -720,14 +718,12 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @EJB
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
     @EJB
-    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    private ArchiveFileServiceLocal archiveFileService;
     
     // custom hooks support
     @Inject
     Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
     @Override
     @RolesAllowed({"loginRole"})
     public List<FormTypeBean> getAllFormTypes() {
@@ -834,7 +830,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(afb.getId(), newHistEntry);
 
         return this.caseFormsFacade.find(id);
 
@@ -888,7 +884,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileHistoryFacade.create(newHistEntry);
+        this.archiveFileService.addHistory(afb.getArchiveFileKey().getId(), newHistEntry);
     }
 
     @Override
@@ -925,13 +921,17 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         }
 
         StringGenerator idGen = new StringGenerator();
+        long totalChars=0;
         for (ArchiveFileFormEntriesBean newEntry : formEntries) {
             newEntry.setForm(afb);
             newEntry.setArchiveFileKey(afb.getArchiveFileKey());
             newEntry.setId(idGen.getID().toString());
             newEntry.setEntryKey(newEntry.getPlaceHolder());
+            if(newEntry.getStringValue()!=null)
+                totalChars=totalChars+newEntry.getStringValue().length();
             this.caseFormEntriesFacade.create(newEntry);
         }
+        log.info(context.getCallerPrincipal().getName() + " saved " + formEntries.size() + " entries with total " + totalChars + " chars to form " + formId);
         
         if(entriesChanged) {
             try {
@@ -1007,7 +1007,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
         List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
         if (existingEntries == null) {
-            existingEntries = new ArrayList<ArchiveFileFormEntriesBean>();
+            existingEntries = new ArrayList<>();
         }
         return existingEntries;
     }
@@ -1032,7 +1032,6 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
         }
 
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
         ArrayList<String> placeHolders = new ArrayList<>();
         for (ArchiveFileFormsBean f : forms) {
@@ -1056,15 +1055,14 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+    public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
         }
 
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        Hashtable<String, String> placeHolders = new Hashtable<String, String>();
+        HashMap<String, String> placeHolders = new HashMap<>();
         for (ArchiveFileFormsBean f : forms) {
             List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
             for (ArchiveFileFormEntriesBean e : entries) {

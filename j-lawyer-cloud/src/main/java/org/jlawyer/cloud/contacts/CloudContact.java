@@ -859,7 +859,7 @@ public class CloudContact implements Serializable {
                     nametest = nametest + ", " + getFirstName();
                 }
                 if(nametest!=null && !("".equals(nametest)))
-                    returnValue=returnValue + "; " + nametest;
+                    returnValue=returnValue + " (" + nametest + ")";
             } else {
                 returnValue = getName();
                 if (getFirstName() != null && !("".equals(getFirstName()))) {

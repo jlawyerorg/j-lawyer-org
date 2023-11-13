@@ -760,25 +760,67 @@ public class PlaceHolders {
     public static final String AKTE_SCHADENNR = "{{AKTE_SCHADENNR}}";
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
-    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
+    
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
-    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
-    // Anzeigename
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
+    public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    
+    //Nutzernamen
+    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
+    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    
+    // Kürzel
+    public static final String AKTE_SACHBEARBEITER_KRZ = "{{AKTE_SACHBEARBEITER_KRZ}}";
+    public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
+    public static final String AUTOR_KRZ = "{{AUTOR_KRZ}}";
+    
     public static final String DOK_DZ = "{{DOK_DZ}}";
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
-    public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
+    
+    // invoices
+    public static final String BEL_NR = "{{BEL_NR}}";
+    public static final String BEL_TYP = "{{BEL_TYP}}";
+    public static final String BEL_NAME = "{{BEL_NAME}}";
+    public static final String BEL_BESCHR = "{{BEL_BESCHR}}";
+    public static final String BEL_DTFAELLIG = "{{BEL_DTFAELLIG}}";
+    public static final String BEL_DTLZVON = "{{BEL_DTLZVON}}";
+    public static final String BEL_DTLZBIS = "{{BEL_DTLZBIS}}";
+    public static final String BEL_DTERSTELLT = "{{BEL_DTERSTELLT}}";
+    public static final String BEL_TOTAL = "{{BEL_TOTAL}}";
+    public static final String BEL_WHRG = "{{BEL_WHRG}}";
+    public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
+    
+    public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
+    
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
+        ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(ZE_TABELLE);
+    }
+    
+    public static String insertAt(String origin, String insert, int position) {
+        String origin1 = origin.substring(0, position);
+        String origin2 = origin.substring(position, origin.length());
+        return origin1 + insert + origin2;
+
+    }
+    
+    protected static String val(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s;
     }
     
     public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
@@ -885,13 +927,29 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER);
         ALLPLACEHOLDERS.add(AKTE_ANWALT_AN);
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_AN);
+        ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_KRZ);
+        ALLPLACEHOLDERS.add(AKTE_ANWALT_KRZ);
+        ALLPLACEHOLDERS.add(AUTOR_KRZ);
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
+        
         
         ALLPLACEHOLDERS.add(AUTOR_AN);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
+        
+        ALLPLACEHOLDERS.add(BEL_NR);
+        ALLPLACEHOLDERS.add(BEL_TYP);
+        ALLPLACEHOLDERS.add(BEL_NAME);
+        ALLPLACEHOLDERS.add(BEL_BESCHR);
+        ALLPLACEHOLDERS.add(BEL_DTFAELLIG);
+        ALLPLACEHOLDERS.add(BEL_DTLZVON);
+        ALLPLACEHOLDERS.add(BEL_DTLZBIS);
+        ALLPLACEHOLDERS.add(BEL_DTERSTELLT);
+        ALLPLACEHOLDERS.add(BEL_TOTAL);
+        ALLPLACEHOLDERS.add(BEL_WHRG);
 
         return ALLPLACEHOLDERS;
     }

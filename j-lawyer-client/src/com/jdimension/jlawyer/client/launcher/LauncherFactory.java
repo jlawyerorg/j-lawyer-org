@@ -666,8 +666,8 @@ package com.jdimension.jlawyer.client.launcher;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
+import java.awt.Window;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.util.ArrayList;
@@ -733,11 +733,11 @@ public class LauncherFactory {
 
     }
 
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        return getLauncher(fileName, content, store, null);
+    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, Window parent) throws Exception {
+        return getLauncher(fileName, content, store, null, parent);
     }
 
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName) throws Exception {
+    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName, Window parent) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
 
         ClientSettings set = ClientSettings.getInstance();
@@ -748,17 +748,33 @@ public class LauncherFactory {
         String lowerFileName = fileName.toLowerCase();
 
         if (lowerFileName.endsWith("xjustiz_nachricht.xml")) {
-            XjustizLauncher xjl = new XjustizLauncher(url, store);
+            XjustizLauncher xjl = new XjustizLauncher(url, store, parent);
             xjl.setContent(new String(content));
             return xjl;
         }
 
         if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-            return new EMLInternalLauncher(url, store);
+            
+            String extension = FileUtils.getExtension(lowerFileName);
+            if (CustomLauncher.hasCustomLauncher(extension)) {
+                return new CustomLauncher(url, store);
+            }
+            
+            return new EMLInternalLauncher(url, store, parent);
+        }
+        
+        if (lowerFileName.endsWith(".msg") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
+            
+            String extension = FileUtils.getExtension(lowerFileName);
+            if (CustomLauncher.hasCustomLauncher(extension)) {
+                return new CustomLauncher(url, store);
+            }
+            
+            return new OutlookMsgInternalLauncher(url, store, parent);
         }
 
         if (lowerFileName.endsWith(".bea")) {
-            return new BEAInternalLauncher(url, store);
+            return new BEAInternalLauncher(url, store, parent);
         }
 
         // then for forced custom launchers
@@ -915,16 +931,21 @@ public class LauncherFactory {
                 try {
 
                     PrintService service = PrintServiceLookup.lookupDefaultPrintService();
+
                     if (service == null) {
                         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Kein Standarddrucker für PDF-Dateien gefunden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     } else {
 
                         Thread.sleep(100);
                         for (String u : pdfUrls) {
-                            PDDocument document = PDDocument.load(new File(u));
+                            File toBePrinted = new File(u);
+                            PDDocument document = PDDocument.load(toBePrinted);
 
                             PrinterJob job = PrinterJob.getPrinterJob();
-                            job.setPageable(new PDFPageable(document));
+                            job.setJobName(toBePrinted.getName());
+                            
+                            PDFPageable pageable = new PDFPageable(document);
+                            job.setPageable(pageable);
                             job.setPrintService(service);
                             job.print();
                         }
@@ -954,7 +975,7 @@ public class LauncherFactory {
                 for (String u : libreOfficeUrls) {
                     cmdLine.add(u);
                 }
-                
+
                 try {
 
                     Thread.sleep(100);

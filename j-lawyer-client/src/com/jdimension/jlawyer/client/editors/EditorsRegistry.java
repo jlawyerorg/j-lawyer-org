@@ -701,7 +701,7 @@ public class EditorsRegistry {
         }
         return instance;
     }
-
+    
     public Object getEditor(String editorClass) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         if (!(this.editors.containsKey(editorClass))) {
             Object editor = Class.forName(editorClass).newInstance();

@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.AddressUtils;
 import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -690,8 +691,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -710,7 +711,6 @@ import themes.colors.DefaultColorTheme;
 public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private AddressBean a = null;
     private ArchiveFileAddressesBean afa = null;
     private ArchiveFileBean caseDto = null;
@@ -734,6 +734,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
         this.initializing = true;
         initComponents();
+        
         this.openedFromEditorClass = openedFromClassName;
         this.container = container;
         this.casePanel = casePanel;
@@ -749,12 +750,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
+        this.txtReference.setDocument(new JTextFieldLimit(249));
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes = afs.getAllPartyTypes();
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes = sys.getPartyTypes();
 
             this.cmbRefType.removeAllItems();
             ArrayList<String> refTypeNames = new ArrayList<>();
@@ -836,8 +838,17 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             wrapper.append("<html>");
             wrapper.append("<table>");
             StringBuilder content = new StringBuilder();
+            if (!StringUtils.isEmpty(this.a.getCompany())) {
+                content.append(getContentRow("Unternehmen:", this.a.getCompany()));
+            }
+            if (!StringUtils.isEmpty(this.a.getDepartment())) {
+                content.append(getContentRow("Abteilung:", this.a.getDepartment()));
+            }
             if (!StringUtils.isEmpty(this.a.getPhone())) {
                 content.append(getContentRow("Festnetz:", this.a.getPhone()));
+            }
+            if (!StringUtils.isEmpty(this.a.getFax())) {
+                content.append(getContentRow("Fax:", this.a.getFax()));
             }
             if (!StringUtils.isEmpty(this.a.getMobile())) {
                 content.append(getContentRow("Mobil:", this.a.getMobile()));
@@ -920,6 +931,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuCallPhone = new javax.swing.JMenuItem();
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
+        mnuCopy = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -1013,41 +1025,46 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuRemoveParty);
 
-        lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        mnuCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopy.setText("kopieren");
+        mnuCopy.setToolTipText("Adresse in die Zwischenablage kopieren");
+        mnuCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuCopy);
+
+        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
         lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         lblAddress.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblAddressMouseClicked(evt);
             }
-
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 lblAddressMouseExited(evt);
             }
-
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblAddressMouseEntered(evt);
             }
         });
 
-        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Mandant", "Gegner", "Dritte"}));
+        cmbRefType.setFont(cmbRefType.getFont().deriveFont(cmbRefType.getFont().getStyle() | java.awt.Font.BOLD));
+        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mandant", "Gegner", "Dritte" }));
         cmbRefType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbRefTypeActionPerformed(evt);
             }
         });
 
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel3.setText("Zeichen:");
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
         cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdActionsMousePressed(evt);
-            }
-        });
-        cmdActions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdActionsActionPerformed(evt);
             }
         });
 
@@ -1067,6 +1084,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         detailsContentTaskPane.setForeground(new java.awt.Color(255, 255, 255));
         detailsContentTaskPane.setTitle("Details");
         detailsContentTaskPane.setAnimated(false);
+        detailsContentTaskPane.setFont(detailsContentTaskPane.getFont().deriveFont(detailsContentTaskPane.getFont().getStyle() | java.awt.Font.BOLD));
 
         jScrollPane1.setBorder(null);
 
@@ -1076,20 +1094,21 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         javax.swing.GroupLayout detailsContentTaskPaneLayout = new javax.swing.GroupLayout(detailsContentTaskPane.getContentPane());
         detailsContentTaskPane.getContentPane().setLayout(detailsContentTaskPaneLayout);
         detailsContentTaskPaneLayout.setHorizontalGroup(
-                detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         detailsContentTaskPaneLayout.setVerticalGroup(
-                detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(detailsContentTaskPaneLayout.createSequentialGroup()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
+            detailsContentTaskPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsContentTaskPaneLayout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         jXTaskPane1.setExpanded(false);
         jXTaskPane1.setForeground(new java.awt.Color(255, 255, 255));
         jXTaskPane1.setTitle("Zusätzliche Angaben");
         jXTaskPane1.setAnimated(false);
+        jXTaskPane1.setFont(jXTaskPane1.getFont().deriveFont(jXTaskPane1.getFont().getStyle() | java.awt.Font.BOLD));
 
         jLabel2.setText("Ansprechpartner:");
 
@@ -1099,100 +1118,95 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         lblCustom3.setText("Eigene 3:");
 
-        txtCustom1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtCustom1ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jXTaskPane1Layout = new javax.swing.GroupLayout(jXTaskPane1.getContentPane());
         jXTaskPane1.getContentPane().setLayout(jXTaskPane1Layout);
         jXTaskPane1Layout.setHorizontalGroup(
-                jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jXTaskPane1Layout.createSequentialGroup()
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblCustom1)
-                                        .addComponent(lblCustom2)
-                                        .addComponent(lblCustom3))
-                                .addGap(72, 72, 72)
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(txtCustom1, javax.swing.GroupLayout.Alignment.TRAILING)
-                                        .addComponent(txtCustom2, javax.swing.GroupLayout.Alignment.TRAILING)
-                                        .addComponent(txtCustom3, javax.swing.GroupLayout.Alignment.TRAILING)))
-                        .addGroup(jXTaskPane1Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtContact))
+            jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCustom1)
+                    .addComponent(lblCustom2)
+                    .addComponent(lblCustom3))
+                .addGap(72, 72, 72)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtCustom1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtCustom2, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtCustom3, javax.swing.GroupLayout.Alignment.TRAILING)))
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtContact))
         );
         jXTaskPane1Layout.setVerticalGroup(
-                jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jXTaskPane1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel2))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txtCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblCustom1))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txtCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblCustom2))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txtCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblCustom3))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom3))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        lblUnderage.setFont(lblUnderage.getFont().deriveFont(lblUnderage.getFont().getStyle() | java.awt.Font.BOLD));
         lblUnderage.setText("jLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblType)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(lblAddress)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(lblUnderage)
-                                                .addGap(18, 18, 18)
-                                                .addComponent(jLabel3)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(txtReference)
-                                                .addGap(18, 18, 18)
-                                                .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmdToAddress)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmdActions))
-                                        .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(lblType)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblAddress)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblUnderage)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtReference)
+                        .addGap(18, 18, 18)
+                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdToAddress)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdActions))
+                    .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(cmdActions)
-                                        .addComponent(cmdToAddress)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                                .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(lblAddress)
-                                                .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(jLabel3)
-                                                .addComponent(lblUnderage)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(21, Short.MAX_VALUE))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdActions)
+                    .addComponent(cmdToAddress)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblAddress)
+                        .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel3)
+                        .addComponent(lblUnderage)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(detailsContentTaskPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(21, 21, 21))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1216,7 +1230,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblType.setBackground(c);
 
         if (!this.initializing) {
-            ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
+            ConflictOfInterestUtils.checkForConflicts(a, ptb, this.caseDto.getId(), EditorsRegistry.getInstance().getMainWindow());
         }
 
         if (!this.initializing && this.a != null) {
@@ -1249,7 +1263,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
+            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
@@ -1292,6 +1311,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            
+            if(this.casePanel!=null) {
+                this.casePanel.saveFormData();
+            }
+            
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
@@ -1410,10 +1434,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
     }//GEN-LAST:event_mnuSendFaxActionPerformed
 
-    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-
-    }//GEN-LAST:event_cmdActionsActionPerformed
-
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
         this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdActionsMousePressed
@@ -1434,9 +1454,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblAddressMouseClicked
 
-    private void txtCustom1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCustom1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtCustom1ActionPerformed
+    private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
+        if(this.a!=null) {
+            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
+        }
+    }//GEN-LAST:event_mnuCopyActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
@@ -1456,6 +1478,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JLabel lblUnderage;
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
+    private javax.swing.JMenuItem mnuCopy;
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendEmail;
@@ -1470,6 +1493,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
 
+    public void close() {
+        EventBroker b=EventBroker.getInstance();
+        b.unsubscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
+    }
+    
     @Override
     public void onEvent(Event e) {
         if (e instanceof ContactUpdatedEvent) {

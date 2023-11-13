@@ -683,7 +683,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.NextcloudCalendarConnector;
 import org.jlawyer.cloud.calendar.CloudCalendar;
 import themes.colors.DefaultColorTheme;
 
@@ -932,7 +931,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         jLabel2.setText("Zielkalender:");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
         jLabel4.setForeground(new java.awt.Color(153, 153, 153));
         jLabel4.setText("Synchronisation zu Nextcloud (optional)");
 
@@ -943,7 +942,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
         jLabel5.setText("Kalenderdaten");
 
@@ -1118,6 +1117,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
 
             ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{savedCalendar, savedCalendar.getBackground(), null});
+            this.tblCalendars.getSelectionModel().setSelectionInterval(this.tblCalendars.getRowCount()-1, this.tblCalendars.getRowCount()-1);
             JOptionPane.showMessageDialog(this, "Der Kalender ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Kalenderberechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
@@ -1181,7 +1181,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().updateCalendarSetup(cs);
-                row=this.tblCalendars.convertRowIndexToView(row);
+                row=this.tblCalendars.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar, row, 0);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getBackground(), row, 1);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getHref(), row, 2);
@@ -1236,6 +1236,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 }
                 
                 locator.lookupCalendarServiceRemote().removeCalendarSetup(cs);
+                row=this.tblCalendars.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblCalendars.getModel()).removeRow(row);
 
                 this.resetDetails();
@@ -1271,19 +1272,34 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_tblCalendarsKeyReleased
 
     private void cmdGetCloudCalendarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetCloudCalendarsActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
         try {
-            NextcloudCalendarConnector nc = new NextcloudCalendarConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
-            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
-                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
-            List<CloudCalendar> cals = nc.getAllCalendars();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            List cals = locator.lookupCalendarServiceRemote().listCalendars(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword(), this.pnlCloud.getCloudPath());
             this.cmbName.removeAllItems();
             cals.forEach(ab -> {
                 ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
             });
-        } catch (Throwable ex) {
+
+        } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        
+//        try {
+//            NextcloudCalendarConnector nc = new NextcloudCalendarConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
+//            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
+//                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
+//            List<CloudCalendar> cals = nc.getAllCalendars();
+//            this.cmbName.removeAllItems();
+//            cals.forEach(ab -> {
+//                ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
+//            });
+//        } catch (Throwable ex) {
+//            log.error("Error connecting to server", ex);
+//            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//        }
     }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
@@ -1293,25 +1309,46 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     private void updatedUI(CalendarSetup cs) {
         this.cmbName.removeAllItems();
         if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && !StringUtils.isEmpty(cs.getCloudPassword())) {
+            ClientSettings settings = ClientSettings.getInstance();
             try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-                if(!StringUtils.isEmpty(cs.getCloudPath()))
-                    nc.setSubpathPrefix(cs.getCloudPath());
-                List<CloudCalendar> cals = nc.getAllCalendars();
-                
+                List cals = locator.lookupCalendarServiceRemote().listCalendars(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()), cs.getCloudPath());
                 CloudCalendar selected = null;
-                for (CloudCalendar ab : cals) {
+                for (Object abO : cals) {
+                    CloudCalendar ab=(CloudCalendar)abO;
                     ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
                     if (ab.getHref().equals(cs.getHref())) {
                         selected = ab;
                     }
                 }
                 this.cmbName.setSelectedItem(selected);
+
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            
+//            try {
+//
+//                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
+//                if(!StringUtils.isEmpty(cs.getCloudPath()))
+//                    nc.setSubpathPrefix(cs.getCloudPath());
+//                List<CloudCalendar> cals = nc.getAllCalendars();
+//                
+//                CloudCalendar selected = null;
+//                for (CloudCalendar ab : cals) {
+//                    ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
+//                    if (ab.getHref().equals(cs.getHref())) {
+//                        selected = ab;
+//                    }
+//                }
+//                this.cmbName.setSelectedItem(selected);
+//            } catch (Exception ex) {
+//                log.error("Error connecting to server", ex);
+//                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//            }
         }
 
         try {

@@ -722,12 +722,13 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         editorPane = new javax.swing.JEditorPane();
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setText("XJustiz-Strukturdatensatz");
 
         cmdOpenXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_xml.png"))); // NOI18N
         cmdOpenXjustizViewer.setText("XJustiz-Viewer");
         cmdOpenXjustizViewer.setToolTipText("XJustiz-Viewer öffnen");
+        cmdOpenXjustizViewer.setEnabled(false);
         cmdOpenXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdOpenXjustizViewerActionPerformed(evt);

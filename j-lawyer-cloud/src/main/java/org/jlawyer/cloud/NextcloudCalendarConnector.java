@@ -684,7 +684,6 @@ import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.model.property.XProperty;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
@@ -742,9 +741,14 @@ public class NextcloudCalendarConnector {
     public List<CloudCalendar> getAllCalendars() throws Exception {
         ArrayList<CloudCalendar> calendars = new ArrayList<>();
         try {
-            HttpClient client = new HttpClient();
+            
+            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
             Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
             client.getState().setCredentials(AuthScope.ANY, creds);
+            
+            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
+            client.getParams().setAuthenticationPreemptive(true);
+            
             PropFindMethod method = new PropFindMethod(this.getBaseUrl(), DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
             method.setRequestBody("<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\">\n"
                     + "  <d:prop>\n"
@@ -752,8 +756,9 @@ public class NextcloudCalendarConnector {
                     + "     <cs:getctag />\n"
                     + "  </d:prop>\n"
                     + "</d:propfind>");
-
             client.getHttpConnectionManager().getParams().setSoTimeout(15000);
+            client.getHttpConnectionManager().getParams().setConnectionTimeout(15000);
+            
             client.executeMethod(method);
 
             MultiStatus multiStatus = method.getResponseBodyAsMultiStatus();
@@ -1156,7 +1161,7 @@ public class NextcloudCalendarConnector {
         }
     }
 
-    private String getBaseUrl() {
+    protected String getBaseUrl() {
         StringBuilder sb = new StringBuilder();
         sb.append("http");
         if (useHTTPS) {

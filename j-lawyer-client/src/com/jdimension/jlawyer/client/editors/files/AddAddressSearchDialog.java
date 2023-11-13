@@ -679,8 +679,8 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -706,20 +706,24 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
     private AddressBean resultAddress = null;
     private ArchiveFileAddressesBean resultInvolvement = null;
     private List<PartyTypeBean> partyTypes = null;
+    
+    private String targetCaseId=null;
 
     /**
      * Creates new form AddAddressSearchDialog
      * @param parent
      * @param modal
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal) {
+    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, String targetCaseId) {
         super(parent, modal);
         initComponents();
+        
+        this.targetCaseId=targetCaseId;
 
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
 
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Straße", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
@@ -727,8 +731,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         ClientSettings s = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
-            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            this.partyTypes = afRem.getAllPartyTypes();
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            this.partyTypes = sys.getPartyTypes();
         } catch (Throwable t) {
             log.error("Error getting party types", t);
             JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -948,7 +952,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         int row = this.tblResults.getSelectedRow();
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this);
+        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this.targetCaseId, this);
 
         this.resultAddress = id.getAddressDTO();
         ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
@@ -1042,7 +1046,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new AddAddressSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1062,6 +1066,9 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
     @Override
     public void valueChanged(ListSelectionEvent arg0) {
         int row = this.tblResults.getSelectedRow();
+        if(row<0)
+            return;
+        
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
         this.resultAddress = id.getAddressDTO();
         if(this.resultAddress.getDefaultRole()!=null && !("".equalsIgnoreCase(this.resultAddress.getDefaultRole()))) {

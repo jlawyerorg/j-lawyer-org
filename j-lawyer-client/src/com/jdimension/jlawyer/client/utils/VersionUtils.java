@@ -676,7 +676,7 @@ public class VersionUtils {
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
     public static String getClientVersion() {
-        return "2.2";
+        return "2.6";
     }
 
     public static String getPatchLevel() {

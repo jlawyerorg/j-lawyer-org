@@ -684,7 +684,6 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -692,17 +691,18 @@ import org.apache.log4j.Logger;
  */
 public class MultiAddressSearchDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(MultiAddressSearchDialog.class.getName());
-    private HashMap<AddressBean, String> resultAddresses = new HashMap<AddressBean, String>();
+    private HashMap<AddressBean, String> resultAddresses = new HashMap<>();
 
     /**
      * Creates new form MultiAddressSearchDialog
+     * @param parent
+     * @param modal
      */
     public MultiAddressSearchDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Straße", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

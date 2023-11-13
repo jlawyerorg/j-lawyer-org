@@ -696,6 +696,8 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form DocumentsBinDialog
+     * @param parent
+     * @param modal
      */
     public DocumentsBinDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

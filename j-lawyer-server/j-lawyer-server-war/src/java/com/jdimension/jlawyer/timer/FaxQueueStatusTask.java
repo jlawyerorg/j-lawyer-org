@@ -665,8 +665,6 @@ package com.jdimension.jlawyer.timer;
 
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ServerSettingsBean;
-import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import com.jdimension.jlawyer.services.VoipServiceLocal;
 import com.jdimension.jlawyer.sip.SipUtils;
@@ -674,7 +672,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.security.RunAs;
-import javax.jms.*;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -686,8 +683,6 @@ import org.apache.log4j.Logger;
 public class FaxQueueStatusTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(FaxQueueStatusTask.class.getName());
-//    private static DecimalFormat df=new DecimalFormat("##0");
-//    private static SimpleDateFormat dateF=new SimpleDateFormat("dd.MM.yyy HH:mm:ss");
 
     public FaxQueueStatusTask() {
 
@@ -698,17 +693,12 @@ public class FaxQueueStatusTask extends java.util.TimerTask {
 
         try {
             InitialContext ic = new InitialContext();
-            //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
-            ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             SingletonServiceLocal singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
-            //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
-
-            //VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("j-lawyer-server/VoipService/local");
+            
             VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/VoipService!com.jdimension.jlawyer.services.VoipServiceLocal");
 
             FaxQueueBeanFacadeLocal faxQ = (FaxQueueBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FaxQueueBeanFacade!com.jdimension.jlawyer.persistence.FaxQueueBeanFacadeLocal");
             List<FaxQueueBean> entries = faxQ.findAll();
-            boolean changes = false;
             int failed = 0;
             for (FaxQueueBean fb : entries) {
                 try {
@@ -717,13 +707,11 @@ public class FaxQueueStatusTask extends java.util.TimerTask {
                         String newStatus = voip.getSessionStatus(fb.getSessionId(), fb.getSentBy());
                         if (!(newStatus).equalsIgnoreCase(currentStatus)) {
                             // update entry
-                            changes = true;
                             fb.setLastStatus(newStatus);
                             fb.setLastStatusDate(new Date());
                             faxQ.edit(fb);
 
                             if (SipUtils.isFailStatus(newStatus)) {
-                                //this.publishFailStatus(fb);
                                 failed = failed + 1;
                                 singleton.setFailedFax(fb);
                             }
@@ -738,13 +726,10 @@ public class FaxQueueStatusTask extends java.util.TimerTask {
                 singleton.setFailedFax(null);
             }
 
-            //if(changes) {
-            ArrayList<FaxQueueBean> list = new ArrayList<FaxQueueBean>();
+            ArrayList<FaxQueueBean> list = new ArrayList<>();
             list.addAll(faxQ.findAll());
-            //this.publishQueueList(list);
             singleton.setFaxQueue(list);
-            //}
-
+            
         } catch (Throwable ex) {
             log.error("Error checking fax statuses", ex);
         }

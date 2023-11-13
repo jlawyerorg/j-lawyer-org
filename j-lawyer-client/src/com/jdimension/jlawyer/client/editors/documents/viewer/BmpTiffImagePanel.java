@@ -676,17 +676,17 @@ import org.apache.log4j.Logger;
  */
 public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log=Logger.getLogger(BmpTiffImagePanel.class.getName());
-    
+    private static final Logger log = Logger.getLogger(BmpTiffImagePanel.class.getName());
+
     /**
      * Creates new form PlaintextPanel
+     *
+     * @param content
      */
     public BmpTiffImagePanel(byte[] content) {
         initComponents();
         ThreadUtils.updateLabel(this.lblContent, "");
-        
-        
-        
+
     }
 
     /**
@@ -731,37 +731,30 @@ public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPane
 
     @Override
     public void showContent(byte[] content) {
-        
+
         try {
-        
-        Image image=ImageIO.read(new ByteArrayInputStream(content));
-        
-        //ImageIcon imageIcon = new ImageIcon(content); // load the image to a imageIcon
-        //Image image = imageIcon.getImage(); // transform it
-        ImageIcon imageIcon=new ImageIcon(image);
-        
-        
-        int height=Math.max(this.getHeight(), 200);
-        float scaleFactor=(float)height/(float)imageIcon.getIconHeight();
-        int width=(int)((float)imageIcon.getIconWidth()*scaleFactor);
-        Image newimg=image.getScaledInstance(width,height,Image.SCALE_FAST);
-        
-        
-        
-	        
-                //float scaleFactor=(float)((float)this.getWidth()/(float)imageIcon.getIconWidth());
-	        //Image newimg = image.getScaledInstance(this.getWidth(), (int)((float)imageIcon.getIconHeight()*scaleFactor),  java.awt.Image.SCALE_FAST); // scale it the smooth way 
-	        
-        imageIcon = new ImageIcon(newimg);  // transform it back
-        
-        this.lblContent.setSize(this.getWidth(),this.lblContent.getHeight());
-        ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
-        
+
+            Image image = ImageIO.read(new ByteArrayInputStream(content));
+
+            ImageIcon imageIcon = new ImageIcon(image);
+
+            // need to subtract the height of the page navigation buttons, but
+            // the panel has not been layed out yet, so there is no height we could query
+            int height = Math.max(this.getHeight() - 35, 200);
+
+            float scaleFactor = (float) height / (float) imageIcon.getIconHeight();
+            int width = (int) ((float) imageIcon.getIconWidth() * scaleFactor);
+            Image newimg = image.getScaledInstance(width, height, Image.SCALE_FAST);
+
+            imageIcon = new ImageIcon(newimg);  // transform it back
+
+            this.lblContent.setSize(this.getWidth(), this.lblContent.getHeight());
+            ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
+
         } catch (Throwable t) {
             log.error("Errors loading image");
             ThreadUtils.updateLabel(lblContent, "Vorschau nicht verfügbar");
         }
     }
-    
-    
+
 }

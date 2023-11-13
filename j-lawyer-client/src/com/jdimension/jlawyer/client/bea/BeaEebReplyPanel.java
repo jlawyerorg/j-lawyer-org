@@ -742,7 +742,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdEebConfirm.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdEebConfirm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdEebConfirm.setToolTipText("eEB abgeben");
         cmdEebConfirm.setMargin(new java.awt.Insets(0, 0, 0, 0));
@@ -752,7 +751,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdEebDeny.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdEebDeny.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdEebDeny.setToolTipText("eEB zurückweisen");
         cmdEebDeny.setMargin(new java.awt.Insets(0, 0, 0, 0));

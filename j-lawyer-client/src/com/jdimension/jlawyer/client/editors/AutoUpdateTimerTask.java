@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -679,12 +680,9 @@ import java.awt.Component;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -758,8 +756,8 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String backupmode = set.getSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "off");
 
             // anonymous - identify as unique installation, but we don't care about personal details.
-            String installationHash = md5(zip + " " + company);
-            String userHash = md5(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            String installationHash = StringUtils.md5(zip + " " + company);
+            String userHash = StringUtils.md5(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
             String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
 
@@ -827,10 +825,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String urlHelp = nl.item(0).getTextContent();
             settings.setUrlHelp(urlHelp);
 
-            nl = doc.getElementsByTagName("urlxjustiz");
-            String urlXjustiz = nl.item(0).getTextContent();
-            settings.setUrlXjustiz(urlXjustiz);
-
             nl = doc.getElementsByTagName("bea-enabled-versions");
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
@@ -860,26 +854,4 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
     }
 
-    private static String md5(String plaintext) {
-
-        try {
-
-            MessageDigest m = MessageDigest.getInstance("MD5");
-
-            m.reset();
-
-            m.update(plaintext.getBytes("UTF-8"));
-
-            byte[] digest = m.digest();
-
-            BigInteger bigInt = new BigInteger(1, digest);
-
-            String hashtext = bigInt.toString(16);
-
-            return hashtext;
-        } catch (Throwable t) {
-            log.error(t);
-            return "" + plaintext.hashCode();
-        }
-    }
 }

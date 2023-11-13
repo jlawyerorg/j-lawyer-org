@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
@@ -687,6 +686,7 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
 
     /**
      * Creates new form SampleStep1
+     * @param dialogType
      */
     public DocumentsStep(int dialogType) {
         initComponents();
@@ -700,12 +700,12 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
     }
     
     private void storeData() {
-        ArrayList<ArchiveFileDocumentsBean> drebDocs=new ArrayList<ArchiveFileDocumentsBean>();
+        ArrayList<ArchiveFileDocumentsBean> drebDocs=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblDocuments.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
-            if(enabled.booleanValue()) {
+            if(enabled) {
                 // user chose to submit this document
                 
                 // columns: 0 submit, 1 datum, 2 name, 3 dictatesign
@@ -718,24 +718,21 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
         
         this.data.put("documents.drebisdocumentbeans", drebDocs);
         
-        return;
     }
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         this.storeData();
-        return;
     }
 
     @Override
     public void cancelledEvent() {
-        return;
+        
     }
 
     @Override
     public void finishedEvent() {
-        return;
+        
     }
 
     /**
@@ -826,7 +823,6 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
         } else {
             insTest=this.data.get("claimdetails.insurance");
         }
-        //InsuranceInfo ins = (InsuranceInfo) this.data.get("claimdetails.insurance");
         InsuranceInfo ins=null;
         if (insTest != null && insTest instanceof InsuranceInfo) {
             ins=(InsuranceInfo)insTest;
@@ -855,13 +851,12 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
         } else {
             ArrayList<ArchiveFileDocumentsBean> docs = (ArrayList<ArchiveFileDocumentsBean>) data.get("documents.documentbeans");
             ArrayList<ArchiveFileDocumentsBean> selDocs = (ArrayList<ArchiveFileDocumentsBean>) data.get("documents.documentbeans.selected");
-            SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
             for (ArchiveFileDocumentsBean d : docs) {
                 Vector row = new Vector();
                 if (selDocs.contains(d)) {
-                    row.add(new Boolean(true));
+                    row.add(true);
                 } else {
-                    row.add(new Boolean(false));
+                    row.add(false);
                 }
                 row.add(d);
                 row.add(d.getName());
@@ -872,12 +867,15 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
             ComponentUtils.autoSizeColumns(tblDocuments);
         }
 
-
-        return;
     }
 
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

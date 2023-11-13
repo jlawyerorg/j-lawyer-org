@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 
 /**
@@ -673,6 +674,8 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form CalculationPluginDialog
+     * @param parent
+     * @param modal
      */
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -682,11 +685,27 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form CalculationPluginDialog
+     * @param parent
+     * @param modal
+     * @param pluginUi
      */
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal, JPanel pluginUi) {
         this(parent, modal);
         this.scrollMain.setViewportView(pluginUi);
         
+    }
+    
+    /**
+     * Creates new form CalculationPluginDialog
+     * @param parent
+     * @param modal
+     * @param pluginUi
+     */
+    public CalculationPluginDialog(JDialog parent, boolean modal, JPanel pluginUi) {
+        super(parent, modal);
+        initComponents();
+        this.scrollMain.setViewportView(pluginUi);
+        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
     }
     
     public void setHeader(String h) {
@@ -712,9 +731,10 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
+        lblDescription.setFont(lblDescription.getFont());
         lblDescription.setText("Pluginbeschreibung");
 
-        lblUpdated.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblUpdated.setFont(lblUpdated.getFont().deriveFont(lblUpdated.getFont().getSize()-2f));
         lblUpdated.setText("aktualisiert am");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -727,7 +747,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
                     .addComponent(scrollMain)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addGap(0, 824, Short.MAX_VALUE))
+                        .addGap(0, 842, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(lblUpdated)))
@@ -739,7 +759,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(lblDescription)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollMain, javax.swing.GroupLayout.DEFAULT_SIZE, 623, Short.MAX_VALUE)
+                .addComponent(scrollMain, javax.swing.GroupLayout.DEFAULT_SIZE, 716, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblUpdated)
                 .addContainerGap())
@@ -776,17 +796,15 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                CalculationPluginDialog dialog = new CalculationPluginDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            CalculationPluginDialog dialog = new CalculationPluginDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

@@ -677,11 +677,13 @@ public class AboutDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AboutDialog
+     * @param parent
+     * @param modal
      */
     public AboutDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         
         sb.append("<html>");
         sb.append("<br/>");
@@ -736,7 +738,6 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setResizable(false);
 
         cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdOk.setText("OK");
@@ -748,6 +749,7 @@ public class AboutDialog extends javax.swing.JDialog {
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/agpl-v3.png"))); // NOI18N
 
+        lblInfos.setFont(lblInfos.getFont().deriveFont(lblInfos.getFont().getStyle() | java.awt.Font.BOLD));
         lblInfos.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblInfos.setText("jLabel2");
         lblInfos.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -755,7 +757,7 @@ public class AboutDialog extends javax.swing.JDialog {
         txtLicenses.setEditable(false);
         jScrollPane1.setViewportView(txtLicenses);
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 1, 7)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getSize()-5f));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Logo CC-BY Christian Cadena");
 
@@ -838,19 +840,16 @@ public class AboutDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                AboutDialog dialog = new AboutDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            AboutDialog dialog = new AboutDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

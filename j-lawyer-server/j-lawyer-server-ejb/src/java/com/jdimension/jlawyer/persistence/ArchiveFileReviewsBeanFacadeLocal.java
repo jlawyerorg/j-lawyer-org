@@ -689,6 +689,8 @@ public interface ArchiveFileReviewsBeanFacadeLocal {
     
     public List<ArchiveFileReviewsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
     
+    public List<ArchiveFileReviewsBean> findByArchiveFileKeyAndDone(ArchiveFileBean archiveFileKey, boolean done);
+    
     public List<ArchiveFileReviewsBean> findByDone(boolean done);
 
     public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup calendar);

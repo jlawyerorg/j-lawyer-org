@@ -672,6 +672,7 @@ import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
@@ -689,7 +690,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  */
 public class FormPluginCallback {
 
-    private static Logger log = Logger.getLogger(FormPluginCallback.class.getName());
+    private static final Logger log = Logger.getLogger(FormPluginCallback.class.getName());
 
     private ArchiveFileBean selectedCase = null;
 
@@ -702,9 +703,21 @@ public class FormPluginCallback {
     }
     
     public void processResultToClipboard(Object r) {
+        this.processResultToClipboardAsHtml(r);
+    }
+    
+    public void processResultToClipboardAsHtml(Object r) {
         System.out.println("received result: " + r.toString());
 
         HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }
+    
+    public void processResultToClipboardAsText(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        StringSelection stsel = new StringSelection(r.toString());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
         system.setContents(stsel, null);
     }
@@ -718,7 +731,7 @@ public class FormPluginCallback {
 
                 if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel) {
                     Object editor = EditorsRegistry.getInstance().getCurrentEditor();
-                    ((ArchiveFilePanel) editor).newDocumentDialog(table);
+                    ((ArchiveFilePanel) editor).newDocumentDialog(table, null, null, null);
                 }
 
             } catch (Exception ex) {
@@ -778,18 +791,21 @@ public class FormPluginCallback {
 
         }
 
+        @Override
         public DataFlavor[] getTransferDataFlavors() {
 
             return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
 
         }
 
+        @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
 
             return htmlFlavors.contains(flavor);
 
         }
 
+        @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
 
             if (String.class.equals(flavor.getRepresentationClass())) {

@@ -663,13 +663,18 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import javax.ejb.Local;
+import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -677,6 +682,10 @@ import javax.ejb.Local;
  */
 @Local
 public interface SystemManagementLocal {
+    
+    public static final int TEMPLATE_TYPE_BODY=10;
+    public static final int TEMPLATE_TYPE_HEAD=20;
+    
     public String getServerVersion();
     public void statusMail(String subject, String body);
     public MonitoringSnapshot getMonitoringSnapshot();
@@ -687,7 +696,7 @@ public interface SystemManagementLocal {
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
     
@@ -696,4 +705,18 @@ public interface SystemManagementLocal {
     List<MappingTable> getMappingTables();
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
+    
+    List<String> getAllOptionGroups();
+    
+    AppOptionGroupBean[] getOptionGroup(String optionGroup);
+    
+    GenericNode getAllTemplatesTree(int templateType) throws Exception;
+
+    String getTemplatesBaseDir(int templateType) throws Exception;
+
+    List<String> getTemplatesByPath(int templateType, String folder) throws Exception;
+    
+    List<String> getPlaceHoldersForTemplate(int templateType, String templatePath, String templateName, String caseId) throws Exception;
+    
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception;
 }

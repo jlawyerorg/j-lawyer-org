@@ -871,12 +871,12 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.jaxb-api-2.3.1.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jaxb-core-2.3.0.1.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jaxb-impl-2.3.2.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.poi-4.1.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.poi-excelant-4.1.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.poi-ooxml-4.1.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.poi-scratchpad-4.1.1.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.curvesapi-1.06.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-4.1.2.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-excelant-4.1.2.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-ooxml-4.1.2.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.2.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-scratchpad-4.1.2.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.xmlbeans-3.1.0.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.libphonenumber-8.12.18.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.j-lawyer-cloud.jar}" todir="${build.classes.dir}"/>
@@ -928,12 +928,12 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.jaxb-api-2.3.1.jar}" property="manifest.file.reference.jaxb-api-2.3.1.jar"/>
         <basename file="${file.reference.jaxb-core-2.3.0.1.jar}" property="manifest.file.reference.jaxb-core-2.3.0.1.jar"/>
         <basename file="${file.reference.jaxb-impl-2.3.2.jar}" property="manifest.file.reference.jaxb-impl-2.3.2.jar"/>
-        <basename file="${file.reference.poi-4.1.1.jar}" property="manifest.file.reference.poi-4.1.1.jar"/>
-        <basename file="${file.reference.poi-excelant-4.1.1.jar}" property="manifest.file.reference.poi-excelant-4.1.1.jar"/>
-        <basename file="${file.reference.poi-ooxml-4.1.1.jar}" property="manifest.file.reference.poi-ooxml-4.1.1.jar"/>
-        <basename file="${file.reference.poi-ooxml-schemas-4.1.1.jar}" property="manifest.file.reference.poi-ooxml-schemas-4.1.1.jar"/>
-        <basename file="${file.reference.poi-scratchpad-4.1.1.jar}" property="manifest.file.reference.poi-scratchpad-4.1.1.jar"/>
         <basename file="${file.reference.curvesapi-1.06.jar}" property="manifest.file.reference.curvesapi-1.06.jar"/>
+        <basename file="${file.reference.poi-4.1.2.jar}" property="manifest.file.reference.poi-4.1.2.jar"/>
+        <basename file="${file.reference.poi-excelant-4.1.2.jar}" property="manifest.file.reference.poi-excelant-4.1.2.jar"/>
+        <basename file="${file.reference.poi-ooxml-4.1.2.jar}" property="manifest.file.reference.poi-ooxml-4.1.2.jar"/>
+        <basename file="${file.reference.poi-ooxml-schemas-4.1.2.jar}" property="manifest.file.reference.poi-ooxml-schemas-4.1.2.jar"/>
+        <basename file="${file.reference.poi-scratchpad-4.1.2.jar}" property="manifest.file.reference.poi-scratchpad-4.1.2.jar"/>
         <basename file="${file.reference.xmlbeans-3.1.0.jar}" property="manifest.file.reference.xmlbeans-3.1.0.jar"/>
         <basename file="${file.reference.libphonenumber-8.12.18.jar}" property="manifest.file.reference.libphonenumber-8.12.18.jar"/>
         <basename file="${file.reference.j-lawyer-cloud.jar}" property="manifest.file.reference.j-lawyer-cloud.jar"/>
@@ -985,12 +985,12 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-42-Extension-Name" value="${manifest.file.reference.jaxb-api-2.3.1.jar}"/>
             <attribute name="jar-43-Extension-Name" value="${manifest.file.reference.jaxb-core-2.3.0.1.jar}"/>
             <attribute name="jar-44-Extension-Name" value="${manifest.file.reference.jaxb-impl-2.3.2.jar}"/>
-            <attribute name="jar-45-Extension-Name" value="${manifest.file.reference.poi-4.1.1.jar}"/>
-            <attribute name="jar-46-Extension-Name" value="${manifest.file.reference.poi-excelant-4.1.1.jar}"/>
-            <attribute name="jar-47-Extension-Name" value="${manifest.file.reference.poi-ooxml-4.1.1.jar}"/>
-            <attribute name="jar-48-Extension-Name" value="${manifest.file.reference.poi-ooxml-schemas-4.1.1.jar}"/>
-            <attribute name="jar-49-Extension-Name" value="${manifest.file.reference.poi-scratchpad-4.1.1.jar}"/>
-            <attribute name="jar-50-Extension-Name" value="${manifest.file.reference.curvesapi-1.06.jar}"/>
+            <attribute name="jar-45-Extension-Name" value="${manifest.file.reference.curvesapi-1.06.jar}"/>
+            <attribute name="jar-46-Extension-Name" value="${manifest.file.reference.poi-4.1.2.jar}"/>
+            <attribute name="jar-47-Extension-Name" value="${manifest.file.reference.poi-excelant-4.1.2.jar}"/>
+            <attribute name="jar-48-Extension-Name" value="${manifest.file.reference.poi-ooxml-4.1.2.jar}"/>
+            <attribute name="jar-49-Extension-Name" value="${manifest.file.reference.poi-ooxml-schemas-4.1.2.jar}"/>
+            <attribute name="jar-50-Extension-Name" value="${manifest.file.reference.poi-scratchpad-4.1.2.jar}"/>
             <attribute name="jar-51-Extension-Name" value="${manifest.file.reference.xmlbeans-3.1.0.jar}"/>
             <attribute name="jar-52-Extension-Name" value="${manifest.file.reference.libphonenumber-8.12.18.jar}"/>
             <attribute name="jar-53-Extension-Name" value="${manifest.file.reference.j-lawyer-cloud.jar}"/>
@@ -1043,12 +1043,12 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.jaxb-api-2.3.1.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jaxb-core-2.3.0.1.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jaxb-impl-2.3.2.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.poi-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.poi-excelant-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.poi-ooxml-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.poi-scratchpad-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.curvesapi-1.06.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-4.1.2.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-excelant-4.1.2.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-ooxml-4.1.2.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.2.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-scratchpad-4.1.2.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.xmlbeans-3.1.0.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.libphonenumber-8.12.18.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.j-lawyer-cloud.jar}" todir="${dist.ear.dir}/lib"/>

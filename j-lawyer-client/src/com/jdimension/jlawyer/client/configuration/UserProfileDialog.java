@@ -677,7 +677,6 @@ import java.util.Arrays;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -696,21 +695,13 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form UserProfileDialog
+     * @param parent
+     * @param modal
      */
     public UserProfileDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
-//        try {
-//            Enumeration<URL> urls=ClassLoader.getSystemClassLoader().getResources("avatar32");
-//            while(urls.hasMoreElements()) {
-//                URL url=urls.nextElement();
-//                System.out.println(url.getFile() + url.getPath());
-//            }
-//            
-//        } catch (IOException ex) {
-//            log.error("Could not find avatars", ex);
-//        }
         this.names = new Object[]{
             "aim_protocol.png",
             "babelfish.png",
@@ -801,8 +792,6 @@ public class UserProfileDialog extends javax.swing.JDialog {
         this.cmbAvatar.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> jlist, Object o, int i, boolean selected, boolean cellHasFocus) {
-//                JLabel label=new JLabel();
-//                label.setText("");
 
                 this.setText("");
                 this.setOpaque(true);
@@ -825,7 +814,6 @@ public class UserProfileDialog extends javax.swing.JDialog {
         });
 
         String currentIcon = UserSettings.getInstance().getSetting(UserSettings.USER_AVATAR, "identity.png");
-        //int selectedIndex=Arrays.binarySearch(names, currentIcon);
         int selectedIndex = new java.util.ArrayList(Arrays.asList(names)).indexOf(currentIcon);
         this.cmbAvatar.setSelectedIndex(Math.max(0, selectedIndex));
 
@@ -1071,19 +1059,16 @@ public class UserProfileDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                UserProfileDialog dialog = new UserProfileDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            UserProfileDialog dialog = new UserProfileDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

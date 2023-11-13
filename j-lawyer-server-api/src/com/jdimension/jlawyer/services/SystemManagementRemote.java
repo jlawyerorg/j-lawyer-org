@@ -668,11 +668,13 @@ import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import javax.ejb.Remote;
 import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -680,6 +682,9 @@ import org.jlawyer.data.tree.GenericNode;
  */
 @Remote
 public interface SystemManagementRemote {
+    
+    public static final int TEMPLATE_TYPE_BODY=10;
+    public static final int TEMPLATE_TYPE_HEAD=20;
 
     AppOptionGroupBean[] getOptionGroup(String optionGroup);
 
@@ -699,7 +704,7 @@ public interface SystemManagementRemote {
 
     void removeOptionGroup(String id);
 
-    boolean addFromMasterTemplate(String fileName, String basedOnFileName) throws Exception;
+    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception;
     
     public void clearCurrentBackup();
 
@@ -714,10 +719,16 @@ public interface SystemManagementRemote {
     void deleteUser(String principalId);
 
     ServerInformation getServerInformation();
+    
+    Properties getSystemProperties();
+    
+    String getServerLogs(int numberOfLines) throws Exception;
 
     ServerSettingsBean getSetting(String key);
 
     boolean setSetting(String key, String value);
+    
+    List<String> getAllOptionGroups();
 
     AppUserBean getUser(String principalId);
 
@@ -727,7 +738,7 @@ public interface SystemManagementRemote {
     
     void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
     
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd) throws Exception;
+    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
 
     boolean validateFileOnServer(File file, boolean isDirectory);
 
@@ -743,37 +754,37 @@ public interface SystemManagementRemote {
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
 
-    boolean addTemplate(GenericNode folder, String fileName, byte[] data) throws Exception;
+    boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
 
-    boolean addTemplateFromTemplate(GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
+    boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
 
-    boolean deleteTemplate(GenericNode folder, String fileName) throws Exception;
+    boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception;
 
-    GenericNode getAllTemplatesTree() throws Exception;
+    GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
-    byte[] getTemplateData(GenericNode folder, String fileName) throws Exception;
+    byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception;
 
-    void setTemplateData(GenericNode folder, String fileName, byte[] content) throws Exception;
+    void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception;
 
-    boolean addTemplateFolder(GenericNode parent, String folderName) throws Exception;
+    boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
 
-    boolean deleteTemplateFolder(GenericNode parent, String folderName) throws Exception;
+    boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
 
-    boolean renameTemplateFolder(GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
+    boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
 
-    List<String> getTemplatesInFolder(GenericNode folder) throws Exception;
+    List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception;
 
-    boolean addFromMasterTemplate(String fileName, String basedOnFileName, GenericNode folder) throws Exception;
+    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception;
 
-    List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
+    List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
 
-    List<GenericNode> searchTemplateFolders(String query) throws Exception;
+    List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
 
-    String getTemplatePreview(GenericNode folder, String fileName) throws Exception;
+    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
 
-    void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception;
+    void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
 
-    Collection<PartyTypeBean> getPartyTypes();
+    List<PartyTypeBean> getPartyTypes();
 
     Hashtable<String,PartyTypeBean> getPartyTypesTable();
 
@@ -800,5 +811,7 @@ public interface SystemManagementRemote {
     void deleteMappingTable(String tableName) throws Exception;
 
     MappingTable updateMappingTable(MappingTable mt) throws Exception;
+
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception;
     
 }

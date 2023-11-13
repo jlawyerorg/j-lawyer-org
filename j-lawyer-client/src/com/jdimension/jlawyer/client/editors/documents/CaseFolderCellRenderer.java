@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.editors.documents;
 import java.awt.Color;
 import java.awt.Component;
 import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 /**
@@ -696,11 +695,6 @@ public class CaseFolderCellRenderer extends DefaultTreeCellRenderer {
             this.defaultBackground=this.getBackground();
         
         this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
-
-
-        if (((DefaultMutableTreeNode) object).getUserObject() == null) {
-            return this;
-        }
 
         return this;
     }

@@ -692,7 +692,7 @@ public final class PasswordGenerator {
         .useLower(true)
         .useUpper(true)
         .build();
-    String password = passwordGenerator.generate(8);
+    String password = passwordGenerator.generate(10);
     */
 
     private PasswordGenerator() {
@@ -789,9 +789,9 @@ public final class PasswordGenerator {
         }
 
         /**
-         * Get an object to use.
+         * Get an object to use.object.
          *
-         * object.
+         * @return
          */
         public PasswordGenerator build() {
             return new PasswordGenerator(this);

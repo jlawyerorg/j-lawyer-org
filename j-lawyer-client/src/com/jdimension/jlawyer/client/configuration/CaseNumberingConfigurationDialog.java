@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ItemEvent;
 import javax.swing.DefaultListModel;
-import javax.swing.JOptionPane;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -681,6 +680,8 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form CaseNumberingConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public CaseNumberingConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -884,12 +885,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
 
         txtCustom.setText("nnnnn/YY");
         txtCustom.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtCustomKeyTyped(evt);
-            }
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtCustomKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtCustomKeyReleased(evt);
             }
@@ -899,9 +894,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
 
         txtStartFrom.setText("1");
         txtStartFrom.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtStartFromKeyTyped(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtStartFromKeyReleased(evt);
             }
@@ -1038,7 +1030,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        lblHint.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblHint.setFont(lblHint.getFont().deriveFont(lblHint.getFont().getStyle() | java.awt.Font.BOLD, lblHint.getFont().getSize()+2));
         lblHint.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblHint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/info.png"))); // NOI18N
         lblHint.setText("Hinweise");
@@ -1110,22 +1102,20 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdSave)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCancel))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 746, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jLabel5)
+                        .addGap(9, 9, 9)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1)
+                            .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 569, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1134,20 +1124,17 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(92, 92, 92)
-                        .addComponent(lblError))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addComponent(jLabel5)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblError)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -1229,20 +1216,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_opt_customItemStateChanged
 
-    private void txtCustomKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCustomKeyTyped
-//        if(this.opt_custom.isSelected()) {
-//            this.selectePattern=this.txtCustom.getText();
-//            this.updatePreview();
-//        }
-    }//GEN-LAST:event_txtCustomKeyTyped
-
-    private void txtCustomKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCustomKeyPressed
-//        if(this.opt_custom.isSelected()) {
-//            this.selectePattern=this.txtCustom.getText();
-//            this.updatePreview();
-//        }
-    }//GEN-LAST:event_txtCustomKeyPressed
-
     private void txtCustomKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCustomKeyReleased
         if(this.opt_custom.isSelected()) {
             if(!(this.txtCustom.getText().equals(this.selectePattern))) {
@@ -1252,10 +1225,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_txtCustomKeyReleased
-
-    private void txtStartFromKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtStartFromKeyTyped
-        //this.updatePreview();
-    }//GEN-LAST:event_txtStartFromKeyTyped
 
     private void txtStartFromKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtStartFromKeyReleased
         this.updatePreview();
@@ -1354,19 +1323,16 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                CaseNumberingConfigurationDialog dialog = new CaseNumberingConfigurationDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            CaseNumberingConfigurationDialog dialog = new CaseNumberingConfigurationDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

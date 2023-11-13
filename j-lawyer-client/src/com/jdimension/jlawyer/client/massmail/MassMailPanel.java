@@ -778,7 +778,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Serienschreiben");
 
@@ -956,7 +956,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     }//GEN-LAST:event_cmdAddCampaignActionPerformed
 
     private void cmbCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCampaignActionPerformed
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Straße", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

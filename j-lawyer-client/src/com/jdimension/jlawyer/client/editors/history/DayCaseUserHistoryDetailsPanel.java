@@ -710,7 +710,7 @@ public class DayCaseUserHistoryDetailsPanel extends javax.swing.JPanel {
         setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
         lblUserAndTime.setBackground(new java.awt.Color(153, 102, 255));
-        lblUserAndTime.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUserAndTime.setFont(lblUserAndTime.getFont().deriveFont(lblUserAndTime.getFont().getStyle() | java.awt.Font.BOLD));
         lblUserAndTime.setForeground(new java.awt.Color(255, 255, 255));
         lblUserAndTime.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUserAndTime.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar16/identity.png"))); // NOI18N
@@ -736,7 +736,7 @@ public class DayCaseUserHistoryDetailsPanel extends javax.swing.JPanel {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

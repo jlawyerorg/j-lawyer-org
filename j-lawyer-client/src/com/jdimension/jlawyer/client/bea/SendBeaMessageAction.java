@@ -678,10 +678,8 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -703,17 +701,15 @@ import org.jlawyer.bea.model.ProcessCard;
 public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     List<BeaAttachmentMetadata> attachments = null;
-    private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
-    private Identity to = null;
+    private List<Identity> recipients = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
-    private CaseFolder folder=null;
+    private CaseFolder folder = null;
     private String documentTag = null;
 
     private String azSender = null;
@@ -721,12 +717,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private String msgType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
-        this.cu = cu;
         this.readReceipt = readReceipt;
-        this.to = to;
+        this.recipients = to;
         this.subject = subject;
         this.body = body;
         this.fromSafeId = fromSafeId;
@@ -738,15 +733,18 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
-        this.folder=folder;
+        this.folder = folder;
     }
 
     @Override
     public int getMax() {
-        return 8;
+        if(this.recipients==null)
+            return 8;
+        else
+            return 8 * this.recipients.size();
     }
 
     @Override
@@ -759,214 +757,207 @@ public class SendBeaMessageAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         BeaAccess bea = BeaAccess.getInstance();
-        //long sentId = -1;
-        Message sentMessage = null;
-        Message msg = new Message();
-        msg.setMessageType(msgType);
-        String recipientsText = "";
 
-        try {
-            this.progress("Erstelle Nachricht...");
+        for (Identity to : recipients) {
 
-            msg.setSubject(subject);
-            msg.setBody(body);
-            if (this.azSender != null && !("".equals(this.azSender))) {
-                msg.setReferenceNumber(this.azSender);
+            if(to==null)
+                continue;
+            
+            Message sentMessage = null;
+            Message msg = new Message();
+            msg.setMessageType(msgType);
+            String recipientsText = "";
+
+            try {
+                this.progress("Erstelle Nachricht...");
+
+                msg.setSubject(subject);
+                msg.setBody(body);
+                if (this.azSender != null && !("".equals(this.azSender))) {
+                    msg.setReferenceNumber(this.azSender);
+                }
+
+                if (this.azRecipient != null && !("".equals(this.azRecipient))) {
+                    msg.setReferenceJustice(this.azRecipient);
+                }
+
+                recipientsText = to.toString();
+
+                String senderSafeId = this.fromSafeId;
+
+                for (BeaAttachmentMetadata meta : this.attachments) {
+                    Attachment att = new Attachment();
+                    File f = new File(meta.getUrl());
+                    att.setFileName(f.getName());
+                    att.setAlias(meta.getAlias());
+                    att.setContent(FileUtils.readFileToByteArray(f));
+                    att.setType(meta.getType());
+                    msg.getAttachments().add(att);
+                }
+
+                if (this.readReceipt) {
+                    msg.setEebRequested(true);
+                } else {
+                    msg.setEebRequested(false);
+                }
+
+                this.progress("Sende an " + to.toString() + "...");
+                String toSafeId = to.getSafeId();
+                sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, toSafeId, this.authority);
+
+            } catch (BeaWrapperException ex) {
+                log.error(ex);
+                JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                throw ex;
             }
 
-            if (this.azRecipient != null && !("".equals(this.azRecipient))) {
-                msg.setReferenceJustice(this.azRecipient);
-            }
+            ProcessCard p = sentMessage.getProcessCard();
+            boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
 
-            if (this.to!=null) {
-                recipientsText=this.to.toString();
-            }
+            Throwable storeException = null;
+            try {
+                if (this.archiveFile != null) {
 
-            String senderSafeId = this.fromSafeId;
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            for (BeaAttachmentMetadata meta : this.attachments) {
-                Attachment att = new Attachment();
-                File f = new File(meta.getUrl());
-                att.setFileName(f.getName());
-                att.setAlias(meta.getAlias());
-                att.setContent(FileUtils.readFileToByteArray(f));
-                att.setType(meta.getType());
-                msg.getAttachments().add(att);
-            }
+                    this.progress("Laden der Nachricht...");
 
-            if (this.readReceipt) {
-                msg.setEebRequested(true);
-            } else {
-                msg.setEebRequested(false);
-            }
+                    Message msgEx = sentMessage;
 
-            this.progress("Sende...");
-            String toSafeId=null;
-            if(this.to!=null) {
-                toSafeId=this.to.getSafeId();
-            }
-            sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, toSafeId, this.authority);
-            System.out.println("sent message " + sentMessage.getId());
+                    this.progress("Warten auf EGVP-Laufzettel...");
 
-        } catch (BeaWrapperException ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            throw ex;
-        }
+                    if (isEgvpRecipient && p == null) {
+                        long maxWaitTime = 120000l;
+                        long start = System.currentTimeMillis();
+                        long waited = 0;
+                        while (p == null && waited < maxWaitTime) {
+                            if (this.isCancelled()) {
+                                break;
+                            }
+                            p = bea.getProcessCards(Long.parseLong(sentMessage.getId()));
+                            if (p != null) {
+                                msgEx.setProcessCard(p);
+                                break;
+                            } else {
+                                waited = System.currentTimeMillis() - start;
+                                try {
+                                    Thread.sleep(1000l);
+                                } catch (Throwable t) {
 
-        ProcessCard p = sentMessage.getProcessCard();
-        boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(this.to.getSafeId());
-
-        Throwable storeException = null;
-        try {
-            if (this.archiveFile != null) {
-
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-                this.progress("Laden der Nachricht...");
-
-                Message msgEx = sentMessage;
-
-                this.progress("Warten auf EGVP-Laufzettel...");
-
-                if (isEgvpRecipient && p == null) {
-                    long maxWaitTime = 120000l;
-                    long start = System.currentTimeMillis();
-                    long waited = 0;
-                    while (p == null && waited < maxWaitTime) {
-                        if (this.isCancelled()) {
-                            break;
-                        }
-                        p = bea.getProcessCards(fromSafeId, Long.parseLong(sentMessage.getId()));
-                        if (p != null) {
-                            msgEx.setProcessCard(p);
-                            break;
-                        } else {
-                            waited = System.currentTimeMillis() - start;
-                            try {
-                                Thread.sleep(1000l);
-                            } catch (Throwable t) {
-
+                                }
                             }
                         }
                     }
+
+                    if (!this.isCancelled()) {
+                        this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
+                        BeaAccess.addSignatureVerification(bea, msgEx);
+                        MessageExport mex = BeaAccess.exportMessage(msgEx);
+
+                        java.util.Date receivedPrefix = msg.getReceptionTime();
+                        if (receivedPrefix == null) {
+                            receivedPrefix = new java.util.Date();
+                        }
+                        String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator, "Datei benennen");
+                        if (newName == null) {
+                            return false;
+                        }
+
+                        if (newName.trim().length() == 0) {
+                            newName = "beA-Nachricht";
+                        }
+                        if (newName.length() > 230) {
+                            newName = newName.substring(0, 229);
+                        }
+
+                        if (!newName.toLowerCase().endsWith(".bea")) {
+                            newName = newName + ".bea";
+                        }
+
+                        boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                        while (documentExists) {
+                            newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(newName, true, receivedPrefix, this.indicator, "Datei benennen");
+                            if (newName == null || "".equals(newName)) {
+                                break;
+                            }
+                            documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                        }
+
+                        if (newName != null) {
+
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null);
+
+                            if (this.documentTag != null && !("".equals(this.documentTag))) {
+                                afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                            }
+
+                            if (this.folder != null) {
+                                ArrayList<String> docList = new ArrayList<>();
+                                docList.add(newDoc.getId());
+                                afs.moveDocumentsToFolder(docList, folder.getId());
+                            }
+
+                            ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                            historyDto.setChangeDate(new Date());
+                            historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText + ": " + msg.getSubject());
+                            afs.addHistory(this.archiveFile.getId(), historyDto);
+
+                            if (folder != null) {
+                                newDoc.setFolder(folder);
+                            }
+                            EventBroker eb = EventBroker.getInstance();
+                            eb.publishEvent(new DocumentAddedEvent(newDoc));
+                        }
+                    }
+                } else {
+                    this.progress("Überspringe Speichern in Akte...");
                 }
 
-                if (!this.isCancelled()) {
-                    this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-                    BeaAccess.addSignatureVerification(bea, msgEx);
-                    MessageExport mex = BeaAccess.exportMessage(msgEx);
-
-                    java.util.Date receivedPrefix = msg.getReceptionTime();
-                    if (receivedPrefix == null) {
-                        receivedPrefix = new java.util.Date();
-                    }
-                    String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator, "Datei benennen");
-                    if (newName == null) {
-                        return false;
-                    }
-
-                    if (newName.trim().length() == 0) {
-                        newName = "beA-Nachricht";
-                    }
-                    if (newName.length() > 230) {
-                        newName = newName.substring(0, 229);
-                    }
-
-                    if (!newName.toLowerCase().endsWith(".bea")) {
-                        newName = newName + ".bea";
-                    }
-
-                    boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
-                    while (documentExists) {
-                        newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(newName, true, receivedPrefix, this.indicator, "Datei benennen");
-                        if (newName == null || "".equals(newName)) {
-                            break;
-                        }
-                        documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
-                    }
-
-                    if (newName != null) {
-
-                        ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
-
-                        if (this.documentTag != null && !("".equals(this.documentTag))) {
-                            afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
-                        }
-                        
-                        if(this.folder != null) {
-                            ArrayList<String> docList = new ArrayList<>();
-                            docList.add(newDoc.getId());
-                            afs.moveDocumentsToFolder(docList, folder.getId());
-                        }
-
-                        ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
-                        historyDto.setChangeDate(new Date());
-                        historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText + ": " + msg.getSubject());
-                        afs.addHistory(this.archiveFile.getId(), historyDto);
-
-                        if(folder!=null)
-                            newDoc.setFolder(folder);
-                        EventBroker eb = EventBroker.getInstance();
-                        eb.publishEvent(new DocumentAddedEvent(newDoc));
-                    }
-                }
-            } else {
-                this.progress("Überspringe Speichern in Akte...");
+            } catch (Throwable t) {
+                log.error("Could not save message to archive file", t);
+                storeException = t;
             }
 
-        } catch (Throwable t) {
-            log.error("Could not save message to archive file", t);
-            storeException = t;
-        }
-
-        boolean egvpError = false;
-        final ProcessCard pCheck = p;
-        if (isEgvpRecipient && p == null) {
-            egvpError = true;
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    indicator.setProgressStringError("Nachricht ohne EGVP-Laufzettel - bitte prüfen!");
-                }
-
-            });
-            Thread.sleep(3000);
-        } else if (isEgvpRecipient && p != null) {
-            if (!(p.isSuccess())) {
+            boolean egvpError = false;
+            final ProcessCard pCheck = p;
+            if (isEgvpRecipient && pCheck == null) {
                 egvpError = true;
-            }
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    indicator.setProgressStringError("Nachricht ohne EGVP-Laufzettel - bitte prüfen!");
+                });
+                Thread.sleep(3000);
+            } else if (isEgvpRecipient && p != null) {
+                if (!(p.isSuccess())) {
+                    egvpError = true;
+                }
+                SwingUtilities.invokeLater(() -> {
                     if (pCheck.isSuccess()) {
                         indicator.setProgressStringSuccess("Nachricht erfolgreich verschickt.");
                     } else {
                         indicator.setProgressStringError("EGVP-Laufzettel: fehlerhafter Nachrichtenversand!");
                     }
+                });
+                Thread.sleep(5000);
 
-                }
-
-            });
-            Thread.sleep(5000);
-
-        }
-
-        for (BeaAttachmentMetadata meta : this.attachments) {
-            File f = new File(meta.getUrl());
-            if (f.exists()) {
-                LauncherFactory.cleanupTempFile(meta.getUrl());
             }
-        }
 
-        if (storeException != null) {
-            throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
-        }
+            for (BeaAttachmentMetadata meta : this.attachments) {
+                File f = new File(meta.getUrl());
+                if (f.exists()) {
+                    LauncherFactory.cleanupTempFile(meta.getUrl());
+                }
+            }
 
-        if (egvpError) {
-            throw new Exception("Nachricht enthielt keinen EGVP-Laufzettel oder der Laufzettel enthielt Fehler - bitte Nachrichtenversand im beA prüfen.");
+            if (storeException != null) {
+                throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
+            }
+
+            if (egvpError) {
+                throw new Exception("Nachricht enthielt keinen EGVP-Laufzettel oder der Laufzettel enthielt Fehler - bitte Nachrichtenversand im beA prüfen.");
+            }
+
         }
 
         return true;

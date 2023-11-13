@@ -667,6 +667,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
 import javax.mail.Folder;
+import javax.mail.MessagingException;
 import org.apache.log4j.Logger;
 
 /**
@@ -674,56 +675,116 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class FolderContainer {
+
+    public static final String INBOX = "INBOX";
+    public static final String SENT = "Sent";
+    public static final String TRASH = "Trash";
+    public static final String DRAFTS = "Drafts";
+
+    private long cachedToStringUpdated = -1;
+    private String cachedToString = null;
     
-    public static final String INBOX="INBOX";
-    public static final String SENT="Sent";
-    public static final String TRASH="Trash";
-    
+    private long cachedUnreadUpdated = -1;
+    private int cachedUnread = -1;
+
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
-    private static Hashtable<String,String> folderNameMapping=new Hashtable<String,String>();
-    
+    private static Hashtable<String, String> folderNameMapping = new Hashtable<>();
+
     static {
         folderNameMapping.put(INBOX, "Posteingang");
         folderNameMapping.put(SENT, "Gesendet");
         folderNameMapping.put(TRASH, "Papierkorb");
+        folderNameMapping.put(DRAFTS, "Entwürfe");
     }
-    
+
     private Folder folder;
-    
+
     public FolderContainer(Folder f) {
-        this.folder=f;
+        this.folder = f;
     }
     
+    public void resetCaches() {
+        this.cachedToStringUpdated=-1;
+        this.cachedUnreadUpdated=-1;
+    }
+    
+    public int getUnreadMessageCount() {
+        
+        // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
+        // default 15mins plus up to 5hrs
+        double retentionTime=((15l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        if(this.folder!=null && this.folder.getName()!=null) {
+            String folderName=this.folder.getName();
+            if(EmailUtils.isInbox(folderName)) {
+                // 5mins plus up to 3min for inbox
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*3l));
+            } else if(EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 15mins plus up to 30min for drafts, sent, trash
+                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*30l));
+            }
+        }
+        
+        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > retentionTime)) {
+            if(this.folder!=null) {
+                try {
+                    this.cachedUnread=this.folder.getUnreadMessageCount();
+                } catch (MessagingException ex) {
+                    log.error("Unable to determine number of unread messages", ex);
+                }
+                this.cachedUnreadUpdated=System.currentTimeMillis();
+            }
+        }
+        return cachedUnread;
+    }
+
+    /*
+    * Called e.g. by the email tree cell renderer, therefore it is performance critical
+    */
     @Override
     public String toString() {
-        try {
-//            if(!this.folder.isOpen())
-//                this.folder.open(Folder.READ_WRITE);
-            String name=this.folder.getName();
-            
-            Set mapKey=folderNameMapping.keySet();
-            Iterator mIt=mapKey.iterator();
-            while(mIt.hasNext()) {
-                String k=mIt.next().toString();
-                if(k.equalsIgnoreCase(name)) {
-                    name=folderNameMapping.get(k);
-                    break;
-                }
+        
+        // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
+        // default 15mins plus up to 5hrs
+        double retentionTime=((15l * 60l * 1000l)+(Math.random()*1000l * 60l * 60l * 5l));
+        if(this.folder!=null && this.folder.getName()!=null) {
+            String folderName=this.folder.getName();
+            if(EmailUtils.isInbox(folderName)) {
+                // 5mins plus up to 3min for inbox
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*3l));
+            } else if(EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                // 15mins plus up to 30min for drafts, sent, trash
+                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*30l));
             }
-            
-//            if(folderNameMapping.containsKey(name.toLowerCase()))
-//                name=folderNameMapping.get(name.toLowerCase());
-            
-            int msgCount=this.folder.getMessageCount();
-            if(msgCount<0)
-                return name;
-            else
-                return name + " (" + msgCount + ")";
-            
-        } catch (Exception ex) {
-            log.error(ex);
-            return this.folder.getName();
         }
+        
+        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > retentionTime)) {
+            try {
+                String name = this.folder.getName();
+
+                Set mapKey = folderNameMapping.keySet();
+                Iterator mIt = mapKey.iterator();
+                while (mIt.hasNext()) {
+                    String k = mIt.next().toString();
+                    if (k.equalsIgnoreCase(name)) {
+                        name = folderNameMapping.get(k);
+                        break;
+                    }
+                }
+
+                int msgCount = this.folder.getMessageCount();
+                cachedToStringUpdated = System.currentTimeMillis();
+                if (msgCount < 0) {
+                    cachedToString = name;
+                } else {
+                    cachedToString = name + " (" + msgCount + ")";
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+                cachedToString = this.folder.getName();
+            }
+        }
+        return cachedToString;
     }
 
     /**
@@ -739,5 +800,5 @@ public class FolderContainer {
     public void setFolder(Folder folder) {
         this.folder = folder;
     }
-    
+
 }

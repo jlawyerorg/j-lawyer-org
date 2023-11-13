@@ -707,6 +707,15 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
     }
     
     @Override
+    public ArchiveFileDocumentsBean findByExternalId(String externalId) {
+        try {
+            return (ArchiveFileDocumentsBean) em.createNamedQuery("ArchiveFileDocumentsBean.findByExternalId").setParameter("externalId", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+    
+    @Override
     public List<ArchiveFileDocumentsBean> findDeleted() {
         
         List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where deleted = true").getResultList();

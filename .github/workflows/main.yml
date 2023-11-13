@@ -48,16 +48,26 @@ jobs:
           wget -O /home/runner/j-lawyer-backup/backups.tar.gz https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
           tar -m -xvzf /home/runner/j-lawyer-backup/backups.tar.gz -C /home/runner/j-lawyer-backup
           
-      - name: Set up JDK8
+#      - name: Set up JDK8
+#        uses: AdoptOpenJDK/install-jdk@v1
+#        with:
+#          version: '8'
+#          architecture: x64
+
+      - name: Set up JDK11
         uses: AdoptOpenJDK/install-jdk@v1
         with:
-          version: '8'
+          version: '11'
           architecture: x64
+          targets: 'JDK_11'
+
+      - name: populate JAVA_HOME to Java 11
+        run: echo "JAVA_HOME=$(echo $JDK_11)" >> $GITHUB_ENV
 
       - name: Build server with JDK8
         # ejb tests fail for some reason...
         # run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default
-        run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default && ant -buildfile j-lawyer-io-common/build.xml default
+        run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dplatforms.default_platform.home=$JDK_11 -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default && ant -buildfile j-lawyer-io-common/build.xml default
         # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
         env:
           ftpuser: ${{ secrets.FTPUSER }}
@@ -72,15 +82,15 @@ jobs:
           datadirectory: /home/runner/j-lawyer-data
           encryptionpwd:  
               
-      - name: Set up JDK11
-        uses: AdoptOpenJDK/install-jdk@v1
-        with:
-          version: '11'
-          architecture: x64
-          targets: 'JDK_11'
-
-      - name: populate JAVA_HOME to Java 11
-        run: echo "JAVA_HOME=$(echo $JDK_11)" >> $GITHUB_ENV
+#      - name: Set up JDK11
+#        uses: AdoptOpenJDK/install-jdk@v1
+#        with:
+#          version: '11'
+#          architecture: x64
+#          targets: 'JDK_11'
+#
+#      - name: populate JAVA_HOME to Java 11
+#        run: echo "JAVA_HOME=$(echo $JDK_11)" >> $GITHUB_ENV
       
       - name: Build client with JDK11
         run: ant -buildfile j-lawyer-client/build.xml default
@@ -105,7 +115,7 @@ jobs:
             -Dsonar.organization=jlawyerorg
             -Dsonar.projectKey=jlawyerorg_j-lawyer-org
             -Dsonar.projectName=j-lawyer-org
-            -Dsonar.projectVersion=2.2.0
+            -Dsonar.projectVersion=2.6.0
             -Dsonar.java.binaries=.
             -Dsonar.java.source=8
             

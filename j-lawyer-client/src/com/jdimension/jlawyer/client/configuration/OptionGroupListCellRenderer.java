@@ -689,6 +689,5 @@ public class OptionGroupListCellRenderer extends DefaultListCellRenderer {
             ((JLabel) ret).setText(b.getValue());
         }
         return ret;
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
 }

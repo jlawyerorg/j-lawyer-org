@@ -677,6 +677,10 @@ import org.jlawyer.io.rest.v5.ContactsEndpointV5;
 import org.jlawyer.io.rest.v6.CasesEndpointV6;
 import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
 import org.jlawyer.io.rest.v6.SecurityEndpointV6;
+import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
+import org.jlawyer.io.rest.v7.CasesEndpointV7;
+import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
+import org.jlawyer.io.rest.v7.MessagingEndpointV7;
 
 @ApplicationPath("/rest")
 public class EndpointServiceLocator extends Application
@@ -699,6 +703,10 @@ public class EndpointServiceLocator extends Application
         s.add(CasesEndpointV6.class);
         s.add(SecurityEndpointV6.class);
         s.add(DataBucketEndpointV6.class);
+        s.add(TemplatesEndpointV6.class);
+        s.add(ConfigurationEndpointV7.class);
+        s.add(CasesEndpointV7.class);
+        s.add(MessagingEndpointV7.class);
         return s;
     }
 }

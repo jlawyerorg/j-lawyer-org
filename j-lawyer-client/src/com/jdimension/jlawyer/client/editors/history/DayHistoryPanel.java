@@ -665,13 +665,11 @@ package com.jdimension.jlawyer.client.editors.history;
 
 import com.jdimension.jlawyer.client.components.AutoWrapLayout;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
-import org.apache.log4j.Logger;
+import java.util.HashMap;
 
 /**
  *
@@ -679,36 +677,29 @@ import org.apache.log4j.Logger;
  */
 public class DayHistoryPanel extends javax.swing.JPanel {
 
-    private static final Logger log = Logger.getLogger(DayHistoryPanel.class.getName());
-    private SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-    private SimpleDateFormat dfday=new SimpleDateFormat("EEE");
+    private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+    private final SimpleDateFormat dfday=new SimpleDateFormat("EEE");
     
 
     /**
-     * Creates new form HitPanel6
+     * Creates new form DayHistoryPanel
+     * @param d
      */
     public DayHistoryPanel(Date d) {
         initComponents();
         
-        //this.lblDate.setText(df.format(d));
-        //this.lblDate.setText("<html>" + dfday.format(d) + ",<br/>" + df.format(d) + "</html>");
         this.lblDate.setText(dfday.format(d) + ", " + df.format(d));
         
     }
 
     public void setEntries(ArrayList<ArchiveFileHistoryBean> list) {
-        //this.pnlEntries.setLayout(new GridLayout(list.size(), 1));
-        
-        //this.setMaximumSize(new Dimension(this.getParent().getWidth(), Integer.MAX_VALUE));
-        
         AutoWrapLayout layout=new AutoWrapLayout(FlowLayout.LEFT);
         layout.setHgap(10);
-        //this.pnlEntries.setPreferredSize(new Dimension(this.pnlEntries.getWidth(),15));
         this.pnlEntries.setLayout(layout);
         
         
-        Hashtable<String,ArrayList<ArchiveFileHistoryBean>> ht=new Hashtable<String,ArrayList<ArchiveFileHistoryBean>>();
-        ArrayList<String> sortedKeys=new ArrayList<String>();
+        HashMap<String,ArrayList<ArchiveFileHistoryBean>> ht=new HashMap<>();
+        ArrayList<String> sortedKeys=new ArrayList<>();
         for(int i=0;i<list.size();i++) {
             
             ArchiveFileHistoryBean hist=list.get(i);
@@ -717,7 +708,7 @@ public class DayHistoryPanel extends javax.swing.JPanel {
                     ArrayList<ArchiveFileHistoryBean> l=ht.get(key);
                     l.add(hist);
                 } else {
-                    ArrayList<ArchiveFileHistoryBean> l=new ArrayList<ArchiveFileHistoryBean>();
+                    ArrayList<ArchiveFileHistoryBean> l=new ArrayList<>();
                     l.add(hist);
                     ht.put(key, l);
                     sortedKeys.add(key);
@@ -729,11 +720,8 @@ public class DayHistoryPanel extends javax.swing.JPanel {
         for(int i=0;i<sortedKeys.size();i++) {
             ArrayList<ArchiveFileHistoryBean> l=ht.get(sortedKeys.get(i));
             DayCaseHistoryDetailsPanel det=new DayCaseHistoryDetailsPanel(l.get(0).getArchiveFileKey());
-            //det.setPreferredSize(new Dimension(this.pnlEntries.getWidth()-200, 260));
-            //det.setMaximumSize(new Dimension(this.pnlEntries.getWidth()-800, 32000));
             
             det.setEntries(l);
-            //det.doLayout();
             this.pnlEntries.add(det);
         }
     }
@@ -754,7 +742,7 @@ public class DayHistoryPanel extends javax.swing.JPanel {
         setMaximumSize(new java.awt.Dimension(32767, 327670));
         setOpaque(false);
 
-        lblDate.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblDate.setFont(lblDate.getFont().deriveFont(lblDate.getFont().getSize()+2f));
         lblDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule_big.png"))); // NOI18N
         lblDate.setText("Mon, 24.12.2000");
         lblDate.setVerticalAlignment(javax.swing.SwingConstants.TOP);

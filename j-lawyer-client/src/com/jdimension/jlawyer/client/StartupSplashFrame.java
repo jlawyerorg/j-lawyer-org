@@ -743,14 +743,14 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         setPreferredSize(new java.awt.Dimension(700, 400));
         getContentPane().setLayout(null);
 
-        lblUser.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        lblUser.setFont(lblUser.getFont().deriveFont(lblUser.getFont().getStyle() | java.awt.Font.BOLD, lblUser.getFont().getSize()+6));
         lblUser.setForeground(new java.awt.Color(102, 102, 102));
         lblUser.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblUser.setText("User");
         getContentPane().add(lblUser);
         lblUser.setBounds(20, 20, 570, 30);
 
-        lblVersion.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD, lblVersion.getFont().getSize()+36));
         lblVersion.setForeground(new java.awt.Color(14, 113, 180));
         lblVersion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblVersion.setText("1.0");
@@ -763,7 +763,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         getContentPane().add(lblFullClientVersion);
         lblFullClientVersion.setBounds(510, 60, 160, 20);
 
-        lblProgress.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        lblProgress.setFont(lblProgress.getFont().deriveFont(lblProgress.getFont().getStyle() | java.awt.Font.BOLD, lblProgress.getFont().getSize()+6));
         lblProgress.setForeground(new java.awt.Color(255, 255, 255));
         lblProgress.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblProgress.setText("jLabel2");
@@ -782,7 +782,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         getContentPane().add(lblCompany);
         lblCompany.setBounds(20, 60, 670, 19);
 
-        lblDate.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        lblDate.setFont(lblDate.getFont().deriveFont(lblDate.getFont().getStyle() | java.awt.Font.BOLD, lblDate.getFont().getSize()+6));
         lblDate.setForeground(new java.awt.Color(102, 102, 102));
         lblDate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblDate.setText("jLabel3");

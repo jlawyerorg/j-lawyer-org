@@ -793,8 +793,14 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
+        
+        
         this.initializing = false;
 
+    }
+    
+    public void setFocusToBody() {
+        this.htmlEditorPanel1.requestFocus();
     }
 
     /**
@@ -858,7 +864,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Notiz:");
 
@@ -1104,8 +1110,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
-            this.targetTable.addDocument(db);
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "", null);
+            this.targetTable.addDocument(db, null);
 
             if (this.chkCaseTagging.isSelected()) {
                 Object caseTag = this.cmbCaseTag.getSelectedItem();

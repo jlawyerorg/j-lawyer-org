@@ -670,8 +670,6 @@ import java.io.ByteArrayInputStream;
 import javax.swing.ImageIcon;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
@@ -785,6 +783,10 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    public void reRenderPage() {
+        this.showPage(this.content, this.currentPage);
+    }
+    
     private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
         this.currentPage = this.currentPage - 1;
         this.showPage(this.content, this.currentPage);
@@ -836,7 +838,6 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                         
             PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
             PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
-            PDPageTree allPages = inputPDF.getDocumentCatalog().getPages();
 
             this.totalPages = inputPDF.getNumberOfPages();
 
@@ -860,11 +861,15 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
             this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
 
-            PDPage testPage = (PDPage) inputPDF.getPage(page);
             this.orgImage = pdfRenderer.renderImageWithDPI(page, 100, ImageType.RGB);
-            int height = Math.max(this.getHeight(), 400);
+            
+            // need to subtract the height of the page navigation buttons, but
+            // the panel has not been layed out yet, so there is no height we could query
+            int height = Math.max(this.getHeight() - 55, 400);
+            
             float scaleFactor = (float) height / (float) this.orgImage.getHeight();
             int width = (int) ((float) this.orgImage.getWidth() * scaleFactor);
+            width=Math.min(width, this.getWidth());
             Image bi2 = this.orgImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
             inputPDF.close();
 

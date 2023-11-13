@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -702,44 +701,12 @@ public class PartiesPanel extends javax.swing.JPanel {
     public PartiesPanel() {
         initComponents();
 
-        //this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     }
 
     public void setListener(PartiesSelectionListener l) {
         this.listener = l;
     }
 
-//    class PartyEditor extends DefaultCellEditor {
-//
-//        private List<AddressBean> parties = null;
-//
-//        public PartyEditor(List<AddressBean> parties) {
-//            super(new JComboBox());
-//            this.parties = parties;
-//            
-//            
-//            
-//        }
-//
-//        @Override
-//        public Component getTableCellEditorComponent(JTable jtable, Object o, boolean bln, int i, int i1) {
-//            JComboBox combo = new JComboBox();
-//            combo.setRenderer(new AddressBeanListCellRenderer());
-//            for (AddressBean a : this.parties) {
-//                combo.addItem(a);
-//            }
-//            combo.setSelectedItem(o);
-//            return combo;
-//        }
-//
-//        @Override
-//        public Object getCellEditorValue() {
-//            return super.getCellEditorValue(); //To change body of generated methods, choose Tools | Templates.
-//        }
-//        
-//        
-//        
-//    }
     class PartyRenderer extends DefaultTableCellRenderer {
 
         public PartyRenderer() {
@@ -749,13 +716,6 @@ public class PartiesPanel extends javax.swing.JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-//            JComboBox combo = new JComboBox();
-//            combo.setRenderer(new AddressBeanListCellRenderer());
-//            for (AddressBean a : this.parties) {
-//                combo.addItem(a);
-//            }
-//            combo.setSelectedItem(value);
-//            return comboreturn ;
             if (c instanceof JLabel) {
                 if (value instanceof PartiesPanelEntry) {
                     ((JLabel) c).setText(((AddressBean) ((PartiesPanelEntry) value).getAddress()).toDisplayName());
@@ -778,15 +738,10 @@ public class PartiesPanel extends javax.swing.JPanel {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.partyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
-            ArrayList<String> columnNames = new ArrayList<String>();
-            //ArrayList<AddressBean> parties = new ArrayList<AddressBean>();
-            // collect all addresses of relevant parties
-//            for (ArchiveFileAddressesBean aab : involved) {
-//                parties.add(aab.getAddressKey());
-//            }
+            this.partyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            ArrayList<String> columnNames = new ArrayList<>();
 
-            // display a column for EACH type, regardless of whether it is uses
+            // display a column for EACH type, regardless of whether it is used
             // this is required because we do not know which placeholders are used in the template the user selected, and we allow to use an address for ANY type
             for (PartyTypeBean ptb : partyTypes) {
                 if (!columnNames.contains(ptb.getName())) {
@@ -795,17 +750,15 @@ public class PartiesPanel extends javax.swing.JPanel {
             }
 
             Collections.sort(columnNames);
-            ArrayList<String> allColumnNames = new ArrayList<String>();
+            ArrayList<String> allColumnNames = new ArrayList<>();
             allColumnNames.add("Beteiligte");
             allColumnNames.addAll(columnNames);
             String[] colNames = allColumnNames.toArray(new String[0]);
             PartiesPanelTableModel model = new PartiesPanelTableModel(colNames, 0);
 
-            //this.tblParties.getColumnModel().getColumn(0).setCellRenderer(tcr);
             this.tblParties.setModel(model);
             this.tblParties.getColumnModel().getColumn(0).setCellRenderer(new PartyRenderer());
-            //this.tblParties.getColumnModel().getColumn(0).setCellEditor(new PartyEditor(parties));
-
+            
             TableCellRenderer headerRenderer = new VerticalTableHeaderCellRenderer();
             for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
                 this.tblParties.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
@@ -827,32 +780,23 @@ public class PartiesPanel extends javax.swing.JPanel {
                 model.addRow(rowArray);
             }
 
-//            int partyColumnWidth=this.tblParties.getWidth()-(this.tblParties.getColumnCount()*20);
-//            if(partyColumnWidth<50)
-//                partyColumnWidth=50;
-//            this.tblParties.getColumnModel().getColumn(0).setWidth(partyColumnWidth);
-            this.tblParties.getModel().addTableModelListener(
-                    new TableModelListener() {
-                public void tableChanged(TableModelEvent evt) {
-                    if (ignoreTableChanges) {
-                        return;
-                    }
-                    
-                    //System.out.println("table model changed: " + evt.getType());
-
-                    ignoreTableChanges = true;
-                    if (evt.getColumn() > 0) {
-                        Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
-                        if (newValue == true) {
-                            for (int i = 0; i < tblParties.getRowCount(); i++) {
-                                tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
-                            }
+            this.tblParties.getModel().addTableModelListener((TableModelEvent evt) -> {
+                if (ignoreTableChanges) {
+                    return;
+                }
+                
+                ignoreTableChanges = true;
+                if (evt.getColumn() > 0) {
+                    Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
+                    if (newValue == true) {
+                        for (int i = 0; i < tblParties.getRowCount(); i++) {
+                            tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
                         }
                     }
-                    ignoreTableChanges = false;
-                    if (listener != null) {
-                        listener.selectedPartiesUpdated();
-                    }
+                }
+                ignoreTableChanges = false;
+                if (listener != null) {
+                    listener.selectedPartiesUpdated();
                 }
             });
 
@@ -862,31 +806,6 @@ public class PartiesPanel extends javax.swing.JPanel {
             EditorsRegistry.getInstance().clearStatus();
         }
     }
-
-//    public void addParty(ArchiveFileAddressesBean aab) {
-//        this.addParty(aab.getAddressKey(), aab.getReferenceType());
-//    }
-//
-//    public void addParty(AddressBean party) {
-//        this.addParty(party, null);
-//    }
-
-//    public void addParty(AddressBean party, PartyTypeBean ptb) {
-//        PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
-//        ArrayList row = new ArrayList();
-//        row.add(party);
-//        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-//            String colName = this.tblParties.getColumnName(i);
-//            if (ptb != null) {
-//                row.add(colName.equals(ptb.getName()) && getNumberOfSelected(i) == 0);
-//            } else {
-//                row.add(getNumberOfSelected(i) == 0);
-//            }
-//        }
-//        Object[] rowArray = row.toArray();
-//        model.addRow(rowArray);
-//
-//    }
     
     public void addParty(PartiesPanelEntry entry) {
         PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
@@ -961,7 +880,7 @@ public class PartiesPanel extends javax.swing.JPanel {
     }
 
     public List<PartiesPanelEntry> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
-        List<PartiesPanelEntry> result = new ArrayList<PartiesPanelEntry>();
+        List<PartiesPanelEntry> result = new ArrayList<>();
         for (PartyTypeBean ptb : allPartyTypes) {
             PartiesPanelEntry selected = this.getSelectedParty(ptb);
             if (selected != null) {

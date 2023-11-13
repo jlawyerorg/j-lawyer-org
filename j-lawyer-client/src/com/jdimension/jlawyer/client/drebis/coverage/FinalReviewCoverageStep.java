@@ -840,4 +840,9 @@ public class FinalReviewCoverageStep extends javax.swing.JPanel implements Wizar
     public void setData(WizardDataContainer data) {
         this.data=data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

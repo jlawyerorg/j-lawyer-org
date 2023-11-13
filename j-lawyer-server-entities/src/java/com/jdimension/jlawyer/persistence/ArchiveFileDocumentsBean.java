@@ -680,10 +680,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileDocumentsBean.findAll", query = "SELECT a FROM ArchiveFileDocumentsBean a"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findById", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileDocumentsBean.findByExternalId", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByName", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByCreationDate", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.creationDate = :creationDate")})
 public class ArchiveFileDocumentsBean implements Serializable {
+    
     private static final long serialVersionUID = 1L;
+    
+    // default for new documents or documents not typed before
+    public static final int TYPE_GENERIC=10;
+    // invoices etc.
+    public static final int TYPE_RECEIPT=20;
+    
     @Id
     @Basic(optional = false)
     @Column(name = "id")
@@ -717,6 +725,21 @@ public class ArchiveFileDocumentsBean implements Serializable {
     protected Date deletionDate;
     @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
     protected boolean deleted;
+    @Column(name = "version", columnDefinition = "INTEGER DEFAULT 1")
+    protected long version=1;
+    @Column(name = "highlight1", columnDefinition = "INTEGER DEFAULT -2147483648")
+    protected int highlight1=Integer.MIN_VALUE;
+    @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -2147483648")
+    protected int highlight2=Integer.MIN_VALUE;
+    
+    @Column(name = "document_type", columnDefinition = "INTEGER DEFAULT 10")
+    protected long documentType=TYPE_GENERIC;
+    @Column(name = "date_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date changeDate;
+    
+    @Column(name = "ext_id")
+    private String externalId;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -894,6 +917,95 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    /**
+     * @return the version
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(long version) {
+        this.version = version;
+    }
+    
+    public void bumpVersion() {
+        this.setVersion(this.version+1);
+        this.setChangeDate(new Date());
+    }
+
+    /**
+     * @return the highlight1
+     */
+    public int getHighlight1() {
+        return highlight1;
+    }
+
+    /**
+     * @param highlight1 the highlight1 to set
+     */
+    public void setHighlight1(int highlight1) {
+        this.highlight1 = highlight1;
+    }
+
+    /**
+     * @return the highlight2
+     */
+    public int getHighlight2() {
+        return highlight2;
+    }
+
+    /**
+     * @param highlight2 the highlight2 to set
+     */
+    public void setHighlight2(int highlight2) {
+        this.highlight2 = highlight2;
+    }
+
+    /**
+     * @return the documentType
+     */
+    public long getDocumentType() {
+        return documentType;
+    }
+
+    /**
+     * @param documentType the documentType to set
+     */
+    public void setDocumentType(long documentType) {
+        this.documentType = documentType;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
 }

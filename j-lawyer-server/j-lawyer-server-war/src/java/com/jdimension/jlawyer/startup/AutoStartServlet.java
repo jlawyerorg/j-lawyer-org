@@ -682,9 +682,6 @@ import org.apache.log4j.Logger;
 @WebServlet(name = "AutoStartServlet", urlPatterns = {"/autostart"})
 @ServletSecurity(@HttpConstraint(rolesAllowed = "loginRole"))
 public class AutoStartServlet extends HttpServlet {
-    
-//    @EJB
-//    private ServerSettingsBeanFacadeLocal serverSettingsBeanFacade;
 
     private static Logger log = Logger.getLogger(AutoStartServlet.class.getName());
 
@@ -707,11 +704,12 @@ public class AutoStartServlet extends HttpServlet {
         File templatesFile = new File(localBaseDir + "templates");
         templatesFile.mkdirs();
 
+        File templateHeadsFile = new File(localBaseDir + "letterheads");
+        templateHeadsFile.mkdirs();
+        
         File masterTemplatesFile = new File(localBaseDir + "mastertemplates");
         masterTemplatesFile.mkdirs();
-
-
-
+        
         File archiveFilesFile = new File(localBaseDir + "archivefiles");
         archiveFilesFile.mkdirs();
         
@@ -749,8 +747,7 @@ public class AutoStartServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-        try {
+        try (PrintWriter out = response.getWriter()) {
             /*
              * TODO output your page here. You may use following sample code.
              */
@@ -774,8 +771,6 @@ public class AutoStartServlet extends HttpServlet {
             
             out.println("</body>");
             out.println("</html>");
-        } finally {
-            out.close();
         }
     }
 

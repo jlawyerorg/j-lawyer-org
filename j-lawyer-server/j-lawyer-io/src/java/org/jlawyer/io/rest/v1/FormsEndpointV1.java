@@ -709,7 +709,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/types/list")
     @RolesAllowed({"loginRole"})
     public Response listFormTypes() {
@@ -741,7 +741,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/entries")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getFormEntries(@PathParam("id") String id) {
@@ -796,7 +796,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/entries/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response setFormEntries(List<RestfulFormEntryV1> formEntries) {
@@ -869,7 +869,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -911,7 +911,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"writeArchiveFileRole"})

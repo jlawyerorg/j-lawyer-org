@@ -664,7 +664,7 @@
 package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
-import com.jdimension.jlawyer.server.utils.InvalidCaseNumberPatternException;
+import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -705,23 +705,23 @@ public class CaseNumberGeneratorTest {
 
         try {
             Assert.assertTrue(CaseNumberGenerator.compilePattern("CCCCC"));
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         try {
             Assert.assertTrue(CaseNumberGenerator.compilePattern("nnnn/YY"));
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         try {
             Assert.assertTrue(CaseNumberGenerator.compilePattern("NNNNN_YYYY"));
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
         try {
             Assert.assertTrue(CaseNumberGenerator.compilePattern("RRRRR-YYMMDD"));
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
@@ -731,7 +731,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RRRRR-YYYMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -741,7 +741,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RRRRR-YYYYYMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -750,7 +750,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RRRRR-YYYYMMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -759,7 +759,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RRRRR-YYYYMMMDDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -768,7 +768,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("nn-YYMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -777,7 +777,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("NNN-YYMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
         try {
@@ -785,7 +785,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RR-YYYYMMDD");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -794,7 +794,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("RR-YYYYMMDD-RR");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
         try {
@@ -802,7 +802,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("NNNNN-YYYYMMDD-NNNNN");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
         try {
@@ -810,7 +810,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("nnnnn-YYYYMMDD-nnnnn");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -819,7 +819,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("nnnnn-YYYYMMDD-RRRRR");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
         
@@ -828,7 +828,7 @@ public class CaseNumberGeneratorTest {
             CaseNumberGenerator.compilePattern("-");
 
             Assert.fail();
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
 
         }
 
@@ -838,53 +838,53 @@ public class CaseNumberGeneratorTest {
     public void testNext() {
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR#MM/YY", -1);
             System.out.println("RRR#MM/YY" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRRRR-YYMMDD", -1);
             System.out.println("RRRRR-YYMMDD" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC", -1);
             System.out.println("CCCCC" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC/MM/YYYY", -1);
             System.out.println("CCCCC/MM/YYYY" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
             System.out.println("nnnn/YY" + " " + next);
             existing.add(next);
             next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
             System.out.println("nnnn/YY" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN_YYYY", -1);
             System.out.println("NNNNN_YYYY" + " " + next);
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
 
@@ -893,52 +893,52 @@ public class CaseNumberGeneratorTest {
     @Test
     public void testNext_n() {
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
                 existing.add(next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/C", -1);
                 existing.add(next);
                 //System.out.println("nnnnn/C" + " " + next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 700; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", -1);
                 existing.add(next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             existing.add("103/19");
             for (int i = 0; i < 700; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 100);
                 existing.add(next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 1000);
                 Assert.fail("must never happen");
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             // this is expected
         }
         
@@ -948,23 +948,22 @@ public class CaseNumberGeneratorTest {
     @Test
     public void testNext_N() {
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1);
                 existing.add(next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/CC", -1);
                 existing.add(next);
-                //System.out.println("NNNNN/CC" + " " + next);
             }
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
@@ -975,15 +974,14 @@ public class CaseNumberGeneratorTest {
     public void testNext_R() {
         try {
             System.out.println("Testing RRR/YY");
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 999; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR/YY", -1);
-                //System.out.println("found: " + next);
                 existing.add(next);
             }
             Collections.sort(existing);
             System.out.println("random count: " + existing.size());
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         System.out.println("Testing RRR/YY - done.");
@@ -994,7 +992,7 @@ public class CaseNumberGeneratorTest {
     @Test
     public void testNext_N_startFrom() {
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1);
                 existing.add(next);
@@ -1009,7 +1007,7 @@ public class CaseNumberGeneratorTest {
                 existing.add(next);
                 
             
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         
@@ -1020,7 +1018,7 @@ public class CaseNumberGeneratorTest {
     @Test
     public void testPreview() {
         try {
-            ArrayList<String> existing = new ArrayList<String>();
+            ArrayList<String> existing = new ArrayList<>();
             
             Date now=new Date();
             
@@ -1052,7 +1050,7 @@ public class CaseNumberGeneratorTest {
                     System.out.println(s);
                 }
             
-        } catch (InvalidCaseNumberPatternException ex) {
+        } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
         }
         

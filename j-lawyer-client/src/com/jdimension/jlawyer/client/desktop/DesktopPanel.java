@@ -676,16 +676,17 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxFailedEvent;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingFailedEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.awt.Color;
 import java.awt.Font;
@@ -693,13 +694,14 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -720,11 +722,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.initializing = true;
         initComponents();
         
-        // semi transparent grey background
-//        this.messagesWidget.setOpaque(true);
-//        Color barColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-//        this.messagesWidget.setBackground(barColor);
-        
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
@@ -739,7 +736,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             lblUnreadBea.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadMail.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadDrebis.setFont(font.deriveFont(Font.BOLD, 24));
-            lblFaxStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUnreadInstantMessages.setFont(font.deriveFont(Font.BOLD, 24));
+            lblMailingStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblNewsStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
             lblUpdateStatus.setFont(font.deriveFont(Font.BOLD, 24));
@@ -752,9 +750,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane4.getViewport().setOpaque(false);
         
-        ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
-        ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
-        
+        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+        ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
+        ComponentUtils.decorateSplitPane(jSplitPane2, splitPaneColor);
         
         Date now = new Date();
         SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
@@ -790,11 +788,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_AUTOUPDATE);
         b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXSTATUS);
-        b.subscribeConsumer(this, Event.TYPE_FAXFAILED);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_MAILINGFAILED);
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
 
         Timer timer1 = new Timer();
         TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
@@ -848,6 +847,19 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }
+        
+        // pre-load JFileChooser to avoid long load times for the user
+        // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
+        Timer timer12 = new Timer();
+        TimerTask fileChooserPreload=new TimerTask() {
+            @Override
+            public void run() {
+                log.info("pre-loading JFileChooser");
+                JFileChooser fc=new JFileChooser();
+                log.info("pre-loading JFileChooser finished");
+            }   
+        };
+        timer12.schedule(fileChooserPreload, 7500);
 
         this.jSplitPane1.setDividerLocation(0.5d);
         
@@ -935,9 +947,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea = new javax.swing.JLabel();
         lblScans = new javax.swing.JLabel();
         lblUnreadDrebis = new javax.swing.JLabel();
+        lblMailingStatus = new javax.swing.JLabel();
+        lblUnreadInstantMessages = new javax.swing.JLabel();
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
-        lblFaxStatus = new javax.swing.JLabel();
         systemInformationWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblArchiveFileCount = new javax.swing.JLabel();
         lblArchiveFileArchivedCount = new javax.swing.JLabel();
@@ -968,11 +981,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel2.setOpaque(false);
 
-        jLabel6.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() | java.awt.Font.BOLD, jLabel6.getFont().getSize()+2));
         jLabel6.setForeground(java.awt.Color.white);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
         jLabel6.setText(bundle.getString("label.due")); // NOI18N
 
+        chkOnlyMyReviews.setFont(chkOnlyMyReviews.getFont().deriveFont(chkOnlyMyReviews.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyReviews.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyReviews.setText("nur meine anzeigen");
         chkOnlyMyReviews.setOpaque(false);
@@ -983,7 +997,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshRevDue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshRevDue.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshRevDue.setBorder(null);
         cmdRefreshRevDue.setContentAreaFilled(false);
         cmdRefreshRevDue.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshRevDue.addActionListener(new java.awt.event.ActionListener() {
@@ -994,7 +1008,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         tabPaneDue.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         tabPaneDue.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        tabPaneDue.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        tabPaneDue.setFont(tabPaneDue.getFont().deriveFont(tabPaneDue.getFont().getStyle() & ~java.awt.Font.BOLD, tabPaneDue.getFont().getSize()-2));
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setOpaque(false);
@@ -1047,7 +1061,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel1.setOpaque(false);
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()+2));
         jLabel5.setForeground(java.awt.Color.white);
         jLabel5.setText(bundle.getString("label.lastchanged")); // NOI18N
 
@@ -1077,6 +1091,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jScrollPane3.setViewportView(pnlLastChanged);
 
+        chkOnlyMyCases.setFont(chkOnlyMyCases.getFont().deriveFont(chkOnlyMyCases.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyCases.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyCases.setText("nur meine anzeigen");
         chkOnlyMyCases.addActionListener(new java.awt.event.ActionListener() {
@@ -1086,7 +1101,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshLastChanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshLastChanged.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshLastChanged.setBorder(null);
         cmdRefreshLastChanged.setContentAreaFilled(false);
         cmdRefreshLastChanged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshLastChanged.addActionListener(new java.awt.event.ActionListener() {
@@ -1120,7 +1135,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1128,10 +1143,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel3.setOpaque(false);
 
-        jLabel9.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD, jLabel9.getFont().getSize()+2));
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
+        chkOnlyMyTagged.setFont(chkOnlyMyTagged.getFont().deriveFont(chkOnlyMyTagged.getFont().getStyle() | java.awt.Font.BOLD));
         chkOnlyMyTagged.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyTagged.setText("nur meine anzeigen");
         chkOnlyMyTagged.addActionListener(new java.awt.event.ActionListener() {
@@ -1141,7 +1157,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdRefreshTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        cmdRefreshTagged.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdRefreshTagged.setBorder(null);
         cmdRefreshTagged.setContentAreaFilled(false);
         cmdRefreshTagged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdRefreshTagged.addActionListener(new java.awt.event.ActionListener() {
@@ -1152,7 +1168,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
         cmdTagFilter.setToolTipText("Akten-Etiketten");
-        cmdTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdTagFilter.setBorder(null);
         cmdTagFilter.setContentAreaFilled(false);
         cmdTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1168,7 +1184,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
         cmdDocumentTagFilter.setToolTipText("Dokument-Etiketten");
-        cmdDocumentTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        cmdDocumentTagFilter.setBorder(null);
         cmdDocumentTagFilter.setContentAreaFilled(false);
         cmdDocumentTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1184,7 +1200,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         tabPaneTagged.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         tabPaneTagged.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        tabPaneTagged.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        tabPaneTagged.setFont(tabPaneTagged.getFont().deriveFont(tabPaneTagged.getFont().getStyle() & ~java.awt.Font.BOLD, tabPaneTagged.getFont().getSize()-2));
 
         jScrollPane4.setBorder(null);
         jScrollPane4.setOpaque(false);
@@ -1229,7 +1245,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 248, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 130, Short.MAX_VALUE)
                         .add(chkOnlyMyTagged))
                     .add(tabPaneTagged))
                 .addContainerGap())
@@ -1254,14 +1270,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jSplitPane1.setLeftComponent(jSplitPane2);
 
-        lblUnreadMail.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadMail.setFont(lblUnreadMail.getFont().deriveFont(lblUnreadMail.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadMail.getFont().getSize()+2));
         lblUnreadMail.setForeground(java.awt.Color.white);
         lblUnreadMail.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png"))); // NOI18N
         lblUnreadMail.setText("0");
         lblUnreadMail.setEnabled(false);
 
-        lblUnreadBea.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadBea.setFont(lblUnreadBea.getFont().deriveFont(lblUnreadBea.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadBea.getFont().getSize()+2));
         lblUnreadBea.setForeground(java.awt.Color.white);
         lblUnreadBea.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-16.png"))); // NOI18N
@@ -1269,35 +1285,43 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea.setToolTipText("noch nicht eingeloggt");
         lblUnreadBea.setEnabled(false);
 
-        lblScans.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblScans.setFont(lblScans.getFont().deriveFont(lblScans.getFont().getStyle() | java.awt.Font.BOLD, lblScans.getFont().getSize()+2));
         lblScans.setForeground(java.awt.Color.white);
         lblScans.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblScans.setText("0");
         lblScans.setEnabled(false);
 
-        lblUnreadDrebis.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUnreadDrebis.setFont(lblUnreadDrebis.getFont().deriveFont(lblUnreadDrebis.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadDrebis.getFont().getSize()+2));
         lblUnreadDrebis.setForeground(java.awt.Color.white);
         lblUnreadDrebis.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
         lblUnreadDrebis.setText("?");
         lblUnreadDrebis.setEnabled(false);
 
-        lblUpdateStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblMailingStatus.setFont(lblMailingStatus.getFont().deriveFont(lblMailingStatus.getFont().getStyle() | java.awt.Font.BOLD, lblMailingStatus.getFont().getSize()+2));
+        lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
+        lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
+        lblMailingStatus.setText("?");
+        lblMailingStatus.setEnabled(false);
+
+        lblUnreadInstantMessages.setFont(lblUnreadInstantMessages.getFont().deriveFont(lblUnreadInstantMessages.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadInstantMessages.getFont().getSize()+2));
+        lblUnreadInstantMessages.setForeground(new java.awt.Color(255, 255, 255));
+        lblUnreadInstantMessages.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblUnreadInstantMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_chat_white_48dp.png"))); // NOI18N
+        lblUnreadInstantMessages.setText("?");
+        lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
+        lblUnreadInstantMessages.setEnabled(false);
+
+        lblUpdateStatus.setFont(lblUpdateStatus.getFont().deriveFont(lblUpdateStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblUpdateStatus.setForeground(java.awt.Color.white);
         lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblUpdateStatus.setText("???");
 
-        lblNewsStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        lblNewsStatus.setFont(lblNewsStatus.getFont().deriveFont(lblNewsStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblNewsStatus.setForeground(java.awt.Color.white);
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblNewsStatus.setText("???");
-
-        lblFaxStatus.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
-        lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
-        lblFaxStatus.setText("?");
-        lblFaxStatus.setEnabled(false);
 
         org.jdesktop.layout.GroupLayout messagesWidgetLayout = new org.jdesktop.layout.GroupLayout(messagesWidget);
         messagesWidget.setLayout(messagesWidgetLayout);
@@ -1308,45 +1332,54 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(18, 18, 18)
                 .add(lblScans)
                 .add(18, 18, 18)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(18, 18, 18)
                 .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(lblUnreadBea)
                 .add(18, 18, 18)
-                .add(lblUpdateStatus)
+                .add(lblUnreadInstantMessages)
                 .add(18, 18, 18)
+                .add(lblUpdateStatus)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         messagesWidgetLayout.setVerticalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 .add(lblUnreadMail)
                 .add(lblScans)
-                .add(lblFaxStatus)
+                .add(lblMailingStatus)
                 .add(lblUnreadDrebis)
-                .add(lblUnreadBea)
+                .add(lblUnreadBea))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(lblUpdateStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
+        lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileCount.setForeground(java.awt.Color.white);
         lblArchiveFileCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
         lblArchiveFileCount.setText(bundle.getString("totals.cases")); // NOI18N
 
+        lblArchiveFileArchivedCount.setFont(lblArchiveFileArchivedCount.getFont().deriveFont(lblArchiveFileArchivedCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileArchivedCount.setForeground(java.awt.Color.white);
         lblArchiveFileArchivedCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
         lblArchiveFileArchivedCount.setText(bundle.getString("totals.cases.archive")); // NOI18N
 
+        lblAddressCount.setFont(lblAddressCount.getFont().deriveFont(lblAddressCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblAddressCount.setForeground(java.awt.Color.white);
         lblAddressCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_perm_contact_calendar_white_36dp.png"))); // NOI18N
         lblAddressCount.setText(bundle.getString("totals.addresses")); // NOI18N
 
+        lblDocumentCount.setFont(lblDocumentCount.getFont().deriveFont(lblDocumentCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblDocumentCount.setForeground(java.awt.Color.white);
         lblDocumentCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_insert_drive_file_white_36dp.png"))); // NOI18N
         lblDocumentCount.setText(bundle.getString("totals.documents")); // NOI18N
 
+        lblVoipBalance.setFont(lblVoipBalance.getFont().deriveFont(lblVoipBalance.getFont().getStyle() | java.awt.Font.BOLD));
         lblVoipBalance.setForeground(java.awt.Color.white);
         lblVoipBalance.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_print_white_36dp.png"))); // NOI18N
         lblVoipBalance.setText(bundle.getString("voip.balance")); // NOI18N
@@ -1389,7 +1422,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        lblUserName.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblUserName.setFont(lblUserName.getFont().deriveFont(lblUserName.getFont().getStyle() | java.awt.Font.BOLD, lblUserName.getFont().getSize()+2));
         lblUserName.setForeground(new java.awt.Color(255, 255, 255));
         lblUserName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUserName.setText("My User Name");
@@ -1419,7 +1452,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        lblDay.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblDay.setFont(lblDay.getFont().deriveFont(lblDay.getFont().getStyle() | java.awt.Font.BOLD, lblDay.getFont().getSize()+2));
         lblDay.setForeground(new java.awt.Color(255, 255, 255));
         lblDay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblDay.setText("28");
@@ -1437,7 +1470,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1)
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 856, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1597,11 +1630,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblArchiveFileCount;
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
-    private javax.swing.JLabel lblFaxStatus;
+    private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScans;
     private javax.swing.JLabel lblUnreadBea;
     private javax.swing.JLabel lblUnreadDrebis;
+    private javax.swing.JLabel lblUnreadInstantMessages;
     private javax.swing.JLabel lblUnreadMail;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JLabel lblUserIcon;
@@ -1647,28 +1681,28 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblScans.setEnabled(false);
             this.revalidate();
             this.repaint();
-        } else if (e instanceof FaxFailedEvent) {
-            FaxQueueBean fb = ((FaxFailedEvent) e).getFax();
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fax an " + fb.getRemoteName() + " konnte nicht gesendet werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        } else if (e instanceof FaxStatusEvent) {
+        } else if (e instanceof MailingFailedEvent) {
+            MailingQueueEntry mqe = ((MailingFailedEvent) e).getEntry();
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), mqe.getFailedObjectDescription() + " konnte nicht gesendet werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } else if (e instanceof MailingStatusEvent) {
 
-            this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
-            if (((FaxStatusEvent) e).getFailed() > 0) {
+            this.lblMailingStatus.setText(" " + ((MailingStatusEvent) e).getMailingList().size());
+            if (((MailingStatusEvent) e).getFailed() > 0) {
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
-                this.lblFaxStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
-                this.lblFaxStatus.setForeground(Color.red.darker());
+                this.lblMailingStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
+                this.lblMailingStatus.setForeground(Color.red.darker());
 
             } else {
-                this.lblFaxStatus.setToolTipText("");
-                this.lblFaxStatus.setForeground(Color.white);
+                this.lblMailingStatus.setToolTipText("");
+                this.lblMailingStatus.setForeground(Color.white);
 
             }
             
-            if(((FaxStatusEvent) e).getFaxList().size()>0)
-                this.lblFaxStatus.setEnabled(true);
+            if(((MailingStatusEvent) e).getMailingList().size()>0)
+                this.lblMailingStatus.setEnabled(true);
             else
-                this.lblFaxStatus.setEnabled(false);
+                this.lblMailingStatus.setEnabled(false);
 
             this.revalidate();
             this.repaint();
@@ -1683,11 +1717,25 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if(e instanceof BeaStatusEvent) {
             this.lblUnreadBea.setEnabled(true);
             if(((BeaStatusEvent) e).getUnread()>0) {
-                this.lblUnreadBea.setText("!");
-                this.lblUnreadBea.setToolTipText("es gibt ungelesene beA-Nachrichten");
+                this.lblUnreadBea.setText("" + ((BeaStatusEvent) e).getUnread());
+                this.lblUnreadBea.setToolTipText("" + ((BeaStatusEvent) e).getUnread() + " ungelesene beA-Nachricht(en)");
             } else {
                 this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");
+            }
+            
+            this.revalidate();
+            this.repaint();
+        } else if(e instanceof OpenMentionsEvent) {
+            this.lblUnreadInstantMessages.setEnabled(true);
+            if (((OpenMentionsEvent) e).getOpenMentions() > 0) {
+                this.lblUnreadInstantMessages.setEnabled(true);
+                this.lblUnreadInstantMessages.setText("" + ((OpenMentionsEvent) e).getOpenMentions());
+                this.lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
+            } else {
+                this.lblUnreadInstantMessages.setEnabled(false);
+                this.lblUnreadInstantMessages.setText("");
+                this.lblUnreadInstantMessages.setToolTipText(null);
             }
             
             this.revalidate();

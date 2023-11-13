@@ -672,7 +672,9 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 public class DrebisConfigurationDialog extends javax.swing.JDialog {
 
     /**
-     * Creates new form BackupConfigurationDialog
+     * Creates new form DrebisConfigurationDialog
+     * @param parent
+     * @param modal
      */
     public DrebisConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

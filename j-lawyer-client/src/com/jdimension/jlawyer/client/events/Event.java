@@ -675,8 +675,8 @@ public abstract class Event {
     public static final Integer TYPE_NEWS=20;
     public static final Integer TYPE_SYSTEMSTATUS=30;
     public static final Integer TYPE_SCANNERSTATUS=40;
-    public static final Integer TYPE_FAXSTATUS=50;
-    public static final Integer TYPE_FAXFAILED=60;
+    public static final Integer TYPE_MAILINGSTATUS=50;
+    public static final Integer TYPE_MAILINGFAILED=60;
     public static final Integer TYPE_MAILSTATUS=70;
     public static final Integer TYPE_BEASTATUS=80;
     public static final Integer TYPE_DREBISSTATUS=90;
@@ -685,6 +685,13 @@ public abstract class Event {
     public static final Integer TYPE_DOCUMENTADDED=110;
     public static final Integer TYPE_CONTACTUPDATED=120;
     public static final Integer TYPE_REVIEWADDED=130;
+    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
+    public static final Integer TYPE_OPENTIMESHEETPOSITIONS=150;
+    
+    public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
+    public static final Integer TYPE_INSTANTMESSAGING_MENTIONCHANGED=170;
+    public static final Integer TYPE_INSTANTMESSAGING_OPENMENTIONS=180;
+    public static final Integer TYPE_INSTANTMESSAGING_MESSAGEDELETED=190;
     
     
     private Integer type=TYPE_DEFAULT;

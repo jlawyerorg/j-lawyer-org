@@ -666,10 +666,12 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -688,6 +690,9 @@ public class FormInstancePanel extends javax.swing.JPanel {
     private ArchiveFileFormsBean form = null;
     private JTabbedPane container = null;
     private FormPlugin plugin = null;
+    
+    // used to compare before and after to determine whether saving is needed
+    private String valuesCheckSum=null;
 
     /**
      * Creates new form FormInstancePanel
@@ -716,14 +721,27 @@ public class FormInstancePanel extends javax.swing.JPanel {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<ArchiveFileFormEntriesBean> entries = locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
             Hashtable placeHolderValues = new Hashtable();
+            ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
             for (ArchiveFileFormEntriesBean entry : entries) {
                 if (entry.getPlaceHolder() == null || "".equals(entry.getPlaceHolder())) {
                     log.warn("Form with id " + this.form.getId() + " has an entry with a null placeholder, which is invalid!");
                 } else {
                     placeHolderValues.put(entry.getPlaceHolder(), entry.getStringValue());
+                    allPlaceHolderKeys.add(entry.getEntryKey());
                 }
 
             }
+            
+            // create a sorted list of all keys before calculating a checksum
+            Collections.sort(allPlaceHolderKeys);
+            
+            // checksum only includes values
+            StringBuilder checkSumValues=new StringBuilder();
+            for(String k: allPlaceHolderKeys) {
+                checkSumValues.append(placeHolderValues.get(k));
+            }
+            this.valuesCheckSum=StringUtils.md5(checkSumValues.toString());            
+            
             this.plugin.setPlaceHolderValues(placeHolderValues);
 
         } catch (Throwable t) {
@@ -843,26 +861,60 @@ public class FormInstancePanel extends javax.swing.JPanel {
         if (placeHolders == null) {
             // this happens e.g. when the form had compile issues and did not load.
             // in that case, do NOT overwrite existing values with an empty set - it would mean data loss for this form!
+            log.warn("Form plugin did not provide any placeholders - skip saving to avoid empty form!");
             return;
         }
-
-        ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            for (Object key : placeHolders.keySet()) {
-                String keyString = key.toString();
-                String value = placeHolders.get(key).toString();
-                ArchiveFileFormEntriesBean formEntry = new ArchiveFileFormEntriesBean();
-                formEntry.setForm(form);
-                formEntry.setPlaceHolder(keyString);
-                formEntry.setStringValue(value);
-                formEntries.add(formEntry);
-            }
-            locator.lookupFormsServiceRemote().setFormEntries(this.form.getId(), formEntries);
-        } catch (Throwable t) {
-            log.error("Error saving form entries", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        
+        log.info("Form plugin " + form.getId() + " has " + placeHolders.size() + " placeholder values");
+        
+        boolean save=true;
+        
+        ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
+        for(Object k: placeHolders.keySet()) {
+            allPlaceHolderKeys.add(k.toString());
         }
+        
+        // create a sorted list of all keys before calculating a checksum
+        Collections.sort(allPlaceHolderKeys);
+
+        // checksum only includes values
+        StringBuilder checkSumValues = new StringBuilder();
+        for (String k : allPlaceHolderKeys) {
+            checkSumValues.append(placeHolders.get(k));
+        }
+        String newCheckSum = StringUtils.md5(checkSumValues.toString());
+        if (newCheckSum != null && this.valuesCheckSum != null) {
+            if (newCheckSum.equals(this.valuesCheckSum)) {
+                // user made no changes - do not save to avoid overwriting concurrent
+                // changes that might have happened on the server
+                save = false;
+            }
+        }
+        
+        if(save) {
+            log.info("form " + form.getId() + " has been updated - saving");
+            ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                for (Object key : placeHolders.keySet()) {
+                    String keyString = key.toString();
+                    String value = placeHolders.get(key).toString();
+                    ArchiveFileFormEntriesBean formEntry = new ArchiveFileFormEntriesBean();
+                    formEntry.setForm(form);
+                    formEntry.setPlaceHolder(keyString);
+                    formEntry.setStringValue(value);
+                    formEntries.add(formEntry);
+                }
+                locator.lookupFormsServiceRemote().setFormEntries(this.form.getId(), formEntries);
+                log.info("finished saving " + formEntries.size() + " form entries");
+            } catch (Throwable t) {
+                log.error("Error saving form entries", t);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            log.info("form " + form.getId() + " has not been changed - skip saving");
+        }
+        this.valuesCheckSum=newCheckSum;
 
     }
 

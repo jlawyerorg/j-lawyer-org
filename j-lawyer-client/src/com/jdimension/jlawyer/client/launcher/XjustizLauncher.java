@@ -665,17 +665,9 @@ package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaEebDisplayDialog;
-import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import io.undertow.util.FileUtils;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.URL;
-import javax.mail.Flags.Flag;
-import javax.mail.internet.MimeMessage;
+import java.awt.Window;
 import org.apache.log4j.Logger;
 
 /**
@@ -688,8 +680,8 @@ public class XjustizLauncher extends InternalLauncher {
 
     private String xml=null;
     
-    public XjustizLauncher(String url, ObservedDocumentStore store) {
-        super(url, store);
+    public XjustizLauncher(String url, ObservedDocumentStore store, Window parent) {
+        super(url, store, parent);
     }
 
     @Override
@@ -708,7 +700,11 @@ public class XjustizLauncher extends InternalLauncher {
             
             String html = BeaAccess.getEebAsHtml(xml, null);
 
-            BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            BeaEebDisplayDialog dlg = null;
+            if(this.parent==null)
+                dlg=new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow());
+            else
+                dlg=new BeaEebDisplayDialog(this.parent);
             dlg.setHtml(html);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);

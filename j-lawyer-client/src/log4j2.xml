@@ -34,7 +34,7 @@
             <PatternLayout pattern="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
             <!-- Filter type="ThresholdFilter" level="INFO"/ -->
             <Filters>
-                <ThresholdFilter level="DEBUG" onMatch="ACCEPT" />
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" />
             </Filters>
         </Console>
         
@@ -50,8 +50,10 @@
         <!-- Limit JBoss categories -->
         <Logger name="org.jboss"/>
         
+        <Logger name="org.apache.commons.digester" level="INFO"/>
+        
         <!-- ======================= -->
-        <Root level="DEBUG">
+        <Root level="INFO">
             <AppenderRef ref="CONSOLE"/>
             <AppenderRef ref="FILE"/>
         </Root>      

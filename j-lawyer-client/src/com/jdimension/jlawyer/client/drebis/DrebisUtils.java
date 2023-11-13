@@ -666,18 +666,33 @@ package com.jdimension.jlawyer.client.drebis;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
- * @author jens
+ * @author j-dimension
  */
 public class DrebisUtils {
+    
+    public static PartyTypeBean getType(AddressBean ab, List<ArchiveFileAddressesBean> allParties) {
+        if(allParties==null || ab==null)
+            return null;
+        
+        for(ArchiveFileAddressesBean aab: allParties) {
+            if(aab.getAddressKey()!=null && aab.getAddressKey().getId().equals(ab.getId()))
+                return aab.getReferenceType();
+        }
+        return null;
+    }
     
     public static InsuranceInfo getAnyInsurance(String id, String office) {
         ClientSettings s=ClientSettings.getInstance();
         
-        ArrayList<InsuranceInfo> all=new ArrayList<InsuranceInfo>();
+        ArrayList<InsuranceInfo> all=new ArrayList<>();
         all.addAll(s.getInsurances());
         all.addAll(s.getMotorInsurances());
         

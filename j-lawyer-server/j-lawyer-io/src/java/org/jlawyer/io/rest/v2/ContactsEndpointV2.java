@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v2;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
 import javax.annotation.security.RolesAllowed;
@@ -701,7 +702,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
     public Response getContact(@PathParam("id") String id) {
@@ -719,6 +720,36 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             return res;
         }
     }
+    
+    /**
+     * Returns a contacts metadata given its external ID
+     *
+     * @param extId the contacts external ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No contact found with this external ID
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/byexternalid/{extId}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContactByExternalId(@PathParam("extId") String extId) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr = addresses.getAddressByExternalId(extId);
+            if(adr!=null) {
+                return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get address by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+    }
 
     /**
      * Creates a new contact
@@ -729,7 +760,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
     public Response createContact(RestfulContactV2 contact) {
@@ -750,7 +781,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     }
 
     /**
-     * Updates an existing contact based on its ID
+     * Updates an existing contact based on its ID. The external ID of the contact is only changed if provided by the client as a non-empty string. Setting the external ID to null / empty is not possible using this endpoint.
      *
      * @param contact the contacts data
      * @response 401 User not authorized
@@ -758,7 +789,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
     public Response updateContact(RestfulContactV2 contact) {
@@ -778,6 +809,12 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
                 Response res = Response.serverError().build();
                 return res;
             }
+            
+            // only overwrite external ID if the client provided one
+            if(!ServerStringUtils.isEmpty(contact.getExternalId())) {
+                currentContact.setExternalId(contact.getExternalId());
+            }
+            
             // file number must not be changed
 
             currentContact.setBankAccount(contact.getBankAccount());

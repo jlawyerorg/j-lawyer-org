@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import javax.swing.JTable;
@@ -691,7 +692,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
     private int typeSearchMode = 0;
     private Date toDate = null;
     private Date fromDate = null;
-    private String fileNumber = null;
+    private String search = null;
 
     /**
      * Creates a new instance of ArchiveFileReviewsAdvancedSearchThread
@@ -702,20 +703,56 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
      * @param typeSearchMode
      * @param fromDate
      * @param toDate
+     * @param search
      */
-    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String fileNumber) {
+    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String search) {
         this.owner = owner;
         this.target = target;
         this.statusSearchMode = statusSearchMode;
         this.typeSearchMode = typeSearchMode;
         this.toDate = toDate;
         this.fromDate = fromDate;
-        this.fileNumber = fileNumber;
+        this.search = search;
     }
 
+    private boolean isMatch(ArchiveFileReviewsBean dto, String searchText) {
+        if(dto.getArchiveFileKey().getFileNumber().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getArchiveFileKey().getName()!=null && dto.getArchiveFileKey().getName().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getArchiveFileKey().getReason()!=null && dto.getArchiveFileKey().getReason().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getArchiveFileKey().getLawyer()!=null && dto.getArchiveFileKey().getLawyer().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getArchiveFileKey().getAssistant()!=null && dto.getArchiveFileKey().getAssistant().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getDescription()!=null && dto.getDescription().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getSummary()!=null && dto.getSummary().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getAssignee()!=null && dto.getAssignee().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getEventTypeName()!=null && dto.getEventTypeName().toLowerCase().contains(searchText))
+            return true;
+        
+        if(dto.getCalendarSetup()!=null && dto.getCalendarSetup().getDisplayName()!=null && dto.getCalendarSetup().getDisplayName().toLowerCase().contains(searchText))
+            return true;
+        
+        return false;
+    }
+    
     @Override
     public void run() {
         Collection<ArchiveFileReviewsBean> dtos = null;
+        ArrayList<ArchiveFileReviewsBean> filteredDtos=new ArrayList<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -723,8 +760,14 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             dtos = calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
 
-            if (fileNumber != null && !fileNumber.isEmpty()) {
-                dtos.removeIf(bean -> !bean.getArchiveFileKey().getFileNumber().contains(fileNumber));
+            if (search != null && !search.isEmpty()) {
+                search=search.toLowerCase();
+                for(ArchiveFileReviewsBean dto: dtos) {
+                    if(isMatch(dto, search))
+                        filteredDtos.add(dto);
+                }
+            } else {
+                filteredDtos.addAll(dtos);
             }
 
         } catch (Exception ex) {
@@ -736,13 +779,13 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
         ArchiveFileReviewsFindTableModel model = new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
-        for (ArchiveFileReviewsBean b : dtos) {
+        for (ArchiveFileReviewsBean b : filteredDtos) {
             String reviewDateString = b.toString();
             String calendar = "";
             if (b.getCalendarSetup() != null) {
                 calendar = b.getCalendarSetup().getDisplayName();
             }
-            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getDoneBoolean(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);

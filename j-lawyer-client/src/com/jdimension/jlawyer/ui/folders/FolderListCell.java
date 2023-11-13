@@ -855,7 +855,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         });
 
         txtFolderName.setEditable(false);
-        txtFolderName.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
+        txtFolderName.setFont(txtFolderName.getFont().deriveFont(txtFolderName.getFont().getStyle() | java.awt.Font.BOLD));
         txtFolderName.setText("jTextField1");
         txtFolderName.setBorder(null);
         txtFolderName.setOpaque(false);
@@ -1131,7 +1131,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
 
-                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder, null);
 
                     a.start();
 

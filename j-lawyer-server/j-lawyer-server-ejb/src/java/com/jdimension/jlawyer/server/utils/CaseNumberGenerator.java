@@ -677,37 +677,35 @@ import java.util.regex.Pattern;
  */
 public class CaseNumberGenerator {
 
-    private static final String shortCodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String SHORTCODECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private static final boolean DBG = false;
 
-    public static boolean compilePattern(String pattern) throws InvalidCaseNumberPatternException {
+    public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
 
-        if (pattern.indexOf("YYY") > -1 && !(pattern.indexOf("YYYY") > -1)) {
-            throw new InvalidCaseNumberPatternException("Y muss als YY oder YYYY enthalten sein");
+        if (pattern.contains("YYY") && !pattern.contains("YYYY")) {
+            throw new InvalidSchemaPatternException("Y muss als YY oder YYYY enthalten sein");
         }
-        if (pattern.indexOf("YYYYY") > -1) {
-            throw new InvalidCaseNumberPatternException("Y muss als YY oder YYYY enthalten sein");
-        }
-
-        if (pattern.indexOf("MMM") > -1) {
-            throw new InvalidCaseNumberPatternException("M muss als M oder MM enthalten sein");
-        }
-        if (pattern.indexOf("DDD") > -1) {
-            throw new InvalidCaseNumberPatternException("D muss als D oder DD enthalten sein");
+        if (pattern.contains("YYYYY")) {
+            throw new InvalidSchemaPatternException("Y muss als YY oder YYYY enthalten sein");
         }
 
-//        if(pattern.indexOf('r')>-1 && !(pattern.indexOf("rrr")>-1))
-//            throw new InvalidCaseNumberPatternException("r must be contained as at least rrr (999 cases per year)");
-        if (pattern.indexOf('n') > -1 && !(pattern.indexOf("nnn") > -1)) {
-            throw new InvalidCaseNumberPatternException("n muss mindestens als nnn (999 Akten innerhalb der anderen Angaben) enthalten sein");
+        if (pattern.contains("MMM")) {
+            throw new InvalidSchemaPatternException("M muss als M oder MM enthalten sein");
+        }
+        if (pattern.contains("DDD")) {
+            throw new InvalidSchemaPatternException("D muss als D oder DD enthalten sein");
         }
 
-        if (pattern.indexOf('R') > -1 && !(pattern.indexOf("RRR") > -1)) {
-            throw new InvalidCaseNumberPatternException("R muss mindestens als RRR (max. 999 Akten) enthalten sein");
+        if (pattern.indexOf('n') > -1 && !pattern.contains("nnn")) {
+            throw new InvalidSchemaPatternException("n muss mindestens als nnn (999 Akten innerhalb der anderen Angaben) enthalten sein");
         }
-        if (pattern.indexOf('N') > -1 && !(pattern.indexOf("NNNNN") > -1)) {
-            throw new InvalidCaseNumberPatternException("N muss mindestens als NNNNN (max. 99999 Akten)");
+
+        if (pattern.indexOf('R') > -1 && !pattern.contains("RRR")) {
+            throw new InvalidSchemaPatternException("R muss mindestens als RRR (max. 999 Akten) enthalten sein");
+        }
+        if (pattern.indexOf('N') > -1 && !pattern.contains("NNNNN")) {
+            throw new InvalidSchemaPatternException("N muss mindestens als NNNNN (max. 99999 Akten)");
         }
 
         int allNumberComponents = 0;
@@ -719,7 +717,7 @@ public class CaseNumberGenerator {
             count = count + 1;
             allNumberComponents++;
             if (count == 2) {
-                throw new InvalidCaseNumberPatternException("Es kann nur EINE Zufallszahlenangabe R geben");
+                throw new InvalidSchemaPatternException("Es kann nur EINE Zufallszahlenangabe R geben");
             }
         }
 
@@ -730,7 +728,7 @@ public class CaseNumberGenerator {
             count = count + 1;
             allNumberComponents++;
             if (count == 2) {
-                throw new InvalidCaseNumberPatternException("Es kann nur EINE globale Indexangabe N geben");
+                throw new InvalidSchemaPatternException("Es kann nur EINE globale Indexangabe N geben");
             }
         }
 
@@ -741,12 +739,12 @@ public class CaseNumberGenerator {
             count = count + 1;
             allNumberComponents++;
             if (count == 2) {
-                throw new InvalidCaseNumberPatternException("Es kan nur EINE lokale Indexangabe n geben");
+                throw new InvalidSchemaPatternException("Es kan nur EINE lokale Indexangabe n geben");
             }
         }
 
         if (allNumberComponents > 1) {
-            throw new InvalidCaseNumberPatternException("Es kann nur EIN Vorkommen einer N- n- oder R-Angabe geben");
+            throw new InvalidSchemaPatternException("Es kann nur EIN Vorkommen einer N- n- oder R-Angabe geben");
         }
 
         randNoPattern = Pattern.compile("\\.*(C+)\\.*");
@@ -757,20 +755,20 @@ public class CaseNumberGenerator {
             allNumberComponents++;
         }
         if (allNumberComponents == 0) {
-            throw new InvalidCaseNumberPatternException("Es muss zumindest eine dynamische Angabe geben");
+            throw new InvalidSchemaPatternException("Es muss zumindest eine dynamische Angabe geben");
         }
 
         return true;
     }
 
-    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
+    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidSchemaPatternException {
 
         compilePattern(pattern);
 
         return next(allExisting, pattern, startFromIndex);
     }
 
-    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
+    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidSchemaPatternException {
 
         compilePattern(pattern);
 
@@ -780,7 +778,7 @@ public class CaseNumberGenerator {
     public static String getExtension(boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean bUserAbbr, String userAbbr, boolean bGroupAbbr, String groupAbbr) throws Exception {
 
         if (extension) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(dividerMain);
             if (bPrefix) {
                 if (prefix == null || "".equals(prefix)) {
@@ -823,45 +821,45 @@ public class CaseNumberGenerator {
         return "";
     }
 
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidSchemaPatternException {
         return next(allExisting, pattern, new Date(), startFromIndex);
     }
 
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidSchemaPatternException {
 
         SimpleDateFormat shortYear = new SimpleDateFormat("yy");
-    SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
+        SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
 
-    SimpleDateFormat shortMonth = new SimpleDateFormat("M");
-    SimpleDateFormat longMonth = new SimpleDateFormat("MM");
+        SimpleDateFormat shortMonth = new SimpleDateFormat("M");
+        SimpleDateFormat longMonth = new SimpleDateFormat("MM");
 
-    SimpleDateFormat shortDay = new SimpleDateFormat("d");
-    SimpleDateFormat longDay = new SimpleDateFormat("dd");
-        
+        SimpleDateFormat shortDay = new SimpleDateFormat("d");
+        SimpleDateFormat longDay = new SimpleDateFormat("dd");
+
         Date current = date;
         if (current == null) {
             current = new Date();
         }
 
         // fixed values
-        while (pattern.indexOf("YYYY") > -1) {
+        while (pattern.contains("YYYY")) {
             pattern = pattern.replace("YYYY", longYear.format(current));
         }
-        while (pattern.indexOf("YY") > -1) {
+        while (pattern.contains("YY")) {
             pattern = pattern.replace("YY", shortYear.format(current));
         }
 
-        while (pattern.indexOf("MM") > -1) {
+        while (pattern.contains("MM")) {
             pattern = pattern.replace("MM", longMonth.format(current));
         }
-        while (pattern.indexOf("M") > -1) {
+        while (pattern.contains("M")) {
             pattern = pattern.replace("M", shortMonth.format(current));
         }
 
-        while (pattern.indexOf("DD") > -1) {
+        while (pattern.contains("DD")) {
             pattern = pattern.replace("DD", longDay.format(current));
         }
-        while (pattern.indexOf("D") > -1) {
+        while (pattern.contains("D")) {
             pattern = pattern.replace("D", shortDay.format(current));
         }
 
@@ -885,7 +883,7 @@ public class CaseNumberGenerator {
                         System.out.println("30");
                     }
                     int randDigit = (int) (Math.random() * 10);
-                    patternChar[m.start() + i] = Integer.toString(randDigit).charAt(0);;
+                    patternChar[m.start() + i] = Integer.toString(randDigit).charAt(0);
                 }
             }
             if (DBG) {
@@ -922,7 +920,7 @@ public class CaseNumberGenerator {
                 String dfs = df.format(globalIndex);
 
                 // get all current globa index values
-                ArrayList<String> allExistingGlobals = new ArrayList<String>();
+                ArrayList<String> allExistingGlobals = new ArrayList<>();
                 for (String existing : allExisting) {
                     if (DBG) {
                         System.out.println("70");
@@ -962,7 +960,7 @@ public class CaseNumberGenerator {
                         System.out.println("110");
                     }
 
-                    char shortCode = shortCodeChars.charAt(r.nextInt(shortCodeChars.length()));
+                    char shortCode = SHORTCODECHARS.charAt(r.nextInt(SHORTCODECHARS.length()));
                     cPatternChar[mc.start() + i] = shortCode;
                 }
             }
@@ -979,7 +977,7 @@ public class CaseNumberGenerator {
                 String s = mn.group(1);
 
                 if (("" + localIndex).length() > s.length()) {
-                    throw new InvalidCaseNumberPatternException("Case number " + localIndex + " has exceeded maximum value of " + s + "!");
+                    throw new InvalidSchemaPatternException("Case number " + localIndex + " has exceeded maximum value of " + s + "!");
                 }
 
                 DecimalFormat df = new DecimalFormat(s.replaceAll("n", "0"));

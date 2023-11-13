@@ -698,7 +698,7 @@ public class ModuleBar extends javax.swing.JPanel {
             JMenuItem mi = new JMenuItem("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
             mi.setIcon(m.getDefaultIcon());
             mi.setRolloverIcon(m.getRolloverIcon());
-            mi.setFont(new java.awt.Font("Dialog", 1, 10));
+            mi.setFont(mi.getFont().deriveFont(mi.getFont().getSize()-2f));
             mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
 
@@ -754,11 +754,8 @@ public class ModuleBar extends javax.swing.JPanel {
             if (hotKeyActions.containsKey(keyStroke)) {
                 final Action a = hotKeyActions.get(keyStroke);
                 final ActionEvent ae = new ActionEvent(e.getSource(), e.getID(), null);
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        a.actionPerformed(ae);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    a.actionPerformed(ae);
                 });
                 return true;
             }

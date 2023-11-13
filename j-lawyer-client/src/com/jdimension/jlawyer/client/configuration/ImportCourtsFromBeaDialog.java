@@ -666,11 +666,6 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import java.io.File;
-import java.io.IOException;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 import org.apache.log4j.Logger;
 
 /**
@@ -681,7 +676,9 @@ public class ImportCourtsFromBeaDialog extends javax.swing.JDialog {
     
     private static final Logger log=Logger.getLogger(ImportCourtsFromBeaDialog.class.getName());
     
-    /** Creates new form ImportZipCodesDialog */
+    /** Creates new form ImportCourtsFromBeaDialog
+     * @param parent
+     * @param modal */
     public ImportCourtsFromBeaDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -800,10 +797,8 @@ public class ImportCourtsFromBeaDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ImportCourtsFromBeaDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ImportCourtsFromBeaDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     

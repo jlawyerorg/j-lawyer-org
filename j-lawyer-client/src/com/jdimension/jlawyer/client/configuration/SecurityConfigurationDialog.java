@@ -663,11 +663,8 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.security.PasswordsUtil;
-import java.net.URL;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -675,9 +672,9 @@ import org.apache.log4j.Logger;
  */
 public class SecurityConfigurationDialog extends javax.swing.JDialog {
     
-    private static Logger log=Logger.getLogger(SecurityConfigurationDialog.class.getName());
-    
-    /** Creates new form SecurityConfigurationDialog */
+    /** Creates new form SecurityConfigurationDialog
+     * @param parent
+     * @param modal */
     public SecurityConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -808,10 +805,8 @@ public class SecurityConfigurationDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new SecurityConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new SecurityConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     

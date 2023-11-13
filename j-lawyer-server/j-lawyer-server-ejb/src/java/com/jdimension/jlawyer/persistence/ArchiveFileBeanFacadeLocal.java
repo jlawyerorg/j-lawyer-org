@@ -687,7 +687,13 @@ public interface ArchiveFileBeanFacadeLocal {
 
     List<ArchiveFileBean> findByFileNumber(String fileNumber);
     
+    List<ArchiveFileBean> findLastChanged(int limit);
+    
+    List<ArchiveFileBean> findLastChangedNonArchived(int limit);
+    
     List<ArchiveFileBean> findByGroup(Group g);
+    
+    ArchiveFileBean findByExternalId(String externalId);
 
     int count();
     

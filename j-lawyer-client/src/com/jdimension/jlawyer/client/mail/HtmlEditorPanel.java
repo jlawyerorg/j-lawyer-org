@@ -676,7 +676,7 @@ import javax.swing.JComboBox;
 public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImplementation {
 
     /**
-     * Creates new form TextEditorPanel
+     * Creates new form HtmlEditorPanel
      */
     public HtmlEditorPanel() {
         initComponents();

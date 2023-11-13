@@ -694,8 +694,10 @@ public class LoadTemplatePreviewThread implements Runnable {
     private JPanel pnlPreview = null;
     private JSplitPane split=null;
     private String fileName = null;
+    private int templateType = SystemManagementRemote.TEMPLATE_TYPE_BODY;
 
-    public LoadTemplatePreviewThread(GenericNode folder, String fileName, JPanel pnlPreview, JSplitPane split) {
+    public LoadTemplatePreviewThread(int templateType, GenericNode folder, String fileName, JPanel pnlPreview, JSplitPane split) {
+        this.templateType=templateType;
         this.f = folder;
         this.pnlPreview = pnlPreview;
         this.fileName = fileName;
@@ -723,9 +725,9 @@ public class LoadTemplatePreviewThread implements Runnable {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SystemManagementRemote afs = locator.lookupSystemManagementRemote();
 
-            byte[] data = afs.getTemplateData(f, fileName);
+            byte[] data = afs.getTemplateData(this.templateType, f, fileName);
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, new TemplatePreviewProvider(afs, f, fileName), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, new TemplatePreviewProvider(this.templateType, afs, f, fileName), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.remove(pnlPreview, loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());

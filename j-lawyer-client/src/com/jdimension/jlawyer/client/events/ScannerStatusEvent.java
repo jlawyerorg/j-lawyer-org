@@ -663,17 +663,9 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.awt.Desktop;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
-import java.net.URI;
 import java.util.Date;
-import java.util.Hashtable;
-import javax.swing.ImageIcon;
+import java.util.HashMap;
 
 /**
  *
@@ -681,9 +673,9 @@ import javax.swing.ImageIcon;
  */
 public class ScannerStatusEvent extends Event {
 
-    private Hashtable<File, Date> fileNames=null;
+    private HashMap<File, Date> fileNames=null;
     
-    public ScannerStatusEvent(Hashtable<File, Date> fileNames) {
+    public ScannerStatusEvent(HashMap<File, Date> fileNames) {
         super(Event.TYPE_SCANNERSTATUS);
         this.fileNames=fileNames;
         
@@ -699,14 +691,14 @@ public class ScannerStatusEvent extends Event {
     /**
      * @return the fileNames
      */
-    public Hashtable<File, Date> getFileNames() {
+    public HashMap<File, Date> getFileNames() {
         return fileNames;
     }
 
     /**
      * @param fileNames the fileNames to set
      */
-    public void setFileNames(Hashtable<File, Date> fileNames) {
+    public void setFileNames(HashMap<File, Date> fileNames) {
         this.fileNames = fileNames;
     }
 

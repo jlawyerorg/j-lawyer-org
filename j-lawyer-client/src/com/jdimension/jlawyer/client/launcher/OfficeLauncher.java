@@ -663,11 +663,6 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import java.awt.Desktop;
-import java.io.File;
-
 /**
  *
  * @author jens

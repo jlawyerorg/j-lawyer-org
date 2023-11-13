@@ -819,7 +819,7 @@ public class GetExternLocationDialog extends javax.swing.JDialog {
         });
 
         txtTarget.setBackground(javax.swing.UIManager.getDefaults().getColor("Button.background"));
-        txtTarget.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
+        txtTarget.setFont(txtTarget.getFont().deriveFont(txtTarget.getFont().getStyle() | java.awt.Font.BOLD));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

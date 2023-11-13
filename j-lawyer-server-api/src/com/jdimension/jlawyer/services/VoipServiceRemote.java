@@ -663,10 +663,15 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.epost.EpostApiStatus;
+import com.jdimension.jlawyer.epost.EpostException;
+import com.jdimension.jlawyer.epost.EpostLetter;
+import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
 import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.fax.SipgateException;
+import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.util.ArrayList;
 import java.util.List;
@@ -692,13 +697,37 @@ public interface VoipServiceRemote {
     ArrayList<FaxQueueBean> queueList() throws Exception;
 
     String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
+    EpostLetterStatus getLetterStatus(int letterId, String senderPrincipalId) throws Exception;
 
     void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
+    void deleteEpostQueueEntries(List<Integer> letterIds) throws EpostException;
 
     String reInitiateFax(String id) throws SipgateException;
 
-    void saveFaxReport(String sessionId) throws SipgateException;
+    void saveFaxReport(String sessionId, String fileName) throws SipgateException;
 
     List<SipUser> getUsers(String user, String password) throws SipgateException;
+
+    String getNewFaxReportFileName(String sessionId) throws Exception;
+
+    byte[] getValidatedLetter(int letterId) throws Exception;
+
+    EpostApiStatus epostHealthCheck() throws EpostException;
+
+    int sendLetter(EpostLetter letter, String caseId) throws Exception;
+
+    int sendRegisteredLetter(EpostLetter letter, String registeredLetterMode, String caseId) throws Exception;
+
+    String setEpostPassword(String newPassword, String smsCode, String customerNo) throws EpostException;
+
+    void epostSmsRequest(String customerNo) throws EpostException;
+
+    int validateLetter(EpostLetter letter, String toEmail) throws Exception;
+
+    ArrayList<EpostQueueBean> epostQueueList() throws Exception;
+
+    String getNewEpostReportFileName(int letterId) throws Exception;
+
+    void saveEpostReport(int letterId, String fileName) throws EpostException;
     
 }
