@@ -945,7 +945,10 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         String[] lines = content.split("\n");
         for (String line : lines) {
             String[] words = line.split(" ");
-            StringBuilder currentLine = new StringBuilder(words[0]);
+            String initial="";
+            if(words.length>0)
+                initial=words[0];
+            StringBuilder currentLine = new StringBuilder(initial);
 
             for (int i = 1; i < words.length; i++) {
                 String testLine = currentLine.toString() + " " + words[i];
