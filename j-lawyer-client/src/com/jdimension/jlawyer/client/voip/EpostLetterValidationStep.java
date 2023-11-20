@@ -963,7 +963,13 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                 try {
                     SwingUtilities.invokeLater(() -> {
                         if (this.wizard != null) {
-                            this.wizard.enableButtons(true, true, true, false);
+                            // for actual sending
+//                            this.wizard.enableButtons(true, true, true, true);
+                            
+                            // for validation in templates
+//                            this.wizard.enableButtons(false, false, false, true);
+                            
+                            this.wizard.enableButtons(!this.wizard.isFirstStep(this), !this.wizard.isFinalStep(this), true, this.wizard.isFirstStep(this));
                         }
                     });
                 } catch (Throwable t) {
