@@ -726,4 +726,6 @@ public interface SecurityServiceRemote {
     MailboxSetup updateMailboxSetup(MailboxSetup cs);
 
     void removeMailboxSetup(MailboxSetup cs);
+
+    List<AppUserBean> getMessagingEnabledUsers() throws Exception;
 }

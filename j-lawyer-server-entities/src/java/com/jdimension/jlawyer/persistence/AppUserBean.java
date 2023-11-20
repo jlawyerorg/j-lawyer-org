@@ -677,6 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "AppUserBean.findAll", query = "SELECT a FROM AppUserBean a"),
     @NamedQuery(name = "AppUserBean.findByPrincipalId", query = "SELECT a FROM AppUserBean a WHERE a.principalId = :principalId"),
+    @NamedQuery(name = "AppUserBean.findByExternalId", query = "SELECT a FROM AppUserBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "AppUserBean.findByPassword", query = "SELECT a FROM AppUserBean a WHERE a.password = :password")})
 public class AppUserBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -749,6 +750,9 @@ public class AppUserBean implements Serializable {
     
     @Column(name = "epost_secret")
     protected String epostSecret;
+    
+    @Column(name = "ext_id")
+    private String externalId;
     
     
     public AppUserBean() {
@@ -1113,6 +1117,20 @@ public class AppUserBean implements Serializable {
      */
     public void setEpostSecret(String epostSecret) {
         this.epostSecret = epostSecret;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
     

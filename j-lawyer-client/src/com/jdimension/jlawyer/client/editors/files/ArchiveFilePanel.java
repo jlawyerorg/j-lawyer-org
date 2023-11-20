@@ -855,7 +855,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ComponentUtils.decorateSplitPane(this.splitNotes);
         
         this.messageSendPanel1.setMessageConsumer(this);
-        this.messageSendPanel1.setUsers(UserSettings.getInstance().getLoginEnabledUsers());
+        this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
 
         this.tagPanel.setLayout(new WrapLayout());
         this.documentTagPanel.setLayout(new WrapLayout());

@@ -692,4 +692,6 @@ public interface SecurityServiceLocal {
 
     boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;
     
+    public AppUserBean getUserByExternalId(String extId);
+    
 }

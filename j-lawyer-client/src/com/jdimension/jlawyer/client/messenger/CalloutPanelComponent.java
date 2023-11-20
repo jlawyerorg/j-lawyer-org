@@ -907,13 +907,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         }
 
-        //g2d.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius);
         g2d.fillRect(0, 0, width, height);
 
-//        int[] xPoints = {width, width, width};
-//        int[] yPoints = {height / 2, height / 2, height / 2};
-//
-//        g2d.fillPolygon(xPoints, yPoints, 3);
         if (this.message != null && this.message.hasMentions()) {
             if (this.message.hasOpenMentions()) {
                 if(this.message.getMentions().size()==this.message.getOpenMentionsCount())
@@ -930,8 +925,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
 
         g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        //g2d.drawRoundRect(0, 0, width, height, cornerRadius, cornerRadius);
-        //g2d.drawRect(0, 0, width, height);
 
         g2d.setFont(defaultFont);
 
@@ -952,7 +945,10 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         String[] lines = content.split("\n");
         for (String line : lines) {
             String[] words = line.split(" ");
-            StringBuilder currentLine = new StringBuilder(words[0]);
+            String initial="";
+            if(words.length>0)
+                initial=words[0];
+            StringBuilder currentLine = new StringBuilder(initial);
 
             for (int i = 1; i < words.length; i++) {
                 String testLine = currentLine.toString() + " " + words[i];
@@ -971,7 +967,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         g2d.setFont(miniFont);
         g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
-        //g2d.drawString(timestamp, 10, yOffset + 15); // Timestamp position
         Date sent = null;
         if (this.message == null || this.message.getSent() == null) {
             sent = new Date();
@@ -984,21 +979,16 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             if (read == READ) {
                 // read
                 g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-                //g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
                 g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
             } else {
                 // unread
                 g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-                //g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
                 g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
             }
         }
         
         // delete button
         this.deleteX=width-70;
-//        g2d.setFont(miniFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD));
-//        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
-//        g2d.drawString("x", this.deleteX,this.deleteY); // Timestamp position
         
         // delete icon
         ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);

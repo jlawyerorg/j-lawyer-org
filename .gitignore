@@ -64,3 +64,5 @@
 /j-lawyer-server/j-lawyer-server-ejb/src/java/body.docx
 /j-lawyer-server/j-lawyer-server-ejb/src/java/header.docx
 /j-lawyer-fax/test/org/jlawyer/tests/test.pdf
+/j-lawyer-server/j-lawyer-io/addbasicauth-error.log
+/j-lawyer-server/j-lawyer-io/addbasicauth.log

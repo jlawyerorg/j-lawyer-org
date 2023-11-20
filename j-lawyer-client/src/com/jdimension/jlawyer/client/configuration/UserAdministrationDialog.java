@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.EpostSetPasswordDialog;
 import com.jdimension.jlawyer.client.voip.EpostVendorIdRequestDialog;
 import com.jdimension.jlawyer.fax.SipUser;
@@ -734,12 +735,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
-            List<AppUserBean> allUsers = mgmt.getUsers();
-            for (AppUserBean u : allUsers) {
-                m.addElement(u);
-            }
-
+            this.populateUsersList(this.chkShowExternalUsers.isSelected());
+            
             CalendarUtils cu = CalendarUtils.getInstance();
             this.countries = cu.getCountryCodes();
             ArrayList countryNames = new ArrayList();
@@ -797,6 +794,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.updateEpostStatus();
         
 
+    }
+    
+    private void populateUsersList(boolean includeExternalUsers) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        UserListModel m=(UserListModel)this.lstUsers.getModel();
+        m.clear();
+        SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            List<AppUserBean> allUsers = mgmt.getUsers();
+            for (AppUserBean u : allUsers) {
+                if(StringUtils.isEmpty(u.getExternalId())) {
+                    // internal users are always displayed
+                    m.addElement(u);
+                } else {
+                    if(includeExternalUsers)
+                        m.addElement(u);
+                }
+            }
     }
     
     private void updateEpostStatus() {
@@ -915,6 +930,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel7 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblInvoicePools = new javax.swing.JTable();
+        chkShowExternalUsers = new javax.swing.JCheckBox();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("Löschen");
@@ -1204,7 +1220,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(281, Short.MAX_VALUE))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1284,8 +1300,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel6Layout.createSequentialGroup()
                         .add(jLabel21)
-                        .add(0, 430, Short.MAX_VALUE))
-                    .add(jScrollPane5))
+                        .add(0, 382, Short.MAX_VALUE))
+                    .add(jScrollPane5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1335,7 +1351,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
+                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE)
                     .add(jPanel7Layout.createSequentialGroup()
                         .add(jLabel22)
                         .add(0, 0, Short.MAX_VALUE)))
@@ -1441,7 +1457,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)))
+                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 486, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1453,7 +1469,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(18, 18, 18)
                 .add(jLabel5)
-                .addContainerGap(339, Short.MAX_VALUE))
+                .addContainerGap(248, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
@@ -1597,7 +1613,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel26)
-                .addContainerGap(248, Short.MAX_VALUE))
+                .addContainerGap(154, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Sipgate / E-POST", jPanel11);
@@ -1675,8 +1691,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jLabel19)
-                        .add(0, 435, Short.MAX_VALUE))
-                    .add(jScrollPane4))
+                        .add(0, 382, Short.MAX_VALUE))
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1729,11 +1745,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel12Layout.createSequentialGroup()
                         .add(jLabel7)
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Belege", jPanel12);
+
+        chkShowExternalUsers.setText("Nutzer aus externen System anzeigen");
+        chkShowExternalUsers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkShowExternalUsersActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1743,6 +1766,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jTabbedPane1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdSave)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdClose))
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(cmdAdd)
@@ -1751,12 +1779,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 216, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .add(18, 18, 18)
-                        .add(jScrollPane1))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdSave)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdClose)))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(chkShowExternalUsers)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(jScrollPane1))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1772,8 +1799,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(cmdAdd))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 570, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(chkShowExternalUsers)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 532, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 27, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
                     .add(cmdSave))
@@ -2076,6 +2105,41 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+        } else {
+                this.chkLawyer.setSelected(false);
+                this.cmbCountry.setSelectedIndex(0);
+                this.cmbArea.setSelectedIndex(0);
+                this.txtAbbreviation.setText("");
+                this.cmbPrimaryGroup.setSelectedIndex(0);
+
+                this.pnlCloudConnection.setCloudHost("");
+                this.pnlCloudConnection.setCloudPath("");
+                this.pnlCloudConnection.setCloudPort(443);
+                this.pnlCloudConnection.setCloudUser("");
+                this.pnlCloudConnection.setCloudPassword("");
+                this.pnlCloudConnection.setSsl(true);
+
+                this.txtVoipPassword.setText("");
+                this.txtVoipUser.setText("");
+                this.cmbVoipId.removeAllItems();
+                
+                this.txtEpostCustomer.setText("");
+                this.txtEpostSecret.setText("");
+                
+                this.pwdEpostPassword.setText("");
+                
+                this.txtDisplayName.setText("");
+
+                
+                    this.rdAutoLogin.setSelected(false);
+                    this.rdManualLogin.setSelected(true);
+                
+                this.pwdBeaCertificatePassword.setText("");
+                this.currentCertificate = null;
+
+                
+                this.taBeaCertificate.setText("");
+                
         }
     }//GEN-LAST:event_lstUsersValueChanged
 
@@ -2569,6 +2633,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         
     }//GEN-LAST:event_cmdSetEpostPasswordActionPerformed
 
+    private void chkShowExternalUsersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkShowExternalUsersActionPerformed
+        try {
+            this.populateUsersList(this.chkShowExternalUsers.isSelected());
+        } catch (Exception ex) {
+            log.error("Error loading users", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_chkShowExternalUsersActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2834,6 +2907,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkRemoveOption;
     private javax.swing.JCheckBox chkReportCommon;
     private javax.swing.JCheckBox chkReportConfidential;
+    private javax.swing.JCheckBox chkShowExternalUsers;
     private javax.swing.JCheckBox chkWriteAddress;
     private javax.swing.JCheckBox chkWriteFile;
     private javax.swing.JCheckBox chkWriteOption;

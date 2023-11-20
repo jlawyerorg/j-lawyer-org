@@ -799,6 +799,7 @@ public class SplashThread implements Runnable {
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
         List<AppUserBean> loginEnabledUsers=null;
+        List<AppUserBean> messagingEnabledUsers=null;
         try {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -827,6 +828,7 @@ public class SplashThread implements Runnable {
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
 
             loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
+            messagingEnabledUsers = security.getMessagingEnabledUsers();
             
             List<AppUserBean> users = mgmt.getUsers();
             List<AppUserBean> lawyers = new ArrayList<>();
@@ -879,6 +881,7 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
         UserSettings.getInstance().setLoginEnabledUsers(loginEnabledUsers);
+        UserSettings.getInstance().setMessagingEnabledUsers(messagingEnabledUsers);
         settings.setTitles(titles);
         settings.setTitlesInAddress(titlesInAddress);
         settings.setCountries(countries);

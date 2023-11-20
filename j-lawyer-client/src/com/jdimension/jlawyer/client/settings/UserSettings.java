@@ -760,6 +760,7 @@ public class UserSettings {
     private AppUserBean[] assistantUsers = null;
     private AppUserBean[] allUsers = null;
     private List<AppUserBean> loginEnabledUsers = null;
+    private List<AppUserBean> messagingEnabledUsers = null;
 
     private SystemManagementRemote mgmt = null;
 
@@ -767,13 +768,13 @@ public class UserSettings {
     private ImageIcon smallIcon = null;
     private ImageIcon bigIcon = null;
 
-    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<String, ImageIcon>();
-    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<String, ImageIcon>();
-    private Hashtable<String, List<String>> userRoles = new Hashtable<String, List<String>>();
+    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<>();
+    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<>();
+    private Hashtable<String, List<String>> userRoles = new Hashtable<>();
 
-    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<String, List<MailboxSetup>>();
+    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<>();
 
-    private ArrayList<String> invalidUsers = new ArrayList<String>();
+    private ArrayList<String> invalidUsers = new ArrayList<>();
 
     /**
      * Creates a new instance of ClientSettings
@@ -1105,6 +1106,20 @@ public class UserSettings {
             // also, having no icon is not a big issue - but the logging of the error can cause some performance issues because it is invoked frequently
 
         }
+    }
+
+    /**
+     * @return the messagingEnabledUsers
+     */
+    public List<AppUserBean> getMessagingEnabledUsers() {
+        return messagingEnabledUsers;
+    }
+
+    /**
+     * @param messagingEnabledUsers the messagingEnabledUsers to set
+     */
+    public void setMessagingEnabledUsers(List<AppUserBean> messagingEnabledUsers) {
+        this.messagingEnabledUsers = messagingEnabledUsers;
     }
 
 }

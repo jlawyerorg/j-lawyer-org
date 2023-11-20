@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6.pojo;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
+
 /**
  *
  * @author jens
@@ -678,8 +680,35 @@ public class RestfulUserV6 {
     
     protected String displayName;
     
+    private String externalId=null;
+    
     public RestfulUserV6() {
         
+    }
+    
+    public AppUserBean toAppUserBean(AppUserBean au) {
+        
+        au.setPrincipalId(principalId);
+        au.setLawyer(lawyer);
+        au.setCountryCode(countryCode);
+        au.setAreaCode(areaCode);
+        au.setAbbreviation(abbreviation);
+        au.setDisplayName(displayName);
+        au.setExternalId(externalId);       
+        return au;
+        
+    }
+    
+    public static RestfulUserV6 fromAppUserBean(AppUserBean au) {
+        RestfulUserV6 u = new RestfulUserV6();
+        u.setAbbreviation(au.getAbbreviation());
+        u.setAreaCode(au.getAreaCode());
+        u.setCountryCode(au.getCountryCode());
+        u.setDisplayName(au.getDisplayName());
+        u.setExternalId(au.getExternalId());
+        u.setLawyer(au.isLawyer());
+        u.setPrincipalId(au.getPrincipalId());
+        return u;
     }
 
     /**
@@ -764,6 +793,20 @@ public class RestfulUserV6 {
      */
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
     
 }
