@@ -46,7 +46,7 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="226" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="228" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -199,12 +199,14 @@
                       <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="lblArchiveFile" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="cmdResend" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdSaveReport" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdDelete" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="selectAllToggle" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="cmdResend" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdSaveReport" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdDelete" alignment="0" max="32767" attributes="0"/>
+                      </Group>
+                      <Component id="selectAllToggle" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>

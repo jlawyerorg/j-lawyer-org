@@ -703,6 +703,14 @@ public class WizardMainPanel extends javax.swing.JPanel {
         this.parent=p;
     }
     
+    public boolean isFinalStep(WizardStepInterface s) {
+        return this.steps.isFinalStep(s);
+    }
+    
+    public boolean isFirstStep(WizardStepInterface s) {
+        return this.steps.isFirstStep(s);
+    }
+    
     public void setSteps(WizardSteps steps) {
         this.steps=steps;
         

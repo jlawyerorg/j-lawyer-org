@@ -258,9 +258,8 @@
                                           <Component id="jLabel45" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel41" alignment="1" max="32767" attributes="0"/>
-                                          <Component id="jLabel32" alignment="1" max="32767" attributes="0"/>
-                                          <Component id="jLabel29" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="jLabel33" alignment="0" max="32767" attributes="0"/>
+                                          <Component id="jLabel29" alignment="1" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel32" alignment="1" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -282,21 +281,23 @@
                                           <Component id="cmbNationality" alignment="0" max="32767" attributes="0"/>
                                           <Component id="cmbProfession" alignment="0" max="32767" attributes="0"/>
                                           <Component id="cmbRole" alignment="0" max="32767" attributes="0"/>
-                                          <Group type="102" attributes="0">
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                                  <Component id="txtBirthDate" pref="125" max="32767" attributes="0"/>
+                                                  <Component id="txtPlaceOfBirth" max="32767" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="cmdSelectBirthday" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Group type="102" attributes="0">
-                                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                                          <Component id="txtBirthDate" pref="98" max="32767" attributes="0"/>
-                                                          <Component id="txtPlaceOfBirth" max="32767" attributes="0"/>
-                                                          <Component id="txtDeathDate" alignment="0" max="32767" attributes="0"/>
-                                                      </Group>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="cmdSelectBirthday" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="cmdSelectDeathday" min="-2" max="-2" attributes="0"/>
-                                                      </Group>
-                                                  </Group>
                                                   <Component id="lblAge" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="jLabel33" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="txtDeathDate" min="-2" pref="125" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="cmdSelectDeathday" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
                                               </Group>
                                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                           </Group>
@@ -366,30 +367,22 @@
                                   <Component id="jLabel45" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="jLabel33" max="32767" attributes="0"/>
                                   <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                                       <Component id="txtBirthDate" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="jLabel29" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cmdSelectBirthday" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdSelectBirthday" alignment="1" max="32767" attributes="0"/>
+                                  <Component id="txtDeathDate" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="cmdSelectDeathday" alignment="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="102" alignment="1" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="txtPlaceOfBirth" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel32" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="txtDeathDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel33" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="cmdSelectDeathday" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="txtPlaceOfBirth" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel32" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblAge" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblAge" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -589,7 +582,7 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel29">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="geboren:"/>
+                        <Property name="text" type="java.lang.String" value="*"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel32">
@@ -599,7 +592,7 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel33">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="gestorben:"/>
+                        <Property name="text" type="java.lang.String" value="&#x2020;&#x2020;"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JTextField" name="txtDeathDate">
@@ -801,7 +794,7 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="txtNoticePane" pref="516" max="32767" attributes="0"/>
+                                  <Component id="txtNoticePane" pref="571" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -1425,7 +1418,7 @@
                           <Component id="jPanel11" max="32767" attributes="0"/>
                           <Component id="jPanel12" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="187" max="32767" attributes="0"/>
+                      <EmptySpace pref="122" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1879,7 +1872,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel6" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="506" max="32767" attributes="0"/>
+                      <EmptySpace pref="527" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -2033,7 +2026,7 @@
                       <Component id="lblCustom3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="404" max="32767" attributes="0"/>
+                      <EmptySpace pref="375" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -2113,7 +2106,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" pref="595" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="635" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>

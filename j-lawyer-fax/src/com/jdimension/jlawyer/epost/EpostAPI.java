@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.epost;
 import com.jdimension.jlawyer.fax.utils.Base64;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
@@ -686,7 +687,8 @@ public class EpostAPI {
     private static final String AUTH_HEADERNAME = "Authorization";
     private static final String AUTH_HEADERPREFIX = "Bearer ";
 
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private SimpleDateFormat dfMilliseconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private SimpleDateFormat dfSeconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private String baseUri = "https://api.epost.docuguide.com";
 
@@ -941,10 +943,10 @@ public class EpostAPI {
                 s.setFileName(result.getString(Jsoner.mintJsonKey("fileName", null)));
                 s.setStatusId(result.getInteger(Jsoner.mintJsonKey("statusID", null)));
                 s.setStatusDetails(result.getString(Jsoner.mintJsonKey("statusDetails", null)));
-                s.setCreatedDate(df.parse(result.getString(Jsoner.mintJsonKey("createdDate", null))));
+                s.setCreatedDate(parseDate(result.getString(Jsoner.mintJsonKey("createdDate", null))));
                 s.setDestinationAreaStatus(result.getString(Jsoner.mintJsonKey("destinationAreaStatus", null)));
                 if (result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null)) != null) {
-                    s.setDestinationAreaStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
+                    s.setDestinationAreaStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
                 }
 
                 if (result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
@@ -953,26 +955,26 @@ public class EpostAPI {
                         JsonObject eo = (JsonObject) errorEntry;
                         EpostLetterStatusError se = new EpostLetterStatusError();
                         se.setCode(eo.getString(Jsoner.mintJsonKey("code", null)));
-                        se.setDate(df.parse(eo.getString(Jsoner.mintJsonKey("code", null))));
-                        se.setDescription(eo.getString(Jsoner.mintJsonKey("code", null)));
-                        se.setLevel(eo.getString(Jsoner.mintJsonKey("code", null)));
+                        se.setDate(parseDate(eo.getString(Jsoner.mintJsonKey("date", null))));
+                        se.setDescription(eo.getString(Jsoner.mintJsonKey("description", null)));
+                        se.setLevel(eo.getString(Jsoner.mintJsonKey("level", null)));
                         s.getErrorList().add(se);
                     }
                 }
 
                 s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
                 if (result.getString(Jsoner.mintJsonKey("printFeedbackDate", null)) != null) {
-                    s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
+                    s.setPrintFeedbackDate(parseDate(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
                 }
                 if (result.getString(Jsoner.mintJsonKey("printUploadDate", null)) != null) {
-                    s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
+                    s.setPrintUploadDate(parseDate(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
                 }
                 if (result.getString(Jsoner.mintJsonKey("processedDate", null)) != null) {
-                    s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
+                    s.setProcessedDate(parseDate(result.getString(Jsoner.mintJsonKey("processedDate", null))));
                 }
                 s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
                 if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
-                    s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
+                    s.setRegisteredLetterStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
                 }
 
                 return s;
@@ -986,6 +988,25 @@ public class EpostAPI {
             log.error("Could not check ePost letter status", ex);
             throw new EpostException(ex.getMessage(), ex);
         }
+    }
+    
+    private Date parseDate(String dateString) {
+        if(dateString==null)
+            return new Date();
+        
+        Date d=null;
+        try {
+            d=dfMilliseconds.parse(dateString);
+        } catch (Throwable t) {
+            log.warn("timestamp without milliseconds: " + dateString);
+            try {
+                d=dfSeconds.parse(dateString);
+            } catch (Throwable t2) {
+                log.error("invalid timestamp: " + dateString + " - returning current date / time");
+                d=new Date();
+            }
+        }
+        return d;
     }
 
     public ArrayList<EpostLetterStatus> getLetterStatus(String token, List<Integer> letterIds) throws EpostException {
@@ -1023,10 +1044,10 @@ public class EpostAPI {
                     s.setFileName(result.getString(Jsoner.mintJsonKey("fileName", null)));
                     s.setStatusId(result.getInteger(Jsoner.mintJsonKey("statusID", null)));
                     s.setStatusDetails(result.getString(Jsoner.mintJsonKey("statusDetails", null)));
-                    s.setCreatedDate(df.parse(result.getString(Jsoner.mintJsonKey("createdDate", null))));
+                    s.setCreatedDate(parseDate(result.getString(Jsoner.mintJsonKey("createdDate", null))));
                     s.setDestinationAreaStatus(result.getString(Jsoner.mintJsonKey("destinationAreaStatus", null)));
                     if (result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null)) != null) {
-                        s.setDestinationAreaStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
+                        s.setDestinationAreaStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("destinationAreaStatusDate", null))));
                     }
 
                     if (result.get(Jsoner.mintJsonKey("errorList", null)) != null) {
@@ -1035,26 +1056,26 @@ public class EpostAPI {
                             JsonObject eo = (JsonObject) errorEntry;
                             EpostLetterStatusError se = new EpostLetterStatusError();
                             se.setCode(eo.getString(Jsoner.mintJsonKey("code", null)));
-                            se.setDate(df.parse(eo.getString(Jsoner.mintJsonKey("code", null))));
-                            se.setDescription(eo.getString(Jsoner.mintJsonKey("code", null)));
-                            se.setLevel(eo.getString(Jsoner.mintJsonKey("code", null)));
+                            se.setDate(parseDate(eo.getString(Jsoner.mintJsonKey("date", null))));
+                            se.setDescription(eo.getString(Jsoner.mintJsonKey("description", null)));
+                            se.setLevel(eo.getString(Jsoner.mintJsonKey("level", null)));
                             s.getErrorList().add(se);
                         }
                     }
 
                     s.setNoOfPages(result.getInteger(Jsoner.mintJsonKey("noOfPages", null)));
                     if (result.getString(Jsoner.mintJsonKey("printFeedbackDate", null)) != null) {
-                        s.setPrintFeedbackDate(df.parse(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
+                        s.setPrintFeedbackDate(parseDate(result.getString(Jsoner.mintJsonKey("printFeedbackDate", null))));
                     }
                     if (result.getString(Jsoner.mintJsonKey("printUploadDate", null)) != null) {
-                        s.setPrintUploadDate(df.parse(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
+                        s.setPrintUploadDate(parseDate(result.getString(Jsoner.mintJsonKey("printUploadDate", null))));
                     }
                     if (result.getString(Jsoner.mintJsonKey("processedDate", null)) != null) {
-                        s.setProcessedDate(df.parse(result.getString(Jsoner.mintJsonKey("processedDate", null))));
+                        s.setProcessedDate(parseDate(result.getString(Jsoner.mintJsonKey("processedDate", null))));
                     }
                     s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
                     if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
-                        s.setRegisteredLetterStatusDate(df.parse(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
+                        s.setRegisteredLetterStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
                     }
                     returnStatusList.add(s);
 
