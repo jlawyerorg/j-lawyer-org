@@ -676,6 +676,6 @@ public interface MessagingEndpointLocalV7 {
 
     public Response submitMessage(RestfulInstantMessageV7 msg);
     
-    public Response deleteDocument(String id);
+    public Response deleteMessage(String id);
     
 }

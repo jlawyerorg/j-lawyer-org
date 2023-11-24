@@ -772,7 +772,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"loginRole"})
-    public Response deleteDocument(@PathParam("id") String id) {
+    public Response deleteMessage(@PathParam("id") String id) {
         try {
 
             InitialContext ic = new InitialContext();
