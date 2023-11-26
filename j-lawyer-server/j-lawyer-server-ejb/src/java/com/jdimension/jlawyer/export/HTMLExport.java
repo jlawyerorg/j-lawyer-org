@@ -886,7 +886,7 @@ public class HTMLExport {
         }
         try {
             sContent = sContent.replaceAll("\\{\\{history\\}\\}", sb.toString());
-        } catch (Throwable t) {
+        } catch (Exception t) {
             log.error("failed to add history to export, replacement string was " + sb.toString(), t);
         }
 
@@ -918,24 +918,24 @@ public class HTMLExport {
 
                 String dbNewName = removeSonderzeichen(db.getName());
 
-                dbNewName = dbNewName.replaceAll(",", "");
-                dbNewName = dbNewName.replaceAll("\"", "");
-                dbNewName = dbNewName.replaceAll("§", "");
-                dbNewName = dbNewName.replaceAll("%", "");
-                dbNewName = dbNewName.replaceAll("&", "");
-                dbNewName = dbNewName.replaceAll("/", "");
-                dbNewName = dbNewName.replaceAll("=", "");
-                dbNewName = dbNewName.replaceAll("\\?", "");
-                dbNewName = dbNewName.replaceAll("\\{", "");
-                dbNewName = dbNewName.replaceAll("\\}", "");
-                dbNewName = dbNewName.replaceAll("\\[", "");
-                dbNewName = dbNewName.replaceAll("\\]", "");
-                dbNewName = dbNewName.replaceAll("\\\\", "");
-                dbNewName = dbNewName.replaceAll("\\*", "");
-                dbNewName = dbNewName.replaceAll("#", "");
-                dbNewName = dbNewName.replaceAll("'", "");
-                dbNewName = dbNewName.replaceAll(":", "");
-                dbNewName = dbNewName.replaceAll(";", "");
+                dbNewName = dbNewName.replace(",", "");
+                dbNewName = dbNewName.replace("\"", "");
+                dbNewName = dbNewName.replace("§", "");
+                dbNewName = dbNewName.replace("%", "");
+                dbNewName = dbNewName.replace("&", "");
+                dbNewName = dbNewName.replace("/", "");
+                dbNewName = dbNewName.replace("=", "");
+                dbNewName = dbNewName.replace("\\?", "");
+                dbNewName = dbNewName.replace("\\{", "");
+                dbNewName = dbNewName.replace("\\}", "");
+                dbNewName = dbNewName.replace("\\[", "");
+                dbNewName = dbNewName.replace("\\]", "");
+                dbNewName = dbNewName.replace("\\\\", "");
+                dbNewName = dbNewName.replace("\\*", "");
+                dbNewName = dbNewName.replace("#", "");
+                dbNewName = dbNewName.replace("'", "");
+                dbNewName = dbNewName.replace(":", "");
+                dbNewName = dbNewName.replace(";", "");
                 
                 if(dbNewName.length()==0) {
                     log.warn("invalid file name: " + dbNewName);
