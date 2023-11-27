@@ -707,7 +707,7 @@ import org.jboss.ejb3.annotation.SecurityDomain;
  */
 @Stateless
 @DeclareRoles(value = {"readArchiveFileRole", "writeArchiveFileRole", "loginRole"})
-@SecurityDomain(value = "j-lawyer-security")
+//@SecurityDomain(value = "j-lawyer-security")
 public class IntegrationService implements IntegrationServiceRemote, IntegrationServiceLocal {
 
     private static final Logger log = Logger.getLogger(IntegrationService.class.getName());

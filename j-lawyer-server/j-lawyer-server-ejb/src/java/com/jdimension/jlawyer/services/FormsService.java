@@ -697,7 +697,7 @@ import org.jboss.ejb3.annotation.SecurityDomain;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
     private static final Logger log = Logger.getLogger(FormsService.class.getName());

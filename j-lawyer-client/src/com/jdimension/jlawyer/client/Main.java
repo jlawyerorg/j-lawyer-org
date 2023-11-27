@@ -673,10 +673,18 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.Hashtable;
+import java.util.Properties;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
@@ -686,6 +694,10 @@ import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 
 /**
  *
@@ -803,6 +815,93 @@ public class Main {
         
         com.jdimension.jlawyer.client.editors.documents.viewer.html.data.Handler.install();
         com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.Handler.install();
+        
+        
+//                try {
+//
+//                    AuthenticationConfiguration authCfg
+//                            = AuthenticationConfiguration
+//                                    .empty()
+//                                    .useRealm("jlawyer-jdbc-realm")
+//                                    .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism("DIGEST-SHA-256"))
+//                                    .useName("admin")
+//                                    .usePassword("a")
+//                            .useDefaultProviders();
+//
+//                    final AuthenticationContext authCtx = AuthenticationContext.empty().with(MatchRule.ALL, authCfg);
+//
+//                    AuthenticationContext.getContextManager().setThreadDefault(authCtx);
+//
+//                    final Hashtable<String, String> jndiProperties = new Hashtable();
+//
+//                    jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+//
+//                    //jndiProperties.put(Context.PROVIDER_URL, "remote+http://localhost:8080");
+//                    jndiProperties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+//                    
+//                    
+//                    // jens
+////                    jndiProperties.put("jboss.naming.client.ejb.context", true);
+////            jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+////            jndiProperties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+////            jndiProperties.put(Context.SECURITY_PRINCIPAL, "admin");
+////            jndiProperties.put(Context.SECURITY_CREDENTIALS, "a");
+//            jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//            jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+////            jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+////            jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "false");
+//                    // ende jens
+//                    
+//
+//                    final Context context = new InitialContext(jndiProperties);
+//
+//                    SecurityServiceRemote remote1 = (SecurityServiceRemote) context.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
+//            remote1.login("admin", "a");
+//
+//                    
+//                    
+//                    
+//                    
+//                    
+//            String pwString="a";
+//            
+//            // Create MessageDigest instance for SHA-256
+//            MessageDigest md = MessageDigest.getInstance("SHA-256");
+//
+//            // Update the message digest with the input string
+//            md.update(pwString.getBytes(StandardCharsets.UTF_8));
+//
+//            // Generate the hash
+//            byte[] hashBytes = md.digest();
+//
+//            // Encode the hash using Base64
+//            pwString = Base64.getEncoder().encodeToString(hashBytes);
+//            
+//            
+//            
+//            Properties properties = new Properties();
+//            properties.put("jboss.naming.client.ejb.context", true);
+//
+//            // begin: for JMS only
+//            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+//            properties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+//            properties.put(Context.SECURITY_PRINCIPAL, "admin");
+//            properties.put(Context.SECURITY_CREDENTIALS, pwString);
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "false");
+//
+//            InitialContext ic = new InitialContext(properties);
+//            SecurityServiceRemote remote = (SecurityServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
+//            remote.login("admin", "a");
+//            System.out.println("connected!");
+//            
+//        } catch (Throwable ne) {
+//            ne.printStackTrace();
+//        }
+        
+        
         
         Main main = new Main();
         main.showSplash(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);

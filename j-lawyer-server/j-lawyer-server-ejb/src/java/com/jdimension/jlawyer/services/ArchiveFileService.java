@@ -729,7 +729,7 @@ import org.jlawyer.search.SearchIndexRequest;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFileServiceLocal {
 
     private static final Logger log = Logger.getLogger(ArchiveFileService.class.getName());

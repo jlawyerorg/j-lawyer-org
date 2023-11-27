@@ -737,7 +737,7 @@ import org.w3c.dom.NodeList;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static final Logger log = Logger.getLogger(SystemManagement.class.getName());

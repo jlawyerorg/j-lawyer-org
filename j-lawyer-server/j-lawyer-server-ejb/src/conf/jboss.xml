@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jboss>
     <!-- security-domain>java:/jaas/j-lawyer-security</security-domain -->
-    <security-domain>j-lawyer-security</security-domain>
+    <security-domain>jlawyer-application-security-domain</security-domain>
 </jboss>

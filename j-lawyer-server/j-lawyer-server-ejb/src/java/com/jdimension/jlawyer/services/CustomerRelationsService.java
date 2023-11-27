@@ -706,7 +706,7 @@ import org.jlawyer.data.tree.TreeNodeUtils;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class CustomerRelationsService implements CustomerRelationsServiceRemote, CustomerRelationsServiceLocal {
     
     private static final Logger log=Logger.getLogger(CustomerRelationsService.class.getName());

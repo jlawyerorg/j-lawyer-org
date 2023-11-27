@@ -1745,7 +1745,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setForeground(Color.RED);
             this.cmdLogin.setEnabled(true);
             launching = false;
-            System.exit(1);
+            //System.exit(1);
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);
