@@ -744,7 +744,7 @@ public class PrintStubGenerator {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yy");
 
         ReviewsDetail det = new ReviewsDetail();
-        if (rev.getDone() == 1) {
+        if (rev.isDone()) {
             det.setDoneStatus("erledigt");
         } else {
             det.setDoneStatus("offen");

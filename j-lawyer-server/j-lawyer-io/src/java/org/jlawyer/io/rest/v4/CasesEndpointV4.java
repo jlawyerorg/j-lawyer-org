@@ -729,7 +729,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 RestfulDueDateV4 dd = new RestfulDueDateV4();
                 dd.setId(rev.getId());
                 dd.setAssignee(rev.getAssignee());
-                dd.setDone(rev.getDoneBoolean());
+                dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
                 dd.setEndDate(rev.getEndDate());
                 dd.setSummary(rev.getSummary());

@@ -792,7 +792,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             log.info("Syncing updated event to cloud: " + event.getId());
 
             // remove anything that is done
-            if (event.getDoneBoolean()) {
+            if (event.isDone()) {
                 CalendarSetup cs = event.getCalendarSetup();
                 if(cs.isDeleteDone()) {
                     this.eventDeleted(event);

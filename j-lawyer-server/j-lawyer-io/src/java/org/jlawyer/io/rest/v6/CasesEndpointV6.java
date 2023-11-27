@@ -834,7 +834,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             rev.setEndDate(dueDate.getEndDate());
             rev.setCalendarSetup(calSetup);
             rev.setDescription(dueDate.getDescription());
-            rev.setDoneBoolean(dueDate.isDone());
+            rev.setDone(dueDate.isDone());
             rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
             if (RestfulDueDateV6.TYPE_RESPITE.equals(dueDate.getType())) {
                 rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
@@ -848,7 +848,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             RestfulDueDateV6 dd = new RestfulDueDateV6();
             dd.setId(rev.getId());
             dd.setAssignee(rev.getAssignee());
-            dd.setDone(rev.getDoneBoolean());
+            dd.setDone(rev.isDone());
             dd.setBeginDate(rev.getBeginDate());
             dd.setEndDate(rev.getBeginDate());
             dd.setSummary(rev.getSummary());
@@ -929,7 +929,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             rev.setEndDate(dueDate.getEndDate());
             rev.setCalendarSetup(calSetup);
             rev.setDescription(dueDate.getDescription());
-            rev.setDoneBoolean(dueDate.isDone());
+            rev.setDone(dueDate.isDone());
             rev.setLocation(dueDate.getLocation());
             rev.setSummary(dueDate.getSummary());
             rev = cal.updateReview(dueDate.getCaseId(), rev);
@@ -937,7 +937,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             RestfulDueDateV6 dd = new RestfulDueDateV6();
             dd.setId(rev.getId());
             dd.setAssignee(rev.getAssignee());
-            dd.setDone(rev.getDoneBoolean());
+            dd.setDone(rev.isDone());
             dd.setBeginDate(rev.getBeginDate());
             dd.setEndDate(rev.getBeginDate());
             dd.setSummary(rev.getSummary());

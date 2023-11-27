@@ -2561,8 +2561,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 ArchiveFileBean aFile1 = (ArchiveFileBean)o1;
                                 ArchiveFileBean aFile2 = (ArchiveFileBean)o2;
                                 
-                                if (aFile2.getArchivedBoolean()) {
-                                    if (aFile1.getArchivedBoolean()) {
+                                if (aFile2.isArchived()) {
+                                    if (aFile1.isArchived()) {
                                         // both archived
                                         // sort by changed date
                                         //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
@@ -2571,7 +2571,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                         // only 2 is archived
                                         return -1;
                                     }
-                                } else if (aFile1.getArchivedBoolean()) {
+                                } else if (aFile1.isArchived()) {
                                     // only 1 is archived
                                     return 1;
                                 } else {
@@ -2604,7 +2604,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 lce.setRole("");
                 lce.setName(aFile.getName());
                 lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-                lce.setArchived(aFile.getArchivedBoolean());
+                lce.setArchived(aFile.isArchived());
                 ep.setEntry(lce, this);
 
                 actionPanelEntries.add(ep);

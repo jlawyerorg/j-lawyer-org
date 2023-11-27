@@ -784,7 +784,7 @@ public class HTMLExport {
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getSummary()));
             excelStr.append(CELL_BREAK);
-            if (rev.getArchiveFileKey().getArchivedBoolean()) {
+            if (rev.getArchiveFileKey().isArchived()) {
                 excelStr.append("ja");
             } else {
                 excelStr.append("nein");

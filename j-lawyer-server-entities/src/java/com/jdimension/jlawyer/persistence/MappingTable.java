@@ -684,7 +684,7 @@ public class MappingTable implements Serializable {
     @Basic(optional = false)
     @Column(name = "table_name")
     protected String tableName;
-    @Column(name = "system_table", columnDefinition = "TINYINT")
+    @Column(name = "system_table")
     protected boolean systemTable;
     @Column(name = "key1_name")
     protected String key1Name;

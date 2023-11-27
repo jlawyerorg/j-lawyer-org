@@ -704,7 +704,7 @@ public class Timesheet implements Serializable {
     @Column(name = "interval_minutes")
     protected int interval;
     
-    @Column(name = "limited", columnDefinition = "TINYINT")
+    @Column(name = "limited")
     protected boolean limited=true;
     @Column(name = "limit_net")
     protected float limit=0f;

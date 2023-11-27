@@ -788,7 +788,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
             RestfulCaseV1 c=new RestfulCaseV1();
-            c.setArchived(afb.getArchived());
+            if(afb.isArchived())
+                c.setArchived((short)1);
+            else
+                c.setArchived((short)0);
             c.setAssistant(afb.getAssistant());
             c.setClaimNumber(afb.getClaimNumber());
             c.setClaimValue(afb.getClaimValue());
@@ -933,7 +936,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             
             // file number must not be changed
 
-            currentCase.setArchived(caseData.getArchived());
+            currentCase.setArchived(caseData.getArchived()==1);
             currentCase.setAssistant(caseData.getAssistant());
             currentCase.setClaimNumber(caseData.getClaimNumber());
             currentCase.setClaimValue(caseData.getClaimValue());
@@ -1095,7 +1098,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 RestfulDueDateV1 dd = new RestfulDueDateV1();
                 dd.setId(rev.getId());
                 dd.setAssignee(rev.getAssignee());
-                dd.setDone(rev.getDoneBoolean());
+                dd.setDone(rev.isDone());
                 dd.setDueDate(rev.getBeginDate());
                 dd.setReason(rev.getSummary());
                 dd.setType(RestfulDueDateV1.TYPE_RESPITE);

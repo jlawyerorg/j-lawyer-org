@@ -716,11 +716,11 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String emailSenderName;
     @Column(name = "emailSignature", columnDefinition = "TEXT")
     protected String emailSignature;
-    @Column(name = "emailInSsl", columnDefinition = "TINYINT")
+    @Column(name = "emailInSsl")
     protected boolean emailInSsl;
-    @Column(name = "emailOutSsl", columnDefinition = "TINYINT")
+    @Column(name = "emailOutSsl")
     protected boolean emailOutSsl;
-    @Column(name = "emailStartTls", columnDefinition = "TINYINT")
+    @Column(name = "emailStartTls")
     protected boolean emailStartTls;
     
     // Office 365 / Exchange
@@ -728,7 +728,7 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String clientId;
     @Column(name = "client_secret")
     protected String clientSecret;
-    @Column(name = "msexchange", columnDefinition = "TINYINT")
+    @Column(name = "msexchange")
     protected boolean msExchange;
     @Column(name = "tenant_id")
     protected String tenantId;

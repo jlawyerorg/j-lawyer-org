@@ -1287,8 +1287,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String newArchiveFileKeyExtension = this.getExtension(lawyerAbbr, gs);
         dto.setFileNumberExtension(newArchiveFileKeyExtension);
 
-        boolean archivedOld = aFile.getArchivedBoolean();
-        boolean archivedNew = dto.getArchivedBoolean();
+        boolean archivedOld = aFile.isArchived();
+        boolean archivedNew = dto.isArchived();
 
         this.addCaseHistory(idGen.getID().toString(), dto, "Akte geändert");
 
@@ -1356,7 +1356,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        boolean archivedOld = aFile.getArchivedBoolean();
+        boolean archivedOld = aFile.isArchived();
         boolean archivedNew = archived;
 
         if (archivedOld != archivedNew) {
@@ -1366,12 +1366,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // archived
                 historyDescription = "Akte abgelegt / archiviert";
                 aFile.setDateArchived(new Date());
-                aFile.setArchivedBoolean(true);
+                aFile.setArchived(true);
             } else {
                 // de-archived
                 historyDescription = "Akte wieder aufgenommen / dearchiviert";
                 aFile.setDateArchived(null);
-                aFile.setArchivedBoolean(false);
+                aFile.setArchived(false);
             }
 
             this.addCaseHistory(idGen.getID().toString(), aFile, historyDescription);
@@ -4567,14 +4567,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         CaseFolderSettings currentSettings = this.caseFolderSettingsFacade.findByFolderAndPrincipal(folder, context.getCallerPrincipal().getName());
 
-        if (currentSettings == null && folderSettings.getHiddenBoolean()) {
+        if (currentSettings == null && folderSettings.isHidden()) {
             // not blacklisted - create blacklist entry
             StringGenerator idGen = new StringGenerator();
             folderSettings.setId(idGen.getID().toString());
             folderSettings.setPrincipal(context.getCallerPrincipal().getName());
             folderSettings.setFolder(folder);
             this.caseFolderSettingsFacade.create(folderSettings);
-        } else if (currentSettings != null && !(folderSettings.getHiddenBoolean())) {
+        } else if (currentSettings != null && !(folderSettings.isHidden())) {
             // blacklisted, but should not be
             this.caseFolderSettingsFacade.remove(currentSettings);
         }

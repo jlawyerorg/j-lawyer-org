@@ -836,7 +836,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setFirstName(contact.getFirstName());
             currentContact.setInsuranceName(contact.getInsuranceName());
             currentContact.setInsuranceNumber(contact.getInsuranceNumber());
-            currentContact.setLegalProtection(contact.getLegalProtection());
+            currentContact.setLegalProtection(contact.getLegalProtection()==1);
             currentContact.setMobile(contact.getMobile());
             currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
             currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
@@ -847,7 +847,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
-            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection());
+            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection()==1);
             currentContact.setWebsite(contact.getWebsite());
             currentContact.setZipCode(contact.getZipCode());
 

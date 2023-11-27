@@ -1306,7 +1306,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtName.setText(dto.getName());
         // this field has a special handling to avoid overlengthy input, cannot handle null values
         this.txtNotice.setText(StringUtils.nonNull(dto.getNotice()));
-        this.chkArchived.setSelected(dto.getArchivedBoolean());
+        this.chkArchived.setSelected(dto.isArchived());
         this.lblCaseChanged.setText(this.dfDay.format(dto.getDateChanged()));
         this.lblCaseCreated.setText(this.dfDay.format(dto.getDateCreated()));
 
@@ -1329,7 +1329,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // lock when archive flag is set, only allow  dearchiving - only applies to editor in edit mode
         if (!this.readOnly) {
-            if (dto.getArchivedBoolean()) {
+            if (dto.isArchived()) {
                 // set everything readonly except for save button and archive checkbox
                 this.setReadOnly(this.readOnly, true);
                 this.chkArchived.setEnabled(true);
@@ -1358,7 +1358,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.isArchived(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -3588,7 +3588,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
 
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            review.setDoneBoolean(false);
+            review.setDone(false);
             if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
                 try {
                     calService.updateReview(this.dto.getId(), review);
@@ -3627,7 +3627,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-                review.setDoneBoolean(true);
+                review.setDone(true);
 
                 calService.updateReview(this.dto.getId(), review);
 
@@ -3759,7 +3759,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
-        reviewDto.setDoneBoolean(false);
+        reviewDto.setDone(false);
         reviewDto.setBeginDate(beginDate);
         reviewDto.setEndDate(endDate);
         reviewDto.setAssignee(assignee);
@@ -4286,7 +4286,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // click on checkbox in table
                 int row = this.tblReviewReasons.rowAtPoint(p);
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, 0);
-                reviewDto.setDoneBoolean(!reviewDto.getDoneBoolean());
+                reviewDto.setDone(!reviewDto.isDone());
 
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
@@ -4300,7 +4300,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                this.tblReviewReasons.setValueAt(reviewDto.getDoneBoolean(), row, col);
+                this.tblReviewReasons.setValueAt(reviewDto.isDone(), row, col);
             }
         } else if (evt.getClickCount() == 2 && !evt.isConsumed()) {
             this.mnuEditReviewActionPerformed(null);
@@ -5731,7 +5731,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (int i = 0; i < reviewsModel.getRowCount(); i++) {
                 Object row = reviewsModel.getValueAt(i, 0);
                 ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
-                if (!reviewDTO.getDoneBoolean()) {
+                if (!reviewDTO.isDone()) {
                     openCalItems.add(reviewDTO);
                 }
             }
@@ -5751,7 +5751,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                         for (ArchiveFileReviewsBean a : openCalItems) {
-                            a.setDoneBoolean(true);
+                            a.setDone(true);
                             calService.updateReview(this.dto.getId(), a);
                         }
                         for (int i = 0; i < this.tblReviewReasons.getRowCount(); i++) {
@@ -6100,7 +6100,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void fillDTO(ArchiveFileBean aFile, boolean withReviews) throws Exception {
-        aFile.setArchivedBoolean(this.chkArchived.isSelected());
+        aFile.setArchived(this.chkArchived.isSelected());
         aFile.setClaimNumber(this.txtClaimNumber.getText());
         float claimValueFloat = 0f;
         try {
@@ -6298,7 +6298,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < reviewsModel.getRowCount(); i++) {
             Object row = reviewsModel.getValueAt(i, 0);
             ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
-            if (!reviewDTO.getDoneBoolean()) {
+            if (!reviewDTO.isDone()) {
                 reviewsValid = true;
                 break;
             }
@@ -6647,7 +6647,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.saveFormData();
         
         // todo: check all data here for changes
-        if (this.dto.getArchivedBoolean() != this.chkArchived.isSelected()) {
+        if (this.dto.isArchived() != this.chkArchived.isSelected()) {
             return true;
         }
         if (!StringUtils.equals(dto.getClaimNumber(), this.txtClaimNumber.getText())) {

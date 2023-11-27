@@ -687,7 +687,7 @@ public class AppUserBean implements Serializable {
     private String principalId;
     @Column(name = "password")
     private String password;
-    @Column(name = "lawyer", columnDefinition = "TINYINT")
+    @Column(name = "lawyer")
     private boolean lawyer;
     @Column(name = "countryCode")
     private String countryCode;
@@ -701,7 +701,7 @@ public class AppUserBean implements Serializable {
     private byte[] beaCertificate;
     @Column(name = "beaCertificatePassword")
     private String beaCertificatePassword;
-    @Column(name = "beaCertificateAutoLogin", columnDefinition = "TINYINT")
+    @Column(name = "beaCertificateAutoLogin")
     private boolean beaCertificateAutoLogin;
     
     @Column(name = "abbreviation")
@@ -718,7 +718,7 @@ public class AppUserBean implements Serializable {
     @Column(name = "cloudPort")
     private int cloudPort=443;
     
-    @Column(name = "cloudSsl", columnDefinition = "TINYINT")
+    @Column(name = "cloudSsl")
     private boolean cloudSsl=true;
     
     @Column(name = "cloudUser")

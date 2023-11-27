@@ -756,7 +756,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setEventType(rev.getEventType());
         if (this.mode == MODE_EDIT) {
             targetReview.setId(rev.getId());
-            targetReview.setDoneBoolean(false);
+            targetReview.setDone(false);
 
         }
 
@@ -1040,7 +1040,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             return;
         }
 
-        targetReview.setDoneBoolean(false);
+        targetReview.setDone(false);
         targetReview.setBeginDate(beginDate);
         targetReview.setEndDate(endDate);
         targetReview.setSummary(this.cmbReviewReason.getSelectedItem().toString());
@@ -1080,7 +1080,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                             model.setValueAt(targetReview.getEventTypeName(), i, 1);
                             model.setValueAt(targetReview.getSummary(), i, 2);
                             model.setValueAt(targetReview.getLocation(), i, 3);
-                            model.setValueAt(targetReview.getDoneBoolean(), i, 4);
+                            model.setValueAt(targetReview.isDone(), i, 4);
                             model.setValueAt(targetReview.getAssignee(), i, 5);
                             model.setValueAt(targetReview.getDescription(), i, 6);
                             model.setValueAt(targetReview.getCalendarSetup().getDisplayName(), i, 7);

@@ -788,7 +788,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public void setRootFolder(CaseFolder rootFolder, Map<String, CaseFolderSettings> folderSettings) {
         ArrayList<String> unselectedIds = new ArrayList<>();
         for (String id : folderSettings.keySet()) {
-            if (folderSettings.get(id).getHiddenBoolean()) {
+            if (folderSettings.get(id).isHidden()) {
                 unselectedIds.add(id);
             }
         }

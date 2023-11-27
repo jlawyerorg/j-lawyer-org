@@ -691,8 +691,8 @@ public class CaseFolderSettings implements Serializable {
     protected String principal=null;
     
     @Basic(optional = false)
-    @Column(name = "hidden", columnDefinition = "TINYINT NOT NULL")
-    protected short hidden;
+    @Column(name = "hidden")
+    protected boolean hidden;
     
     @JoinColumn(name = "folder", referencedColumnName = "id")
     @ManyToOne
@@ -736,28 +736,14 @@ public class CaseFolderSettings implements Serializable {
     /**
      * @return the hidden
      */
-    public short getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
     
-    public boolean getHiddenBoolean() {
-        if(hidden==0) {
-            return false;
-        }
-        return true;
-    }
-    
-    public void setHiddenBoolean(boolean hidden) {
-        if(hidden)
-            this.hidden=1;
-        else 
-            this.hidden=0;
-    }
-
     /**
      * @param hidden the hidden to set
      */
-    public void setHidden(short hidden) {
+    public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
 
