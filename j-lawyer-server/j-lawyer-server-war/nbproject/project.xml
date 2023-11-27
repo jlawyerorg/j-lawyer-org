@@ -43,10 +43,10 @@
                     <file>${file.reference.j-lawyer-fax.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.javax.mail-1.5.3.jar}</file>
+                    <file>${file.reference.jakarta.mail-1.6.7.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.jboss-servlet-api_3.1_spec-1.0.0.Final.jar}</file>
+                    <file>${file.reference.jboss-servlet-api_4.0_spec-2.0.0.Final.jar}</file>
                 </library>
                 <library dirs="200">
                     <file>${file.reference.commons-logging-1.2.jar}</file>
