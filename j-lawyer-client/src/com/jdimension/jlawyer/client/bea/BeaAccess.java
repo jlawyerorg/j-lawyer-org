@@ -829,21 +829,18 @@ public class BeaAccess {
                 .build(true);
 
         try {
+            
             this.messageCache = cacheManager.createCache("bea-messages-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
-                    ResourcePoolsBuilder.newResourcePoolsBuilder()
-                            .heap(50, MemoryUnit.MB)
-                            .disk(1000, MemoryUnit.MB, true)
-            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
+                                        ResourcePoolsBuilder.heap(5).disk(1000, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))).build());
+            
         } catch (Throwable t) {
             log.error(t);
         }
 
         try {
+            
             this.folderOverviewCache = cacheManager.createCache("bea-messageheaders-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ArrayList.class,
-                    ResourcePoolsBuilder.newResourcePoolsBuilder()
-                            .heap(100, MemoryUnit.MB)
-                            .disk(250, MemoryUnit.MB, true)
-            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
+                                        ResourcePoolsBuilder.heap(5000).disk(500, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))).build());
 
         } catch (Throwable t) {
             log.error(t);

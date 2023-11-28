@@ -686,6 +686,7 @@ public class EpostAPI {
     private static final Logger log = Logger.getLogger(EpostAPI.class.getName());
     private static final String AUTH_HEADERNAME = "Authorization";
     private static final String AUTH_HEADERPREFIX = "Bearer ";
+    private static final String MIMETYPE_JSON = "application/json";
 
     private SimpleDateFormat dfMilliseconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
     private SimpleDateFormat dfSeconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -703,7 +704,8 @@ public class EpostAPI {
     public void smsRequest() throws EpostException {
         log.info("ePost API SMS request");
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/smsRequest");
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Login/smsRequest");
 
         String jsonQuery = null;
 
@@ -723,13 +725,16 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not request SMS code for ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
     }
 
     public String setPassword(String newPassword, String smsCode) throws EpostException {
         log.info("ePost API set password request");
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/setPassword");
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Login/setPassword");
 
         String jsonQuery = null;
 
@@ -752,14 +757,17 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not (re-)set password for ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
     }
 
     public String login(String secret, String password) throws EpostException {
         log.info("ePost API login");
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login");
-
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Login");
+        
         String jsonQuery = null;
 
         jsonQuery = "{\n"
@@ -771,7 +779,7 @@ public class EpostAPI {
 
         String token = null;
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).accept(MIMETYPE_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not authenticate with ePost API: " + returnValue + " [" + response.getStatus() + "]");
@@ -789,6 +797,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not authenticate with ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
         return token;
     }
@@ -797,9 +807,12 @@ public class EpostAPI {
         log.info("ePost API validated letter retrieval");
 
         byte[] bytes = null;
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
+        
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
+        
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).get();
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not retrieve validated letter: " + returnValue + " [" + response.getStatus() + "]");
@@ -818,6 +831,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not retrieve validated letter", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
 
         log.info("ePost API validated letter retrieval finished, received bytes: " + bytes.length);
@@ -881,11 +896,12 @@ public class EpostAPI {
     public EpostApiStatus healthCheck() throws EpostException {
         log.info("ePost API health check");
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Login/HealthCheck");
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Login/HealthCheck");
 
         EpostApiStatus status = new EpostApiStatus("", "", "");
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).get();
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not check ePost API status: " + returnValue + " [" + response.getStatus() + "]");
@@ -917,6 +933,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not check ePost API status", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
         return status;
     }
@@ -924,10 +942,11 @@ public class EpostAPI {
     public EpostLetterStatus getLetterStatus(String token, int letterId) throws EpostException {
         log.info("ePost letter status check for letter " + letterId);
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/" + letterId);
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/" + letterId);
 
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).get();
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not check ePost letter status: " + returnValue + " [" + response.getStatus() + "]");
@@ -987,6 +1006,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not check ePost letter status", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
     }
     
@@ -1012,7 +1033,8 @@ public class EpostAPI {
     public ArrayList<EpostLetterStatus> getLetterStatus(String token, List<Integer> letterIds) throws EpostException {
         log.info("ePost letter status check for " + letterIds.size() + " letters");
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter/StatusQuery");
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/StatusQuery");
 
         StringBuilder request = new StringBuilder();
         request.append("[ ");
@@ -1025,7 +1047,7 @@ public class EpostAPI {
         request.append(" ]");
         ArrayList<EpostLetterStatus> returnStatusList=new ArrayList<>();
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).post(javax.ws.rs.client.Entity.entity(request.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).accept(MIMETYPE_JSON).post(javax.ws.rs.client.Entity.entity(request.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not check ePost multi-letter status: " + returnValue + " [" + response.getStatus() + "]");
@@ -1089,6 +1111,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not check ePost letter status", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
         
         return returnStatusList;
@@ -1105,7 +1129,8 @@ public class EpostAPI {
             throw new EpostException("PDF konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
         }
 
-        WebTarget webTarget = this.getWebTarget(baseUri + "/api/Letter");
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(baseUri + "/api/Letter");
 
         StringBuilder jsonQuery = new StringBuilder();
 
@@ -1170,7 +1195,7 @@ public class EpostAPI {
         jsonQuery.append("}]");
 
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).post(javax.ws.rs.client.Entity.entity(jsonQuery.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + token).accept(MIMETYPE_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could no validate letter using ePost API: " + returnValue + " [" + response.getStatus() + "]");
@@ -1196,6 +1221,8 @@ public class EpostAPI {
         } catch (Exception ex) {
             log.error("Could not validate letter using ePost API", ex);
             throw new EpostException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
         }
     }
 
@@ -1227,12 +1254,6 @@ public class EpostAPI {
         if (letter.getCity() == null || letter.getCity().isEmpty()) {
             throw new EpostException("Stadt / Ort darf nicht leer sein");
         }
-    }
-
-    private WebTarget getWebTarget(String endpoint) {
-
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        return restClient.target(endpoint);
     }
 
 }

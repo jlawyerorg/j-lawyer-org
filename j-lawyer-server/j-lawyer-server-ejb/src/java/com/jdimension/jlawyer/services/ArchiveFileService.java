@@ -713,6 +713,8 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
@@ -815,6 +817,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     Event<CaseTagChangedEvent> caseTagChangedEvent;
     @Inject
     Event<DocumentTagChangedEvent> docTagChangedEvent;
+    
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
+    private javax.jms.Queue searchIndexQueue;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
@@ -1730,7 +1739,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Datei " + docId + " existiert bereits im Datenverzeichnis der Akte!");
         }
 
-        SystemManagement.createFile(dst, data);
+        ServerFileUtils.createFile(dst, data);
 
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         db.setId(docId);
@@ -1792,21 +1801,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private void publishSearchIndexRequest(SearchIndexRequest req) {
         try {
-            InitialContext ic = new InitialContext();
-            ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-            javax.jms.Queue indexQueue = (javax.jms.Queue) ic.lookup("/queue/searchIndexProcessorQueue");
-            javax.jms.Connection connection = cf.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            MessageProducer producer = session.createProducer(indexQueue);
-            connection.start();
-            //TextMessage message = session.createTextMessage("This is an order");
-            ObjectMessage msg = session.createObjectMessage(req);
-            producer.send(msg);
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(searchIndexQueue, msg);
 
-            connection.stop();
-            producer.close();
-            session.close();
-            connection.close();
         } catch (Exception ex) {
             log.error("could not publish search index request", ex);
         }
@@ -1927,7 +1924,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
-        SystemManagement.writeFile(dstFile, content);
+        ServerFileUtils.writeFile(dstFile, content);
 
         String preview = "";
         try {
@@ -1997,7 +1994,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
-        return SystemManagement.readFile(dstFile);
+        return ServerFileUtils.readFile(dstFile);
     }
 
     private long getDocumentSize(ArchiveFileDocumentsBean db) {
@@ -3448,11 +3445,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if(ServerStringUtils.isEmpty(letterHead)) {
             // new document equals the body template
-            SystemManagement.copyFile(src, dstId);
+            ServerFileUtils.copyFile(src, dstId);
         } else {
             // new document equals the head template
             String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
-            SystemManagement.copyFile(srcHead, dstId);
+            ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }

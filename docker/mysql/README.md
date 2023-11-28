@@ -1,4 +1,4 @@
-Docker + Ubuntu-16.04 + Mysql-5.7
+Docker + Ubuntu + Mysql-5.7
 
 #### parameter
 
