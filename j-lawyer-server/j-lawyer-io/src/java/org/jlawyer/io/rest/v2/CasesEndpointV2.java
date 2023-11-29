@@ -752,6 +752,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
 
             c.setDateCreated(afb.getDateCreated());
             c.setDateUpdated(afb.getDateChanged());
+            c.setExternalId(afb.getExternalId());
             Response res = Response.ok(c).build();
             return res;
         } catch (Exception ex) {
