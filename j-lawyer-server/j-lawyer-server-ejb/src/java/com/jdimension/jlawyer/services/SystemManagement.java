@@ -1118,16 +1118,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private void flushUserCache(String principalId) {
-        try {
-
-            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
-            Object[] params = {principalId};
-            String[] signature = {"java.lang.String"};
-            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
-            server.invoke(jaasMgr, "flushCache", params, signature);
-        } catch (Throwable ex) {
-            log.warn("Could not flush authorization cache", ex);
-        }
+// with Wildfly 26, this does not seem to be needed anymore.
+//        try {
+//
+//            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
+//            Object[] params = {principalId};
+//            String[] signature = {"java.lang.String"};
+//            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
+//            server.invoke(jaasMgr, "flushCache", params, signature);
+//        } catch (Throwable ex) {
+//            log.warn("Could not flush authorization cache", ex);
+//        }
     }
 
     @Override
