@@ -713,7 +713,7 @@ public class HTMLExport {
     public HTMLExport(File targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade) {
         this.targetDirectory = targetDirectory;
         this.caseFacade = caseFacade;
-        this.calendarFacade=calendarFacade;
+        this.calendarFacade = calendarFacade;
     }
 
     public File getExportFolderName(ArchiveFileBean dto) {
@@ -784,7 +784,7 @@ public class HTMLExport {
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getSummary()));
             excelStr.append(CELL_BREAK);
-            if(rev.getArchiveFileKey().getArchivedBoolean()) {
+            if (rev.getArchiveFileKey().getArchivedBoolean()) {
                 excelStr.append("ja");
             } else {
                 excelStr.append("nein");
@@ -796,15 +796,15 @@ public class HTMLExport {
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getArchiveFileKey().getCustom3()));
             excelStr.append(CELL_BREAK);
-            Collection<ArchiveFileTagsBean> tags=this.caseFacade.getTagsUnrestricted(rev.getArchiveFileKey().getId());
-            StringBuilder tagBuffer=new StringBuilder();
-            for(ArchiveFileTagsBean tag: tags) {
+            Collection<ArchiveFileTagsBean> tags = this.caseFacade.getTagsUnrestricted(rev.getArchiveFileKey().getId());
+            StringBuilder tagBuffer = new StringBuilder();
+            for (ArchiveFileTagsBean tag : tags) {
                 tagBuffer.append(tag);
                 tagBuffer.append(" / ");
             }
-            String tagString=tagBuffer.toString();
-            if(tagString.endsWith(" / ")) {
-                tagString=tagString.substring(0, tagString.length()-3);
+            String tagString = tagBuffer.toString();
+            if (tagString.endsWith(" / ")) {
+                tagString = tagString.substring(0, tagString.length() - 3);
             }
             excelStr.append(escape(tagString));
             excelStr.append(LINE_BREAK);
@@ -866,7 +866,7 @@ public class HTMLExport {
         Collection documents = null;
         Collection parties = null;
         Collection reviews = null;
-        
+
         history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
         parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
         reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
@@ -886,7 +886,7 @@ public class HTMLExport {
         }
         try {
             sContent = sContent.replaceAll("\\{\\{history\\}\\}", sb.toString());
-        } catch (Throwable t) {
+        } catch (Exception t) {
             log.error("failed to add history to export, replacement string was " + sb.toString(), t);
         }
 
@@ -917,6 +917,30 @@ public class HTMLExport {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) d;
 
                 String dbNewName = removeSonderzeichen(db.getName());
+
+                dbNewName = dbNewName.replace(",", "");
+                dbNewName = dbNewName.replace("\"", "");
+                dbNewName = dbNewName.replace("§", "");
+                dbNewName = dbNewName.replace("%", "");
+                dbNewName = dbNewName.replace("&", "");
+                dbNewName = dbNewName.replace("/", "");
+                dbNewName = dbNewName.replace("=", "");
+                dbNewName = dbNewName.replace("\\?", "");
+                dbNewName = dbNewName.replace("\\{", "");
+                dbNewName = dbNewName.replace("\\}", "");
+                dbNewName = dbNewName.replace("\\[", "");
+                dbNewName = dbNewName.replace("\\]", "");
+                dbNewName = dbNewName.replace("\\\\", "");
+                dbNewName = dbNewName.replace("\\*", "");
+                dbNewName = dbNewName.replace("#", "");
+                dbNewName = dbNewName.replace("'", "");
+                dbNewName = dbNewName.replace(":", "");
+                dbNewName = dbNewName.replace(";", "");
+                
+                if(dbNewName.length()==0) {
+                    log.warn("invalid file name: " + dbNewName);
+                    dbNewName=""+System.currentTimeMillis();
+                }
 
                 try {
                     byte[] docContent = caseFacade.getDocumentContentUnrestricted(db.getId());
@@ -979,8 +1003,7 @@ public class HTMLExport {
     }
 
     public void zipDirectory(String dirToZip, String targetFile) throws Exception {
-        try (FileOutputStream fos = new FileOutputStream(targetFile);
-                ZipOutputStream zos = new ZipOutputStream(fos)) {
+        try (FileOutputStream fos = new FileOutputStream(targetFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
             addDirToZipArchive(zos, new File(dirToZip), null);
             zos.flush();
             fos.flush();
@@ -1055,8 +1078,7 @@ public class HTMLExport {
     }
 
     private void copyToLocal(String resource, String name, File dir, String subDir) throws Exception {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource);
-                FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + System.getProperty("file.separator") + subDir + name);) {
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource); FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + System.getProperty("file.separator") + subDir + name);) {
             byte[] buffer = new byte[256];
             int len = 0;
             while ((len = is.read(buffer)) > 0) {
