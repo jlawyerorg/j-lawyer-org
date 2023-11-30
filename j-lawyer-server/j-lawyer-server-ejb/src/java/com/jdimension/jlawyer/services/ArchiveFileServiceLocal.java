@@ -793,5 +793,7 @@ public interface ArchiveFileServiceLocal {
     
     public ArchiveFileBean getCaseByExternalId(String extId);
     public ArchiveFileDocumentsBean getDocumentByExternalId(String extId);
+
+    void updateDocumentExternalId(String id, String externalId) throws Exception;
     
 }

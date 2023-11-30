@@ -1242,7 +1242,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
 
-            if (!currentDoc.getName().equals(document.getFileName())) {
+            if (document.getFileName()!=null && !currentDoc.getName().equals(document.getFileName())) {
                 cases.renameDocument(document.getId(), document.getFileName());
             }
             
@@ -1255,6 +1255,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 ArrayList<String> docIds=new ArrayList<>();
                 docIds.add(document.getId());
                 cases.moveDocumentsToFolder(docIds, document.getFolderId());
+            }
+            
+            if(document.getExternalId()!=null) {
+                cases.updateDocumentExternalId(document.getId(), document.getExternalId());
             }
             
             ArchiveFileDocumentsBean updated = cases.getDocument(document.getId());

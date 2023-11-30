@@ -6007,4 +6007,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return this.archiveFileDocumentsFacade.findByExternalId(extId);
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void updateDocumentExternalId(String id, String externalId) throws Exception {
+        
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        db.setExternalId(externalId);
+        db.bumpVersion();
+        this.archiveFileDocumentsFacade.edit(db);
+
+        DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
+        evt.setDocumentId(id);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(db.getName());
+        this.updatedDocumentEvent.fireAsync(evt);
+
+    }
+
 }
