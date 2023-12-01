@@ -4,7 +4,7 @@ MAINTAINER j-dimension "info@j-lawyer.org"
 
 # Set the WILDFLY_VERSION env variable
 ENV WILDFLY_VERSION 26.1.3.Final
-ENV WILDFLY_SHA1 287c21b069ec6ecd80472afec01384093ed8eb7d
+ENV WILDFLY_SHA1 b9f52ba41df890e09bb141d72947d2510caf758c
 ENV JBOSS_HOME /opt/jboss/wildfly
 
 USER root
