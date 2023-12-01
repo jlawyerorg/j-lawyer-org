@@ -1,5 +1,5 @@
 # Use latest jboss/base-jdk:11 image as the base
-FROM jboss/base-jdk:17
+FROM jboss/base-jdk:11
 MAINTAINER j-dimension "info@j-lawyer.org"
 
 # Set the WILDFLY_VERSION env variable
