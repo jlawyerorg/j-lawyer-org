@@ -61,6 +61,12 @@
             <included-library dirs="200">file.reference.j-lawyer-cloud.jar</included-library>
             <included-library dirs="200">file.reference.jollyday-0.5.10.jar</included-library>
             <included-library dirs="200">file.reference.json-simple-2.3.0.jar</included-library>
+            <included-library dirs="200">file.reference.jersey-client.jar</included-library>
+            <included-library dirs="200">file.reference.jersey-common.jar</included-library>
+            <included-library dirs="200">file.reference.hk2-api-2.2.0-b21.jar</included-library>
+            <included-library dirs="200">file.reference.hk2-locator-2.2.0-b21.jar</included-library>
+            <included-library dirs="200">file.reference.hk2-utils-2.2.0-b21.jar</included-library>
+            <included-library dirs="200">file.reference.cglib-2.2.0-b21.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

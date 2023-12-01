@@ -720,8 +720,8 @@ public class BeaAccess {
     private String beaEnabledVersions=null;
 
     private Collection<PostBox> inboxes = null;
-    private Hashtable<String, Identity> identityCache = new Hashtable<String, Identity>();
-    private Hashtable<String, Folder> importedFolderCache = new Hashtable<String, Folder>();
+    private Hashtable<String, Identity> identityCache = new Hashtable<>();
+    private Hashtable<String, Folder> importedFolderCache = new Hashtable<>();
 
     private PersistentCacheManager cacheManager = null;
     private Cache<String, Message> messageCache = null;
@@ -831,7 +831,7 @@ public class BeaAccess {
         try {
             
             this.messageCache = cacheManager.createCache("bea-messages-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
-                                        ResourcePoolsBuilder.heap(5).disk(1000, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))).build());
+                                        ResourcePoolsBuilder.heap(5).disk(1000, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(3))).build());
             
         } catch (Throwable t) {
             log.error(t);
