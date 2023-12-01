@@ -77,10 +77,19 @@ jobs:
           backupdirectory: /home/runner/j-lawyer-backup
           datadirectory: /home/runner/j-lawyer-data
           encryptionpwd:  
-              
       
-      - name: Build client with JDK 11
-        run: ant -Dplatforms.JDK_17.home=$JDK_11 -buildfile j-lawyer-client/build.xml default
+      - name: Set up JDK17
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '17'
+          architecture: x64
+          targets: 'JDK_17'
+
+      - name: populate JAVA_HOME to Java 17
+        run: echo "JAVA_HOME=$(echo $JDK_17)" >> $GITHUB_ENV
+      
+      - name: Build client with JDK 17
+        run: ant -Dplatforms.JDK_17.home=$JDK_17 -buildfile j-lawyer-client/build.xml default
         # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
         env:
           ftpuser: ${{ secrets.FTPUSER }}
