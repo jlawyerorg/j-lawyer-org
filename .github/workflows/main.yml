@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
-          java-version: '17' # The JDK version to make available on the path.
+          java-version: '11' # The JDK version to make available on the path.
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
 
@@ -50,7 +50,17 @@ jobs:
           tar -m -xvzf /home/runner/j-lawyer-backup/backups.tar.gz -C /home/runner/j-lawyer-backup
           
 
-      - name: Build server
+      - name: Set up JDK11
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '11'
+          architecture: x64
+          targets: 'JDK_11'
+
+      - name: populate JAVA_HOME to Java 11
+        run: echo "JAVA_HOME=$(echo $JDK_11)" >> $GITHUB_ENV
+
+      - name: Build server with JDK11
         # ejb tests fail for some reason...
         # run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default
         run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dplatforms.default_platform.home=$JDK_11 -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default && ant -buildfile j-lawyer-io-common/build.xml default
@@ -69,7 +79,7 @@ jobs:
           encryptionpwd:  
               
       
-      - name: Build client 
+      - name: Build client with JDK 11
         run: ant -buildfile j-lawyer-client/build.xml default
         # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
         env:
@@ -94,7 +104,7 @@ jobs:
             -Dsonar.projectName=j-lawyer-org
             -Dsonar.projectVersion=2.6.0
             -Dsonar.java.binaries=.
-            -Dsonar.java.source=17
+            -Dsonar.java.source=11
             
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
