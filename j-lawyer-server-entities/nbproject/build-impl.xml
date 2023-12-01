@@ -805,19 +805,23 @@ exists or setup the property manually. For example like this:
     <target if="is.jars.in.ejbjar" name="-library-inclusion-in-archive-by-user">
         <copyfiles files="${file.reference.j-lawyer-server-common.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.flyway-core-5.2.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.hibernate-core-5.3.28.Final.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${file.reference.j-lawyer-server-common.jar}" property="manifest.file.reference.j-lawyer-server-common.jar"/>
         <basename file="${file.reference.flyway-core-5.2.1.jar}" property="manifest.file.reference.flyway-core-5.2.1.jar"/>
+        <basename file="${file.reference.hibernate-core-5.3.28.Final.jar}" property="manifest.file.reference.hibernate-core-5.3.28.Final.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.j-lawyer-server-common.jar}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.file.reference.flyway-core-5.2.1.jar}"/>
+            <attribute name="jar-3-Extension-Name" value="${manifest.file.reference.hibernate-core-5.3.28.Final.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
         <copyfiles files="${file.reference.j-lawyer-server-common.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.flyway-core-5.2.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.hibernate-core-5.3.28.Final.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">

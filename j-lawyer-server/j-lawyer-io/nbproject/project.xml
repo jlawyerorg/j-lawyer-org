@@ -29,6 +29,9 @@
                     <file>${file.reference.jboss-client.jar}</file>
                 </library>
                 <library dirs="200">
+                    <file>${file.reference.jakarta.persistence-api-2.2.3.jar}</file>
+                </library>
+                <library dirs="200">
                     <file>${reference.j-lawyer-server-api.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>

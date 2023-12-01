@@ -10,6 +10,7 @@ function check_error {
 	fi
 }
 
+# export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full/
 export JAVA_HOME=/home/jens/bin/jdk1.8.0_131
 
 # there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
@@ -24,6 +25,7 @@ ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xm
 check_error $?
 ant -buildfile j-lawyer-server-api/build.xml jar
 check_error $?
+# ant -Dplatforms.default_platform.home=/home/jens/bin/jdk-17.0.9-full/ -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
 ant -Dplatforms.default_platform.home=/home/jens/bin/jdk-11.0.9.1-full/ -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
 check_error $?
 ant -buildfile j-lawyer-io-common/build.xml jar
