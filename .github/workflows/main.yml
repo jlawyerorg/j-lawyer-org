@@ -80,7 +80,7 @@ jobs:
               
       
       - name: Build client with JDK 11
-        run: ant -buildfile j-lawyer-client/build.xml default
+        run: ant -Dplatforms.JDK_17.home=$JDK_11 -buildfile j-lawyer-client/build.xml default
         # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
         env:
           ftpuser: ${{ secrets.FTPUSER }}
