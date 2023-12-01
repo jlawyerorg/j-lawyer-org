@@ -89,7 +89,7 @@ jobs:
         run: echo "JAVA_HOME=$(echo $JDK_17)" >> $GITHUB_ENV
       
       - name: Build client with JDK 17
-        run: ant -Dplatforms.JDK_17.home=$JDK_17 -buildfile j-lawyer-client/build.xml default
+        run: ant -Dplatforms.JDK_17.home=$JDK_17 -buildfile j-lawyer-client/build.xml test jar
         # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
         env:
           ftpuser: ${{ secrets.FTPUSER }}
