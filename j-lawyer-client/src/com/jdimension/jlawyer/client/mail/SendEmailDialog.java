@@ -1933,7 +1933,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             if (this.radioReviewTypeRespite.isSelected()) {
                 reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
             }
-            reviewDto.setDoneBoolean(false);
+            reviewDto.setDone(false);
             reviewDto.setBeginDate(d);
             reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());

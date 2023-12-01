@@ -3,5 +3,5 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss-app_7_0.xsd"
 	version="7.0">
-	<security-domain>j-lawyer-security</security-domain>
+	<security-domain>jlawyer-application-security-domain</security-domain>
 </jboss-app>

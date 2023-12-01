@@ -14,7 +14,7 @@
     </security-constraint>
     <login-config>
         <auth-method>BASIC</auth-method>
-        <realm-name>jlawyerRealm</realm-name>
+        <realm-name>ApplicationRealm</realm-name>
     </login-config>
     <security-role>
         <description/>

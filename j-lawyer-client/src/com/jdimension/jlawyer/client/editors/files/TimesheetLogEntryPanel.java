@@ -673,12 +673,15 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -716,6 +719,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         
         ComponentUtils.addAutoComplete(cmbTemplate);
         
+    }
+    
+    private void setStatusColor(Color c) {
+        this.txtStart.setForeground(c);
+        this.txtEnd.setForeground(c);
+        this.lblDuration.setForeground(c);
     }
     
     public boolean isEntryRunning() {
@@ -763,11 +772,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             
             if (stopped == null) {
                 // position is running
-
+                
                 String duration = StringUtils.formatDuration((new Date().getTime() - started.getTime()));
                 this.lblDuration.setText(duration);
                 
                 cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+                
+                this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
+                
             } else {
                 // position already closed
                 String duration = StringUtils.formatDuration((stopped.getTime() - started.getTime()));
@@ -985,6 +997,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     TimesheetPosition stopped=afs.timesheetPositionStop(this.entry.getTimesheet().getId(), entry);
                     this.setEntry(entryCase, entrySheet, stopped);
                     cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
+                    this.setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
                 } catch (Exception ex) {
                     log.error("Error stopping open timesheet position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Stoppen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1003,6 +1016,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     TimesheetPosition started=afs.timesheetPositionStart(this.entry.getTimesheet().getId(), entry);
                     this.setEntry(entryCase, entrySheet, started);
                     cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+                    this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
                 } catch (Exception ex) {
                     log.error("Error restarting open timesheet position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Stoppen/Starten des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1025,6 +1039,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     }
     
     private void saveManualEntry () {
+        
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
         
         int minutes=-1;
         try {
@@ -1075,6 +1091,18 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             log.error("Error adding timesheet position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Thread.sleep(1500);
+                //txtManualEntry.setText("");
+                txtManualEntry.setValue(null);
+            } catch (Exception ex) {
+                
+            }
+            setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+        });
+        
     }
     
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed

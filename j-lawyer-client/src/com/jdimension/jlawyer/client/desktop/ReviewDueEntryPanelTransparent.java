@@ -1131,7 +1131,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         }
 
         ArchiveFileReviewsBean reviewDto = this.e.getReview();
-        reviewDto.setDoneBoolean(done);
+        reviewDto.setDone(done);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {

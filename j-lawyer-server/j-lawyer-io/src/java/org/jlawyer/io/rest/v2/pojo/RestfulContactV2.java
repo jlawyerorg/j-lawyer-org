@@ -765,7 +765,7 @@ public class RestfulContactV2 {
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
         ad.setLastModifier(this.getLastModifier());
-        ad.setLegalProtection(this.getLegalProtection());
+        ad.setLegalProtection(this.getLegalProtection()==1);
         ad.setMobile(this.getMobile());
         ad.setModificationDate(this.getModificationDate());
         ad.setMotorInsuranceName(this.getMotorInsuranceName());
@@ -777,7 +777,7 @@ public class RestfulContactV2 {
         ad.setTitle(this.getTitle());
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(this.getTrafficLegalProtection());
+        ad.setTrafficLegalProtection(this.getTrafficLegalProtection()==1);
         ad.setWebsite(this.getWebsite());
         ad.setZipCode(this.getZipCode());
         ad.setDistrict(this.getDistrict());
@@ -828,7 +828,10 @@ public class RestfulContactV2 {
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
         ad.setLastModifier(a.getLastModifier());
-        ad.setLegalProtection(a.getLegalProtection());
+        if(a.isLegalProtection())
+            ad.setLegalProtection((short)1);
+        else
+            ad.setLegalProtection((short)0);
         ad.setMobile(a.getMobile());
         ad.setModificationDate(a.getModificationDate());
         ad.setMotorInsuranceName(a.getMotorInsuranceName());
@@ -840,7 +843,10 @@ public class RestfulContactV2 {
         ad.setTitle(a.getTitle());
         ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(a.getTrafficLegalProtection());
+        if(a.isTrafficLegalProtection())
+            ad.setTrafficLegalProtection((short)1);
+        else
+            ad.setTrafficLegalProtection((short)0);
         ad.setWebsite(a.getWebsite());
         ad.setZipCode(a.getZipCode());
         ad.setDistrict(a.getDistrict());

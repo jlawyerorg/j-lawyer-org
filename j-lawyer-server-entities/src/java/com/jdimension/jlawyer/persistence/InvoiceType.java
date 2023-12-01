@@ -699,7 +699,7 @@ public class InvoiceType implements Serializable {
     
     // indicates whether this type involves cash flowing
     // when false, (e.g. for Angebot or Kostenvoranschlag), invoices of this type will be left out
-    @Column(name = "turnover", columnDefinition = "TINYINT")
+    @Column(name = "turnover")
     protected boolean turnOver=true;
     
     public String getId() {

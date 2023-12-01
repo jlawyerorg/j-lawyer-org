@@ -681,7 +681,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
     @NamedQuery(name = "ArchiveFileBean.findAllSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a ORDER BY a.dateChanged DESC"),
-    @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = 0 ORDER BY a.dateChanged DESC"),
+    @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = false ORDER BY a.dateChanged DESC"),
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
     @NamedQuery(name = "ArchiveFileBean.findByExternalId", query = "SELECT a FROM ArchiveFileBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
@@ -711,8 +711,8 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "claimValue")
     private float claimValue;
     @Basic(optional = false)
-    @Column(name = "archived", columnDefinition = "TINYINT NOT NULL")
-    private short archived;
+    @Column(name = "archived")
+    private boolean archived;
     @Column(name = "notice")
     private String notice;
     @Column(name = "lawyer")
@@ -768,7 +768,7 @@ public class ArchiveFileBean implements Serializable {
         this.id = id;
     }
 
-    public ArchiveFileBean(String id, float claimValue, short archived) {
+    public ArchiveFileBean(String id, float claimValue, boolean archived) {
         this.id = id;
         this.claimValue = claimValue;
         this.archived = archived;
@@ -822,29 +822,14 @@ public class ArchiveFileBean implements Serializable {
         this.claimValue = claimValue;
     }
 
-    public short getArchived() {
+    public boolean isArchived() {
         return archived;
     }
     
-    public boolean getArchivedBoolean() {
-        if(archived==1)
-            return true;
-        else
-            return false;
-                    
-    }
-
-    public void setArchived(short archived) {
+    public void setArchived(boolean archived) {
         this.archived = archived;
     }
     
-    public void setArchivedBoolean(boolean archived) {
-        if(archived)
-            this.archived=1;
-        else 
-            this.archived=0;
-    }
-
     public String getNotice() {
         return notice;
     }

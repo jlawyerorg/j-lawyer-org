@@ -708,8 +708,8 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @Temporal(TemporalType.TIMESTAMP)
     protected Date endDate;
     @Basic(optional = false)
-    @Column(name = "done", columnDefinition = "TINYINT NOT NULL")
-    private short done;
+    @Column(name = "done")
+    private boolean done;
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
@@ -745,7 +745,7 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
         this.id = id;
     }
 
-    public ArchiveFileReviewsBean(String id, short done) {
+    public ArchiveFileReviewsBean(String id, boolean done) {
         this.id = id;
         this.done = done;
     }
@@ -774,24 +774,12 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
         this.beginDate = beginDate;
     }
 
-    public short getDone() {
+    public boolean isDone() {
         return done;
     }
 
-    public void setDone(short done) {
+    public void setDone(boolean done) {
         this.done = done;
-    }
-
-    public boolean getDoneBoolean() {
-        return this.done == 1;
-    }
-
-    public void setDoneBoolean(boolean done) {
-        if (done) {
-            this.done = 1;
-        } else {
-            this.done = 0;
-        }
     }
 
     public ArchiveFileBean getArchiveFileKey() {

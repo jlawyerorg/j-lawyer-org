@@ -731,7 +731,10 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
                 return res;
             }
             RestfulCaseV2 c = new RestfulCaseV2();
-            c.setArchived(afb.getArchived());
+            if(afb.isArchived())
+                c.setArchived((short)1);
+            else
+                c.setArchived((short)0);
             c.setAssistant(afb.getAssistant());
             c.setClaimNumber(afb.getClaimNumber());
             c.setClaimValue(afb.getClaimValue());
@@ -861,7 +864,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             
             // file number must not be changed
 
-            currentCase.setArchived(caseData.getArchived());
+            currentCase.setArchived(caseData.getArchived()==1);
             currentCase.setAssistant(caseData.getAssistant());
             currentCase.setClaimNumber(caseData.getClaimNumber());
             currentCase.setClaimValue(caseData.getClaimValue());

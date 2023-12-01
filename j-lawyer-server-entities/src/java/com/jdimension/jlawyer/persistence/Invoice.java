@@ -740,7 +740,7 @@ public class Invoice implements Serializable {
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
     
-    @Column(name = "small_business", columnDefinition = "TINYINT")
+    @Column(name = "small_business")
     protected boolean smallBusiness=true;
     
     @JoinColumn(name = "contact_id", referencedColumnName = "id")

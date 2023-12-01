@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -699,7 +700,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
-import org.jboss.ejb3.annotation.SecurityDomain;
 
 /**
  *
@@ -707,7 +707,7 @@ import org.jboss.ejb3.annotation.SecurityDomain;
  */
 @Stateless
 @DeclareRoles(value = {"readArchiveFileRole", "writeArchiveFileRole", "loginRole"})
-@SecurityDomain(value = "j-lawyer-security")
+//@SecurityDomain(value = "j-lawyer-security")
 public class IntegrationService implements IntegrationServiceRemote, IntegrationServiceLocal {
 
     private static final Logger log = Logger.getLogger(IntegrationService.class.getName());
@@ -850,7 +850,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     //f.delete();
-                    byte[] data = SystemManagement.readFile(f);
+                    byte[] data = ServerFileUtils.readFile(f);
                     return data;
                 }
             }
@@ -892,7 +892,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if (!f.isDirectory()) {
                 String name = f.getName();
                 if (name.equals(fileName)) {
-                    byte[] data = SystemManagement.readFile(f);
+                    byte[] data = ServerFileUtils.readFile(f);
                     ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "", null);
                     return d.getId();
                 }

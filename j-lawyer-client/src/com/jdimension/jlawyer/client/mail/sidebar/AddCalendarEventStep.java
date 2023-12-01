@@ -818,7 +818,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
     public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
-        reviewDto.setDoneBoolean(false);
+        reviewDto.setDone(false);
         reviewDto.setBeginDate(beginDate);
         reviewDto.setEndDate(endDate);
         reviewDto.setAssignee(assignee);

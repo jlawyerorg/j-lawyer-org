@@ -711,7 +711,7 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
-    @Column(name = "favorite", columnDefinition = "TINYINT DEFAULT 0")
+    @Column(name = "favorite")
     private boolean favorite;
     
     @JoinColumn(name = "folder", referencedColumnName = "id")
@@ -723,17 +723,17 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @Column(name = "deletion_date")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date deletionDate;
-    @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
+    @Column(name = "deleted")
     protected boolean deleted;
     @Column(name = "version", columnDefinition = "INTEGER DEFAULT 1")
-    protected long version=1;
+    protected int version=1;
     @Column(name = "highlight1", columnDefinition = "INTEGER DEFAULT -2147483648")
     protected int highlight1=Integer.MIN_VALUE;
     @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -2147483648")
     protected int highlight2=Integer.MIN_VALUE;
     
     @Column(name = "document_type", columnDefinition = "INTEGER DEFAULT 10")
-    protected long documentType=TYPE_GENERIC;
+    protected int documentType=TYPE_GENERIC;
     @Column(name = "date_changed")
     @Temporal(TemporalType.TIMESTAMP)
     private Date changeDate;
@@ -922,14 +922,14 @@ public class ArchiveFileDocumentsBean implements Serializable {
     /**
      * @return the version
      */
-    public long getVersion() {
+    public int getVersion() {
         return version;
     }
 
     /**
      * @param version the version to set
      */
-    public void setVersion(long version) {
+    public void setVersion(int version) {
         this.version = version;
     }
     
@@ -969,14 +969,14 @@ public class ArchiveFileDocumentsBean implements Serializable {
     /**
      * @return the documentType
      */
-    public long getDocumentType() {
+    public int getDocumentType() {
         return documentType;
     }
 
     /**
      * @param documentType the documentType to set
      */
-    public void setDocumentType(long documentType) {
+    public void setDocumentType(int documentType) {
         this.documentType = documentType;
     }
 

@@ -1030,7 +1030,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     CaseFolderSettings s = new CaseFolderSettings();
-                    s.setHiddenBoolean(!selected);
+                    s.setHidden(!selected);
                     locator.lookupArchiveFileServiceRemote().setCaseFolderSettings(this.folder.getId(), s);
                 } else {
                     log.warn("Folder is null when setting folder list cell selected");

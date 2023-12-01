@@ -663,7 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.security;
 
-import org.jboss.crypto.CryptoUtil;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  *
@@ -701,13 +703,20 @@ public class PasswordsUtil {
         return COMPLEXITY_WEAK;
     }
 
-    public static String createPasswordHash(String clearText) {
-        String hashedPassword = CryptoUtil.createPasswordHash("SHA-256",
-                CryptoUtil.BASE64_ENCODING,
-                null,
-                null,
-                clearText);
-        return hashedPassword;
+    public static String createPasswordHash(String clearText) throws NoSuchAlgorithmException  {
+            
+            // Create MessageDigest instance for SHA-256
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            // Update the message digest with the input string
+            md.update(clearText.getBytes(StandardCharsets.UTF_8));
+
+            // Generate the hash
+            byte[] hashBytes = md.digest();
+
+            // Encode the hash using Base64
+            return new Base64().encode(hashBytes);
+            
     }
 
 }

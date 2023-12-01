@@ -1142,7 +1142,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
         String status = "offen";
-        if (review.getDoneBoolean()) {
+        if (review.isDone()) {
             status = "erledigt";
         }
         newHistEntry.setChangeDescription(review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")");

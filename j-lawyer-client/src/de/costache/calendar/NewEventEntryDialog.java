@@ -801,7 +801,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         ev.setSummary(reason);
         ev.setDescription(description);
         ev.setArchiveFileKey(this.eventCase);
-        ev.setDoneBoolean(false);
+        ev.setDone(false);
         ev.setAssignee(assignee);
         ev.setLocation(location);
         ev.setCalendarSetup(calSetup);

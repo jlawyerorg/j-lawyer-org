@@ -733,16 +733,16 @@ public class AddressBean implements Serializable {
     @Column(name = "department")
     private String department;
     @Basic(optional = false)
-    @Column(name = "legalProtection", columnDefinition = "TINYINT NOT NULL")
-    private short legalProtection;
+    @Column(name = "legalProtection")
+    private boolean legalProtection;
     @Column(name = "insuranceNumber")
     private String insuranceNumber;
     @Column(name = "insuranceName")
     private String insuranceName;
     
     @Basic(optional = false)
-    @Column(name = "trafficLegalProtection", columnDefinition = "TINYINT NOT NULL")
-    private short trafficLegalProtection;
+    @Column(name = "trafficLegalProtection")
+    private boolean trafficLegalProtection;
     @Column(name = "trafficInsuranceNumber")
     private String trafficInsuranceNumber;
     @Column(name = "trafficInsuranceName")
@@ -864,7 +864,7 @@ public class AddressBean implements Serializable {
         this.id = id;
     }
 
-    public AddressBean(String id, short legalProtection) {
+    public AddressBean(String id, boolean legalProtection) {
         this.id = id;
         this.legalProtection = legalProtection;
     }
@@ -925,40 +925,12 @@ public class AddressBean implements Serializable {
         this.company = company;
     }
 
-    public short getLegalProtection() {
+    public boolean isLegalProtection() {
         return legalProtection;
     }
     
-    public boolean getLegalProtectionBoolean() {
-        if(legalProtection==0) {
-            return false;
-        }
-        return true;
-    }
-    
-    public boolean getTrafficLegalProtectionBoolean() {
-        if(trafficLegalProtection==0) {
-            return false;
-        }
-        return true;
-    }
-
-    public void setLegalProtection(short legalProtection) {
+    public void setLegalProtection(boolean legalProtection) {
         this.legalProtection = legalProtection;
-    }
-    
-    public void setLegalProtectionBoolean(boolean legalP) {
-        if(legalP)
-            this.legalProtection=1;
-        else
-            this.legalProtection=0;
-    }
-    
-    public void setTrafficLegalProtectionBoolean(boolean legalP) {
-        if(legalP)
-            this.trafficLegalProtection=1;
-        else
-            this.trafficLegalProtection=0;
     }
 
     public String getInsuranceNumber() {
@@ -1229,14 +1201,14 @@ public class AddressBean implements Serializable {
     /**
      * @return the trafficLegalProtection
      */
-    public short getTrafficLegalProtection() {
+    public boolean isTrafficLegalProtection() {
         return trafficLegalProtection;
     }
 
     /**
      * @param trafficLegalProtection the trafficLegalProtection to set
      */
-    public void setTrafficLegalProtection(short trafficLegalProtection) {
+    public void setTrafficLegalProtection(boolean trafficLegalProtection) {
         this.trafficLegalProtection = trafficLegalProtection;
     }
 

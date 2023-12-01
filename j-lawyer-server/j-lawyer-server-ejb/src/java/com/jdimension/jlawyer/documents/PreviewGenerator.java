@@ -710,7 +710,7 @@ public class PreviewGenerator {
             throw new Exception("Dokumentvorschau für " + db.getName() + " existiert nicht!");
         }
 
-        return SystemManagement.readTextFile(dstFile);
+        return ServerFileUtils.readTextFile(dstFile);
     }
 
     public boolean previewExists(String archiveFileId, String docId, String fileName) {

@@ -1,9 +1,9 @@
 # Use latest jboss/base-jdk:11 image as the base
-FROM jboss/base-jdk:8
+FROM jboss/base-jdk:17
 MAINTAINER j-dimension "info@j-lawyer.org"
 
 # Set the WILDFLY_VERSION env variable
-ENV WILDFLY_VERSION 16.0.0.Final
+ENV WILDFLY_VERSION 26.1.3.Final
 ENV WILDFLY_SHA1 287c21b069ec6ecd80472afec01384093ed8eb7d
 ENV JBOSS_HOME /opt/jboss/wildfly
 
@@ -27,7 +27,7 @@ RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 # Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
 # Make sure the distribution is available from a well-known place
 RUN cd $HOME \
-    && curl -O https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz \
+    && curl -O https://github.com/wildfly/wildfly/releases/download/26.1.3.Final/wildfly-26.1.3.Final.tar.gz \
     && sha1sum wildfly-$WILDFLY_VERSION.tar.gz | grep $WILDFLY_SHA1 \
     && tar xf wildfly-$WILDFLY_VERSION.tar.gz \
     && mv $HOME/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
@@ -54,7 +54,7 @@ COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 
 COPY ./standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
 COPY ./j-lawyer-server.ear /opt/jboss/wildfly/standalone/deployments/j-lawyer-server.ear
-COPY ./mysql/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/main/
+COPY ./mysql/driver8/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/driver8/main/
 
 
 # Expose the ports we're interested in

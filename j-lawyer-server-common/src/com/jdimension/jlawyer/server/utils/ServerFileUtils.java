@@ -667,8 +667,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import org.apache.log4j.Logger;
 
@@ -719,6 +722,50 @@ public class ServerFileUtils {
             return sb.toString();
         }
         
+    }
+    
+    public static String readTextFile(File file) throws Exception {
+        try ( FileReader fr = new FileReader(file)) {
+
+            char[] data = new char[(int) file.length()];
+            fr.read(data);
+            return new String(data);
+        }
+    }
+    
+    public static void writeFile(File file, byte[] content) throws Exception {
+        try ( FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
+            fileOutputStream.write(content);
+            fileOutputStream.flush();
+        }
+    }
+    
+    public static void createFile(String file, byte[] data) throws Exception {
+        try ( FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(data);
+
+        }
+
+    }
+    
+    public static void copyFile(String srFile, String dtFile) throws Exception {
+
+        File f1 = new File(srFile);
+        File f2 = new File(dtFile);
+
+        if (f2.exists()) {
+            throw new Exception("Zieldatei existiert bereits!");
+        }
+
+        try ( InputStream in = new FileInputStream(f1);  OutputStream out = new FileOutputStream(f2)) {
+
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+        }
+
     }
     
     public static String readLinesFromEnd(File file, int numberOfLines) throws Exception {

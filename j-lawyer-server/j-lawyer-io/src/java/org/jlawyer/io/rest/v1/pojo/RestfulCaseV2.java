@@ -672,43 +672,47 @@ import java.util.Date;
  */
 public class RestfulCaseV2 extends RestfulCaseV1 {
 
-    private String group=null;
-    protected Date dateCreated=null;
-    protected Date dateUpdated=null;
-    private String externalId=null;
+    private String group = null;
+    protected Date dateCreated = null;
+    protected Date dateUpdated = null;
+    private String externalId = null;
 
     public RestfulCaseV2() {
     }
-    
+
     public ArchiveFileBean toArchiveFileBean(ArchiveFileBean afb) {
-        ArchiveFileBean result= super.toArchiveFileBean(afb);
+        ArchiveFileBean result = super.toArchiveFileBean(afb);
         result.setExternalId(this.externalId);
         return result;
-        
+
     }
-    
+
     public static RestfulCaseV2 fromArchiveFileBean(ArchiveFileBean afb) {
-        RestfulCaseV2 c=new RestfulCaseV2();
-            c.setArchived(afb.getArchived());
-            c.setAssistant(afb.getAssistant());
-            c.setClaimNumber(afb.getClaimNumber());
-            c.setClaimValue(afb.getClaimValue());
-            c.setCustom1(afb.getCustom1());
-            c.setCustom2(afb.getCustom2());
-            c.setCustom3(afb.getCustom3());
-            c.setFileNumber(afb.getFileNumber());
-            c.setId(afb.getId());
-            c.setExternalId(afb.getExternalId());
-            c.setLawyer(afb.getLawyer());
-            c.setName(afb.getName());
-            c.setNotice(afb.getNotice());
-            c.setReason(afb.getReason());
-            c.setSubjectField(afb.getSubjectField());
-            if(afb.getGroup()!=null) {
-                c.setGroup(afb.getGroup().getName());
-            }
-            
-            return c;
+        RestfulCaseV2 c = new RestfulCaseV2();
+        if (afb.isArchived()) {
+            c.setArchived((short) 1);
+        } else {
+            c.setArchived((short) 0);
+        }
+        c.setAssistant(afb.getAssistant());
+        c.setClaimNumber(afb.getClaimNumber());
+        c.setClaimValue(afb.getClaimValue());
+        c.setCustom1(afb.getCustom1());
+        c.setCustom2(afb.getCustom2());
+        c.setCustom3(afb.getCustom3());
+        c.setFileNumber(afb.getFileNumber());
+        c.setId(afb.getId());
+        c.setExternalId(afb.getExternalId());
+        c.setLawyer(afb.getLawyer());
+        c.setName(afb.getName());
+        c.setNotice(afb.getNotice());
+        c.setReason(afb.getReason());
+        c.setSubjectField(afb.getSubjectField());
+        if (afb.getGroup() != null) {
+            c.setGroup(afb.getGroup().getName());
+        }
+
+        return c;
     }
 
     /**
@@ -766,7 +770,5 @@ public class RestfulCaseV2 extends RestfulCaseV1 {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-
-   
 
 }

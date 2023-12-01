@@ -704,7 +704,7 @@ public class CalendarSetup implements Serializable, EventTypes {
     @Column(name = "cloudPort")
     protected int cloudPort=443;
     
-    @Column(name = "cloudSsl", columnDefinition = "TINYINT")
+    @Column(name = "cloudSsl")
     protected boolean cloudSsl=true;
     
     @Column(name = "cloudPath")
@@ -723,7 +723,7 @@ public class CalendarSetup implements Serializable, EventTypes {
     protected int eventType=EventTypes.EVENTTYPE_FOLLOWUP;
     
     // if true, events that are marked as done are deleted from Nextcloud
-    @Column(name = "delete_done", columnDefinition = "TINYINT")
+    @Column(name = "delete_done")
     protected boolean deleteDone=false;
 
     public Object getClone() {

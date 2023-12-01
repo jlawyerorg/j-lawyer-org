@@ -1250,7 +1250,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 source.setArchiveFileHistoryBeanList(null);
                 source.setArchiveFileAddressesBeanList(null);
                 source.setName(source.getName() + " (Kopie)");
-                source.setArchivedBoolean(false);
+                source.setArchived(false);
                 source.setClaimNumber("");
                 source.setClaimValue(0f);
                

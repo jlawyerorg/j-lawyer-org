@@ -1229,7 +1229,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         lce.setRole("");
         lce.setName(af.getName());
         lce.setReason(StringUtils.nonEmpty(af.getReason()));
-        lce.setArchived(af.getArchivedBoolean());
+        lce.setArchived(af.isArchived());
         ep.setEntry(lce, this);
         return ep;
     }

@@ -700,7 +700,7 @@ import org.jboss.ejb3.annotation.SecurityDomain;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+@SecurityDomain("other")
 public class SecurityService implements SecurityServiceRemote, SecurityServiceLocal {
 
     @Resource

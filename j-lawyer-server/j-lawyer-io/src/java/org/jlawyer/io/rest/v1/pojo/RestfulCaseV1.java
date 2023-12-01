@@ -671,29 +671,29 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
  */
 public class RestfulCaseV1 {
 
-    private String id=null;
-    private String name=null;
-    private String fileNumber=null;
-    private String claimNumber=null;
-    private float claimValue=0f;
-    private short archived=0;
+    private String id = null;
+    private String name = null;
+    private String fileNumber = null;
+    private String claimNumber = null;
+    private float claimValue = 0f;
+    private short archived = 0;
 
-    private String notice=null;
-    private String lawyer=null;
-    private String assistant=null;
-    private String reason=null;
-    private String subjectField=null;
-    private String custom1=null;
+    private String notice = null;
+    private String lawyer = null;
+    private String assistant = null;
+    private String reason = null;
+    private String subjectField = null;
+    private String custom1 = null;
 
-    private String custom2=null;
+    private String custom2 = null;
 
-    private String custom3=null;
+    private String custom3 = null;
 
     public RestfulCaseV1() {
     }
-    
+
     public ArchiveFileBean toArchiveFileBean(ArchiveFileBean afb) {
-        afb.setArchived(this.archived);
+        afb.setArchived(this.archived == 1);
         afb.setAssistant(this.assistant);
         afb.setClaimNumber(this.claimNumber);
         afb.setClaimValue(this.claimValue);
@@ -704,32 +704,37 @@ public class RestfulCaseV1 {
         afb.setId(id);
         afb.setLawyer(lawyer);
         afb.setName(name);
-        if(notice==null)
+        if (notice == null) {
             afb.setNotice("");
-        else
+        } else {
             afb.setNotice(notice);
+        }
         afb.setReason(reason);
         afb.setSubjectField(subjectField);
         return afb;
     }
-    
+
     public static RestfulCaseV1 fromArchiveFileBean(ArchiveFileBean afb) {
-        RestfulCaseV1 c=new RestfulCaseV1();
-            c.setArchived(afb.getArchived());
-            c.setAssistant(afb.getAssistant());
-            c.setClaimNumber(afb.getClaimNumber());
-            c.setClaimValue(afb.getClaimValue());
-            c.setCustom1(afb.getCustom1());
-            c.setCustom2(afb.getCustom2());
-            c.setCustom3(afb.getCustom3());
-            c.setFileNumber(afb.getFileNumber());
-            c.setId(afb.getId());
-            c.setLawyer(afb.getLawyer());
-            c.setName(afb.getName());
-            c.setNotice(afb.getNotice());
-            c.setReason(afb.getReason());
-            c.setSubjectField(afb.getSubjectField());
-            return c;
+        RestfulCaseV1 c = new RestfulCaseV1();
+        if (afb.isArchived()) {
+            c.setArchived((short) 1);
+        } else {
+            c.setArchived((short) 0);
+        }
+        c.setAssistant(afb.getAssistant());
+        c.setClaimNumber(afb.getClaimNumber());
+        c.setClaimValue(afb.getClaimValue());
+        c.setCustom1(afb.getCustom1());
+        c.setCustom2(afb.getCustom2());
+        c.setCustom3(afb.getCustom3());
+        c.setFileNumber(afb.getFileNumber());
+        c.setId(afb.getId());
+        c.setLawyer(afb.getLawyer());
+        c.setName(afb.getName());
+        c.setNotice(afb.getNotice());
+        c.setReason(afb.getReason());
+        c.setSubjectField(afb.getSubjectField());
+        return c;
     }
 
     /**

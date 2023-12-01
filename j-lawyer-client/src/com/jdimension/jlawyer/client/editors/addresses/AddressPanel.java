@@ -973,11 +973,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         this.txtInsuranceNumber.setText(dto.getInsuranceNumber());
         this.cmbInsurance.setSelectedItem(dto.getInsuranceName());
-        this.chkLegalProtection.setSelected(dto.getLegalProtectionBoolean());
+        this.chkLegalProtection.setSelected(dto.isLegalProtection());
 
         this.txtTrafficInsuranceNumber.setText(dto.getTrafficInsuranceNumber());
         this.txtTrafficInsurance.setText(dto.getTrafficInsuranceName());
-        this.chkTrafficLegalProtection.setSelected(dto.getTrafficLegalProtectionBoolean());
+        this.chkTrafficLegalProtection.setSelected(dto.isTrafficLegalProtection());
 
         this.txtMotorInsuranceNumber.setText(dto.getMotorInsuranceNumber());
         this.cmbMotorInsurance.setSelectedItem(dto.getMotorInsuranceName());
@@ -3303,7 +3303,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 lce.setRole(key);
                 lce.setName(aFile.getArchiveFileKey().getName());
                 lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
-                lce.setArchived(aFile.getArchiveFileKey().getArchivedBoolean());
+                lce.setArchived(aFile.getArchiveFileKey().isArchived());
                 lce.setOwnReference(aFile.getReference());
                 
                 if(this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
@@ -3324,7 +3324,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     public static String getArchiveFilesAsHTML(Collection<ArchiveFileBean> partyFiles) {
         StringBuilder html = new StringBuilder();
         html.append("<html><body>");
-        if (partyFiles.size() > 0) {
+        if (!partyFiles.isEmpty()) {
             html.append("Der Kontakt ist Beteiligte(r) in<br/><ul>");
             for (ArchiveFileBean af : partyFiles) {
                 html.append("<li>");
@@ -3563,7 +3563,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!StringUtils.equals(dto.getInsuranceName(), (String) this.cmbInsurance.getSelectedItem())) {
             return true;
         }
-        if (dto.getLegalProtectionBoolean() != this.chkLegalProtection.isSelected()) {
+        if (dto.isLegalProtection() != this.chkLegalProtection.isSelected()) {
             return true;
         }
         if (!StringUtils.equals(dto.getTrafficInsuranceNumber(), this.txtTrafficInsuranceNumber.getText())) {
@@ -3572,7 +3572,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!StringUtils.equals(dto.getTrafficInsuranceName(), (String) this.txtTrafficInsurance.getText())) {
             return true;
         }
-        if (dto.getTrafficLegalProtectionBoolean() != this.chkTrafficLegalProtection.isSelected()) {
+        if (dto.isTrafficLegalProtection() != this.chkTrafficLegalProtection.isSelected()) {
             return true;
         }
         if (!StringUtils.equals(dto.getMotorInsuranceNumber(), this.txtMotorInsuranceNumber.getText())) {
@@ -3731,11 +3731,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         } else {
             adr.setInsuranceName(null);
         }
-        adr.setLegalProtectionBoolean(this.chkLegalProtection.isSelected());
+        adr.setLegalProtection(this.chkLegalProtection.isSelected());
 
         adr.setTrafficInsuranceNumber(this.txtTrafficInsuranceNumber.getText());
         adr.setTrafficInsuranceName(this.txtTrafficInsurance.getText());
-        adr.setTrafficLegalProtectionBoolean(this.chkTrafficLegalProtection.isSelected());
+        adr.setTrafficLegalProtection(this.chkTrafficLegalProtection.isSelected());
 
         adr.setMotorInsuranceNumber(this.txtMotorInsuranceNumber.getText());
         if (this.cmbMotorInsurance.getSelectedItem() != null) {

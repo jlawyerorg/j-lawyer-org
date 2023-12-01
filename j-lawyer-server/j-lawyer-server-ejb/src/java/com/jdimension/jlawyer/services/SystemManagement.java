@@ -737,7 +737,7 @@ import org.w3c.dom.NodeList;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static final Logger log = Logger.getLogger(SystemManagement.class.getName());
@@ -987,61 +987,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
-    }
-
-    public static void createFile(String file, byte[] data) throws Exception {
-        try ( FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(data);
-
-        }
-
-    }
-
-    public static void copyFile(String srFile, String dtFile) throws Exception {
-
-        File f1 = new File(srFile);
-        File f2 = new File(dtFile);
-
-        if (f2.exists()) {
-            throw new Exception("Zieldatei existiert bereits!");
-        }
-
-        try ( InputStream in = new FileInputStream(f1);  OutputStream out = new FileOutputStream(f2)) {
-
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-        }
-
-    }
-
-    public static byte[] readFile(File file) throws Exception {
-        try ( FileInputStream fileInputStream = new FileInputStream(file);) {
-            byte[] data = new byte[(int) file.length()];
-            fileInputStream.read(data);
-            return data;
-        }
-    }
-
-    public static String readTextFile(File file) throws Exception {
-        try ( FileReader fr = new FileReader(file)) {
-
-            char[] data = new char[(int) file.length()];
-            fr.read(data);
-            return new String(data);
-        }
-    }
-
-    public static void writeFile(File file, byte[] content) throws Exception {
-        try ( FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
-            fileOutputStream.write(content);
-            fileOutputStream.flush();
-        }
     }
 
     @Override
@@ -1170,16 +1118,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private void flushUserCache(String principalId) {
-        try {
-
-            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
-            Object[] params = {principalId};
-            String[] signature = {"java.lang.String"};
-            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
-            server.invoke(jaasMgr, "flushCache", params, signature);
-        } catch (Throwable ex) {
-            log.warn("Could not flush authorization cache", ex);
-        }
+// with Wildfly 26, this does not seem to be needed anymore.
+//        try {
+//
+//            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
+//            Object[] params = {principalId};
+//            String[] signature = {"java.lang.String"};
+//            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
+//            server.invoke(jaasMgr, "flushCache", params, signature);
+//        } catch (Throwable ex) {
+//            log.warn("Could not flush authorization cache", ex);
+//        }
     }
 
     @Override
@@ -1703,7 +1652,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());
         }
 
-        copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
+        ServerFileUtils.copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
 
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
@@ -1785,7 +1734,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDir + File.separator + basedOnTemplateFileName;
         String dst = localBaseDir + File.separator + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
     }
@@ -1857,7 +1806,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String read = localBaseDir + File.separator + fileName;
 
         File f = new File(read);
-        return readFile(f);
+        return ServerFileUtils.readFile(f);
     }
 
     @Override
@@ -1868,7 +1817,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String upd = localBaseDir + File.separator + fileName;
 
         File f = new File(upd);
-        writeFile(f, content);
+        ServerFileUtils.writeFile(f, content);
     }
 
     @Override
@@ -1939,7 +1888,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
     }
