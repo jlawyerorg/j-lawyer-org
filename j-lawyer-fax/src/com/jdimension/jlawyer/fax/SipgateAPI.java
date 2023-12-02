@@ -724,12 +724,6 @@ public class SipgateAPI {
     public List<SipUser> getUsers() throws SipgateException {
         String baseUri = "https://api.sipgate.com/v2/users";
         String authStringEnc = this.getAuthString();
-        
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
 
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
@@ -789,11 +783,6 @@ public class SipgateAPI {
         HashMap<String, SipUri> allUris = new HashMap<>();
 
         String baseUri = API_BASE + internalUserId + "/faxlines";
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
@@ -1051,12 +1040,6 @@ public class SipgateAPI {
         String baseUri = "https://api.sipgate.com/v2/balance";
         String authStringEnc = this.getAuthString();
         
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
 
@@ -1107,12 +1090,6 @@ public class SipgateAPI {
         String baseUri = "https://api.sipgate.com/v2/sessions/sms";
         String authStringEnc = this.getAuthString();
         
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
 
@@ -1152,12 +1129,6 @@ public class SipgateAPI {
         //"}"
         String baseUri = "https://api.sipgate.com/v2/sessions/calls";
         String authStringEnc = this.getAuthString();
-        
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
@@ -1237,11 +1208,6 @@ public class SipgateAPI {
 //        "}"
         String baseUri = "https://api.sipgate.com/v2/sessions/fax";
         String authStringEnc = this.getAuthString();
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
@@ -1314,12 +1280,7 @@ public class SipgateAPI {
 
         String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
         String authStringEnc = this.getAuthString();
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
-        
+
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
 
@@ -1375,11 +1336,6 @@ public class SipgateAPI {
 
         String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
         String authStringEnc = this.getAuthString();
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri);
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);

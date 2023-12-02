@@ -705,12 +705,6 @@ public class EpostAPI {
     public void smsRequest() throws EpostException {
         log.info("ePost API SMS request");
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Login/smsRequest");
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Login/smsRequest");
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Login/smsRequest");
         
@@ -741,12 +735,6 @@ public class EpostAPI {
     public String setPassword(String newPassword, String smsCode) throws EpostException {
         log.info("ePost API set password request");
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Login/setPassword");
-//        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Login/setPassword");
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Login/setPassword");
 
@@ -780,12 +768,6 @@ public class EpostAPI {
     public String login(String secret, String password) throws EpostException {
         log.info("ePost API login");
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Login");
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Login");
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Login");
 
@@ -830,12 +812,6 @@ public class EpostAPI {
         log.info("ePost API validated letter retrieval");
 
         byte[] bytes = null;
-        
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/TestResult?letterID=" + letterId);
@@ -925,12 +901,6 @@ public class EpostAPI {
 
     public EpostApiStatus healthCheck() throws EpostException {
         log.info("ePost API health check");
-
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Login/HealthCheck");
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Login/HealthCheck");
         
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Login/HealthCheck");
@@ -979,12 +949,6 @@ public class EpostAPI {
     public EpostLetterStatus getLetterStatus(String token, int letterId) throws EpostException {
         log.info("ePost letter status check for letter " + letterId);
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/" + letterId);
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/" + letterId);
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/" + letterId);
 
@@ -1077,12 +1041,6 @@ public class EpostAPI {
     public ArrayList<EpostLetterStatus> getLetterStatus(String token, List<Integer> letterIds) throws EpostException {
         log.info("ePost letter status check for " + letterIds.size() + " letters");
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Letter/StatusQuery");
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/StatusQuery");
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Letter/StatusQuery");
 
@@ -1180,12 +1138,6 @@ public class EpostAPI {
             throw new EpostException("PDF konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
         }
 
-//        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-//        WebTarget webTarget = restClient.target(baseUri + "/api/Letter");
-        
-//        ResteasyClient restClient = (ResteasyClient)ResteasyClientBuilder.newClient();
-//        ResteasyWebTarget webTarget = restClient.target(baseUri + "/api/Letter");
-        
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "/api/Letter");
 

@@ -1095,7 +1095,6 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         SwingUtilities.invokeLater(() -> {
             try {
                 Thread.sleep(1500);
-                //txtManualEntry.setText("");
                 txtManualEntry.setValue(null);
             } catch (Exception ex) {
                 
