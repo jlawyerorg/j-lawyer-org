@@ -145,7 +145,7 @@
                     </security>
                 </datasource>
                 <datasource jndi-name="java:/jlawyerdb" pool-name="jlawyerdb" enabled="true" use-java-context="true">
-                    <connection-url>jdbc:mysql://localhost:3306/jlawyerdb?serverTimezone=Europe/Berlin&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</connection-url>
+                    <connection-url>jdbc:mysql://db:3306/jlawyerdb?serverTimezone=Europe/Berlin&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</connection-url>
                     <driver>mysql</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
