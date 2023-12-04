@@ -41,10 +41,10 @@
         <extension module="org.wildfly.extension.undertow"/>
     </extensions>
     <system-properties>
-        <property name="jlawyer.server.basedirectory" value="/home/jens/dev/projects/j-lawyer-data/"/>
-        <property name="jlawyer.server.initdir" value="/home/jens/j-lawyer-server/j-lawyer-init/"/>
-        <property name="jlawyer.server.numbering.foryear" value="2019"/>
-        <property name="jlawyer.server.numbering.startfrom" value="666"/>
+        <property name="jlawyer.server.basedirectory" value="/opt/jboss/j-lawyer-data/"/>
+        <property name="jlawyer.server.initdir" value="/opt/jboss/j-lawyer-init/"/>
+        <property name="jlawyer.server.numbering.foryear" value="2023"/>
+        <property name="jlawyer.server.numbering.startfrom" value="100"/>
     </system-properties>
     <management>
         <audit-log>
