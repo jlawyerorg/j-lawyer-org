@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
@@ -733,22 +734,16 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
-            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
-            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
-            boolean onlyMyReviews = false;
-            String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-            if ("true".equalsIgnoreCase(temp)) {
-                onlyMyReviews = true;
-            }
+
+            String[] relevantUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()});
+            List<String> relevantUsersList = Arrays.asList(relevantUsers);
 
             if (myNewList != null) {
 
                 for (ArchiveFileReviewsBean ar : myNewList) {
 
-                    if (onlyMyReviews) {
-                        if (!principalId.equalsIgnoreCase(ar.getAssignee())) {
-                            continue;
-                        }
+                    if (!StringUtils.isEmpty(ar.getAssignee()) && !relevantUsersList.contains(ar.getAssignee())) {
+                        continue;
                     }
 
                     ReviewDueEntry e = new ReviewDueEntry();
@@ -763,8 +758,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setReviewReason(ar.getSummary());
                     e.setType(ar.getEventType());
                     e.setReview(ar);
-                    if(ar.getCalendarSetup()!=null)
+                    if (ar.getCalendarSetup() != null) {
                         e.setCalendarSetupColor(ar.getCalendarSetup().getBackground());
+                    }
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
                     ArrayList<String> xTags = new ArrayList<>();
                     if (tags != null) {

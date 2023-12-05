@@ -14,6 +14,12 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
     </Container>
+    <Container class="javax.swing.JPopupMenu" name="popUserFilter">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+    </Container>
   </NonVisualComponents>
   <Events>
     <EventHandler event="ancestorResized" listener="java.awt.event.HierarchyBoundsListener" parameters="java.awt.event.HierarchyEvent" handler="formAncestorResized"/>
@@ -44,7 +50,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jSplitPane1" pref="856" max="32767" attributes="0"/>
+                  <Component id="jSplitPane1" max="32767" attributes="0"/>
                   <Component id="systemInformationWidget" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -74,9 +80,6 @@
   <SubComponents>
     <Container class="javax.swing.JSplitPane" name="jSplitPane1">
       <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="null"/>
-        </Property>
         <Property name="dividerLocation" type="int" value="600"/>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -99,14 +102,16 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
+                          <Component id="tabPaneDue" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdRefreshRevDue" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="chkOnlyMyReviews" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace pref="295" max="32767" attributes="0"/>
+                              <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lblUserFilterCount" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="tabPaneDue" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -116,13 +121,14 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkOnlyMyReviews" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdRefreshRevDue" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmdRefreshRevDue" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblUserFilterCount" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="tabPaneDue" max="32767" attributes="0"/>
+                      <Component id="tabPaneDue" pref="487" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -139,26 +145,25 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
                 </Property>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="com/jdimension/jlawyer/client/desktop/DesktopPanel.properties" key="label.due" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                </Property>
+                <Property name="text" type="java.lang.String" value="F&#xe4;llig"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="chkOnlyMyReviews">
+            <Component class="javax.swing.JButton" name="cmdUserFilter">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="true" component="chkOnlyMyReviews" property="font" relativeSize="true" size="0"/>
-                  </FontInfo>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_supervisor_account_white_48dp.png"/>
                 </Property>
-                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                <Property name="toolTipText" type="java.lang.String" value="verantwortliche Nutzer&#xa;(Kalendereintr&#xe4;ge ohne Verantwortliche(n) werden stets angezeigt)"/>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="null"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="nur meine anzeigen"/>
-                <Property name="opaque" type="boolean" value="false"/>
+                <Property name="contentAreaFilled" type="boolean" value="false"/>
+                <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+                  <Color id="Handcursor"/>
+                </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkOnlyMyReviewsActionPerformed"/>
+                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdUserFilterMousePressed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JButton" name="cmdRefreshRevDue">
@@ -230,13 +235,23 @@
                 </Container>
               </SubComponents>
             </Container>
+            <Component class="javax.swing.JLabel" name="lblUserFilterCount">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="lblUserFilterCount" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
+                </Property>
+                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="1"/>
+              </Properties>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JSplitPane" name="jSplitPane2">
           <Properties>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="null"/>
-            </Property>
             <Property name="dividerLocation" type="int" value="400"/>
             <Property name="orientation" type="int" value="0"/>
             <Property name="opaque" type="boolean" value="false"/>
@@ -285,10 +300,10 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="chkOnlyMyCases" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdRefreshLastChanged" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdRefreshLastChanged" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jScrollPane3" pref="259" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="258" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -416,7 +431,7 @@
                                   <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="130" max="32767" attributes="0"/>
+                                  <EmptySpace pref="159" max="32767" attributes="0"/>
                                   <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="tabPaneTagged" max="32767" attributes="0"/>
@@ -430,16 +445,16 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="cmdRefreshTagged" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                               <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdRefreshTagged" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="cmdDocumentTagFilter" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="cmdTagFilter" alignment="0" max="32767" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tabPaneTagged" pref="48" max="32767" attributes="0"/>
+                          <Component id="tabPaneTagged" pref="172" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -510,7 +525,6 @@
                   </Properties>
                   <Events>
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdTagFilterMousePressed"/>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTagFilterActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdDocumentTagFilter">
@@ -529,7 +543,6 @@
                   </Properties>
                   <Events>
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDocumentTagFilterMousePressed"/>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDocumentTagFilterActionPerformed"/>
                   </Events>
                 </Component>
                 <Container class="javax.swing.JTabbedPane" name="tabPaneTagged">

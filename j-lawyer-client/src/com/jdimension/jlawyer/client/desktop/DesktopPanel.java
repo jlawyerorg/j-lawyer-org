@@ -686,20 +686,27 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.MenuElement;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -770,12 +777,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.chkOnlyMyCases.setSelected(true);
         }
 
-        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
-        temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkOnlyMyReviews.setSelected(true);
-        }
-
         UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
         temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
         if ("true".equalsIgnoreCase(temp)) {
@@ -795,6 +796,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
 
+        this.buildUsersPopup();
+        
         Timer timer1 = new Timer();
         TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
         timer1.schedule(systemStateTask, 5000, 600000);
@@ -873,6 +876,52 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
     }
+    
+    private void buildUsersPopup() {
+        List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames=new ArrayList<>();
+        for(AppUserBean u: relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+        
+        String[] selectedUsers=UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{});
+        if(selectedUsers.length==0)
+            selectedUsers=new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()};
+        
+        this.lblUserFilterCount.setText("" + selectedUsers.length);
+
+        this.popUserFilter.removeAll();
+            for (AppUserBean ru : relevantUsers) {
+                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+                mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+                mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+                if (Arrays.asList(selectedUsers).contains(ru.getPrincipalId())) {
+                    mi.setSelected(true);
+                } else {
+                    mi.setSelected(false);
+                }
+                popUserFilter.add(mi);
+
+            }
+            for (MenuElement me : popUserFilter.getSubElements()) {
+                ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                    ArrayList<String> al = new ArrayList<>();
+                    for (MenuElement me1 : popUserFilter.getSubElements()) {
+                        JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                        if (mi.isSelected()) {
+                            al.add(mi.getText());
+                        }
+                    }
+                    this.lblUserFilterCount.setText("" + al.size());
+                    UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                    TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                    new java.util.Timer().schedule(revDueTask, 100);
+                });
+            }
+
+        
+    }
 
     public void setUnreadMessages(int count) {
         this.lblUnreadMail.setText("" + count);
@@ -915,15 +964,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
+        popUserFilter = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
-        chkOnlyMyReviews = new javax.swing.JCheckBox();
+        cmdUserFilter = new javax.swing.JButton();
         cmdRefreshRevDue = new javax.swing.JButton();
         tabPaneDue = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlRevDue = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
+        lblUserFilterCount = new javax.swing.JLabel();
         jSplitPane2 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
@@ -975,7 +1026,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(600);
         jSplitPane1.setOpaque(false);
 
@@ -983,16 +1033,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() | java.awt.Font.BOLD, jLabel6.getFont().getSize()+2));
         jLabel6.setForeground(java.awt.Color.white);
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
-        jLabel6.setText(bundle.getString("label.due")); // NOI18N
+        jLabel6.setText("Fällig");
 
-        chkOnlyMyReviews.setFont(chkOnlyMyReviews.getFont().deriveFont(chkOnlyMyReviews.getFont().getStyle() | java.awt.Font.BOLD));
-        chkOnlyMyReviews.setForeground(new java.awt.Color(255, 255, 255));
-        chkOnlyMyReviews.setText("nur meine anzeigen");
-        chkOnlyMyReviews.setOpaque(false);
-        chkOnlyMyReviews.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkOnlyMyReviewsActionPerformed(evt);
+        cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilter.setToolTipText("verantwortliche Nutzer\n(Kalendereinträge ohne Verantwortliche(n) werden stets angezeigt)");
+        cmdUserFilter.setBorder(null);
+        cmdUserFilter.setContentAreaFilled(false);
+        cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterMousePressed(evt);
             }
         });
 
@@ -1016,12 +1066,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlRevDue.setOpaque(false);
         pnlRevDue.setLayout(new javax.swing.BoxLayout(pnlRevDue, javax.swing.BoxLayout.Y_AXIS));
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
         jLabel8.setText(bundle.getString("label.due.loading")); // NOI18N
         pnlRevDue.add(jLabel8);
 
         jScrollPane1.setViewportView(pnlRevDue);
 
         tabPaneDue.addTab("alle", jScrollPane1);
+
+        lblUserFilterCount.setFont(lblUserFilterCount.getFont().deriveFont(lblUserFilterCount.getFont().getStyle() | java.awt.Font.BOLD, lblUserFilterCount.getFont().getSize()+2));
+        lblUserFilterCount.setForeground(java.awt.Color.white);
+        lblUserFilterCount.setText("1");
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1030,31 +1085,33 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(tabPaneDue)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(chkOnlyMyReviews))
-                    .add(tabPaneDue))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 295, Short.MAX_VALUE)
+                        .add(cmdUserFilter)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserFilterCount)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdRefreshRevDue)
                     .add(jLabel6)
-                    .add(chkOnlyMyReviews)
-                    .add(cmdRefreshRevDue))
+                    .add(lblUserFilterCount)
+                    .add(cmdUserFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneDue)
+                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jSplitPane1.setRightComponent(jPanel2);
 
-        jSplitPane2.setBorder(null);
         jSplitPane2.setDividerLocation(400);
         jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         jSplitPane2.setOpaque(false);
@@ -1135,7 +1192,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1176,11 +1233,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 cmdTagFilterMousePressed(evt);
             }
         });
-        cmdTagFilter.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdTagFilterActionPerformed(evt);
-            }
-        });
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
         cmdDocumentTagFilter.setToolTipText("Dokument-Etiketten");
@@ -1190,11 +1242,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdDocumentTagFilterMousePressed(evt);
-            }
-        });
-        cmdDocumentTagFilter.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDocumentTagFilterActionPerformed(evt);
             }
         });
 
@@ -1245,7 +1292,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 130, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 159, Short.MAX_VALUE)
                         .add(chkOnlyMyTagged))
                     .add(tabPaneTagged))
                 .addContainerGap())
@@ -1255,14 +1302,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel9)
-                        .add(cmdRefreshTagged))
-                    .add(cmdTagFilter)
-                    .add(cmdDocumentTagFilter)
-                    .add(chkOnlyMyTagged))
+                    .add(chkOnlyMyTagged)
+                    .add(jLabel9)
+                    .add(cmdRefreshTagged)
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdDocumentTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1470,7 +1517,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 856, Short.MAX_VALUE)
+                    .add(jSplitPane1)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1532,22 +1579,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     }//GEN-LAST:event_chkOnlyMyCasesActionPerformed
 
-    private void chkOnlyMyReviewsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMyReviewsActionPerformed
-
-        if (this.initializing) {
-            return;
-        }
-
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean onlyMyReviews = this.chkOnlyMyReviews.isSelected();
-        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "" + onlyMyReviews);
-
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
-        new Timer().schedule(revDueTask, 500);
-
-    }//GEN-LAST:event_chkOnlyMyReviewsActionPerformed
-
     private void cmdRefreshLastChangedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshLastChangedActionPerformed
         Timer timer = new Timer();
 
@@ -1584,10 +1615,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer.schedule(taggedTask, 10);
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
-    private void cmdTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTagFilterActionPerformed
-        
-    }//GEN-LAST:event_cmdTagFilterActionPerformed
-
     private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
@@ -1596,20 +1623,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
 
-    private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
+    private void cmdUserFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdUserFilterMousePressed
+        this.popUserFilter.show(this.cmdUserFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdUserFilterMousePressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkOnlyMyCases;
-    private javax.swing.JCheckBox chkOnlyMyReviews;
     private javax.swing.JCheckBox chkOnlyMyTagged;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
     private javax.swing.JButton cmdTagFilter;
+    private javax.swing.JButton cmdUserFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel2;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
@@ -1638,6 +1665,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUnreadInstantMessages;
     private javax.swing.JLabel lblUnreadMail;
     private javax.swing.JLabel lblUpdateStatus;
+    private javax.swing.JLabel lblUserFilterCount;
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
@@ -1647,6 +1675,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel pnlTagged;
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
+    private javax.swing.JPopupMenu popUserFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
