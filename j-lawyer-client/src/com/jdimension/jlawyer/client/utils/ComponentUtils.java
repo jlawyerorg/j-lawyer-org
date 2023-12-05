@@ -663,7 +663,10 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
+import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -1001,6 +1004,19 @@ public class ComponentUtils {
                 }
             }
         });
+    }
+    
+    public static void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
+        String[] items = new String[options.length + 1];
+        items[0] = "";
+        for (int i = 0; i < options.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
+            items[i + 1] = aogb.getValue();
+
+        }
+        StringUtils.sortIgnoreCase(items);
+        OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
+        cmb.setModel(cModel);
     }
 
     public static void decorateSplitPane(JSplitPane split, Color dividerColor) {

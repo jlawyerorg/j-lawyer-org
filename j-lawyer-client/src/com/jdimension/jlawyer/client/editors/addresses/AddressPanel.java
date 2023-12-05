@@ -1357,17 +1357,17 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         AppOptionGroupBean[] professions = settings.getProfessions();
         AppOptionGroupBean[] roles = settings.getRoles();
 
-        populateOptionsCombobox(salutations, this.cmbSalutation);
-        populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
-        populateOptionsCombobox(titles, this.cmbTitle);
-        populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
-        populateOptionsCombobox(nationalities, this.cmbNationality);
-        populateOptionsCombobox(countries, this.cmbCountry);
-        populateOptionsCombobox(legalForms, this.cmbLegalForm);
-        populateOptionsCombobox(degreePrefixes, this.cmbDegreePrefix);
-        populateOptionsCombobox(degreeSuffixes, this.cmbDegreeSuffix);
-        populateOptionsCombobox(professions, this.cmbProfession);
-        populateOptionsCombobox(roles, this.cmbRole);
+        ComponentUtils.populateOptionsCombobox(salutations, this.cmbSalutation);
+        ComponentUtils.populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
+        ComponentUtils.populateOptionsCombobox(titles, this.cmbTitle);
+        ComponentUtils.populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
+        ComponentUtils.populateOptionsCombobox(nationalities, this.cmbNationality);
+        ComponentUtils.populateOptionsCombobox(countries, this.cmbCountry);
+        ComponentUtils.populateOptionsCombobox(legalForms, this.cmbLegalForm);
+        ComponentUtils.populateOptionsCombobox(degreePrefixes, this.cmbDegreePrefix);
+        ComponentUtils.populateOptionsCombobox(degreeSuffixes, this.cmbDegreeSuffix);
+        ComponentUtils.populateOptionsCombobox(professions, this.cmbProfession);
+        ComponentUtils.populateOptionsCombobox(roles, this.cmbRole);
 
         ComponentUtils.addAutoComplete(this.cmbSalutation);
         ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
@@ -1381,19 +1381,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         ComponentUtils.addAutoComplete(this.cmbProfession);
         ComponentUtils.addAutoComplete(this.cmbRole);
 
-    }
-
-    private void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
-        String[] items = new String[options.length + 1];
-        items[0] = "";
-        for (int i = 0; i < options.length; i++) {
-            AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
-            items[i + 1] = aogb.getValue();
-
-        }
-        StringUtils.sortIgnoreCase(items);
-        OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
-        cmb.setModel(cModel);
     }
 
     /**
