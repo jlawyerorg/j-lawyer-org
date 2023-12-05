@@ -789,6 +789,10 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.splitMain.setDividerLocation(dl);
     }
 
+    public void setTimesheetName(String name) {
+        this.txtName.setText(name);
+    }
+    
     public void setEntry(Timesheet timesheet) {
         this.currentEntry = timesheet;
         
