@@ -896,11 +896,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
                 mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
                 mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
-                if (Arrays.asList(selectedUsers).contains(ru.getPrincipalId())) {
-                    mi.setSelected(true);
-                } else {
-                    mi.setSelected(false);
-                }
+                mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
                 popUserFilter.add(mi);
 
             }
