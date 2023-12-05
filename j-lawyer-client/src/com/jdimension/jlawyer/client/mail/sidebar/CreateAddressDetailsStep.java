@@ -715,13 +715,13 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         AppOptionGroupBean[] professions = settings.getProfessions();
         AppOptionGroupBean[] roles = settings.getRoles();
 
-        populateOptionsCombobox(salutations, this.cmbSalutation);
-        populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
-        populateOptionsCombobox(titles, this.cmbTitle);
-        populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
-        populateOptionsCombobox(countries, this.cmbCountry);
-        populateOptionsCombobox(professions, this.cmbProfession);
-        populateOptionsCombobox(roles, this.cmbRole);
+        ComponentUtils.populateOptionsCombobox(salutations, this.cmbSalutation);
+        ComponentUtils.populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
+        ComponentUtils.populateOptionsCombobox(titles, this.cmbTitle);
+        ComponentUtils.populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
+        ComponentUtils.populateOptionsCombobox(countries, this.cmbCountry);
+        ComponentUtils.populateOptionsCombobox(professions, this.cmbProfession);
+        ComponentUtils.populateOptionsCombobox(roles, this.cmbRole);
 
         ComponentUtils.addAutoComplete(this.cmbSalutation);
         ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
@@ -733,19 +733,6 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         
     }
     
-    private void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
-        String[] items = new String[options.length + 1];
-        items[0] = "";
-        for (int i = 0; i < options.length; i++) {
-            AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
-            items[i + 1] = aogb.getValue();
-
-        }
-        StringUtils.sortIgnoreCase(items);
-        OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
-        cmb.setModel(cModel);
-    }
-
     @Override
     public void nextEvent() {
         

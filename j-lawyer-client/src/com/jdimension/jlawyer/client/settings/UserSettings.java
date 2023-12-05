@@ -714,6 +714,7 @@ public class UserSettings {
     public static final String CONF_DESKTOP_ONLYMYREVIEWS = "client.desktop.onlymyreviews";
     public static final String CONF_DESKTOP_ONLYMYTAGGED = "client.desktop.onlymytagged";
     public static final String CONF_DESKTOP_LASTFILTERTAG = "client.desktop.lastfiltertag";
+    public static final String CONF_DESKTOP_LASTFILTERUSERS = "client.desktop.lastfilterusers";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
 
     public static final String CONF_DREBIS_TAGGINGENABLED = "user.drebis.taggingenabled";

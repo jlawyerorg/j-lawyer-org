@@ -727,6 +727,7 @@ public class DynamicTablePanel extends javax.swing.JPanel {
             }
         });
 
+        tblResult.setAutoCreateRowSorter(true);
         tblResult.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
