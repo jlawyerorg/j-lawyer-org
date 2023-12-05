@@ -883,8 +883,8 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
 
                             String newName = "E-POST-Brief_" + l.getFileName();
 
-                            if (newName.length() > 230) {
-                                newName = newName.substring(0, 229);
+                            if (newName.length() > 228) {
+                                newName = newName.substring(0, 227);
                             }
                             newName = FileUtils.sanitizeFileName(newName);
                             java.util.Date sentPrefix = new Date();

@@ -883,8 +883,8 @@ public class SendAction extends ProgressableAction {
                     if (attachmentNames.trim().length() > 0) {
                         newName = attachmentNames.trim() + " per E-Mail";
                     }
-                    if (newName.length() > 230) {
-                        newName = newName.substring(0, 229);
+                    if (newName.length() > 228) {
+                        newName = newName.substring(0, 227);
                     }
                     newName = newName + ".eml";
                     newName = FileUtils.sanitizeFileName(newName);
