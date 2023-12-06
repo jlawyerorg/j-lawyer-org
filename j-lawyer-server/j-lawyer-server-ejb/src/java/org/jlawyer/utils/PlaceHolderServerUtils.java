@@ -795,6 +795,9 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()), val(selected.getFirstName()));
             }
+            if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME2, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_VORNAME2, ptb.getPlaceHolder()), val(selected.getFirstName2()));
+            }
             if (placeHolders.containsKey(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()), val(selected.getCompany()));
             }

@@ -276,12 +276,11 @@
                                               </Group>
                                           </Group>
                                           <Component id="txtInitials" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="txtFirstName" alignment="0" max="32767" attributes="0"/>
                                           <Component id="txtBirthName" alignment="0" max="32767" attributes="0"/>
                                           <Component id="cmbNationality" alignment="0" max="32767" attributes="0"/>
                                           <Component id="cmbProfession" alignment="0" max="32767" attributes="0"/>
                                           <Component id="cmbRole" alignment="0" max="32767" attributes="0"/>
-                                          <Group type="102" alignment="0" attributes="0">
+                                          <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                                   <Component id="txtBirthDate" pref="125" max="32767" attributes="0"/>
                                                   <Component id="txtPlaceOfBirth" max="32767" attributes="0"/>
@@ -300,6 +299,11 @@
                                                   </Group>
                                               </Group>
                                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="txtFirstName" max="32767" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="txtFirstName2" min="-2" pref="190" max="-2" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -334,6 +338,7 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="txtFirstName" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="txtFirstName2" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -396,10 +401,13 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel2">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Vorname:"/>
+                        <Property name="text" type="java.lang.String" value="Vorname(n):"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JTextField" name="txtFirstName">
+                      <Properties>
+                        <Property name="toolTipText" type="java.lang.String" value="Rufname"/>
+                      </Properties>
                       <AuxValues>
                         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
                       </AuxValues>
@@ -642,6 +650,11 @@
                     <Component class="javax.swing.JLabel" name="lblAge">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="jLabel48"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JTextField" name="txtFirstName2">
+                      <Properties>
+                        <Property name="toolTipText" type="java.lang.String" value="weitere Vornamen"/>
                       </Properties>
                     </Component>
                   </SubComponents>

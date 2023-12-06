@@ -886,6 +886,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtEmail.setEnabled(!readOnly);
         this.txtFax.setEnabled(!readOnly);
         this.txtFirstName.setEnabled(!readOnly);
+        this.txtFirstName2.setEnabled(!readOnly);
 
         this.txtInsuranceNumber.setEnabled(!readOnly);
         this.chkLegalProtection.setEnabled(!readOnly);
@@ -970,6 +971,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.enableEmailButton();
         this.txtFax.setText(dto.getFax());
         this.txtFirstName.setText(dto.getFirstName());
+        this.txtFirstName2.setText(dto.getFirstName2());
 
         this.txtInsuranceNumber.setText(dto.getInsuranceNumber());
         this.cmbInsurance.setSelectedItem(dto.getInsuranceName());
@@ -1250,6 +1252,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.enableEmailButton();
         this.txtFax.setText("");
         this.txtFirstName.setText("");
+        this.txtFirstName2.setText("");
         this.txtInsuranceNumber.setText("");
         this.cmbInsurance.setSelectedItem("");
         this.chkLegalProtection.setSelected(false);
@@ -1438,6 +1441,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmdSelectBirthday = new javax.swing.JButton();
         cmdSelectDeathday = new javax.swing.JButton();
         lblAge = new javax.swing.JLabel();
+        txtFirstName2 = new javax.swing.JTextField();
         jPanel25 = new javax.swing.JPanel();
         jPanel20 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -1608,7 +1612,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel1.setText("Name:");
 
-        jLabel2.setText("Vorname:");
+        jLabel2.setText("Vorname(n):");
+
+        txtFirstName.setToolTipText("Rufname");
 
         jLabel25.setText("Anrede:");
         jLabel25.setToolTipText("z.B. \"Herr\"");
@@ -1692,6 +1698,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         lblAge.setText("jLabel48");
 
+        txtFirstName2.setToolTipText("weitere Vornamen");
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1731,7 +1739,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                                     .add(cmbDegreePrefix, 0, 230, Short.MAX_VALUE)
                                     .add(cmbDegreeSuffix, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .add(txtInitials)
-                            .add(txtFirstName)
                             .add(txtBirthName)
                             .add(cmbNationality, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(cmbProfession, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1751,7 +1758,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                                         .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(cmdSelectDeathday)))
-                                .add(0, 0, Short.MAX_VALUE)))))
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(txtFirstName)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtFirstName2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 190, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -1775,7 +1786,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(8, 8, 8)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel2))
+                    .add(jLabel2)
+                    .add(txtFirstName2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -3150,7 +3162,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void cmdCopyAddressToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyAddressToClipboardActionPerformed
 
-        AddressUtils.copyToClipboard(this.txtCompany.getText(), txtDepartment.getText(), this.cmbTitleInAddress.getEditor().getItem().toString(), this.cmbDegreePrefix.getEditor().getItem().toString(), this.txtFirstName.getText(), this.txtName.getText(), this.cmbDegreeSuffix.getEditor().getItem().toString(), this.txtStreet.getText(), this.txtStreetNr.getText(), this.txtAdjunct.getText(), this.txtZipCode.getText(), this.txtCity.getText(), this.txtDistrict.getText(), this.cmbCountry.getEditor().getItem().toString());
+        AddressUtils.copyToClipboard(this.txtCompany.getText(), txtDepartment.getText(), this.cmbTitleInAddress.getEditor().getItem().toString(), this.cmbDegreePrefix.getEditor().getItem().toString(), this.txtFirstName.getText() + " " + this.txtFirstName2.getText(), this.txtName.getText(), this.cmbDegreeSuffix.getEditor().getItem().toString(), this.txtStreet.getText(), this.txtStreetNr.getText(), this.txtAdjunct.getText(), this.txtZipCode.getText(), this.txtCity.getText(), this.txtDistrict.getText(), this.cmbCountry.getEditor().getItem().toString());
         
     }//GEN-LAST:event_cmdCopyAddressToClipboardActionPerformed
 
@@ -3474,6 +3486,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     protected javax.swing.JTextField txtEmail;
     protected javax.swing.JTextField txtFax;
     protected javax.swing.JTextField txtFirstName;
+    private javax.swing.JTextField txtFirstName2;
     private javax.swing.JTextField txtInitials;
     protected javax.swing.JTextField txtInsuranceNumber;
     protected javax.swing.JTextField txtMobile;
@@ -3542,6 +3555,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             return true;
         }
         if (!StringUtils.equals(dto.getFirstName(), this.txtFirstName.getText())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getFirstName2(), this.txtFirstName2.getText())) {
             return true;
         }
         if (!StringUtils.equals(dto.getInsuranceNumber(), this.txtInsuranceNumber.getText())) {
@@ -3712,6 +3728,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         adr.setEmail(this.txtEmail.getText());
         adr.setFax(this.txtFax.getText());
         adr.setFirstName(this.txtFirstName.getText());
+        adr.setFirstName2(this.txtFirstName2.getText());
         adr.setInsuranceNumber(this.txtInsuranceNumber.getText());
         if (this.cmbInsurance.getSelectedItem() != null) {
             adr.setInsuranceName(this.cmbInsurance.getSelectedItem().toString());

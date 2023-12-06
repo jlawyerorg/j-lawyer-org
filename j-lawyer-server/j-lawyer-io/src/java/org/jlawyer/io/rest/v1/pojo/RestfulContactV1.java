@@ -674,6 +674,7 @@ public class RestfulContactV1 {
     
     private String id=null;
     private String firstName=null;
+    private String firstName2=null;
     private String name=null;
     private String company=null;
     private String department=null;
@@ -738,6 +739,7 @@ public class RestfulContactV1 {
         ad.setEncryptionPwd(this.getEncryptionPwd());
         ad.setFax(this.getFax());
         ad.setFirstName(this.getFirstName());
+        ad.setFirstName2(this.getFirstName2());
         ad.setId(this.getId());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
@@ -780,6 +782,7 @@ public class RestfulContactV1 {
         ad.setEncryptionPwd(a.getEncryptionPwd());
         ad.setFax(a.getFax());
         ad.setFirstName(a.getFirstName());
+        ad.setFirstName2(a.getFirstName2());
         ad.setId(a.getId());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
@@ -1338,6 +1341,20 @@ public class RestfulContactV1 {
      */
     public void setEncryptionPwd(String encryptionPwd) {
         this.encryptionPwd = encryptionPwd;
+    }
+
+    /**
+     * @return the firstName2
+     */
+    public String getFirstName2() {
+        return firstName2;
+    }
+
+    /**
+     * @param firstName2 the firstName2 to set
+     */
+    public void setFirstName2(String firstName2) {
+        this.firstName2 = firstName2;
     }
     
     

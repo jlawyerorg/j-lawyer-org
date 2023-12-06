@@ -726,6 +726,8 @@ public class AddressBean implements Serializable {
     private String id;
     @Column(name = "firstName")
     private String firstName;
+    @Column(name = "firstName2")
+    private String firstName2;
     @Column(name = "name")
     private String name;
     @Column(name = "company")
@@ -1709,6 +1711,20 @@ public class AddressBean implements Serializable {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the firstName2
+     */
+    public String getFirstName2() {
+        return firstName2;
+    }
+
+    /**
+     * @param firstName2 the firstName2 to set
+     */
+    public void setFirstName2(String firstName2) {
+        this.firstName2 = firstName2;
     }
     
 }

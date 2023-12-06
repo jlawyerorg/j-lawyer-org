@@ -699,6 +699,7 @@ public class PlaceHolders {
 
     public static final String _NAME = "{{###_NAME}}";
     public static final String _VORNAME = "{{###_VORNAME}}";
+    public static final String _VORNAME2 = "{{###_VORNAME2}}";
     public static final String _FIRMA_ALIAS = "{{###_FIRMA}}"; // Alias for UNTERNEHMEN
     public static final String _UNTERNEHMEN = "{{###_UNTERNEHMEN}}";
     public static final String _ABTLG = "{{###_ABTLG}}";
@@ -801,7 +802,7 @@ public class PlaceHolders {
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     
 
-    public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
+    public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
@@ -860,6 +861,7 @@ public class PlaceHolders {
 
             ALLPLACEHOLDERS.add(_NAME.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_VORNAME.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME2.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_UNTERNEHMEN.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_ABTLG.replaceAll("###", typePlaceHolder));
