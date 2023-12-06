@@ -759,11 +759,12 @@ public class AutoStartServlet extends HttpServlet {
             out.println("<h1>Servlet AutoStartServlet at " + request.getContextPath() + "</h1>");
             
             String action=request.getParameter("action");
+            String jobId=request.getParameter("jobid");
             if(action!=null) {
                 if("backup.adhoc".equalsIgnoreCase(action)) {
                     out.println("starting ad-hoc backup...<br/>");
                     TransientTimer timer=TransientTimer.getInstance();
-                    timer.scheduleAdHocBackup();
+                    timer.scheduleAdHocBackup(jobId);
                     out.println("ad-hoc backup has been scheduled.<br/>");
                 }
             }

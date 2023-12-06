@@ -683,7 +683,6 @@ import com.jdimension.jlawyer.timer.executors.BackupResult;
 import com.jdimension.jlawyer.timer.executors.IterativeBackupExecutor;
 import java.io.File;
 import junit.framework.Assert;
-import net.lingala.zip4j.core.ZipFile;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -82,25 +83,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +104,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +114,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +127,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +276,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +289,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +639,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +651,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,65 +660,172 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package org.jlawyer.io.rest.v7;
 
-package com.jdimension.jlawyer.services;
-
-
-
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.JobStatus;
-import java.io.File;
+import com.jdimension.jlawyer.services.SingletonServiceLocal;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import javax.ejb.Local;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulCredentials;
+import org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/security/metadata
  */
-@Local
-public interface SingletonServiceLocal {
-    
-    int getSystemStatus();
+@Stateless
+@Path("/v7/administration")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
 
-    void setSystemStatus(int status);
+    private static final Logger log = Logger.getLogger(AdministrationEndpointV7.class.getName());
+    private static final String LOOKUP_SINGLETON = "java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal";
 
-    HashMap<File,Date> getObservedFiles();
-    
-    HashMap<File,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
+    /**
+     * Triggers a backup run and returns its status. The job ID may be used to
+     * check on the execution status of the job.
+     *
+     * @param credentials the credentials under which to perform the backup
+     * @return job status
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/backup")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    public Response adHocBackup(RestfulCredentials credentials) {
 
-    void setObservedFiles(HashMap<File,Date> fileNames);
+        try {
+            
+            String jobId=new StringGenerator().getID().toString();
+            URL backupUrl = new java.net.URL("http://localhost:" + System.getProperty("jboss.http.port") + "/j-lawyer-server-war/autostart?action=backup.adhoc&jobid=" +jobId);
+            URLConnection urlConnection = backupUrl.openConnection();
+            String userpass = credentials.getUser() + ":" + credentials.getPassword();
+            String basicAuth = "Basic " + new String(java.util.Base64.getEncoder().encode(userpass.getBytes()));
+            urlConnection.setRequestProperty ("Authorization", basicAuth);
 
-    FaxQueueBean getFailedFax();
-    EpostQueueBean getFailedLetter();
+            InputStream is = urlConnection.getInputStream();
 
-    ArrayList<FaxQueueBean> getFaxQueue();
-    ArrayList<EpostQueueBean> getEpostQueue();
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                // discard
+            }
+            br.close();
+            
+            JobStatus status=new JobStatus();
+            status.setId(jobId);
+            status.setJobType(JobStatus.TYPE_BACKUP);
+            status.setLastUpdated(new Date());
+            status.setStatus(RestfulJobStatusV7.STATUS_INPROGRESS);
+            status.setPercentage(0f);
+            status.setDetails("Backup initiated");
+            
+            InitialContext ic = new InitialContext();
+            SingletonServiceLocal sng = (SingletonServiceLocal) ic.lookup(LOOKUP_SINGLETON);
+            sng.updateJobStatus(status);
+            
+            status=sng.getJobStatus(jobId);
+            
+            RestfulJobStatusV7 result = RestfulJobStatusV7.fromJobStatus(status);
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("could not initiate backup", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
 
-    void setFailedFax(FaxQueueBean failedFax);
-    void setFailedLetter(EpostQueueBean failedLetter);
+    }
 
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    void setEpostQueue(ArrayList<EpostQueueBean> epostQueue);
+    /**
+     * Returns the status of a specific job.
+     *
+     * @param jobId the ID of the job to check
+     * @return job status
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 There is no job with this ID
+     */
+    @Override
+    @Path("/jobs/{jobId}/status")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    public Response getJobStatus(@PathParam("jobId") String jobId) {
 
-    long getLatestInstantMessageReceived();
+        try {
 
-    void setLatestInstantMessageReceived(long timestamp);
-    
-    long getLatestInstantMessageStatusUpdated();
-    void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated);
+            InitialContext ic = new InitialContext();
+            SingletonServiceLocal sng = (SingletonServiceLocal) ic.lookup(LOOKUP_SINGLETON);
+            JobStatus js = sng.getJobStatus(jobId);
+            if(js==null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            } else {
+                RestfulJobStatusV7 o = RestfulJobStatusV7.fromJobStatus(js);
+                return Response.ok(o).build();
+            }
 
-    JobStatus getJobStatus(String jobId);
+            
 
-    void updateJobStatus(JobStatus jobStatus);
+        } catch (Exception ex) {
+            log.error("could not initiate backup", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
 
-    Collection<JobStatus> listJobs();
-    
-    
+    }
+
+    /**
+     * Lists all jobs currently known to the server. Note that jobs are not persistent, restarting the server will result in an empty status list.
+     *
+     * @return list of job status objects
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/jobs/list")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    public Response listJobs() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SingletonServiceLocal sng = (SingletonServiceLocal) ic.lookup(LOOKUP_SINGLETON);
+            Collection<JobStatus> jobs = sng.listJobs();
+            ArrayList<RestfulJobStatusV7> resultList = new ArrayList<>();
+            for (JobStatus js : jobs) {
+                RestfulJobStatusV7 o = RestfulJobStatusV7.fromJobStatus(js);
+                resultList.add(o);
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("Could not list jobs", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
 }

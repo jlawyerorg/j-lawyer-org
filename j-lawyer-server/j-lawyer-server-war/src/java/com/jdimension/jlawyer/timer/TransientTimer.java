@@ -751,9 +751,9 @@ public class TransientTimer {
         }
     }
 
-    public void scheduleAdHocBackup() {
+    public void scheduleAdHocBackup(String jobId) {
         if (timerBackup != null) {
-            timerBackup.schedule(new IterativeBackupTask(true), 3000l);
+            timerBackup.schedule(new IterativeBackupTask(true, jobId), 3000l);
         }
     }
 

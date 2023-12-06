@@ -667,10 +667,12 @@ import com.jdimension.jlawyer.export.HTMLExport;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.JobStatus;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import com.jdimension.jlawyer.sync.FolderSync;
@@ -697,13 +699,36 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
     private SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
     private DecimalFormat mbFormat = new DecimalFormat("0.0");
     private boolean adHoc = false;
+    private String jobId=null;
 
     public IterativeBackupTask() {
         this.adHoc = false;
+        this.jobId="" + System.currentTimeMillis();
     }
 
-    public IterativeBackupTask(boolean adhoc) {
+    public IterativeBackupTask(boolean adhoc, String jobId) {
         this.adHoc = adhoc;
+        this.jobId=jobId;
+    }
+    
+    private void updateJobStatus(String status, float percentage, String details) {
+        if (this.jobId != null) {
+            try {
+
+                InitialContext ic = new InitialContext();
+                SingletonServiceLocal sng = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
+                JobStatus js = new JobStatus();
+                js.setJobType(JobStatus.TYPE_BACKUP);
+                js.setLastUpdated(new Date());
+                js.setDetails(details);
+                js.setStatus(status);
+                js.setPercentage(percentage);
+                js.setId(this.jobId);
+                sng.updateJobStatus(js);
+            } catch (Exception ex) {
+                log.error("Could not update job status", ex);
+            }
+        }
     }
 
     @Override
@@ -711,7 +736,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         
         log.info("backup task is starting");
         isRunning=true;
-
+        
         Date backupStart = new Date();
         Date syncStart = new Date();
         Date syncEnd = new Date();
@@ -782,6 +807,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             if (dbUser == null || "".equals(dbUser)) {
                 log.warn("missing backup configuration - skipping backup!");
                 isRunning=false;
+                this.updateJobStatus(JobStatus.STATUS_FAILED, 0, "Missing backup configuration");
                 return;
             }
 
@@ -878,6 +904,8 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             log.error("Error getting ServerSettingsBean", t);
         }
 
+        this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 0, "preparing backup...");
+        
         log.info("getting directories...");
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
         String backupDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
@@ -892,6 +920,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         try {
             log.info("starting backup");
             backupResult=ibe.execute();
+            this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 30, "Backup created.");
         } catch (Throwable t) {
             backupSuccess=false;
             backupResult=new BackupResult();
@@ -914,6 +943,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             exportStart = new Date();
             if (exportEnabled) {
                 log.info("Starting export to " + exportLocation);
+                this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 30, "Exporting to " + exportLocation);
                 InitialContext ic = new InitialContext();
                 ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
                 CalendarServiceLocal calendarSvc = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
@@ -947,6 +977,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 }
                 export.exportReviews();
                 log.info("Export finished");
+                this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 60, "Export finished");
             }
 
         } catch (Throwable ex) {
@@ -960,6 +991,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         try {
             if (syncLocation.length() > 0) {
                 log.info("Starting sync to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
+                this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 65, "Syncing to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
                 syncStart = new Date();
 
                 try {
@@ -1028,6 +1060,12 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             body.append("\r\n");
             body.append("Hinweis: Speichern Sie die Sicherungsdatei regelmäßig auf einem anderen Medium, idealerweise in anderen Räumlichkeiten (für den Fall eines Diebstahls oder Brandes).");
 
+            if(!backupSuccess || !syncSuccess || !exportSuccess) {
+                this.updateJobStatus(JobStatus.STATUS_FAILED, 100, "Failed - check logs for details");
+            } else {
+                this.updateJobStatus(JobStatus.STATUS_FINISHED, 100, "Finished");
+            }
+            
             if(exportSuccess && syncSuccess && backupSuccess && notifySuccess) {
                 sysMan.statusMail(subject, body.toString());
             } else if((!exportSuccess || !syncSuccess || !backupSuccess) && notifyFailure) {
