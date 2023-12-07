@@ -882,16 +882,20 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
             
             
             String field="";
-            if(line.contains("@")) {
+            if(line.contains("@") || line.contains("(at)")) {
                 field=AttributeCellEditor.ATTRIBUTE_EMAIL;
                 line=line.replace("E-Mail:", "");
                 line=line.replace("Email:", "");
                 line=line.replace("Mail:", "");
+                line=line.replace("(at)", "@");
+                line=line.replace("(dot)", ".");
                 line=line.replace(":", "");
                 line=line.trim();
                 addressProvided=true;
             } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
                 field=AttributeCellEditor.ATTRIBUTE_TEL;
+                line=line.replace("Telefonnummer", "");
+                line=line.replace("telefonnummer", "");
                 line=line.replace("Telefon", "");
                 line=line.replace("telefon", "");
                 line=line.replace("Tel", "");
@@ -899,16 +903,20 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                 line=line.replace("Tel.", "");
                 line=line.replace("tel.", "");
                 line=line.replace(":", "");
+                line=line.replace(".", "");
                 line=line.trim();
-            } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:")) {
+            } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:") || line.toLowerCase().contains("telefax") || line.toLowerCase().contains("telefax:")) {
                 field=AttributeCellEditor.ATTRIBUTE_FAX;
+                line=line.replace("Telefax", "");
+                line=line.replace("telefax", "");
                 line=line.replace("Fax", "");
                 line=line.replace("fax", "");
                 line=line.replace(":", "");
+                line=line.replace(".", "");
                 line=line.trim();
             } else if(line.matches("\\d{5}")) {
                 field=AttributeCellEditor.ATTRIBUTE_PLZ;
-            } else if(line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße")) {
+            } else if(line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße") || line.toLowerCase().contains("allee")) {
                 field=AttributeCellEditor.ATTRIBUTE_STRASSE;
             } else if(line.matches("\\d{1,3}[abc]?")) {
                 field=AttributeCellEditor.ATTRIBUTE_HAUSNR;
