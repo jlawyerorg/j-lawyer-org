@@ -825,7 +825,7 @@ public class PlaceHolders {
     }
     
     public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
-        return genericPlaceHolder.replaceAll("###", typeSpecificPrefix);
+        return genericPlaceHolder.replace("###", typeSpecificPrefix);
     }
 
     public static ArrayList<String> getAllPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
@@ -859,62 +859,62 @@ public class PlaceHolders {
 
         for (String typePlaceHolder : allPartyTypesPlaceHolders) {
 
-            ALLPLACEHOLDERS.add(_NAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_VORNAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_VORNAME2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_UNTERNEHMEN.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ABTLG.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_TITEL_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BEGRUESSUNG.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_NACHTEXT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STRASSE.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ORT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_PLZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_LAND.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_TEL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_MOBIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FAX.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EMAIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_WWW.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BANK.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BLZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_KONTONR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_KFZVERS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE3.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEB.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ORTSTEIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_NOTIZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STA.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEBNAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEBORT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEST.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_USTIDNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STEUERNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_RFORM.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_REGNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_REGGERICHT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GESCHLECHT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_HAUSNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_INITIAL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AGRAD1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AGRAD2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BERUF.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FKT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ZUSATZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ALTER.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_UNTERNEHMEN.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ABTLG.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TITEL_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BEGRUESSUNG.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NACHTEXT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STRASSE.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_PLZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_LAND.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TEL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_MOBIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FAX.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EMAIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_WWW.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BANK.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BLZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KONTONR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KFZVERS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE3.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEB.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORTSTEIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NOTIZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STA.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBNAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBORT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEST.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_USTIDNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STEUERNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RFORM.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGGERICHT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GESCHLECHT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_HAUSNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_INITIAL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BERUF.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FKT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ZUSATZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ALTER.replace("###", typePlaceHolder));
 
         }
 
