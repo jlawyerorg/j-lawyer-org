@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -2086,6 +2087,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void cmdViewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdViewDocumentActionPerformed
         if(this.currentEntry != null && this.currentEntry.getInvoiceDocument() != null) {
             try {
+                
+                if(!CaseUtils.requestOpen(this.currentEntry.getInvoiceDocument(), EditorsRegistry.getInstance().getMainWindow()))
+                    return;
+                
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setShowCancelButton(true);
                 dlg.setInfinite(false);

@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
+import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -762,17 +763,23 @@ public class CaseUtils {
             } else {
                 launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName, EditorsRegistry.getInstance().getMainWindow());
             }
-
-            int response = JOptionPane.NO_OPTION;
-            if (launcher.isDocumentOpen(value.getId())) {
-                response = JOptionPane.showConfirmDialog(parent, "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-            }
-            launcher.launch(response == JOptionPane.YES_OPTION);
+            launcher.launch(true);
 
         }
+    }
+    
+    public static boolean requestOpen(ArchiveFileDocumentsBean doc, Component parent) {
+        DocumentObserver observer = DocumentObserver.getInstance();
+        boolean open = observer.isDocumentOpen(doc.getId());
+        if (open) {
+
+            int response = JOptionPane.showConfirmDialog(parent, "Dokument " + doc.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return false;
+            }
+
+        }
+        return true;
     }
 
 }

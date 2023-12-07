@@ -3700,6 +3700,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ActionListener al = (ActionEvent e) -> {
                     try {
 
+                        if(!CaseUtils.requestOpen(value, this))
+                            return;
+                        
                         CaseUtils.openDocumentInCustomLauncher(dto, value, this.readOnly, this, customLauncher, null);
 
                     } catch (Exception ex) {
@@ -4036,6 +4039,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
+            
+            if(!CaseUtils.requestOpen(value, this))
+                return;
 
             //CaseUtils.openDocument(dto, value, this.readOnly, this);
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -5092,7 +5098,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuOpenDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentActionPerformed
         ArrayList<ArchiveFileDocumentsBean> selecteDocs = this.caseFolderPanel1.getSelectedDocuments();
-        if (selecteDocs.size() > 0)
+        if (!selecteDocs.isEmpty())
             this.openSelectedDocument(selecteDocs.get(0));
     }//GEN-LAST:event_mnuOpenDocumentActionPerformed
 
