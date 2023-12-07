@@ -699,7 +699,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class FolderListCell extends javax.swing.JPanel implements DropTargetListener {
 
-    private static Logger log = Logger.getLogger(FolderListCell.class.getName());
+    private static final Logger log = Logger.getLogger(FolderListCell.class.getName());
 
     private CaseFolder folder = null;
     protected CaseFolder parentFolder = null;
@@ -711,6 +711,10 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
     /**
      * Creates new form FolderCell
+     * @param parent
+     * @param level
+     * @param name
+     * @param readOnly
      */
     public FolderListCell(FoldersListPanel parent, int level, String name, boolean readOnly) {
         initComponents();
@@ -790,6 +794,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     private void initComponents() {
 
         popFolder = new javax.swing.JPopupMenu();
+        mnuSelectThisOnly = new javax.swing.JMenuItem();
         mnuEdit = new javax.swing.JMenuItem();
         mnuDelete = new javax.swing.JMenuItem();
         mnuCreate = new javax.swing.JMenuItem();
@@ -797,6 +802,14 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         cmdMore = new javax.swing.JButton();
         lblExpanded = new javax.swing.JLabel();
         txtFolderName = new javax.swing.JTextField();
+
+        mnuSelectThisOnly.setText("nur diesen auswählen");
+        mnuSelectThisOnly.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSelectThisOnlyActionPerformed(evt);
+            }
+        });
+        popFolder.add(mnuSelectThisOnly);
 
         mnuEdit.setText("umbenennen");
         mnuEdit.addActionListener(new java.awt.event.ActionListener() {
@@ -858,7 +871,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         txtFolderName.setFont(txtFolderName.getFont().deriveFont(txtFolderName.getFont().getStyle() | java.awt.Font.BOLD));
         txtFolderName.setText("jTextField1");
         txtFolderName.setBorder(null);
-        txtFolderName.setOpaque(false);
         txtFolderName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 txtFolderNameMouseClicked(evt);
@@ -987,6 +999,12 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         this.parent.selectionChanged();
     }//GEN-LAST:event_txtFolderNameMouseClicked
 
+    private void mnuSelectThisOnlyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSelectThisOnlyActionPerformed
+        this.parent.selectAll(false);
+        setSelected(true);
+        this.parent.selectionChanged();
+    }//GEN-LAST:event_mnuSelectThisOnlyActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdMore;
@@ -995,6 +1013,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     private javax.swing.JMenuItem mnuCreate;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuEdit;
+    private javax.swing.JMenuItem mnuSelectThisOnly;
     private javax.swing.JPopupMenu popFolder;
     private javax.swing.JTextField txtFolderName;
     // End of variables declaration//GEN-END:variables

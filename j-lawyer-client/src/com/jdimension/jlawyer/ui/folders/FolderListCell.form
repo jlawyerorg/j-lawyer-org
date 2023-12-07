@@ -8,6 +8,14 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
       <SubComponents>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSelectThisOnly">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="nur diesen ausw&#xe4;hlen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSelectThisOnlyActionPerformed"/>
+          </Events>
+        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuEdit">
           <Properties>
             <Property name="text" type="java.lang.String" value="umbenennen"/>
