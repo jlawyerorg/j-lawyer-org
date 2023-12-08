@@ -708,9 +708,11 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
         this.nextFocus = nextFocus;
         this.to = to;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "SafeID"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
+        
+        this.tblResults.setDefaultRenderer(Object.class, new AddressHasEncryptionCellRenderer());
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();

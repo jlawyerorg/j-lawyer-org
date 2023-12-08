@@ -671,11 +671,14 @@ import javax.swing.table.DefaultTableModel;
  */
 public class QuickAddressSearchTableModel extends DefaultTableModel {
     
-    /** Creates a new instance of QuickAddressSearchTableModel */
+    /** Creates a new instance of QuickAddressSearchTableModel
+     * @param colNames
+     * @param rowCount */
     public QuickAddressSearchTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int i, int i0) {
         /*boolean retValue;
         

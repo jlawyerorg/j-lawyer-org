@@ -663,72 +663,33 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.client.editors.addresses.*;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import javax.swing.JLabel;
 import javax.swing.JTable;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
  * @author jens
  */
-public class QuickEmailSearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(QuickEmailSearchThread.class.getName());
-    
-    private String query;
-    private Component owner;
-    private JTable target;
-    private String[] tag;
-    
-    /** Creates a new instance of QuickEmailSearchThread
-     * @param owner
-     * @param query
-     * @param tag
-     * @param target */
-    public QuickEmailSearchThread(Component owner, String query, String[] tag, JTable target) {
-        this.query=query;
-        this.owner=owner;
-        this.target=target;
-        this.tag=tag;
-    }
+public class AddressHasEncryptionCellRenderer extends DefaultTableCellRenderer {
 
     @Override
-    public void run() {
-        AddressBean[] dtos=null;
-        try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            dtos=addressService.searchEnhanced(query, tag);
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            return;
-        }
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        ((JLabel) returnRenderer).setIcon(null);
         
-        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
-        QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
-        for(int i=0;i<dtos.length;i++) {
-            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getEmail(), !StringUtils.isEmpty(dtos[i].getEncryptionPwd()) && !StringUtils.isEmpty(dtos[i].getEmail()), dtos[i].getBeaSafeId()};
-            model.addRow(row);
+        if (column == 6) {
+            ((JLabel) returnRenderer).setText("");
+
+            boolean hasEncryption = (boolean) value;
+            if (hasEncryption) {
+                ((JLabel) returnRenderer).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
+            }
         }
-        if(dtos.length>0) {
-            ThreadUtils.setTableModel(this.target, model, 0, 0);
-            ThreadUtils.requestFocus(target);
-            
-        } else {
-            ThreadUtils.setTableModel(this.target, model);
-        }
-        EditorsRegistry.getInstance().clearStatus(true);
-        ThreadUtils.setDefaultCursor(this.owner);
+
+        return (Component) returnRenderer;
     }
-    
+
 }

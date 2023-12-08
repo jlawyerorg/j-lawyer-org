@@ -2020,6 +2020,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo));
             mi.setBackground(new Color(ptb.getColor()));
             mi.setOpaque(true);
+            if(!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
+            }
             this.popRecipients.add(mi);
 
             JCheckBoxMenuItem mi2 = new JCheckBoxMenuItem();
@@ -2028,6 +2031,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc));
             mi2.setOpaque(true);
             mi2.setBackground(new Color(ptb.getColor()));
+            if(!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+                mi2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
+            }
             this.popRecipientsCc.add(mi2);
 
             JCheckBoxMenuItem mi3 = new JCheckBoxMenuItem();
@@ -2036,6 +2042,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc));
             mi3.setBackground(new Color(ptb.getColor()));
             mi3.setOpaque(true);
+            if(!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+                mi3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
+            }
             this.popRecipientsBcc.add(mi3);
 
         }
