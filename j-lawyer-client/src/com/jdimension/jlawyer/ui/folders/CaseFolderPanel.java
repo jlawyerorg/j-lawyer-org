@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1715,11 +1716,14 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 if (selectNext) {
                     this.selectAllDocuments(false);
                     ((DocumentEntryPanel) c).setSelected(true);
+                    Rectangle bounds = c.getBounds();
+                    this.pnlDocumentEntries.scrollRectToVisible(bounds);
                     return;
                 }
                 if (((DocumentEntryPanel) c).isSelected()) {
                     selectNext = true;
                 }
+                
             }
         }
     }
@@ -1741,6 +1745,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         if (prev instanceof DocumentEntryPanel) {
             this.selectAllDocuments(false);
             ((DocumentEntryPanel) prev).setSelected(true);
+            Rectangle bounds = prev.getBounds();
+            this.pnlDocumentEntries.scrollRectToVisible(bounds);
         }
 
     }
