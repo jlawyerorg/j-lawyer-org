@@ -772,7 +772,6 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -782,7 +781,6 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.text.DefaultStyledDocument;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperPrintManager;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
@@ -1804,7 +1802,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblCustom3 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
         taCustom3 = new javax.swing.JTextArea();
-        tabPrint = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
         tabPaneForms = new javax.swing.JTabbedPane();
         pnlAddForms = new javax.swing.JPanel();
@@ -3092,25 +3089,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel11); // NOI18N
 
-        tabPrint.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                tabPrintComponentResized(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout tabPrintLayout = new org.jdesktop.layout.GroupLayout(tabPrint);
-        tabPrint.setLayout(tabPrintLayout);
-        tabPrintLayout.setHorizontalGroup(
-            tabPrintLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 969, Short.MAX_VALUE)
-        );
-        tabPrintLayout.setVerticalGroup(
-            tabPrintLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 803, Short.MAX_VALUE)
-        );
-
-        tabPaneArchiveFile.addTab("Handakte", new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png")), tabPrint); // NOI18N
-
         jPanel5.setName("Falldaten"); // NOI18N
 
         tabPaneForms.setTabPlacement(javax.swing.JTabbedPane.LEFT);
@@ -3883,41 +3861,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
-        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
+        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
 
             if (this.dto == null || this.dto.getId() == null) {
                 this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
 
-        } else if (this.tabPaneArchiveFile.getSelectedIndex() == 6) {
-            try {
-                ArchiveFileBean printFile = new ArchiveFileBean();
-                this.fillDTO(printFile, true);
-                if (this.dto != null) {
-                    printFile.setFileNumberExtension(this.dto.getFileNumberExtension());
-                    printFile.setFileNumberMain(this.dto.getFileNumberMain());
-                } else {
-                    printFile.setFileNumberExtension("");
-                    printFile.setFileNumberMain("");
-                }
-                ArchiveFileStub printStub = PrintStubGenerator.getStub(printFile);
-                JRBeanCollectionDataSource colIn = new JRBeanCollectionDataSource(Arrays.asList(printStub));
-
-                Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
-                JasperReport jasperReport = (JasperReport) report;
-
-                HashMap<String, Object> parameter = new HashMap<>();
-                parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
-
-                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-                JRViewer viewer = new JRViewer(jasperPrint);
-                this.tabPrint.removeAll();
-                this.tabPrint.add(viewer);
-                viewer.setBounds(15, 15, tabPrint.getWidth() - 30, tabPrint.getHeight() - 30);
-            } catch (Exception ex) {
-                log.error("Error printing archive file reviews", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Wiedervorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
         }
     }//GEN-LAST:event_tabPaneArchiveFileStateChanged
 
@@ -4099,7 +4048,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void cmdPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPrintActionPerformed
+        
         try {
+            
+            JDialog dlgPrint = new JDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            dlgPrint.setTitle("Handakte");
+            dlgPrint.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            dlgPrint.setSize(800, 700);
+            FrameUtils.fitDialogToScreen(dlgPrint, 80);
+
             ArchiveFileBean printFile = new ArchiveFileBean();
             this.fillDTO(printFile, true);
             if (this.dto != null) {
@@ -4114,15 +4071,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
             JasperReport jasperReport = (JasperReport) report;
+
             HashMap<String, Object> parameter = new HashMap<>();
             parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-            JasperPrintManager.printReport(jasperPrint, true);
+            JRViewer viewer = new JRViewer(jasperPrint);
+            dlgPrint.getContentPane().add(viewer);
+            viewer.setBounds(15, 15, dlgPrint.getWidth() - 30, dlgPrint.getHeight() - 30);
+
+            dlgPrint.setVisible(true);
         } catch (Exception ex) {
-            log.error("Error printing archive file reviews", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Wiedervorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            log.error("Error displaying print dialgo", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Handakte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+        
     }//GEN-LAST:event_cmdPrintActionPerformed
 
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
@@ -4330,12 +4293,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuDuplicateReviewActionPerformed
 
-    private void tabPrintComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_tabPrintComponentResized
-        if (this.tabPrint.getComponentCount() > 0) {
-            this.tabPrint.getComponent(0).setBounds(15, 15, tabPrint.getWidth() - 30, tabPrint.getHeight() - 30);
-        }
-    }//GEN-LAST:event_tabPrintComponentResized
-
     public void removeInvolvedParty(InvolvedPartyEntryPanel ipep) {
         ipep.close();
         this.pnlInvolvedParties.remove(ipep);
@@ -4464,7 +4421,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
-        if (open.size() > 0) {
+        if (!open.isEmpty()) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
             for (String o : open) {
                 question = question + "<li>" + o + "</li>";
@@ -6613,7 +6570,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JTabbedPane tabPaneArchiveFile;
     private javax.swing.JTabbedPane tabPaneForms;
     private javax.swing.JPanel tabParties;
-    private javax.swing.JPanel tabPrint;
     private javax.swing.JTabbedPane tabPrivileges;
     private javax.swing.JPanel tabReviews;
     private javax.swing.JPanel tagPanel;
