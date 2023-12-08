@@ -1113,7 +1113,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         );
 
         jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
-        jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(200);
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
@@ -1143,7 +1142,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        lstAttachments.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachments.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachments.setVisibleRowCount(-1);
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1169,7 +1167,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        lstAttachmentsTechnical.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachmentsTechnical.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachmentsTechnical.setVisibleRowCount(-1);
         lstAttachmentsTechnical.addMouseListener(new java.awt.event.MouseAdapter() {

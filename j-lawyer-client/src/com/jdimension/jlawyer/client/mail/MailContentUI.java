@@ -1684,7 +1684,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        lstAttachments.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachments.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachments.setVisibleRowCount(-1);
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {

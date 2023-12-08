@@ -383,7 +383,6 @@
                                     <StringItem index="4" value="Item 5"/>
                                   </StringArray>
                                 </Property>
-                                <Property name="selectionMode" type="int" value="1"/>
                                 <Property name="layoutOrientation" type="int" value="2"/>
                                 <Property name="visibleRowCount" type="int" value="-1"/>
                               </Properties>
@@ -423,7 +422,6 @@
                                     <StringItem index="4" value="Item 5"/>
                                   </StringArray>
                                 </Property>
-                                <Property name="selectionMode" type="int" value="1"/>
                                 <Property name="layoutOrientation" type="int" value="2"/>
                                 <Property name="visibleRowCount" type="int" value="-1"/>
                               </Properties>
