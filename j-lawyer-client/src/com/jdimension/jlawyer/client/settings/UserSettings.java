@@ -722,6 +722,8 @@ public class UserSettings {
     public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
     public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
     
+    public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";
+    
     public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
     
     public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
