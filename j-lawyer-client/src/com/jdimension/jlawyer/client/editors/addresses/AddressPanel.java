@@ -1877,7 +1877,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel25)
                             .add(jLabel47))
-                        .add(34, 34, 34)
+                        .add(35, 35, 35)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(cmbTitleInAddress, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -1895,7 +1895,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel32))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtName)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(jLabel42)
@@ -1928,7 +1927,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 400, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(txtFirstName2)))))
+                                .add(txtFirstName2))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtName))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
