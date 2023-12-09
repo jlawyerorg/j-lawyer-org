@@ -5842,7 +5842,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
         InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
         ip.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
-        this.pnlInvoices.add(ip);
+        this.pnlInvoices.add(ip, 0);
+        this.pnlInvoices.revalidate();
         
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed
 
