@@ -6357,7 +6357,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 try {
 
                     List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                    if (transferData != null && transferData.size() > 0) {
+                    if (transferData != null && !transferData.isEmpty()) {
 
                         ThreadUtils.setWaitCursor(p);
 

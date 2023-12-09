@@ -682,15 +682,14 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
     /**
      * Creates new form PlaintextPanel
+     * @param docId
+     * @param readOnly
      */
     public HtmlPanel(String docId, boolean readOnly) {
         initComponents();
         this.id = docId;
         this.readOnly=readOnly;
-        this.cmdSave.setEnabled(!readOnly);
-        //ThreadUtils.updateEditorPane(this.edtContent, "");
         ThreadUtils.updateHtmlEditor(this.html, "");
-        ThreadUtils.enableComponent(cmdSave, !readOnly);
         
         ThreadUtils.enableComponent(this, !readOnly);
         ThreadUtils.enableComponent(this.html, !readOnly);
@@ -713,18 +712,10 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         html = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
-        cmdSave = new javax.swing.JButton();
         lblFileName = new javax.swing.JLabel();
 
         html.setFocusable(false);
         jScrollPane1.setViewportView(html);
-
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
 
         lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() | java.awt.Font.BOLD));
         lblFileName.setText("Notizdatei.html");
@@ -734,41 +725,21 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(cmdSave)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdSave, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(lblFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        if (this.id != null) {
-            ThreadUtils.enableComponent(cmdSave, false);
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
-            } catch (Throwable t) {
-                log.error("Error saving document with id " + this.id, t);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                
-            }
-            ThreadUtils.enableComponent(cmdSave, true);
-        }
-    }//GEN-LAST:event_cmdSaveActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSave;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel html;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFileName;
@@ -784,6 +755,21 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
     public void showContent(byte[] content) {
         //ThreadUtils.updateEditorPane(this.edtContent, new String(content));
         ThreadUtils.updateHtmlEditor(html, new String(content));
+    }
+    
+    @Override
+    public void removeNotify() {
+        if (this.id != null && !this.readOnly) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
+            } catch (Throwable t) {
+                log.error("Error saving document with id " + this.id, t);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                
+            }
+        }
     }
 
 }
