@@ -864,7 +864,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
         String shortened=msg.getSubject();
-        shortened=shortened.substring(0,Math.min(150, shortened.length()));
+        shortened=shortened.substring(0,Math.min(90, shortened.length()));
         lblSubject.setText(shortened);
         lblSubject.setToolTipText(msg.getSubject());
         lblFrom.setText(msg.getSenderName());
@@ -879,7 +879,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
 
         String to = "";
-        if (msg.getRecipients().size() > 0) {
+        if (!msg.getRecipients().isEmpty()) {
             to = msg.getRecipients().get(0).getName();
             for (int i = 1; i < msg.getRecipients().size(); i++) {
                 to = to + ", " + msg.getRecipients().get(i).getName();
@@ -920,7 +920,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         processCardTable.setModel(tm2);
         tabs.setIconAt(2, null);
         if (msg.getProcessCard() != null) {
-            if (msg.getProcessCard().getEntries().size() > 0 || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
+            if (!msg.getProcessCard().getEntries().isEmpty() || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
                 tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
             }
             if(!StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
