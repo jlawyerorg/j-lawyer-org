@@ -788,19 +788,19 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
         TimesheetDialog dlg=new TimesheetDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setEntry(this.timesheet);
+        dlg.setEntry(this.getTimesheet());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.setEntry(caseDto, dlg.getEntry());
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Projekt '" + this.timesheet.getName() + "' unwiderruflich löschen?", "Zeiterfassungsprojekt löschen", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(this, "Projekt '" + this.getTimesheet().getName() + "' unwiderruflich löschen?", "Zeiterfassungsprojekt löschen", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removeTimesheet(this.timesheet.getId());
+                locator.lookupArchiveFileServiceRemote().removeTimesheet(this.getTimesheet().getId());
                 Container parent=this.getParent();
                 parent.remove(this);
                 parent.invalidate();
@@ -820,4 +820,11 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblStatus;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the timesheet
+     */
+    public Timesheet getTimesheet() {
+        return timesheet;
+    }
 }

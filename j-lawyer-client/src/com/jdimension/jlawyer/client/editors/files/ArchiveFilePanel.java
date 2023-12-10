@@ -5689,45 +5689,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void chkArchivedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkArchivedActionPerformed
         if (chkArchived.isSelected()) {
-            ArrayList<ArchiveFileReviewsBean> openCalItems = new ArrayList<>();
-            ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            for (int i = 0; i < reviewsModel.getRowCount(); i++) {
-                Object row = reviewsModel.getValueAt(i, 0);
-                ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
-                if (!reviewDTO.isDone()) {
-                    openCalItems.add(reviewDTO);
-                }
-            }
-            if (!openCalItems.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("<html>Es gibt noch offene Wiedervorlagen / Fristen / Termine.<br/>Sollen offene Kalendereintr&auml;ge automatisch geschlossen werden?");
-                sb.append("<ul>");
-                for (ArchiveFileReviewsBean a : openCalItems) {
-                    sb.append("<li>").append(a.toString()).append(" - ").append(a.getSummary()).append("</li>");
-                }
-                sb.append("</ul>");
-                sb.append("</html>");
-                int response = JOptionPane.showConfirmDialog(this, sb.toString(), "offene Kalendereinträge automatisch schließen?", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.YES_OPTION) {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    try {
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-                        for (ArchiveFileReviewsBean a : openCalItems) {
-                            a.setDone(true);
-                            calService.updateReview(this.dto.getId(), a);
-                        }
-                        for (int i = 0; i < this.tblReviewReasons.getRowCount(); i++) {
-                            this.tblReviewReasons.setValueAt(true, i, 4);
-                        }
-                    } catch (Exception ex) {
-                        log.error("Error updating review", ex);
-                        chkArchived.setSelected(false);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Schließen des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    chkArchived.setSelected(false);
-                }
+            ArchivalDialog dlg=new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlTimesheets);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            if (!dlg.isArchivalConfirmed()) {
+                chkArchived.setSelected(false);
             }
         } else {
             if (!this.readOnly) {

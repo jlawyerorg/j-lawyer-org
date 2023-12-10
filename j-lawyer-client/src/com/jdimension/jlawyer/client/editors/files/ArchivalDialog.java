@@ -663,90 +663,144 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.Timesheet;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.awt.Container;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class InvoiceEntryPanel extends javax.swing.JPanel {
+public class ArchivalDialog extends javax.swing.JDialog {
+
+    private static final Logger log=Logger.getLogger(ArchivalDialog.class.getName());
     
-    private static final Logger log=Logger.getLogger(InvoiceEntryPanel.class.getName());
-    private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat totalFormat=new DecimalFormat("#0.00");
-    
-    private ArchiveFileBean caseDto=null;
-    private ArchiveFilePanel caseView=null;
-    private Invoice invoice=null;
-    private List<AddressBean> addresses=null;
+    private boolean archivalConfirmed = false;
+    private JTable tblReviews=null;
+    private JPanel invoicesPanel=null;
+    private JPanel timesheetsPanel=null;
+    private String caseId=null;
 
     /**
-     * Creates new form InvoiceEntryPanel
-     * @param caseView
+     * Creates new form ArchivalDialog
+     *
+     * @param parent
+     * @param modal
+     * @param caseId
+     * @param tblReviews
+     * @param invoicesPanel
+     * @param timesheetsPanel
      */
-    public InvoiceEntryPanel(ArchiveFilePanel caseView) {
+    public ArchivalDialog(java.awt.Frame parent, boolean modal, String caseId, JTable tblReviews, JPanel invoicesPanel, JPanel timesheetsPanel) {
+        super(parent, modal);
         initComponents();
-        this.caseView=caseView;
-    }
-    
-    public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
-        this.caseDto=caseDto;
-        this.invoice=invoice;
-        this.addresses=addresses;
-        this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
-        this.lblDueDate.setText(df.format(invoice.getDueDate()));
-        if(invoice.getStatus()==Invoice.STATUS_CANCELLED || invoice.getStatus()==Invoice.STATUS_PAID) {
-            this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        } else {
-            if(invoice.getDueDate().getTime()<new Date().getTime()) {
-                this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-            } else {
-                this.lblDueDate.setForeground(Color.black);
+
+        this.cmdArchive.setEnabled(false);
+        
+        this.tblReviews=tblReviews;
+        this.invoicesPanel=invoicesPanel;
+        this.timesheetsPanel=timesheetsPanel;
+        this.caseId=caseId;
+        
+        this.chkCalendar.setEnabled(false);
+        this.chkInvoices.setEnabled(false);
+        this.chkTimesheets.setEnabled(false);
+        
+        this.lblCalendar.setText("Keine offenen Kalendereinträge");
+        this.lblInvoices.setText("Keine Belege in Offene Posten-Liste");
+        this.lblTimesheets.setText("Keine offenen Zeiterfassungsprojekte");
+        
+        this.lblCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        this.lblInvoices.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        this.lblTimesheets.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        
+        ArrayList<ArchiveFileReviewsBean> openCalItems = new ArrayList<>();
+        ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) tblReviews.getModel();
+        for (int i = 0; i < reviewsModel.getRowCount(); i++) {
+            Object row = reviewsModel.getValueAt(i, 0);
+            ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
+            if (!reviewDTO.isDone()) {
+                openCalItems.add(reviewDTO);
             }
         }
-        this.lblName.setText(invoice.getName());
-        this.lblStatus.setText("(" + invoice.getStatusString() + ")");
-        StringBuilder tooltip=new StringBuilder();
-        tooltip.append("<html>");
-        tooltip.append("Belegdatum: ").append(df.format(invoice.getCreationDate()));
-        tooltip.append("<br/>");
-        tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
-        tooltip.append("<br/><br/>");
-        if(!StringUtils.isEmpty(invoice.getDescription())) {
-            tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
-            tooltip.append("<br/>");
+        if (!openCalItems.isEmpty()) {
+            this.lblCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.chkCalendar.setEnabled(true);
+            this.lblCalendar.setText("" + openCalItems.size() + " offene Kalendereinträge");
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>Es gibt noch offene Wiedervorlagen / Fristen / Termine.<br/>Sollen offene Kalendereintr&auml;ge automatisch geschlossen werden?");
+            sb.append("<ul>");
+            for (ArchiveFileReviewsBean a : openCalItems) {
+                sb.append("<li>").append(a.toString()).append(" - ").append(a.getSummary()).append("</li>");
+            }
+            sb.append("</ul>");
+            sb.append("</html>");
+            this.lblCalendar.setToolTipText(sb.toString());
+
         }
-        tooltip.append("</html>");
-        this.lblName.setToolTipText(tooltip.toString());
-        if(invoice.getInvoiceType()!=null)
-            this.lblInvoiceType.setText(invoice.getInvoiceType().getDisplayName());
-        else
-            this.lblInvoiceType.setText("");
         
-        if(invoice.getContact()!=null)
-            this.lblRecipient.setText(invoice.getContact().toDisplayName());
-        else
-            this.lblRecipient.setText("");
+        ArrayList<Invoice> openInvoices = new ArrayList<>();
+        for(int i=0;i<this.invoicesPanel.getComponentCount();i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.invoicesPanel.getComponent(i);
+            Invoice inv=ie.getInvoice();
+            if(inv.getInvoiceType().isTurnOver() && (inv.getStatus()!=Invoice.STATUS_CANCELLED && inv.getStatus()!=Invoice.STATUS_PAID)) {
+                openInvoices.add(inv);
+            }
+        }
+        if (!openInvoices.isEmpty()) {
+            this.lblInvoices.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.chkInvoices.setEnabled(true);
+            this.lblInvoices.setText("" + openInvoices.size() + " offene Belege");
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>Es gibt noch offene Belege.<br/>Sollen diese Belege unverändert bleiben und ignoriert werden?");
+            sb.append("<ul>");
+            for (Invoice i : openInvoices) {
+                sb.append("<li>").append(i.getInvoiceNumber()).append(" - ").append(i.getStatusString()).append("</li>");
+            }
+            sb.append("</ul>");
+            sb.append("</html>");
+            this.lblInvoices.setToolTipText(sb.toString());
+
+        }
         
-        this.lblTotal.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
         
+        ArrayList<Timesheet> openSheets = new ArrayList<>();
+        for(int i=0;i<this.timesheetsPanel.getComponentCount();i++) {
+            TimesheetEntryPanel te = (TimesheetEntryPanel) this.timesheetsPanel.getComponent(i);
+            Timesheet t=te.getTimesheet();
+            if(t.getStatus()==Timesheet.STATUS_OPEN) {
+                openSheets.add(t);
+            }
+        }
+        if (!openSheets.isEmpty()) {
+            this.lblTimesheets.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.chkTimesheets.setEnabled(true);
+            this.lblTimesheets.setText("" + openSheets.size() + " offene Zeiterfassungsprojekte");
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>Es gibt noch offene Zeiterfassungsprojekte.<br/>Sollen diese automatisch geschlossen werden?");
+            sb.append("<ul>");
+            for (Timesheet t : openSheets) {
+                sb.append("<li>").append(t.getName()).append("</li>");
+            }
+            sb.append("</ul>");
+            sb.append("</html>");
+            this.lblTimesheets.setToolTipText(sb.toString());
+
+        }
         
+        this.enableArchival();
+
     }
 
     /**
@@ -758,183 +812,265 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblInvoiceNumber = new javax.swing.JLabel();
-        cmdOpen = new javax.swing.JButton();
-        lblName = new javax.swing.JLabel();
-        lblDueDate = new javax.swing.JLabel();
-        lblStatus = new javax.swing.JLabel();
-        lblRecipient = new javax.swing.JLabel();
-        lblInvoiceType = new javax.swing.JLabel();
-        cmdDelete = new javax.swing.JButton();
-        cmdDuplicate = new javax.swing.JButton();
-        cmdCopy = new javax.swing.JButton();
-        lblTotal = new javax.swing.JLabel();
+        lblCalendar = new javax.swing.JLabel();
+        lblInvoices = new javax.swing.JLabel();
+        lblTimesheets = new javax.swing.JLabel();
+        cmdCancel = new javax.swing.JButton();
+        cmdArchive = new javax.swing.JButton();
+        chkCalendar = new javax.swing.JCheckBox();
+        chkInvoices = new javax.swing.JCheckBox();
+        chkTimesheets = new javax.swing.JCheckBox();
 
-        lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
-        lblInvoiceNumber.setText("RG123");
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Akte archivieren - Prüfergebnis");
 
-        cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
-        cmdOpen.setToolTipText("einsehen / bearbeiten");
-        cmdOpen.addActionListener(new java.awt.event.ActionListener() {
+        lblCalendar.setFont(lblCalendar.getFont());
+        lblCalendar.setText("offene Kalendereinträge");
+
+        lblInvoices.setFont(lblInvoices.getFont());
+        lblInvoices.setText("Belege in Offene Posten-Liste");
+
+        lblTimesheets.setFont(lblTimesheets.getFont());
+        lblTimesheets.setText("offene Zeiterfassungsprojekte");
+
+        cmdCancel.setFont(cmdCancel.getFont());
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdOpenActionPerformed(evt);
+                cmdCancelActionPerformed(evt);
             }
         });
 
-        lblName.setFont(lblName.getFont());
-        lblName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
-        lblName.setText("<Name>");
-        lblName.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-
-        lblDueDate.setFont(lblDueDate.getFont().deriveFont(lblDueDate.getFont().getStyle() | java.awt.Font.BOLD));
-        lblDueDate.setText("01.01.2023");
-
-        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));
-        lblStatus.setText("offen");
-
-        lblRecipient.setFont(lblRecipient.getFont());
-        lblRecipient.setText("<Rechnungsadresse>");
-
-        lblInvoiceType.setFont(lblInvoiceType.getFont());
-        lblInvoiceType.setText("Angebot");
-
-        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDelete.setToolTipText("Beleg löschen");
-        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+        cmdArchive.setFont(cmdArchive.getFont());
+        cmdArchive.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdArchive.setText("Akte archivieren");
+        cmdArchive.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteActionPerformed(evt);
+                cmdArchiveActionPerformed(evt);
             }
         });
 
-        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        cmdDuplicate.setToolTipText("in dieser Akte duplizieren");
-        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
+        chkCalendar.setFont(chkCalendar.getFont());
+        chkCalendar.setText("auf erledigt setzen");
+        chkCalendar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDuplicateActionPerformed(evt);
+                chkCalendarActionPerformed(evt);
             }
         });
 
-        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        cmdCopy.setToolTipText("in andere Akte kopieren");
-        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+        chkInvoices.setFont(chkInvoices.getFont());
+        chkInvoices.setText("ignorieren");
+        chkInvoices.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCopyActionPerformed(evt);
+                chkInvoicesActionPerformed(evt);
             }
         });
 
-        lblTotal.setFont(lblTotal.getFont().deriveFont(lblTotal.getFont().getStyle() | java.awt.Font.BOLD));
-        lblTotal.setText("0,75");
+        chkTimesheets.setFont(chkTimesheets.getFont());
+        chkTimesheets.setText("schließen");
+        chkTimesheets.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkTimesheetsActionPerformed(evt);
+            }
+        });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmdOpen)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDuplicate)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdCopy)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDelete)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblDueDate)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblInvoiceNumber)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblTotal)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblStatus)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblInvoiceType)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdArchive)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(cmdCancel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(chkTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdOpen)
-                    .addComponent(cmdDelete)
-                    .addComponent(cmdDuplicate)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblInvoiceNumber)
-                                .addComponent(lblStatus)
-                                .addComponent(lblTotal))
-                            .addComponent(lblDueDate))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblInvoiceType)
-                            .addComponent(lblName)))
-                    .addComponent(cmdCopy))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCalendar)
+                    .addComponent(chkCalendar))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblRecipient)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblInvoices)
+                    .addComponent(chkInvoices))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblTimesheets)
+                    .addComponent(chkTimesheets))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdCancel)
+                    .addComponent(cmdArchive))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
-        dlg.setEntry(this.getInvoice());
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-        this.setEntry(caseDto, dlg.getEntry(), addresses);
-    }//GEN-LAST:event_cmdOpenActionPerformed
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.archivalConfirmed = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Beleg '" + this.getInvoice().getInvoiceNumber() + "' unwiderruflich löschen?", "Beleg löschen", JOptionPane.YES_NO_OPTION);
-        if (response == JOptionPane.YES_OPTION) {
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removeInvoice(this.getInvoice().getId());
-                Container parent=this.getParent();
-                parent.remove(this);
-                parent.invalidate();
-                parent.repaint();
-            } catch (Exception ex) {
-                log.error("Error deleting invoice", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    private void cmdArchiveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdArchiveActionPerformed
+        
+        ArrayList<ArchiveFileReviewsBean> openCalItems = new ArrayList<>();
+        ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) tblReviews.getModel();
+        for (int i = 0; i < reviewsModel.getRowCount(); i++) {
+            Object row = reviewsModel.getValueAt(i, 0);
+            ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
+            if (!reviewDTO.isDone()) {
+                openCalItems.add(reviewDTO);
             }
         }
-    }//GEN-LAST:event_cmdDeleteActionPerformed
+        
+        if (!openCalItems.isEmpty()) {
+            
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                for (ArchiveFileReviewsBean a : openCalItems) {
+                    a.setDone(true);
+                    calService.updateReview(this.caseId, a);
+                }
+                for (int i = 0; i < tblReviews.getRowCount(); i++) {
+                    tblReviews.setValueAt(true, i, 4);
+                }
+            } catch (Exception ex) {
+                log.error("Error updating review", ex);
+                this.archivalConfirmed = true;
+                JOptionPane.showMessageDialog(this, "Fehler beim Schließen des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
 
-    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
-        this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId());
-    }//GEN-LAST:event_cmdDuplicateActionPerformed
+        }
+        
+        ArrayList<Timesheet> openSheets = new ArrayList<>();
+        for(int i=0;i<this.timesheetsPanel.getComponentCount();i++) {
+            TimesheetEntryPanel te = (TimesheetEntryPanel) this.timesheetsPanel.getComponent(i);
+            Timesheet t=te.getTimesheet();
+            if(t.getStatus()==Timesheet.STATUS_OPEN) {
+                openSheets.add(t);
+            }
+        }
+        if (!openSheets.isEmpty()) {
+            
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                for (Timesheet t : openSheets) {
+                    t.setStatus(Timesheet.STATUS_CLOSED);
+                    locator.lookupArchiveFileServiceRemote().updateTimesheet(caseId, t);
+                }
+                
+            } catch (Exception ex) {
+                log.error("Error updating timesheets", ex);
+                this.archivalConfirmed = true;
+                JOptionPane.showMessageDialog(this, "Fehler beim Schließen der Zeiterfassungsprojekte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
 
-    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
-        this.caseView.duplicateInvoice(null, this.getInvoice().getId());
-    }//GEN-LAST:event_cmdCopyActionPerformed
+        }
+        
+        this.archivalConfirmed = true;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdArchiveActionPerformed
 
+    private void chkCalendarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCalendarActionPerformed
+        this.enableArchival();
+    }//GEN-LAST:event_chkCalendarActionPerformed
+
+    private void chkInvoicesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkInvoicesActionPerformed
+        this.enableArchival();
+    }//GEN-LAST:event_chkInvoicesActionPerformed
+
+    private void chkTimesheetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkTimesheetsActionPerformed
+        this.enableArchival();
+    }//GEN-LAST:event_chkTimesheetsActionPerformed
+
+    private void enableArchival() {
+        boolean calendarOkay=!this.chkCalendar.isEnabled() || (this.chkCalendar.isSelected() && this.chkCalendar.isEnabled());
+        boolean invoiceOkay=!this.chkInvoices.isEnabled() || (this.chkInvoices.isSelected() && this.chkInvoices.isEnabled());
+        boolean timesheetOkay=!this.chkTimesheets.isEnabled() || (this.chkTimesheets.isSelected() && this.chkTimesheets.isEnabled());
+        
+        this.cmdArchive.setEnabled(invoiceOkay && calendarOkay && timesheetOkay);
+    }
+    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(ArchivalDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(ArchivalDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ArchivalDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ArchivalDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                ArchivalDialog dialog = new ArchivalDialog(new javax.swing.JFrame(), true, null, null, null, null);
+                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent e) {
+                        System.exit(0);
+                    }
+                });
+                dialog.setVisible(true);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdCopy;
-    private javax.swing.JButton cmdDelete;
-    private javax.swing.JButton cmdDuplicate;
-    private javax.swing.JButton cmdOpen;
-    private javax.swing.JLabel lblDueDate;
-    private javax.swing.JLabel lblInvoiceNumber;
-    private javax.swing.JLabel lblInvoiceType;
-    private javax.swing.JLabel lblName;
-    private javax.swing.JLabel lblRecipient;
-    private javax.swing.JLabel lblStatus;
-    private javax.swing.JLabel lblTotal;
+    private javax.swing.JCheckBox chkCalendar;
+    private javax.swing.JCheckBox chkInvoices;
+    private javax.swing.JCheckBox chkTimesheets;
+    private javax.swing.JButton cmdArchive;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JLabel lblCalendar;
+    private javax.swing.JLabel lblInvoices;
+    private javax.swing.JLabel lblTimesheets;
     // End of variables declaration//GEN-END:variables
 
     /**
-     * @return the invoice
+     * @return the archivalConfirmed
      */
-    public Invoice getInvoice() {
-        return invoice;
+    public boolean isArchivalConfirmed() {
+        return archivalConfirmed;
     }
 }
