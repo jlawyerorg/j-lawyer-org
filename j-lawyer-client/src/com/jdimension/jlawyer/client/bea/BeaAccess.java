@@ -1236,9 +1236,9 @@ public class BeaAccess {
         }
     }
     
-    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
+    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
         this.checkValidBeaClient();
-        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority);
+        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority, priority);
         if (!this.messageCache.containsKey(sentMessage.getId())) {
             this.messageCache.put(sentMessage.getId(), sentMessage);
         }

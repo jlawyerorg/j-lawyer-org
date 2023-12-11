@@ -704,6 +704,7 @@ public class SendBeaMessageAction extends ProgressableAction {
     List<BeaAttachmentMetadata> attachments = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
+    private BeaListItem priority = null;
     private List<Identity> recipients = null;
     private String subject = "";
     private String body = "";
@@ -717,13 +718,14 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private String msgType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.readReceipt = readReceipt;
         this.recipients = to;
         this.subject = subject;
         this.body = body;
+        this.priority=priority;
         this.fromSafeId = fromSafeId;
         this.documentTag = documentTag;
         this.readReceipt = readReceipt;
@@ -733,8 +735,8 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
-        this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+        this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, priority, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder = folder;
     }
@@ -803,7 +805,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                 this.progress("Sende an " + to.toString() + "...");
                 String toSafeId = to.getSafeId();
-                sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, toSafeId, this.authority);
+                sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, toSafeId, this.authority, this.priority);
 
             } catch (BeaWrapperException ex) {
                 log.error(ex);
