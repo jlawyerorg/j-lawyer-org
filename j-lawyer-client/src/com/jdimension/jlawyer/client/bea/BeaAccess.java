@@ -1263,14 +1263,14 @@ public class BeaAccess {
         return sentMessage;
     }
 
-    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
+    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
         this.checkValidBeaClient();
         Folder draftsFolder = this.wrapper.getDraftsFolder(senderSafeId);
         if (draftsFolder != null) {
             if (this.folderOverviewCache.containsKey(draftsFolder.getId()))
                 this.folderOverviewCache.remove(draftsFolder.getId());
         }
-        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority);
+        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority, priority);
     }
 
     public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, String recipientSafeId, Date abgabeDate) throws BeaWrapperException {

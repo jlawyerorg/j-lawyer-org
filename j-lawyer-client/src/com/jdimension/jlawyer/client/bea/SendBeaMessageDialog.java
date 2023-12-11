@@ -1630,7 +1630,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         jLabel6.setText("Priorität:");
 
-        chkEeb.setText("Zust. g. Empfangsb.");
+        chkEeb.setText("Zustellung gegen Empfangsbekenntnis");
         chkEeb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkEebActionPerformed(evt);
@@ -1660,11 +1660,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmbPriorities, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel6))
-                    .addComponent(jLabel5))
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbPriorities, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbMessageType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1706,7 +1706,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 49, Short.MAX_VALUE)
+                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2286,6 +2286,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         if (this.lstTo.getModel().getSize() > 0) {
             recipient = (Identity) ((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
         }
+        
+        BeaListItem priority=null;
+        if(this.cmbPriorities.getSelectedItem() instanceof BeaListItem)
+            // first index is a string (no priority selected)
+            priority=(BeaListItem)this.cmbPriorities.getSelectedItem();
 
         ArrayList<BeaAttachmentMetadata> attachmentMetadata = this.getAttachmentMetdata();
 
@@ -2297,9 +2302,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder, priority);
         } else {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), priority);
         }
         a.start();
 
