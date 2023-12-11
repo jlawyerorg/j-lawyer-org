@@ -706,6 +706,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form CaseFolderPanel
+     * @param readonly
      */
     public CaseFolderPanel(boolean readonly) {
         initComponents();
@@ -1197,6 +1198,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         jScrollPane2.setViewportView(pnlDocumentEntries);
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane1.setViewportView(foldersListPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
