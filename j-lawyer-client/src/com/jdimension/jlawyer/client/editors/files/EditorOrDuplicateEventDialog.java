@@ -1080,11 +1080,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             }
 
             ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(targetReview);
-
-            if (this.mode == MODE_DUPLICATE) {
-//                model.addRow(row);
-            } else if (this.mode == MODE_EDIT) {
+            if (this.mode == MODE_EDIT) {
                 for (int i = 0; i < model.getRowCount(); i++) {
                     Object modelRev = model.getValueAt(i, 0);
                     if (modelRev instanceof ArchiveFileReviewsBean) {

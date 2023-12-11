@@ -1163,9 +1163,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
         ArchiveFileReviewsBean arb = e.getReview();
         
-        Date oldBegin=arb.getBeginDate();
-        Date oldEnd=arb.getEndDate();
-
         if (arb.getEventType() == EventTypes.EVENTTYPE_EVENT) {
             Calendar evCal = Calendar.getInstance();
             evCal.setTime(arb.getBeginDate());

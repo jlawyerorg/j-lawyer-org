@@ -698,7 +698,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
-    private JTable tblReviewReasons = null;
 
     /**
      * Creates new form AddNoteDialog
@@ -709,11 +708,10 @@ public class AddNoteDialog extends javax.swing.JDialog {
      * @param aFile
      * @param tblReviewReasons
      */
-    public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, JTable tblReviewReasons) {
+    public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile) {
         super(parent, modal);
         this.initializing = true;
         this.targetTable = targetTable;
-        this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
         initComponents();
 
@@ -1179,12 +1177,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
                     EditorsRegistry.getInstance().clearStatus();
                     return;
                 }
-
-//                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-//                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-//
-//                model.addRow(row);
-//                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
 
         }
@@ -1253,7 +1245,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddNoteDialog(new javax.swing.JFrame(), true, null, null, null).setVisible(true);
+            new AddNoteDialog(new javax.swing.JFrame(), true, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

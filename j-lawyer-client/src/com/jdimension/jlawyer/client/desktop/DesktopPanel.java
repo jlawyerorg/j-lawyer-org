@@ -727,8 +727,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private boolean initializing = false;
     
-    private Timer reviewsTimer=null;
-    private Timer lastChangedTimer=null;
+    private transient Timer reviewsTimer=null;
+    private transient Timer lastChangedTimer=null;
 
     /**
      * Creates new form MainPanel

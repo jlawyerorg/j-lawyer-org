@@ -3787,10 +3787,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EventBroker eb = EventBroker.getInstance();
         eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
-//        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-//        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-//        model.addRow(row);
-
         if (this.chkArchived.isSelected()) {
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
@@ -5322,7 +5318,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdClearSearchActionPerformed
 
     private void cmdAddNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNoteActionPerformed
-        AddNoteDialog dlg = new AddNoteDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, this.tblReviewReasons);
+        AddNoteDialog dlg = new AddNoteDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto);
         dlg.setTitle("Notiz hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

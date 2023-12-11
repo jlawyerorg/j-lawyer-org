@@ -691,11 +691,7 @@ public class DateUtils {
         }
 
         Date now = new Date();
-        if (begin.getTime() <= now.getTime() && end.getTime() >= now.getTime()) {
-            return true;
-        }
-
-        return false;
+        return (begin.getTime() <= now.getTime() && end.getTime() >= now.getTime());
     }
 
     public static boolean isToday(Date date) {
