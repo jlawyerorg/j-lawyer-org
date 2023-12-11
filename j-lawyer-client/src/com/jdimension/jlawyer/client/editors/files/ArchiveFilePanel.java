@@ -693,12 +693,14 @@ import com.jdimension.jlawyer.client.editors.documents.*;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.CustomLauncher;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
@@ -3527,11 +3529,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
         ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+        ArchiveFileReviewsBean relevantEvent=null;
         for (int i = selectedRows.length - 1; i > -1; i--) {
 
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
 
+                if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
+                    relevantEvent=review;
+                
                 calService.removeReview(review.getId());
 
             } catch (Exception ex) {
@@ -3545,6 +3551,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             tModel.removeRow(this.tblReviewReasons.convertRowIndexToModel(selectedRows[i]));
         }
+        
+        if(relevantEvent!=null) {
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
+        }
+        
     }//GEN-LAST:event_mnuRemoveReviewActionPerformed
 
     private void mnuSetReviewOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSetReviewOpenActionPerformed
@@ -3563,10 +3575,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+        ArchiveFileReviewsBean relevantEvent=null;
         for (int i = 0; i < selectedRows.length; i++) {
 
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
             review.setDone(false);
+            
+            if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
+                relevantEvent=review;
+            
             if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
                 try {
                     calService.updateReview(this.dto.getId(), review);
@@ -3581,6 +3598,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
                 this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
             }
+        }
+        if(relevantEvent!=null) {
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
         }
         EditorsRegistry.getInstance().clearStatus();
 
@@ -3601,11 +3622,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+        ArchiveFileReviewsBean relevantEvent=null;
         for (int i = 0; i < selectedRows.length; i++) {
 
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
                 review.setDone(true);
+                
+                if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
+                    relevantEvent=review;
 
                 calService.updateReview(this.dto.getId(), review);
 
@@ -3617,8 +3642,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
             this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], 4);
+        }
+        if(relevantEvent != null) {
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
         }
     }//GEN-LAST:event_mnuSetReviewDoneActionPerformed
 
@@ -3755,10 +3783,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
         reviewDto = calService.addReview(this.dto.getId(), reviewDto);
+        
+        EventBroker eb = EventBroker.getInstance();
+        eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
-        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-        model.addRow(row);
+//        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+//        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
+//        model.addRow(row);
 
         if (this.chkArchived.isSelected()) {
             this.chkArchived.setSelected(false);
@@ -3844,6 +3875,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new CasesChangedEvent());
+                
                 EditorsRegistry.getInstance().updateStatus("Akte gespeichert.", 5000);
                 return true;
             } catch (Exception ex) {
@@ -4262,6 +4296,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                     calService.updateReview(this.dto.getId(), reviewDto);
+                    
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewUpdatedEvent(null, null, reviewDto));
                 } catch (Exception ex) {
                     log.error("Error updating review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -5089,8 +5126,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+        ArchiveFileReviewsBean relevantEvent=null;
+        Date oldBegin=null;
+        Date oldEnd=null;
         for (int i = 0; i < selectedRows.length; i++) {
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null) {
+                relevantEvent=review;
+                oldBegin=review.getBeginDate();
+                oldEnd=review.getEndDate();
+            }
+            
             try {
                 if (review.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
                     JOptionPane.showMessageDialog(this, "Fristen können nicht verschoben werden!", "Hinweis", JOptionPane.WARNING_MESSAGE);
@@ -5104,6 +5150,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     review.setEndDate(new Date(review.getEndDate().getTime() + difference));
                 }
                 review.setBeginDate(d);
+                
+                if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
+                    relevantEvent=review;
+                }
 
                 if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
                     calService.updateReview(this.dto.getId(), review);
@@ -5118,6 +5168,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
+        }
+        if(relevantEvent != null) {
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewUpdatedEvent(oldBegin, oldEnd, relevantEvent));
         }
     }//GEN-LAST:event_mnuPostponeReviewActionPerformed
 
@@ -6817,6 +6871,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // it's a new archive file, so clear the input fields when saved
                 this.clearInputs();
             }
+            
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             EditorsRegistry.getInstance().updateStatus("Akte gespeichert.", 5000);
 

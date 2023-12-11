@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -1068,6 +1070,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 model.removeRow(tblResults.convertRowIndexToModel(selectedIndices[i]));
 
             }
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             EditorsRegistry.getInstance().clearStatus(false);
 
@@ -1285,6 +1289,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 fileService.updateAllowedGroups(target.getId(), targetGroups);
                 
             }
+            
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             EditorsRegistry.getInstance().clearStatus(false);
             this.cmdQuickSearchActionPerformed(null);

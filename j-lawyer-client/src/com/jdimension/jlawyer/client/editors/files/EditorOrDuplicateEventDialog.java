@@ -668,6 +668,9 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -699,6 +702,9 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
     private ArchiveFileReviewsBean targetReview = null;
     private JTable tblReviewReasons = null;
     private String archiveFileId = null;
+    
+    private Date oldBegin=null;
+    private Date oldEnd=null;
 
     private int mode = MODE_DUPLICATE;
 
@@ -735,6 +741,9 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         this.cmbAssignee.setModel(allUserModel);
         this.cmbAssignee.setRenderer(new UserListCellRenderer());
 
+        this.oldBegin=rev.getBeginDate();
+        this.oldEnd=rev.getEndDate();
+        
         if (rev.getBeginDate() != null) {
             this.txtEventBeginDateField.setText(df.format(rev.getBeginDate()));
             this.cmbEventBeginTime.setSelectedItem(df2.format(rev.getBeginDate()));
@@ -1056,8 +1065,12 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                 if (this.mode == MODE_DUPLICATE) {
                     targetReview = calService.addReview(this.archiveFileId, targetReview);
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewAddedEvent(targetReview));
                 } else if (this.mode == MODE_EDIT) {
                     targetReview = calService.updateReview(this.archiveFileId, targetReview);
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewUpdatedEvent(oldBegin, oldEnd, targetReview));
                 }
             } catch (Exception ex) {
                 log.error("Error updating review", ex);
@@ -1070,7 +1083,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(targetReview);
 
             if (this.mode == MODE_DUPLICATE) {
-                model.addRow(row);
+//                model.addRow(row);
             } else if (this.mode == MODE_EDIT) {
                 for (int i = 0; i < model.getRowCount(); i++) {
                     Object modelRev = model.getValueAt(i, 0);

@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -1515,6 +1517,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                     reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
                     EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);

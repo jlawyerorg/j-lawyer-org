@@ -663,82 +663,62 @@
  */
 package com.jdimension.jlawyer.client.events;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import java.util.Date;
+
 /**
  *
  * @author jens
  */
-public abstract class Event {
+public class ReviewUpdatedEvent extends Event {
+
+    private ArchiveFileReviewsBean review;
+    private Date oldBeginDate=null;
+    private Date oldEndDate=null;
     
-    public static final Integer TYPE_DEFAULT=0;
-    public static final Integer TYPE_AUTOUPDATE=10;
-    public static final Integer TYPE_SERVICES=11;
-    public static final Integer TYPE_NEWS=20;
-    public static final Integer TYPE_SYSTEMSTATUS=30;
-    public static final Integer TYPE_SCANNERSTATUS=40;
-    public static final Integer TYPE_MAILINGSTATUS=50;
-    public static final Integer TYPE_MAILINGFAILED=60;
-    public static final Integer TYPE_MAILSTATUS=70;
-    public static final Integer TYPE_BEASTATUS=80;
-    public static final Integer TYPE_DREBISSTATUS=90;
-    public static final Integer TYPE_ALLCASETAGS=100;
-    public static final Integer TYPE_ALLDOCUMENTTAGS=100;
-    public static final Integer TYPE_DOCUMENTADDED=110;
-    public static final Integer TYPE_CONTACTUPDATED=120;
-    public static final Integer TYPE_REVIEWADDED=130;
-    public static final Integer TYPE_REVIEWUPDATED=131;
-    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
-    public static final Integer TYPE_OPENTIMESHEETPOSITIONS=150;
-    
-    public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
-    public static final Integer TYPE_INSTANTMESSAGING_MENTIONCHANGED=170;
-    public static final Integer TYPE_INSTANTMESSAGING_OPENMENTIONS=180;
-    public static final Integer TYPE_INSTANTMESSAGING_MESSAGEDELETED=190;
-    
-    public static final Integer TYPE_CASESCHANGED=200;
-    
-    
-    private Integer type=TYPE_DEFAULT;
-    private Object payload=null;
-    
-    public Event(Integer type) {
-        this.type=type;
+    public ReviewUpdatedEvent(Date oldBegin, Date oldEnd, ArchiveFileReviewsBean updatedRev) {
+        super(Event.TYPE_REVIEWUPDATED);
+        this.review=updatedRev;
+        this.oldBeginDate=oldBegin;
+        this.oldEndDate=oldEnd;
         
     }
+
     
-    public Event(Integer type, Object payload) {
-        this.type=type;
-        this.payload=payload;
-        
+
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
     }
+
+    /**
+     * @return the review
+     */
+    public ArchiveFileReviewsBean getReview() {
+        return review;
+    }
+
+    /**
+     * @param review the review to set
+     */
+    public void setReview(ArchiveFileReviewsBean review) {
+        this.review = review;
+    }
+
+    /**
+     * @return the oldBeginDate
+     */
+    public Date getOldBeginDate() {
+        return oldBeginDate;
+    }
+
+    /**
+     * @return the oldEndDate
+     */
+    public Date getOldEndDate() {
+        return oldEndDate;
+    }
+
     
-    public abstract boolean isUiUpdateTrigger();
 
-    /**
-     * @return the type
-     */
-    public Integer getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(Integer type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the payload
-     */
-    public Object getPayload() {
-        return payload;
-    }
-
-    /**
-     * @param payload the payload to set
-     */
-    public void setPayload(Object payload) {
-        this.payload = payload;
-    }
-    
 }

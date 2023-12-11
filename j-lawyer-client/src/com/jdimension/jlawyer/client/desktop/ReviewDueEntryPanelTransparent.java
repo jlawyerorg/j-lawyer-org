@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -827,14 +828,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (due == null) {
             due = new Date(now.getTime() - (25 * 60 * 60 * 1000));
         }
-        Calendar cal1 = Calendar.getInstance();
-        Calendar cal2 = Calendar.getInstance();
-        cal1.setTime(now);
-        cal2.setTime(due);
-        boolean sameDay = cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
-                && cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
-
-        if (!sameDay) {
+        if (!DateUtils.isToday(due)) {
             // not today, must be overdue
             if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
                 this.lblDescription.setForeground(OVERDUE_RESPITE_COLOR);
@@ -1168,6 +1162,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         // update data
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
         ArchiveFileReviewsBean arb = e.getReview();
+        
+        Date oldBegin=arb.getBeginDate();
+        Date oldEnd=arb.getEndDate();
 
         if (arb.getEventType() == EventTypes.EVENTTYPE_EVENT) {
             Calendar evCal = Calendar.getInstance();

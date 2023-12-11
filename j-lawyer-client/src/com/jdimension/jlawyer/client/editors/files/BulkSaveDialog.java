@@ -668,6 +668,8 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
@@ -1170,6 +1172,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 } else {
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "" + fails + " Dokument(e) konnten nicht gespeichert werden - bitte prüfen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING);
                 }
+                
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new CasesChangedEvent());
             } catch (Exception ex) {
                 log.error("Unable to save document", ex);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail / Anlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);

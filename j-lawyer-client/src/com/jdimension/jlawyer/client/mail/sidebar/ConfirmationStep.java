@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -830,11 +833,15 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
             label3.setText("Kalendereintrag erstellen");
             label3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
             this.pnlStatus.add(label3);
+            
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             ArchiveFileReviewsBean newEvent = (ArchiveFileReviewsBean) this.data.get("newevent.event");
             if(newEvent!=null) {
                 newEvent.setArchiveFileKey(newCase);
-                locator.lookupCalendarServiceRemote().addReview(newCase.getId(), newEvent);
+                ArchiveFileReviewsBean targetReview=locator.lookupCalendarServiceRemote().addReview(newCase.getId(), newEvent);
+                eb.publishEvent(new ReviewAddedEvent(targetReview));
             }
 
             label3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));

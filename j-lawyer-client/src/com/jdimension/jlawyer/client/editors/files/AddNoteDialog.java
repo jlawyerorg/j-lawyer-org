@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -1167,6 +1169,9 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
                     reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
                     EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+                    
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
@@ -1175,11 +1180,11 @@ public class AddNoteDialog extends javax.swing.JDialog {
                     return;
                 }
 
-                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-
-                model.addRow(row);
-                ComponentUtils.autoSizeColumns(tblReviewReasons);
+//                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+//                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
+//
+//                model.addRow(row);
+//                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
 
         }

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -680,15 +681,19 @@ import com.jdimension.jlawyer.client.events.MailingFailedEvent;
 import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -721,6 +726,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private Image backgroundImage = null;
 
     private boolean initializing = false;
+    
+    private Timer reviewsTimer=null;
+    private Timer lastChangedTimer=null;
 
     /**
      * Creates new form MainPanel
@@ -795,6 +803,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
+        b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
+        b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
+        b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
 
         this.buildUsersPopup();
         
@@ -804,23 +815,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
-        Timer timer2 = new Timer();
+        this.lastChangedTimer = new Timer();
         TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
-        timer2.schedule(lastChangedTask, 1000, 59000);
+        this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
 
         Timer timer3 = new Timer();
         TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
-        Timer timer4 = new Timer();
+        this.reviewsTimer = new Timer();
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
-        timer4.schedule(revDueTask, 1000, 61000);
+        reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
         Timer timer5 = new Timer();
         TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
-        timer5.schedule(taggedTask, 1000, 63000);
+        timer5.schedule(taggedTask, 1000, 3l*63000l);
 
         Timer timer6 = new Timer();
         TimerTask docObserverTask = new DocumentObserverTask();
@@ -1700,7 +1711,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if (e instanceof ScannerStatusEvent) {
             this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
             this.lblScans.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
-            if(((ScannerStatusEvent) e).getFileNames().size()>0)
+            if(!((ScannerStatusEvent) e).getFileNames().isEmpty())
                 this.lblScans.setEnabled(true);
             else
                 this.lblScans.setEnabled(false);
@@ -1724,7 +1735,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             }
             
-            if(((MailingStatusEvent) e).getMailingList().size()>0)
+            if(!((MailingStatusEvent) e).getMailingList().isEmpty())
                 this.lblMailingStatus.setEnabled(true);
             else
                 this.lblMailingStatus.setEnabled(false);
@@ -1778,6 +1789,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             
             this.revalidate();
             this.repaint();
+        } else if(e instanceof ReviewAddedEvent) {
+            ArchiveFileReviewsBean r=((ReviewAddedEvent) e).getReview();
+            
+            if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate())) {
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+                reviewsTimer.schedule(revDueTask, 10);
+            }
+        } else if(e instanceof ReviewUpdatedEvent) {
+            ArchiveFileReviewsBean r=((ReviewUpdatedEvent) e).getReview();
+            
+            if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate()) || DateUtils.containsToday(((ReviewUpdatedEvent) e).getOldBeginDate(), ((ReviewUpdatedEvent) e).getOldEndDate())) {
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+                reviewsTimer.schedule(revDueTask, 10);
+            }
+        } else if(e instanceof CasesChangedEvent) {
+            TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+            this.lastChangedTimer.schedule(lastChangedTask, 10);
         }
     }
 

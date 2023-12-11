@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package de.costache.calendar;
 
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -812,6 +814,8 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
         ArchiveFileReviewsBean reviewDto = calService.addReview(this.eventCase.getId(), ev);
+        EventBroker eb = EventBroker.getInstance();
+        eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
         this.calendarPanel.addCalendarEvent(reviewDto);
     }

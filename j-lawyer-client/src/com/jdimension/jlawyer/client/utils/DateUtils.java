@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
@@ -670,15 +672,54 @@ import java.util.Date;
  * @author jens
  */
 public class DateUtils {
-    
-    public static final String DATEFORMAT_DATETIME_FULL="EEE, dd.MM.yyyy HH:mm:ss";
-    public static final String DATEFORMAT_DATETIME_DEFAULT="dd.MM.yyyy, HH:mm";
-    
+
+    public static final String DATEFORMAT_DATETIME_FULL = "EEE, dd.MM.yyyy HH:mm:ss";
+    public static final String DATEFORMAT_DATETIME_DEFAULT = "dd.MM.yyyy, HH:mm";
+
+    public static boolean containsToday(Date begin, Date end) {
+
+        if (begin == null && end != null) {
+            return isToday(end);
+        }
+
+        if (end == null && begin != null) {
+            return isToday(begin);
+        }
+
+        if (begin == null && end == null) {
+            return false;
+        }
+
+        Date now = new Date();
+        if (begin.getTime() <= now.getTime() && end.getTime() >= now.getTime()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static boolean isToday(Date date) {
+
+        if (date == null) {
+            return false;
+        }
+
+        // Convert the given date to LocalDate
+        LocalDate givenLocalDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // Get the current date
+        LocalDate currentDate = LocalDate.now();
+
+        // Compare the given date with the current date
+        return givenLocalDate.isEqual(currentDate);
+    }
+
     public static String getHumanReadableTimeInPast(Date d) {
-        
-        if(d==null)
+
+        if (d == null) {
             return "unbekannt";
-        
+        }
+
         long jetzt = System.currentTimeMillis();
         long vergangeneZeitInMs = d.getTime();
 
@@ -702,20 +743,21 @@ public class DateUtils {
             return "vor " + sekunden + (sekunden == 1 ? " Sekunde" : " Sekunden");
         }
     }
-    
+
     public static String getHumanReadableTime(Date d) {
-        
-        if(d==null)
+
+        if (d == null) {
             return "unbekannt";
-        
+        }
+
         long jetzt = System.currentTimeMillis();
         long vergangeneZeitInMs = d.getTime();
 
         long differenzInMs = jetzt - vergangeneZeitInMs;
-        String prefix="vor ";
-        if(differenzInMs<0) {
-            prefix="in ";
-            differenzInMs=differenzInMs*-1l;
+        String prefix = "vor ";
+        if (differenzInMs < 0) {
+            prefix = "in ";
+            differenzInMs = differenzInMs * -1l;
         }
 
         long sekunden = differenzInMs / 1000;
@@ -723,9 +765,9 @@ public class DateUtils {
         long stunden = minuten / 60;
         long tage = stunden / 24;
         long wochen = tage / 7;
-        long jahre=wochen / 52;
+        long jahre = wochen / 52;
 
-        if(jahre>0) {
+        if (jahre > 0) {
             return prefix + jahre + (jahre == 1 ? " Jahr" : " Jahren");
         } else if (wochen > 0) {
             return prefix + wochen + (wochen == 1 ? " Woche" : " Wochen");

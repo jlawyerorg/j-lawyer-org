@@ -663,7 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Timesheet;
@@ -948,12 +952,20 @@ public class ArchivalDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                ArchiveFileReviewsBean relevantEvent=null;
                 for (ArchiveFileReviewsBean a : openCalItems) {
                     a.setDone(true);
                     calService.updateReview(this.caseId, a);
+                    if(DateUtils.containsToday(a.getBeginDate(), a.getEndDate()) && relevantEvent==null)
+                        relevantEvent=a;
                 }
                 for (int i = 0; i < tblReviews.getRowCount(); i++) {
                     tblReviews.setValueAt(true, i, 4);
+                }
+                if(relevantEvent!=null) {
+                    // one event is enough to trigger a desktop refresh
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
                 }
             } catch (Exception ex) {
                 log.error("Error updating review", ex);
