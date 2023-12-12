@@ -706,4 +706,9 @@ public class InvoiceFacade extends AbstractFacade<Invoice> implements InvoiceFac
         return (List<Invoice>) em.createNamedQuery("Invoice.findByAddress").setParameter("contact", address).getResultList();
     }
     
+    @Override
+    public List<Invoice> findByStatus(int status) {
+        return (List<Invoice>) em.createNamedQuery("Invoice.findByStatus").setParameter("status", status).getResultList();
+    }
+    
 }

@@ -663,9 +663,13 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.Properties;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -681,6 +685,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "AppUserBean.findByPassword", query = "SELECT a FROM AppUserBean a WHERE a.password = :password")})
 public class AppUserBean implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final Logger log=Logger.getLogger(AppUserBean.class.getName());
+    
     @Id
     @Basic(optional = false)
     @Column(name = "principalId")
@@ -861,6 +867,31 @@ public class AppUserBean implements Serializable {
      */
     public byte[] getSettings() {
         return settings;
+    }
+    
+    public String getSetting(String key, String defaultValue) {
+        byte[] settingBytes = getSettings();
+        Properties props = new Properties();
+        if (settingBytes != null) {
+            ByteArrayInputStream in = new ByteArrayInputStream(settingBytes);
+            try {
+                props.load(in);
+
+            } catch (IOException ioe) {
+                log.error("Error updating user settings", ioe);
+            }
+
+        }
+        String value=props.getProperty(key);
+        if (value == null) {
+            value = defaultValue;
+        }
+        return value;
+    }
+    
+    public boolean getSettingAsBoolean(String key, boolean defaultValue) {
+        String s=getSetting(key, "" + defaultValue);
+        return Boolean.parseBoolean(s);
     }
 
     /**

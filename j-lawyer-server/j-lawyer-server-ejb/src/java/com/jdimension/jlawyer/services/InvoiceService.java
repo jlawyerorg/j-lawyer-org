@@ -663,6 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
@@ -672,18 +676,29 @@ import com.jdimension.jlawyer.persistence.InvoicePositionTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import javax.annotation.Resource;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
@@ -691,14 +706,19 @@ import org.apache.log4j.Logger;
  */
 @Stateless
 public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal {
-    
+
     private static final Logger log = Logger.getLogger(InvoiceService.class.getName());
+    
+    SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+    NumberFormat nf=NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
     @Resource
     private SessionContext context;
-    
+
     @EJB
     private SecurityServiceLocal securityFacade;
+    @EJB
+    private InvoiceFacadeLocal invoices;
     @EJB
     private InvoicePoolFacadeLocal invoicePools;
     @EJB
@@ -707,39 +727,52 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     private InvoiceTypeFacadeLocal invoiceTypes;
     @EJB
     private InvoicePositionTemplateFacadeLocal posTemplates;
+    @EJB
+    private AppUserBeanFacadeLocal users;
+
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
+    private javax.jms.Queue outgoingMailQueue;
     
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoicePool> getAllInvoicePools() throws Exception {
-        List<InvoicePool> pools=this.invoicePools.findAll();
+        List<InvoicePool> pools = this.invoicePools.findAll();
         Collections.sort(pools, (InvoicePool arg0, InvoicePool arg1) -> {
-            String s1=arg0.getDisplayName();
-            if(s1==null)
-                s1="";
-            String s2=arg1.getDisplayName();
-            if(s2==null)
-                s2="";
+            String s1 = arg0.getDisplayName();
+            if (s1 == null) {
+                s1 = "";
+            }
+            String s2 = arg1.getDisplayName();
+            if (s2 == null) {
+                s2 = "";
+            }
             return s1.toUpperCase().compareTo(s2.toUpperCase());
         });
         return pools;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception {
-        List<InvoicePositionTemplate> tpls=this.posTemplates.findAll();
+        List<InvoicePositionTemplate> tpls = this.posTemplates.findAll();
         Collections.sort(tpls, (InvoicePositionTemplate arg0, InvoicePositionTemplate arg1) -> {
-            String s1=arg0.getName();
-            if(s1==null)
-                s1="";
-            String s2=arg1.getName();
-            if(s2==null)
-                s2="";
+            String s1 = arg0.getName();
+            if (s1 == null) {
+                s1 = "";
+            }
+            String s2 = arg1.getName();
+            if (s2 == null) {
+                s2 = "";
+            }
             return s1.toUpperCase().compareTo(s2.toUpperCase());
         });
         return tpls;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception {
@@ -754,10 +787,11 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             }
         }
         Collections.sort(returnList, (InvoicePool p1, InvoicePool p2) -> {
-            if(p1!=null && p2!=null && p1.getDisplayName()!=null && p2.getDisplayName()!=null)
+            if (p1 != null && p2 != null && p1.getDisplayName() != null && p2.getDisplayName() != null) {
                 return p1.getDisplayName().compareTo(p2.getDisplayName());
-            else
+            } else {
                 return -1;
+            }
         });
         return returnList;
     }
@@ -778,7 +812,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
         return this.invoicePools.find(ipId);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl) {
@@ -795,7 +829,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         this.invoicePools.edit(ip);
         return this.invoicePools.find(ip.getId());
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public InvoicePositionTemplate updateInvoicePositionTemplate(InvoicePositionTemplate tpl) {
@@ -808,7 +842,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     public void removeInvoicePool(InvoicePool ip) {
         this.invoicePools.remove(ip);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public void removeInvoicePositionTemplate(InvoicePositionTemplate tpl) {
@@ -819,12 +853,13 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @RolesAllowed({"loginRole"})
     public List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception {
         ArrayList<String> previews = new ArrayList<>();
-        
-        int startFrom=testPool.getLastIndex()+1;
-        int startFrom2=startFrom;
-        if(testPool.getStartIndex()>startFrom)
-            startFrom=testPool.getStartIndex();
-        
+
+        int startFrom = testPool.getLastIndex() + 1;
+        int startFrom2 = startFrom;
+        if (testPool.getStartIndex() > startFrom) {
+            startFrom = testPool.getStartIndex();
+        }
+
         Date now = new Date();
         try {
 
@@ -866,16 +901,17 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @RolesAllowed({"loginRole"})
     public String nextInvoiceNumber(InvoicePool pool) throws Exception {
         InvoicePool ip = this.invoicePools.find(pool.getId());
-        if(ip==null) {
+        if (ip == null) {
             log.error("invalid invoice pool with id " + pool.getId());
             throw new Exception("Ungültiger Rechnungsnummernkreis");
         }
-        
-        int startFrom=ip.getLastIndex()+1;
-        if(ip.getStartIndex()>startFrom)
-            startFrom=ip.getStartIndex();
+
+        int startFrom = ip.getLastIndex() + 1;
+        if (ip.getStartIndex() > startFrom) {
+            startFrom = ip.getStartIndex();
+        }
         ip.setLastIndex(startFrom);
-        
+
         Date now = new Date();
         try {
 
@@ -887,7 +923,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             log.error("invalid invoice schema pattern " + ip.getPattern(), isp);
             throw new Exception(isp.getMessage());
         }
-        
+
     }
 
     @Override
@@ -919,6 +955,82 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         this.invoiceTypes.remove(invoiceType);
     }
 
+    @Override
+    @PermitAll
+    public void checkInvoicesDue() {
+
+        Date now = new Date();
+        List<Invoice> openInvoices = this.invoices.findByStatus(Invoice.STATUS_OPEN);
+        if (openInvoices != null) {
+            for (Invoice i : openInvoices) {
+                Date dueDate = i.getDueDate();
+                if (dueDate != null) {
+                    if (now.getTime() > dueDate.getTime()) {
+                        log.info("Setting invoice " + i.getInvoiceNumber() + " to first dunning level");
+                        i.setStatus(Invoice.STATUS_OPEN_REMINDER1);
+                        this.invoices.edit(i);
+                        
+                        
+                        String assistant = i.getArchiveFileKey().getAssistant();
+                        String assistantEmail=null;
+                        boolean assistantNotification=false;
+                        String lawyer = i.getArchiveFileKey().getLawyer();
+                        String lawyerEmail=null;
+                        boolean lawyerNotification=false;
+                        
+                        if(!ServerStringUtils.isEmpty(assistant)) {
+                            AppUserBean assUser = this.users.find(assistant);
+                            if(assUser!=null && !ServerStringUtils.isEmpty(assUser.getEmail())) {
+                                assistantEmail=assUser.getEmail();
+                                assistantNotification=assUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
+                            }
+                        }
+                        if(!ServerStringUtils.isEmpty(lawyer)) {
+                            AppUserBean lawUser = this.users.find(lawyer);
+                            if(lawUser!=null && !ServerStringUtils.isEmpty(lawUser.getEmail())) {
+                                lawyerEmail=lawUser.getEmail();
+                                lawyerNotification=lawUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
+                            }
+                        }
+                        
+                        if (lawyerNotification || assistantNotification) {
+                            OutgoingMailRequest omr = new OutgoingMailRequest();
+                            if(lawyerNotification)
+                                omr.addTo(lawyerEmail);
+                            if(assistantNotification)
+                                omr.addTo(assistantEmail);
+                            omr.setSubject("Neue fällige Rechnung");
+                            omr.setMainCaption("Rechnung " + i.getInvoiceNumber() + " ist seit heute fällig");
+                            
+                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotal())+ ")");
+                            
+                            StringBuilder body = new StringBuilder();
+                            body.append("Erstellt: ").append(df.format(i.getCreationDate())).append("\n");
+                            body.append("Fällig: ").append(df.format(i.getDueDate())).append("\n");
+                            body.append("Rechnungsbetrag: ").append(nf.format(i.getTotal())).append("\n");
+                            if(i.getContact()!=null)
+                                body.append("zahlungspflichtig: ").append(i.getContact().toDisplayName()).append("\n");
+                            body.append("Akte: ").append(i.getArchiveFileKey().getFileNumber()).append(" ").append(i.getArchiveFileKey().getName());
+                            omr.setBodyContent(body.toString());
+                            this.publishOutgoingMailRequest(omr);
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+    }
     
-    
+    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(outgoingMailQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish outgoing mail request", ex);
+        }
+    }
+
 }

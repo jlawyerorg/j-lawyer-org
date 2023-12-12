@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.InstantMessageFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -773,14 +774,23 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             this.mentionFacade.create(m);
             String principalId=m.getPrincipal();
             AppUserBean notifyTo=this.systemManagement.getUser(principalId);
-            if(notifyTo!=null && notifyTo.getEmail()!=null) {
-                OutgoingMailRequest omr=new OutgoingMailRequest();
-                omr.setTo(notifyTo.getEmail());
-                omr.setSubject("Du wurdest in einer Nachricht erwähnt");
-                omr.setMainCaption("Du wurdest in einer Sofortnachricht erwähnt");
-                omr.setSubCaption(m.getMessage().getSender() + " schrieb am " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent())+ ":");
-                omr.setBodyContent("\"" + m.getMessage().getContent() + "\"");
-                this.publishOutgoingMailRequest(omr);
+            if(notifyTo != null) {
+                boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true);
+                if (notificationEnabled && notifyTo.getEmail() != null) {
+                    OutgoingMailRequest omr = new OutgoingMailRequest();
+                    omr.setTo(notifyTo.getEmail());
+                    omr.setSubject("Du wurdest in einer Nachricht erwähnt");
+                    omr.setMainCaption("Du wurdest in einer Sofortnachricht erwähnt");
+                    omr.setSubCaption(m.getMessage().getSender() + " schrieb am " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + ":");
+                    StringBuilder body=new StringBuilder();
+                    body.append("\"").append(m.getMessage().getContent()).append("\"\n");
+                    if(m.getMessage().getCaseContext()!=null) 
+                        body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
+                    if(m.getMessage().getDocumentContext()!=null) 
+                        body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
+                    omr.setBodyContent(body.toString());
+                    this.publishOutgoingMailRequest(omr);
+                }
             }
         }
         

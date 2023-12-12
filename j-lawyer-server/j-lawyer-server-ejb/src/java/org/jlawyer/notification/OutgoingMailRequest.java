@@ -664,6 +664,8 @@
 package org.jlawyer.notification;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -675,7 +677,7 @@ public class OutgoingMailRequest implements Serializable {
     private String mainCaption;
     private String subCaption;
     private String bodyContent;
-    private String to;
+    private ArrayList<String> to=new ArrayList<>();
     
     public OutgoingMailRequest() {
         
@@ -699,7 +701,7 @@ public class OutgoingMailRequest implements Serializable {
     /**
      * @return the to
      */
-    public String getTo() {
+    public List<String> getTo() {
         return to;
     }
 
@@ -707,7 +709,13 @@ public class OutgoingMailRequest implements Serializable {
      * @param to the to to set
      */
     public void setTo(String to) {
-        this.to = to;
+        this.to.clear();
+        this.to.add(to);
+    }
+    
+    public void addTo(String email) {
+        if(!this.to.contains(email))
+            this.to.add(email);
     }
 
     /**

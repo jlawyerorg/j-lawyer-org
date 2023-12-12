@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -685,7 +684,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private static final DecimalFormat diskFormat = new DecimalFormat("0.0");
 
     /**
-     * Creates new form BackupConfigurationDialog
+     * Creates new form ServerMonitoringDialog
      * @param parent
      * @param modal
      */
@@ -701,7 +700,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (!currentlyAdmin) {
                 this.cmdSave.setEnabled(false);
-                this.cmdTestMail.setEnabled(false);
                 this.cmbCpuError.setEnabled(false);
                 this.cmbCpuWarn.setEnabled(false);
                 this.cmbDiskError.setEnabled(false);
@@ -717,106 +715,76 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.chkMonitorDisk.setEnabled(false);
                 this.chkMonitorJava.setEnabled(false);
                 this.chkMonitorRam.setEnabled(false);
-                this.txtPassword.setEnabled(false);
-                this.txtSmtp.setEnabled(false);
-                this.txtSmtpPort.setEnabled(false);
-                this.txtUser.setEnabled(false);
-                this.txtSenderName.setEnabled(false);
-                this.txtRecipient.setEnabled(false);
-                this.chkSsl.setEnabled(false);
-                this.chkEmailStartTls.setEnabled(false);
             }
         } catch (Exception ex) {
             log.error(ex);
-            //JOptionPane.showMessageDialog(this, "Datensicherungsdialog kann nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.INFORMATION_MESSAGE);
         }
 
         ServerSettings set = ServerSettings.getInstance();
-        String cpuE = set.getSetting(set.SERVERCONF_MONITOR_CPUERROR, "90");
+        String cpuE = set.getSetting(ServerSettings.SERVERCONF_MONITOR_CPUERROR, "90");
         this.cmbCpuError.setSelectedItem(cpuE);
-        String cpuW = set.getSetting(set.SERVERCONF_MONITOR_CPUWARN, "80");
+        String cpuW = set.getSetting(ServerSettings.SERVERCONF_MONITOR_CPUWARN, "80");
         this.cmbCpuWarn.setSelectedItem(cpuW);
-        String memE = set.getSetting(set.SERVERCONF_MONITOR_MEMERROR, "90");
+        String memE = set.getSetting(ServerSettings.SERVERCONF_MONITOR_MEMERROR, "90");
         this.cmbMemError.setSelectedItem(memE);
-        String memW = set.getSetting(set.SERVERCONF_MONITOR_MEMWARN, "80");
+        String memW = set.getSetting(ServerSettings.SERVERCONF_MONITOR_MEMWARN, "80");
         this.cmbMemWarn.setSelectedItem(memW);
-        String diskE = set.getSetting(set.SERVERCONF_MONITOR_DISKERROR, "90");
+        String diskE = set.getSetting(ServerSettings.SERVERCONF_MONITOR_DISKERROR, "90");
         this.cmbDiskError.setSelectedItem(diskE);
-        String diskW = set.getSetting(set.SERVERCONF_MONITOR_DISKWARN, "80");
+        String diskW = set.getSetting(ServerSettings.SERVERCONF_MONITOR_DISKWARN, "80");
         this.cmbDiskWarn.setSelectedItem(diskW);
-        String vmE = set.getSetting(set.SERVERCONF_MONITOR_VMERROR, "85");
+        String vmE = set.getSetting(ServerSettings.SERVERCONF_MONITOR_VMERROR, "85");
         this.cmbVMMemError.setSelectedItem(vmE);
-        String vmW = set.getSetting(set.SERVERCONF_MONITOR_VMWARN, "75");
+        String vmW = set.getSetting(ServerSettings.SERVERCONF_MONITOR_VMWARN, "75");
         this.cmbVMMemWarn.setSelectedItem(vmW);
 
         if (currentlyAdmin) {
-            String notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+            String notify = set.getSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY, "off");
             if ("off".equalsIgnoreCase(notify)) {
                 this.chkWarnings.setSelected(false);
             } else {
                 this.chkWarnings.setSelected(true);
             }
             
-            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+            notify = set.getSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
             if ("off".equalsIgnoreCase(notify)) {
                 this.chkWarningsBackupSuccess.setSelected(false);
             } else {
                 this.chkWarningsBackupSuccess.setSelected(true);
             }
-            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+            notify = set.getSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
             if ("off".equalsIgnoreCase(notify)) {
                 this.chkWarningsBackupFailure.setSelected(false);
             } else {
                 this.chkWarningsBackupFailure.setSelected(true);
             }
 
-            String cpuEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
+            String cpuEnabled = set.getSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_CPU, "on");
             if ("off".equalsIgnoreCase(cpuEnabled)) {
                 this.chkMonitorCpu.setSelected(false);
             } else {
                 this.chkMonitorCpu.setSelected(true);
             }
 
-            String ramEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
+            String ramEnabled = set.getSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_RAM, "on");
             if ("off".equalsIgnoreCase(ramEnabled)) {
                 this.chkMonitorRam.setSelected(false);
             } else {
                 this.chkMonitorRam.setSelected(true);
             }
 
-            String diskEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
+            String diskEnabled = set.getSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_DISK, "on");
             if ("off".equalsIgnoreCase(diskEnabled)) {
                 this.chkMonitorDisk.setSelected(false);
             } else {
                 this.chkMonitorDisk.setSelected(true);
             }
 
-            String javaEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
+            String javaEnabled = set.getSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
             if ("off".equalsIgnoreCase(javaEnabled)) {
                 this.chkMonitorJava.setSelected(false);
             } else {
                 this.chkMonitorJava.setSelected(true);
-            }
-
-            this.txtPassword.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, ""));
-            this.txtSmtp.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSERVER, ""));
-            this.txtSmtpPort.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPORT, ""));
-            this.txtUser.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPUSER, ""));
-            this.txtSenderName.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, ""));
-            this.txtRecipient.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPTO, ""));
-
-            String ssl = set.getSetting(set.SERVERCONF_MONITOR_SMTPSSL, "false");
-            if ("true".equalsIgnoreCase(ssl)) {
-                this.chkSsl.setSelected(true);
-            } else {
-                this.chkSsl.setSelected(false);
-            }
-
-            String startTls = set.getSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, "false");
-            if ("true".equalsIgnoreCase(startTls)) {
-                this.chkEmailStartTls.setSelected(true);
-            } else {
-                this.chkEmailStartTls.setSelected(false);
             }
         }
 
@@ -940,21 +908,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         chkMonitorDisk = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
         chkWarnings = new javax.swing.JCheckBox();
-        jLabel6 = new javax.swing.JLabel();
-        txtSmtp = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
-        txtUser = new javax.swing.JTextField();
-        jLabel8 = new javax.swing.JLabel();
-        txtPassword = new javax.swing.JPasswordField();
-        jLabel19 = new javax.swing.JLabel();
-        txtRecipient = new javax.swing.JTextField();
-        chkSsl = new javax.swing.JCheckBox();
-        txtSenderName = new javax.swing.JTextField();
-        jLabel20 = new javax.swing.JLabel();
-        chkEmailStartTls = new javax.swing.JCheckBox();
-        jLabel21 = new javax.swing.JLabel();
-        txtSmtpPort = new javax.swing.JTextField();
-        cmdTestMail = new javax.swing.JButton();
         chkWarningsBackupFailure = new javax.swing.JCheckBox();
         chkWarningsBackupSuccess = new javax.swing.JCheckBox();
 
@@ -1002,8 +955,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel5.setText("letzter Status:");
 
-        taStatus.setColumns(20);
         taStatus.setEditable(false);
+        taStatus.setColumns(20);
         taStatus.setRows(5);
         jScrollPane1.setViewportView(taStatus);
 
@@ -1031,7 +984,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                         .addComponent(jLabel5)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 607, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1)
                         .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
@@ -1056,7 +1009,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 182, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1201,29 +1154,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         chkWarnings.setText("Warnungen aktivieren");
 
-        jLabel6.setText("SMTP-Server:");
-
-        jLabel7.setText("Absenderadresse:");
-
-        jLabel8.setText("Passwort:");
-
-        jLabel19.setText("Senden an:");
-
-        chkSsl.setText("SSL");
-
-        jLabel20.setText("Absendername:");
-
-        chkEmailStartTls.setText("StartTLS");
-
-        jLabel21.setText("Port (optional):");
-
-        cmdTestMail.setText("Einstellungen testen");
-        cmdTestMail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdTestMailActionPerformed(evt);
-            }
-        });
-
         chkWarningsBackupFailure.setText("bei fehlgeschlagener Datensicherung");
 
         chkWarningsBackupSuccess.setText("bei erfolgreicher Datensicherung (Zusammenfassung)");
@@ -1237,35 +1167,13 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(chkWarnings)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(152, 152, 152)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel19)
-                            .addComponent(jLabel20)
-                            .addComponent(jLabel21))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtRecipient)
-                            .addComponent(txtUser)
-                            .addComponent(txtPassword)
-                            .addComponent(txtSenderName)
-                            .addComponent(txtSmtpPort)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(cmdTestMail)
-                                    .addGroup(jPanel4Layout.createSequentialGroup()
-                                        .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(chkEmailStartTls)
-                                        .addGap(2, 2, 2)
-                                        .addComponent(chkSsl))
-                                    .addComponent(chkWarningsBackupFailure)
-                                    .addComponent(chkWarningsBackupSuccess))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
-                .addContainerGap())
+                            .addComponent(chkWarningsBackupFailure)
+                            .addComponent(chkWarningsBackupSuccess))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1275,34 +1183,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addComponent(chkWarningsBackupSuccess)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkWarningsBackupFailure)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkSsl)
-                    .addComponent(chkEmailStartTls))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel21)
-                    .addComponent(txtSmtpPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtSenderName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel20))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel19)
-                    .addComponent(txtRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdTestMail)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1323,8 +1203,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Einstellungen", jPanel2);
@@ -1348,11 +1228,12 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdSave)))
+                    .addComponent(cmdSave))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.getAccessibleContext().setAccessibleDescription("");
@@ -1363,73 +1244,55 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set = ServerSettings.getInstance();
 
-        set.setSetting(set.SERVERCONF_MONITOR_CPUERROR, this.cmbCpuError.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_CPUWARN, this.cmbCpuWarn.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_MEMERROR, this.cmbMemError.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_MEMWARN, this.cmbMemWarn.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_DISKERROR, this.cmbDiskError.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_DISKWARN, this.cmbDiskWarn.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_VMERROR, this.cmbVMMemError.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_VMWARN, this.cmbVMMemWarn.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_CPUERROR, this.cmbCpuError.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_CPUWARN, this.cmbCpuWarn.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_MEMERROR, this.cmbMemError.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_MEMWARN, this.cmbMemWarn.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_DISKERROR, this.cmbDiskError.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_DISKWARN, this.cmbDiskWarn.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_VMERROR, this.cmbVMMemError.getSelectedItem().toString());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_VMWARN, this.cmbVMMemWarn.getSelectedItem().toString());
 
         if (this.chkWarnings.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY, "off");
         }
         
         if (this.chkWarningsBackupSuccess.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "off");
         }
         if (this.chkWarningsBackupFailure.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "off");
         }
 
         if (this.chkMonitorCpu.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_CPU, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_CPU, "off");
         }
 
         if (this.chkMonitorRam.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_RAM, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_RAM, "off");
         }
 
         if (this.chkMonitorDisk.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_DISK, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_DISK, "off");
         }
 
         if (this.chkMonitorJava.isSelected()) {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
         } else {
-            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "off");
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_ENABLED_JAVA, "off");
         }
-
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, this.txtSenderName.getText());
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPSERVER, this.txtSmtp.getText());
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPPORT, this.txtSmtpPort.getText());
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPTO, this.txtRecipient.getText());
-        String ssl = "false";
-        if (this.chkSsl.isSelected()) {
-            ssl = "true";
-        }
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPSSL, ssl);
-
-        String startTls = "false";
-        if (this.chkEmailStartTls.isSelected()) {
-            startTls = "true";
-        }
-        set.setSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, startTls);
 
         this.setVisible(false);
         this.dispose();
@@ -1439,27 +1302,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
-
-    private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SystemManagementRemote sysMan = locator.lookupSystemManagementRemote();
-            int port = -1;
-            if (!("".equals(this.txtSmtpPort.getText()))) {
-                port = Integer.parseInt(this.txtSmtpPort.getText());
-            }
-            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText());
-            JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ex) {
-            log.error(ex);
-            String exMsg = ex.getMessage();
-            if (ex.getCause() != null) {
-                exMsg = exMsg + "; " + ex.getCause().getMessage();
-            }
-            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.WARNING_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdTestMailActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1509,12 +1351,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup backupMode;
-    private javax.swing.JCheckBox chkEmailStartTls;
     private javax.swing.JCheckBox chkMonitorCpu;
     private javax.swing.JCheckBox chkMonitorDisk;
     private javax.swing.JCheckBox chkMonitorJava;
     private javax.swing.JCheckBox chkMonitorRam;
-    private javax.swing.JCheckBox chkSsl;
     private javax.swing.JCheckBox chkWarnings;
     private javax.swing.JCheckBox chkWarningsBackupFailure;
     private javax.swing.JCheckBox chkWarningsBackupSuccess;
@@ -1528,7 +1368,6 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox cmbVMMemWarn;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
-    private javax.swing.JButton cmdTestMail;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1539,16 +1378,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel20;
-    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -1561,11 +1394,5 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JProgressBar prgMemory;
     private javax.swing.JProgressBar prgVMMemory;
     private javax.swing.JTextArea taStatus;
-    private javax.swing.JPasswordField txtPassword;
-    private javax.swing.JTextField txtRecipient;
-    private javax.swing.JTextField txtSenderName;
-    private javax.swing.JTextField txtSmtp;
-    private javax.swing.JTextField txtSmtpPort;
-    private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 }

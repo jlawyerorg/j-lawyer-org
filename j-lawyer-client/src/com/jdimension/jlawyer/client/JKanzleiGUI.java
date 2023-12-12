@@ -1180,6 +1180,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuGroups = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JPopupMenu.Separator();
         mnuBackupConfiguration = new javax.swing.JMenuItem();
+        mnuSystemMailbox = new javax.swing.JMenuItem();
         mnuServerMonitor = new javax.swing.JMenuItem();
         mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
@@ -1917,6 +1918,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAdministration.add(mnuBackupConfiguration);
+
+        mnuSystemMailbox.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_eml.png"))); // NOI18N
+        mnuSystemMailbox.setText("Systempostfach");
+        mnuSystemMailbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSystemMailboxActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuSystemMailbox);
 
         mnuServerMonitor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_show_chart_black_48dp.png"))); // NOI18N
         mnuServerMonitor.setText(bundle.getString("menu.settings.monitoring")); // NOI18N
@@ -2800,6 +2810,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuBugReportActionPerformed
 
+    private void mnuSystemMailboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSystemMailboxActionPerformed
+        if (checkAdmin()) {
+            SystemMailboxDialog dlg = new SystemMailboxDialog(this, true);
+
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuSystemMailboxActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2895,6 +2914,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuSecurity;
     private javax.swing.JMenuItem mnuServerMonitor;
     private javax.swing.JMenu mnuServices;
+    private javax.swing.JMenuItem mnuSystemMailbox;
     private javax.swing.JMenu mnuTimesheet;
     private javax.swing.JMenuItem mnuTimesheetIntervals;
     private javax.swing.JMenuItem mnuTimesheetPositions;

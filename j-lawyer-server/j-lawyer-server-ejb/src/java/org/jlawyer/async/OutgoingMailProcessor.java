@@ -668,13 +668,9 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
 import javax.ejb.*;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -687,7 +683,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import javax.mail.util.ByteArrayDataSource;
 import org.apache.log4j.Logger;
 import org.jlawyer.notification.OutgoingMailRequest;
 
@@ -724,7 +719,8 @@ public class OutgoingMailProcessor implements MessageListener {
                 if (o instanceof OutgoingMailRequest) {
                     log.info("adding mail to queue");
                     OutgoingMailRequest omr=(OutgoingMailRequest)o;
-                    this.sendMail(omr.getTo(), omr.getSubject(), omr.getMainCaption(), omr.getSubCaption(), omr.getBodyContent());
+                    for(String to: omr.getTo())
+                        this.sendMail(to, omr.getSubject(), omr.getMainCaption(), omr.getSubCaption(), omr.getBodyContent());
                 }
             }
 
@@ -848,27 +844,16 @@ public class OutgoingMailProcessor implements MessageListener {
             msg.setSubject(subject);
             msg.setSentDate(new java.util.Date());
             
-//            String logoContentId = "<image@" + System.currentTimeMillis() + ">";
-            
             String body=this.getBodyContent(mainCaption, subCaption, bodyContent);
             
             
             // Create the message body
             MimeBodyPart messageBodyPart = new MimeBodyPart();
             messageBodyPart.setContent(body, "text/html");
-            //messageBodyPart.setContent("<html><body><h1>Hello, this is a test email with an embedded image:</h1><img src=\"cid:image\"></body></html>", "text/html");
-
-            // Create the image part
-//            MimeBodyPart imageBodyPart = new MimeBodyPart();
-//            byte[] imageData = getLogo(); // Replace with your method to get the image byte array
-//            DataSource ds = new ByteArrayDataSource(imageData, "image/png");
-//            imageBodyPart.setDataHandler(new DataHandler(ds));
-//            imageBodyPart.setHeader("Content-ID", logoContentId);
 
             // Create a multipart message
             Multipart multipart = new MimeMultipart();
             multipart.addBodyPart(messageBodyPart);
-//            multipart.addBodyPart(imageBodyPart);
 
             // Set the content of the message
             msg.setContent(multipart);
@@ -881,26 +866,6 @@ public class OutgoingMailProcessor implements MessageListener {
         } catch (Exception mex) {
             log.error(mex);
 
-        }
-    }
-    
-    private byte[] getLogo() {
-        try (InputStream inputStream = OutgoingMailProcessor.class.getClassLoader().getResourceAsStream("/templates/email/j-lawyer-logo.png")) {
-            if (inputStream != null) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-                return baos.toByteArray();
-            } else {
-                log.error("j-lawyer-logo.png resource not found");
-                return null;
-            }
-        } catch (IOException e) {
-            log.error("j-lawyer-logo.png resource could not be loaded", e);
-            return null;
         }
     }
     
@@ -924,7 +889,6 @@ public class OutgoingMailProcessor implements MessageListener {
             template = template.replace("MAINCAPTION", mainCaption);
             template = template.replace("SUBCAPTION", subCaption);
             template = template.replace("BODYCONTENT", bodyContent);
-            //template = template.replace("LOGOCONTENTID", logoContentId);
             
             return template;
         } catch (Throwable t) {

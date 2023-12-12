@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import de.jollyday.CalendarHierarchy;
@@ -700,12 +701,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Resource;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
@@ -734,6 +741,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarSetupFacadeLocal calendarSetups;
     @EJB
     private CalendarAccessFacadeLocal calendarAccess;
+    
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
+    private javax.jms.Queue outgoingMailQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -863,6 +877,28 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        
+        if (!ServerStringUtils.isEmpty(review.getAssignee())) {
+            // only send notifications if ANOTHER person entered the review
+            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+                AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
+                if (assignee != null) {
+                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    if (notificationEnabled && assignee.getEmail() != null) {
+                        OutgoingMailRequest omr = new OutgoingMailRequest();
+                        omr.setTo(assignee.getEmail());
+                        omr.setSubject("Neuer Kalendereintrag für Dich");
+                        omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " für Dich erstellt");
+                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
+                        StringBuilder body=new StringBuilder();
+                        body.append(review.getSummary()).append("\n").append(review.getDescription()).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(review.getAssignee()).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
+                        omr.setBodyContent(body.toString());
+                        this.publishOutgoingMailRequest(omr);
+                    }
+                }
+            }
+        }
 
         try {
             this.calendarSync.eventAdded(aFile, review);
@@ -871,6 +907,16 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return this.archiveFileReviewsFacade.find(revId);
+    }
+    
+    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(outgoingMailQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish outgoing mail request", ex);
+        }
     }
 
     @Override
@@ -1158,6 +1204,28 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
+        
+        if (!ServerStringUtils.isEmpty(review.getAssignee())) {
+            // only send notifications if ANOTHER person entered the review
+            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+                AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
+                if (assignee != null) {
+                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    if (notificationEnabled && assignee.getEmail() != null) {
+                        OutgoingMailRequest omr = new OutgoingMailRequest();
+                        omr.setTo(assignee.getEmail());
+                        omr.setSubject("Geänderter Kalendereintrag für Dich");
+                        omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
+                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
+                        StringBuilder body=new StringBuilder();
+                        body.append(review.getSummary()).append("\n").append(review.getDescription()).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(review.getAssignee()).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
+                        omr.setBodyContent(body.toString());
+                        this.publishOutgoingMailRequest(omr);
+                    }
+                }
+            }
+        }
 
         try {
             this.calendarSync.eventUpdated(aFile, review);
@@ -1419,6 +1487,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @RolesAllowed({"loginRole"})
     public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
         return this.calendarSync.listCalendars(host, ssl, port, user, password, path);
+    }
+
+    @Override
+    @PermitAll
+    public void sendDailyAgenda() throws Exception {
+        
     }
 
 }

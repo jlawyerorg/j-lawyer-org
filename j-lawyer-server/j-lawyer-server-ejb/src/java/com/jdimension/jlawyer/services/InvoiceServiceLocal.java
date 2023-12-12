@@ -677,5 +677,7 @@ public interface InvoiceServiceLocal {
     List<InvoicePool> getAllInvoicePools() throws Exception;
 
     String nextInvoiceNumber(InvoicePool pool) throws Exception;
+
+    void checkInvoicesDue();
     
 }

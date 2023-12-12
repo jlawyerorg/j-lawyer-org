@@ -687,5 +687,7 @@ public interface CalendarServiceLocal {
     ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     
     ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
+
+    void sendDailyAgenda() throws Exception;
     
 }
