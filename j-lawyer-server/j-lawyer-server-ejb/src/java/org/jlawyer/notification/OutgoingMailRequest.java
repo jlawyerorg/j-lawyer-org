@@ -672,7 +672,9 @@ import java.io.Serializable;
 public class OutgoingMailRequest implements Serializable {
     
     private String subject;
-    private String body;
+    private String mainCaption;
+    private String subCaption;
+    private String bodyContent;
     private String to;
     
     public OutgoingMailRequest() {
@@ -695,20 +697,6 @@ public class OutgoingMailRequest implements Serializable {
     }
 
     /**
-     * @return the body
-     */
-    public String getBody() {
-        return body;
-    }
-
-    /**
-     * @param body the body to set
-     */
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    /**
      * @return the to
      */
     public String getTo() {
@@ -720,6 +708,48 @@ public class OutgoingMailRequest implements Serializable {
      */
     public void setTo(String to) {
         this.to = to;
+    }
+
+    /**
+     * @return the mainCaption
+     */
+    public String getMainCaption() {
+        return mainCaption;
+    }
+
+    /**
+     * @param mainCaption the mainCaption to set
+     */
+    public void setMainCaption(String mainCaption) {
+        this.mainCaption = mainCaption;
+    }
+
+    /**
+     * @return the subCaption
+     */
+    public String getSubCaption() {
+        return subCaption;
+    }
+
+    /**
+     * @param subCaption the subCaption to set
+     */
+    public void setSubCaption(String subCaption) {
+        this.subCaption = subCaption;
+    }
+
+    /**
+     * @return the bodyContent
+     */
+    public String getBodyContent() {
+        return bodyContent;
+    }
+
+    /**
+     * @param bodyContent the bodyContent to set
+     */
+    public void setBodyContent(String bodyContent) {
+        this.bodyContent = bodyContent;
     }
 
 }

@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -699,6 +700,9 @@ import org.jlawyer.notification.OutgoingMailRequest;
 public class MessagingService implements MessagingServiceRemote, MessagingServiceLocal {
     
     private static final Logger log = Logger.getLogger(MessagingService.class.getName());
+    
+    SimpleDateFormat dfDate=new SimpleDateFormat("dd.MM.yyyy");
+    SimpleDateFormat dfTime=new SimpleDateFormat("HH:mm");
 
     @Resource
     private SessionContext context;
@@ -773,7 +777,9 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
                 OutgoingMailRequest omr=new OutgoingMailRequest();
                 omr.setTo(notifyTo.getEmail());
                 omr.setSubject("Du wurdest in einer Nachricht erwähnt");
-                omr.setBody(m.getMessage().getSender() + " schrieb am " + m.getMessage().getSent().toString() + ": " + m.getMessage().getContent());
+                omr.setMainCaption("Du wurdest in einer Sofortnachricht erwähnt");
+                omr.setSubCaption(m.getMessage().getSender() + " schrieb am " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent())+ ":");
+                omr.setBodyContent("\"" + m.getMessage().getContent() + "\"");
                 this.publishOutgoingMailRequest(omr);
             }
         }
