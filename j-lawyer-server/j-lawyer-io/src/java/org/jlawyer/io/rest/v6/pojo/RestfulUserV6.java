@@ -681,6 +681,7 @@ public class RestfulUserV6 {
     protected String displayName;
     
     private String externalId=null;
+    private String email=null;
     
     public RestfulUserV6() {
         
@@ -695,6 +696,7 @@ public class RestfulUserV6 {
         au.setAbbreviation(abbreviation);
         au.setDisplayName(displayName);
         au.setExternalId(externalId);       
+        au.setEmail(email);
         return au;
         
     }
@@ -708,6 +710,7 @@ public class RestfulUserV6 {
         u.setExternalId(au.getExternalId());
         u.setLawyer(au.isLawyer());
         u.setPrincipalId(au.getPrincipalId());
+        u.setEmail(au.getEmail());
         return u;
     }
 
@@ -807,6 +810,20 @@ public class RestfulUserV6 {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
     }
     
 }

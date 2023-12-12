@@ -685,7 +685,11 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
@@ -710,10 +714,19 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @EJB
     private SecurityServiceLocal securityFacade;
     @EJB
+    private SystemManagementLocal systemManagement;
+    @EJB
     private SingletonServiceLocal singleton;
     
     @Inject
     Event<InstantMessageCreatedEvent> newMessageEvent;
+    
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
+    private javax.jms.Queue outgoingMailQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -754,6 +767,15 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             m.setDone(false);
             m.setStatusChanged(null);
             this.mentionFacade.create(m);
+            String principalId=m.getPrincipal();
+            AppUserBean notifyTo=this.systemManagement.getUser(principalId);
+            if(notifyTo!=null && notifyTo.getEmail()!=null) {
+                OutgoingMailRequest omr=new OutgoingMailRequest();
+                omr.setTo(notifyTo.getEmail());
+                omr.setSubject("Du wurdest in einer Nachricht erwähnt");
+                omr.setBody(m.getMessage().getSender() + " schrieb am " + m.getMessage().getSent().toString() + ": " + m.getMessage().getContent());
+                this.publishOutgoingMailRequest(omr);
+            }
         }
         
         this.singleton.setLatestInstantMessageReceived(sentDate.getTime());
@@ -775,6 +797,16 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         this.newMessageEvent.fireAsync(evt);
         
         return this.messageFacade.find(messageId);
+    }
+    
+    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(outgoingMailQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish outgoing mail request", ex);
+        }
     }
     
     @Override

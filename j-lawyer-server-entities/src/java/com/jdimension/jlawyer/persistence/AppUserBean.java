@@ -754,6 +754,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "ext_id")
     private String externalId;
     
+    @Column(name = "email")
+    private String email;
+    
     
     public AppUserBean() {
     }
@@ -1131,6 +1134,20 @@ public class AppUserBean implements Serializable {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
     }
     
     
