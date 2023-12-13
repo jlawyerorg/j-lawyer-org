@@ -5075,6 +5075,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+            if (selected.isEmpty()) {
+                return;
+            }
+
+            ArrayList<String> open = this.getDocumentsOpenForWrite(selected);
+            if (!open.isEmpty()) {
+                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for (String o : open) {
+                    question = question + "<li>" + o + "</li>";
+                }
+                question = question + "</ul></html>";
+                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+            
 
             for (ArchiveFileDocumentsBean doc : selected) {
                 this.convertDocumentToPdf(doc);
