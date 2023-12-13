@@ -682,8 +682,7 @@ import themes.colors.DefaultColorTheme;
 public class SystemMailboxDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(SystemMailboxDialog.class.getName());
-    private static final DecimalFormat diskFormat = new DecimalFormat("0.0");
-
+    
     /**
      * Creates new form BackupConfigurationDialog
      * @param parent
@@ -713,7 +712,6 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
             }
         } catch (Exception ex) {
             log.error(ex);
-            //JOptionPane.showMessageDialog(this, "Datensicherungsdialog kann nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.INFORMATION_MESSAGE);
         }
 
         ServerSettings set = ServerSettings.getInstance();
