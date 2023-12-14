@@ -670,12 +670,15 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class InvolvedPartiesPanel extends javax.swing.JPanel {
+    
+    private static final Logger log=Logger.getLogger(InvolvedPartiesPanel.class.getName());
 
     /**
      * Creates new form InvolvedPartiesPanel
@@ -703,6 +706,8 @@ public class InvolvedPartiesPanel extends javax.swing.JPanel {
                 aFile.addParty(aadto);
                 
                     
+            } else {
+                log.warn("unexpected child component class in parties panel: " + c.getClass().getName());
             }
         }
         
