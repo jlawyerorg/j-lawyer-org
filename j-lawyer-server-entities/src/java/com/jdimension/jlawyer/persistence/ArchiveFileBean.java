@@ -692,6 +692,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "ArchiveFileBean.findByArchived", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = :archived"),
     @NamedQuery(name = "ArchiveFileBean.findByNotice", query = "SELECT a FROM ArchiveFileBean a WHERE a.notice = :notice")})
 public class ArchiveFileBean implements Serializable {
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileReviewsBean> archiveFileReviewsBeanList;
     private static final long serialVersionUID = 1L;
@@ -729,7 +730,7 @@ public class ArchiveFileBean implements Serializable {
     private String custom2;
     @Column(name = "custom3")
     private String custom3;
-    
+
     @Column(name = "date_created")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date dateCreated;
@@ -739,10 +740,10 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "date_archived")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date dateArchived;
-    
+
     @Column(name = "ext_id")
     private String externalId;
-    
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
@@ -756,7 +757,7 @@ public class ArchiveFileBean implements Serializable {
     @JoinColumn(name = "owner_group", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
     private Group group;
-    
+
     @JoinColumn(name = "root_folder", referencedColumnName = "id")
     @OneToOne(cascade = CascadeType.REMOVE)
     private CaseFolder rootFolder;
@@ -793,9 +794,9 @@ public class ArchiveFileBean implements Serializable {
     public String getFileNumberMain() {
         return fileNumberMain;
     }
-    
+
     public String getFileNumber() {
-        if(this.fileNumberExtension!=null && this.fileNumberExtension.length()>0) {
+        if (this.fileNumberExtension != null && this.fileNumberExtension.length() > 0) {
             return this.fileNumberMain + this.fileNumberExtension;
         } else {
             return this.fileNumberMain;
@@ -825,11 +826,11 @@ public class ArchiveFileBean implements Serializable {
     public boolean isArchived() {
         return archived;
     }
-    
+
     public void setArchived(boolean archived) {
         this.archived = archived;
     }
-    
+
     public String getNotice() {
         return notice;
     }
@@ -874,9 +875,10 @@ public class ArchiveFileBean implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        if(object==null)
+        if (object == null) {
             return false;
-        
+        }
+
         // TODO: Warning - this method won't work in the case the id fields are not set
         if (!(object instanceof ArchiveFileBean)) {
             return false;
@@ -901,27 +903,28 @@ public class ArchiveFileBean implements Serializable {
     public void setArchiveFileReviewsBeanList(List<ArchiveFileReviewsBean> archiveFileReviewsBeanList) {
         this.archiveFileReviewsBeanList = archiveFileReviewsBeanList;
     }
-    
+
     public void addParty(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<>();
+        if (this.archiveFileAddressesBeanList == null) {
+            this.archiveFileAddressesBeanList = new ArrayList<>();
+        }
         this.archiveFileAddressesBeanList.add(dto);
     }
-    
+
     public void addReview(ArchiveFileReviewsBean dto) {
-        if(this.archiveFileReviewsBeanList==null)
-            this.archiveFileReviewsBeanList=new ArrayList<>();
+        if (this.archiveFileReviewsBeanList == null) {
+            this.archiveFileReviewsBeanList = new ArrayList<>();
+        }
         this.archiveFileReviewsBeanList.add(dto);
     }
-    
+
     public void removeAllParties() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            this.archiveFileAddressesBeanList.remove(i);
-            
-            
-        }
+        if (this.archiveFileAddressesBeanList != null) {
+            for (int i = this.archiveFileAddressesBeanList.size() - 1; i > -1; i--) {
+                ArchiveFileAddressesBean b = this.archiveFileAddressesBeanList.get(i);
+                this.archiveFileAddressesBeanList.remove(i);
+
+            }
         }
     }
 
@@ -1047,7 +1050,8 @@ public class ArchiveFileBean implements Serializable {
     }
 
     /**
-     * @param archiveFileFormEntriesBeanList the archiveFileFormEntriesBeanList to set
+     * @param archiveFileFormEntriesBeanList the archiveFileFormEntriesBeanList
+     * to set
      */
     public void setArchiveFileFormEntriesBeanList(List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList) {
         this.archiveFileFormEntriesBeanList = archiveFileFormEntriesBeanList;
@@ -1150,5 +1154,5 @@ public class ArchiveFileBean implements Serializable {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-    
+
 }
