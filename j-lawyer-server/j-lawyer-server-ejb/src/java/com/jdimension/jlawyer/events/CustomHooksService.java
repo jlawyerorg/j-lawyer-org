@@ -668,15 +668,15 @@ import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.security.Crypto;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.event.ObservesAsync;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import org.apache.log4j.Logger;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
 import org.json.simple.Jsoner;
 
 /**
@@ -719,17 +719,19 @@ public class CustomHooksService implements CustomHooksServiceLocal {
         String evtJson = Jsoner.serialize(evt);
         log.debug("about to post the following event to custom hook: " + evtJson);
 
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-        clientBuilder.connectTimeout(hook.getConnectionTimeout(), TimeUnit.SECONDS);
-        clientBuilder.readTimeout(hook.getReadTimeout(), TimeUnit.SECONDS);
-
-        Client client = clientBuilder.build();
+        JerseyClient client=(JerseyClient)JerseyClientBuilder.createClient();
+        int connectTimeout=(int)(1000 * hook.getConnectionTimeout());
+        int readTimeout=(int)(1000 * hook.getReadTimeout());
+        client.property(ClientProperties.CONNECT_TIMEOUT, connectTimeout);
+        client.property(ClientProperties.READ_TIMEOUT,    readTimeout);
+        
         if(hook.getAuthenticationUser()!=null && !"".equalsIgnoreCase(hook.getAuthenticationUser())) {
             if(!this.hookPwd.containsKey(hook.getName()))
                 this.hookPwd.put(hook.getName(), Crypto.decrypt(hook.getAuthenticationPwd()));
             client.register(new HookAuthenticator(hook.getAuthenticationUser(), this.hookPwd.get(hook.getName())));
         }
-        WebTarget webTarget = client.target(hook.getUrl());
+        
+        JerseyWebTarget webTarget = client.target(hook.getUrl());
         String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
         log.debug("custom hook returned: " + returnValue);
     }
