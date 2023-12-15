@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +685,11 @@ public class CaseAccountEntryFacade extends AbstractFacade<CaseAccountEntry> imp
 
     public CaseAccountEntryFacade() {
         super(CaseAccountEntry.class);
+    }
+
+    @Override
+    public List<CaseAccountEntry> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
+        return (List<CaseAccountEntry>) em.createNamedQuery("CaseAccountEntry.findByArchiveFileKey").setParameter("archiveFileKey", archiveFileKey).getResultList();
     }
     
 }

@@ -1295,6 +1295,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         while (tm.getRowCount() > 0) {
             tm.removeRow(tm.getRowCount() - 1);
         }
+        
+        DefaultTableModel tm2 = ((DefaultTableModel) this.tblAccountEntries.getModel());
+        while (tm2.getRowCount() > 0) {
+            tm2.removeRow(tm2.getRowCount() - 1);
+        }
 
         this.clearDocumentPreview("");
 
@@ -1776,6 +1781,33 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentTagPanel = new javax.swing.JPanel();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
+        jPanel15 = new javax.swing.JPanel();
+        cmdAddAccountEntry = new javax.swing.JButton();
+        jScrollPane10 = new javax.swing.JScrollPane();
+        tblAccountEntries = new javax.swing.JTable();
+        cmdEditAccountEntry = new javax.swing.JButton();
+        cmdRemoveAccountEntry = new javax.swing.JButton();
+        jPanel17 = new javax.swing.JPanel();
+        jLabel35 = new javax.swing.JLabel();
+        jLabel36 = new javax.swing.JLabel();
+        jLabel37 = new javax.swing.JLabel();
+        jPanel16 = new javax.swing.JPanel();
+        jLabel23 = new javax.swing.JLabel();
+        jLabel24 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        jLabel26 = new javax.swing.JLabel();
+        jLabel27 = new javax.swing.JLabel();
+        jLabel28 = new javax.swing.JLabel();
+        jLabel29 = new javax.swing.JLabel();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        jLabel32 = new javax.swing.JLabel();
+        jLabel33 = new javax.swing.JLabel();
+        jLabel34 = new javax.swing.JLabel();
+        jPanel18 = new javax.swing.JPanel();
+        jLabel38 = new javax.swing.JLabel();
+        jLabel39 = new javax.swing.JLabel();
+        jLabel40 = new javax.swing.JLabel();
         jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         cmdNewInvoice = new javax.swing.JButton();
@@ -2816,6 +2848,227 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         subTabsFinance.setTabPlacement(javax.swing.JTabbedPane.LEFT);
         subTabsFinance.setFont(subTabsFinance.getFont());
+
+        cmdAddAccountEntry.setText("+");
+        cmdAddAccountEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddAccountEntryActionPerformed(evt);
+            }
+        });
+
+        tblAccountEntries.setAutoCreateRowSorter(true);
+        tblAccountEntries.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Object.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblAccountEntries.setShowGrid(false);
+        jScrollPane10.setViewportView(tblAccountEntries);
+
+        cmdEditAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+
+        cmdRemoveAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+
+        jPanel17.setLayout(new java.awt.GridLayout(1, 3));
+
+        jLabel35.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel35.setFont(jLabel35.getFont().deriveFont(jLabel35.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel35.setForeground(new java.awt.Color(14, 114, 181));
+        jLabel35.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel35.setText("Einnahmen / Ausgaben");
+        jLabel35.setOpaque(true);
+        jPanel17.add(jLabel35);
+
+        jLabel36.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel36.setFont(jLabel36.getFont().deriveFont(jLabel36.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel36.setForeground(new java.awt.Color(14, 114, 181));
+        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel36.setText("Fremdgeld");
+        jLabel36.setOpaque(true);
+        jPanel17.add(jLabel36);
+
+        jLabel37.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel37.setFont(jLabel37.getFont().deriveFont(jLabel37.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel37.setForeground(new java.awt.Color(14, 114, 181));
+        jLabel37.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel37.setText("Auslagen");
+        jLabel37.setOpaque(true);
+        jPanel17.add(jLabel37);
+
+        jPanel16.setLayout(new java.awt.GridLayout(2, 6));
+
+        jLabel23.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel23.setFont(jLabel23.getFont().deriveFont(jLabel23.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel23.setForeground(new java.awt.Color(151, 191, 13));
+        jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel23.setText("ein");
+        jLabel23.setOpaque(true);
+        jPanel16.add(jLabel23);
+
+        jLabel24.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel24.setFont(jLabel24.getFont().deriveFont(jLabel24.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel24.setForeground(new java.awt.Color(222, 49, 59));
+        jLabel24.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel24.setText("aus");
+        jLabel24.setOpaque(true);
+        jPanel16.add(jLabel24);
+
+        jLabel25.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel25.setFont(jLabel25.getFont().deriveFont(jLabel25.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel25.setForeground(new java.awt.Color(151, 191, 13));
+        jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel25.setText("ein");
+        jLabel25.setOpaque(true);
+        jPanel16.add(jLabel25);
+
+        jLabel26.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel26.setFont(jLabel26.getFont().deriveFont(jLabel26.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel26.setForeground(new java.awt.Color(222, 49, 59));
+        jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel26.setText("aus");
+        jLabel26.setOpaque(true);
+        jPanel16.add(jLabel26);
+
+        jLabel27.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel27.setFont(jLabel27.getFont().deriveFont(jLabel27.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel27.setForeground(new java.awt.Color(151, 191, 13));
+        jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel27.setText("ein");
+        jLabel27.setOpaque(true);
+        jPanel16.add(jLabel27);
+
+        jLabel28.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel28.setFont(jLabel28.getFont().deriveFont(jLabel28.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel28.setForeground(new java.awt.Color(222, 49, 59));
+        jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel28.setText("aus");
+        jLabel28.setOpaque(true);
+        jPanel16.add(jLabel28);
+
+        jLabel29.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel29.setFont(jLabel29.getFont());
+        jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel29.setText("0,00");
+        jLabel29.setOpaque(true);
+        jPanel16.add(jLabel29);
+
+        jLabel30.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel30.setFont(jLabel30.getFont());
+        jLabel30.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel30.setText("0,00");
+        jLabel30.setOpaque(true);
+        jPanel16.add(jLabel30);
+
+        jLabel31.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel31.setFont(jLabel31.getFont());
+        jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel31.setText("0,00");
+        jLabel31.setOpaque(true);
+        jPanel16.add(jLabel31);
+
+        jLabel32.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel32.setFont(jLabel32.getFont());
+        jLabel32.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel32.setText("0,00");
+        jLabel32.setOpaque(true);
+        jPanel16.add(jLabel32);
+
+        jLabel33.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel33.setFont(jLabel33.getFont());
+        jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel33.setText("0,00");
+        jLabel33.setOpaque(true);
+        jPanel16.add(jLabel33);
+
+        jLabel34.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel34.setFont(jLabel34.getFont());
+        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel34.setText("0,00");
+        jLabel34.setOpaque(true);
+        jPanel16.add(jLabel34);
+
+        jPanel18.setLayout(new java.awt.GridLayout(1, 3));
+
+        jLabel38.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel38.setFont(jLabel38.getFont().deriveFont(jLabel38.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel38.setText("0,00");
+        jLabel38.setOpaque(true);
+        jPanel18.add(jLabel38);
+
+        jLabel39.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel39.setFont(jLabel39.getFont().deriveFont(jLabel39.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel39.setText("0,00");
+        jLabel39.setOpaque(true);
+        jPanel18.add(jLabel39);
+
+        jLabel40.setBackground(new java.awt.Color(153, 153, 153));
+        jLabel40.setFont(jLabel40.getFont().deriveFont(jLabel40.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel40.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel40.setText("0,00");
+        jLabel40.setOpaque(true);
+        jPanel18.add(jLabel40);
+
+        org.jdesktop.layout.GroupLayout jPanel15Layout = new org.jdesktop.layout.GroupLayout(jPanel15);
+        jPanel15.setLayout(jPanel15Layout);
+        jPanel15Layout.setHorizontalGroup(
+            jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel15Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane10)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 925, Short.MAX_VALUE)
+                    .add(jPanel15Layout.createSequentialGroup()
+                        .add(cmdAddAccountEntry)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdEditAccountEntry)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdRemoveAccountEntry)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jPanel16, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel15Layout.setVerticalGroup(
+            jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel15Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdAddAccountEntry)
+                        .add(cmdEditAccountEntry))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(0, 0, 0)
+                .add(jPanel16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(0, 0, 0)
+                .add(jPanel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        subTabsFinance.addTab("Aktenkonto", jPanel15);
 
         jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel7.setText("Belege:");
@@ -3891,10 +4144,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
-        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
+        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
 
             if (this.dto == null || this.dto.getId() == null) {
                 this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
+            }
+            
+            if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount()==0) {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                    List<CaseAccountEntry> accountEntries=fileService.getAccountEntries(this.dto.getId());
+                    for(CaseAccountEntry cae: accountEntries) {
+                        this.addAccountEntry(cae);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error loading account entries", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Aktenkontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
             }
 
         }
@@ -5983,7 +6251,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuSendEpostLetterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEpostLetterActionPerformed
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
-        if (open.size() > 0) {
+        if (!open.isEmpty()) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
             for (String o : open) {
                 question = question + "<li>" + o + "</li>";
@@ -6021,6 +6289,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setVisible(true);
         
     }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
+
+    private void addAccountEntry(CaseAccountEntry e) {
+        ((DefaultTableModel)this.tblAccountEntries.getModel()).addRow(new Object[]{e.getEntryDate(), e.getContact(), e.getEarnings(), e.getSpendings(), e.getEscrowIn(),e.getEscrowOut(),e.getExpendituresIn(),e.getExpendituresOut(), e.getInvoice(), e.getDescription()});
+    }
+    
+    private void cmdAddAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddAccountEntryActionPerformed
+        CaseAccountEntryDialog dlg=new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if(dlg.getEntry()!=null) {
+            CaseAccountEntry e=dlg.getEntry();
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+                e=caseService.addAccountEntry(this.dto.getId(), e);
+                this.addAccountEntry(e);
+            } catch (Throwable ex) {
+                log.error("Error saving account entry", ex);
+                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }            
+        }
+    }//GEN-LAST:event_cmdAddAccountEntryActionPerformed
 
     private void updateDocumentHighlights(int highlightIndex) {
         if(!this.readOnly) {
@@ -6444,6 +6735,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JComboBox cmbHistoryTime;
     protected javax.swing.JComboBox cmbLawyer;
     protected javax.swing.JComboBox cmbSubjectField;
+    private javax.swing.JButton cmdAddAccountEntry;
     private javax.swing.JButton cmdAddForm;
     private javax.swing.JButton cmdAddHistory;
     private javax.swing.JButton cmdAddNote;
@@ -6452,6 +6744,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdCopyCaseNumber;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDrebis;
+    private javax.swing.JButton cmdEditAccountEntry;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
@@ -6462,6 +6755,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdNewRvg;
     private javax.swing.JButton cmdNewTimesheet;
     private javax.swing.JButton cmdPrint;
+    private javax.swing.JButton cmdRemoveAccountEntry;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchClient;
     private javax.swing.JButton cmdSendInstantMessage;
@@ -6487,8 +6781,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
+    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -6500,6 +6812,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel14;
+    private javax.swing.JPanel jPanel15;
+    private javax.swing.JPanel jPanel16;
+    private javax.swing.JPanel jPanel17;
+    private javax.swing.JPanel jPanel18;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -6509,6 +6825,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane10;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -6607,6 +6924,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JTabbedPane tabPrivileges;
     private javax.swing.JPanel tabReviews;
     private javax.swing.JPanel tagPanel;
+    private javax.swing.JTable tblAccountEntries;
     private javax.swing.JTable tblGroups;
     private javax.swing.JTable tblHistory;
     private javax.swing.JTable tblReviewReasons;

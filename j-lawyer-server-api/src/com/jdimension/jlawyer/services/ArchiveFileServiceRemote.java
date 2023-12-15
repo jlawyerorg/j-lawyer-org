@@ -915,4 +915,12 @@ public interface ArchiveFileServiceRemote {
     ArrayList<String> getAllArchiveFileNumbers() throws Exception;
 
     List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
+
+    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
+
+    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+
+    CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+
+    void removeAccountEntry(String entryId) throws Exception;
 }

@@ -712,15 +712,10 @@ import javax.ejb.TransactionAttribute;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import javax.jms.ConnectionFactory;
 import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
-import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
-import javax.jms.Session;
-import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
@@ -793,11 +788,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private InvoiceTypeFacadeLocal invoicesTypesFacade;
     @EJB
     private InvoiceServiceLocal invoiceService;
-
     @EJB
     private TimesheetFacadeLocal timesheetFacade;
     @EJB
     private TimesheetPositionFacadeLocal timesheetPositionsFacade;
+    @EJB
+    private CaseAccountEntryFacadeLocal accountEntries;
     
     
     // custom hooks support
@@ -6022,6 +6018,149 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         evt.setDocumentName(db.getName());
         this.updatedDocumentEvent.fireAsync(evt);
 
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.accountEntries.findByArchiveFileKey(aFile);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            
+            StringGenerator idGen = new StringGenerator();
+            accountEntry.setId(idGen.getID().toString());
+            accountEntry.setArchiveFileKey(aFile);
+            
+            this.accountEntries.create(accountEntry);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Buchung Aktenkonto hinzugefügt (" + accountEntry.getDescription() + ")");
+            
+            return this.accountEntries.find(accountEntry.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            CaseAccountEntry updatedEntry = this.accountEntries.find(accountEntry.getId());
+            updatedEntry.setContact(accountEntry.getContact());
+            updatedEntry.setDescription(accountEntry.getDescription());
+            updatedEntry.setEarnings(accountEntry.getEarnings());
+            updatedEntry.setEscrowIn(accountEntry.getEscrowIn());
+            updatedEntry.setEscrowOut(accountEntry.getEscrowOut());
+            updatedEntry.setExpendituresIn(accountEntry.getExpendituresIn());
+            updatedEntry.setExpendituresOut(accountEntry.getExpendituresOut());
+            updatedEntry.setInvoice(accountEntry.getInvoice());
+            updatedEntry.setSpendings(accountEntry.getSpendings());
+
+            this.accountEntries.edit(updatedEntry);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Buchung Aktenkonto geändert (" + updatedEntry.getDescription() + ")");
+            
+            return this.accountEntries.find(updatedEntry.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeAccountEntry(String entryId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        CaseAccountEntry entry = this.accountEntries.find(entryId);
+        if (entry == null) {
+            throw new Exception("Eintrag im Aktenkonto kann nicht gefunden werden");
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(entry.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.accountEntries.remove(entry);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Buchung Aktenkonto gelöscht (" + entry.getDescription() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
     }
 
 }
