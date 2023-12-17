@@ -791,6 +791,7 @@ public class EmailUtils {
     }
 
     public static MailboxSetup getMailboxSetup(Message msg) throws Exception {
+        boolean opened=false;
         try {
             UserSettings uset = UserSettings.getInstance();
             List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
@@ -798,7 +799,7 @@ public class EmailUtils {
                 return null;
             }
 
-            boolean opened = openFolder(msg.getFolder());
+            opened = openFolder(msg.getFolder());
             Address[] froms = msg.getFrom();
             for (MailboxSetup ms : mailboxes) {
                 if (froms != null) {
@@ -823,7 +824,9 @@ public class EmailUtils {
                     }
                 }
             }
-
+            if (opened) {
+                closeIfIMAP(msg.getFolder());
+            }
             return null;
 
         } catch (Exception ex) {
@@ -832,6 +835,9 @@ public class EmailUtils {
                 subject = msg.getSubject();
             } catch (Throwable t) {
                 log.warn("cannot determine message subject", t);
+            }
+            if (opened) {
+                closeIfIMAP(msg.getFolder());
             }
             log.error("Error determining mailbox for message " + subject, ex);
             return null;
