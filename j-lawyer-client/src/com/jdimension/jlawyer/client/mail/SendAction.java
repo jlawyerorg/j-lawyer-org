@@ -968,9 +968,13 @@ public class SendAction extends ProgressableAction {
             Folder sent = EmailUtils.getSentFolder(store);
             if (sent != null) {
                 this.progress("Kopiere Nachricht in 'Gesendet'...");
-                sent.open(Folder.READ_WRITE);
+                boolean closed=!sent.isOpen();
+                if(!sent.isOpen())
+                    sent.open(Folder.READ_WRITE);
                 msg.setFlag(Flags.Flag.SEEN, true);
                 sent.appendMessages(new Message[]{msg});
+                if(closed)
+                    EmailUtils.closeIfIMAP(sent);
 
             } else {
                 log.error("Unable to determine 'Sent' folder for mailbox");

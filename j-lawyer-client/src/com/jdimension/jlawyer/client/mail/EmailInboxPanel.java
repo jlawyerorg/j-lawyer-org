@@ -2019,7 +2019,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         int sortCol = -1;
         List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
         if (sortKeys != null) {
-            if (sortKeys.size() > 0) {
+            if (!sortKeys.isEmpty()) {
                 sortCol = sortKeys.get(0).getColumn();
             }
         }

@@ -668,6 +668,7 @@ import java.util.Iterator;
 import java.util.Set;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
+import javax.mail.StoreClosedException;
 import org.apache.log4j.Logger;
 
 /**
@@ -728,6 +729,8 @@ public class FolderContainer {
             if(this.folder!=null) {
                 try {
                     this.cachedUnread=this.folder.getUnreadMessageCount();
+                } catch (StoreClosedException stex) {
+                    log.warn("Unable to determine number of unread messages - folder is closed");
                 } catch (MessagingException ex) {
                     log.error("Unable to determine number of unread messages", ex);
                 }

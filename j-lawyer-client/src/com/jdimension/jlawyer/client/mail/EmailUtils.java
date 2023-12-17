@@ -724,7 +724,7 @@ public class EmailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
-        
+
         draftAliases = new ArrayList<>();
         draftAliases.add("Entwürfe");
         draftAliases.add("Drafts");
@@ -798,20 +798,26 @@ public class EmailUtils {
                 return null;
             }
 
-            openFolder(msg.getFolder());
+            boolean opened = openFolder(msg.getFolder());
             Address[] froms = msg.getFrom();
             for (MailboxSetup ms : mailboxes) {
                 if (froms != null) {
                     for (Address from : froms) {
                         if (from.toString().contains(ms.getEmailAddress())) {
+                            if (opened) {
+                                closeIfIMAP(msg.getFolder());
+                            }
                             return ms;
                         }
                     }
                 }
                 if (msg.getAllRecipients() != null) {
-                    openFolder(msg.getFolder());
+                    //boolean opened=openFolder(msg.getFolder());
                     for (Address to : msg.getAllRecipients()) {
                         if (to.toString().contains(ms.getEmailAddress())) {
+                            if (opened) {
+                                closeIfIMAP(msg.getFolder());
+                            }
                             return ms;
                         }
                     }
@@ -831,7 +837,7 @@ public class EmailUtils {
             return null;
         }
     }
-    
+
     public static MailboxSetup getMailboxSetup(OutlookMessage msg) throws Exception {
         try {
             UserSettings uset = UserSettings.getInstance();
@@ -841,8 +847,9 @@ public class EmailUtils {
             }
 
             String from = msg.getFromEmail();
-            if(from==null)
-                from="";
+            if (from == null) {
+                from = "";
+            }
             for (MailboxSetup ms : mailboxes) {
                 if (!StringUtils.isEmpty(from) && from.contains(ms.getEmailAddress())) {
                     return ms;
@@ -906,7 +913,7 @@ public class EmailUtils {
                     if (part.getFileName() != null) {
                         attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                     } else {
-                        if(part.getContentType().toLowerCase().contains("message/rfc822")) {
+                        if (part.getContentType().toLowerCase().contains("message/rfc822")) {
                             attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
                         }
                     }
@@ -927,7 +934,7 @@ public class EmailUtils {
 
     private static Part getAttachmentPart(String name, Object partObject, Folder folder) throws Exception {
 
-        openFolder(folder);
+        boolean opened = openFolder(folder);
 
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
@@ -935,6 +942,9 @@ public class EmailUtils {
                 Part childPart = mp.getBodyPart(i);
                 Part attPart = getAttachmentPart(name, childPart, folder);
                 if (attPart != null) {
+                    if (opened) {
+                        closeIfIMAP(folder);
+                    }
                     return attPart;
                 }
 
@@ -942,6 +952,9 @@ public class EmailUtils {
         } else {
 
             if (partObject == null) {
+                if (opened) {
+                    closeIfIMAP(folder);
+                }
                 return null;
             }
 
@@ -954,18 +967,30 @@ public class EmailUtils {
                 if (mimePart.getContent() instanceof Multipart) {
                     Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
                     if (attPart != null) {
+                        if (opened) {
+                            closeIfIMAP(folder);
+                        }
                         return attPart;
                     }
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
+                    if (opened) {
+                        closeIfIMAP(folder);
+                    }
                     return part;
-                } else if(name.equals("Nachricht_"+part.getSize() + ".eml")) {
+                } else if (name.equals("Nachricht_" + part.getSize() + ".eml")) {
+                    if (opened) {
+                        closeIfIMAP(folder);
+                    }
                     return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
+                    if (opened) {
+                        closeIfIMAP(folder);
+                    }
                     return part;
                 }
 
@@ -973,25 +998,35 @@ public class EmailUtils {
                 log.error("unkown content");
             }
         }
+        if (opened) {
+            closeIfIMAP(folder);
+        }
         return null;
     }
 
-    private static void openFolder(Folder f) throws Exception {
+    /**
+     * @param f
+     * @return true if "open" was called on the folder
+     * @throws Exception
+     */
+    private static boolean openFolder(Folder f) throws Exception {
         boolean closed = false;
         if (f != null) {
             closed = !f.isOpen();
         }
         if (closed && f != null) {
             f.open(Folder.READ_WRITE);
+            return true;
         }
+        return false;
     }
 
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
 
-        openFolder(msgContainer.getMessage().getFolder());
+        boolean opened=openFolder(msgContainer.getMessage().getFolder());
         Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
-        openFolder(msgContainer.getMessage().getFolder());
+        opened=opened || openFolder(msgContainer.getMessage().getFolder());
         if (att != null) {
             InputStream is = att.getInputStream();
             byte[] buffer = new byte[1024];
@@ -1003,9 +1038,15 @@ public class EmailUtils {
             }
             is.close();
             bOut.close();
+            if (opened) {
+                closeIfIMAP(msgContainer.getMessage().getFolder());
+            }
             return bOut.toByteArray();
 
         } else {
+            if (opened) {
+                closeIfIMAP(msgContainer.getMessage().getFolder());
+            }
             return null;
         }
     }
@@ -1074,7 +1115,7 @@ public class EmailUtils {
         }
         return getSentFolder(accountFolders);
     }
-    
+
     public static Folder getDraftsFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
         try {
@@ -1114,7 +1155,7 @@ public class EmailUtils {
     public static Folder getInboxFolder(Folder[] folders) throws Exception {
         return getFolderByName(folders, FolderContainer.INBOX);
     }
-    
+
     public static Folder getDraftsFolder(Folder inbox) throws Exception {
         return getFolderByName(inbox, FolderContainer.DRAFTS);
     }
@@ -1122,7 +1163,7 @@ public class EmailUtils {
     public static Folder getDraftsFolder(Folder[] folders) throws Exception {
         return getFolderByName(folders, FolderContainer.DRAFTS);
     }
-    
+
     public static boolean isDrafts(String folderName) {
         ArrayList<String> aliases = getFolderAliases(FolderContainer.DRAFTS);
         for (String a : aliases) {
@@ -1132,7 +1173,7 @@ public class EmailUtils {
         }
         return false;
     }
-    
+
     public static boolean isInbox(String folderName) {
         ArrayList<String> aliases = getFolderAliases(FolderContainer.INBOX);
         for (String a : aliases) {
@@ -1142,7 +1183,7 @@ public class EmailUtils {
         }
         return false;
     }
-    
+
     public static boolean isSent(String folderName) {
         ArrayList<String> aliases = getFolderAliases(FolderContainer.SENT);
         for (String a : aliases) {
@@ -1152,7 +1193,7 @@ public class EmailUtils {
         }
         return false;
     }
-    
+
     public static boolean isTrash(String folderName) {
         ArrayList<String> aliases = getFolderAliases(FolderContainer.TRASH);
         for (String a : aliases) {
@@ -1251,25 +1292,27 @@ public class EmailUtils {
     public static boolean isIMAP(Folder f) {
         return (f instanceof IMAPFolder);
     }
-    
+
     public static boolean sameCryptoPassword(AddressBean[] addresses) throws Exception {
-        ArrayList<String> passwords=new ArrayList<>();
-        for(AddressBean a: addresses) {
-            if(a.supportsCrypto()) {
-                if(!passwords.contains(a.getEncryptionPwd()))
+        ArrayList<String> passwords = new ArrayList<>();
+        for (AddressBean a : addresses) {
+            if (a.supportsCrypto()) {
+                if (!passwords.contains(a.getEncryptionPwd())) {
                     passwords.add(a.getEncryptionPwd());
+                }
             } else {
                 return false;
             }
         }
-        return passwords.size()==1;
+        return passwords.size() == 1;
     }
 
     // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f) {
-        if(f==null)
+        if (f == null) {
             return;
-        
+        }
+
         try {
             if (isIMAP(f)) {
                 if (f.isOpen()) {
@@ -1282,8 +1325,9 @@ public class EmailUtils {
     }
 
     public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
-        if(StringUtils.isEmpty(decodedTo))
-            decodedTo="Unbekannt";
+        if (StringUtils.isEmpty(decodedTo)) {
+            decodedTo = "Unbekannt";
+        }
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
             decodedTo = decodedTo.replaceAll("<", "&lt;");
             decodedTo = decodedTo.replaceAll(">", "&gt;");
@@ -1483,15 +1527,15 @@ public class EmailUtils {
             StringBuilder toString = new StringBuilder();
             if (sentByCurrentUser) {
                 // sent by the current user - reply to the recipient of the message
-                List<OutlookRecipient> recs= m.getRecipients();
+                List<OutlookRecipient> recs = m.getRecipients();
                 for (OutlookRecipient a : recs) {
                     toString.append(a.getAddress()).append(", ");
                 }
             } else {
                 // not sent by the current user - reply to the sender of the message
-                
+
                 String to = null;
-                if(!StringUtils.isEmpty(replyTo)) {
+                if (!StringUtils.isEmpty(replyTo)) {
                     to = replyTo;
                 }
                 if (to == null) {
@@ -1525,7 +1569,7 @@ public class EmailUtils {
 
         return dlg;
     }
-    
+
     public static SendEmailDialog reply(Message m, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
@@ -1615,10 +1659,11 @@ public class EmailUtils {
             }
         }
 
-        String s=listString.toString();
-        if(s.endsWith(", "))
-            s=s.substring(0, s.length()-2);
-        
+        String s = listString.toString();
+        if (s.endsWith(", ")) {
+            s = s.substring(0, s.length() - 2);
+        }
+
         return s;
     }
 }

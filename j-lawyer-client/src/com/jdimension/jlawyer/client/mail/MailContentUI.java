@@ -1214,7 +1214,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             } else {
                 recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
-                if (partsFound.size() > 0) {
+                if (!partsFound.isEmpty()) {
                     String text = partsFound.get(0);
                     contentUI.setBody(text, ContentTypes.TEXT_PLAIN);
                 } else {
