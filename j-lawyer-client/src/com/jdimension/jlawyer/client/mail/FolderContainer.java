@@ -717,11 +717,11 @@ public class FolderContainer {
         if(this.folder!=null && this.folder.getName()!=null) {
             String folderName=this.folder.getName();
             if(EmailUtils.isInbox(folderName)) {
-                // 5mins plus up to 3min for inbox
-                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*3l));
+                // 5mins plus up to 5min for inbox
+                retentionTime=((5l * 60l * 1000l)+(Math.random()*60000l*5l));
             } else if(EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
-                // 15mins plus up to 30min for drafts, sent, trash
-                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*30l));
+                // 15mins plus up to 45min for drafts, sent, trash
+                retentionTime=((15l * 60l * 1000l)+(Math.random()*60000l*45l));
             }
         }
         
