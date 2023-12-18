@@ -923,7 +923,7 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                     } catch (Exception ex) {
                         try {
                             log.error("Error getting validated PDF", ex);
-                            Thread.sleep(1500);
+                            Thread.sleep(2200);
                         } catch (Throwable t) {
 
                         }
