@@ -813,7 +813,6 @@ public class EmailUtils {
                     }
                 }
                 if (msg.getAllRecipients() != null) {
-                    //boolean opened=openFolder(msg.getFolder());
                     for (Address to : msg.getAllRecipients()) {
                         if (to.toString().contains(ms.getEmailAddress())) {
                             if (opened) {
