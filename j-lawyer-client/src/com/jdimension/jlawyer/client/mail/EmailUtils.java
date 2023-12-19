@@ -1497,7 +1497,7 @@ public class EmailUtils {
 
             HTMLEditorKit editorKit = new HTMLEditorKit();
             Document doc = editorKit.createDefaultDocument();
-            doc.putProperty("IgnoreCharsetDirective", new Boolean(true));
+            doc.putProperty("IgnoreCharsetDirective", true);
             editorKit.read(new StringReader(html), doc, 0);
             String strText = doc.getText(0, doc.getLength());
             return strText;

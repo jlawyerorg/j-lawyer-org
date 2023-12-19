@@ -970,6 +970,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPlaceHolders = new javax.swing.JTable();
         pnlPartiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
+        lblPlaceholderHint = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         txtTemplateFilter = new javax.swing.JTextField();
@@ -1153,11 +1154,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        tblPlaceHolders.setToolTipText("Bearbeiten der Platzhalterwerte durch Doppelklick möglich");
         tblPlaceHolders.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(tblPlaceHolders);
 
         splitPlaceholders.setLeftComponent(jScrollPane1);
         splitPlaceholders.setRightComponent(pnlPartiesPanel);
+
+        lblPlaceholderHint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        lblPlaceholderHint.setText("keine leeren Platzhalterwerte");
+        lblPlaceholderHint.setToolTipText("Bearbeiten der Platzhalterwerte durch Doppelklick möglich");
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1165,13 +1171,20 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(splitPlaceholders)
+                    .add(jPanel2Layout.createSequentialGroup()
+                        .add(lblPlaceholderHint)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblPlaceholderHint)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 581, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1731,13 +1744,17 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
                 ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable, this.timesheetsTable);
 
+                int emptyValues=0;
                 for (String key : ht.keySet()) {
                     if (key.startsWith("[[SCRIPT:")) {
                         continue;
                     }
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
+                    if(StringUtils.isEmpty((String)ht.get(key)))
+                        emptyValues++;
                 }
+                ThreadUtils.setLabel(this.lblPlaceholderHint, emptyValues + " leere Platzhalterwerte");
                 ThreadUtils.setTableModel(this.tblPlaceHolders, model);
 
                 ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<>();
@@ -1965,6 +1982,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JLabel lblPlaceholderHint;
     private javax.swing.JList lstTemplates;
     private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlPartiesPanel;
     private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
