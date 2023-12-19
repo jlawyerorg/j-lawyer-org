@@ -689,4 +689,6 @@ public interface CaseAccountEntryFacadeLocal {
     
     List<CaseAccountEntry> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
     
+    List<CaseAccountEntry> findByInvoice(Invoice invoice);
+    
 }

@@ -679,7 +679,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "CaseAccountEntry.findAll", query = "SELECT a FROM CaseAccountEntry a"),
     @NamedQuery(name = "CaseAccountEntry.findById", query = "SELECT a FROM CaseAccountEntry a WHERE a.id = :id"),
     @NamedQuery(name = "CaseAccountEntry.findByArchiveFileKey", query = "SELECT a FROM CaseAccountEntry a WHERE a.archiveFileKey = :archiveFileKey order by a.entryDate asc"),
-    @NamedQuery(name = "CaseAccountEntry.findByInvoiceDocument", query = "SELECT a FROM CaseAccountEntry a WHERE a.invoice = :invoice"),
+    @NamedQuery(name = "CaseAccountEntry.findByInvoice", query = "SELECT a FROM CaseAccountEntry a WHERE a.invoice = :invoice"),
     @NamedQuery(name = "CaseAccountEntry.findByAddress", query = "SELECT a FROM CaseAccountEntry a WHERE a.contact = :contact")})
 public class CaseAccountEntry implements Serializable {
     

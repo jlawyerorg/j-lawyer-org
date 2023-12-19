@@ -6110,6 +6110,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             CaseAccountEntry updatedEntry = this.accountEntries.find(accountEntry.getId());
             updatedEntry.setContact(accountEntry.getContact());
+            updatedEntry.setEntryDate(accountEntry.getEntryDate());
             updatedEntry.setDescription(accountEntry.getDescription());
             updatedEntry.setEarnings(accountEntry.getEarnings());
             updatedEntry.setEscrowIn(accountEntry.getEscrowIn());
@@ -6160,6 +6161,39 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Buchung Aktenkonto gelöscht (" + entry.getDescription() + ")");
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Invoice invoice=this.invoicesFacade.find(invoiceId);
+        if(invoice==null) {
+            throw new Exception ("Der Beleg kann nicht gefunden werden!");
+        }
+        
+        ArchiveFileBean aFile = invoice.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.accountEntries.findByInvoice(invoice);
+        } else {
+            return new ArrayList<>();
         }
     }
 

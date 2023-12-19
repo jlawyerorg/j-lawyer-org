@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -1002,6 +1003,26 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 log.error("Error determining invoice positions", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
+                for (CaseAccountEntry ae : payments) {
+//                    InvoicePositionEntryPanel posPanel = new InvoicePositionEntryPanel(this, this.taxRates);
+//
+//                    this.pnlInvoicePositions.add(posPanel);
+//                    this.pnlInvoicePositions.doLayout();
+//                    this.bumpSplitPane();
+//
+//                    posPanel.setEntry(this.currentEntry.getId(), pos);
+//                    posPanel.updateEntryTotal();
+
+                }
+
+            } catch (Exception ex) {
+                log.error("Error determining invoice positions", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
 
         }
         
@@ -1109,7 +1130,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         });
 
-        splitMain.setDividerLocation(400);
+        splitMain.setDividerLocation(350);
 
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("Empfänger:");
@@ -1393,7 +1414,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                         .addGap(21, 21, 21)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtName)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 754, Short.MAX_VALUE)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

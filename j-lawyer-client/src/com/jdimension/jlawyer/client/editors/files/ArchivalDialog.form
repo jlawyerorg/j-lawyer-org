@@ -33,17 +33,32 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lblCalendar" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblInvoices" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblTimesheets" alignment="0" pref="585" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblCalendar" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblInvoices" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblTimesheets" alignment="0" pref="585" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblEscrow" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="32767" attributes="0"/>
+                          </Group>
                       </Group>
-                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="chkTimesheets" max="32767" attributes="0"/>
-                          <Component id="chkInvoices" max="32767" attributes="0"/>
-                          <Component id="chkCalendar" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="chkEscrow" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="chkTimesheets" max="32767" attributes="0"/>
+                              <Component id="chkInvoices" max="32767" attributes="0"/>
+                              <Component id="chkCalendar" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="chkExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -69,12 +84,22 @@
                   <Component id="lblTimesheets" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="chkTimesheets" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chkEscrow" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblEscrow" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chkExpenditures" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblExpenditures" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdArchive" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -180,6 +205,32 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkTimesheetsActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkEscrow">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="ignorieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkEscrowActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkExpenditures">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="ignorieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkExpendituresActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblEscrow">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Aktenkonto: Fremdgeld nicht ausgeglichen"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblExpenditures">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Aktenkonto: Auslagen nicht ausgeglichen"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

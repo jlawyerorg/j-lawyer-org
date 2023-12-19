@@ -774,11 +774,14 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.DefaultStyledDocument;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -804,6 +807,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
+    private DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
 
     private ArchiveFileBean dto = null;
     private String openedFromEditorClass = null;
@@ -830,7 +834,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
-        
+
         this.cmdCopyCaseNumber.setText("");
 
         CustomLauncherOptionsDialog.upgradeSettings();
@@ -853,7 +857,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.splitDocuments.setOneTouchExpandable(true);
         ComponentUtils.decorateSplitPane(this.splitDocumentsMain);
         ComponentUtils.decorateSplitPane(this.splitNotes);
-        
+
         this.messageSendPanel1.setMessageConsumer(this);
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
 
@@ -930,7 +934,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         }
-        
+
         this.splitDocuments.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
         ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
@@ -938,7 +942,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.splitDocumentsMain.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
         ComponentUtils.persistSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
-        
+
         this.splitMessages.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitMessages, this.getClass(), "splitMessages");
         ComponentUtils.persistSplitPane(splitMessages, this.getClass(), "splitMessages");
@@ -946,16 +950,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.splitNotes.setDividerLocation(170);
         ComponentUtils.restoreSplitPane(splitNotes, this.getClass(), "splitNotes");
         ComponentUtils.persistSplitPane(splitNotes, this.getClass(), "splitNotes");
-        
-        BoxLayout boxLayout=new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
+
+        BoxLayout boxLayout = new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
         this.pnlInvoices.setLayout(boxLayout);
-                
-        BoxLayout boxLayout3=new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
+
+        BoxLayout boxLayout3 = new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
         this.pnlTimesheets.setLayout(boxLayout3);
-        
+
         BoxLayout msgLayout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(msgLayout);
-        
+
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
         for (CalculationPlugin cp : plugins) {
@@ -988,6 +992,41 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.newEventPanel.setNewEventListener(this);
 
+        this.tblAccountEntries.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value instanceof Float) {
+                    ((JLabel) c).setText(accountEntryFormat.format((Float) value));
+                    ((JLabel) c).setHorizontalAlignment(RIGHT);
+                } else if (value instanceof AddressBean) {
+                    ((JLabel) c).setText(((AddressBean) value).toDisplayName());
+                } else if (value instanceof Invoice) {
+                    ((JLabel) c).setText(((Invoice) value).getInvoiceNumber());
+                }
+                return c;
+            }
+
+        });
+
+        this.tblAccountEntries.setDefaultRenderer(Float.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value instanceof Float) {
+                    ((JLabel) c).setText(accountEntryFormat.format((Float) value));
+                    ((JLabel) c).setHorizontalAlignment(RIGHT);
+                }
+                return c;
+            }
+
+        });
+
+        DateTimeStringComparator dtComparator = new DateTimeStringComparator("dd.MM.yyyy");
+        TableRowSorter htrs = new TableRowSorter(this.tblAccountEntries.getModel());
+        htrs.setComparator(0, dtComparator);
+        this.tblAccountEntries.setRowSorter(htrs);
+
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
@@ -999,9 +1038,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public long getLastPopupClosed() {
         return this.lastPopupClosed;
     }
-    
+
     public void duplicateInvoice(String caseId, String invoiceId) {
-        if(caseId==null) {
+        if (caseId == null) {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
             ArchiveFileBean sel = dlg.getCaseSelection();
@@ -1009,9 +1048,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (sel == null) {
                 return;
             }
-            caseId=sel.getId();
+            caseId = sel.getId();
         }
-        
+
         // get invoice pool
         ClientSettings settings = ClientSettings.getInstance();
         DefaultComboBoxModel<InvoicePool> dmPools = new DefaultComboBoxModel<>();
@@ -1025,24 +1064,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error("Error determining invoice pools", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         JComboBox<InvoicePool> cmbInvoicePool = new JComboBox<>();
         cmbInvoicePool.setModel(dmPools);
         cmbInvoicePool.setSelectedIndex(1);
-        int response=JOptionPane.showConfirmDialog(null, cmbInvoicePool, "Nummernkreis für neuen Beleg",JOptionPane.CANCEL_OPTION,
+        int response = JOptionPane.showConfirmDialog(null, cmbInvoicePool, "Nummernkreis für neuen Beleg", JOptionPane.CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
-        
-        if(response==JOptionPane.CANCEL_OPTION)
+
+        if (response == JOptionPane.CANCEL_OPTION) {
             return;
-        
-        InvoicePool selectedPool=(InvoicePool)cmbInvoicePool.getSelectedItem();
-        
+        }
+
+        InvoicePool selectedPool = (InvoicePool) cmbInvoicePool.getSelectedItem();
+
         // duplicate and add to view, if same case
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Invoice invoiceCopy=locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool);
-            if(this.dto.getId().equals(caseId)) {
-                InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
+            Invoice invoiceCopy = locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool);
+            if (this.dto.getId().equals(caseId)) {
+                InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
                 this.pnlInvoices.add(ip);
             }
@@ -1050,7 +1090,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error("Error determining invoice pools", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Belegnummernkreise: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }
 
     public void documentSelectionChanged() {
@@ -1182,7 +1222,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.caseFolderPanel1.setReadOnly(readOnly || archived);
 
         this.cmdAddForm.setEnabled(!readOnly && !archived);
-        
+
         this.cmdNewTimesheet.setEnabled(!readOnly && !archived);
 
         this.chkArchived.setEnabled(!readOnly && !archived);
@@ -1261,7 +1301,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.taCustom3.setEnabled(!readOnly && !archived);
 
     }
-    
+
     public ArrayList<AddressBean> getInvolvedAddresses() {
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
@@ -1269,7 +1309,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         return clients;
     }
-    
+
     public ArchiveFileBean getArchiveFileDTO() {
         return this.dto;
     }
@@ -1295,7 +1335,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         while (tm.getRowCount() > 0) {
             tm.removeRow(tm.getRowCount() - 1);
         }
-        
+
         DefaultTableModel tm2 = ((DefaultTableModel) this.tblAccountEntries.getModel());
         while (tm2.getRowCount() > 0) {
             tm2.removeRow(tm2.getRowCount() - 1);
@@ -1798,16 +1838,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel26 = new javax.swing.JLabel();
         jLabel27 = new javax.swing.JLabel();
         jLabel28 = new javax.swing.JLabel();
-        jLabel29 = new javax.swing.JLabel();
-        jLabel30 = new javax.swing.JLabel();
-        jLabel31 = new javax.swing.JLabel();
-        jLabel32 = new javax.swing.JLabel();
-        jLabel33 = new javax.swing.JLabel();
-        jLabel34 = new javax.swing.JLabel();
+        lblEarnings = new javax.swing.JLabel();
+        lblSpendings = new javax.swing.JLabel();
+        lblEscrowIn = new javax.swing.JLabel();
+        lblEscrowOut = new javax.swing.JLabel();
+        lblExpendituresIn = new javax.swing.JLabel();
+        lblExpendituresOut = new javax.swing.JLabel();
         jPanel18 = new javax.swing.JPanel();
-        jLabel38 = new javax.swing.JLabel();
-        jLabel39 = new javax.swing.JLabel();
-        jLabel40 = new javax.swing.JLabel();
+        lblEarningsTotal = new javax.swing.JLabel();
+        lblEscrowTotal = new javax.swing.JLabel();
+        lblExpendituresTotal = new javax.swing.JLabel();
+        cmdExportAccountEntries = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         cmdNewInvoice = new javax.swing.JButton();
@@ -2849,7 +2890,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         subTabsFinance.setTabPlacement(javax.swing.JTabbedPane.LEFT);
         subTabsFinance.setFont(subTabsFinance.getFont());
 
-        cmdAddAccountEntry.setText("+");
+        cmdAddAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdAddAccountEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddAccountEntryActionPerformed(evt);
@@ -2881,11 +2922,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         tblAccountEntries.setShowGrid(false);
+        tblAccountEntries.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblAccountEntriesMouseClicked(evt);
+            }
+        });
         jScrollPane10.setViewportView(tblAccountEntries);
 
         cmdEditAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEditAccountEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditAccountEntryActionPerformed(evt);
+            }
+        });
 
         cmdRemoveAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveAccountEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveAccountEntryActionPerformed(evt);
+            }
+        });
 
         jPanel17.setLayout(new java.awt.GridLayout(1, 3));
 
@@ -2963,70 +3019,78 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel28.setOpaque(true);
         jPanel16.add(jLabel28);
 
-        jLabel29.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel29.setFont(jLabel29.getFont());
-        jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel29.setText("0,00");
-        jLabel29.setOpaque(true);
-        jPanel16.add(jLabel29);
+        lblEarnings.setBackground(new java.awt.Color(153, 153, 153));
+        lblEarnings.setFont(lblEarnings.getFont());
+        lblEarnings.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblEarnings.setText("0,00");
+        lblEarnings.setOpaque(true);
+        jPanel16.add(lblEarnings);
 
-        jLabel30.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel30.setFont(jLabel30.getFont());
-        jLabel30.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel30.setText("0,00");
-        jLabel30.setOpaque(true);
-        jPanel16.add(jLabel30);
+        lblSpendings.setBackground(new java.awt.Color(153, 153, 153));
+        lblSpendings.setFont(lblSpendings.getFont());
+        lblSpendings.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSpendings.setText("0,00");
+        lblSpendings.setOpaque(true);
+        jPanel16.add(lblSpendings);
 
-        jLabel31.setBackground(new java.awt.Color(204, 204, 204));
-        jLabel31.setFont(jLabel31.getFont());
-        jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel31.setText("0,00");
-        jLabel31.setOpaque(true);
-        jPanel16.add(jLabel31);
+        lblEscrowIn.setBackground(new java.awt.Color(204, 204, 204));
+        lblEscrowIn.setFont(lblEscrowIn.getFont());
+        lblEscrowIn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblEscrowIn.setText("0,00");
+        lblEscrowIn.setOpaque(true);
+        jPanel16.add(lblEscrowIn);
 
-        jLabel32.setBackground(new java.awt.Color(204, 204, 204));
-        jLabel32.setFont(jLabel32.getFont());
-        jLabel32.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel32.setText("0,00");
-        jLabel32.setOpaque(true);
-        jPanel16.add(jLabel32);
+        lblEscrowOut.setBackground(new java.awt.Color(204, 204, 204));
+        lblEscrowOut.setFont(lblEscrowOut.getFont());
+        lblEscrowOut.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblEscrowOut.setText("0,00");
+        lblEscrowOut.setOpaque(true);
+        jPanel16.add(lblEscrowOut);
 
-        jLabel33.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel33.setFont(jLabel33.getFont());
-        jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel33.setText("0,00");
-        jLabel33.setOpaque(true);
-        jPanel16.add(jLabel33);
+        lblExpendituresIn.setBackground(new java.awt.Color(153, 153, 153));
+        lblExpendituresIn.setFont(lblExpendituresIn.getFont());
+        lblExpendituresIn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblExpendituresIn.setText("0,00");
+        lblExpendituresIn.setOpaque(true);
+        jPanel16.add(lblExpendituresIn);
 
-        jLabel34.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel34.setFont(jLabel34.getFont());
-        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel34.setText("0,00");
-        jLabel34.setOpaque(true);
-        jPanel16.add(jLabel34);
+        lblExpendituresOut.setBackground(new java.awt.Color(153, 153, 153));
+        lblExpendituresOut.setFont(lblExpendituresOut.getFont());
+        lblExpendituresOut.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblExpendituresOut.setText("0,00");
+        lblExpendituresOut.setOpaque(true);
+        jPanel16.add(lblExpendituresOut);
 
         jPanel18.setLayout(new java.awt.GridLayout(1, 3));
 
-        jLabel38.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel38.setFont(jLabel38.getFont().deriveFont(jLabel38.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel38.setText("0,00");
-        jLabel38.setOpaque(true);
-        jPanel18.add(jLabel38);
+        lblEarningsTotal.setBackground(new java.awt.Color(153, 153, 153));
+        lblEarningsTotal.setFont(lblEarningsTotal.getFont().deriveFont(lblEarningsTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblEarningsTotal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblEarningsTotal.setText("0,00");
+        lblEarningsTotal.setOpaque(true);
+        jPanel18.add(lblEarningsTotal);
 
-        jLabel39.setBackground(new java.awt.Color(204, 204, 204));
-        jLabel39.setFont(jLabel39.getFont().deriveFont(jLabel39.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel39.setText("0,00");
-        jLabel39.setOpaque(true);
-        jPanel18.add(jLabel39);
+        lblEscrowTotal.setBackground(new java.awt.Color(204, 204, 204));
+        lblEscrowTotal.setFont(lblEscrowTotal.getFont().deriveFont(lblEscrowTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblEscrowTotal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblEscrowTotal.setText("0,00");
+        lblEscrowTotal.setOpaque(true);
+        jPanel18.add(lblEscrowTotal);
 
-        jLabel40.setBackground(new java.awt.Color(153, 153, 153));
-        jLabel40.setFont(jLabel40.getFont().deriveFont(jLabel40.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel40.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel40.setText("0,00");
-        jLabel40.setOpaque(true);
-        jPanel18.add(jLabel40);
+        lblExpendituresTotal.setBackground(new java.awt.Color(153, 153, 153));
+        lblExpendituresTotal.setFont(lblExpendituresTotal.getFont().deriveFont(lblExpendituresTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblExpendituresTotal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblExpendituresTotal.setText("0,00");
+        lblExpendituresTotal.setOpaque(true);
+        jPanel18.add(lblExpendituresTotal);
+
+        cmdExportAccountEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/table.png"))); // NOI18N
+        cmdExportAccountEntries.setToolTipText("Aktenkonto in Tabellenkalkulation exportieren");
+        cmdExportAccountEntries.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportAccountEntriesActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel15Layout = new org.jdesktop.layout.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -3043,7 +3107,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdEditAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdRemoveAccountEntry)
-                        .add(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdExportAccountEntries))
                     .add(jPanel16, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -3052,11 +3117,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel15Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(cmdAddAccountEntry)
-                        .add(cmdEditAccountEntry))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
+                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(cmdAddAccountEntry)
+                            .add(cmdEditAccountEntry))
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
+                    .add(cmdExportAccountEntries))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3782,15 +3849,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
         ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-        ArchiveFileReviewsBean relevantEvent=null;
+        ArchiveFileReviewsBean relevantEvent = null;
         for (int i = selectedRows.length - 1; i > -1; i--) {
 
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
 
-                if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
-                    relevantEvent=review;
-                
+                if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
+                    relevantEvent = review;
+                }
+
                 calService.removeReview(review.getId());
 
             } catch (Exception ex) {
@@ -3804,12 +3872,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             tModel.removeRow(this.tblReviewReasons.convertRowIndexToModel(selectedRows[i]));
         }
-        
-        if(relevantEvent!=null) {
+
+        if (relevantEvent != null) {
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
         }
-        
+
     }//GEN-LAST:event_mnuRemoveReviewActionPerformed
 
     private void mnuSetReviewOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSetReviewOpenActionPerformed
@@ -3828,15 +3896,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewsBean relevantEvent=null;
+        ArchiveFileReviewsBean relevantEvent = null;
         for (int i = 0; i < selectedRows.length; i++) {
 
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
             review.setDone(false);
-            
-            if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
-                relevantEvent=review;
-            
+
+            if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
+                relevantEvent = review;
+            }
+
             if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
                 try {
                     calService.updateReview(this.dto.getId(), review);
@@ -3852,7 +3921,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
             }
         }
-        if(relevantEvent!=null) {
+        if (relevantEvent != null) {
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
         }
@@ -3875,15 +3944,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewsBean relevantEvent=null;
+        ArchiveFileReviewsBean relevantEvent = null;
         for (int i = 0; i < selectedRows.length; i++) {
 
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
                 review.setDone(true);
-                
-                if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null)
-                    relevantEvent=review;
+
+                if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
+                    relevantEvent = review;
+                }
 
                 calService.updateReview(this.dto.getId(), review);
 
@@ -3897,7 +3967,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
             this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], 4);
         }
-        if(relevantEvent != null) {
+        if (relevantEvent != null) {
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
         }
@@ -3959,9 +4029,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ActionListener al = (ActionEvent e) -> {
                     try {
 
-                        if(!CaseUtils.requestOpen(value, this))
+                        if (!CaseUtils.requestOpen(value, this)) {
                             return;
-                        
+                        }
+
                         CaseUtils.openDocumentInCustomLauncher(dto, value, this.readOnly, this, customLauncher, null);
 
                     } catch (Exception ex) {
@@ -3979,19 +4050,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
 
     }
-    
+
     public void addMessageToView(InstantMessage msg) {
         // check if message has already been added
-        for(Component c: this.pnlMessages.getComponents()) {
-            if(c instanceof MessagePanel) {
-                InstantMessage existingMessage=((MessagePanel)c).getMessage();
-                if(existingMessage.getId().equals(msg.getId())) {
+        for (Component c : this.pnlMessages.getComponents()) {
+            if (c instanceof MessagePanel) {
+                InstantMessage existingMessage = ((MessagePanel) c).getMessage();
+                if (existingMessage.getId().equals(msg.getId())) {
                     return;
                 }
             }
         }
-        
-        
+
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         mp1.setContextForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -4036,7 +4106,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
         reviewDto = calService.addReview(this.dto.getId(), reviewDto);
-        
+
         EventBroker eb = EventBroker.getInstance();
         eb.publishEvent(new ReviewAddedEvent(reviewDto));
 
@@ -4073,7 +4143,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.repaint();
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
-        
+
     }//GEN-LAST:event_cmdSearchClientActionPerformed
 
     public boolean confirmSave(String question, String tagToActivate) {
@@ -4126,7 +4196,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new CasesChangedEvent());
-                
+
                 EditorsRegistry.getInstance().updateStatus("Akte gespeichert.", 5000);
                 return true;
             } catch (Exception ex) {
@@ -4142,6 +4212,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return false;
     }
 
+    private void loadAccountEntries() {
+        TableUtils.clearModel(this.tblAccountEntries);
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
+            for (CaseAccountEntry cae : accountEntries) {
+                this.addAccountEntry(cae);
+            }
+        } catch (Exception ex) {
+            log.error("Error loading account entries", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Aktenkontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
         if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
@@ -4149,20 +4235,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.dto == null || this.dto.getId() == null) {
                 this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
-            
-            if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount()==0) {
-                try {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                    List<CaseAccountEntry> accountEntries=fileService.getAccountEntries(this.dto.getId());
-                    for(CaseAccountEntry cae: accountEntries) {
-                        this.addAccountEntry(cae);
-                    }
-                } catch (Exception ex) {
-                    log.error("Error loading account entries", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Aktenkontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
+
+            if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount() == 0) {
+                this.loadAccountEntries();
             }
 
         }
@@ -4245,7 +4320,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             fip.save();
         }
     }
-    
+
     private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
 
         // save all forms to have the latest data available for document creation
@@ -4286,9 +4361,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
-            
-            if(!CaseUtils.requestOpen(value, this))
+
+            if (!CaseUtils.requestOpen(value, this)) {
                 return;
+            }
 
             //CaseUtils.openDocument(dto, value, this.readOnly, this);
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -4346,9 +4422,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void cmdPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPrintActionPerformed
-        
+
         try {
-            
+
             JDialog dlgPrint = new JDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlgPrint.setTitle("Handakte");
             dlgPrint.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -4383,7 +4459,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error("Error displaying print dialgo", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Handakte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_cmdPrintActionPerformed
 
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
@@ -4392,7 +4468,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void uploadDocument(Invoice invoice) {
         JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(invoice==null);
+        chooser.setMultiSelectionEnabled(invoice == null);
 
         ClientSettings settings = ClientSettings.getInstance();
         String lastUploadDir = settings.getConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, null);
@@ -4408,12 +4484,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
-                File[] fileArray=null;
-                if(chooser.isMultiSelectionEnabled()) {
+                File[] fileArray = null;
+                if (chooser.isMultiSelectionEnabled()) {
                     fileArray = chooser.getSelectedFiles();
                 } else {
-                    fileArray=new File[1];
-                    fileArray[0]=chooser.getSelectedFile();
+                    fileArray = new File[1];
+                    fileArray[0] = chooser.getSelectedFile();
                 }
                 ArrayList<File> files = new ArrayList<>();
                 boolean lastUploadSaved = false;
@@ -4429,7 +4505,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                if(invoice == null) {
+                if (invoice == null) {
                     ThreadUtils.setWaitCursor(this);
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
@@ -4442,7 +4518,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
                     a.execute();
                 }
-                
 
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
@@ -4450,7 +4525,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
     }
-    
+
     private void mnuRemoveDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveDocumentActionPerformed
 
         try {
@@ -4560,7 +4635,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                     calService.updateReview(this.dto.getId(), reviewDto);
-                    
+
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ReviewUpdatedEvent(null, null, reviewDto));
                 } catch (Exception ex) {
@@ -4617,12 +4692,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void closeInvolvedPartyEntryPanelSubscriptions() {
         for (Component c : this.pnlInvolvedParties.getComponents()) {
-            if(c instanceof InvolvedPartyEntryPanel) {
-                ((InvolvedPartyEntryPanel)c).close();
+            if (c instanceof InvolvedPartyEntryPanel) {
+                ((InvolvedPartyEntryPanel) c).close();
             }
         }
     }
-    
+
     private void mnuRenameDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameDocumentActionPerformed
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -4673,10 +4748,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         // save form data so changes are available immediately for mail templates
-        if(!this.readOnly)
+        if (!this.readOnly) {
             this.saveFormData();
+        }
 
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
@@ -4735,9 +4811,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         // save form data so changes are available immediately for mail templates
-        if(!this.readOnly)
+        if (!this.readOnly) {
             this.saveFormData();
-        
+        }
+
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
@@ -4760,7 +4837,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(selectedDocs.size()>1);
+        pi.setShowCancelButton(selectedDocs.size() > 1);
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
 
         a.start();
@@ -4864,7 +4941,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
             allParties.add(abean);
         }
-        
+
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -4910,7 +4987,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
             allParties.add(abean);
         }
-        
+
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -5024,7 +5101,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
             allParties.add(abean);
         }
-        
+
         ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
@@ -5035,7 +5112,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         DrebisFreeTextWizardDialog dlg = new DrebisFreeTextWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
 
         WizardSteps steps = new WizardSteps(dlg);
-        
+
         WizardDataContainer data = steps.getData();
         data.put("archiveFile.id", this.dto.getId());
         data.put("archiveFile.name", this.dto.getName());
@@ -5047,15 +5124,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("clients.allparties", allParties);
         data.put("documents.documentbeans", docs);
         data.put("documents.documentbeans.selected", selDocs);
-        
+
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextReceiptStep());
-
-        
 
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -5187,7 +5262,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (sel == null) {
                 return;
             }
-            
+
             CaseUtils.optionalUnarchiveCase(sel, this);
 
             for (ArchiveFileDocumentsBean doc : selected) {
@@ -5238,7 +5313,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-        
+
         String currentExt = "";
         for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
             ext = ext.toLowerCase();
@@ -5330,10 +5405,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.waitForOpenDocument(doc, callback);
         this.lastPopupClosed = System.currentTimeMillis();
-        
-        
+
     }
-    
+
     private void mnuDuplicateDocumentAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsPdfActionPerformed
         if (LoadDocumentPreviewThread.isRunning()) {
             JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
@@ -5341,7 +5415,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         try {
-            
+
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
             if (selected.isEmpty()) {
                 return;
@@ -5359,7 +5433,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
             }
-            
 
             for (ArchiveFileDocumentsBean doc : selected) {
                 this.convertDocumentToPdf(doc);
@@ -5407,17 +5480,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewsBean relevantEvent=null;
-        Date oldBegin=null;
-        Date oldEnd=null;
+        ArchiveFileReviewsBean relevantEvent = null;
+        Date oldBegin = null;
+        Date oldEnd = null;
         for (int i = 0; i < selectedRows.length; i++) {
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            if(DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent==null) {
-                relevantEvent=review;
-                oldBegin=review.getBeginDate();
-                oldEnd=review.getEndDate();
+            if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
+                relevantEvent = review;
+                oldBegin = review.getBeginDate();
+                oldEnd = review.getEndDate();
             }
-            
+
             try {
                 if (review.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
                     JOptionPane.showMessageDialog(this, "Fristen können nicht verschoben werden!", "Hinweis", JOptionPane.WARNING_MESSAGE);
@@ -5431,9 +5504,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     review.setEndDate(new Date(review.getEndDate().getTime() + difference));
                 }
                 review.setBeginDate(d);
-                
+
                 if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
-                    relevantEvent=review;
+                    relevantEvent = review;
                 }
 
                 if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
@@ -5450,7 +5523,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         }
-        if(relevantEvent != null) {
+        if (relevantEvent != null) {
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ReviewUpdatedEvent(oldBegin, oldEnd, relevantEvent));
         }
@@ -5485,9 +5558,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        if(!this.readOnly)
+        if (!this.readOnly) {
             this.saveFormData();
-        
+        }
+
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
 
         dlg.setArchiveFile(dto);
@@ -5547,9 +5621,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        if(!this.readOnly)
+        if (!this.readOnly) {
             this.saveFormData();
-        
+        }
+
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
 
         dlg.setArchiveFile(dto);
@@ -5559,7 +5634,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(selectedDocs.size()>1);
+        pi.setShowCancelButton(selectedDocs.size() > 1);
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
 
         a.start();
@@ -5607,7 +5682,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setTitle("Notiz hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
+
     }//GEN-LAST:event_cmdAddNoteActionPerformed
 
     private void mnuEditReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReviewActionPerformed
@@ -6024,7 +6099,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void chkArchivedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkArchivedActionPerformed
         if (chkArchived.isSelected()) {
-            ArchivalDialog dlg=new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlTimesheets);
+            if(this.tblAccountEntries.getRowCount()==0) {
+                this.loadAccountEntries();
+            }
+            List<CaseAccountEntry> accountEntries=new ArrayList<>();
+            float totalEscrow=0f;
+            //float totalEarnings=0f;
+            float totalExpenditures=0f;
+            for(int r=0;r<this.tblAccountEntries.getRowCount();r++) {
+                AccountEntryRowIdentifier ident=(AccountEntryRowIdentifier)this.tblAccountEntries.getValueAt(r, 0);
+                totalEscrow=totalEscrow+ident.getAccountEntry().getEscrowIn() - ident.getAccountEntry().getEscrowOut();
+                //totalEarnings=totalEarnings+ident.getAccountEntry().getEarnings() - ident.getAccountEntry().getSpendings();
+                totalExpenditures=totalExpenditures+ident.getAccountEntry().getExpendituresIn()-ident.getAccountEntry().getExpendituresOut();
+            }
+            
+            
+            ArchivalDialog dlg = new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlTimesheets, totalEscrow, totalExpenditures);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
             if (!dlg.isArchivalConfirmed()) {
@@ -6137,25 +6227,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
 
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
-        InvoiceDialog dlg=new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        InvoiceDialog dlg = new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
-        InvoiceEntryPanel ip=new InvoiceEntryPanel(this);
+
+        InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
         ip.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
         this.pnlInvoices.add(ip, 0);
         this.pnlInvoices.revalidate();
-        
+
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed
 
     private void cmdLoadFullHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoadFullHistoryActionPerformed
-        if(this.dto!=null && this.dto.getId()!=null) {
-            ArchiveFileHistoryBean[] dtos=null;
+        if (this.dto != null && this.dto.getId() != null) {
+            ArchiveFileHistoryBean[] dtos = null;
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
-                dtos=caseService.getHistoryForArchiveFile(this.dto.getId(), null);
+                dtos = caseService.getHistoryForArchiveFile(this.dto.getId(), null);
             } catch (Throwable ex) {
                 log.error("Error enabling case sync", ex);
                 JOptionPane.showMessageDialog(this, "Synchronisation kann nicht aktiviert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -6184,7 +6274,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
 
     private void cmdCopyCaseNumberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyCaseNumberActionPerformed
-        if(this.dto != null) {
+        if (this.dto != null) {
             Toolkit toolkit = Toolkit.getDefaultToolkit();
             Clipboard clipboard = toolkit.getSystemClipboard();
             StringSelection strSel = new StringSelection(this.dto.getFileNumber());
@@ -6193,38 +6283,39 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdCopyCaseNumberActionPerformed
 
     private void cmdNewTimesheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewTimesheetActionPerformed
-        
-        TimesheetDialog dlg=new TimesheetDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
+
+        TimesheetDialog dlg = new TimesheetDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setTimesheetName(this.dto.getName());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
-        TimesheetEntryPanel tp=new TimesheetEntryPanel(this);
+
+        TimesheetEntryPanel tp = new TimesheetEntryPanel(this);
         tp.setEntry(this.dto, dlg.getEntry());
         this.pnlTimesheets.add(tp);
-       
+
     }//GEN-LAST:event_cmdNewTimesheetActionPerformed
 
     private void cmdTimesheetLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetLogActionPerformed
-        TimesheetLogDialog dlg=new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId());
+        TimesheetLogDialog dlg = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdTimesheetLogActionPerformed
 
     private void mnuSendMessageForDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendMessageForDocumentActionPerformed
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-        if(selectedDocs.isEmpty())
+        if (selectedDocs.isEmpty()) {
             return;
-        
-        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs);
+        }
+
+        SendInstantMessageDialog dlg = new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, selectedDocs);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
+
 
     }//GEN-LAST:event_mnuSendMessageForDocumentActionPerformed
 
     private void cmdSendInstantMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendInstantMessageActionPerformed
-        SendInstantMessageDialog dlg=new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null, this);
+        SendInstantMessageDialog dlg = new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null, this);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSendInstantMessageActionPerformed
@@ -6241,7 +6332,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             pi.setShowCancelButton(true);
             CopyDocumentsToClipboardAction a = new CopyDocumentsToClipboardAction(pi, this, selectedDocs);
             a.start();
-            
+
         } catch (Exception ioe) {
             log.error("Error copying documents to clipboard", ioe);
             JOptionPane.showMessageDialog(this, "Fehler beim Kopieren in die Zwischenablage: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -6262,21 +6353,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         EpostWizardDialog dlg = new EpostWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
 
         WizardSteps steps = new WizardSteps(dlg);
-        
+
         WizardDataContainer data = steps.getData();
         data.put("epost.letter.documents", selectedDocs);
         data.put("epost.letter.caseid", this.dto.getId());
-        
-        List<AddressBean> addresses=new ArrayList<>();
+
+        List<AddressBean> addresses = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
             addresses.add(aab.getAddressKey());
         }
         data.put("epost.letter.addresses", addresses);
-                
+
         steps.addStep(new EpostPdfConversionStep());
         steps.addStep(new EpostPdfOrderingStep());
         steps.addStep(new EpostPdfMergeStep());
@@ -6287,49 +6378,172 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
+
     }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
 
     private void addAccountEntry(CaseAccountEntry e) {
-        ((DefaultTableModel)this.tblAccountEntries.getModel()).addRow(new Object[]{e.getEntryDate(), e.getContact(), e.getEarnings(), e.getSpendings(), e.getEscrowIn(),e.getEscrowOut(),e.getExpendituresIn(),e.getExpendituresOut(), e.getInvoice(), e.getDescription()});
+        ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings(), e.getSpendings(), e.getEscrowIn(), e.getEscrowOut(), e.getExpendituresIn(), e.getExpendituresOut(), e.getInvoice(), e.getDescription()});
+        this.updateAccountTotals();
     }
-    
+
+    private void updateAccountTotals() {
+
+        float tEarnings = 0f;
+        float tSpendings = 0f;
+        float tEscrowIn = 0f;
+        float tEscrowOut = 0f;
+        float tExpIn = 0f;
+        float tExpOut = 0f;
+        for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
+            AccountEntryRowIdentifier id = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0);
+            CaseAccountEntry e = id.getAccountEntry();
+
+            tEarnings += e.getEarnings();
+            tSpendings += e.getSpendings();
+            tEscrowIn += e.getEscrowIn();
+            tEscrowOut += e.getEscrowOut();
+            tExpIn += e.getExpendituresIn();
+            tExpOut += e.getExpendituresOut();
+        }
+
+        float tEarningsSpendings = tEarnings - tSpendings;
+        float tEscrow = tEscrowIn - tEscrowOut;
+        float tExp = tExpIn - tExpOut;
+
+        this.lblEarnings.setText(accountEntryFormat.format(tEarnings));
+        this.lblSpendings.setText(accountEntryFormat.format(tSpendings));
+        this.lblEscrowIn.setText(accountEntryFormat.format(tEscrowIn));
+        this.lblEscrowOut.setText(accountEntryFormat.format(tEscrowOut));
+        this.lblExpendituresIn.setText(accountEntryFormat.format(tExpIn));
+        this.lblExpendituresOut.setText(accountEntryFormat.format(tExpOut));
+        this.lblEarningsTotal.setText(accountEntryFormat.format(tEarningsSpendings));
+        this.lblEscrowTotal.setText(accountEntryFormat.format(tEscrow));
+        this.lblExpendituresTotal.setText(accountEntryFormat.format(tExp));
+
+    }
+
     private void cmdAddAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddAccountEntryActionPerformed
-        CaseAccountEntryDialog dlg=new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null);
+
+        ArrayList<Invoice> invoices = new ArrayList<>();
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            invoices.add(inv);
+        }
+
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        if(dlg.getEntry()!=null) {
-            CaseAccountEntry e=dlg.getEntry();
+        if (dlg.getEntry() != null) {
+            CaseAccountEntry e = dlg.getEntry();
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
-                e=caseService.addAccountEntry(this.dto.getId(), e);
+                e = caseService.addAccountEntry(this.dto.getId(), e);
                 this.addAccountEntry(e);
+                this.updateAccountTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }            
+            }
         }
     }//GEN-LAST:event_cmdAddAccountEntryActionPerformed
 
+    private void cmdRemoveAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAccountEntryActionPerformed
+        int[] selected = this.tblAccountEntries.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        for (int i = selected.length - 1; i > -1; i--) {
+            AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(selected[i], 0);
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+                caseService.removeAccountEntry(ae.getAccountEntry().getId());
+                ((DefaultTableModel) this.tblAccountEntries.getModel()).removeRow(this.tblAccountEntries.convertRowIndexToModel(selected[i]));
+            } catch (Throwable ex) {
+                log.error("Error removing account entry", ex);
+                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht gelöscht werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+
+        this.updateAccountTotals();
+
+
+    }//GEN-LAST:event_cmdRemoveAccountEntryActionPerformed
+
+    private void cmdEditAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditAccountEntryActionPerformed
+
+        int[] selected = this.tblAccountEntries.getSelectedRows();
+        if (selected.length != 1) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
+
+        ArrayList<Invoice> invoices = new ArrayList<>();
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            invoices.add(inv);
+        }
+
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if (dlg.getEntry() != null) {
+            CaseAccountEntry e = dlg.getEntry();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+                e = caseService.updateAccountEntry(this.dto.getId(), e);
+                ((DefaultTableModel) this.tblAccountEntries.getModel()).removeRow(this.tblAccountEntries.convertRowIndexToModel(this.tblAccountEntries.getSelectedRow()));
+                this.addAccountEntry(e);
+
+                this.updateAccountTotals();
+            } catch (Throwable ex) {
+                log.error("Error saving account entry", ex);
+                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdEditAccountEntryActionPerformed
+
+    private void tblAccountEntriesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAccountEntriesMouseClicked
+        if (evt.getClickCount() == 2)
+            this.cmdEditAccountEntryActionPerformed(null);
+    }//GEN-LAST:event_tblAccountEntriesMouseClicked
+
+    private void cmdExportAccountEntriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportAccountEntriesActionPerformed
+        try {
+            TableUtils.exportAndLaunch("aktenkonto-export.csv", this.tblAccountEntries, this.accountEntryFormat);
+        } catch (Exception ex) {
+            log.error("Error exporting table to CSV", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExportAccountEntriesActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
-        if(!this.readOnly) {
+        if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
             hp.setLocationRelativeTo(this.mnuDocumentHighlights);
             hp.setVisible(true);
-            int highlightColor=Integer.MIN_VALUE;
+            int highlightColor = Integer.MIN_VALUE;
             if (hp.getSelectedColor() != null) {
-                highlightColor=hp.getSelectedColor().getRGB();
+                highlightColor = hp.getSelectedColor().getRGB();
             }
-            
+
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
                 for (ArchiveFileDocumentsBean doc : selectedDocs) {
-                    if(highlightIndex==1) {
+                    if (highlightIndex == 1) {
                         remote.setDocumentHighlights(doc.getId(), highlightColor, doc.getHighlight2());
                         doc.setHighlight1(highlightColor);
                     } else {
@@ -6343,10 +6557,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 log.error("Error highlighting documents", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Hervorheben von Dokumenten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
         }
     }
-    
+
     public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
@@ -6493,28 +6707,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         } else if (e instanceof InstantMessageDeletedEvent) {
-            
-                boolean removed = false;
-                for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
-                    if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
-                        if (((MessagePanel) this.pnlMessages.getComponent(i)).getMessage().getId().equals(((InstantMessageDeletedEvent)e).getMessageId())) {
-                            this.pnlMessages.remove(this.pnlMessages.getComponent(i));
-                            removed = true;
-                            break;
-                        }
+
+            boolean removed = false;
+            for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+                if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                    if (((MessagePanel) this.pnlMessages.getComponent(i)).getMessage().getId().equals(((InstantMessageDeletedEvent) e).getMessageId())) {
+                        this.pnlMessages.remove(this.pnlMessages.getComponent(i));
+                        removed = true;
+                        break;
                     }
                 }
-                if (removed) {
-                    this.pnlMessages.revalidate();
-                }
-                
-            
-            
+            }
+            if (removed) {
+                this.pnlMessages.revalidate();
+            }
+
         } else if (e instanceof NewInstantMessagesEvent) {
             SwingUtilities.invokeLater(() -> {
                 if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
                     for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
-                        if(msg.getCaseContext() != null && this.dto!=null) {
+                        if (msg.getCaseContext() != null && this.dto != null) {
                             if (msg.getCaseContext().getId().equals(this.dto.getId())) {
                                 this.addMessageToView(msg);
                             }
@@ -6611,20 +6823,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     @Override
     public void newMessageForSubmission(InstantMessage msg) {
-        
-        if(this.dto==null || this.dto.getId()==null) {
-                return;
-            }
-        
+
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             msg.setCaseContext(this.dto);
             InstantMessage submittedMsg = locator.lookupMessagingServiceRemote().submitMessage(msg);
-            
+
             InstantMessage reloadedMsg = locator.lookupMessagingServiceRemote().getMessage(submittedMsg.getId());
-            
+
             this.addMessageToView(reloadedMsg);
 
         } catch (Exception ex) {
@@ -6745,6 +6957,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDrebis;
     private javax.swing.JButton cmdEditAccountEntry;
+    private javax.swing.JButton cmdExportAccountEntries;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
@@ -6787,20 +7000,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
-    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel30;
-    private javax.swing.JLabel jLabel31;
-    private javax.swing.JLabel jLabel32;
-    private javax.swing.JLabel jLabel33;
-    private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
     private javax.swing.JLabel jLabel37;
-    private javax.swing.JLabel jLabel38;
-    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -6850,8 +7054,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblCustom2;
     private javax.swing.JLabel lblCustom3;
     private javax.swing.JLabel lblDocumentHits;
+    private javax.swing.JLabel lblEarnings;
+    private javax.swing.JLabel lblEarningsTotal;
+    private javax.swing.JLabel lblEscrowIn;
+    private javax.swing.JLabel lblEscrowOut;
+    private javax.swing.JLabel lblEscrowTotal;
+    private javax.swing.JLabel lblExpendituresIn;
+    private javax.swing.JLabel lblExpendituresOut;
+    private javax.swing.JLabel lblExpendituresTotal;
     private javax.swing.JLabel lblHeaderInfo;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JLabel lblSpendings;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCopyFilesToClipboard;
@@ -6960,7 +7173,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.saveFormData();
-        
+
         // todo: check all data here for changes
         if (this.dto.isArchived() != this.chkArchived.isSelected()) {
             return true;
@@ -7103,9 +7316,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String fileNumberMain = null;
             String fileNumberExt = null;
             CaseFolder rootFolder = null;
-            Date dCr=null;
-            Date dCh=null;
-            Date dAr=null;
+            Date dCr = null;
+            Date dCh = null;
+            Date dAr = null;
             String externalId = null;
             if (this.dto != null) {
                 id = this.dto.getId();
@@ -7113,9 +7326,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 fileNumberMain = this.dto.getFileNumberMain();
                 fileNumberExt = this.dto.getFileNumberExtension();
                 rootFolder = this.dto.getRootFolder();
-                dCr=this.dto.getDateCreated();
-                dCh=this.dto.getDateChanged();
-                dAr=this.dto.getDateArchived();
+                dCr = this.dto.getDateCreated();
+                dCh = this.dto.getDateChanged();
+                dAr = this.dto.getDateArchived();
             }
 
             this.dto = new ArchiveFileBean();
@@ -7131,7 +7344,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (externalId != null) {
                 this.dto.setExternalId(externalId);
             }
-            
+
             this.fillDTO(this.dto, true);
 
             String caseId = null;
@@ -7169,9 +7382,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }));
 
             }
-            
+
             this.saveFormData();
-            
+
             if (this.groupPrivilegesChanged) {
                 ArrayList<Group> allowedGroups = new ArrayList<>();
                 for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
@@ -7202,7 +7415,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // it's a new archive file, so clear the input fields when saved
                 this.clearInputs();
             }
-            
+
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new CasesChangedEvent());
 

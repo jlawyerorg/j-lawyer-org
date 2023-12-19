@@ -664,7 +664,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DateUtils;
@@ -702,8 +701,10 @@ public class ArchivalDialog extends javax.swing.JDialog {
      * @param tblReviews
      * @param invoicesPanel
      * @param timesheetsPanel
+     * @param totalEscrowDiff
+     * @param totalExpendituresDiff
      */
-    public ArchivalDialog(java.awt.Frame parent, boolean modal, String caseId, JTable tblReviews, JPanel invoicesPanel, JPanel timesheetsPanel) {
+    public ArchivalDialog(java.awt.Frame parent, boolean modal, String caseId, JTable tblReviews, JPanel invoicesPanel, JPanel timesheetsPanel, float totalEscrowDiff, float totalExpendituresDiff) {
         super(parent, modal);
         initComponents();
 
@@ -717,14 +718,20 @@ public class ArchivalDialog extends javax.swing.JDialog {
         this.chkCalendar.setEnabled(false);
         this.chkInvoices.setEnabled(false);
         this.chkTimesheets.setEnabled(false);
+        this.chkEscrow.setEnabled(false);
+        this.chkExpenditures.setEnabled(false);
         
         this.lblCalendar.setText("Keine offenen Kalendereinträge");
         this.lblInvoices.setText("Keine Belege in Offene Posten-Liste");
         this.lblTimesheets.setText("Keine offenen Zeiterfassungsprojekte");
+        this.lblEscrow.setText("Aktenkonto: Fremdgelder sind ausgeglichen");
+        this.lblExpenditures.setText("Aktenkonto: Auslagen sind ausgeglichen");
         
         this.lblCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         this.lblInvoices.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         this.lblTimesheets.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         
         ArrayList<ArchiveFileReviewsBean> openCalItems = new ArrayList<>();
         ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) tblReviews.getModel();
@@ -803,6 +810,18 @@ public class ArchivalDialog extends javax.swing.JDialog {
 
         }
         
+        if(totalEscrowDiff!=0) {
+            this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.chkEscrow.setEnabled(true);
+            this.lblEscrow.setText("Aktenkonto: Fremdgelder nicht ausgeglichen");
+        }
+        
+        if(totalExpendituresDiff!=0) {
+            this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.chkExpenditures.setEnabled(true);
+            this.lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
+        }
+        
         this.enableArchival();
 
     }
@@ -824,6 +843,10 @@ public class ArchivalDialog extends javax.swing.JDialog {
         chkCalendar = new javax.swing.JCheckBox();
         chkInvoices = new javax.swing.JCheckBox();
         chkTimesheets = new javax.swing.JCheckBox();
+        chkEscrow = new javax.swing.JCheckBox();
+        chkExpenditures = new javax.swing.JCheckBox();
+        lblEscrow = new javax.swing.JLabel();
+        lblExpenditures = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akte archivieren - Prüfergebnis");
@@ -879,6 +902,24 @@ public class ArchivalDialog extends javax.swing.JDialog {
             }
         });
 
+        chkEscrow.setText("ignorieren");
+        chkEscrow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkEscrowActionPerformed(evt);
+            }
+        });
+
+        chkExpenditures.setText("ignorieren");
+        chkExpenditures.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkExpendituresActionPerformed(evt);
+            }
+        });
+
+        lblEscrow.setText("Aktenkonto: Fremdgeld nicht ausgeglichen");
+
+        lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -891,16 +932,26 @@ public class ArchivalDialog extends javax.swing.JDialog {
                         .addComponent(cmdArchive)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
-                    .addGroup(layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(chkTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chkInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chkCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE))
+                                .addGap(18, 18, 18))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblEscrow)
+                                    .addComponent(lblExpenditures))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkEscrow)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(chkTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(chkInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(chkCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(chkExpenditures))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -918,11 +969,19 @@ public class ArchivalDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblTimesheets)
                     .addComponent(chkTimesheets))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkEscrow)
+                    .addComponent(lblEscrow))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkExpenditures)
+                    .addComponent(lblExpenditures))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdArchive))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -1018,12 +1077,22 @@ public class ArchivalDialog extends javax.swing.JDialog {
         this.enableArchival();
     }//GEN-LAST:event_chkTimesheetsActionPerformed
 
+    private void chkEscrowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEscrowActionPerformed
+        this.enableArchival();
+    }//GEN-LAST:event_chkEscrowActionPerformed
+
+    private void chkExpendituresActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExpendituresActionPerformed
+        this.enableArchival();
+    }//GEN-LAST:event_chkExpendituresActionPerformed
+
     private void enableArchival() {
         boolean calendarOkay=!this.chkCalendar.isEnabled() || (this.chkCalendar.isSelected() && this.chkCalendar.isEnabled());
         boolean invoiceOkay=!this.chkInvoices.isEnabled() || (this.chkInvoices.isSelected() && this.chkInvoices.isEnabled());
         boolean timesheetOkay=!this.chkTimesheets.isEnabled() || (this.chkTimesheets.isSelected() && this.chkTimesheets.isEnabled());
+        boolean escrowOkay=!this.chkEscrow.isEnabled() || (this.chkEscrow.isSelected() && this.chkEscrow.isEnabled());
+        boolean expendituresOkay=!this.chkExpenditures.isEnabled() || (this.chkExpenditures.isSelected() && this.chkExpenditures.isEnabled());
         
-        this.cmdArchive.setEnabled(invoiceOkay && calendarOkay && timesheetOkay);
+        this.cmdArchive.setEnabled(invoiceOkay && calendarOkay && timesheetOkay && escrowOkay && expendituresOkay);
     }
     
     /**
@@ -1054,27 +1123,29 @@ public class ArchivalDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ArchivalDialog dialog = new ArchivalDialog(new javax.swing.JFrame(), true, null, null, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ArchivalDialog dialog = new ArchivalDialog(new javax.swing.JFrame(), true, null, null, null, null, 0f, 0f);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkCalendar;
+    private javax.swing.JCheckBox chkEscrow;
+    private javax.swing.JCheckBox chkExpenditures;
     private javax.swing.JCheckBox chkInvoices;
     private javax.swing.JCheckBox chkTimesheets;
     private javax.swing.JButton cmdArchive;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JLabel lblCalendar;
+    private javax.swing.JLabel lblEscrow;
+    private javax.swing.JLabel lblExpenditures;
     private javax.swing.JLabel lblInvoices;
     private javax.swing.JLabel lblTimesheets;
     // End of variables declaration//GEN-END:variables

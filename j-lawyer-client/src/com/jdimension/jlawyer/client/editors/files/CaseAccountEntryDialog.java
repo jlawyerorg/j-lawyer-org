@@ -663,9 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
-import java.util.Date;
+import com.jdimension.jlawyer.persistence.Invoice;
+import java.util.List;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -673,8 +677,11 @@ import java.util.Date;
  */
 public class CaseAccountEntryDialog extends javax.swing.JDialog {
 
+    private static final Logger log=Logger.getLogger(CaseAccountEntryDialog.class.getName());
+    
     private CaseAccountEntry entry=null;
     private ArchiveFileBean caseDto=null;
+    private final List<Invoice> invoices;
     
     /**
      * Creates new form CaseAccountEntryDialog
@@ -682,16 +689,22 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
      * @param modal
      * @param dto
      * @param entry
+     * @param addresses
+     * @param invoices
      */
-    public CaseAccountEntryDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean dto, CaseAccountEntry entry) {
+    public CaseAccountEntryDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean dto, CaseAccountEntry entry, List<AddressBean> addresses, List<Invoice> invoices) {
         super(parent, modal);
         initComponents();
         this.entry=entry;
         this.caseDto=dto;
         
-        if(entry!=null) {
-            
-        }
+        
+        this.caseAccountEntryPanel1.setCaseEntry(caseDto);
+        this.caseAccountEntryPanel1.setParentDialog(this);
+        this.caseAccountEntryPanel1.setAddresses(addresses);
+        this.caseAccountEntryPanel1.setInvoices(invoices);
+        this.caseAccountEntryPanel1.setEntry(entry);
+        this.invoices = invoices;
     }
 
     /**
@@ -703,95 +716,12 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        txtDate = new javax.swing.JFormattedTextField();
-        jButton1 = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        txtEarnings = new javax.swing.JFormattedTextField();
-        txtSpendings = new javax.swing.JFormattedTextField();
-        jLabel2 = new javax.swing.JLabel();
-        txtEscrowIn = new javax.swing.JFormattedTextField();
-        txtEscrowOut = new javax.swing.JFormattedTextField();
-        jLabel3 = new javax.swing.JLabel();
-        txtExpendituresIn = new javax.swing.JFormattedTextField();
-        txtExpendituresOut = new javax.swing.JFormattedTextField();
-        jLabel7 = new javax.swing.JLabel();
-        cmbInvoice = new javax.swing.JComboBox<>();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        taDescription = new javax.swing.JTextArea();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
-        lblRecipient = new javax.swing.JLabel();
-        cmdSearchRecipient = new javax.swing.JButton();
+        caseAccountEntryPanel1 = new com.jdimension.jlawyer.client.editors.files.CaseAccountEntryPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Buchung im Aktenkonto");
-
-        txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yyyy"))));
-
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
-
-        jPanel1.setLayout(new java.awt.GridLayout(4, 3, 6, 6));
-
-        jLabel4.setText(" ");
-        jPanel1.add(jLabel4);
-
-        jLabel5.setText("Einnahmen");
-        jPanel1.add(jLabel5);
-
-        jLabel6.setText("Ausgaben");
-        jPanel1.add(jLabel6);
-
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel1.setText("Honorar / Gebühren");
-        jPanel1.add(jLabel1);
-
-        txtEarnings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtEarnings);
-
-        txtSpendings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtSpendings);
-
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel2.setText("Fremdgeld");
-        jPanel1.add(jLabel2);
-
-        txtEscrowIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtEscrowIn);
-
-        txtEscrowOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtEscrowOut);
-
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel3.setText("Auslagen");
-        jPanel1.add(jLabel3);
-
-        txtExpendituresIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtExpendituresIn);
-
-        txtExpendituresOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-        jPanel1.add(txtExpendituresOut);
-
-        jLabel7.setText("Datum:");
-
-        cmbInvoice.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        jLabel8.setText("von / an:");
-
-        jLabel9.setText("Beleg:");
-
-        jLabel10.setText("Kommentar:");
-
-        taDescription.setColumns(20);
-        taDescription.setRows(5);
-        jScrollPane1.setViewportView(taDescription);
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
@@ -802,81 +732,34 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
         });
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSave.setText("cmdSave");
+        cmdSave.setText("Speichern");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveActionPerformed(evt);
             }
         });
 
-        lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
-        lblRecipient.setText("...");
-
-        cmdSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel9))
-                        .addGap(39, 39, 39)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblRecipient)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(cmdSearchRecipient))
-                            .addComponent(cmbInvoice, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel10)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel))
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdSave)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCancel)
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(caseAccountEntryPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1)
-                    .addComponent(jLabel7))
+                .addComponent(caseAccountEntryPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel8)
-                    .addComponent(lblRecipient)
-                    .addComponent(cmdSearchRecipient))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel10)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
@@ -893,19 +776,12 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        if(this.getEntry()==null) {
-            this.entry=new CaseAccountEntry();
+        try {
+            this.entry=this.caseAccountEntryPanel1.getEntry();
+        } catch (Exception ex) {
+            log.error("error saving invoice", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        this.entry.setArchiveFileKey(this.caseDto);
-        this.entry.setEntryDate((Date)this.txtDate.getValue());
-        //this.entry.setContact(contact);
-        this.entry.setDescription(this.taDescription.getText());
-        this.entry.setEarnings( ((Number)txtEarnings.getValue()).floatValue());
-        this.entry.setSpendings(((Number)txtSpendings.getValue()).floatValue());
-        this.entry.setEscrowIn(((Number)txtEscrowIn.getValue()).floatValue());
-        this.entry.setEscrowOut(((Number)txtEscrowOut.getValue()).floatValue());
-        this.entry.setExpendituresIn(((Number)txtExpendituresIn.getValue()).floatValue());
-        this.entry.setExpendituresOut(((Number)txtExpendituresOut.getValue()).floatValue());
         
         this.setVisible(false);
         this.dispose();
@@ -941,7 +817,7 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            CaseAccountEntryDialog dialog = new CaseAccountEntryDialog(new javax.swing.JFrame(), true, null, null);
+            CaseAccountEntryDialog dialog = new CaseAccountEntryDialog(new javax.swing.JFrame(), true, null, null, null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -953,33 +829,9 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbInvoice;
+    private com.jdimension.jlawyer.client.editors.files.CaseAccountEntryPanel caseAccountEntryPanel1;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
-    private javax.swing.JButton cmdSearchRecipient;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel lblRecipient;
-    private javax.swing.JTextArea taDescription;
-    private javax.swing.JFormattedTextField txtDate;
-    private javax.swing.JFormattedTextField txtEarnings;
-    private javax.swing.JFormattedTextField txtEscrowIn;
-    private javax.swing.JFormattedTextField txtEscrowOut;
-    private javax.swing.JFormattedTextField txtExpendituresIn;
-    private javax.swing.JFormattedTextField txtExpendituresOut;
-    private javax.swing.JFormattedTextField txtSpendings;
     // End of variables declaration//GEN-END:variables
 
     /**

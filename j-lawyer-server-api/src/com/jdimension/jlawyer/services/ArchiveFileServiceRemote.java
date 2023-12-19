@@ -923,4 +923,6 @@ public interface ArchiveFileServiceRemote {
     CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
 
     void removeAccountEntry(String entryId) throws Exception;
+
+    List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception;
 }

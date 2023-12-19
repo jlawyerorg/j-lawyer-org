@@ -692,4 +692,9 @@ public class CaseAccountEntryFacade extends AbstractFacade<CaseAccountEntry> imp
         return (List<CaseAccountEntry>) em.createNamedQuery("CaseAccountEntry.findByArchiveFileKey").setParameter("archiveFileKey", archiveFileKey).getResultList();
     }
     
+    @Override
+    public List<CaseAccountEntry> findByInvoice(Invoice invoice) {
+        return (List<CaseAccountEntry>) em.createNamedQuery("CaseAccountEntry.findByInvoice").setParameter("invoice", invoice).getResultList();
+    }
+    
 }
