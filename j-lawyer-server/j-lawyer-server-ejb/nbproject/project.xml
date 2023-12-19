@@ -67,6 +67,7 @@
             <included-library dirs="200">file.reference.hk2-locator-2.2.0-b21.jar</included-library>
             <included-library dirs="200">file.reference.hk2-utils-2.2.0-b21.jar</included-library>
             <included-library dirs="200">file.reference.cglib-2.2.0-b21.jar</included-library>
+            <included-library dirs="200">file.reference.groovy-4.0.16.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
