@@ -680,8 +680,6 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
     private static final Logger log=Logger.getLogger(CaseAccountEntryDialog.class.getName());
     
     private CaseAccountEntry entry=null;
-    private ArchiveFileBean caseDto=null;
-    private final List<Invoice> invoices;
     
     /**
      * Creates new form CaseAccountEntryDialog
@@ -696,15 +694,13 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.entry=entry;
-        this.caseDto=dto;
         
         
-        this.caseAccountEntryPanel1.setCaseEntry(caseDto);
+        this.caseAccountEntryPanel1.setCaseEntry(dto);
         this.caseAccountEntryPanel1.setParentDialog(this);
         this.caseAccountEntryPanel1.setAddresses(addresses);
         this.caseAccountEntryPanel1.setInvoices(invoices);
         this.caseAccountEntryPanel1.setEntry(entry);
-        this.invoices = invoices;
     }
 
     /**

@@ -791,6 +791,13 @@ public class EmailUtils {
     }
 
     public static MailboxSetup getMailboxSetup(Message msg) throws Exception {
+        
+        if(msg==null)
+            return null;
+        
+        if(msg.getFolder()==null)
+            return null;
+        
         boolean opened=false;
         try {
             UserSettings uset = UserSettings.getInstance();

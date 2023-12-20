@@ -6102,14 +6102,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if(this.tblAccountEntries.getRowCount()==0) {
                 this.loadAccountEntries();
             }
-            List<CaseAccountEntry> accountEntries=new ArrayList<>();
             float totalEscrow=0f;
-            //float totalEarnings=0f;
             float totalExpenditures=0f;
             for(int r=0;r<this.tblAccountEntries.getRowCount();r++) {
                 AccountEntryRowIdentifier ident=(AccountEntryRowIdentifier)this.tblAccountEntries.getValueAt(r, 0);
                 totalEscrow=totalEscrow+ident.getAccountEntry().getEscrowIn() - ident.getAccountEntry().getEscrowOut();
-                //totalEarnings=totalEarnings+ident.getAccountEntry().getEarnings() - ident.getAccountEntry().getSpendings();
                 totalExpenditures=totalExpenditures+ident.getAccountEntry().getExpendituresIn()-ident.getAccountEntry().getExpendituresOut();
             }
             

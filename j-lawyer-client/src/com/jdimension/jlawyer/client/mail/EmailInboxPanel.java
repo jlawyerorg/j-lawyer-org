@@ -2753,6 +2753,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             if (mce.getMessages().length == 0) {
                 return;
             }
+            if(mce.getMessages()[0]==null)
+                return;
+            
             MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
             if(ms==null) {
                 log.warn("can not determine mailbox setup of removed message");
