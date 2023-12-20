@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -700,15 +701,22 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTable;
+import static javax.swing.SwingConstants.RIGHT;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
@@ -724,7 +732,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private static final DecimalFormat cf = new DecimalFormat("0.00");
+    private final DecimalFormat cf = new DecimalFormat("0.00");
+    private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
 
     private Invoice currentEntry = null;
     private ArchiveFileBean caseDto = null;
@@ -888,6 +897,45 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
+        this.tblPayments.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value instanceof Date) {
+                    ((JLabel) c).setText(df.format(value));
+                    ((JLabel) c).setHorizontalAlignment(RIGHT);
+                }
+                return c;
+            }
+
+        });
+
+        this.tblPayments.setDefaultRenderer(Float.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value instanceof Float) {
+                    ((JLabel) c).setText(accountEntryFormat.format((Float) value));
+                    ((JLabel) c).setHorizontalAlignment(RIGHT);
+                    if(((float)value)<0) {
+                        if(!isSelected)
+                            ((JLabel) c).setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                        
+                    } else {
+                        if(!isSelected)
+                            ((JLabel) c).setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                    }
+                }
+                return c;
+            }
+
+        });
+
+        DateTimeStringComparator dtComparator = new DateTimeStringComparator("dd.MM.yyyy");
+        TableRowSorter htrs = new TableRowSorter(this.tblPayments.getModel());
+        htrs.setComparator(0, dtComparator);
+        this.tblPayments.setRowSorter(htrs);
+        
         this.setEntry(null);
         
         this.textSearchPositionTemplateKeyReleased(null);
@@ -1006,18 +1054,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
+                TableUtils.clearModel(tblPayments);
+                float paymentsTotal=0f;
                 for (CaseAccountEntry ae : payments) {
-//                    InvoicePositionEntryPanel posPanel = new InvoicePositionEntryPanel(this, this.taxRates);
-//
-//                    this.pnlInvoicePositions.add(posPanel);
-//                    this.pnlInvoicePositions.doLayout();
-//                    this.bumpSplitPane();
-//
-//                    posPanel.setEntry(this.currentEntry.getId(), pos);
-//                    posPanel.updateEntryTotal();
-
+                    float aeTotal=ae.calculateTotal();
+                    paymentsTotal+=aeTotal;
+                    ((DefaultTableModel)this.tblPayments.getModel()).addRow(new Object[]{ae.getEntryDate(), aeTotal, ae.getDescription()});
                 }
-
+                this.lblPaymentsTotal.setText(cf.format(paymentsTotal));
+                ComponentUtils.autoSizeColumns(tblPayments);
             } catch (Exception ex) {
                 log.error("Error determining invoice positions", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1107,7 +1152,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         pnlInvoicePositions = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tblPayments = new javax.swing.JTable();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        lblInvoiceTotal2 = new javax.swing.JLabel();
+        lblPaymentsTotal = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -1625,18 +1674,42 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         jTabbedPane1.addTab("Positionen", splitMain);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblPayments.setAutoCreateRowSorter(true);
+        tblPayments.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Datum", "Betrag", "Kommentar"
             }
-        ));
-        jScrollPane4.setViewportView(jTable1);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Float.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane4.setViewportView(tblPayments);
+
+        jLabel13.setText("Zahlungseingang:");
+
+        jLabel14.setText("Rechnungssumme:");
+
+        lblInvoiceTotal2.setText("   ");
+
+        lblPaymentsTotal.setText("   ");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -1644,14 +1717,32 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel14)
+                            .addComponent(jLabel13))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblPaymentsTotal)
+                            .addComponent(lblInvoiceTotal2))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel14)
+                    .addComponent(lblInvoiceTotal2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel13)
+                    .addComponent(lblPaymentsTotal))
                 .addContainerGap())
         );
 
@@ -2057,6 +2148,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.lblNetValue.setText(cf.format(totalNet));
         this.lblInvoiceTax.setText(cf.format(totalTax));
         this.lblInvoiceTotal.setText(cf.format(total));
+        this.lblInvoiceTotal2.setText(cf.format(total));
         if(this.currentEntry!=null) {
             this.currentEntry.setTotal(total);
             
@@ -2339,6 +2431,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -2356,13 +2450,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblInvoiceDocument;
     private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblInvoiceTax;
     private javax.swing.JLabel lblInvoiceTotal;
+    private javax.swing.JLabel lblInvoiceTotal2;
     private javax.swing.JLabel lblNetValue;
+    private javax.swing.JLabel lblPaymentsTotal;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JList<String> lstPositionTemplates;
     private javax.swing.JPanel pnlInvoicePositions;
@@ -2370,6 +2465,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JSplitPane splitMain;
     private javax.swing.JTextArea taDescription;
+    private javax.swing.JTable tblPayments;
     private javax.swing.JTextField textSearchPositionTemplate;
     private javax.swing.JTextField txtName;
     // End of variables declaration//GEN-END:variables

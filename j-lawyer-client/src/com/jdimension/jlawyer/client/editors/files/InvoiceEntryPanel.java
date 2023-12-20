@@ -705,6 +705,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView=caseView;
     }
     
+    public void setPaidTotal(float paid) {
+        this.lblPaidTotal.setText(totalFormat.format(paid));
+    }
+    
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
         this.caseDto=caseDto;
         this.invoice=invoice;
@@ -742,7 +746,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         if(invoice.getContact()!=null)
             this.lblRecipient.setText(invoice.getContact().toDisplayName());
         else
-            this.lblRecipient.setText("");
+            this.lblRecipient.setText(" ");
         
         this.lblTotal.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
         
@@ -769,6 +773,9 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         cmdDuplicate = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
         lblTotal = new javax.swing.JLabel();
+        lblPaidTotal = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -822,8 +829,17 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblTotal.setFont(lblTotal.getFont().deriveFont(lblTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTotal.setFont(lblTotal.getFont());
+        lblTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblTotal.setText("0,75");
+
+        lblPaidTotal.setFont(lblPaidTotal.getFont());
+        lblPaidTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblPaidTotal.setText("0,00");
+
+        jLabel2.setText("Rechnungssumme:");
+
+        jLabel3.setText("Zahlungseingang:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -840,45 +856,64 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addComponent(cmdDelete)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDueDate)
                         .addGap(18, 18, 18)
                         .addComponent(lblInvoiceNumber)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblTotal)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblStatus)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 53, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblInvoiceType)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblPaidTotal)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(lblStatus)
+                        .addGap(12, 12, 12))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblTotal)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdOpen)
-                    .addComponent(cmdDelete)
                     .addComponent(cmdDuplicate)
+                    .addComponent(cmdCopy)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblInvoiceNumber)
-                                .addComponent(lblStatus)
-                                .addComponent(lblTotal))
+                                .addComponent(lblStatus))
                             .addComponent(lblDueDate))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblInvoiceType)
-                            .addComponent(lblName)))
-                    .addComponent(cmdCopy))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblRecipient)
-                .addContainerGap())
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(lblInvoiceType)
+                                    .addComponent(lblName))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblRecipient))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(lblTotal)
+                                    .addComponent(jLabel2))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(lblPaidTotal)
+                                    .addComponent(jLabel3))))
+                        .addContainerGap())
+                    .addComponent(cmdDelete)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -922,10 +957,13 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdOpen;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel lblDueDate;
     private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblInvoiceType;
     private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblPaidTotal;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblTotal;

@@ -4218,10 +4218,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            HashMap<String,Float> invoiceTotals=new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
                 this.addAccountEntry(cae);
+                if(cae.getInvoice()!=null) {
+                    if(!invoiceTotals.containsKey(cae.getInvoice().getId()))
+                        invoiceTotals.put(cae.getInvoice().getId(), 0f);
+                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId())+cae.calculateTotal());
+                }
             }
+            ComponentUtils.autoSizeColumns(tblAccountEntries);
+            
+            
+            for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+                InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+                Invoice inv = ie.getInvoice();
+                if(invoiceTotals.containsKey(inv.getId()))
+                    ie.setPaidTotal(invoiceTotals.get(inv.getId()));
+            }
+            
+            
         } catch (Exception ex) {
             log.error("Error loading account entries", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Aktenkontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

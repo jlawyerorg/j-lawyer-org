@@ -737,7 +737,9 @@ public class CaseAccountEntry implements Serializable {
         this.id = id;
     }
 
-    
+    public float calculateTotal() {
+        return getEarnings()+getEscrowIn()+getExpendituresIn()-getSpendings()-getEscrowOut()-getExpendituresOut();
+    }
 
     @Override
     public int hashCode() {
