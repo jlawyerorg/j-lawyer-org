@@ -761,6 +761,13 @@ public class ArchiveFileBean implements Serializable {
     @JoinColumn(name = "root_folder", referencedColumnName = "id")
     @OneToOne(cascade = CascadeType.REMOVE)
     private CaseFolder rootFolder;
+    
+    @Column(name = "cal_followups")
+    private String lastCalendarSetupFollowups;
+    @Column(name = "cal_respites")
+    private String lastCalendarSetupRespites;
+    @Column(name = "cal_events")
+    private String lastCalendarSetupEvents;
 
     public ArchiveFileBean() {
     }
@@ -1153,6 +1160,72 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the lastCalendarSetupFollowups
+     */
+    public String getLastCalendarSetupFollowups() {
+        return lastCalendarSetupFollowups;
+    }
+
+    /**
+     * @param lastCalendarSetupFollowups the lastCalendarSetupFollowups to set
+     */
+    public void setLastCalendarSetupFollowups(String lastCalendarSetupFollowups) {
+        this.lastCalendarSetupFollowups = lastCalendarSetupFollowups;
+    }
+
+    /**
+     * @return the lastCalendarSetupRespites
+     */
+    public String getLastCalendarSetupRespites() {
+        return lastCalendarSetupRespites;
+    }
+
+    /**
+     * @param lastCalendarSetupRespites the lastCalendarSetupRespites to set
+     */
+    public void setLastCalendarSetupRespites(String lastCalendarSetupRespites) {
+        this.lastCalendarSetupRespites = lastCalendarSetupRespites;
+    }
+
+    /**
+     * @return the lastCalendarSetupEvents
+     */
+    public String getLastCalendarSetupEvents() {
+        return lastCalendarSetupEvents;
+    }
+    
+    public String getLastCalendarSetup(int eventType) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_FOLLOWUP:
+                return this.getLastCalendarSetupFollowups();
+            case EventTypes.EVENTTYPE_RESPITE:
+                return this.getLastCalendarSetupRespites();
+            case EventTypes.EVENTTYPE_EVENT:
+                return this.getLastCalendarSetupEvents();
+            default:
+                return null;
+        }
+    }
+    
+    public void setLastCalendarSetup(int eventType, String setup) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_FOLLOWUP:
+                this.setLastCalendarSetupFollowups(setup);
+            case EventTypes.EVENTTYPE_RESPITE:
+                this.setLastCalendarSetupRespites(setup);
+            case EventTypes.EVENTTYPE_EVENT:
+                this.setLastCalendarSetupEvents(setup);
+        }
+    }
+
+    /**
+     * @param lastCalendarSetupEvents the lastCalendarSetupEvents to set
+     */
+    public void setLastCalendarSetupEvents(String lastCalendarSetupEvents) {
+        this.lastCalendarSetupEvents = lastCalendarSetupEvents;
     }
 
 }

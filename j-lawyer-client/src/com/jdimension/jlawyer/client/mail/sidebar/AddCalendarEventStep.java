@@ -666,10 +666,10 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Date;
-import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -677,8 +677,6 @@ import themes.colors.DefaultColorTheme;
  * @author Kutschke
  */
 public class AddCalendarEventStep extends javax.swing.JPanel implements WizardStepInterface, NewEventPanelListener {
-
-    private static final Logger log = Logger.getLogger(AddCalendarEventStep.class.getName());
 
     private WizardDataContainer data = null;
 
@@ -837,5 +835,10 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
     @Override
     public void closeNewEventListener() {
         
+    }
+
+    @Override
+    public ArchiveFileBean getCase() {
+        return null;
     }
 }

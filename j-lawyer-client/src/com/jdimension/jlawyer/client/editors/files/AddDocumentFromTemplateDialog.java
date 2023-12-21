@@ -871,7 +871,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             templateName = this.lstTemplates.getSelectedValue().toString();
         }
 
-        String name = "";
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         String templateFileName = templateName;
@@ -882,7 +881,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         if (templateFileName.lastIndexOf(".") >= 0) {
             templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
         }
-        name = df.format(new Date()) + "_" + templateFileName;
+        String name = df.format(new Date()) + "_" + templateFileName;
 
         // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
         ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
@@ -1658,13 +1657,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.aFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeFollowUpActionPerformed
 
     private void radioReviewTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeRespiteActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.aFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeRespiteActionPerformed
 

@@ -4676,7 +4676,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
+            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -5707,7 +5707,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             //evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
+            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -6857,6 +6857,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error("Could not submit instant message to server", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public ArchiveFileBean getCase() {
+        return this.dto;
     }
 
     protected class DropTargetHandler implements DropTargetListener {

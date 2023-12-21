@@ -2259,13 +2259,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.contextArchiveFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeFollowUpActionPerformed
 
     private void radioReviewTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeRespiteActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.contextArchiveFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeRespiteActionPerformed
 

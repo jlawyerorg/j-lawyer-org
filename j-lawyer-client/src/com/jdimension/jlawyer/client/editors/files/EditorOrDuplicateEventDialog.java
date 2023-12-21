@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -701,7 +702,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
 
     private ArchiveFileReviewsBean targetReview = null;
     private JTable tblReviewReasons = null;
-    private String archiveFileId = null;
+    private ArchiveFileBean caseDto = null;
     
     private Date oldBegin=null;
     private Date oldEnd=null;
@@ -714,17 +715,17 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
      * @param editMode
      * @param parent
      * @param modal
-     * @param archiveFileId
+     * @param caseDto
      * @param rev
      * @param tblReviewReasons
      */
-    public EditorOrDuplicateEventDialog(int editMode, java.awt.Frame parent, boolean modal, String archiveFileId, ArchiveFileReviewsBean rev, JTable tblReviewReasons) {
+    public EditorOrDuplicateEventDialog(int editMode, java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto, ArchiveFileReviewsBean rev, JTable tblReviewReasons) {
         super(parent, modal);
         if (editMode == MODE_DUPLICATE || editMode == MODE_EDIT) {
             this.mode = editMode;
         }
         this.tblReviewReasons = tblReviewReasons;
-        this.archiveFileId = archiveFileId;
+        this.caseDto = caseDto;
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
@@ -792,7 +793,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
 
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.toggleEventUi();
-        this.calendarSelectionButton1.restrictToType(rev.getEventType(), rev.getCalendarSetup());
+        this.calendarSelectionButton1.restrictToType(rev.getEventType(), rev.getCalendarSetup(), this.caseDto);
 
     }
 
@@ -1064,11 +1065,11 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                 if (this.mode == MODE_DUPLICATE) {
-                    targetReview = calService.addReview(this.archiveFileId, targetReview);
+                    targetReview = calService.addReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ReviewAddedEvent(targetReview));
                 } else if (this.mode == MODE_EDIT) {
-                    targetReview = calService.updateReview(this.archiveFileId, targetReview);
+                    targetReview = calService.updateReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ReviewUpdatedEvent(oldBegin, oldEnd, targetReview));
                 }

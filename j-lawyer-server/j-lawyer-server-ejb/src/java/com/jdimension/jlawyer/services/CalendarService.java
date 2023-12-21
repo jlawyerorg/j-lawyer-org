@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
+import com.jdimension.jlawyer.persistence.EventTypes;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
@@ -869,6 +870,25 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         this.archiveFileReviewsFacade.create(review);
+        
+        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
+            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+                switch (review.getEventType()) {
+                    case EventTypes.EVENTTYPE_FOLLOWUP:
+                        aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_RESPITE:
+                        aFile.setLastCalendarSetupRespites(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_EVENT:
+                        aFile.setLastCalendarSetupEvents(review.getCalendarSetup().getId());
+                        break;
+                    default:
+                        break;
+                }
+                this.archiveFileFacade.edit(aFile);
+            }
+        }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
@@ -1204,6 +1224,25 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
+        
+        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
+            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+                switch (review.getEventType()) {
+                    case EventTypes.EVENTTYPE_FOLLOWUP:
+                        aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_RESPITE:
+                        aFile.setLastCalendarSetupRespites(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_EVENT:
+                        aFile.setLastCalendarSetupEvents(review.getCalendarSetup().getId());
+                        break;
+                    default:
+                        break;
+                }
+                this.archiveFileFacade.edit(aFile);
+            }
+        }
         
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review

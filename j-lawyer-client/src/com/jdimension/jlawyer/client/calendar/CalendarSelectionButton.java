@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.calendar;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -701,11 +702,11 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
         this.cmdSelectCalendarSetup.setEnabled(enabled);
     }
     
-    public void restrictToType(int eventType, CalendarSetup preSelected) {
-        this.restrictToType(eventType, preSelected, false);
+    public void restrictToType(int eventType, CalendarSetup preSelected, ArchiveFileBean caseDto) {
+        this.restrictToType(eventType, preSelected, caseDto, false);
     }
     
-    public void restrictToType(int eventType, CalendarSetup preSelected, boolean suppressWarnings) {
+    public void restrictToType(int eventType, CalendarSetup preSelected, ArchiveFileBean caseDto, boolean suppressWarnings) {
         this.popCalendarSetups.removeAll();
         this.selectedSetup = null;
         UserSettings uSettings=UserSettings.getInstance();
@@ -715,16 +716,25 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
                 continue;
             }
             
+            
+            // not set at all - use whatever comes first
             if (this.getSelectedSetup() == null) {
                 this.updateSelection(cs);
             }
             
-            if(preSelected==null && lastSelectedCalendarSetup!=null && cs.getId().equals(lastSelectedCalendarSetup)) {
+            if (preSelected != null && preSelected.getId().equals(cs.getId())) {
+                // preselection was provided - use it
                 this.updateSelection(cs);
-            }
-            
-            if(preSelected!=null && preSelected.getId().equals(cs.getId())) {
-                this.updateSelection(cs);
+            } else {
+                if (caseDto != null && caseDto.getLastCalendarSetup(eventType) != null && caseDto.getLastCalendarSetup(eventType).equals(cs.getId())) {
+                    // case has a default
+                    this.updateSelection(cs);
+                } else {
+                    if (preSelected == null && lastSelectedCalendarSetup != null && cs.getId().equals(lastSelectedCalendarSetup)) {
+                        // no preselection was provided - use whatever the user last used
+                        this.updateSelection(cs);
+                    }
+                }
             }
             
             JMenuItem mi = new JMenuItem();
@@ -746,12 +756,12 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
         this.updateSelection(getSelectedSetup());
     }
     
-    public void restrictToType(int eventType) {
-        this.restrictToType(eventType, null, false);
+    public void restrictToType(int eventType, ArchiveFileBean caseDto) {
+        this.restrictToType(eventType, null, caseDto, false);
     }
     
-    public void restrictToType(int eventType, boolean suppressWarnings) {
-        this.restrictToType(eventType, null, suppressWarnings);
+    public void restrictToType(int eventType, ArchiveFileBean caseDto, boolean suppressWarnings) {
+        this.restrictToType(eventType, null, caseDto, suppressWarnings);
     }
     
     public void refreshCalendarSetups() {
