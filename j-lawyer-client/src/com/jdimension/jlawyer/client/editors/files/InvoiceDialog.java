@@ -1075,9 +1075,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }
     
     public void bumpSplitPane() {
-        int dl = this.splitMain.getDividerLocation();
-        this.splitMain.setDividerLocation(dl + 1);
-        this.splitMain.setDividerLocation(dl);
+        ComponentUtils.bumpSplitPane(this.splitMain);
     }
 
     /**

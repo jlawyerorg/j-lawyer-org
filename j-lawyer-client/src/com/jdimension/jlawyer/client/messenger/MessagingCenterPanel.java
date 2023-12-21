@@ -1439,6 +1439,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         }
         if(removed) {
             messagesPanel.revalidate();
+            messagesPanel.doLayout();
         }
     }
 

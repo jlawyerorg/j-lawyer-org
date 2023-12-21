@@ -1006,6 +1006,13 @@ public class ComponentUtils {
         });
     }
     
+    // causes a re-layout of the splitpanes components
+    public static void bumpSplitPane(JSplitPane split) {
+        int dl = split.getDividerLocation();
+        split.setDividerLocation(dl + 1);
+        split.setDividerLocation(dl);
+    }
+    
     public static void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
         String[] items = new String[options.length + 1];
         items[0] = "";

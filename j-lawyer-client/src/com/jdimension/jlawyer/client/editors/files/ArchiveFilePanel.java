@@ -6737,7 +6737,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
             if (removed) {
-                this.pnlMessages.revalidate();
+                ComponentUtils.bumpSplitPane(this.splitMessages);
             }
 
         } else if (e instanceof NewInstantMessagesEvent) {
