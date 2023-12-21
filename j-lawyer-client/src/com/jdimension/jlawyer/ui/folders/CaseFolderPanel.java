@@ -665,6 +665,10 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.events.DocumentLockEvent;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -695,7 +699,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class CaseFolderPanel extends javax.swing.JPanel {
+public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer {
 
     private boolean readonly = false;
     private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
@@ -731,6 +735,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         sortSize.setNoneIcon(sortSizeNoneIcon);
         ImageIcon sortFolderNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
         sortFolder.setNoneIcon(sortFolderNoneIcon);
+        
+        EventBroker b = EventBroker.getInstance();
+        b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
 
     }
 
@@ -765,6 +772,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         sortSize.setNoneIcon(sortSizeNoneIcon);
         ImageIcon sortFolderNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
         sortFolder.setNoneIcon(sortFolderNoneIcon);
+        
+        EventBroker b = EventBroker.getInstance();
+        b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
@@ -880,11 +890,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
                 long l1 = d1.getSize();
                 long l2 = d2.getSize();
-                return new Long(l1).compareTo(l2);
+                return Long.valueOf(l1).compareTo(l2);
             } else if (sortSize.getSortState() == SortButton.SORT_DESC) {
                 long l1 = d1.getSize();
                 long l2 = d2.getSize();
-                return new Long(l2).compareTo(l1);
+                return Long.valueOf(l2).compareTo(l1);
             } else if (sortName.getSortState() == SortButton.SORT_ASC) {
                 String s1 = d1.getName();
                 String s2 = d2.getName();
@@ -1364,7 +1374,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSelectNoneActionPerformed
 
     private void cmdMoveToFolderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoveToFolderMouseReleased
-        boolean selection = this.getSelectedDocuments().size() > 0;
+        boolean selection = !this.getSelectedDocuments().isEmpty();
         for (Component m : this.popMoveToFolder.getComponents()) {
             m.setEnabled(selection);
         }
@@ -1457,6 +1467,18 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                 if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
                     this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
+                }
+            }
+        }
+    }
+    
+    private void updateDocumentLock(String docId, boolean locked, String lockedBy, Date when) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                if (((DocumentEntryPanel) c).getDocument()==null)
+                    continue;
+                if (((DocumentEntryPanel) c).getDocument().getId().equals(docId)) {
+                    ((DocumentEntryPanel) c).updateLock(locked, lockedBy, when);
                 }
             }
         }
@@ -1751,6 +1773,14 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.pnlDocumentEntries.scrollRectToVisible(bounds);
         }
 
+    }
+
+    @Override
+    public void onEvent(Event e) {
+        if(e instanceof DocumentLockEvent) {
+            DocumentLockEvent le=(DocumentLockEvent)e;
+            this.updateDocumentLock(le.getDocumentId(), le.isLocked(), le.getLockedBy(), le.getLockedDate());
+        }
     }
 
 }

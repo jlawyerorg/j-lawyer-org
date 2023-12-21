@@ -663,10 +663,13 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
 import javax.swing.DefaultListModel;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -674,56 +677,58 @@ import javax.swing.SwingUtilities;
  */
 public class DocumentMonitorDialog extends javax.swing.JDialog implements DocumentObserverListener {
 
-    private boolean shuttingDown=false;
-    private boolean cancelClose=false;
+    private static final Logger log=Logger.getLogger(DocumentMonitorDialog.class.getName());
     
+    private boolean shuttingDown = false;
+    private boolean cancelClose = false;
+
     /**
      * Creates new form DocumentMonitorDialog
      */
     public DocumentMonitorDialog(java.awt.Frame parent, boolean modal, String caption) {
         this(parent, modal, caption, false);
-        this.cancelClose=false;
+        this.cancelClose = false;
     }
-    
+
     public boolean hasUserCancelled() {
         return this.cancelClose;
     }
-    
+
     public DocumentMonitorDialog(java.awt.Frame parent, boolean modal, String caption, boolean shuttingDown) {
         super(parent, modal);
-        this.cancelClose=false;
-        
+        this.cancelClose = false;
+
         initComponents();
-        
-        this.shuttingDown=shuttingDown;
-        if(this.shuttingDown) {
+
+        this.shuttingDown = shuttingDown;
+        if (this.shuttingDown) {
             this.cmdCancel.setEnabled(true);
             cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/exit.png")));
         } else {
             this.cmdCancel.setEnabled(false);
         }
-        
+
         this.lblCaption.setText(caption);
         //((DefaultListModel)this.lstOpenDocs.getModel()).removeAllElements();
         this.lstOpenDocs.setModel(new DefaultListModel());
         this.lstOpenDocs.setCellRenderer(new DocumentMonitorEntryRenderer());
-        DocumentObserver observer=DocumentObserver.getInstance();
-        
-        ArrayList<ObservedDocument> docs=observer.getDocuments();
-        for(ObservedDocument d: docs) {
-            if(this.shuttingDown && d.isMonitoringMode()) {
+        DocumentObserver observer = DocumentObserver.getInstance();
+
+        ArrayList<ObservedDocument> docs = observer.getDocuments();
+        for (ObservedDocument d : docs) {
+            if (this.shuttingDown && d.isMonitoringMode()) {
                 // hide the documents that are only in monitoring mode
             } else {
-                ((DefaultListModel)this.lstOpenDocs.getModel()).addElement(d);
+                ((DefaultListModel) this.lstOpenDocs.getModel()).addElement(d);
             }
         }
-        
+
         observer.addListener(this);
     }
-    
+
     @Override
     public void dispose() {
-        DocumentObserver observer=DocumentObserver.getInstance();
+        DocumentObserver observer = DocumentObserver.getInstance();
         observer.removeListener(this);
         super.dispose();
     }
@@ -805,29 +810,33 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-//        if(this.shuttingDown) {
-//
-//            DocumentObserver observer = DocumentObserver.getInstance();
-//            int openDocs=observer.getDocuments().size();
-//            if (openDocs > 0) {
-//
-//                int response = JOptionPane.showConfirmDialog(this, "Anwendung schliessen ohne offene Dokumente zu speichern?", openDocs + " offene Dokumente", JOptionPane.YES_NO_OPTION);
-//                if (response == JOptionPane.NO_OPTION) {
-//                    return;
-//                }
-//            }
-//        }
-        
+
+        if (this.shuttingDown) {
+
+            DocumentObserver observer = DocumentObserver.getInstance();
+            for (ObservedDocument d : observer.getDocuments()) {
+                if (UserSettings.getInstance().getCurrentUser().isAutoLockDocuments()) {
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        locator.lookupArchiveFileServiceRemote().setDocumentLock(d.getStore().getDocumentIdentifier(), false, false);
+                    } catch (Throwable t) {
+                        log.warn("Could not unlock document " + d.getStore().getDocumentIdentifier(), t);
+                    }
+                }
+            }
+        }
+
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.cancelClose=true;
-        
+        this.cancelClose = true;
+
         this.setVisible(false);
         this.dispose();
-        
+
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     /**
@@ -858,17 +867,15 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                DocumentMonitorDialog dialog = new DocumentMonitorDialog(new javax.swing.JFrame(), true, "");
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            DocumentMonitorDialog dialog = new DocumentMonitorDialog(new javax.swing.JFrame(), true, "");
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
@@ -882,34 +889,29 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
 
     @Override
     public void documentClosed(ObservedDocument doc) {
-        ((DefaultListModel)this.lstOpenDocs.getModel()).removeElement(doc);
+        ((DefaultListModel) this.lstOpenDocs.getModel()).removeElement(doc);
         repaintEntries();
     }
 
     @Override
     public void documentChanged(ObservedDocument doc) {
-        int index=((DefaultListModel)this.lstOpenDocs.getModel()).indexOf(doc);
-        ((DefaultListModel)this.lstOpenDocs.getModel()).set(index, doc);
+        int index = ((DefaultListModel) this.lstOpenDocs.getModel()).indexOf(doc);
+        ((DefaultListModel) this.lstOpenDocs.getModel()).set(index, doc);
         repaintEntries();
     }
 
     @Override
     public void documentAdded(ObservedDocument doc) {
-        
-        ((DefaultListModel)this.lstOpenDocs.getModel()).addElement(doc);
-        //int index=((DefaultListModel)this.lstOpenDocs.getModel()).indexOf(doc);
-        //this.lstOpenDocs.getUI()..getComponent(index);
+
+        ((DefaultListModel) this.lstOpenDocs.getModel()).addElement(doc);
         repaintEntries();
     }
-    
+
     private void repaintEntries() {
-        
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                lstOpenDocs.repaint();
-            }
+
+        SwingUtilities.invokeLater(() -> {
+            lstOpenDocs.repaint();
         });
-        
-        
+
     }
 }

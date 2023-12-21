@@ -1847,6 +1847,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public void removeDocument(String id) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        
+        if(db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy())) {
+            throw new Exception(db.getName() + " ist gesperrt für Nutzer '" + db.getLockedBy() + "'");
+        }
+        
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
@@ -1895,6 +1900,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public boolean setDocumentContent(String id, byte[] content) throws Exception {
 
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        
+        if(db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy())) {
+            throw new Exception(db.getName() + " ist gesperrt für Nutzer '" + db.getLockedBy() + "'");
+        }
+        
         String aId = db.getArchiveFileKey().getId();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
 
@@ -2051,6 +2061,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         StringGenerator idGen = new StringGenerator();
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        
+        if(db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy())) {
+            throw new Exception(db.getName() + " ist gesperrt für Nutzer '" + db.getLockedBy() + "'");
+        }
+        
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
@@ -6195,6 +6210,36 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setDocumentLock(String docId, boolean locked, boolean force) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        
+        if(db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy()) && !force) {
+            throw new Exception(db.getName() + " ist bereits gesperrt durch Nutzer '" + db.getLockedBy() + "'");
+        }
+        
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        if(locked) {
+            db.setLockedDate(new Date());
+            db.setLockedBy(context.getCallerPrincipal().getName());
+        } else {
+            db.setLockedDate(null);
+            db.setLockedBy(null);
+        }
+        this.archiveFileDocumentsFacade.edit(db);
+
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean isDocumentLocked(String docId) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        return db.isLocked();
     }
 
 }

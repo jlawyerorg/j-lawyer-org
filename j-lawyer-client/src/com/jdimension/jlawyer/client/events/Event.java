@@ -683,6 +683,7 @@ public abstract class Event {
     public static final Integer TYPE_ALLCASETAGS=100;
     public static final Integer TYPE_ALLDOCUMENTTAGS=100;
     public static final Integer TYPE_DOCUMENTADDED=110;
+    public static final Integer TYPE_DOCUMENTLOCK=111;
     public static final Integer TYPE_CONTACTUPDATED=120;
     public static final Integer TYPE_REVIEWADDED=130;
     public static final Integer TYPE_REVIEWUPDATED=131;

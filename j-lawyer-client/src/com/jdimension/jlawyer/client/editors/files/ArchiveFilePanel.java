@@ -1190,6 +1190,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                     if (value != null) {
 
+                        if (!CaseUtils.requestOpen(value, readOnly, EditorsRegistry.getInstance().getMainWindow())) {
+                            return;
+                        }
+                        
                         ClientSettings settings = ClientSettings.getInstance();
                         byte[] content = null;
                         try {
@@ -4029,7 +4033,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ActionListener al = (ActionEvent e) -> {
                     try {
 
-                        if (!CaseUtils.requestOpen(value, this)) {
+                        if (!CaseUtils.requestOpen(value, this.readOnly, this)) {
                             return;
                         }
 
@@ -4379,7 +4383,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
 
-            if (!CaseUtils.requestOpen(value, this)) {
+            if (!CaseUtils.requestOpen(value, this.readOnly, this)) {
                 return;
             }
 
@@ -5231,7 +5235,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             }
 
-            if (notSupported.size() > 0) {
+            if (!notSupported.isEmpty()) {
                 StringBuilder msg = new StringBuilder();
                 msg.append("Folgende Dateien können nicht direkt gedruckt werden:");
                 msg.append(System.getProperty("line.separator"));

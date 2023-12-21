@@ -925,4 +925,8 @@ public interface ArchiveFileServiceRemote {
     void removeAccountEntry(String entryId) throws Exception;
 
     List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception;
+
+    void setDocumentLock(String docId, boolean locked, boolean force) throws Exception;
+
+    boolean isDocumentLocked(String docId) throws Exception;
 }

@@ -37,10 +37,14 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblFolder" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="lblFileName" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="226" pref="226" max="-2" attributes="0"/>
+                      <EmptySpace min="226" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="lblLockIcon" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                      <Component id="lblFileName" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -53,7 +57,10 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="lblFileIcon" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="lblFileName" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblFileName" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblLockIcon" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -197,6 +204,14 @@
         <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblInvoiceMouseEntered"/>
         <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblInvoiceMouseExited"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblLockIcon">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/baseline_lock_black_48dp.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value=" "/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

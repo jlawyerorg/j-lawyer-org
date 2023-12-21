@@ -2258,7 +2258,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         if(this.currentEntry != null && this.currentEntry.getInvoiceDocument() != null) {
             try {
                 
-                if(!CaseUtils.requestOpen(this.currentEntry.getInvoiceDocument(), EditorsRegistry.getInstance().getMainWindow()))
+                if(!CaseUtils.requestOpen(this.currentEntry.getInvoiceDocument(), false, EditorsRegistry.getInstance().getMainWindow()))
                     return;
                 
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);

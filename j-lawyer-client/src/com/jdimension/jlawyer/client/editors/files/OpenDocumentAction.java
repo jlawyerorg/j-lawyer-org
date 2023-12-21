@@ -714,7 +714,7 @@ public class OpenDocumentAction extends ProgressableAction {
         try {
             
             CaseUtils.openDocument(this.caseDto, this.doc, this.readOnly, this.indicator, this);
-
+            
         } catch (Throwable t) {
             log.error("Could not open document", t);
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument kann nicht geöffnet werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);

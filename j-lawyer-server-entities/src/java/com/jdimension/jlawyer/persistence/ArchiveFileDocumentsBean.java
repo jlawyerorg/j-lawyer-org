@@ -740,6 +740,13 @@ public class ArchiveFileDocumentsBean implements Serializable {
     
     @Column(name = "ext_id")
     private String externalId;
+    
+    @Column(name = "date_locked")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lockedDate;
+    
+    @Column(name = "locked_by")
+    private String lockedBy;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -810,8 +817,6 @@ public class ArchiveFileDocumentsBean implements Serializable {
 
     @Override
     public String toString() {
-        // return "com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean[ id=" + id + " ]";
-        
         if(this.creationDate!=null) {
             SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);;
             return df.format(this.creationDate);
@@ -1006,6 +1011,38 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the lockedDate
+     */
+    public Date getLockedDate() {
+        return lockedDate;
+    }
+    
+    public boolean isLocked() {
+        return lockedDate!=null && lockedBy!=null;
+    }
+
+    /**
+     * @param lockedDate the lockedDate to set
+     */
+    public void setLockedDate(Date lockedDate) {
+        this.lockedDate = lockedDate;
+    }
+
+    /**
+     * @return the lockedBy
+     */
+    public String getLockedBy() {
+        return lockedBy;
+    }
+
+    /**
+     * @param lockedBy the lockedBy to set
+     */
+    public void setLockedBy(String lockedBy) {
+        this.lockedBy = lockedBy;
     }
     
 }

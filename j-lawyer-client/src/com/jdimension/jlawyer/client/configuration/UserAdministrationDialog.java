@@ -873,6 +873,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkReportConfidential = new javax.swing.JCheckBox();
         txtEmail = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
+        chkAutoLockDocuments = new javax.swing.JCheckBox();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -1181,6 +1182,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel13.setText("E-Mail:");
 
+        chkAutoLockDocuments.setText("Dokumente bei Bearbeitung automatisch sperren");
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1210,7 +1213,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(txtDisplayName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE))
                         .add(18, 18, 18)
                         .add(chkLawyer)
-                        .add(189, 189, 189))))
+                        .add(189, 189, 189))
+                    .add(jPanel5Layout.createSequentialGroup()
+                        .add(chkAutoLockDocuments)
+                        .add(0, 0, Short.MAX_VALUE))))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1229,11 +1235,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(130, Short.MAX_VALUE))
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(18, 18, 18)
+                .add(chkAutoLockDocuments)
+                .addContainerGap(50, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1975,6 +1983,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 List<AppRoleBean> roles = mgmt.getRoles(u.getPrincipalId());
                 this.setRoles(roles);
                 this.chkLawyer.setSelected(u.isLawyer());
+                this.chkAutoLockDocuments.setSelected(u.isAutoLockDocuments());
 
                 CalendarUtils cu = CalendarUtils.getInstance();
                 String countryId = null;
@@ -2124,6 +2133,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         } else {
             this.chkLawyer.setSelected(false);
+            this.chkAutoLockDocuments.setSelected(true);
             this.cmbCountry.setSelectedIndex(0);
             this.cmbArea.setSelectedIndex(0);
             this.txtAbbreviation.setText("");
@@ -2186,6 +2196,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
             if (u != null) {
                 u.setLawyer(this.chkLawyer.isSelected());
+                u.setAutoLockDocuments(this.chkAutoLockDocuments.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
                 u.setPrimaryGroup(null);
                 if (this.cmbPrimaryGroup.getSelectedItem() instanceof Group) {
@@ -2912,6 +2923,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpAutoLogin;
     private javax.swing.JCheckBox chkAdmin;
+    private javax.swing.JCheckBox chkAutoLockDocuments;
     private javax.swing.JCheckBox chkCreateAddress;
     private javax.swing.JCheckBox chkCreateFile;
     private javax.swing.JCheckBox chkCreateOption;

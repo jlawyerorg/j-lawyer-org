@@ -763,6 +763,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "email")
     private String email;
     
+    @Column(name = "lock_documents")
+    private boolean autoLockDocuments=true;
+    
     
     public AppUserBean() {
     }
@@ -1179,6 +1182,20 @@ public class AppUserBean implements Serializable {
      */
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    /**
+     * @return the autoLockDocuments
+     */
+    public boolean isAutoLockDocuments() {
+        return autoLockDocuments;
+    }
+
+    /**
+     * @param autoLockDocuments the autoLockDocuments to set
+     */
+    public void setAutoLockDocuments(boolean autoLockDocuments) {
+        this.autoLockDocuments = autoLockDocuments;
     }
     
     

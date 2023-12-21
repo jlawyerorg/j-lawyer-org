@@ -688,8 +688,10 @@ import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -703,6 +705,8 @@ import themes.colors.HighlightPicker;
 public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestureListener {
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
+    
+    private static final ImageIcon lockIcon=new javax.swing.ImageIcon(DocumentEntryPanel.class.getResource("/icons16/baseline_lock_black_48dp.png"));
 
     private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyy, HH:mm");
     private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyy");
@@ -861,6 +865,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         cmdHighlight1 = new javax.swing.JButton();
         cmdHighlight2 = new javax.swing.JButton();
         lblInvoice = new javax.swing.JLabel();
+        lblLockIcon = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -963,6 +968,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         });
 
+        lblLockIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_lock_black_48dp.png"))); // NOI18N
+        lblLockIcon.setText(" ");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -987,10 +995,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addComponent(lblDictateSign)
                         .addGap(18, 18, 18)
                         .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblInvoice)
-                        .addGap(226, 226, 226))))
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblLockIcon)
+                        .addGap(0, 0, 0)
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -999,7 +1010,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblFileIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblFileName)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblFileName)
+                            .addComponent(lblLockIcon))
                         .addGap(2, 2, 2)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblChangeDate)
@@ -1234,6 +1247,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private javax.swing.JLabel lblFileSize;
     private javax.swing.JLabel lblFolder;
     private javax.swing.JLabel lblInvoice;
+    private javax.swing.JLabel lblLockIcon;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1271,6 +1285,25 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.updateHighlights();
         this.setInvoice(linkedInvoice);
         
+        lblLockIcon.setIcon(null);
+        lblLockIcon.setText("");
+        this.updateLock(doc.isLocked(), doc.getLockedBy(), doc.getLockedDate());
+        
+    }
+    
+    public void updateLock(boolean locked, String lockedBy, Date when) {
+        this.document.setLockedBy(lockedBy);
+        this.document.setLockedDate(when);
+        
+        // note: we do not update the UI because it may confuse users - a document not displayed as locked might have been locked recently by another client
+//        if(locked) {
+//            lblLockIcon.setIcon(lockIcon);
+//            lblLockIcon.setToolTipText("gesperrt durch " + lockedBy + " " + DateUtils.getHumanReadableTime(when));
+//            lblLockIcon.setText(" ");
+//        } else {
+//            lblLockIcon.setIcon(null);
+//            lblLockIcon.setText("");
+//        }
     }
     
     private void setInvoice(Invoice linkedInvoice) {

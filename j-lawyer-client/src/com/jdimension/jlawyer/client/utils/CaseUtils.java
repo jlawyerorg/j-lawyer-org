@@ -665,11 +665,15 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
+import com.jdimension.jlawyer.client.events.DocumentLockEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.pojo.DataBucket;
@@ -677,6 +681,7 @@ import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.ByteArrayOutputStream;
+import java.util.Date;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -757,27 +762,88 @@ public class CaseUtils {
             }
 
             CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-            Launcher launcher = null;
+            Launcher launcher;
             if (customLauncherName == null) {
                 launcher = LauncherFactory.getLauncher(value.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
             } else {
                 launcher = LauncherFactory.getLauncher(value.getName(), content, store, customLauncherName, EditorsRegistry.getInstance().getMainWindow());
             }
             launcher.launch(true);
+            
+            if (UserSettings.getInstance().getCurrentUser().isAutoLockDocuments()) {
+                setDocumentLock(value.getId(), true, true);
+            }
 
         }
     }
     
-    public static boolean requestOpen(ArchiveFileDocumentsBean doc, Component parent) {
+    public static void setDocumentLock(String documentId, boolean locked, boolean force) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().setDocumentLock(documentId, locked, force);
+            
+            EventBroker broker = EventBroker.getInstance();
+            if(locked) {
+                Date lockedDate = new Date();
+                DocumentLockEvent dle = new DocumentLockEvent(documentId, true, UserSettings.getInstance().getCurrentUser().getPrincipalId(), lockedDate);
+                broker.publishEvent(dle);
+            } else {
+                DocumentLockEvent dle = new DocumentLockEvent(documentId, false, null, null);
+            broker.publishEvent(dle);
+            }
+            
+
+            
+            
+
+        } catch (Throwable t) {
+            log.error("Could not lock document", t);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument kann nicht gesperrt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }
+    
+    public static boolean requestOpen(ArchiveFileDocumentsBean doc, boolean readOnly, Component parent) {
         DocumentObserver observer = DocumentObserver.getInstance();
         boolean open = observer.isDocumentOpen(doc.getId());
+        boolean forceOpen=false;
         if (open) {
-
             int response = JOptionPane.showConfirmDialog(parent, "Dokument " + doc.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return false;
             }
-
+            // user answered "yes, open anyway"
+            forceOpen=true;
+        }
+        
+        boolean currentlyLocked=doc.isLocked();
+        String lockedBy=doc.getLockedBy();
+        Date lockedDate=doc.getLockedDate();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            currentlyLocked=locator.lookupArchiveFileServiceRemote().isDocumentLocked(doc.getId());
+            if(currentlyLocked && (lockedBy==null || lockedDate==null)) {
+                // current state is in this client is outdated - documnet has been locked by another client meanwhile
+                ArchiveFileDocumentsBean latestDoc=locator.lookupArchiveFileServiceRemote().getDocument(doc.getId());
+                lockedBy=latestDoc.getLockedBy();
+                lockedDate=latestDoc.getLockedDate();
+            }
+        } catch (Throwable t) {
+            log.error("Could not determine latest lock status for document "+doc.getId(), t);
+        }
+        
+        boolean monitoringMode=false;
+        ObservedDocument obsDoc=observer.getDocumentById(doc.getId());
+        if(obsDoc!=null) {
+            monitoringMode=obsDoc.isMonitoringMode();
+        }
+        
+        if(currentlyLocked && !readOnly && !forceOpen && !monitoringMode) {
+            int response = JOptionPane.showConfirmDialog(parent, "Dokument " + doc.getName() + " ist gesperrt (" + lockedBy + ", " + DateUtils.getHumanReadableTime(lockedDate) + "). Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return false;
+            }
         }
         return true;
     }
