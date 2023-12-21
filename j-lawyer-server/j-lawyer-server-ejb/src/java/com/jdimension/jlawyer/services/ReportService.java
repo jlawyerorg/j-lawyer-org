@@ -726,6 +726,12 @@ public class ReportService implements ReportServiceRemote {
         
         reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
         
+        reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_COMMON);
+        
+        reportPrivs.put(Reports.RPT_ACCOUNTS_ESCROW, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_ACCOUNTS_EARNINGS, PRIVILEGE_COMMON);
+        
+        
                 
         if(!reportPrivs.containsKey(reportId))
             throw new Exception("Report " + reportId + " ist nicht definiert");
@@ -919,6 +925,45 @@ public class ReportService implements ReportServiceRemote {
                     + "order by Megabytes desc\n"
                     + "limit 500";
             ReportResultTable mainTable = getTable(true, "Akten nach Speicherbedarf", query, params);
+
+            result.getTables().add(mainTable);
+
+        } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
+            String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total) as Umsatz, invoice_status, due_date from (\n"
+                    + "SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total, i.invoice_status, i.due_date\n"
+                    + "FROM invoices i\n"
+                    + "left join contacts c on c.id=i.contact_id\n"
+                    + "left join invoice_types t on i.invoice_type = t.id where t.turnover=1\n"
+                    + ") revenue\n"
+                    + "where invoice_status=30 and due_date>=? and due_date<=?\n"
+                    + "group by id order by total desc) t1";
+            ReportResultTable mainTable = getTable(false, "Umsätze pro Kunde (bezahlte Rechnungen)", query, params);
+
+            result.getTables().add(mainTable);
+
+        }  else if (Reports.RPT_ACCOUNTS_ESCROW.equals(reportId)) {
+            String query = "select * from (\n"
+                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, sum(in_escrow) as FremdgeldEin, sum(out_escrow) as FremdgeldAus, sum(in_escrow)-sum(out_escrow) as Differenz from (\n"
+                    + "select case_id, fileNumber, name, reason, date_created, in_escrow, out_escrow from case_account_entries\n"
+                    + "left join cases on cases.id=case_account_entries.case_id where date_created>=? and date_created<=?\n"
+                    + ") bookings \n"
+                    + "group by case_id\n"
+                    + "order by Differenz desc) t1\n"
+                    + "where Differenz<>0";
+            ReportResultTable mainTable = getTable(true, "Akten mit nicht ausgeglichenem Fremdgeld", query, params);
+
+            result.getTables().add(mainTable);
+
+        }  else if (Reports.RPT_ACCOUNTS_EARNINGS.equals(reportId)) {
+            String query = "select * from (\n"
+                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, subjectField as Sachgebiet, sum(in_earnings) as Einnahmen, sum(out_spendings) as Ausgaben, sum(in_earnings)-sum(out_spendings) as Ergebnis from (\n"
+                    + "select case_id, fileNumber, name, reason, date_created, subjectField, in_earnings, out_spendings from case_account_entries\n"
+                    + "left join cases on cases.id=case_account_entries.case_id where date_created>=? and date_created<=? \n"
+                    + ") bookings \n"
+                    + "group by case_id\n"
+                    + "order by Ergebnis desc) t1\n"
+                    + "where Ergebnis<>0";
+            ReportResultTable mainTable = getTable(true, "Ergebnis pro Akte", query, params);
 
             result.getTables().add(mainTable);
 
