@@ -35,7 +35,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jTabbedPane1" alignment="0" pref="769" max="32767" attributes="0"/>
+                  <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -286,6 +286,7 @@
             <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntryReminder">
               <Properties>
                 <Property name="text" type="java.lang.String" value="einer meiner Termine in K&#xfc;rze beginnt"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JCheckBox" name="chkEventInvoiceDue">
@@ -301,11 +302,13 @@
             <Component class="javax.swing.JCheckBox" name="chkScheduledDailyAgenda">
               <Properties>
                 <Property name="text" type="java.lang.String" value="t&#xe4;gliche Agenda"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JCheckBox" name="chkScheduledWeeklyDigest">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Wochenzusammenfassung"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
           </SubComponents>

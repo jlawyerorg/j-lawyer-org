@@ -973,14 +973,17 @@ public class UserProfileDialog extends javax.swing.JDialog {
         chkEventCalendarEntry.setText("ein Kalendereintrag für mich erstellt oder geändert wurde");
 
         chkEventCalendarEntryReminder.setText("einer meiner Termine in Kürze beginnt");
+        chkEventCalendarEntryReminder.setEnabled(false);
 
         chkEventInvoiceDue.setText("eine Rechnung in einer meiner Akten fällig ist");
 
         jLabel5.setText("Regelmäßige Informationen senden");
 
         chkScheduledDailyAgenda.setText("tägliche Agenda");
+        chkScheduledDailyAgenda.setEnabled(false);
 
         chkScheduledWeeklyDigest.setText("Wochenzusammenfassung");
+        chkScheduledWeeklyDigest.setEnabled(false);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1038,7 +1041,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
-                    .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE))
+                    .addComponent(jTabbedPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
