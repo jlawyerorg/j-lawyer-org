@@ -720,17 +720,6 @@ public class MessagePanel extends javax.swing.JPanel {
 
         this.im = im;
 
-//        String sender = im.getSender();
-//        if (StringUtils.isEmpty(sender)) {
-//            sender = "?";
-//        }
-//
-//        if (sender.length() > 0) {
-//            sender = sender.substring(0, 1);
-//        }
-//
-//        sender = sender.toUpperCase();
-
         this.lblUser.setForeground(Color.WHITE);
         this.lblUser.putClientProperty("JComponent.roundRect", true);
         this.lblUser.setFont(UIManager.getFont("h1.font"));

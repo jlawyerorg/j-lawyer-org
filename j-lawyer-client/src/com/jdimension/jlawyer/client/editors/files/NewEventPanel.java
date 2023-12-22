@@ -779,7 +779,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase(), true);
+        if(this.newEventListener!=null)
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase(), true);
+        else
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null, true);
 
     }
 
@@ -1019,17 +1022,26 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void radioEventTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeFollowUpActionPerformed
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+        if(this.newEventListener!=null)
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+        else
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
     }//GEN-LAST:event_radioEventTypeFollowUpActionPerformed
 
     private void radioEventTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeRespiteActionPerformed
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.newEventListener.getCase());
+        if(this.newEventListener!=null)
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.newEventListener.getCase());
+        else
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, null);
     }//GEN-LAST:event_radioEventTypeRespiteActionPerformed
 
     private void radioEventTypeEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeEventActionPerformed
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT, this.newEventListener.getCase());
+        if(this.newEventListener!=null)
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT, this.newEventListener.getCase());
+        else
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT, null);
     }//GEN-LAST:event_radioEventTypeEventActionPerformed
 
     private void txtEventBeginDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtEventBeginDateFieldMouseClicked
@@ -1214,7 +1226,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
             this.radioEventTypeFollowUp.setSelected(true);
             this.toggleEventUi();
-            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+            if(this.newEventListener!=null)
+                this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+            else
+                this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
             this.quickDateSelectionPanel.reset();
             this.newEventListener.closeNewEventListener();
         } else {
@@ -1234,7 +1249,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+        if(this.newEventListener!=null)
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
+        else
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
     }
 
     public void setReadOnly(boolean readOnly, boolean archived) {
