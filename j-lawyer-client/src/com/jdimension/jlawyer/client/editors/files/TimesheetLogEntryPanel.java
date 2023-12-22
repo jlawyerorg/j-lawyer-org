@@ -1040,7 +1040,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     
     private void saveManualEntry () {
         
-        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         int minutes=-1;
         try {
