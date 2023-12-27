@@ -929,14 +929,15 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(mainTable);
 
         } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
-            String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total) as Umsatz, invoice_status, due_date from (\n"
-                    + "SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total, i.invoice_status, i.due_date\n"
-                    + "FROM invoices i\n"
-                    + "left join contacts c on c.id=i.contact_id\n"
-                    + "left join invoice_types t on i.invoice_type = t.id where t.turnover=1\n"
-                    + ") revenue\n"
-                    + "where invoice_status=30 and due_date>=? and due_date<=?\n"
-                    + "group by id order by total desc) t1";
+            String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total) as Umsatz from (\n" +
+"                    SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total, i.invoice_status, i.due_date\n" +
+"                    FROM invoices i\n" +
+"                    \n" +
+"                    left join contacts c on c.id=i.contact_id\n" +
+"                    left join invoice_types t on i.invoice_type = t.id where t.turnover=1\n" +
+"                    ) revenue\n" +
+"                    where invoice_status=30 and due_date>=? and due_date<=? \n" +
+"                    group by id) t1 order by Umsatz desc";
             ReportResultTable mainTable = getTable(false, "Umsätze pro Kunde (bezahlte Rechnungen)", query, params);
 
             result.getTables().add(mainTable);
