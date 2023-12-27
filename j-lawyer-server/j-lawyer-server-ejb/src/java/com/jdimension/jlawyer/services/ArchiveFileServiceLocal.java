@@ -796,4 +796,8 @@ public interface ArchiveFileServiceLocal {
 
     void updateDocumentExternalId(String id, String externalId) throws Exception;
     
+    void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description);
+
+    void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate);
+    
 }

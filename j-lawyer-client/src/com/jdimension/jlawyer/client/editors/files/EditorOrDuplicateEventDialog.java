@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
@@ -1068,10 +1069,12 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                     targetReview = calService.addReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ReviewAddedEvent(targetReview));
+                    eb.publishEvent(new CasesChangedEvent());
                 } else if (this.mode == MODE_EDIT) {
                     targetReview = calService.updateReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ReviewUpdatedEvent(oldBegin, oldEnd, targetReview));
+                    eb.publishEvent(new CasesChangedEvent());
                 }
             } catch (Exception ex) {
                 log.error("Error updating review", ex);

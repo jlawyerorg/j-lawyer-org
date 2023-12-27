@@ -1392,11 +1392,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     }
 
-    private void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
         this.addCaseHistory(newHistoryId, dto, description, context.getCallerPrincipal().getName(), new Date());
     }
 
-    private void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate) {
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate) {
         ArchiveFileHistoryBean archiveHistEntry = new ArchiveFileHistoryBean();
         archiveHistEntry.setId(newHistoryId);
         archiveHistEntry.setArchiveFileKey(dto);
@@ -6215,7 +6219,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setDocumentLock(String docId, boolean locked, boolean force) throws Exception {
+        
+        if(docId==null) {
+            log.warn("Client requested to lock a document with a NULL id");
+            return;
+        }
+        
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        if(db==null) {
+            log.warn("Client requested to lock document with id " + docId + ", but there is no such document");
+            return;
+        }
+        
         
         if(db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy()) && !force) {
             throw new Exception(db.getName() + " ist bereits gesperrt durch Nutzer '" + db.getLockedBy() + "'");

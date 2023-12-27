@@ -890,13 +890,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             }
         }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")", context.getCallerPrincipal().getName(), new Date());
         
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
@@ -1032,14 +1026,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = rb.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
-
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")", context.getCallerPrincipal().getName(), new Date());
+        
         this.archiveFileReviewsFacade.remove(rb);
 
         try {
@@ -1203,18 +1191,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
         String status = "offen";
         if (review.isDone()) {
             status = "erledigt";
         }
-        newHistEntry.setChangeDescription(review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
-
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
+        
         review.setArchiveFileKey(aFile);
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
             Date endDate = new Date(review.getBeginDate().getTime());
