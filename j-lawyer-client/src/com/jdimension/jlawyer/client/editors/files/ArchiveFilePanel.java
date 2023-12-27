@@ -1004,6 +1004,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 } else if (value instanceof Invoice) {
                     ((JLabel) c).setText(((Invoice) value).getInvoiceNumber());
                 }
+                if(!isSelected) {
+                    if (row % 2 == 0) {
+                        c.setBackground(new Color(204, 204, 204));
+                    } else {
+                        c.setBackground(Color.WHITE);
+                    }
+                }
                 return c;
             }
 
@@ -1017,11 +1024,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ((JLabel) c).setText(accountEntryFormat.format((Float) value));
                     ((JLabel) c).setHorizontalAlignment(RIGHT);
                 }
+                if(!isSelected) {
+                    if (row % 2 == 0) {
+                        c.setBackground(new Color(204, 204, 204));
+                    } else {
+                        c.setBackground(Color.WHITE);
+                    }
+                }
                 return c;
             }
 
         });
-
+        
         DateTimeStringComparator dtComparator = new DateTimeStringComparator("dd.MM.yyyy");
         TableRowSorter htrs = new TableRowSorter(this.tblAccountEntries.getModel());
         htrs.setComparator(0, dtComparator);
