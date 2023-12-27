@@ -795,9 +795,6 @@ public class EmailUtils {
         if(msg==null)
             return null;
         
-        if(msg.getFolder()==null)
-            return null;
-        
         boolean opened=false;
         try {
             UserSettings uset = UserSettings.getInstance();
