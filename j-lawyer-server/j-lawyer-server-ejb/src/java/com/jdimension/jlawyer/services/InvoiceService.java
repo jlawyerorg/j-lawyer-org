@@ -965,7 +965,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             for (Invoice i : openInvoices) {
                 Date dueDate = i.getDueDate();
                 if (dueDate != null) {
-                    if (now.getTime() > dueDate.getTime()) {
+                    if (now.getTime() > dueDate.getTime() && i.getInvoiceType().isTurnOver()) {
                         log.info("Setting invoice " + i.getInvoiceNumber() + " to first dunning level");
                         i.setStatus(Invoice.STATUS_OPEN_REMINDER1);
                         this.invoices.edit(i);
@@ -999,15 +999,15 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
                                 omr.addTo(lawyerEmail);
                             if(assistantNotification)
                                 omr.addTo(assistantEmail);
-                            omr.setSubject("Neue fällige Rechnung");
-                            omr.setMainCaption("Rechnung " + i.getInvoiceNumber() + " ist seit heute fällig");
+                            omr.setSubject(i.getInvoiceType().getDisplayName() + " fällig");
+                            omr.setMainCaption(i.getInvoiceType().getDisplayName() + " " + i.getInvoiceNumber() + " ist seit heute fällig");
                             
                             omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotal())+ ")");
                             
                             StringBuilder body = new StringBuilder();
                             body.append("Erstellt: ").append(df.format(i.getCreationDate())).append("\n");
                             body.append("Fällig: ").append(df.format(i.getDueDate())).append("\n");
-                            body.append("Rechnungsbetrag: ").append(nf.format(i.getTotal())).append("\n");
+                            body.append("Betrag: ").append(nf.format(i.getTotal())).append("\n");
                             if(i.getContact()!=null)
                                 body.append("zahlungspflichtig: ").append(i.getContact().toDisplayName()).append("\n");
                             body.append("Akte: ").append(i.getArchiveFileKey().getFileNumber()).append(" ").append(i.getArchiveFileKey().getName());
