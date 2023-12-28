@@ -691,7 +691,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -706,7 +705,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
     
-    private static final ImageIcon lockIcon=new javax.swing.ImageIcon(DocumentEntryPanel.class.getResource("/icons16/baseline_lock_black_48dp.png"));
+    //private static final ImageIcon lockIcon=new javax.swing.ImageIcon(DocumentEntryPanel.class.getResource("/icons16/baseline_lock_black_48dp.png"));
 
     private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyy, HH:mm");
     private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyy");
