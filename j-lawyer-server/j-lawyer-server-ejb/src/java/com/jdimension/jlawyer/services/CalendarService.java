@@ -1191,12 +1191,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
-        String status = "offen";
-        if (review.isDone()) {
-            status = "erledigt";
-        }
-        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
-        
         review.setArchiveFileKey(aFile);
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
             Date endDate = new Date(review.getBeginDate().getTime());
@@ -1225,6 +1219,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 this.archiveFileFacade.edit(aFile);
             }
         }
+        
+        String status = "offen";
+        if (review.isDone()) {
+            status = "erledigt";
+        }
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
+        
         
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
