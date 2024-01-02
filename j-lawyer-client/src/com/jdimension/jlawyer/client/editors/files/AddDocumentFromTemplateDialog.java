@@ -1750,7 +1750,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     }
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
-                    if(StringUtils.isEmpty((String)ht.get(key)))
+                    if(ht.get(key) instanceof String && StringUtils.isEmpty((String)ht.get(key)))
                         emptyValues++;
                 }
                 ThreadUtils.setLabel(this.lblPlaceholderHint, emptyValues + " leere Platzhalterwerte");
