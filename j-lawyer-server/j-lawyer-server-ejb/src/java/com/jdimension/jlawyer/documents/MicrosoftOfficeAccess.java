@@ -757,7 +757,10 @@ public class MicrosoftOfficeAccess {
                     CalculationTable tab = (CalculationTable) values.get(key);
                     for (XWPFTable t : allTables) {
                         if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            if (key.equals(t.getRow(0).getCell(0).getText())) {
+                            String cellContent=t.getRow(0).getCell(0).getText();
+                            if(cellContent!=null)
+                                cellContent=cellContent.trim();
+                            if (key.equals(cellContent)) {
                                 for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.addNewCol();
 
@@ -766,7 +769,7 @@ public class MicrosoftOfficeAccess {
                                     t.createRow();
                                 }
                                 int firstDataRow = 0;
-                                if (tab.getColumnLabels().size() > 0) {
+                                if (!tab.getColumnLabels().isEmpty()) {
                                     firstDataRow = 1;
                                     t.createRow();
                                     for (int i = 0; i < tab.getColumnLabels().size(); i++) {
@@ -788,7 +791,10 @@ public class MicrosoftOfficeAccess {
                     XWPFTable t = null;
                     for (XWPFTable tableCandidate : allTables) {
                         if (tableCandidate.getRow(0).getTableCells().size() == 1 && tableCandidate.getNumberOfRows() == 1) {
-                            if (key.equals(tableCandidate.getRow(0).getCell(0).getText())) {
+                            String cellContent=tableCandidate.getRow(0).getCell(0).getText();
+                            if(cellContent!=null)
+                                cellContent=cellContent.trim();
+                            if (key.equals(cellContent)) {
 
                                 t = tableCandidate;
                                 break;
@@ -924,7 +930,10 @@ public class MicrosoftOfficeAccess {
                 for (XWPFTable t : allTables) {
                     try {
                         if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            if (r.equals(t.getRow(0).getCell(0).getText())) {
+                            String cellContent=t.getRow(0).getCell(0).getText();
+                            if(cellContent!=null)
+                                cellContent=cellContent.trim();
+                            if (r.equals(cellContent)) {
                                 resultList.add(r);
                             }
                         }

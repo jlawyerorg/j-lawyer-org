@@ -1114,7 +1114,10 @@ public class LibreOfficeAccess {
                     CalculationTable tab = (CalculationTable) values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                            if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                            String cellContent=t.getCellByPosition(0, 0).getStringValue();
+                            if(cellContent!=null)
+                                cellContent=cellContent.trim();
+                            if (key.equals(cellContent)) {
                                 Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
                                 for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.appendColumn();
@@ -1173,7 +1176,10 @@ public class LibreOfficeAccess {
                     StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                            if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                            String cellContent=t.getCellByPosition(0, 0).getStringValue();
+                            if(cellContent!=null)
+                                cellContent=cellContent.trim();
+                            if (key.equals(cellContent)) {
                                 Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
                                 border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
                                 for (int i = 0; i < tab.getColumnCount() - 1; i++) {
@@ -1423,7 +1429,10 @@ public class LibreOfficeAccess {
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
                 for (Table t : allTables) {
                     if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                        if (r.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                        String cellContent=t.getCellByPosition(0, 0).getStringValue();
+                        if(cellContent!=null)
+                            cellContent=cellContent.trim();
+                        if (r.equals(cellContent)) {
                             resultList.add(r);
                         }
                     }
