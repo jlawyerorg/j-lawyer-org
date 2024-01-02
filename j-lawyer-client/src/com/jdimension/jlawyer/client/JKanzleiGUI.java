@@ -874,14 +874,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             lastBounds = this.rectangleFromBoundsString(lastBoundsString);
         }
 
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gds = ge.getScreenDevices();
-        if(gds!=null && gds.length==1) {
-            // only one monitor connected - there MUST NOT be any negative coordinates, it could render the window in an invisible location
-            if(lastBounds!=null) {
-                if(lastBounds.x<0 || lastBounds.y<0)
-                    lastBounds=null;
+        try {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice[] gds = ge.getScreenDevices();
+            if (gds != null && gds.length == 1) {
+                // only one monitor connected - there MUST NOT be any negative coordinates, it could render the window in an invisible location
+                if (lastBounds != null) {
+                    if (lastBounds.x < 0 || lastBounds.y < 0) {
+                        lastBounds = null;
+                    }
+                }
             }
+        } catch (Throwable t) {
+            log.error("Error determining monitor setup", t);
+            lastBounds = null;
         }
         
         if (lastBounds != null) {
