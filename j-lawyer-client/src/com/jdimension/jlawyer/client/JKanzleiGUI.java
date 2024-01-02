@@ -711,6 +711,8 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -872,6 +874,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             lastBounds = this.rectangleFromBoundsString(lastBoundsString);
         }
 
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gds = ge.getScreenDevices();
+        if(gds!=null && gds.length==1) {
+            // only one monitor connected - there MUST NOT be any negative coordinates, it could render the window in an invisible location
+            if(lastBounds!=null) {
+                if(lastBounds.x<0 || lastBounds.y<0)
+                    lastBounds=null;
+            }
+        }
+        
         if (lastBounds != null) {
             Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
             if(lastBounds.x>screenSize.width)
