@@ -704,6 +704,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
@@ -734,6 +736,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
     private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
+    private final DecimalFormat percentageFormat = new DecimalFormat("0.0");
 
     private Invoice currentEntry = null;
     private ArchiveFileBean caseDto = null;
@@ -1979,19 +1982,21 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         float total = 0f;
         float totalNet = 0f;
         
+        HashMap<Float,Float> taxRateToTaxTotal=new HashMap<>();
+        
         int rowcount = 0;
         
         StyledCalculationTable ct = new StyledCalculationTable();
         if("EN".equalsIgnoreCase(language))
-            ct.addHeaders("", "Position", "Qty", "Rate", "Amount");
+            ct.addHeaders("", "Position", "Qty", "Rate", "Tax", "Amount");
         else if("FR".equalsIgnoreCase(language))
-            ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "Au total");
+            ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "TPS", "Au total");
         else if("NL".equalsIgnoreCase(language))
-            ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "Totaal");
+            ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "BTW", "Totaal");
         else
-            ct.addHeaders("", "Position", "Menge", "Einzel", "Gesamt");
+            ct.addHeaders("", "Position", "Menge", "Einzel", "USt.", "Gesamt");
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+            ct.addRow("", "", "", "", "", "");
         }
 
         int positionIndex=0;
@@ -2003,17 +2008,23 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 float up = pos.getUnitPrice();
                 float t = pos.getTaxRate();
 
-                if(this.chkTaxes.isSelected())
-                    totalTax = totalTax + (u * up * (t / 100f));
+                if(!taxRateToTaxTotal.containsKey(t))
+                    taxRateToTaxTotal.put(t, 0f);
+                
+                if(this.chkTaxes.isSelected()) {
+                    float taxForPosition=(u * up * (t / 100f));
+                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t)+taxForPosition);
+                    totalTax = totalTax + taxForPosition;
+                }
                 total = total + (u * up * (1 + t / 100f));
                 
                 totalNet=totalNet + (u * up);
                 
                 positionIndex=positionIndex+1;
                 if(StringUtils.isEmpty(pos.getDescription()))
-                    ct.addRow(""+positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow(""+positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 else
-                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
                 
                 rowcount = rowcount + 1;
             }
@@ -2021,27 +2032,36 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+            ct.addRow("", "", "", "", "", "");
         }
         int footerRowNet = -1;
-        int footerRowTaxes = -1;
+        ArrayList<Integer> footerRowTaxes = new ArrayList<>();
         int footerRowTotal = -1;
+        Map<Float, Float> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
         if("EN".equalsIgnoreCase(language)) {
-            footerRowNet=ct.addRow("", "Net", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTaxes = ct.addRow("", "Tax", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTotal = ct.addRow("", "Balance Due", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet=ct.addRow("", "Net", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            for(float taxRate: taxRateToTaxTotalSorted.keySet()) {
+                footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+            }
+            footerRowTotal = ct.addRow("", "Balance Due", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if("FR".equalsIgnoreCase(language)) {
-            footerRowNet=ct.addRow("", "Sous Total", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTaxes = ct.addRow("", "TPS", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTotal = ct.addRow("", "Montant Dû", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet=ct.addRow("", "Sous Total", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            for(float taxRate: taxRateToTaxTotalSorted.keySet()) {
+                footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+            }
+            footerRowTotal = ct.addRow("", "Montant Dû", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if("NL".equalsIgnoreCase(language)) {
-            footerRowNet=ct.addRow("", "Subtotal", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTaxes = ct.addRow("", "BTW", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet=ct.addRow("", "Subtotal", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            for(float taxRate: taxRateToTaxTotalSorted.keySet()) {
+                footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+            }
+            footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
-            footerRowNet=ct.addRow("", "Netto", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTaxes = ct.addRow("", "USt.", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
-            footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet=ct.addRow("", "Netto", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            for(float taxRate: taxRateToTaxTotalSorted.keySet()) {
+                footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+            }
+            footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         }
         
         
@@ -2052,7 +2072,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
 
         this.formatFooterRow(ct, footerRowNet);
-        this.formatFooterRow(ct, footerRowTaxes);
+        for(int footRowIndex: footerRowTaxes) {
+            this.formatFooterRow(ct, footRowIndex);
+        }
         this.formatFooterRow(ct, footerRowTotal);
 
         //TableLayout
@@ -2061,6 +2083,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
         ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
         ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(5, Cell.ALIGNMENT_RIGHT);
         ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
         ct.setRowFontSize(0, 12);
 
@@ -2069,6 +2092,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(2, 40);
         ct.setColumnWidth(3, 50);
         ct.setColumnWidth(4, 50);
+        ct.setColumnWidth(5, 50);
 
         // auto width not working
 //        ct.setColumnWidth(0, -1);
