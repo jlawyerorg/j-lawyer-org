@@ -699,6 +699,8 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -1837,6 +1839,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void cmdDateCreatedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDateCreatedActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.dtCreated, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setVisible(true);
+        
+        try {
+            Date paymentDate=df.parse(this.dtCreated.getText());
+            int dueInDays=this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()).getPaymentTerm();
+            
+            LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            localDateTime = localDateTime.plusDays(dueInDays);
+            paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            this.dtDue.setText(df.format(paymentDate));
+            
+        } catch (Throwable t) {
+            log.error("Cannot recalculate due date for creation date " + this.dtCreated.getText());
+        }
+        
     }//GEN-LAST:event_cmdDateCreatedActionPerformed
 
     private void cmdDatePeriodFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDatePeriodFromActionPerformed
