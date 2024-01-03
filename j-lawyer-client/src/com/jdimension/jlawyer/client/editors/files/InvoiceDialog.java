@@ -2003,7 +2003,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 float up = pos.getUnitPrice();
                 float t = pos.getTaxRate();
 
-                totalTax = totalTax + (u * up * (t / 100f));
+                if(this.chkTaxes.isSelected())
+                    totalTax = totalTax + (u * up * (t / 100f));
                 total = total + (u * up * (1 + t / 100f));
                 
                 totalNet=totalNet + (u * up);
