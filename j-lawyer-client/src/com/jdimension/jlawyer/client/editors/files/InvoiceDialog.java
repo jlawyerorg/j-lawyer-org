@@ -732,7 +732,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat cf = new DecimalFormat("0.00");
+    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
     private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
 
     private Invoice currentEntry = null;
