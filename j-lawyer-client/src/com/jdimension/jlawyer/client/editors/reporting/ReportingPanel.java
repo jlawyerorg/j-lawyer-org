@@ -791,7 +791,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         
         Report casesEarnings=new Report();
         casesEarnings.setName("Ergebnis pro Akte");
-        casesEarnings.setDescription("<html>Akten eines bestimmten Zeitraumes und deren <b>betriebswirtschaftliches Ergebnis</b></html>");
+        casesEarnings.setDescription("<html>Akten eines bestimmten Zeitraumes und deren <b>betriebswirtschaftliches Ergebnis</b>, basierend auf Aktenkonten</html>");
         casesEarnings.setClassName(DynamicReportContainerPanel.class.getName());
         casesEarnings.setCategory("Finanzen");
         casesEarnings.setSequence(20);
