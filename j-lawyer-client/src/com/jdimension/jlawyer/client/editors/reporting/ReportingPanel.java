@@ -760,7 +760,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         revenuePerCustomer.setReportId(Reports.RPT_REVENUE_BYCUSTOMER);
         revenuePerCustomer.setTypeChart(false);
         revenuePerCustomer.setTypeTable(true);
-        revenuePerCustomer.setSecurityType(Report.SECURITY_COMMON);
+        revenuePerCustomer.setSecurityType(Report.SECURITY_CONFIDENTIAL);
         fromDate=new Date();
         fromDate.setMonth(0);
         fromDate.setDate(1);
@@ -798,7 +798,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesEarnings.setReportId(Reports.RPT_ACCOUNTS_EARNINGS);
         casesEarnings.setTypeChart(false);
         casesEarnings.setTypeTable(true);
-        casesEarnings.setSecurityType(Report.SECURITY_COMMON);
+        casesEarnings.setSecurityType(Report.SECURITY_CONFIDENTIAL);
         fromDate=new Date();
         fromDate.setMonth(0);
         fromDate.setDate(1);

@@ -726,10 +726,10 @@ public class ReportService implements ReportServiceRemote {
         
         reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
         
-        reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_CONFIDENTIAL);
         
         reportPrivs.put(Reports.RPT_ACCOUNTS_ESCROW, PRIVILEGE_COMMON);
-        reportPrivs.put(Reports.RPT_ACCOUNTS_EARNINGS, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_ACCOUNTS_EARNINGS, PRIVILEGE_CONFIDENTIAL);
         
         
                 
