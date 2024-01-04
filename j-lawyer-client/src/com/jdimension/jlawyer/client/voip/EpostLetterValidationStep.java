@@ -913,9 +913,9 @@ public class EpostLetterValidationStep extends javax.swing.JPanel implements Wiz
                     return;
                 }
                 byte[] validatedPdf = null;
-                for (int i = 0; i < 25; i++) {
+                for (int i = 0; i < 50; i++) {
                     try {
-                        ThreadUtils.updateLabel(this.lblProgress, "Warte auf Ergebnis... " + (i + 1) + "/25");
+                        ThreadUtils.updateLabel(this.lblProgress, "Warte auf Ergebnis... " + (i + 1) + "/50");
                         validatedPdf = locator.lookupVoipServiceRemote().getValidatedLetter(letterId);
                         this.data.put("pdf.validated.bytes", validatedPdf);
                         ThreadUtils.updateLabel(this.lblProgress, "Ergebnis wird aufbereitet...");

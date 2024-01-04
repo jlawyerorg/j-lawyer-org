@@ -828,7 +828,17 @@ public class EpostAPI {
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
                 JsonKey levelKey = Jsoner.mintJsonKey("data", null);
+                if(levelKey==null) {
+                    log.warn("Could not retrieve validated letter - missing data attribute");
+                    log.warn(((JsonObject) jsonOutput).toJson());
+                    throw new EpostException("Could not retrieve validated letter - missing data attribute");
+                }
                 String base64 = result.getString(levelKey);
+                if(base64==null) {
+                    log.warn("Could not retrieve validated letter - empty data attribute");
+                    log.warn(((JsonObject) jsonOutput).toJson());
+                    throw new EpostException("Could not retrieve validated letter - empty data attribute");
+                }
                 Base64 decoder = new Base64();
                 bytes = decoder.decode(base64);
             }
