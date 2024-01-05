@@ -655,19 +655,6 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="txtReason" alignment="1" max="32767" attributes="0"/>
-                                      <Component id="txtName" max="32767" attributes="0"/>
-                                      <Component id="cmbSubjectField" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <Group type="102" attributes="0">
                                   <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
@@ -679,18 +666,34 @@
                                           <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="lblCaseChanged" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="0" pref="358" max="32767" attributes="0"/>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="txtFileNumber" min="-2" pref="200" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="cmdCopyCaseNumber" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmdEditCaseNumber" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="32767" attributes="0"/>
                                           <Component id="chkArchived" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="lblArchivedSince" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace min="0" pref="81" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="txtReason" alignment="1" max="32767" attributes="0"/>
+                                      <Component id="txtName" max="32767" attributes="0"/>
+                                      <Component id="cmbSubjectField" max="32767" attributes="0"/>
+                                  </Group>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -710,12 +713,15 @@
                                   <Group type="103" groupAlignment="1" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="3" attributes="0">
-                                              <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="txtFileNumber" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="chkArchived" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="lblArchivedSince" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="cmdCopyCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                              <Group type="103" groupAlignment="3" attributes="0">
+                                                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="txtFileNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="chkArchived" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="lblArchivedSince" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="cmdEditCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Component id="cmdCopyCaseNumber" max="32767" attributes="0"/>
                                           </Group>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="3" attributes="0">
@@ -742,7 +748,7 @@
                                       </Group>
                                       <Component id="tabPrivileges" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace min="0" pref="2" max="32767" attributes="0"/>
+                                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1080,6 +1086,18 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyCaseNumberActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JButton" name="cmdEditCaseNumber">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/kate.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value=" "/>
+                    <Property name="toolTipText" type="java.lang.String" value="Aktenzeichen bearbeiten (nur f&#xfc;r Administratoren)"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEditCaseNumberActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JSplitPane" name="splitMessages">
@@ -1224,7 +1242,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="messageSendPanel1" pref="571" max="32767" attributes="0"/>
+                              <Component id="messageSendPanel1" pref="661" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                           <Component id="jScrollPane9" alignment="0" pref="0" max="32767" attributes="0"/>
@@ -1338,7 +1356,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="1003" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="1077" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
@@ -1409,7 +1427,7 @@
                                   <Component id="cmdClearSearch" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblDocumentHits" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="85" max="32767" attributes="0"/>
+                                  <EmptySpace pref="220" max="32767" attributes="0"/>
                                   <Component id="cmdNewDocument" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdUploadDocument" min="-2" max="-2" attributes="0"/>
@@ -2191,7 +2209,7 @@
                                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="744" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="829" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
                               </Group>
@@ -2286,7 +2304,7 @@
                                       <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdNewTimesheet" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="733" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="813" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -2432,7 +2450,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="newEventPanel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tblReviewReasonsPane" pref="618" max="32767" attributes="0"/>
+                          <Component id="tblReviewReasonsPane" pref="706" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -2513,7 +2531,7 @@
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="jScrollPane6" alignment="0" pref="945" max="32767" attributes="0"/>
+                          <Component id="jScrollPane6" alignment="0" pref="1079" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -2669,7 +2687,7 @@
                                                       <Component id="txtFormPrefix" max="32767" attributes="0"/>
                                                   </Group>
                                               </Group>
-                                              <EmptySpace min="0" pref="546" max="32767" attributes="0"/>
+                                              <EmptySpace min="0" pref="649" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -2834,7 +2852,7 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane4" pref="972" max="32767" attributes="0"/>
+                              <Component id="jScrollPane4" pref="1057" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>

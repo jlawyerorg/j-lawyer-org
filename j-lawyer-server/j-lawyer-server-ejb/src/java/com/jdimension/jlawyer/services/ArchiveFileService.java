@@ -3607,11 +3607,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"adminRole"})
     public boolean udpateFileNumber(String from, String to) throws Exception {
+        
+        ArchiveFileBean afbCheck = this.getArchiveFileByFileNumber(to);
+        if (afbCheck != null) {
+            throw new Exception("Es gibt bereits eine Akte mit Zeichen " + to);
+        }
+        
         ArchiveFileBean afb = this.getArchiveFileByFileNumber(from);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), afb, this.securityFacade, this.getAllowedGroups(afb));
         if (afb == null) {
             return false;
         }
+        
+        if(to==null)
+            return false;
+        
+        if(to.trim().length()==0)
+            return false;
+        
         afb.setFileNumberMain(to);
         this.archiveFileFacade.edit(afb);
 

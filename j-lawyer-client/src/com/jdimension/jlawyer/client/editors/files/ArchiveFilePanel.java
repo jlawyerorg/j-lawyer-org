@@ -836,6 +836,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         initComponents();
 
         this.cmdCopyCaseNumber.setText("");
+        this.cmdEditCaseNumber.setText("");
 
         CustomLauncherOptionsDialog.upgradeSettings();
 
@@ -1338,6 +1339,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
+        
+        if(this.dto!=null)
+            this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
+        
         this.groupPrivilegesChanged = false;
         this.tabPrivileges.setSelectedIndex(0);
 
@@ -1618,6 +1623,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void populateOptions() {
 
         this.tabPaneArchiveFile.setSelectedIndex(0);
+        
+        this.cmdEditCaseNumber.setEnabled(false);
 
         ClientSettings settings = ClientSettings.getInstance();
         AppOptionGroupBean[] subjectFields = settings.getSubjectFieldDtos();
@@ -1802,6 +1809,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel21 = new javax.swing.JLabel();
         lblCaseChanged = new javax.swing.JLabel();
         cmdCopyCaseNumber = new javax.swing.JButton();
+        cmdEditCaseNumber = new javax.swing.JButton();
         splitMessages = new javax.swing.JSplitPane();
         splitNotes = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
@@ -2479,6 +2487,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdEditCaseNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEditCaseNumber.setText(" ");
+        cmdEditCaseNumber.setToolTipText("Aktenzeichen bearbeiten (nur für Administratoren)");
+        cmdEditCaseNumber.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditCaseNumberActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -2486,16 +2503,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel3)
-                            .add(jLabel8)
-                            .add(jLabel9))
-                        .add(36, 36, 36)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReason)
-                            .add(txtName)
-                            .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel1)
                         .add(26, 26, 26)
@@ -2507,16 +2514,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(jLabel21)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblCaseChanged))
+                                .add(lblCaseChanged)
+                                .add(0, 358, Short.MAX_VALUE))
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdCopyCaseNumber)
-                                .add(18, 18, 18)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdEditCaseNumber)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .add(chkArchived)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblArchivedSince)))
-                        .add(0, 81, Short.MAX_VALUE)))
+                                .add(lblArchivedSince)
+                                .add(15, 15, 15))))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel3)
+                            .add(jLabel8)
+                            .add(jLabel9))
+                        .add(36, 36, 36)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReason)
+                            .add(txtName)
+                            .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSeparator7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2532,12 +2552,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
                                 .addContainerGap()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(jLabel1)
-                                    .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(chkArchived)
-                                    .add(lblArchivedSince)
-                                    .add(cmdCopyCaseNumber))
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                        .add(jLabel1)
+                                        .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(chkArchived)
+                                        .add(lblArchivedSince)
+                                        .add(cmdEditCaseNumber))
+                                    .add(cmdCopyCaseNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(jLabel12)
@@ -2557,7 +2579,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     .add(jLabel9)
                                     .add(cmbSubjectField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                             .add(org.jdesktop.layout.GroupLayout.LEADING, tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(0, 2, Short.MAX_VALUE)))
+                        .add(2, 2, 2)))
                 .addContainerGap())
         );
 
@@ -2639,7 +2661,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             pnlMessagesViewLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(pnlMessagesViewLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE)
+                .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 661, Short.MAX_VALUE)
                 .addContainerGap())
             .add(jScrollPane9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
@@ -2688,7 +2710,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlInvolvedParties.setLayout(pnlInvolvedPartiesLayout);
         pnlInvolvedPartiesLayout.setHorizontalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 1003, Short.MAX_VALUE)
+            .add(0, 1077, Short.MAX_VALUE)
         );
         pnlInvolvedPartiesLayout.setVerticalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2857,7 +2879,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 85, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 220, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
@@ -3192,7 +3214,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jLabel7)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewInvoice)
-                        .add(0, 744, Short.MAX_VALUE))
+                        .add(0, 829, Short.MAX_VALUE))
                     .add(jScrollPane5))
                 .addContainerGap())
         );
@@ -3243,7 +3265,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jLabel22)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewTimesheet)
-                        .add(0, 733, Short.MAX_VALUE)))
+                        .add(0, 813, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel14Layout.setVerticalGroup(
@@ -3348,7 +3370,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(newEventPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 618, Short.MAX_VALUE)
+                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 706, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -3406,7 +3428,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(lblCustom2)
                             .add(lblCustom3))
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 945, Short.MAX_VALUE))
+                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1079, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
@@ -3494,7 +3516,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                                         .add(cmbFormType, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .add(txtFormPrefix)))
-                                .add(0, 546, Short.MAX_VALUE)))))
+                                .add(0, 649, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         pnlAddFormsLayout.setVerticalGroup(
@@ -3605,7 +3627,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 972, Short.MAX_VALUE)
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1057, Short.MAX_VALUE)
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel14)
@@ -6559,6 +6581,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdExportAccountEntriesActionPerformed
 
+    private void cmdEditCaseNumberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditCaseNumberActionPerformed
+        
+        if(UserUtils.isCurrentUserAdmin(this, true)) {
+
+            Object newFileNumber = JOptionPane.showInputDialog(this, "Neues Aktenzeichen: ", "Aktenzeichen anpassen", JOptionPane.QUESTION_MESSAGE, null, null, this.dto.getFileNumberMain());
+            if (newFileNumber == null) {
+                return;
+            }
+            
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                ArchiveFileBean afb = locator.lookupArchiveFileServiceRemote().getArchiveFileByFileNumber(this.dto.getFileNumberMain());
+                if (afb == null) {
+                    JOptionPane.showMessageDialog(this, "Fehler bei Aktenzeichenprüfung", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
+                } else {
+                    boolean success = locator.lookupArchiveFileServiceRemote().udpateFileNumber(this.dto.getFileNumberMain(), newFileNumber.toString());
+                    if (success) {
+                        this.dto.setFileNumberMain(newFileNumber.toString());
+                        this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+                        this.txtFileNumber.setText(dto.getFileNumber());
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Fehler beim Anpassen des Aktenzeichens - neues Zeichen ungültig?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (Exception ex) {
+                log.error("Error updating case number", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Anpassen des Aktenzeichens: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdEditCaseNumberActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6994,6 +7048,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDrebis;
     private javax.swing.JButton cmdEditAccountEntry;
+    private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;

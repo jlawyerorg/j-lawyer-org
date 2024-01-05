@@ -704,6 +704,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
@@ -2209,24 +2210,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuExitActionPerformed
 
     private boolean checkAdmin() {
-        return checkAdmin(true);
+        return UserUtils.isCurrentUserAdmin(this, true);
     }
     
-    private boolean checkAdmin(boolean displayWarning) {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (!currentlyAdmin && displayWarning) {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
-            }
-            return currentlyAdmin;
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchconsole") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-            return false;
-        }
-    }
+    
     
     private void mnuAdminConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAdminConsoleActionPerformed
         
@@ -2804,7 +2791,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator=null;
-            if(checkAdmin(false)) {
+            if(UserUtils.isCurrentUserAdmin(this, false)) {
                 // user is admin
                 locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             } else {
