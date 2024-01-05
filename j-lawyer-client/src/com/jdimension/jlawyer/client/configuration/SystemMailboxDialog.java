@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -692,13 +693,9 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        boolean currentlyAdmin = false;
-
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (!currentlyAdmin) {
+            if (!UserUtils.isCurrentUserAdmin()) {
                 this.cmdSave.setEnabled(false);
                 this.cmdTestMail.setEnabled(false);
                 this.txtPassword.setEnabled(false);

@@ -6082,9 +6082,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormsManagerActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (UserUtils.isCurrentUserAdmin()) {
                 FormsManagementDialog dlg = new FormsManagementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);

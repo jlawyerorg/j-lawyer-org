@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.client.settings.ThemeSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -1065,9 +1066,7 @@ public class SplashThread implements Runnable {
 
     private void openProfileInformationDialog() {
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (UserUtils.isCurrentUserAdmin()) {
                 ProfileDialog dlg = new ProfileDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1082,9 +1081,7 @@ public class SplashThread implements Runnable {
 
     private void openBackupConfigurationDialog() {
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (UserUtils.isCurrentUserAdmin()) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);

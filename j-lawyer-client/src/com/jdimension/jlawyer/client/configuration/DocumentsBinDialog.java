@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -705,10 +706,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         
         
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            this.cmbRetentionDays.setEnabled(currentlyAdmin);
+            this.cmbRetentionDays.setEnabled(UserUtils.isCurrentUserAdmin());
 
         } catch (Throwable t) {
             log.error("Could not determine retention days for documents bin", t);

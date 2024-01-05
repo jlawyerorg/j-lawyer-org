@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -692,12 +693,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        boolean currentlyAdmin = false;
+        boolean currentlyAdmin = UserUtils.isCurrentUserAdmin();
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (!currentlyAdmin) {
                 this.cmdSave.setEnabled(false);
                 this.cmbCpuError.setEnabled(false);
