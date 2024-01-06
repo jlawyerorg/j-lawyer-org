@@ -666,15 +666,10 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.UserUtils;
-import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-import java.awt.Color;
-import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -693,7 +688,6 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        ClientSettings settings = ClientSettings.getInstance();
         try {
             if (!UserUtils.isCurrentUserAdmin()) {
                 this.cmdSave.setEnabled(false);
@@ -734,18 +728,6 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
                 this.chkEmailStartTls.setSelected(false);
             }
         
-    }
-
-    private void setForeground(JProgressBar b, String errorLevel, String warnLevel, int value) {
-        int e = Integer.parseInt(errorLevel);
-        int w = Integer.parseInt(warnLevel);
-        if (value >= e) {
-            b.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-        } else if (value >= w) {
-            b.setForeground(Color.ORANGE.darker().darker());
-        } else {
-            b.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        }
     }
 
     /**

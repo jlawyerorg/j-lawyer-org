@@ -6080,7 +6080,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmbFormTypeActionPerformed
 
     private void cmdFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormsManagerActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
         try {
             if (UserUtils.isCurrentUserAdmin()) {
                 FormsManagementDialog dlg = new FormsManagementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
