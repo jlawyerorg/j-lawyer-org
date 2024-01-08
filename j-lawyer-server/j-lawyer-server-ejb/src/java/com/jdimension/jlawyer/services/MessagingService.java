@@ -922,6 +922,32 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         
         this.singleton.setLatestInstantMessageStatusUpdated(statusChanged.getTime());
         
+        
+        if(m.getPrincipal()!=null && m.getMessage().getSender()!=null && !(m.getPrincipal().equals(m.getMessage().getSender()))) {
+            // only notify if a user other than the sender marked the mention as done
+            AppUserBean notifyTo=this.systemManagement.getUser(m.getMessage().getSender());
+            if(notifyTo != null) {
+                boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, true);
+                if (notificationEnabled && notifyTo.getEmail() != null) {
+                    OutgoingMailRequest omr = new OutgoingMailRequest();
+                    omr.setTo(notifyTo.getEmail());
+                    omr.setSubject("Deine Nachricht wurde als erledigt markiert");
+                    omr.setMainCaption("Deine Nachricht an eine andere Person wurde als erledigt markiert");
+                    omr.setSubCaption(m.getPrincipal() + " hat die folgende Nachricht vom " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + " als erledigt markiert:");
+                    StringBuilder body=new StringBuilder();
+                    body.append("\"").append(m.getMessage().getContent()).append("\"\n");
+                    if(m.getMessage().getCaseContext()!=null) 
+                        body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
+                    if(m.getMessage().getDocumentContext()!=null) 
+                        body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
+                    omr.setBodyContent(body.toString());
+                    this.publishOutgoingMailRequest(omr);
+                }
+            }
+        }
+        
+        
+        
         return true;
     }
 

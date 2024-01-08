@@ -231,8 +231,9 @@
                           <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkScheduledDailyAgenda" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkScheduledWeeklyDigest" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEventInstantMessageDone" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="248" max="32767" attributes="0"/>
+                      <EmptySpace pref="169" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -246,6 +247,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventInstantMessage" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkEventInstantMessageDone" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventCalendarEntry" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventCalendarEntryReminder" min="-2" max="-2" attributes="0"/>
@@ -257,7 +260,7 @@
                       <Component id="chkScheduledDailyAgenda" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkScheduledWeeklyDigest" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="175" max="32767" attributes="0"/>
+                      <EmptySpace pref="143" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -309,6 +312,11 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Wochenzusammenfassung"/>
                 <Property name="enabled" type="boolean" value="false"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkEventInstantMessageDone">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="eine von mir gesendete Sofortnachricht als erledigt markiert wurde"/>
               </Properties>
             </Component>
           </SubComponents>

@@ -739,6 +739,7 @@ public class UserSettingsKeys {
     public static final String EPOST_LAST_SENDER_CITY="epost.sender.last.city";
     
     public static final String NOTIFICATION_EVENT_INSTANTMESSAGEMENTION="notify.event.immention";
+    public static final String NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE="notify.event.immention.done";
     public static final String NOTIFICATION_EVENT_CALENDARENTRY="notify.event.calendarentry";
     public static final String NOTIFICATION_EVENT_CALENDARENTRY_REMINDER="notify.event.calendarentry.reminder";
     public static final String NOTIFICATION_EVENT_INVOICE_DUE="notify.event.invoice.due";
