@@ -719,7 +719,10 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
         try {
             
             String jobId=new StringGenerator().getID().toString();
-            URL backupUrl = new java.net.URL("http://localhost:" + System.getProperty("jboss.http.port") + "/j-lawyer-server-war/autostart?action=backup.adhoc&jobid=" +jobId);
+            String port=System.getProperty("jboss.http.port");
+            if(port==null || "".equals(port))
+                port="8080";
+            URL backupUrl = new java.net.URL("http://localhost:" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc&jobid=" +jobId);
             URLConnection urlConnection = backupUrl.openConnection();
             String userpass = credentials.getUser() + ":" + credentials.getPassword();
             String basicAuth = "Basic " + new String(java.util.Base64.getEncoder().encode(userpass.getBytes()));
