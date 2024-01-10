@@ -853,39 +853,39 @@ public class FileUtils extends ServerFileUtils {
 
     public static String sanitizeFileName(String fileName) {
         String name = fileName;
-        name = name.replaceAll(",", " ");
-        name = name.replaceAll("\"", "");
-        name = name.replaceAll("§", " ");
-        name = name.replaceAll("%", " ");
-        name = name.replaceAll("&", "_");
-        name = name.replaceAll("/", "_");
-        name = name.replaceAll("=", "_");
-        name = name.replaceAll("\\?", " ");
-        name = name.replaceAll("\\{", "(");
-        name = name.replaceAll("\\}", ")");
-        name = name.replaceAll("\\[", "(");
-        name = name.replaceAll("\\]", ")");
-        name = name.replaceAll("\\\\", "_");
-        name = name.replaceAll("\\*", "-");
-        name = name.replaceAll("#", "-");
-        name = name.replaceAll("'", "");
-        name = name.replaceAll(":", " ");
-        name = name.replaceAll(";", " ");
-        name = name.replaceAll(">", "");
-        name = name.replaceAll("<", "");
-        name = name.replaceAll("\\|", "_");
+        name = name.replace(",", " ");
+        name = name.replace("\"", "");
+        name = name.replace("§", " ");
+        name = name.replace("%", " ");
+        name = name.replace("&", "_");
+        name = name.replace("/", "_");
+        name = name.replace("=", "_");
+        name = name.replace("?", " ");
+        name = name.replace("{", "(");
+        name = name.replace("}", ")");
+        name = name.replace("[", "(");
+        name = name.replace("]", ")");
+        name = name.replace("\\", "_");
+        name = name.replace("*", "-");
+        name = name.replace("#", "-");
+        name = name.replace("'", "");
+        name = name.replace(":", " ");
+        name = name.replace(";", " ");
+        name = name.replace(">", "");
+        name = name.replace("<", "");
+        name = name.replace("|", "_");
         return name.trim();
     }
     
     public static String sanitizeAttachmentName(String fileName) {
         String name = sanitizeFileName(fileName);
-        name = name.replaceAll("ä", "ae");
-        name = name.replaceAll("ö", "oe");
-        name = name.replaceAll("ü", "ue");
-        name = name.replaceAll("Ä", "Ae");
-        name = name.replaceAll("Ö", "Oe");
-        name = name.replaceAll("Ü", "Ue");
-        name = name.replaceAll("ß", "ss");
+        name = name.replace("ä", "ae");
+        name = name.replace("ö", "oe");
+        name = name.replace("ü", "ue");
+        name = name.replace("Ä", "Ae");
+        name = name.replace("Ö", "Oe");
+        name = name.replace("Ü", "Ue");
+        name = name.replace("ß", "ss");
         name=name.trim();
         if(name.indexOf('.')==0)
             name="Anhang_"+System.currentTimeMillis()+name;
@@ -894,8 +894,8 @@ public class FileUtils extends ServerFileUtils {
 
     public static String sanitizeFolderName(String folderName) {
         String sanitized = sanitizeFileName(folderName);
-        sanitized = sanitized.replaceAll("  ", " ");
-        sanitized = sanitized.replaceAll("  ", " ");
+        sanitized = sanitized.replace("  ", " ");
+        sanitized = sanitized.replace("  ", " ");
         return sanitized;
     }
 
