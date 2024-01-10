@@ -2001,7 +2001,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
             for (File f : files) {
                 byte[] data = FileUtils.readFile(f);
-                String tmpUrl = FileUtils.createTempFile(f.getName(), data);
+                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(f.getName()), data);
                 this.addAttachment(tmpUrl, null);
             }
 

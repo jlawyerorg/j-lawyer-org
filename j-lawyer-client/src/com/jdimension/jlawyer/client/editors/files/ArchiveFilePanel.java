@@ -4794,7 +4794,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
-        if (open.size() > 0) {
+        if (!open.isEmpty()) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
             for (String o : open) {
                 question = question + "<li>" + o + "</li>";
@@ -4837,7 +4837,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
                 dlg.addAttachment(tmpUrl, doc.getDictateSign());
 
             }

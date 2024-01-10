@@ -876,6 +876,21 @@ public class FileUtils extends ServerFileUtils {
         name = name.replaceAll("\\|", "_");
         return name.trim();
     }
+    
+    public static String sanitizeAttachmentName(String fileName) {
+        String name = sanitizeFileName(fileName);
+        name = name.replaceAll("ä", "ae");
+        name = name.replaceAll("ö", "oe");
+        name = name.replaceAll("ü", "ue");
+        name = name.replaceAll("Ä", "Ae");
+        name = name.replaceAll("Ö", "Oe");
+        name = name.replaceAll("Ü", "Ue");
+        name = name.replaceAll("ß", "ss");
+        name=name.trim();
+        if(name.indexOf('.')==0)
+            name="Anhang_"+System.currentTimeMillis()+name;
+        return name;
+    }
 
     public static String sanitizeFolderName(String folderName) {
         String sanitized = sanitizeFileName(folderName);

@@ -724,7 +724,7 @@ public class SendPDFAction extends ProgressableAction {
                 this.progress("Konvertiere zu PDF: " + doc.getName());
                 byte[] content = remote.getDocumentContent(doc.getId());
                 
-                String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
                 if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {
                     dlg.addAttachment(tmpUrl, doc.getDictateSign());
                 } else {
