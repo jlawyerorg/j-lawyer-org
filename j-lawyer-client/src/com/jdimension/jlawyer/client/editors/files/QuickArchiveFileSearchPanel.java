@@ -1157,7 +1157,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), true);
+            Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), false);
             if (!reviews.isEmpty()) {
                 html.append("<tr><td>").append("Unerledigte Kalendereintr&auml;ge: ").append("</td><td>").append(reviews.size()).append("</td></tr>");
                 SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
