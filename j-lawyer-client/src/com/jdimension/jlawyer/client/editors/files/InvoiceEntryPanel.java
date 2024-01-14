@@ -695,6 +695,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private ArchiveFilePanel caseView=null;
     private Invoice invoice=null;
     private List<AddressBean> addresses=null;
+    
+    private float paid=0f;
 
     /**
      * Creates new form InvoiceEntryPanel
@@ -706,8 +708,12 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }
     
     public void setPaidTotal(float totalGross, float paid, String currency) {
-        this.lblPaidTotal.setText(totalFormat.format(paid) + " " + currency);
-        this.lblOpen.setText(totalFormat.format(totalGross-paid) + " " + currency);
+        if(paid!=Float.MIN_VALUE) {
+            this.paid=paid;
+        }
+        this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
+        this.lblOpen.setText(totalFormat.format(totalGross-this.paid) + " " + currency);
+        
     }
     
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -961,6 +967,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.setEntry(caseDto, dlg.getEntry(), addresses);
+        this.setPaidTotal(dlg.getEntry().getTotalGross(), Float.MIN_VALUE, dlg.getEntry().getCurrency());
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
