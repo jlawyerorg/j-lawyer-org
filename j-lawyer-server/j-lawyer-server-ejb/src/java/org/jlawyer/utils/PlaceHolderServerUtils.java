@@ -1089,7 +1089,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(BEL_NR, val(invoice.getInvoiceNumber()));
             }
             if (placeHolders.containsKey(BEL_TOTAL)) {
-                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotal()));
+                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotalGross()));
             }
             if (placeHolders.containsKey(BEL_WHRG)) {
                 placeHolders.put(BEL_WHRG, val(invoice.getCurrency()));

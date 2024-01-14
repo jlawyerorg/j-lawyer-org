@@ -1002,12 +1002,12 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
                             omr.setSubject(i.getInvoiceType().getDisplayName() + " fällig");
                             omr.setMainCaption(i.getInvoiceType().getDisplayName() + " " + i.getInvoiceNumber() + " ist seit heute fällig");
                             
-                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotal())+ ")");
+                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotalGross())+ ")");
                             
                             StringBuilder body = new StringBuilder();
                             body.append("Erstellt: ").append(df.format(i.getCreationDate())).append("\n");
                             body.append("Fällig: ").append(df.format(i.getDueDate())).append("\n");
-                            body.append("Betrag: ").append(nf.format(i.getTotal())).append("\n");
+                            body.append("Betrag: ").append(nf.format(i.getTotalGross())).append("\n");
                             if(i.getContact()!=null)
                                 body.append("zahlungspflichtig: ").append(i.getContact().toDisplayName()).append("\n");
                             body.append("Akte: ").append(i.getArchiveFileKey().getFileNumber()).append(" ").append(i.getArchiveFileKey().getName());

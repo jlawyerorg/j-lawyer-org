@@ -1173,7 +1173,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         for (Invoice inv : invoices) {
             if (inv.getInvoiceType().isTurnOver()) {
                 float f = cumulatedInvoiceValues.get(inv.getStatus());
-                f = f + inv.getTotal();
+                f = f + inv.getTotalGross();
                 cumulatedInvoiceValues.put(inv.getStatus(), f);
             }
         }

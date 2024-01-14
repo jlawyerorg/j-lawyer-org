@@ -4811,6 +4811,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setSmallBusiness(pool.isSmallBusiness());
             i.setInvoiceType(iType);
             i.setTotal(0f);
+            i.setTotalGross(0f);
             i.setCurrency(currency);
             i.setLastPoolId(pool.getId());
 
@@ -4888,11 +4889,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(invoice);
         if(positions==null)
             positions=new ArrayList<>();
-        float newTotal=0f;
+        float newTotalNet=0f;
+        float newTotalGross=0f;
         for(InvoicePosition p: positions) {
-            newTotal=newTotal+p.getTotal();
+            newTotalNet=newTotalNet+p.getTotal();
+            newTotalGross=newTotalGross+(p.getTotal() * (1 + p.getTaxRate() / 100f));
         }
-        invoice.setTotal(newTotal);
+        invoice.setTotal(newTotalNet);
+        invoice.setTotalGross(newTotalGross);
         this.invoicesFacade.edit(invoice);
     }
 
@@ -5317,7 +5321,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Invoice oldInvoice=this.invoicesFacade.find(invoiceId);
         
         Invoice newInvoice=this.addInvoice(toCaseId, invoicePool,oldInvoice.getInvoiceType(), oldInvoice.getCurrency());
-        newInvoice.setContact(oldInvoice.getContact());
+        newInvoice.setContact(null);
         newInvoice.setCreationDate(new Date());
         newInvoice.setCurrency(oldInvoice.getCurrency());
         newInvoice.setDescription(oldInvoice.getDescription());
@@ -5333,6 +5337,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
         newInvoice.setStatus(Invoice.STATUS_NEW);
         newInvoice.setTotal(oldInvoice.getTotal());
+        newInvoice.setTotalGross(oldInvoice.getTotalGross());
         this.updateInvoice(toCaseId, newInvoice);
         
         List<InvoicePosition> positions=this.invoicePositionsFacade.findByInvoice(oldInvoice);

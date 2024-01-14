@@ -705,8 +705,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView=caseView;
     }
     
-    public void setPaidTotal(float paid) {
-        this.lblPaidTotal.setText(totalFormat.format(paid));
+    public void setPaidTotal(float paid, String currency) {
+        this.lblPaidTotal.setText(totalFormat.format(paid) + " " + currency);
     }
     
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -748,7 +748,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         else
             this.lblRecipient.setText(" ");
         
-        this.lblTotal.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
+        this.lblTotalNet.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
+        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross()) + " " + invoice.getCurrency());
         
         
     }
@@ -772,10 +773,12 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         cmdDelete = new javax.swing.JButton();
         cmdDuplicate = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
-        lblTotal = new javax.swing.JLabel();
+        lblTotalNet = new javax.swing.JLabel();
         lblPaidTotal = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        lblTotalGross = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -829,17 +832,23 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        lblTotal.setFont(lblTotal.getFont());
-        lblTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblTotal.setText("0,75");
+        lblTotalNet.setFont(lblTotalNet.getFont());
+        lblTotalNet.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblTotalNet.setText("0,75");
 
         lblPaidTotal.setFont(lblPaidTotal.getFont());
         lblPaidTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblPaidTotal.setText("0,00");
 
-        jLabel2.setText("Rechnungssumme:");
+        jLabel2.setText("netto:");
 
         jLabel3.setText("Zahlungseingang:");
+
+        lblTotalGross.setFont(lblTotalGross.getFont());
+        lblTotalGross.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblTotalGross.setText("0,00");
+
+        jLabel4.setText("brutto:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -857,30 +866,35 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblDueDate)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblInvoiceNumber)
-                        .addGap(0, 53, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblDueDate)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblInvoiceNumber)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblInvoiceType)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblTotalNet))
+                            .addComponent(lblStatus, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblInvoiceType)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(lblRecipient)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblPaidTotal)
-                        .addContainerGap())
+                        .addComponent(lblPaidTotal))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(lblStatus)
-                        .addGap(12, 12, 12))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel2)
+                        .addGap(0, 282, Short.MAX_VALUE)
+                        .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblTotal)
-                        .addContainerGap())))
+                        .addComponent(lblTotalGross)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -906,14 +920,18 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                                 .addComponent(lblRecipient))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(lblTotal)
+                                    .addComponent(lblTotalNet)
                                     .addComponent(jLabel2))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(lblPaidTotal)
-                                    .addComponent(jLabel3))))
-                        .addContainerGap())
-                    .addComponent(cmdDelete)))
+                                    .addComponent(lblTotalGross)
+                                    .addComponent(jLabel4)))))
+                    .addComponent(cmdDelete))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblPaidTotal)
+                    .addComponent(jLabel3))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -959,6 +977,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdOpen;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel lblDueDate;
     private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblInvoiceType;
@@ -966,7 +985,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblPaidTotal;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblStatus;
-    private javax.swing.JLabel lblTotal;
+    private javax.swing.JLabel lblTotalGross;
+    private javax.swing.JLabel lblTotalNet;
     // End of variables declaration//GEN-END:variables
 
     /**

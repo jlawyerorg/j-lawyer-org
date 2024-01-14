@@ -2165,7 +2165,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ep.updateEntryTotal();
 
         float totalTax = 0f;
-        float total = 0f;
+        float totalGross = 0f;
         float totalNet=0f;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
@@ -2178,18 +2178,19 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 totalNet = totalNet + (u * up);
                 if(this.chkTaxes.isSelected()) {
                     totalTax = totalTax + (u * up * (t / 100f));
-                    total = total + (u * up * (1 + t / 100f));
+                    totalGross = totalGross + (u * up * (1 + t / 100f));
                 } else {
-                    total = total + (u * up);
+                    totalGross = totalGross + (u * up);
                 }
             }
         }
         this.lblNetValue.setText(cf.format(totalNet));
         this.lblInvoiceTax.setText(cf.format(totalTax));
-        this.lblInvoiceTotal.setText(cf.format(total));
-        this.lblInvoiceTotal2.setText(cf.format(total));
+        this.lblInvoiceTotal.setText(cf.format(totalGross));
+        this.lblInvoiceTotal2.setText(cf.format(totalGross));
         if(this.currentEntry!=null) {
-            this.currentEntry.setTotal(total);
+            this.currentEntry.setTotal(totalNet);
+            this.currentEntry.setTotalGross(totalGross);
             
         }
     }

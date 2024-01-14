@@ -777,14 +777,14 @@ public class ReportService implements ReportServiceRemote {
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
-                    + "    round(sum(invp.total),2) Rechnungsbetrag, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
-                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where inv.created >=? and inv.created<=?\n"
-                    + "group by invp.invoice_id";
+                    + "group by inv.id";
             result.getTables().add(getTable(true, "Alle Rechnungen / Belege", query, params));
             
         } else if(Reports.RPT_INV_OPEN.equals(reportId)) {
@@ -800,22 +800,21 @@ public class ReportService implements ReportServiceRemote {
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
-                    + "    round(sum(invp.total), 2) Rechnungsbetrag, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
-                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
                     + "-- where inv.created >=? and inv.created<=?\n"
-                    + "group by invp.invoice_id";
+                    + "group by inv.id";
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
             
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
-                    + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
-                    + "     FROM invoice_positions invp\n"
-                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "    inv.total_gross Rechnungsbetrag \n"
+                    + "     FROM invoices inv\n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
@@ -837,21 +836,20 @@ public class ReportService implements ReportServiceRemote {
                     + "        when inv.invoice_status = 40 then 'storniert'\n"
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
-                    + "    round(sum(invp.total), 2) Rechnungsbetrag, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoice_positions invp\n"
-                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
-                    + "group by invp.invoice_id";
+                    + "group by inv.id";
             result.getTables().add(getTable(true, "Fällige Rechnungen", query, params));
             
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
-                    + "    round(sum(invp.total), 2) Rechnungsbetrag \n"
-                    + "     FROM invoice_positions invp\n"
-                    + "left join invoices inv on inv.id=invp.invoice_id  \n"
+                    + "    inv.total_gross Rechnungsbetrag \n"
+                    + "     FROM invoices inv\n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
@@ -929,8 +927,8 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(mainTable);
 
         } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
-            String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total) as Umsatz from (\n" +
-"                    SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total, i.invoice_status, i.due_date\n" +
+            String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total_gross) as Umsatz from (\n" +
+"                    SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total_gross, i.invoice_status, i.due_date\n" +
 "                    FROM invoices i\n" +
 "                    \n" +
 "                    left join contacts c on c.id=i.contact_id\n" +

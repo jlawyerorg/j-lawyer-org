@@ -4275,7 +4275,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
                 Invoice inv = ie.getInvoice();
                 if(invoiceTotals.containsKey(inv.getId()))
-                    ie.setPaidTotal(invoiceTotals.get(inv.getId()));
+                    ie.setPaidTotal(invoiceTotals.get(inv.getId()), inv.getCurrency());
+                else
+                    ie.setPaidTotal(0f, inv.getCurrency());
             }
             
             

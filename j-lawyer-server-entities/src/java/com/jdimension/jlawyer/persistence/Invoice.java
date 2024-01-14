@@ -751,6 +751,9 @@ public class Invoice implements Serializable {
     @Column(name = "total")
     protected float total=0f;
     
+    @Column(name = "total_gross")
+    private float totalGross=0f;
+    
     @JoinColumn(name = "invoice_document", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
     protected ArchiveFileDocumentsBean invoiceDocument;
@@ -1080,6 +1083,20 @@ public class Invoice implements Serializable {
      */
     public void setLastPoolId(String lastPoolId) {
         this.lastPoolId = lastPoolId;
+    }
+
+    /**
+     * @return the totalGross
+     */
+    public float getTotalGross() {
+        return totalGross;
+    }
+
+    /**
+     * @param totalGross the totalGross to set
+     */
+    public void setTotalGross(float totalGross) {
+        this.totalGross = totalGross;
     }
     
 }
