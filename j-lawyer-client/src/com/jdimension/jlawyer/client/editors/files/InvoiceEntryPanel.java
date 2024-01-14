@@ -705,8 +705,9 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView=caseView;
     }
     
-    public void setPaidTotal(float paid, String currency) {
+    public void setPaidTotal(float totalGross, float paid, String currency) {
         this.lblPaidTotal.setText(totalFormat.format(paid) + " " + currency);
+        this.lblOpen.setText(totalFormat.format(totalGross-paid) + " " + currency);
     }
     
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -779,6 +780,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         lblTotalGross = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        lblOpen = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -850,6 +853,13 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
 
         jLabel4.setText("brutto:");
 
+        lblOpen.setFont(lblOpen.getFont().deriveFont(lblOpen.getFont().getStyle() | java.awt.Font.BOLD));
+        lblOpen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblOpen.setText("0,00");
+
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel1.setText("offen:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -890,10 +900,16 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblPaidTotal))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 282, Short.MAX_VALUE)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblTotalGross)))
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblTotalGross))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblOpen)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -931,7 +947,11 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblPaidTotal)
                     .addComponent(jLabel3))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblOpen)
+                    .addComponent(jLabel1))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -975,6 +995,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdOpen;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -982,6 +1003,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblInvoiceType;
     private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblOpen;
     private javax.swing.JLabel lblPaidTotal;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblStatus;
