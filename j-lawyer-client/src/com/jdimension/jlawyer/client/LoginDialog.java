@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.jlawyerbox.BoxAccess;
 import com.jdimension.jlawyer.security.Crypto;
@@ -680,14 +681,21 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -706,6 +714,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     /**
      * Creates new form LoginDialog
+     *
      * @param initialStatus
      * @param cmdHost
      * @param cmdPort
@@ -720,13 +729,11 @@ public class LoginDialog extends javax.swing.JFrame {
      */
     public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
-        
+
         Color highlightColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
         this.jPanel5.setBackground(highlightColor);
-        
-        this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
-        
+        this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
         this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -736,9 +743,9 @@ public class LoginDialog extends javax.swing.JFrame {
         this.jTabbedPane1.setOpaque(false);
         this.jTabbedPane1.putClientProperty("TabbedPane.contentOpaque", Boolean.FALSE);
         this.jTabbedPane1.putClientProperty("TabbedPane.tabsOpaque", Boolean.FALSE);
-        this.jTabbedPane1.putClientProperty( "JTabbedPane.tabAreaAlignment", "center" );
+        this.jTabbedPane1.putClientProperty("JTabbedPane.tabAreaAlignment", "center");
         // end
-        
+
         ImageIcon image = new ImageIcon(getClass().getResource("/images/login-background-dark.jpg"));
         this.bgPanel.setBackgroundImage(image.getImage());
 
@@ -756,7 +763,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
-            
+
             this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 24));
             this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
 
@@ -804,7 +811,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtSshPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtSshUser.setFont(font.deriveFont(Font.BOLD, 12));
             this.pwdSshPassword.setFont(font.deriveFont(Font.BOLD, 12));
-            this.pwdSshPassword.putClientProperty( "FlatLaf.style", "showRevealButton: false" );
+            this.pwdSshPassword.putClientProperty("FlatLaf.style", "showRevealButton: false");
             this.txtTargetPort.setFont(font.deriveFont(Font.BOLD, 12));
 
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 12));
@@ -991,6 +998,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        lblAutoUpdate = new javax.swing.JLabel();
 
         jButton1.setText("jButton1");
 
@@ -1535,6 +1543,10 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-login.png"))); // NOI18N
 
+        lblAutoUpdate.setFont(lblAutoUpdate.getFont().deriveFont(lblAutoUpdate.getFont().getStyle() | java.awt.Font.BOLD));
+        lblAutoUpdate.setForeground(new java.awt.Color(255, 255, 255));
+        lblAutoUpdate.setText("jLabel18");
+
         org.jdesktop.layout.GroupLayout bgPanelLayout = new org.jdesktop.layout.GroupLayout(bgPanel);
         bgPanel.setLayout(bgPanelLayout);
         bgPanelLayout.setHorizontalGroup(
@@ -1545,7 +1557,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(72, 72, 72))
             .add(bgPanelLayout.createSequentialGroup()
                 .add(51, 51, 51)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 683, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 683, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         bgPanelLayout.setVerticalGroup(
@@ -1555,7 +1569,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jLabel3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 448, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(49, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblAutoUpdate)
+                .addContainerGap(43, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -1755,16 +1771,79 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         settings.setConfiguration(ClientSettings.CONF_LASTCONNECTION, this.cmbCurrentConnection.getSelectedItem().toString());
-        
-        if(saveProfile) {
+
+        if (saveProfile) {
             // save profile in case user changed the user name
             this.cmdSaveProfileActionPerformed(null);
         }
 
         String serverVersion = VersionUtils.getServerVersion();
-        String clientVersion = VersionUtils.getFullClientVersion();
-        if (!VersionUtils.isCompatible(serverVersion, clientVersion)) {
-            int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{clientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
+        String currentClientVersion = VersionUtils.getFullClientVersion();
+        String latestClientVersion = VersionUtils.getLatestClientVersionForServer(serverVersion);
+        if (latestClientVersion != null && !(latestClientVersion.equals(currentClientVersion))) {
+            // provide download option
+            int response = JOptionPane.showConfirmDialog(this, "Für diesen Arbeitsplatz liegt ein Update vor. Jetzt herunterladen?", "Update verfügbar", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+
+                lblAutoUpdate.setText("Lade Installer für Version " + latestClientVersion + "...");
+
+                Thread downloadThread = new Thread(() -> {
+
+                    try {
+                        String downloadUrl=VersionUtils.getLatestClientDownloadForServer(serverVersion);
+                        URL updateURL = new URL(downloadUrl);
+                        URLConnection urlCon = updateURL.openConnection();
+                        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+                        urlCon.setConnectTimeout(1500);
+                        urlCon.setReadTimeout(3500);
+
+                        
+                        String userHome = System.getProperty("user.home");
+                        String downloadsFolder = userHome + System.getProperty("file.separator") + "Downloads";
+                        File tmpF = new File(downloadsFolder + File.separator + downloadUrl.substring(downloadUrl.lastIndexOf("=")+1));
+            
+                        try (InputStream is = urlCon.getInputStream(); FileOutputStream fOut = new FileOutputStream(tmpF)) {
+
+                            byte[] buffer = new byte[1024*1024];
+                            int len = 0;
+                            while ((len = is.read(buffer)) > -1) {
+                                fOut.write(buffer, 0, len);
+                                ThreadUtils.updateLabel(lblAutoUpdate, len + " bytes");
+                                lblAutoUpdate.setText(len + " bytes");
+                                lblAutoUpdate.repaint();
+                                lblAutoUpdate.revalidate();
+                                final int byteLen=len;
+                                SwingUtilities.invokeAndWait(() -> {
+                                    lblAutoUpdate.setText(byteLen + " bytes");
+                                });
+                                System.out.println(len + " bytes");
+                            }
+                        }
+                        
+                        
+                        DesktopUtils.openFileManager(new File(downloadsFolder));
+                    } catch (Exception ex) {
+                        log.error(ex);
+                    }
+
+                    ThreadUtils.updateLabel(lblAutoUpdate, "100%");
+                    ThreadUtils.repaintComponent(lblAutoUpdate);
+
+                });
+                downloadThread.start();
+
+                try {
+                    // Wait for the thread to finish using the join() method
+                    downloadThread.join();
+                } catch (InterruptedException e) {
+                    log.error(e);
+                }
+            }
+
+        }
+
+        if (!VersionUtils.isCompatible(serverVersion, currentClientVersion)) {
+            int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{currentClientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 this.cmdLogin.setEnabled(true);
                 launching = false;
@@ -1788,7 +1867,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
         new Thread(new SplashThread(splash, settings, this)).start();
     }
-    
+
     private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
         this.highlightSecuritySelection();
     }//GEN-LAST:event_rdSecNoneActionPerformed
@@ -1987,6 +2066,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblAutoUpdate;
     private javax.swing.JLabel lblBoxOutput;
     private javax.swing.JLabel lblHint;
     private javax.swing.JLabel lblProfile;

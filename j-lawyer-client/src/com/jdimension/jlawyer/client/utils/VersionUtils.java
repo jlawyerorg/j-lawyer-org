@@ -665,7 +665,19 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URL;
+import java.net.URLConnection;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  *
@@ -675,6 +687,66 @@ public class VersionUtils {
 
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
+    public static String getLatestClientDownloadForServer(String serverVersion) {
+        return getLatestClientForServer(serverVersion, "url");
+    }
+    
+    public static String getLatestClientVersionForServer(String serverVersion) {
+        return getLatestClientForServer(serverVersion, "client");
+    }
+    
+    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
+        try {
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
+            URLConnection urlCon = updateURL.openConnection();
+            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+            urlCon.setConnectTimeout(2000);
+            urlCon.setReadTimeout(3000);
+
+            InputStream is = urlCon.getInputStream();
+            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+
+            char[] buffer = new char[1024];
+            int len = 0;
+            StringBuilder sb = new StringBuilder();
+            while ((len = reader.read(buffer)) > -1) {
+                sb.append(buffer, 0, len);
+            }
+            reader.close();
+            is.close();
+            String calculationsContent = sb.toString();
+
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (IllegalArgumentException iae) {
+                log.warn("Unable to set external entity restrictions in XML parser", iae);
+            }
+            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
+            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
+            inSrc1.setEncoding("UTF-8");
+            Document remoteDoc = remoteDb.parse(inSrc1);
+
+            NodeList remoteList = remoteDoc.getElementsByTagName("server");
+
+            for (int i = 0; i < remoteList.getLength(); i++) {
+                Node n = remoteList.item(i);
+                String server = n.getAttributes().getNamedItem("version").getNodeValue();
+                String client = n.getAttributes().getNamedItem("client").getNodeValue();
+                String os = n.getAttributes().getNamedItem("os").getNodeValue();
+                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
+                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
+                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
+                }
+            }
+
+        } catch (Throwable t) {
+            log.error("Error downloading client version information", t);
+        }
+        return null;
+    }
+    
     public static String getClientVersion() {
         return "2.6";
     }
