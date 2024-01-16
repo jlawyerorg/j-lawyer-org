@@ -807,13 +807,12 @@ public class ReportService implements ReportServiceRemote {
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
-                    + "-- where inv.created >=? and inv.created<=?\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
             
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
-                    + "    inv.total_gross Rechnungsbetrag \n"
+                    + "    sum(inv.total_gross) Rechnungsbetrag \n"
                     + "     FROM invoices inv\n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -848,7 +847,7 @@ public class ReportService implements ReportServiceRemote {
             
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
-                    + "    inv.total_gross Rechnungsbetrag \n"
+                    + "    sum(inv.total_gross) Rechnungsbetrag \n"
                     + "     FROM invoices inv\n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
