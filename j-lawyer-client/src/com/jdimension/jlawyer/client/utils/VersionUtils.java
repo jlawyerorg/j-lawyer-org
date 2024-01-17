@@ -670,6 +670,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -704,7 +705,7 @@ public class VersionUtils {
             urlCon.setReadTimeout(3000);
 
             InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
 
             char[] buffer = new char[1024];
             int len = 0;
@@ -733,7 +734,6 @@ public class VersionUtils {
             for (int i = 0; i < remoteList.getLength(); i++) {
                 Node n = remoteList.item(i);
                 String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String client = n.getAttributes().getNamedItem("client").getNodeValue();
                 String os = n.getAttributes().getNamedItem("os").getNodeValue();
                 String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
                 if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
