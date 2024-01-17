@@ -911,9 +911,12 @@ public class EmailUtils {
                 if (disposition == null) {
                     MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                    if (mimePart.getContent() instanceof Multipart) {
-                        attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
-
+                    try {
+                        if (mimePart.getContent() instanceof Multipart) {
+                            attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
+                        }
+                    } catch (Throwable t) {
+                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
                     }
 
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
