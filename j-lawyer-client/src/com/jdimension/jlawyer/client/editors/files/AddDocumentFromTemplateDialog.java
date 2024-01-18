@@ -916,6 +916,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 name = name.replaceAll(ptb.getPlaceHolder(), contactName);
             }
         }
+        
+        if(this.invoice!=null && this.invoice.getInvoiceNumber()!=null) {
+            name = name.replace("BELNR", this.invoice.getInvoiceNumber());
+        }
 
         name = name.replaceAll(",", "");
         name = name.replaceAll("\"", "");
