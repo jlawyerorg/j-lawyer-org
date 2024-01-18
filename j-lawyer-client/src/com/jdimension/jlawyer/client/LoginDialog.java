@@ -664,10 +664,13 @@
 package com.jdimension.jlawyer.client;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.security.ssh.SshTunnel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -1790,38 +1793,49 @@ public class LoginDialog extends javax.swing.JFrame {
                 Thread downloadThread = new Thread(() -> {
 
                     try {
-                        String downloadUrl=VersionUtils.getLatestClientDownloadForServer(serverVersion);
+                        String downloadUrl = VersionUtils.getLatestClientDownloadForServer(serverVersion);
                         URL updateURL = new URL(downloadUrl);
                         URLConnection urlCon = updateURL.openConnection();
                         urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
                         urlCon.setConnectTimeout(1500);
                         urlCon.setReadTimeout(3500);
 
-                        
                         String userHome = System.getProperty("user.home");
-                        String downloadsFolder = userHome + System.getProperty("file.separator") + "Downloads";
-                        File tmpF = new File(downloadsFolder + File.separator + downloadUrl.substring(downloadUrl.lastIndexOf("=")+1));
-            
+                        String downloadsFolder = userHome + System.getProperty("file.separator") + "Downloads" + System.getProperty("file.separator") + "j-lawyer-Update_" + latestClientVersion;
+                        new File(downloadsFolder).mkdirs();
+                        String fullTempFile=downloadsFolder + File.separator + downloadUrl.substring(downloadUrl.lastIndexOf("=") + 1);
+                        File tmpF = new File(fullTempFile);
+
                         try (InputStream is = urlCon.getInputStream(); FileOutputStream fOut = new FileOutputStream(tmpF)) {
 
-                            byte[] buffer = new byte[1024*1024];
+                            byte[] buffer = new byte[1024 * 1024];
                             int len = 0;
+                            int totalChunk = 0;
+                            int total = 0;
                             while ((len = is.read(buffer)) > -1) {
+
                                 fOut.write(buffer, 0, len);
-                                ThreadUtils.updateLabel(lblAutoUpdate, len + " bytes");
-                                lblAutoUpdate.setText(len + " bytes");
-                                lblAutoUpdate.repaint();
-                                lblAutoUpdate.revalidate();
-                                final int byteLen=len;
-                                SwingUtilities.invokeAndWait(() -> {
-                                    lblAutoUpdate.setText(byteLen + " bytes");
-                                });
-                                System.out.println(len + " bytes");
+                                totalChunk = totalChunk + len;
+                                total=total+len;
+
+                                final int byteLen = total;
+                                if (totalChunk > 1000000) {
+                                    SwingUtilities.invokeLater(() -> {
+                                        lblAutoUpdate.setText("Lade Installer für Version " + latestClientVersion + "... " + FileUtils.getFileSizeHumanReadable(byteLen));
+                                    });
+                                    totalChunk = 0;
+                                }
                             }
                         }
+
+                        FileUtils.setPosixFilePermissions(fullTempFile, true, true, true);
                         
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(this, "<html>Die Anwendung wird nun beendet. F&uuml;hren Sie anschlie&szlig;end diese Datei aus:<br/>" + tmpF.getAbsolutePath(), "bereit zur Installation", JOptionPane.INFORMATION_MESSAGE);
+                            DesktopUtils.openFileManager(new File(downloadsFolder));
+                            System.exit(0);
+                        });
                         
-                        DesktopUtils.openFileManager(new File(downloadsFolder));
                     } catch (Exception ex) {
                         log.error(ex);
                     }
@@ -1832,12 +1846,8 @@ public class LoginDialog extends javax.swing.JFrame {
                 });
                 downloadThread.start();
 
-                try {
-                    // Wait for the thread to finish using the join() method
-                    downloadThread.join();
-                } catch (InterruptedException e) {
-                    log.error(e);
-                }
+                // do not log in if user selected to download the update
+                return;
             }
 
         }

@@ -676,11 +676,17 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -1117,5 +1123,34 @@ public class FileUtils extends ServerFileUtils {
         }
 
         return null;
+    }
+    
+    public static void setPosixFilePermissions(String absolutePathToFile, boolean read, boolean write, boolean execute) {
+        Path path = FileSystems.getDefault().getPath(absolutePathToFile);
+        
+        // Create a set of PosixFilePermission
+        Set<PosixFilePermission> perms = new HashSet<>();
+        if(read)
+            perms.add(PosixFilePermission.OWNER_READ);
+        if(write)
+            perms.add(PosixFilePermission.OWNER_WRITE);
+        if(execute)
+            perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        // You can also add permissions for group and others if needed
+        // perms.add(PosixFilePermission.GROUP_READ);
+        // perms.add(PosixFilePermission.GROUP_WRITE);
+        // perms.add(PosixFilePermission.GROUP_EXECUTE);
+        // perms.add(PosixFilePermission.OTHERS_READ);
+        // perms.add(PosixFilePermission.OTHERS_WRITE);
+        // perms.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        try {
+            // Set the permissions on the file
+            Files.setPosixFilePermissions(path, perms);
+            log.info("Executable flag added to the file: " + path);
+        } catch (IOException e) {
+            log.error("Error adding executable flag: " + e.getMessage());
+        }
     }
 }
