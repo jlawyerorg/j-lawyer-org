@@ -4269,6 +4269,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
+            this.updateAccountTotals();
             
             
             for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
