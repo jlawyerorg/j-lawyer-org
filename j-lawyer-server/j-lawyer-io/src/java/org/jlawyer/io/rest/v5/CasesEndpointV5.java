@@ -734,6 +734,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
                 rco.setFileNumber(afb.getFileNumber());
+                rco.setDateChanged(afb.getDateChanged());
                 rcoList.add(rco);
             }
             Response res = Response.ok(rcoList).build();
