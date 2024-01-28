@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -82,25 +83,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +104,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +114,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +127,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +276,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +289,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +639,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +651,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,66 +660,123 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package org.jlawyer.utils.ocr;
 
-package com.jdimension.jlawyer.services;
-
-
-
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.pojo.FileMetadata;
-import com.jdimension.jlawyer.pojo.JobStatus;
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import javax.ejb.Local;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Properties;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface SingletonServiceLocal {
+public class OcrUtils {
     
-    int getSystemStatus();
+    private static final Logger log=Logger.getLogger(OcrUtils.class.getName());
 
-    void setSystemStatus(int status);
+    private static final String METAPROPERTIES_KEY_FILENAME = "file.name";
+    private static final String METAPROPERTIES_KEY_FILESIZE = "file.size";
+    private static final String METAPROPERTIES_KEY_OCRSTATUS = "file.ocrstatus";
 
-    HashMap<FileMetadata,Date> getObservedFiles();
-    
-    HashMap<FileMetadata,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
 
-    void setObservedFiles(HashMap<FileMetadata,Date> fileNames);
+    public static void performOcr(File inputFile, File outputFile) throws Exception {
+        String[] cmd = new String[]{
+            "ocrmypdf",
+            "--skip-text",
+            inputFile.getAbsolutePath(),
+            outputFile.getAbsolutePath()
+        };
+        
+        log.info("OCR command line arguments for file " + inputFile.getAbsolutePath() + ": ");
+        for (String str : cmd) {
+            log.info("   " + str);
+        }
 
-    FaxQueueBean getFailedFax();
-    EpostQueueBean getFailedLetter();
+        int exitCode = 0;
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+        processBuilder.redirectErrorStream(true); // Redirect standard error to standard output
 
-    ArrayList<FaxQueueBean> getFaxQueue();
-    ArrayList<EpostQueueBean> getEpostQueue();
+        log.info("OCR output:");
+        try {
+            Process process = processBuilder.start();
 
-    void setFailedFax(FaxQueueBean failedFax);
-    void setFailedLetter(EpostQueueBean failedLetter);
+            // Read standard output and standard error streams
+            InputStream inputStream = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    void setEpostQueue(ArrayList<EpostQueueBean> epostQueue);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                log.info("   " + line);
+            }
 
-    long getLatestInstantMessageReceived();
+            // Wait for the process to finish and get the exit code
+            exitCode = process.waitFor();
+            log.info("OCR exit code for file " + inputFile.getAbsolutePath() + ": " + exitCode);
 
-    void setLatestInstantMessageReceived(long timestamp);
-    
-    long getLatestInstantMessageStatusUpdated();
-    void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated);
+        } catch (IOException | InterruptedException ex) {
+            log.error("OCR failed", ex);
+            exitCode = -1; // Set a custom exit code to indicate an error
+        }
 
-    JobStatus getJobStatus(String jobId);
+    }
 
-    void updateJobStatus(JobStatus jobStatus);
+    public static boolean hasMetadata(File f) {
+        File metadata = new File(f.getAbsolutePath() + ".metadata");
+        return metadata.exists();
+    }
 
-    Collection<JobStatus> listJobs();
-    
-    
+    public static void updateOcrStatus(File f, int newStatus) throws Exception {
+        Properties metaProperties = new Properties();
+        FileReader fr = new FileReader(f.getAbsolutePath() + ".metadata");
+        metaProperties.load(fr);
+        fr.close();
+        metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + newStatus);
+
+        FileWriter fw = new FileWriter(f.getAbsolutePath() + ".metadata");
+        metaProperties.store(fw, null);
+        fw.close();
+
+    }
+
+    public static FileMetadata generateMetadata(File f) throws Exception {
+        File metadata = new File(f.getAbsolutePath() + ".metadata");
+        if (!metadata.exists()) {
+            Properties metaProperties = new Properties();
+            metaProperties.put(METAPROPERTIES_KEY_FILENAME, f.getName());
+            metaProperties.put(METAPROPERTIES_KEY_FILESIZE, "" + f.length());
+            metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + FileMetadata.OCRSTATUS_NOTSUPPORTED);
+            if (f.getName().toLowerCase().endsWith(".pdf")) {
+                metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + FileMetadata.OCRSTATUS_PROCESSING);
+            }
+            FileWriter fw = new FileWriter(metadata);
+            metaProperties.store(fw, null);
+            fw.close();
+        }
+        return getMetadata(f);
+
+    }
+
+    public static FileMetadata getMetadata(File f) throws Exception {
+        FileMetadata metadata = null;
+        if (hasMetadata(f)) {
+            Properties metaProperties = new Properties();
+            FileReader fr = new FileReader(f.getAbsolutePath() + ".metadata");
+            metaProperties.load(fr);
+            fr.close();
+            metadata = new FileMetadata();
+            metadata.setFileName(f.getName());
+            metadata.setFileSize(f.length());
+            metadata.setOcrStatus(Integer.parseInt(metaProperties.get(METAPROPERTIES_KEY_OCRSTATUS).toString()));
+        }
+        return metadata;
+    }
+
 }

@@ -663,7 +663,7 @@
  */
 package com.jdimension.jlawyer.client.events;
 
-import java.io.File;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -673,11 +673,11 @@ import java.util.HashMap;
  */
 public class ScannerStatusEvent extends Event {
 
-    private HashMap<File, Date> fileNames=null;
+    private HashMap<FileMetadata, Date> fileMetadata=null;
     
-    public ScannerStatusEvent(HashMap<File, Date> fileNames) {
+    public ScannerStatusEvent(HashMap<FileMetadata, Date> fileNames) {
         super(Event.TYPE_SCANNERSTATUS);
-        this.fileNames=fileNames;
+        this.fileMetadata=fileNames;
         
     }
 
@@ -689,17 +689,17 @@ public class ScannerStatusEvent extends Event {
     }
 
     /**
-     * @return the fileNames
+     * @return the fileMetadata
      */
-    public HashMap<File, Date> getFileNames() {
-        return fileNames;
+    public HashMap<FileMetadata, Date> getFileMetadata() {
+        return fileMetadata;
     }
 
     /**
-     * @param fileNames the fileNames to set
+     * @param metadata the fileMetadata to set
      */
-    public void setFileNames(HashMap<File, Date> fileNames) {
-        this.fileNames = fileNames;
+    public void setFileMetadata(HashMap<FileMetadata, Date> metadata) {
+        this.fileMetadata = metadata;
     }
 
 

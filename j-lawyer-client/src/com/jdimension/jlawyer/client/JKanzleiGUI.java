@@ -1022,9 +1022,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         } else if (e instanceof ScannerStatusEvent) {
             this.lblScanStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png")));
-            this.lblScanStatus.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
-            this.lblScanStatus.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
-            if (((ScannerStatusEvent) e).getFileNames().size() > 0) {
+            this.lblScanStatus.setText("" + ((ScannerStatusEvent) e).getFileMetadata().size());
+            this.lblScanStatus.setToolTipText(((ScannerStatusEvent) e).getFileMetadata().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
+            if (((ScannerStatusEvent) e).getFileMetadata().size() > 0) {
                 this.lblScanStatus.setEnabled(true);
             } else {
                 this.lblScanStatus.setEnabled(false);

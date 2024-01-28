@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
-import java.io.File;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -679,7 +679,7 @@ import javax.ejb.Remote;
 @Remote
 public interface IntegrationServiceRemote {
 
-    HashMap<File,Date> getObservedDirectoryContent();
+    HashMap<FileMetadata,Date> getObservedDirectoryContent();
 
     boolean removeObservedFile(String fileName);
 
@@ -718,5 +718,11 @@ public interface IntegrationServiceRemote {
     void renameEmailTemplate(String oldName, String newName) throws Exception;
 
     void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
+
+    FileMetadata getObservedFileMetadata(String fileName) throws Exception;
+
+    List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception;
+
+    boolean performOcrForObservedFile(String fileName) throws Exception;
     
 }

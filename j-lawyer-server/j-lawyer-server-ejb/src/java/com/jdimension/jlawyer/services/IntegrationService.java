@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
@@ -694,12 +695,19 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
+import org.jlawyer.utils.ocr.OcrRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
  *
@@ -721,9 +729,16 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @EJB
     private CustomHooksServiceLocal hookService;
 
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
+    private javax.jms.Queue searchIndexQueue;
+
     @Override
     @RolesAllowed(value = {"readArchiveFileRole"})
-    public HashMap<File, Date> getObservedDirectoryContent() {
+    public HashMap<FileMetadata, Date> getObservedDirectoryContent() {
 
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
@@ -748,38 +763,46 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return new HashMap();
         }
 
-        HashMap<File, Date> fileObjects = new HashMap<>();
+        HashMap<FileMetadata, Date> fileObjects = new HashMap<>();
         File files[] = scanDirectory.listFiles();
         if (files != null) {
             for (File f : files) {
-                if (!f.isDirectory()) {
+                if (!f.isDirectory() && !f.getName().endsWith(".metadata")) {
+                    try {
+                        // file might still be copying - skip if last modified is less than 2.5s in the past
+                        if ((System.currentTimeMillis() - f.lastModified()) > 2500l) {
 
-                    if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
-                        String name = f.getName();
-                        fileObjects.put(f, new Date(f.lastModified()));
-                    } else {
+                            if (!OcrUtils.hasMetadata(f)) {
+                                FileMetadata newMetadata = OcrUtils.generateMetadata(f);
+                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_PROCESSING) {
+                                    // send request to perform OCR
+                                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                                    this.publishOcrRequest(req);
+                                }
+                            }
 
-                        long size = f.length();
-                        try {
-                            Thread.sleep(300);
-                        } catch (Throwable t) {
-
-                        }
-                        if (size != f.length()) {
-                            // skip file - still copying...
-                        } else {
-                            String name = f.getName();
-                            fileObjects.put(f, new Date(f.lastModified()));
+                            fileObjects.put(OcrUtils.getMetadata(f), new Date(f.lastModified()));
                         }
 
+                    } catch (Exception ex) {
+                        log.error("unable to get metadata for observed file " + f.getAbsolutePath(), ex);
                     }
-
                 }
             }
         } else {
             log.error("observed directory returns null for #listFiles");
         }
         return fileObjects;
+    }
+
+    private void publishOcrRequest(OcrRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(searchIndexQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish OCR request", ex);
+        }
     }
 
     @Override
@@ -809,6 +832,9 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     f.delete();
+                    File metadataFile=new File(f.getAbsolutePath() + ".metadata");
+                    if(metadataFile.exists())
+                        metadataFile.delete();
                     return true;
                 }
             }
@@ -861,10 +887,11 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"writeArchiveFileRole"})
     public String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
-        
-        if(fileName==null || "".equals(fileName))
+
+        if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
-        
+        }
+
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.error("directory observation is switched off");
@@ -893,7 +920,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     byte[] data = ServerFileUtils.readFile(f);
-                    ArchiveFileDocumentsBean d=this.archiveFileService.addDocument(archiveFileId, renameTo, data, "", null);
+                    ArchiveFileDocumentsBean d = this.archiveFileService.addDocument(archiveFileId, renameTo, data, "", null);
                     return d.getId();
                 }
             }
@@ -943,7 +970,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             fw.write(template.toXML());
         }
     }
-    
+
     @Override
     @RolesAllowed(value = {"loginRole"})
     public void deleteEmailTemplate(String fileName) throws Exception {
@@ -979,7 +1006,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             try (FileReader fr = new FileReader(f)) {
                 char[] buffer = new char[1024];
                 int len = 0;
-                
+
                 while ((len = fr.read(buffer)) > -1) {
                     sb.append(buffer, 0, len);
                 }
@@ -1002,10 +1029,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         Tika tika = new Tika();
         String result = null;
         try {
-            try (Reader r = tika.parse(new ByteArrayInputStream(data));
-                    BufferedReader br = new BufferedReader(r);
-                    StringWriter sw = new StringWriter();
-                    BufferedWriter bw = new BufferedWriter(sw)) {
+            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
                 char[] buffer = new char[1024];
                 int bytesRead = -1;
                 while ((bytesRead = br.read(buffer)) > -1) {
@@ -1049,10 +1073,10 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     public String[] getHookTypes() {
-        HookType[] types=HookType.values();
-        String[] typeNames=new String[types.length];
-        for(int i=0;i<types.length;i++) {
-            typeNames[i]=types[i].name();
+        HookType[] types = HookType.values();
+        String[] typeNames = new String[types.length];
+        for (int i = 0; i < types.length; i++) {
+            typeNames[i] = types[i].name();
         }
         Arrays.sort(typeNames);
         return typeNames;
@@ -1117,14 +1141,18 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 }
             }
         }
-        files= scanDirectory.listFiles();
+        files = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
                 if (name.equals(fromName)) {
-                    if(!scanDir.endsWith(File.separator))
-                        scanDir=scanDir+File.separator;
-                    File toFile=new File(scanDir + toName);
+                    if (!scanDir.endsWith(File.separator)) {
+                        scanDir = scanDir + File.separator;
+                    }
+                    File oldMetadata=new File(f.getAbsolutePath() + ".metadata");
+                    File toFile = new File(scanDir + toName);
+                    File newMetadata=new File(toFile.getAbsolutePath() + ".metadata");
+                    oldMetadata.renameTo(newMetadata);
                     return f.renameTo(toFile);
                 }
             }
@@ -1135,10 +1163,11 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     public boolean addObservedFile(String fileName, byte[] data) throws Exception {
-        
-        if(fileName==null || "".equals(fileName))
+
+        if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
-        
+        }
+
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
             log.info("directory observation is switched off");
@@ -1157,18 +1186,19 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return false;
         }
 
-        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd_HH-mm");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
         File files[] = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
                 if (name.equals(fileName)) {
-                    fileName=df.format(new Date())+"_"+name;
+                    fileName = df.format(new Date()) + "_" + name;
                 }
             }
         }
-        if(!scanDir.endsWith(File.separator))
-            scanDir=scanDir+File.separator;
+        if (!scanDir.endsWith(File.separator)) {
+            scanDir = scanDir + File.separator;
+        }
         try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
             fout.write(data);
         }
@@ -1190,15 +1220,16 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + oldName);
         }
-        
-        File fNew =new File(localBaseDir + newName);
+
+        File fNew = new File(localBaseDir + newName);
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + newName);
         }
-        
-        boolean renamed=f.renameTo(fNew);
-        if(!renamed)
+
+        boolean renamed = f.renameTo(fNew);
+        if (!renamed) {
             throw new Exception("Umbenennen der Vorlage fehlgeschlagen");
+        }
     }
 
     @Override
@@ -1216,21 +1247,104 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + templateName);
         }
-        
-        File fNew =new File(localBaseDir + duplicateName);
+
+        File fNew = new File(localBaseDir + duplicateName);
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + duplicateName);
         }
-        
+
         Path originalPath = Paths.get(localBaseDir + templateName);
         Path copied = Paths.get(localBaseDir + duplicateName);
         Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
-        
-        boolean duplicated=fNew.exists();
-        if(!duplicated)
+
+        boolean duplicated = fNew.exists();
+        if (!duplicated) {
             throw new Exception("Duplizieren der Vorlage fehlgeschlagen");
+        }
     }
 
-    
-    
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public FileMetadata getObservedFileMetadata(String fileName) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.error("directory observation is switched off");
+            return null;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return null;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return null;
+        }
+
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fileName)) {
+                    return OcrUtils.getMetadata(f);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception {
+        List<FileMetadata> metadataList = new ArrayList<>();
+        for (String f : fileNames) {
+            FileMetadata meta = this.getObservedFileMetadata(f);
+            if (meta != null) {
+                metadataList.add(meta);
+            }
+        }
+        return metadataList;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public boolean performOcrForObservedFile(String fileName) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+
+        File files[] = scanDirectory.listFiles();
+        for (File f : files) {
+            if (!f.isDirectory()) {
+                String name = f.getName();
+                if (name.equals(fileName)) {
+
+                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                    this.publishOcrRequest(req);
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 }

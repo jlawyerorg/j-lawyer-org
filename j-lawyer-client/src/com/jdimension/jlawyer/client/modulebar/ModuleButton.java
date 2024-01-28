@@ -977,7 +977,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         }
 
         if (e instanceof ScannerStatusEvent) {
-            updateIndicator(((ScannerStatusEvent) e).getFileNames().size());
+            updateIndicator(((ScannerStatusEvent) e).getFileMetadata().size());
         } else if (e instanceof MailingStatusEvent) {
             updateIndicator(((MailingStatusEvent) e).getMailingList().size());
         } else if (e instanceof EmailStatusEvent) {

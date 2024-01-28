@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -731,12 +732,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
-    private HashMap<File, Date> lastEventFileNames = new HashMap<>();
+    private HashMap<FileMetadata, Date> lastEventFileMetadata = new HashMap<>();
 
     @Override
     public void notifyStatusBarReady() {
         EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new ScannerStatusEvent(this.lastEventFileNames));
+        eb.publishEvent(new ScannerStatusEvent(this.lastEventFileMetadata));
     }
 
     @Override
@@ -749,19 +750,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         if (e instanceof ScannerStatusEvent) {
 
             int selectedRow = tblDirContent.getSelectedRow();
-            HashMap<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
+            HashMap<FileMetadata, Date> fileMetadata = ((ScannerStatusEvent) e).getFileMetadata();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            String[] colNames = new String[]{"geändert", "Dateiname"};
+            String[] colNames = new String[]{"geändert", "OCR", "Dateiname"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 @Override
                 public boolean isCellEditable(int i, int i0) {
                     return false;
                 }
             };
-            if (fileNames != null) {
-                for (File f : fileNames.keySet()) {
-                    Date lastModified = fileNames.get(f);
-                    Object[] row = new Object[]{df.format(lastModified), f.getName()};
+            if (fileMetadata != null) {
+                for (FileMetadata f : fileMetadata.keySet()) {
+                    Date lastModified = fileMetadata.get(f);
+                    Object[] row = new Object[]{df.format(lastModified), f, f.getFileName()};
                     model.addRow(row);
                 }
             }
@@ -783,7 +784,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Throwable t) {
                 log.error("Error re-selecting table row", t);
             }
-            this.lastEventFileNames = fileNames;
+            this.lastEventFileMetadata = fileMetadata;
         }
     }
 
@@ -815,6 +816,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
                 if (column == 1) {
+                    FileMetadata fm=(FileMetadata)value;
+                    label.setIcon(null);
+                    label.setText("");
+                    if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_NOTSUPPORTED) {
+                        // no icon
+                    } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_PROCESSING) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_yellow_48dp.png")));
+                    } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOCR) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_green_48dp.png")));
+                    } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOUTOCR) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_off_red_48dp.png")));
+                    }
+                } else if (column == 2) {
                     String sValue = (String) value;
                     FileUtils fu = FileUtils.getInstance();
                     Icon icon = fu.getFileTypeIcon(sValue);
@@ -867,7 +881,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-            HashMap<File, Date> observedDirContent = is.getObservedDirectoryContent();
+            HashMap<FileMetadata, Date> observedDirContent = is.getObservedDirectoryContent();
 
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ScannerStatusEvent(observedDirContent));
@@ -1106,20 +1120,24 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.pnlActionsChild.removeAll();
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length > 0) {
+            
+            log.info(selRow.length + " documents selected");
 
             ArrayList<String> fileNames = new ArrayList<>();
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
             }
 
             ArrayList<Component> actionPanelEntries = new ArrayList<>();
             int i = 0;
 
+            log.info("creating EditScanPanel");
             EditScanPanel dsp = new EditScanPanel(this.getClass().getName());
             dsp.setDetails(fileNames, this);
             actionPanelEntries.add(dsp);
 
+            log.info("creating SaveScanToCasePanel");
             // empty case reference - will trigger a search
             SaveScanToCasePanel sp = new SaveScanToCasePanel(this.getClass().getName());
             sp.setBackground(sp.getBackground().brighter());
@@ -1134,13 +1152,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             actionPanelEntries.add(sp);
 
             try {
+                log.info("querying last changed");
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
                 ArrayList<String> caseCandidates = new ArrayList<>();
+                log.info("querying last changed for current user");
                 List<ArchiveFileBean> myNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), true, 10);
+                log.info("querying last changed for other users");
                 List<ArchiveFileBean> othersNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), false, 10);
+                log.info("building suggestion list 1");
                 for (ArchiveFileBean af : myNewList) {
                     if (!caseCandidates.contains(af.getFileNumber())) {
                         caseCandidates.add(af.getFileNumber());
@@ -1155,6 +1177,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                     }
                 }
+                log.info("building suggestion list 2");
                 for (ArchiveFileBean af : othersNewList) {
                     if (!caseCandidates.contains(af.getFileNumber())) {
                         caseCandidates.add(af.getFileNumber());
@@ -1175,16 +1198,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             }
 
+            log.info("updating UI (sidebar)");
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
             for (Component o : actionPanelEntries) {
                 this.pnlActionsChild.add(o);
             }
 
+            log.info("displaying preview");
             // display document preview
             if (fileNames.size() == 1) {
                 final String fFileName = fileNames.get(0);
                 new Thread(() -> {
                     try {
+                        log.info("loading preview as bytes");
                         int splitLocation = splitTop.getDividerLocation();
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.removeAll(pnlPreview);
@@ -1198,6 +1224,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
                         byte[] data = is.getObservedFile(fFileName);
 
+                        log.info("rendering preview");
                         JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, new ScanPreviewProvider(is, fFileName), data, pnlPreview.getWidth(), pnlPreview.getHeight());
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.remove(pnlPreview, loading);
@@ -1205,6 +1232,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
                         ThreadUtils.setVisible(pnlPreview, true);
                         ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
+                        log.info("preview done");
                     } catch (Exception ex) {
                         log.error(ex);
                         clearPreview();
@@ -1250,7 +1278,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
-                String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(selRow, 2).toString();
 
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
@@ -1376,7 +1404,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             ArrayList<String> fileNames = new ArrayList<>();
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
             }
 
@@ -1463,7 +1491,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
 
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 String toFileName = FileUtils.getNewFileName(fileName, false);
                 if (toFileName == null) {
                     // user cancelled
@@ -1513,7 +1541,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
 
                 for (int r : selRow) {
-                    String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                    String fileName = this.tblDirContent.getValueAt(r, 2).toString();
 
                     try {
 
@@ -1544,7 +1572,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length == 1) {
 
-            String fileName = this.tblDirContent.getValueAt(selRow[0], 1).toString();
+            String fileName = this.tblDirContent.getValueAt(selRow[0], 2).toString();
             if(!fileName.toLowerCase().endsWith(".pdf"))
                 return false;
 

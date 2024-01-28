@@ -1709,9 +1709,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.revalidate();
             this.repaint();
         } else if (e instanceof ScannerStatusEvent) {
-            this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
-            this.lblScans.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
-            if(!((ScannerStatusEvent) e).getFileNames().isEmpty())
+            this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileMetadata().size());
+            this.lblScans.setToolTipText(((ScannerStatusEvent) e).getFileMetadata().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
+            if(!((ScannerStatusEvent) e).getFileMetadata().isEmpty())
                 this.lblScans.setEnabled(true);
             else
                 this.lblScans.setEnabled(false);

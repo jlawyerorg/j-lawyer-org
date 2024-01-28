@@ -715,7 +715,7 @@ public class TransientTimer {
             timerObserver = new Timer();
 
             // start after 20s and run every 12s
-            timerObserver.schedule(new DirectoryObserverTask(), 20000l, 12000l);
+            timerObserver.schedule(new DirectoryObserverTask(), 20000l, 10000l);
 
         }
 

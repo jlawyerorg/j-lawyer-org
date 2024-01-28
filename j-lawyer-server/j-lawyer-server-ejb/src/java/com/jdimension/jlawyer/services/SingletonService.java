@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.pojo.JobStatus;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import java.io.File;
@@ -689,11 +690,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Singleton;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
+import org.jlawyer.utils.ocr.OcrRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
  *
@@ -701,19 +709,26 @@ import org.apache.log4j.Logger;
  */
 @Singleton
 public class SingletonService implements SingletonServiceRemote, SingletonServiceLocal {
-    
+
     private static final Logger log = Logger.getLogger(SingletonService.class.getName());
 
     private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
-    private HashMap<File, Date> observedFileNames = new HashMap<>();
+    private HashMap<FileMetadata, Date> observedFileNames = new HashMap<>();
     private FaxQueueBean failedFax = null;
     protected EpostQueueBean failedLetter = null;
     private ArrayList<FaxQueueBean> faxQueue = new ArrayList<>();
     protected ArrayList<EpostQueueBean> epostQueue = new ArrayList<>();
     private HashMap<String, JobStatus> jobStatus = new HashMap<>();
-    
-    private long latestInstantMessageReceived=-1;
-    private long latestInstantMessageStatusUpdated=-1;
+
+    private long latestInstantMessageReceived = -1;
+    private long latestInstantMessageStatusUpdated = -1;
+
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
+    private javax.jms.Queue searchIndexQueue;
 
     @Override
     @RolesAllowed(value = {"loginRole"})
@@ -729,82 +744,93 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public HashMap<File, Date> getObservedFiles() {
+    public HashMap<FileMetadata, Date> getObservedFiles() {
         return this.getObservedFiles(false);
     }
-    
+
     @Override
     @PermitAll
     public void updateObservedFiles() {
         ServerSettingsBean mode = null;
-            try {
-                InitialContext ic = new InitialContext();
-                ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-                mode = settings.find("jlawyer.server.observe.directory");
-                if (mode == null || "".equals(mode.getSettingValue())) {
-                    log.info("directory observation is switched off");
-                    return;
-                }
-            } catch (Throwable ex) {
-                log.error("Error getting server setting for directory observation", ex);
-                return;
-            }
-
-            String scanDir = mode.getSettingValue();
-            if (scanDir == null || "".equals(scanDir)) {
+        try {
+            InitialContext ic = new InitialContext();
+            ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+            mode = settings.find("jlawyer.server.observe.directory");
+            if (mode == null || "".equals(mode.getSettingValue())) {
                 log.info("directory observation is switched off");
                 return;
             }
+        } catch (Throwable ex) {
+            log.error("Error getting server setting for directory observation", ex);
+            return;
+        }
 
-            File scanDirectory = new File(scanDir);
-            if (!scanDirectory.exists()) {
-                log.error("observed directory does not exist");
-                return;
-            }
+        String scanDir = mode.getSettingValue();
+        if (scanDir == null || "".equals(scanDir)) {
+            log.info("directory observation is switched off");
+            return;
+        }
 
-            if (!scanDirectory.isDirectory()) {
-                log.error("observed directory is not a directory");
-                return;
-            }
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists()) {
+            log.error("observed directory does not exist");
+            return;
+        }
 
-            HashMap<File, Date> fileObjects = new HashMap<>();
-            File files[] = scanDirectory.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (!f.isDirectory()) {
-                        // file might still be copying - skip if last modified is less than 3s in the past
-                        if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
-                            fileObjects.put(f, new Date(f.lastModified()));
-                        } else {
+        if (!scanDirectory.isDirectory()) {
+            log.error("observed directory is not a directory");
+            return;
+        }
 
-                            long size = f.length();
-                            try {
-                                Thread.sleep(300);
-                            } catch (Throwable t) {
+        HashMap<FileMetadata, Date> fileObjects = new HashMap<>();
+        File files[] = scanDirectory.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (!f.isDirectory() && !f.getName().endsWith(".metadata")) {
+                    try {
+                        // file might still be copying - skip if last modified is less than 2.5s in the past
 
+                        if ((System.currentTimeMillis() - f.lastModified()) > 2500l) {
+
+                            if (!OcrUtils.hasMetadata(f)) {
+                                FileMetadata newMetadata = OcrUtils.generateMetadata(f);
+                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_PROCESSING) {
+                                    // send request to perform OCR
+                                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                                    this.publishOcrRequest(req);
+                                }
                             }
-                            if (size != f.length()) {
-                                // skip file - still copying...
-                            } else {
-                                fileObjects.put(f, new Date(f.lastModified()));
-                            }
 
+                            fileObjects.put(OcrUtils.getMetadata(f), new Date(f.lastModified()));
                         }
+
+                    } catch (Exception ex) {
+                        log.error("unable to get metadata for observed file " + f.getAbsolutePath(), ex);
                     }
                 }
-                
-            } else {
-                log.error("observed directory returns null for #listFiles");
             }
 
-            
-            this.setObservedFiles(fileObjects);
-            
+        } else {
+            log.error("observed directory returns null for #listFiles");
+        }
+
+        this.setObservedFiles(fileObjects);
+
+    }
+
+    private void publishOcrRequest(OcrRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(searchIndexQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish OCR request", ex);
+        }
     }
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public HashMap<File, Date> getObservedFiles(boolean bypassCache) {
+    public HashMap<FileMetadata, Date> getObservedFiles(boolean bypassCache) {
         if (bypassCache) {
             this.updateObservedFiles();
         }
@@ -813,7 +839,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @PermitAll
-    public void setObservedFiles(HashMap<File, Date> fileNames) {
+    public void setObservedFiles(HashMap<FileMetadata, Date> fileNames) {
         this.observedFileNames = fileNames;
     }
 
@@ -822,7 +848,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     public FaxQueueBean getFailedFax() {
         return this.failedFax;
     }
-    
+
     @Override
     @RolesAllowed(value = {"loginRole"})
     public ArrayList<FaxQueueBean> getFaxQueue() {
@@ -848,7 +874,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @Override
     @PermitAll
     public void setLatestInstantMessageReceived(long timestamp) {
-        this.latestInstantMessageReceived=timestamp;
+        this.latestInstantMessageReceived = timestamp;
     }
 
     @Override
@@ -905,29 +931,31 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @PermitAll
     public void updateJobStatus(JobStatus jobStatus) {
         this.purgeOldJobs();
-        if(jobStatus.getId()!=null)
+        if (jobStatus.getId() != null) {
             this.jobStatus.put(jobStatus.getId(), jobStatus);
+        }
     }
-    
+
     /*
     * purges any jobs that are older than two days
-    */
+     */
     private void purgeOldJobs() {
-        ArrayList<String> removedKeys=new ArrayList<>();
-        for(String jobId: this.jobStatus.keySet()) {
-            JobStatus s=this.jobStatus.get(jobId);
-            if(s!=null) {
-                Date d=s.getLastUpdated();
-                if(d==null) {
+        ArrayList<String> removedKeys = new ArrayList<>();
+        for (String jobId : this.jobStatus.keySet()) {
+            JobStatus s = this.jobStatus.get(jobId);
+            if (s != null) {
+                Date d = s.getLastUpdated();
+                if (d == null) {
                     removedKeys.add(jobId);
                 } else {
-                    if((System.currentTimeMillis()-d.getTime())>2l*24l*60l*60l*1000l)
+                    if ((System.currentTimeMillis() - d.getTime()) > 2l * 24l * 60l * 60l * 1000l) {
                         removedKeys.add(jobId);
+                    }
                 }
-                    
+
             }
         }
-        for(String id: removedKeys) {
+        for (String id : removedKeys) {
             this.jobStatus.remove(id);
         }
     }

@@ -661,164 +661,35 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.async;
+package org.jlawyer.utils.ocr;
 
-import com.jdimension.jlawyer.documents.PreviewGenerator;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.ejb.*;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.ObjectMessage;
-import org.apache.log4j.Logger;
-import org.apache.tika.Tika;
-import org.jboss.ejb3.annotation.TransactionTimeout;
-import org.jlawyer.search.SearchAPI;
-import org.jlawyer.search.SearchIndexRequest;
-import org.jlawyer.utils.ocr.OcrRequest;
-import org.jlawyer.utils.ocr.OcrUtils;
+import org.jlawyer.search.*;
 
 /**
  *
  * @author jens
  */
-@MessageDriven(mappedName = "queue/searchIndexProcessorQueue", activationConfig = {
-    @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
-    @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-    @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/searchIndexProcessorQueue"),
-    @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "18000")
-})
-public class SearchIndexProcessor implements MessageListener {
-
-    private static final Logger log = Logger.getLogger(SearchIndexProcessor.class.getName());
-
-    @EJB
-    private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
-
-    public SearchIndexProcessor() {
+public class OcrRequest extends SearchHit {
+    
+    private String absolutePath;
+    
+    public OcrRequest(String fileAbsolutePath) {
+        this.absolutePath=fileAbsolutePath;
+        
     }
 
-    @Override
-    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
-    public void onMessage(Message message) {
-
-        try {
-
-            if (message instanceof ObjectMessage) {
-                ObjectMessage om = (ObjectMessage) message;
-                Object o = om.getObject();
-                if (o instanceof SearchIndexRequest) {
-                    SearchIndexRequest req = (SearchIndexRequest) o;
-                    SearchAPI api = SearchAPI.getInstance();
-                    if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
-                        api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETE) {
-                        api.removeFromIndex(req.getId());
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE) {
-                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETEALL) {
-                        api.deleteAll();
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_REINDEXALL) {
-                        api.deleteAll();
-
-                        PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-                        List<ArchiveFileDocumentsBean> allDocs = this.archiveFileDocumentsFacade.findAll();
-                        for (ArchiveFileDocumentsBean db : allDocs) {
-                            if (db.isDeleted()) {
-                                continue;
-                            }
-                            try {
-                                this.doAddToIndex(db, pg, api);
-                            } catch (Throwable th) {
-                                log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
-                            }
-                        }
-                    }
-                } else if (o instanceof OcrRequest) {
-                    // Get the parent directory of the original file
-                    File f=new File(((OcrRequest)o).getAbsolutePath());
-                    
-                    byte[] data = ServerFileUtils.readFile(f);
-                    if (data == null) {
-                        log.error("Error checking for OCR information - content data for file is null");
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                        return;
-                    }
-
-                    Tika tika = new Tika();
-                    String result = "";
-                    try {
-                        try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
-                            char[] buffer = new char[1024];
-                            int bytesRead = -1;
-                            while ((bytesRead = br.read(buffer)) > -1) {
-                                bw.write(buffer, 0, bytesRead);
-                            }
-                            result = sw.toString();
-                        }
-
-                    } catch (Throwable t) {
-                        log.error("Error checking for OCR information - text extraction failed", t);
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                        return;
-                    }
-                    
-                    if(result.length()>0) {
-                        // no OCR required
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
-                        return;
-                    }
-                    
-                    
-                    String tmpDir = System.getProperty("java.io.tmpdir");
-                    if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-                        tmpDir = tmpDir + System.getProperty("file.separator");
-                    }
-
-                    // Add the "OCR" prefix to the original file name
-                    String tmpFileName = tmpDir+System.currentTimeMillis();
-                    
-
-                    // Create a new File instance with the modified file name in the same directory
-                    File outputFile = new File(tmpFileName);
-
-                    OcrUtils.performOcr(f, outputFile);
-                    
-                    if(!outputFile.exists()) {
-                        log.error("OCR failed for file " + f.getAbsolutePath());
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                    } else {
-                        byte[] ocrFile = ServerFileUtils.readFile(outputFile);
-                        ServerFileUtils.writeFile(f, ocrFile);
-                        outputFile.delete();
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
-                    }
-                    
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Could not process search index request: " + message.toString(), t);
-
-        }
-
+    /**
+     * @return the absolutePath
+     */
+    public String getAbsolutePath() {
+        return absolutePath;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    private void doAddToIndex(ArchiveFileDocumentsBean db, PreviewGenerator pg, SearchAPI api) throws Exception {
-        log.info("indexing document " + db.getName());
-        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId()), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
-
+    /**
+     * @param absolutePath the absolutePath to set
+     */
+    public void setAbsolutePath(String absolutePath) {
+        this.absolutePath = absolutePath;
     }
 
 }
