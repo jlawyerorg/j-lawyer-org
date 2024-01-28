@@ -762,6 +762,7 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
     
     public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
+    public static final String SERVERCONF_SCANNER_OCRCMD="jlawyer.server.observe.ocrcmd";
     
     public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";

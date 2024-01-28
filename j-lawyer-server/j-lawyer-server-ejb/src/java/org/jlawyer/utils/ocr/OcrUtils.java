@@ -687,13 +687,14 @@ public class OcrUtils {
     private static final String METAPROPERTIES_KEY_OCRSTATUS = "file.ocrstatus";
 
 
-    public static void performOcr(File inputFile, File outputFile) throws Exception {
-        String[] cmd = new String[]{
-            "ocrmypdf",
-            "--skip-text",
-            inputFile.getAbsolutePath(),
-            outputFile.getAbsolutePath()
-        };
+    public static void performOcr(String[] cmd, File inputFile, File outputFile) throws Exception {
+        
+        for(int i=0;i<cmd.length;i++) {
+            if(cmd[i].contains("DATEIEIN"))
+                cmd[i]=cmd[i].replace("DATEIEIN", inputFile.getAbsolutePath());
+            if(cmd[i].contains("DATEIAUS"))
+                cmd[i]=cmd[i].replace("DATEIAUS", outputFile.getAbsolutePath());
+        }
         
         log.info("OCR command line arguments for file " + inputFile.getAbsolutePath() + ": ");
         for (String str : cmd) {

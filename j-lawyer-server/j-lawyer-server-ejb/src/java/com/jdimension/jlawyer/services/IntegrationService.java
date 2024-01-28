@@ -1284,7 +1284,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return null;
         }
 
-        File files[] = scanDirectory.listFiles();
+        File[] files = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
@@ -1330,7 +1330,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return false;
         }
 
-        File files[] = scanDirectory.listFiles();
+        File[] files = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
