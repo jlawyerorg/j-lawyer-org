@@ -855,7 +855,6 @@ public class LoginDialog extends javax.swing.JFrame {
             newDefault.setSshPort(settings.getConfiguration(ClientSettings.CONF_LASTSSHPORT, "22"));
             newDefault.setSshTargetPort(settings.getConfiguration(ClientSettings.CONF_LASTTARGETPORT, "8080"));
             newDefault.setSshUser(settings.getConfiguration(ClientSettings.CONF_LASTSSHUSER, "root"));
-            newDefault.setUser(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""));
             try {
                 connections.addProfile(newDefault);
             } catch (Exception ex) {

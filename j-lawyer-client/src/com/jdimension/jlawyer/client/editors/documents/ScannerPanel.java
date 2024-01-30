@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -1159,9 +1160,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 ArrayList<String> caseCandidates = new ArrayList<>();
                 log.info("querying last changed for current user");
-                List<ArchiveFileBean> myNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), true, 10);
+                List<ArchiveFileBean> myNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, 10);
                 log.info("querying last changed for other users");
-                List<ArchiveFileBean> othersNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), false, 10);
+                List<ArchiveFileBean> othersNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, 10);
                 log.info("building suggestion list 1");
                 for (ArchiveFileBean af : myNewList) {
                     if (!caseCandidates.contains(af.getFileNumber())) {
