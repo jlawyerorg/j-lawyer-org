@@ -674,6 +674,8 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -693,9 +695,8 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
 
     public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
 
-        NumberFormat currencyFormat = NumberFormat.getNumberInstance();
-        currencyFormat.setMinimumFractionDigits(2);
-        currencyFormat.setMaximumFractionDigits(2);
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        DecimalFormat currencyFormat = new DecimalFormat("#,##0.00", symbols);
 
         if (placeHolders.containsKey(TABELLE_1)) {
             if(calculationTable!=null)
