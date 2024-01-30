@@ -664,8 +664,6 @@
 package com.jdimension.jlawyer.client;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.security.ssh.SshTunnel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -691,13 +689,11 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -732,6 +728,8 @@ public class LoginDialog extends javax.swing.JFrame {
      */
     public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
+        
+        this.lblAutoUpdate.setText(" ");
 
         Color highlightColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
         this.jPanel5.setBackground(highlightColor);
