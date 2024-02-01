@@ -736,12 +736,10 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get calendars", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
@@ -785,12 +783,10 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get calendars", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
