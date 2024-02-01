@@ -675,5 +675,7 @@ public interface CalendarEndpointLocalV4 {
 
     Response getAllCalendars();
     
+    Response getAllCalendarsForUser(String principalId);
+    
     
 }
