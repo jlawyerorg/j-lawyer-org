@@ -671,16 +671,22 @@ import java.util.Objects;
  */
 public class FileMetadata implements Serializable {
     
+    // result status
     public static final int OCRSTATUS_WITHOCR=10;
     public static final int OCRSTATUS_WITHOUTOCR=20;
+    
+    // processing status
     public static final int OCRSTATUS_NOTSUPPORTED=30;
     public static final int OCRSTATUS_PROCESSING=40;
+    public static final int OCRSTATUS_OPEN=50;
     
     protected static long serialVersionUID = 1L;
     
     private String fileName=null;
     private int ocrStatus=OCRSTATUS_NOTSUPPORTED;
     private long fileSize=0;
+    private String principalId=null;
+    private String source=null;
     
     public FileMetadata() {
         
@@ -756,6 +762,34 @@ public class FileMetadata implements Serializable {
      */
     public void setOcrStatus(int ocrStatus) {
         this.ocrStatus = ocrStatus;
+    }
+
+    /**
+     * @return the principalId
+     */
+    public String getPrincipalId() {
+        return principalId;
+    }
+
+    /**
+     * @param principalId the principalId to set
+     */
+    public void setPrincipalId(String principalId) {
+        this.principalId = principalId;
+    }
+
+    /**
+     * @return the source
+     */
+    public String getSource() {
+        return source;
+    }
+
+    /**
+     * @param source the source to set
+     */
+    public void setSource(String source) {
+        this.source = source;
     }
 
     

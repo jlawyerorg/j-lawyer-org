@@ -794,7 +794,7 @@ public interface SystemManagementRemote {
 
     void removePartyType(PartyTypeBean partyType) throws Exception;
 
-    void addObservedFile(String fileName, byte[] content) throws Exception;
+    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
 
     boolean updatePassword(String newPassword) throws Exception;
 

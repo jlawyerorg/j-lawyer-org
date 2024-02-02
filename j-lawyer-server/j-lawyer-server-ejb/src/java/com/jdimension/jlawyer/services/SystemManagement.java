@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
@@ -698,6 +699,10 @@ import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
@@ -727,6 +732,8 @@ import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.utils.PlaceHolderServerUtils;
+import org.jlawyer.utils.ocr.OcrRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -769,6 +776,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private MappingEntryFacadeLocal mappingEntryFacade;
     @EJB
     private FormsServiceLocal formsService;
+    
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
+    private javax.jms.Queue searchIndexQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -2120,7 +2134,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void addObservedFile(String fileName, byte[] content) throws Exception {
+    public void addObservedFile(String fileName, byte[] content, String source) throws Exception {
         
         if(fileName==null || "".equals(fileName))
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -2178,7 +2192,26 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         try ( FileOutputStream fout = new FileOutputStream(uploadFile)) {
             fout.write(content);
         }
+        
+        if (!OcrUtils.hasMetadata(uploadFile)) {
+            FileMetadata newMetadata = OcrUtils.generateMetadata(uploadFile, context.getCallerPrincipal().getName(), source);
+            if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
+                // send request to perform OCR
+                OcrRequest req = new OcrRequest(uploadFile.getAbsolutePath());
+                this.publishOcrRequest(req);
+            }
+        }
 
+    }
+    
+    private void publishOcrRequest(OcrRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(searchIndexQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish OCR request", ex);
+        }
     }
 
     @Override

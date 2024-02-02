@@ -685,9 +685,11 @@ public class OcrUtils {
     private static final String METAPROPERTIES_KEY_FILENAME = "file.name";
     private static final String METAPROPERTIES_KEY_FILESIZE = "file.size";
     private static final String METAPROPERTIES_KEY_OCRSTATUS = "file.ocrstatus";
+    private static final String METAPROPERTIES_KEY_PRINCIPAL = "file.principal";
+    private static final String METAPROPERTIES_KEY_SOURCE = "file.source";
 
 
-    public static void performOcr(String[] cmd, File inputFile, File outputFile) throws Exception {
+    public static int performOcr(String[] cmd, File inputFile, File outputFile) throws Exception {
         
         for(int i=0;i<cmd.length;i++) {
             if(cmd[i].contains("DATEIEIN"))
@@ -721,12 +723,11 @@ public class OcrUtils {
             // Wait for the process to finish and get the exit code
             exitCode = process.waitFor();
             log.info("OCR exit code for file " + inputFile.getAbsolutePath() + ": " + exitCode);
-
         } catch (IOException | InterruptedException ex) {
             log.error("OCR failed", ex);
             exitCode = -1; // Set a custom exit code to indicate an error
         }
-
+        return exitCode;
     }
 
     public static boolean hasMetadata(File f) {
@@ -747,15 +748,17 @@ public class OcrUtils {
 
     }
 
-    public static FileMetadata generateMetadata(File f) throws Exception {
+    public static FileMetadata generateMetadata(File f, String principalId, String source) throws Exception {
         File metadata = new File(f.getAbsolutePath() + ".metadata");
         if (!metadata.exists()) {
             Properties metaProperties = new Properties();
             metaProperties.put(METAPROPERTIES_KEY_FILENAME, f.getName());
+            metaProperties.put(METAPROPERTIES_KEY_PRINCIPAL, principalId);
+            metaProperties.put(METAPROPERTIES_KEY_SOURCE, source);
             metaProperties.put(METAPROPERTIES_KEY_FILESIZE, "" + f.length());
             metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + FileMetadata.OCRSTATUS_NOTSUPPORTED);
             if (f.getName().toLowerCase().endsWith(".pdf")) {
-                metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + FileMetadata.OCRSTATUS_PROCESSING);
+                metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + FileMetadata.OCRSTATUS_OPEN);
             }
             FileWriter fw = new FileWriter(metadata);
             metaProperties.store(fw, null);
@@ -775,7 +778,19 @@ public class OcrUtils {
             metadata = new FileMetadata();
             metadata.setFileName(f.getName());
             metadata.setFileSize(f.length());
-            metadata.setOcrStatus(Integer.parseInt(metaProperties.get(METAPROPERTIES_KEY_OCRSTATUS).toString()));
+            if(metaProperties.get(METAPROPERTIES_KEY_OCRSTATUS)!=null)
+                metadata.setOcrStatus(Integer.parseInt(metaProperties.get(METAPROPERTIES_KEY_OCRSTATUS).toString()));
+            else
+                metadata.setOcrStatus(FileMetadata.OCRSTATUS_PROCESSING);
+            if(metaProperties.get(METAPROPERTIES_KEY_PRINCIPAL)!=null)
+                metadata.setPrincipalId(metaProperties.get(METAPROPERTIES_KEY_PRINCIPAL).toString());
+            else
+                metadata.setPrincipalId("");
+            
+            if(metaProperties.get(METAPROPERTIES_KEY_SOURCE)!=null)
+                metadata.setSource(metaProperties.get(METAPROPERTIES_KEY_SOURCE).toString());
+            else
+                metadata.setSource("");
         }
         return metadata;
     }

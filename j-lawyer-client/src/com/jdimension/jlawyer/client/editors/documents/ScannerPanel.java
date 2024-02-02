@@ -753,7 +753,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             int selectedRow = tblDirContent.getSelectedRow();
             HashMap<FileMetadata, Date> fileMetadata = ((ScannerStatusEvent) e).getFileMetadata();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            String[] colNames = new String[]{"geändert", "OCR", "Dateiname"};
+            String[] colNames = new String[]{"geändert", "OCR", "Dateiname", "von", "Quelle"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 @Override
                 public boolean isCellEditable(int i, int i0) {
@@ -763,7 +763,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             if (fileMetadata != null) {
                 for (FileMetadata f : fileMetadata.keySet()) {
                     Date lastModified = fileMetadata.get(f);
-                    Object[] row = new Object[]{df.format(lastModified), f, f.getFileName()};
+                    Object[] row = new Object[]{df.format(lastModified), f, f.getFileName(), f.getPrincipalId(), f.getSource()};
                     model.addRow(row);
                 }
             }
@@ -822,7 +822,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     label.setText("");
                     if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_NOTSUPPORTED) {
                         // no icon
-                    } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_PROCESSING) {
+                    } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_PROCESSING || fm.getOcrStatus()==FileMetadata.OCRSTATUS_OPEN) {
                         label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_yellow_48dp.png")));
                     } else if(fm.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOCR) {
                         label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_green_48dp.png")));
@@ -835,7 +835,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     Icon icon = fu.getFileTypeIcon(sValue);
                     label.setText(sValue);
                     label.setIcon(icon);
-
+                } else if (column == 3) {
+                    label.setText("");
+                    label.setIcon(null);
+                    String sValue = (String) value;
+                    if(sValue!=null && sValue.length()>0) {
+                        label.setText(sValue);
+                        label.setIcon(UserSettings.getInstance().getUserSmallIcon(sValue));
+                    }
                 } else {
                     label.setIcon(null);
                 }

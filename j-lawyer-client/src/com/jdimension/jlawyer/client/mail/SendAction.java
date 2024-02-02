@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -797,6 +798,7 @@ public class SendAction extends ProgressableAction {
             if (ms.isEmailInSsl()) {
                 props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
             }
+            
         }
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -956,8 +958,22 @@ public class SendAction extends ProgressableAction {
                 store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
 
             } else {
-                store = session.getStore(ms.getEmailInType());
-                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                
+                props.setProperty("mail.imaps.host", ms.getEmailInServer());
+                props.setProperty("mail.imap.host", ms.getEmailInServer());
+                
+                if(ms.isEmailInSsl())
+                    props.setProperty("mail.store.protocol", "imaps");
+                    
+                ServerSettings sset = ServerSettings.getInstance();
+                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                if (trustedServers.length() > 0)
+                    props.put("mail.imaps.ssl.trust", "mail.your-server.de");
+                
+                //store = session.getStore(ms.getEmailInType());
+                store=session.getStore();
+                //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                store.connect();
             }
 
             Folder folder = EmailUtils.getInboxFolder(store);

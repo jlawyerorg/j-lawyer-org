@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -892,6 +893,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 props.setProperty("mail.imap.partialfetch", "false");
                 props.setProperty("mail.imaps.partialfetch", "false");
                 props.setProperty("mail.store.protocol", ms.getEmailInType());
+                
                 if (ms.isEmailInSsl()) {
                     props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
                 }
@@ -925,10 +927,38 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     store.connect(server, ms.getEmailInUser(), authToken);
                     
                 } else {
-                    session = Session.getDefaultInstance(props, null);
-                    store = session.getStore(ms.getEmailInType());
+                    //props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                    
+                    //props.setProperty("mail.imaps.auth", "true");
+                    //props.setProperty("mail.imap.auth", "true");
+                    
+                    props.setProperty("mail.imaps.host", server);
+                    props.setProperty("mail.imap.host", server);
+                    
+                    //props.setProperty("mail.imaps.port", "993");
+                    //props.setProperty("mail.imap.port", "993");
+                    
+                    if(ms.isEmailInSsl())
+                        props.setProperty("mail.store.protocol", "imaps");
+                    
+                    ServerSettings sset=ServerSettings.getInstance();
+                    String trustedServers=sset.getSetting("mail.imaps.ssl.trust", "");
+                    if(trustedServers.length()>0)
+                        props.put("mail.imaps.ssl.trust", "mail.your-server.de");
+                    
+                    session = Session.getInstance(props, new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(ms.getEmailInUser(), emailInPwd);
+                        }
+                    });
+                    
+                    //session = Session.getDefaultInstance(props, null);
+                    //store = session.getStore(ms.getEmailInType());
+                    store=session.getStore();
                     this.stores.put(ms, store);
-                    store.connect(server, ms.getEmailInUser(), emailInPwd);
+                    //store.connect(server, ms.getEmailInUser(), emailInPwd);
+                    store.connect();
                 }
 
                 
