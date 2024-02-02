@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import org.apache.log4j.Logger;
@@ -685,6 +686,7 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
     }
 
+    @Override
     public void run() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -718,7 +720,7 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
                             uploadInProgress=new File(f.getParentFile().getAbsolutePath() + File.separator + f.getName() + ".uploading");
                             f.renameTo(uploadInProgress);
                             byte[] content = FileUtils.readFile(uploadInProgress);
-                            locator.lookupSystemManagementRemote().addObservedFile(realName, content);
+                            locator.lookupSystemManagementRemote().addObservedFile(realName, content, ServerInformation.getHostName());
                         } catch (Exception ex) {
                             log.error("Unable to upload scan " + f.getName() + " from " + localDir.getPath(), ex);
                             // leave scan in local inbox

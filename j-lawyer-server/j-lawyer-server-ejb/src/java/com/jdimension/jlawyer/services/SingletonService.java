@@ -793,8 +793,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
                         if ((System.currentTimeMillis() - f.lastModified()) > 2500l) {
 
                             if (!OcrUtils.hasMetadata(f)) {
-                                FileMetadata newMetadata = OcrUtils.generateMetadata(f);
-                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_PROCESSING) {
+                                FileMetadata newMetadata = OcrUtils.generateMetadata(f, "", "zentraler Scanordner");
+                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                                     // send request to perform OCR
                                     OcrRequest req = new OcrRequest(f.getAbsolutePath());
                                     this.publishOcrRequest(req);

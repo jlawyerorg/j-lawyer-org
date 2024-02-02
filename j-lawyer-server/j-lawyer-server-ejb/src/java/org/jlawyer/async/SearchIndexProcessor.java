@@ -752,6 +752,7 @@ public class SearchIndexProcessor implements MessageListener {
                 } else if (o instanceof OcrRequest) {
                     // Get the parent directory of the original file
                     File f = new File(((OcrRequest) o).getAbsolutePath());
+                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_PROCESSING);
 
                     byte[] data = ServerFileUtils.readFile(f);
                     if (data == null) {
@@ -803,7 +804,7 @@ public class SearchIndexProcessor implements MessageListener {
                         }
                     }
                     if (cmd != null) {
-                        OcrUtils.performOcr(cmd, f, outputFile);
+                        int exitCode=OcrUtils.performOcr(cmd, f, outputFile);
 
                         if (!outputFile.exists()) {
                             log.error("OCR failed for file " + f.getAbsolutePath());
@@ -812,7 +813,10 @@ public class SearchIndexProcessor implements MessageListener {
                             byte[] ocrFile = ServerFileUtils.readFile(outputFile);
                             ServerFileUtils.writeFile(f, ocrFile);
                             outputFile.delete();
-                            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+                            if(exitCode<0)
+                                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                            else
+                                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
                         }
                     } else {
                         log.info("OCR not configured");

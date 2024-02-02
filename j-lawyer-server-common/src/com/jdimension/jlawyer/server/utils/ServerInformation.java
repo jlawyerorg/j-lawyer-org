@@ -667,7 +667,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
 
 /**
@@ -678,8 +677,7 @@ public class ServerInformation {
 
     public static String getHostName() {
         try {
-            String host = "unknown host name";
-            host = java.net.InetAddress.getLocalHost().getHostName();
+            String host = java.net.InetAddress.getLocalHost().getHostName();
             if ("localhost".equalsIgnoreCase(host)) {
                 host = java.net.InetAddress.getLocalHost().getCanonicalHostName();
             }

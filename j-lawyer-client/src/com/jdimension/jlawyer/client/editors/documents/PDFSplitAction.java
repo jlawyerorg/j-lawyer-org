@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -773,7 +774,7 @@ public class PDFSplitAction extends ProgressableAction {
                     this.progress("Speichere " + splitFileName);
                     ByteArrayOutputStream bout = new ByteArrayOutputStream();
                     doc.save(bout);
-                    svc.addObservedFile(splitFileName, bout.toByteArray());
+                    svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
 
                     start = end + 1;
                     end += req.getSplitAfterPages();
@@ -823,7 +824,7 @@ public class PDFSplitAction extends ProgressableAction {
                         this.progress("Speichere " + splitFileName);
                         ByteArrayOutputStream bout = new ByteArrayOutputStream();
                         doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray());
+                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
 
                         doc.close();
                         counter++;
@@ -884,7 +885,7 @@ public class PDFSplitAction extends ProgressableAction {
                         this.progress("Speichere " + splitFileName);
                         ByteArrayOutputStream bout = new ByteArrayOutputStream();
                         doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray());
+                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
 
                         doc.close();
                         counter++;
@@ -941,7 +942,7 @@ public class PDFSplitAction extends ProgressableAction {
                         this.progress("Speichere " + splitFileName);
                         ByteArrayOutputStream bout = new ByteArrayOutputStream();
                         doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray());
+                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
 
                         doc.close();
                         counter++;

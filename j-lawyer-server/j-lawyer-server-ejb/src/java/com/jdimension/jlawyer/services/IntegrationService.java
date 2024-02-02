@@ -699,6 +699,7 @@ import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
@@ -720,6 +721,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     private static final Logger log = Logger.getLogger(IntegrationService.class.getName());
 
+    @Resource
+    private SessionContext context;
     @EJB
     private ArchiveFileServiceRemote archiveFileService;
     @EJB
@@ -773,8 +776,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                         if ((System.currentTimeMillis() - f.lastModified()) > 2500l) {
 
                             if (!OcrUtils.hasMetadata(f)) {
-                                FileMetadata newMetadata = OcrUtils.generateMetadata(f);
-                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_PROCESSING) {
+                                FileMetadata newMetadata = OcrUtils.generateMetadata(f, "", "zentraler Scanordner");
+                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                                     // send request to perform OCR
                                     OcrRequest req = new OcrRequest(f.getAbsolutePath());
                                     this.publishOcrRequest(req);
@@ -832,9 +835,10 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
                     f.delete();
-                    File metadataFile=new File(f.getAbsolutePath() + ".metadata");
-                    if(metadataFile.exists())
+                    File metadataFile = new File(f.getAbsolutePath() + ".metadata");
+                    if (metadataFile.exists()) {
                         metadataFile.delete();
+                    }
                     return true;
                 }
             }
@@ -1149,9 +1153,9 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                     if (!scanDir.endsWith(File.separator)) {
                         scanDir = scanDir + File.separator;
                     }
-                    File oldMetadata=new File(f.getAbsolutePath() + ".metadata");
+                    File oldMetadata = new File(f.getAbsolutePath() + ".metadata");
                     File toFile = new File(scanDir + toName);
-                    File newMetadata=new File(toFile.getAbsolutePath() + ".metadata");
+                    File newMetadata = new File(toFile.getAbsolutePath() + ".metadata");
                     oldMetadata.renameTo(newMetadata);
                     return f.renameTo(toFile);
                 }
@@ -1162,7 +1166,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"loginRole"})
-    public boolean addObservedFile(String fileName, byte[] data) throws Exception {
+    public boolean addObservedFile(String fileName, byte[] data, String source) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -1202,6 +1206,17 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
             fout.write(data);
         }
+
+        File f=new File(scanDir + fileName);
+        if (!OcrUtils.hasMetadata(f)) {
+            FileMetadata newMetadata = OcrUtils.generateMetadata(f, context.getCallerPrincipal().getName(), source);
+            if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
+                // send request to perform OCR
+                OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                this.publishOcrRequest(req);
+            }
+        }
+
         return true;
     }
 
