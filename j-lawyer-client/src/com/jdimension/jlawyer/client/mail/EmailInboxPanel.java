@@ -927,16 +927,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     store.connect(server, ms.getEmailInUser(), authToken);
                     
                 } else {
-                    //props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-                    
-                    //props.setProperty("mail.imaps.auth", "true");
-                    //props.setProperty("mail.imap.auth", "true");
                     
                     props.setProperty("mail.imaps.host", server);
                     props.setProperty("mail.imap.host", server);
-                    
-                    //props.setProperty("mail.imaps.port", "993");
-                    //props.setProperty("mail.imap.port", "993");
                     
                     if(ms.isEmailInSsl())
                         props.setProperty("mail.store.protocol", "imaps");
@@ -953,11 +946,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         }
                     });
                     
-                    //session = Session.getDefaultInstance(props, null);
-                    //store = session.getStore(ms.getEmailInType());
                     store=session.getStore();
                     this.stores.put(ms, store);
-                    //store.connect(server, ms.getEmailInUser(), emailInPwd);
                     store.connect();
                 }
 

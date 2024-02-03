@@ -970,7 +970,6 @@ public class SendAction extends ProgressableAction {
                 if (trustedServers.length() > 0)
                     props.put("mail.imaps.ssl.trust", "mail.your-server.de");
                 
-                //store = session.getStore(ms.getEmailInType());
                 store=session.getStore();
                 //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
                 store.connect();
