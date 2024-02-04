@@ -165,6 +165,8 @@
                   <Component id="sortSize" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFolder" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                  <Component id="sortFileType" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
@@ -173,17 +175,20 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
               <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="cmdActions" max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="cmdActions" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="sortDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
+                      <Component id="sortFileType" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
@@ -295,6 +300,15 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSelectNone1ActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFileType">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Dateityp"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Dateityp sortieren"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFileTypeMouseClicked"/>
           </Events>
         </Component>
       </SubComponents>
