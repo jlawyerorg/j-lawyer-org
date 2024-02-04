@@ -1453,7 +1453,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     log.error("Unable to get content of MimeBodyPart", t);
                 }
 
-                if (mimePartContent != null && mimePartContent instanceof Multipart) {
+                if (mimePartContent instanceof Multipart) {
                     try {
                         Object contentTest = mimePartContent;
                         recursiveLoadInlineImages(contentTest, cids);
