@@ -771,7 +771,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "        "
             + "</body></html>";
     private MessageContainer emlMsgContainer = null;
-    private OutlookMessage outlookMsgContainer=null;
+    private OutlookMessage outlookMsgContainer = null;
     private ArchiveFileBean caseContext = null;
     private String cachedHtml = null;
     private WebView webView = null;
@@ -972,9 +972,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public void setMessage(OutlookMessage om) {
-        
-        this.outlookMsgContainer=om;
-        
+
+        this.outlookMsgContainer = om;
+
         try {
             setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
 
@@ -1268,14 +1268,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
-        
+
         CidCache cids = CidCache.getInstance();
-        cids.clear();       
-        Map<String,OutlookFileAttachment> cidAttachments=msg.fetchCIDMap();
-        for(OutlookFileAttachment ofa: cidAttachments.values()) {
+        cids.clear();
+        Map<String, OutlookFileAttachment> cidAttachments = msg.fetchCIDMap();
+        for (OutlookFileAttachment ofa : cidAttachments.values()) {
             cids.put(ofa.getContentId(), ofa.getData());
         }
-        
+
         String sentString = "";
         if (msg.getDate() != null) {
             SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
@@ -1321,11 +1321,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         List<OutlookFileAttachment> attachments = msg.fetchTrueAttachments();
         for (OutlookFileAttachment att : attachments) {
-            String attFileName=att.getLongFilename();
-            if(StringUtils.isEmpty(attFileName))
-                attFileName=att.getFilename();
-            if(!StringUtils.isEmpty(attFileName))
+            String attFileName = att.getLongFilename();
+            if (StringUtils.isEmpty(attFileName)) {
+                attFileName = att.getFilename();
+            }
+            if (!StringUtils.isEmpty(attFileName)) {
                 ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
+            }
         }
 
         String htmlContent = msg.getBodyHTML();
@@ -1444,47 +1446,58 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
+                Object mimePartContent = null;
+                try {
+                    mimePartContent = mimePart.getContent();
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MimeBodyPart", t);
+                }
+
+                if (mimePartContent != null && mimePartContent instanceof Multipart) {
                     try {
-                        Object contentTest = mimePart.getContent();
+                        Object contentTest = mimePartContent;
                         recursiveLoadInlineImages(contentTest, cids);
                     } catch (Throwable t) {
                         log.error("Unable to load inline image(s)", t);
                     }
                 } else {
-                    if (mimePart.getContentID() != null) {
-                        if (mimePart.getContentType() != null && mimePart.getContentType().toLowerCase().contains("image")) {
-                            String contentId = mimePart.getContentID();
-                            if (contentId.startsWith("<")) {
-                                contentId = contentId.substring(1);
-                            }
-                            if (contentId.endsWith(">")) {
-                                contentId = contentId.substring(0, contentId.length() - 1);
-                            }
-                            InputStream inStream = part.getInputStream();
-                            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                            byte[] tempBuffer = new byte[4096];// 4 KB
-                            int numRead;
-                            while ((numRead = inStream.read(tempBuffer)) != -1) {
-                                outStream.write(tempBuffer);
-                            }
-                            inStream.close();
-                            outStream.close();
-                            byte[] resultBytes = outStream.toByteArray();
+                    try {
+                        if (mimePart.getContentID() != null) {
+                            if (mimePart.getContentType() != null && mimePart.getContentType().toLowerCase().contains("image")) {
+                                String contentId = mimePart.getContentID();
+                                if (contentId.startsWith("<")) {
+                                    contentId = contentId.substring(1);
+                                }
+                                if (contentId.endsWith(">")) {
+                                    contentId = contentId.substring(0, contentId.length() - 1);
+                                }
+                                InputStream inStream = part.getInputStream();
+                                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                                byte[] tempBuffer = new byte[4096];// 4 KB
+                                int numRead;
+                                while ((numRead = inStream.read(tempBuffer)) != -1) {
+                                    outStream.write(tempBuffer);
+                                }
+                                inStream.close();
+                                outStream.close();
+                                byte[] resultBytes = outStream.toByteArray();
 
-                            if (mimePart.getContentType() != null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
-                                // read a jpeg from a inputFile
-                                InputStream is = new ByteArrayInputStream(resultBytes);
-                                BufferedImage bufferedImage = ImageIO.read(is);
+                                if (mimePart.getContentType() != null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
+                                    // read a jpeg from a inputFile
+                                    InputStream is = new ByteArrayInputStream(resultBytes);
+                                    BufferedImage bufferedImage = ImageIO.read(is);
 
-                                // this writes the bufferedImage into a byte array called resultingBytes
-                                ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
-                                ImageIO.write(bufferedImage, "png", byteArrayOut);
-                                resultBytes = byteArrayOut.toByteArray();
+                                    // this writes the bufferedImage into a byte array called resultingBytes
+                                    ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+                                    ImageIO.write(bufferedImage, "png", byteArrayOut);
+                                    resultBytes = byteArrayOut.toByteArray();
+                                }
+
+                                cids.put(contentId, resultBytes);
                             }
-
-                            cids.put(contentId, resultBytes);
                         }
+                    } catch (Throwable t) {
+                        log.error("could not load inline image by content ID", t);
                     }
                 }
 
@@ -1776,18 +1789,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
-                byte[] data=null;
-                if(this.emlMsgContainer!=null) {
+                byte[] data = null;
+                if (this.emlMsgContainer != null) {
                     data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.emlMsgContainer);
                 } else {
-                    for(OutlookFileAttachment ofa: this.outlookMsgContainer.fetchTrueAttachments()) {
-                        if((ofa.getFilename()!=null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename()!=null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString())))) {
-                            data=ofa.getData();
+                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                        if ((ofa.getFilename() != null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString())))) {
+                            data = ofa.getData();
                             break;
                         }
                     }
                 }
-                
+
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
                 Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
@@ -1870,7 +1883,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                try ( FileOutputStream fOut = new FileOutputStream(f)) {
+                try (FileOutputStream fOut = new FileOutputStream(f)) {
                     fOut.write(data);
                 }
 
