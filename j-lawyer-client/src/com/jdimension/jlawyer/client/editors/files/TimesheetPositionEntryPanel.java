@@ -981,20 +981,25 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRemovePositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePositionActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().removeTimesheetPosition(this.timesheetId, this.position);
-            Container parentContainer=this.getParent();
-            parentContainer.remove(this);
+        
+        int response = JOptionPane.showConfirmDialog(this, "Position '" + txtName.getText() + "' (" + txtStarted.getText() + ") löschen?", "erfasste Zeit löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+
+            ClientSettings settings = ClientSettings.getInstance();
             try {
-                parentContainer.doLayout();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removeTimesheetPosition(this.timesheetId, this.position);
+                Container parentContainer = this.getParent();
+                parentContainer.remove(this);
+                try {
+                    parentContainer.doLayout();
+                } catch (Exception ex) {
+                    log.warn("unable to layout time sheet positions container", ex);
+                }
             } catch (Exception ex) {
-                log.warn("unable to layout time sheet positions container", ex);
+                log.error("Error removing timsheet position", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error("Error removing timsheet position", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_cmdRemovePositionActionPerformed
