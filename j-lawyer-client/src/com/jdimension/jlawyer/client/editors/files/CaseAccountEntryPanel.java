@@ -1080,56 +1080,38 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_taDescriptionKeyPressed
 
     private void txtEarningsFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEarningsFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtEarnings.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtEarnings.selectAll();
         });
     }//GEN-LAST:event_txtEarningsFocusGained
 
     private void txtSpendingsFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtSpendingsFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtSpendings.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtSpendings.selectAll();
         });
     }//GEN-LAST:event_txtSpendingsFocusGained
 
     private void txtEscrowInFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEscrowInFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtEscrowIn.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtEscrowIn.selectAll();
         });
     }//GEN-LAST:event_txtEscrowInFocusGained
 
     private void txtEscrowOutFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEscrowOutFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtEscrowOut.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtEscrowOut.selectAll();
         });
     }//GEN-LAST:event_txtEscrowOutFocusGained
 
     private void txtExpendituresInFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtExpendituresInFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtExpendituresIn.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtExpendituresIn.selectAll();
         });
     }//GEN-LAST:event_txtExpendituresInFocusGained
 
     private void txtExpendituresOutFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtExpendituresOutFocusGained
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                txtExpendituresOut.selectAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            txtExpendituresOut.selectAll();
         });
     }//GEN-LAST:event_txtExpendituresOutFocusGained
 
