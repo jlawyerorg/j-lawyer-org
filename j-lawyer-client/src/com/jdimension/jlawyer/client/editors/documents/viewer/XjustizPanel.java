@@ -813,7 +813,8 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.docId=documentId;
         this.xml = new String(content);
 
         String html = null;
@@ -838,6 +839,11 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
             editorPane.setText(htmlContent);
         });
 
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.docId;
     }
 
 }

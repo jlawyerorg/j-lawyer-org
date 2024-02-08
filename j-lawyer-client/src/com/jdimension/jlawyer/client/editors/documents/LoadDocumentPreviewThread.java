@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents;
 import com.jdimension.jlawyer.client.editors.documents.viewer.CaseDocumentPreviewProvider;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
+import com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -673,6 +674,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -713,7 +715,20 @@ public class LoadDocumentPreviewThread implements Runnable {
     public void run() {
 
         try {
+            
             running = true;
+            
+            if(pnlPreview.getComponentCount()>0) {
+                Component child=pnlPreview.getComponent(0);
+                if(child instanceof PreviewPanel) {
+                    if(((PreviewPanel)child).getDocumentId()!=null && this.docDto.getId().equals(((PreviewPanel)child).getDocumentId())) {
+                        // a preview was requested for a document that is already displayed
+                        running=false;
+                        return;
+                    }
+                }
+            }
+            
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.removeAll(pnlPreview);
             ThreadUtils.setLayout(pnlPreview, new FlowLayout());

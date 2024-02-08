@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Rectangle;
 import javax.swing.ImageIcon;
@@ -679,6 +678,8 @@ import org.apache.log4j.Logger;
 public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private static final Logger log = Logger.getLogger(GifJpegPngImageWithTextPanel.class.getName());
+    
+    private String documentId=null;
 
     /**
      * Creates new form PlaintextPanel
@@ -690,6 +691,11 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
         String txt = new String(text);
         ThreadUtils.updateTextArea(this.taContent, txt);
 
+    }
+    
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
     public void intelligentScrolling() {
@@ -782,7 +788,9 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        
+        this.documentId=documentId;
 
         ImageIcon imageIcon = new ImageIcon(content); // load the image to a imageIcon
         Image image = imageIcon.getImage(); // transform it

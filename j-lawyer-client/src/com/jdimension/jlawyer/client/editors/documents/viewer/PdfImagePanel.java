@@ -686,6 +686,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
     private byte[] content = null;
     private int totalPages = 1;
     private String fileName = null;
+    private String documentId=null;
 
     /**
      * Creates new form PlaintextPanel
@@ -884,10 +885,21 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         this.currentPage = 0;
         this.showPage(content, 0);
 
+    }
+    
+    public void showContent(byte[] content) {
+        this.showContent(null, content);
+
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }

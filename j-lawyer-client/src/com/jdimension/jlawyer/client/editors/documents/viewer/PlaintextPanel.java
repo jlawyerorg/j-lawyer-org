@@ -671,6 +671,8 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
  */
 public class PlaintextPanel extends javax.swing.JPanel implements PreviewPanel {
 
+    private String documentId=null;
+    
     /**
      * Creates new form PlaintextPanel
      */
@@ -719,8 +721,15 @@ public class PlaintextPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         ThreadUtils.updateTextArea(this.taContent, new String(content));
+    }
+
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
     
     

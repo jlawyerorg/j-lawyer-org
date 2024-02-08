@@ -670,5 +670,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 public interface PreviewPanel {
     public void showStatus(String text);
     
-    public void showContent(byte[] content);
+    public void showContent(String documentId, byte[] content);
+    
+    public String getDocumentId();
 }

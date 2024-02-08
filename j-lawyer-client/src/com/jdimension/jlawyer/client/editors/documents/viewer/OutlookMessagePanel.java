@@ -679,6 +679,7 @@ import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPanel {
     
     protected MailboxSetup mailboxSetup=null;
+    private String documentId=null;
 
     /**
      * Creates new form OutlookMessagePanel
@@ -692,7 +693,8 @@ public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPa
         this.content.setCase(a);
     }
     
-    public void setMessage(OutlookMessage msg) {
+    public void setMessage(String documentId, OutlookMessage msg) {
+        this.documentId=documentId;
         this.content.setMessage(msg);
 
     }
@@ -735,13 +737,14 @@ public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPa
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         try {
             InputStream source = new ByteArrayInputStream(content);
             MimeMessage message = new MimeMessage(null, source);
             // need to set this to avoid sending read receipts
             message.setFlag(Flag.SEEN, true);
-            this.setMessage(null);
+            this.setMessage(documentId, null);
         } catch (Throwable t) {
             this.showStatus("Fehler beim Laden der Vorschau.");
         }
@@ -759,6 +762,11 @@ public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPa
      */
     public void setMailboxSetup(MailboxSetup mailboxSetup) {
         this.mailboxSetup = mailboxSetup;
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }

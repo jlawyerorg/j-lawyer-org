@@ -702,7 +702,7 @@ public class DocumentViewerFactory {
             pdfP.setSize(new Dimension(width, height));
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(content);
+            pdfP.showContent(id, content);
             return pdfP;
 
         } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
@@ -710,7 +710,7 @@ public class DocumentViewerFactory {
             ip.setSize(width, height);
             ip.setMaximumSize(new Dimension(width, height));
             ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
+            ip.showContent(id, content);
             return ip;
 
         } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
@@ -718,7 +718,7 @@ public class DocumentViewerFactory {
             ip.setSize(width, height);
             ip.setMaximumSize(new Dimension(width, height));
             ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
+            ip.showContent(id, content);
             return ip;
         } else if (fileName.toLowerCase().endsWith(".txt")) {
             PlaintextPanel ptp = new PlaintextPanel();
@@ -726,9 +726,9 @@ public class DocumentViewerFactory {
             ptp.setMaximumSize(new Dimension(width, height));
             ptp.setPreferredSize(new Dimension(width, height));
             try {
-                ptp.showContent(previewProvider.getPreview().getBytes());
+                ptp.showContent(id, previewProvider.getPreview().getBytes());
             } catch (Exception ex) {
-                ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+                ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
             }
             return ptp;
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
@@ -737,14 +737,14 @@ public class DocumentViewerFactory {
             hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(content);
+            hp.showContent(id, content);
             return hp;
         } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
             XjustizPanel xjp = new XjustizPanel(id, fileName);
             xjp.setSize(new Dimension(width, height));
             xjp.setMaximumSize(new Dimension(width, height));
             xjp.setPreferredSize(new Dimension(width, height));
-            xjp.showContent(content);
+            xjp.showContent(id, content);
             return xjp;
         } else if (fileName.toLowerCase().endsWith(".eml")) {
             try {
@@ -757,7 +757,7 @@ public class DocumentViewerFactory {
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
                 MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
+                ep.setMessage(id, new MessageContainer(message, message.getSubject(), true), ms);
                 ep.setCaseContext(caseDto);
                 return ep;
             } catch (Throwable t) {
@@ -782,7 +782,7 @@ public class DocumentViewerFactory {
                 op.setPreferredSize(new Dimension(width, height));
                 
                 //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                op.setMessage(om);
+                op.setMessage(id, om);
                 op.setCaseContext(caseDto);
                 return op;
             } catch (Throwable t) {
@@ -854,7 +854,7 @@ public class DocumentViewerFactory {
                     ip.setSize(width, height);
                     ip.setMaximumSize(new Dimension(width, height));
                     ip.setPreferredSize(new Dimension(width, height));
-                    ip.showContent(thumbBytes);
+                    ip.showContent(id, thumbBytes);
                     return ip;
                 }
             } catch (Throwable t) {
@@ -866,7 +866,7 @@ public class DocumentViewerFactory {
                 bp.setSize(new Dimension(width, height));
                 bp.setMaximumSize(new Dimension(width, height));
                 bp.setPreferredSize(new Dimension(width, height));
-                bp.showContent(content);
+                bp.showContent(id, content);
                 bp.setCaseContext(caseDto);
                 return bp;
             } catch (Throwable t) {
@@ -915,9 +915,9 @@ public class DocumentViewerFactory {
         // we just reuse the showStatus method because it is doing the same thing
         //ptp.showStatus(previewContent);
         try {
-            ptp.showContent(previewProvider.getPreview().getBytes());
+            ptp.showContent(id, previewProvider.getPreview().getBytes());
         } catch (Exception ex) {
-            ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+            ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
         }
 
         return ptp;

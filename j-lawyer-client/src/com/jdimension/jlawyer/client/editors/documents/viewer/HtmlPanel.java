@@ -752,7 +752,8 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.id=documentId;
         //ThreadUtils.updateEditorPane(this.edtContent, new String(content));
         ThreadUtils.updateHtmlEditor(html, new String(content));
     }
@@ -770,6 +771,11 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
                 
             }
         }
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.id;
     }
 
 }
