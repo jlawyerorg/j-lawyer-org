@@ -695,7 +695,6 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
         initComponents();
         this.entry=entry;
         
-        
         this.caseAccountEntryPanel1.setCaseEntry(dto);
         this.caseAccountEntryPanel1.setParentDialog(this);
         this.caseAccountEntryPanel1.setAddresses(addresses);
@@ -834,5 +833,9 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
      */
     public CaseAccountEntry getEntry() {
         return entry;
+    }
+
+    public void requestSaveFocus() {
+        this.cmdSave.requestFocus();
     }
 }

@@ -670,13 +670,16 @@ import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -692,6 +695,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form CaseAccountEntryPanel
+     * @param parent
      */
     public CaseAccountEntryPanel() {
         initComponents();
@@ -699,7 +703,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         this.caseEntry = null;
         this.initialize();
     }
-
+    
     private void initialize() {
         this.cmbInvoice.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -742,6 +746,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
                 lblRecipient.setText(ad.toDisplayName());
                 lblRecipient.setIcon(null);
                 recipientAddress = ad;
+                cmbInvoice.requestFocus();
             });
             this.popRecipients.add(mi);
         }
@@ -805,9 +810,19 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
         taDescription.setColumns(20);
         taDescription.setRows(5);
+        taDescription.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                taDescriptionKeyPressed(evt);
+            }
+        });
         jScrollPane1.setViewportView(taDescription);
 
         cmbInvoice.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbInvoice.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                cmbInvoiceKeyPressed(evt);
+            }
+        });
 
         lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
         lblRecipient.setText("...");
@@ -818,8 +833,18 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
                 cmdSearchRecipientMousePressed(evt);
             }
         });
+        cmdSearchRecipient.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                cmdSearchRecipientKeyReleased(evt);
+            }
+        });
 
         txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yyyy"))));
+        txtDate.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtDateKeyReleased(evt);
+            }
+        });
 
         cmdSelectDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
         cmdSelectDate.addActionListener(new java.awt.event.ActionListener() {
@@ -841,27 +866,87 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(jLabel8);
 
         txtEarnings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEarnings.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtEarningsFocusGained(evt);
+            }
+        });
+        txtEarnings.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtEarningsKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtEarnings);
 
         txtSpendings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtSpendings.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtSpendingsFocusGained(evt);
+            }
+        });
+        txtSpendings.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtSpendingsKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtSpendings);
 
         jLabel9.setText("Fremdgeld");
         jPanel1.add(jLabel9);
 
         txtEscrowIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEscrowIn.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtEscrowInFocusGained(evt);
+            }
+        });
+        txtEscrowIn.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtEscrowInKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtEscrowIn);
 
         txtEscrowOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEscrowOut.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtEscrowOutFocusGained(evt);
+            }
+        });
+        txtEscrowOut.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtEscrowOutKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtEscrowOut);
 
         jLabel10.setText("Auslagen");
         jPanel1.add(jLabel10);
 
         txtExpendituresIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtExpendituresIn.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtExpendituresInFocusGained(evt);
+            }
+        });
+        txtExpendituresIn.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtExpendituresInKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtExpendituresIn);
 
         txtExpendituresOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtExpendituresOut.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtExpendituresOutFocusGained(evt);
+            }
+        });
+        txtExpendituresOut.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtExpendituresOutKeyReleased(evt);
+            }
+        });
         jPanel1.add(txtExpendituresOut);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -931,6 +1016,122 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
         this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSearchRecipientMousePressed
+
+    private void txtDateKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtDateKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.cmdSearchRecipient.requestFocus();
+        }
+    }//GEN-LAST:event_txtDateKeyReleased
+
+    private void txtEarningsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEarningsKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.txtSpendings.requestFocus();
+        }
+    }//GEN-LAST:event_txtEarningsKeyReleased
+
+    private void txtSpendingsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSpendingsKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.txtEscrowIn.requestFocus();
+            this.txtEscrowIn.selectAll();
+        }
+    }//GEN-LAST:event_txtSpendingsKeyReleased
+
+    private void txtEscrowInKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEscrowInKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.txtEscrowOut.requestFocus();
+        }
+    }//GEN-LAST:event_txtEscrowInKeyReleased
+
+    private void txtEscrowOutKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEscrowOutKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.txtExpendituresIn.requestFocus();
+        }
+    }//GEN-LAST:event_txtEscrowOutKeyReleased
+
+    private void txtExpendituresInKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtExpendituresInKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.txtExpendituresOut.requestFocus();
+        }
+    }//GEN-LAST:event_txtExpendituresInKeyReleased
+
+    private void txtExpendituresOutKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtExpendituresOutKeyReleased
+        if(this.parentDialog!=null && this.parentDialog instanceof CaseAccountEntryDialog) {
+            ((CaseAccountEntryDialog)this.parentDialog).requestSaveFocus();
+        }
+    }//GEN-LAST:event_txtExpendituresOutKeyReleased
+
+    private void cmdSearchRecipientKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cmdSearchRecipientKeyReleased
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            evt.consume();
+            this.popRecipients.show(this.cmdSearchRecipient, 0,0);
+        }
+    }//GEN-LAST:event_cmdSearchRecipientKeyReleased
+
+    private void cmbInvoiceKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cmbInvoiceKeyPressed
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            this.taDescription.requestFocus();
+        }
+    }//GEN-LAST:event_cmbInvoiceKeyPressed
+
+    private void taDescriptionKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_taDescriptionKeyPressed
+        if(evt.getKeyCode()==KeyEvent.VK_TAB) {
+            this.txtEarnings.requestFocus();
+        }
+    }//GEN-LAST:event_taDescriptionKeyPressed
+
+    private void txtEarningsFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEarningsFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtEarnings.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtEarningsFocusGained
+
+    private void txtSpendingsFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtSpendingsFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtSpendings.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtSpendingsFocusGained
+
+    private void txtEscrowInFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEscrowInFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtEscrowIn.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtEscrowInFocusGained
+
+    private void txtEscrowOutFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEscrowOutFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtEscrowOut.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtEscrowOutFocusGained
+
+    private void txtExpendituresInFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtExpendituresInFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtExpendituresIn.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtExpendituresInFocusGained
+
+    private void txtExpendituresOutFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtExpendituresOutFocusGained
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                txtExpendituresOut.selectAll();
+            }
+        });
+    }//GEN-LAST:event_txtExpendituresOutFocusGained
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1022,7 +1223,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
             this.lblRecipient.setText("...");
             this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             this.taDescription.setText("");
-            this.txtDate.setText("");
+            this.txtDate.setText(this.df.format(new Date()));
             this.txtEarnings.setValue(0f);
             this.txtSpendings.setValue(0f);
             this.txtEscrowIn.setValue(0f);
@@ -1032,6 +1233,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
             this.cmbInvoice.setSelectedIndex(0);
         }
+        this.txtDate.requestFocus();
     }
 
     private void selectInvoice(Invoice i) {
