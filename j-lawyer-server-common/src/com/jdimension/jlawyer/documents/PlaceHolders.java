@@ -767,6 +767,7 @@ public class PlaceHolders {
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
     public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    public static final String AUTOR_EMAIL = "{{AUTOR_EMAIL}}";
     
     //Nutzernamen
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
@@ -939,6 +940,7 @@ public class PlaceHolders {
         
         
         ALLPLACEHOLDERS.add(AUTOR_AN);
+        ALLPLACEHOLDERS.add(AUTOR_EMAIL);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
         

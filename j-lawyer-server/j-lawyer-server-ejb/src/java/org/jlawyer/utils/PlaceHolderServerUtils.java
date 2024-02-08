@@ -1054,6 +1054,13 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(AUTOR_AN, "");
             }
         }
+        if (placeHolders.containsKey(AUTOR_EMAIL)) {
+            if (author != null) {
+                placeHolders.put(AUTOR_EMAIL, val(author.getEmail()));
+            } else {
+                placeHolders.put(AUTOR_EMAIL, "");
+            }
+        }
         if (placeHolders.containsKey(AUTOR_KRZ)) {
             if (author != null) {
                 placeHolders.put(AUTOR_KRZ, val(author.getAbbreviation()));
