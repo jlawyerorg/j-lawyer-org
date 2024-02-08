@@ -706,8 +706,8 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private ArchiveFileBean caseDto = null;
     private ArchiveFilePanel caseView = null;
 
-    private List<String> taxRates=new ArrayList<>();
-    
+    private List<String> taxRates = new ArrayList<>();
+
     protected NumberFormat currencyFormat = NumberFormat.getNumberInstance();
 
     /**
@@ -722,10 +722,10 @@ public class TimesheetDialog extends javax.swing.JDialog {
         super(parent, modal);
         this.caseDto = caseDto;
         this.caseView = caseView;
-        
+
         this.currencyFormat.setMinimumFractionDigits(2);
         this.currencyFormat.setMaximumFractionDigits(2);
-        
+
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         ComponentUtils.decorateSplitPane(splitMain);
@@ -734,12 +734,12 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
         this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        
+
         BoxLayout boxLayout = new BoxLayout(this.pnlTimesheetPositions, BoxLayout.Y_AXIS);
         this.pnlTimesheetPositions.setLayout(boxLayout);
 
         ClientSettings settings = ClientSettings.getInstance();
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AppOptionGroupBean[] taxRateDtos = locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_INVOICETAXRATES);
@@ -767,7 +767,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
         for (AppOptionGroupBean tsOption : tsOptions) {
             this.cmbTimesheetInterval.addItem("" + tsOption.getValue());
         }
-        
+
         this.cmbStatus.removeAllItems();
         for (String s : new Timesheet().getStatusValues()) {
             this.cmbStatus.addItem(s);
@@ -780,7 +780,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
     public Timesheet getEntry() {
         return this.currentEntry;
     }
-    
+
     private void clearPositionsPanel() {
         this.pnlTimesheetPositions.removeAll();
         this.pnlTimesheetPositions.doLayout();
@@ -792,12 +792,12 @@ public class TimesheetDialog extends javax.swing.JDialog {
     public void setTimesheetName(String name) {
         this.txtName.setText(name);
     }
-    
+
     public void setEntry(Timesheet timesheet) {
         this.currentEntry = timesheet;
-        
+
         this.clearPositionsPanel();
-        
+
         if (timesheet == null) {
             this.txtName.setText("");
             this.taDescription.setText("");
@@ -805,7 +805,6 @@ public class TimesheetDialog extends javax.swing.JDialog {
             this.cmbTimesheetInterval.setSelectedIndex(0);
             this.txtTimesheetLimit.setValue(0);
             this.chkTimesheetLimit.setSelected(false);
-            
 
         } else {
             this.setTitle(timesheet.getName());
@@ -813,7 +812,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             this.txtName.setText(timesheet.getName());
             this.taDescription.setText(timesheet.getDescription());
             this.cmbStatus.setSelectedItem(timesheet.getStatusString());
-            
+
             ComponentUtils.addComboboxItemIfNecessary(this.cmbTimesheetInterval, "" + timesheet.getInterval());
             ComponentUtils.selectComboboxItem(this.cmbTimesheetInterval, "" + timesheet.getInterval());
             this.cmbTimesheetInterval.setSelectedItem("" + timesheet.getInterval());
@@ -1142,26 +1141,25 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.currentEntry.setInterval(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
         this.currentEntry.setLimit(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue());
         this.currentEntry.setLimited(this.chkTimesheetLimit.isSelected());
-        
+
     }
-    
+
     private void save() {
-        
+
         if (this.currentEntry == null) {
-                // creation
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    Timesheet newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), new Timesheet());
-                    this.currentEntry=newTimesheet;
-                    
-                } catch (Exception ex) {
-                    log.error("Error creating invoice", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
+            // creation
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                Timesheet newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), new Timesheet());
+                this.currentEntry = newTimesheet;
+
+            } catch (Exception ex) {
+                log.error("Error creating invoice", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-        
-        
+        }
+
         ClientSettings settings = ClientSettings.getInstance();
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof TimesheetPositionEntryPanel) {
@@ -1190,28 +1188,33 @@ public class TimesheetDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        
+
         this.save();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdRemoveAllPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAllPositionsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().removeAllTimesheetPositions(this.currentEntry.getId());
 
-        } catch (Exception ex) {
-            log.error("Error removing timesheet positions", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Entfernen der Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        int response = JOptionPane.showConfirmDialog(this, "Alle gebuchten Zeiten aus diesem Projekt löschen?", "erfasste Zeit löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removeAllTimesheetPositions(this.currentEntry.getId());
+
+            } catch (Exception ex) {
+                log.error("Error removing timesheet positions", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Entfernen der Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.clearPositionsPanel();
+
+            this.updateTotals(null);
         }
-
-        this.clearPositionsPanel();
-
-        this.updateTotals(null);
     }//GEN-LAST:event_cmdRemoveAllPositionsActionPerformed
 
     private void chkTimesheetLimitStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkTimesheetLimitStateChanged
@@ -1220,30 +1223,30 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_chkTimesheetLimitStateChanged
 
     private void cmbTimesheetIntervalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTimesheetIntervalActionPerformed
-        
+
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof TimesheetPositionEntryPanel) {
 
                 ((TimesheetPositionEntryPanel) c).updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
             }
         }
-        
+
         this.updateTotals(null);
     }//GEN-LAST:event_cmbTimesheetIntervalActionPerformed
 
     private StyledCalculationTable getPositionsAsTable() {
         float totalTax = 0f;
         float total = 0f;
-        
+
         int rowcount = 0;
-        
+
         StyledCalculationTable ct = new StyledCalculationTable();
         ct.addHeaders("", "Position", "Menge", "Einzel", "Gesamt");
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "");
         }
 
-        int positionIndex=0;
+        int positionIndex = 0;
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
 
@@ -1254,13 +1257,12 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
                 totalTax = totalTax + (u * up * (t / 100f));
                 total = total + (u * up * (1 + t / 100f));
-                
-                positionIndex=positionIndex+1;
-                ct.addRow(""+positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
+
+                positionIndex = positionIndex + 1;
+                ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
                 rowcount = rowcount + 1;
             }
         }
-        
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "");
@@ -1275,7 +1277,6 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
 //        this.formatFooterRow(ct, footerRowTaxes);
 //        this.formatFooterRow(ct, footerRowTotal);
-
         //TableLayout
         ct.setColumnAlignment(0, Cell.ALIGNMENT_RIGHT);
         ct.setColumnAlignment(1, Cell.ALIGNMENT_LEFT);
@@ -1294,20 +1295,20 @@ public class TimesheetDialog extends javax.swing.JDialog {
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
         ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
-        
+
         return ct;
 
     }
-    
+
     private void formatFooterRow(StyledCalculationTable ct, int footerRowIndex) {
-                //FooterRow
+        //FooterRow
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
             ct.setRowBold(footerRowIndex, true);
         } else {
             ct.setRowBold(footerRowIndex, false);
         }
         ct.getCellAt(footerRowIndex, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
-        
+
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
             if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
                 ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(true);
@@ -1334,37 +1335,37 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }
 
     public void updateTotals(TimesheetPositionEntryPanel ep) {
-        
-        if(ep!=null)
-            ep.updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
 
-        
-        float total=0f;
-        float totalTax=0f;
-        for(Component tsp: this.pnlTimesheetPositions.getComponents()) {
-            TimesheetPositionEntryPanel tspep=(TimesheetPositionEntryPanel)tsp;
-            TimesheetPosition pos=tspep.getEntry();
-            
-            total=total+pos.getTotal();
+        if (ep != null) {
+            ep.updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+        }
+
+        float total = 0f;
+        float totalTax = 0f;
+        for (Component tsp : this.pnlTimesheetPositions.getComponents()) {
+            TimesheetPositionEntryPanel tspep = (TimesheetPositionEntryPanel) tsp;
+            TimesheetPosition pos = tspep.getEntry();
+
+            total = total + pos.getTotal();
             totalTax = totalTax + (pos.getTotal() * (pos.getTaxRate() / 100f));
-            
+
         }
         this.lblTimesheetTotal.setText(cf.format(total));
         this.lblTimesheetTax.setText(cf.format(totalTax));
         this.txtTimesheetTotal.setText(cf.format(total));
-        
-        if(this.chkTimesheetLimit.isSelected()) {
-            int prgValue=new Float((new Float(total).intValue()/((Number)this.txtTimesheetLimit.getValue()).floatValue())*100f).intValue();
+
+        if (this.chkTimesheetLimit.isSelected()) {
+            int prgValue = new Float((new Float(total).intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue();
             this.prgTimesheetStatus.setMaximum(Math.max(prgValue, 100));
             this.prgTimesheetStatus.setMinimum(0);
             try {
-                this.prgTimesheetStatus.setValue(new Float((new Float(total).intValue()/((Number)this.txtTimesheetLimit.getValue()).floatValue())*100f).intValue());
+                this.prgTimesheetStatus.setValue(new Float((new Float(total).intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue());
             } catch (Throwable th) {
                 log.error("unable to calculate timesheet progress", th);
                 this.prgTimesheetStatus.setValue(0);
             }
             this.prgTimesheetStatus.setEnabled(true);
-            if(prgValue>100) {
+            if (prgValue > 100) {
                 this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
             } else {
                 this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -1375,10 +1376,9 @@ public class TimesheetDialog extends javax.swing.JDialog {
             this.prgTimesheetStatus.setValue(0);
             this.prgTimesheetStatus.setEnabled(false);
         }
-        
+
     }
 
-    
     /**
      * @param args the command line arguments
      */
