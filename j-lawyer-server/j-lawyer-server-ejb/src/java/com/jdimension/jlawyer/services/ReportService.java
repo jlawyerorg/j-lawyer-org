@@ -811,16 +811,50 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
             
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
-            String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
-                    + "    sum(inv.total_gross) Rechnungsbetrag \n"
-                    + "     FROM invoices inv\n"
-                    + "left join contacts cont on inv.contact_id=cont.id\n"
-                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
-                    + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
-                    + "group by Faelligkeit\n"
-                    + "order by Faelligkeit";
-            result.getBarCharts().add(getBarChart(true, "Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, params));
+//            String query3 = "SELECT min(inv.case_id), 'Fälligkeitsdatum' as Faelligkeitsdatum, DATE_FORMAT(inv.due_date,'%Y-%m-%d') as Faelligkeit,\n"
+//                    + "    sum(inv.total_gross) Rechnungsbetrag \n"
+//                    + "     FROM invoices inv\n"
+//                    + "left join contacts cont on inv.contact_id=cont.id\n"
+//                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+//                    + "left join cases cases on inv.case_id=cases.id\n"
+//                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
+//                    + "group by Faelligkeit\n"
+//                    + "order by Faelligkeit";
+            String query3 = "SELECT MIN(inv.case_id) as case_id,\n" +
+"       'Fälligkeitsdatum' as Faelligkeitsdatum,\n" +
+"       DATE_FORMAT(calendar.Faelligkeitsdatum,'%Y-%m-%d') as Faelligkeit,\n" +
+"       COALESCE(SUM(inv.total_gross), 0) as Rechnungsbetrag\n" +
+"FROM (\n" +
+"    SELECT DATE_FORMAT(? + INTERVAL a + b * 10 + c * 100 DAY, '%Y-%m-%d') as Faelligkeitsdatum\n" +
+"    FROM (\n" +
+"        SELECT 0 as a UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9\n" +
+"    ) a\n" +
+"    CROSS JOIN (\n" +
+"        SELECT 0 as b UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9\n" +
+"    ) b\n" +
+"    CROSS JOIN (\n" +
+"        SELECT 0 as c UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9\n" +
+"    ) c\n" +
+"    WHERE ? + INTERVAL a + b * 10 + c * 100 DAY BETWEEN ? AND ?\n" +
+") calendar\n" +
+"LEFT JOIN invoices inv ON calendar.Faelligkeitsdatum = DATE_FORMAT(inv.due_date, '%Y-%m-%d')\n" +
+"LEFT JOIN contacts cont ON inv.contact_id = cont.id\n" +
+"LEFT JOIN invoice_types invt ON inv.invoice_type = invt.id\n" +
+"LEFT JOIN cases cases ON inv.case_id = cases.id\n" +
+"WHERE (invt.turnover = 1 OR invt.turnover IS NULL)\n" +
+"  AND ((inv.invoice_status >= 20 AND inv.invoice_status < 30 AND inv.created >= ? AND inv.created <= ?) OR inv.id IS NULL)\n" +
+"GROUP BY calendar.Faelligkeitsdatum\n" +
+"ORDER BY calendar.Faelligkeitsdatum";
+            
+            Object[] overrideParams=new Object[6];
+            overrideParams[0]=params[0];
+            overrideParams[1]=params[0];
+            overrideParams[2]=params[0];
+            overrideParams[3]=params[1];
+            overrideParams[4]=params[0];
+            overrideParams[5]=params[1];
+            
+            result.getBarCharts().add(getBarChart(true, "Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, overrideParams));
             
         }  else if(Reports.RPT_INV_OVERDUE.equals(reportId)) {
             String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
@@ -1150,7 +1184,7 @@ public class ReportService implements ReportServiceRemote {
                 
                 if(allowedCases!=null) {
                     String caseId=rs.getString(1);
-                    if(!allowedCases.contains(caseId))
+                    if(!allowedCases.contains(caseId) && caseId!=null)
                         continue;
                 }
                 
