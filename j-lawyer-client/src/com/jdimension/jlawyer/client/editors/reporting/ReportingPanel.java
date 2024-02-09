@@ -703,13 +703,11 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOpen.setTypeChart(true);
         invoicesOpen.setTypeTable(true);
         invoicesOpen.setSecurityType(Report.SECURITY_COMMON);
-        Date fromDate=new Date();
-        fromDate.setMonth(0);
-        fromDate.setDate(1);
+        Date fromDate=new Date(System.currentTimeMillis() - 30l*24l*60l*60l*1000l);
         invoicesOpen.setDefaultBeginDate(fromDate);
-        invoicesOpen.setDateSelectionLabel("erstellt");
+        invoicesOpen.setDateSelectionLabel("fällig");
         // display open invoices for 35 days into the future
-        Date toDate=new Date(System.currentTimeMillis() + 35l*24l*60l*60l*1000l);
+        Date toDate=new Date(System.currentTimeMillis() + 30l*24l*60l*60l*1000l);
         invoicesOpen.setDefaultEndDate(toDate);
         allReports.add(invoicesOpen);
         
@@ -723,11 +721,9 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOverdue.setTypeChart(true);
         invoicesOverdue.setTypeTable(true);
         invoicesOverdue.setSecurityType(Report.SECURITY_COMMON);
-        fromDate=new Date();
-        fromDate.setMonth(0);
-        fromDate.setDate(1);
+        fromDate=new Date(System.currentTimeMillis() - 30l*24l*60l*60l*1000l);
         invoicesOverdue.setDefaultBeginDate(fromDate);
-        toDate=new Date();
+        toDate=new Date(System.currentTimeMillis() + 1l*24l*60l*60l*1000l);
         invoicesOverdue.setDefaultEndDate(toDate);
         invoicesOverdue.setDateSelectionLabel("fällig");
         allReports.add(invoicesOverdue);
