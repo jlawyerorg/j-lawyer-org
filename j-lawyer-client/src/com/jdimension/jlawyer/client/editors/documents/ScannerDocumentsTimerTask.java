@@ -701,7 +701,7 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 HashMap<FileMetadata, Date> currentFiles = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
-                if (!areKeySetsDifferent(lastFiles, currentFiles)) {
+                if (areKeySetsDifferent(lastFiles, currentFiles)) {
 
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ScannerStatusEvent(currentFiles));
