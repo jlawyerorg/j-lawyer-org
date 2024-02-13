@@ -23,40 +23,6 @@
           <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
           <Component id="txtReviewReason" alignment="0" max="32767" attributes="0"/>
           <Component id="txtEventLocation" alignment="1" max="32767" attributes="0"/>
-          <Component id="jLabel22" alignment="0" min="-2" max="-2" attributes="0"/>
-          <Group type="102" alignment="0" attributes="0">
-              <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="144" max="-2" attributes="0"/>
-              <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
-          </Group>
-          <Group type="102" alignment="0" attributes="0">
-              <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                  <Component id="cmbEventBeginTime" alignment="0" pref="0" max="32767" attributes="0"/>
-                  <Component id="txtEventBeginDateField" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="cmbEventEndTime" pref="0" max="32767" attributes="0"/>
-                  <Component id="txtEventEndDateField" min="-2" pref="125" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="cmdEventEndDateSelector" min="-2" max="-2" attributes="0"/>
-          </Group>
-          <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-              <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
-              <Group type="102" attributes="0">
-                  <Component id="radioEventTypeFollowUp" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="radioEventTypeRespite" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="radioEventTypeEvent" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="calendarSelectionButton" min="-2" max="-2" attributes="0"/>
-              </Group>
-          </Group>
-          <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -69,6 +35,50 @@
               </Group>
           </Group>
           <Component id="jScrollPane9" alignment="0" max="32767" attributes="0"/>
+          <Group type="102" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jLabel22" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                      <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Component id="radioEventTypeFollowUp" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="radioEventTypeRespite" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="radioEventTypeEvent" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="calendarSelectionButton" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="cmbEventBeginTime" alignment="0" pref="0" max="32767" attributes="0"/>
+                                  <Component id="txtEventBeginDateField" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="cmbEventEndTime" pref="0" max="32767" attributes="0"/>
+                                  <Component id="txtEventEndDateField" min="-2" pref="125" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdEventEndDateSelector" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                  </Group>
+              </Group>
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -85,9 +95,9 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel21" alignment="0" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
