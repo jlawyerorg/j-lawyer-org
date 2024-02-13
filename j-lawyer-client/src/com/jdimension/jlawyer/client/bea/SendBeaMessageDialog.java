@@ -793,10 +793,18 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.cmbFrom.setModel(new DefaultComboBoxModel());
 
         try {
+            HashMap<String,Identity> allMailboxes=new HashMap<>();
             BeaAccess bea = BeaAccess.getInstance();
             for (PostBox pb : bea.getPostBoxes()) {
-                ((DefaultComboBoxModel) this.cmbFrom.getModel()).addElement(bea.getIdentity(pb.getSafeId()));
-
+                Identity ident=bea.getIdentity(pb.getSafeId());
+                ((DefaultComboBoxModel) this.cmbFrom.getModel()).addElement(ident);
+                allMailboxes.put(pb.getSafeId(), ident);
+            }
+            
+            UserSettings usettings = UserSettings.getInstance();
+            String lastSetup = usettings.getSetting(UserSettings.CONF_BEA_LASTUSEDMAILBOX, null);
+            if (lastSetup != null && allMailboxes.containsKey(lastSetup)) {
+                this.cmbFrom.setSelectedItem(allMailboxes.get(lastSetup));
             }
 
         } catch (Throwable t) {
@@ -1916,7 +1924,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         a.start();
 
+        
         UserSettings uset = UserSettings.getInstance();
+        if (fromSafeId != null) {
+            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDMAILBOX, fromSafeId);
+        }
+        
         if (this.cmbTemplates.getSelectedItem() != null) {
             uset.setSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
         }
