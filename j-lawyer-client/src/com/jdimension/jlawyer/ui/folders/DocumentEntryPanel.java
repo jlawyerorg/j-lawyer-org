@@ -899,6 +899,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblChangeDateMouseClicked(evt);
             }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblChangeDateMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblChangeDateMouseExited(evt);
+            }
         });
 
         lblDictateSign.setFont(lblDictateSign.getFont().deriveFont(lblDictateSign.getFont().getStyle() | java.awt.Font.BOLD, lblDictateSign.getFont().getSize()-2));
@@ -1185,6 +1191,18 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private void lblInvoiceMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceMouseExited
         this.lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
     }//GEN-LAST:event_lblInvoiceMouseExited
+
+    private void lblChangeDateMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblChangeDateMouseEntered
+        if(this.document!=null) {
+            this.lblChangeDate.setText(dfDateTime.format(this.document.getCreationDate()));
+        }
+    }//GEN-LAST:event_lblChangeDateMouseEntered
+
+    private void lblChangeDateMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblChangeDateMouseExited
+        if(this.document!=null) {
+            this.lblChangeDate.setText(DateUtils.getHumanReadableTime(this.document.getChangeDate()));
+        }
+    }//GEN-LAST:event_lblChangeDateMouseExited
 
     private void documentUnClicked() {
         this.caseContainer.documentSelectionChanged();

@@ -156,7 +156,9 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdSelectNone1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="sortDate" min="-2" max="-2" attributes="0"/>
+                  <Component id="sortChangeDate" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                  <Component id="sortCreationDate" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortName" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
@@ -167,7 +169,7 @@
                   <Component id="sortFolder" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFileType" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -179,16 +181,19 @@
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="cmdActions" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="sortDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="sortChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
                       </Group>
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <Component id="sortFileType" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="sortCreationDate" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
@@ -196,15 +201,15 @@
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDate">
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortChangeDate">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Datum"/>
+            <Property name="text" type="java.lang.String" value="ge&#xe4;ndert"/>
             <Property name="toolTipText" type="java.lang.String" value="nach &#xc4;nderungsdatum sortieren"/>
             <Property name="iconTextGap" type="int" value="2"/>
             <Property name="inheritsPopupMenu" type="boolean" value="true"/>
           </Properties>
           <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortDateMouseClicked"/>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortChangeDateMouseClicked"/>
           </Events>
         </Component>
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortName">
@@ -309,6 +314,17 @@
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFileTypeMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortCreationDate">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="erstellt"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Erstellungsdatum sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
+            <Property name="inheritsPopupMenu" type="boolean" value="true"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortCreationDateMouseClicked"/>
           </Events>
         </Component>
       </SubComponents>
