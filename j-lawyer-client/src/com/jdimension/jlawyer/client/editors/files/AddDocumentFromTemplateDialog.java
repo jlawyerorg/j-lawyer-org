@@ -716,6 +716,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private GenericCalculationTable calculationTable = null;
     private Invoice invoice=null;
     private StyledCalculationTable invoiceTable=null;
+    private byte[] giroCode=null;
     private StyledCalculationTable timesheetsTable=null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
@@ -726,7 +727,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFilePanel casePanel=null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, tblReviewReasons, null, null, null, null);
+        this(parent, modal, casePanel, targetTable, aFile, involved, tblReviewReasons, null, null, null, null, null);
     }
 
     /**
@@ -744,11 +745,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param invoiceTable
      * @param timesheetsTable
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
         this.invoice=invoice;
+        this.giroCode=giroCode;
         this.invoiceTable=invoiceTable;
         this.timesheetsTable=timesheetsTable;
 
@@ -1745,7 +1747,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable, this.timesheetsTable);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable, this.timesheetsTable, giroCode);
 
                 int emptyValues=0;
                 for (String key : ht.keySet()) {

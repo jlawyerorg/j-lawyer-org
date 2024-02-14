@@ -744,7 +744,7 @@ public class LibreOfficeAccess {
     private static void merge(String intoDocument, String mergeDocument) throws Exception {
         // Load body document
         TextDocument bodyDoc = TextDocument.loadDocument(new File(mergeDocument));
-        OdfPackage bodyPackage=bodyDoc.getPackage();
+        OdfPackage bodyPackage = bodyDoc.getPackage();
 
         // Create a new document to store the merged documents
         TextDocument mergedDoc = TextDocument.loadDocument(new File(intoDocument));
@@ -778,17 +778,17 @@ public class LibreOfficeAccess {
                     if (!processedTables.contains(parentElement.getParentNode().getParentNode())) {
                         OdfElement odfElement = (OdfElement) childNode;
                         TextPElement pElement = (TextPElement) odfElement;
-                        
+
                         Paragraph newP = targetDoc.addParagraph(pElement.getTextContent());
-                        
+
                         pElement.getAutomaticStyle().getFamily();
-                        
+
                     }
                 } else {
                     OdfElement odfElement = (OdfElement) childNode;
                     TextPElement pElement = (TextPElement) odfElement;
                     Paragraph newP = targetDoc.addParagraph(pElement.getTextContent());
-                    
+
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontSize, pElement.getProperty(StyleTextPropertiesElement.FontSize));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontName, pElement.getProperty(StyleTextPropertiesElement.FontName));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.FontWeight, pElement.getProperty(StyleTextPropertiesElement.FontWeight));
@@ -799,7 +799,7 @@ public class LibreOfficeAccess {
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.LetterSpacing, pElement.getProperty(StyleTextPropertiesElement.LetterSpacing));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.TextEmphasize, pElement.getProperty(StyleTextPropertiesElement.TextEmphasize));
                     newP.getOdfElement().setProperty(StyleTextPropertiesElement.TextPosition, pElement.getProperty(StyleTextPropertiesElement.TextPosition));
-                    
+
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextAlign, pElement.getProperty(StyleParagraphPropertiesElement.TextAlign));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineBreak, pElement.getProperty(StyleParagraphPropertiesElement.LineBreak));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.LineHeight, pElement.getProperty(StyleParagraphPropertiesElement.LineHeight));
@@ -807,9 +807,9 @@ public class LibreOfficeAccess {
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.Margin, pElement.getProperty(StyleParagraphPropertiesElement.Margin));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.TextIndent, pElement.getProperty(StyleParagraphPropertiesElement.TextIndent));
                     newP.getOdfElement().setProperty(StyleParagraphPropertiesElement.VerticalAlign, pElement.getProperty(StyleParagraphPropertiesElement.VerticalAlign));
-                        
+
                 }
-                
+
             } // If the child node is a table, create a new Table object
             else if (childNode.getNodeName().equals("table:table")) {
                 OdfElement odfElement = (OdfElement) childNode;
@@ -850,37 +850,32 @@ public class LibreOfficeAccess {
                         list.addItem(listItem.getTextContent());
                     }
                 }
-            }
-            // If the child node is an image, extract the image information
+            } // If the child node is an image, extract the image information
             else if (childNode.getNodeName().equals("draw:image")) {
                 DrawImageElement imageElement = (DrawImageElement) childNode;
                 NamedNodeMap attributes = imageElement.getAttributes();
-                
-                
+
                 Node hrefAttr = attributes.getNamedItemNS("http://www.w3.org/1999/xlink", "href");
                 if (hrefAttr != null) {
                     String imagePath = hrefAttr.getNodeValue();
                     log.debug("Image path: " + imagePath);
                 }
-            }
-            // If the child node is a graphic frame, extract the graphic information
+            } // If the child node is a graphic frame, extract the graphic information
             else if (childNode.getNodeName().equals("draw:frame")) {
                 DrawFrameElement frameElement = (DrawFrameElement) childNode;
                 NamedNodeMap attributes = frameElement.getAttributes();
-                
-                if(frameElement.hasChildNodes()) {
-                    Node imageNode=frameElement.getChildNodes().item(0);
-                    if(imageNode instanceof DrawImageElement) {
+
+                if (frameElement.hasChildNodes()) {
+                    Node imageNode = frameElement.getChildNodes().item(0);
+                    if (imageNode instanceof DrawImageElement) {
                         try {
-                             mergeImage(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
+                            mergeImage(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
                         } catch (Exception ex) {
                             log.error("Can not merge image", ex);
                         }
                     }
                 }
-                
-                
-                
+
                 Node styleNameAttr = attributes.getNamedItem("draw:style-name");
                 if (styleNameAttr != null) {
                     String styleName = styleNameAttr.getNodeValue();
@@ -888,7 +883,7 @@ public class LibreOfficeAccess {
                 }
             } else {
                 //log.warn("unkown element type: " + childNode.getNodeName());
-                
+
             }
             // If the child element has child nodes, recursively call this function on them
             if (childNode.hasChildNodes()) {
@@ -897,36 +892,35 @@ public class LibreOfficeAccess {
 
         }
     }
-    
+
     private static void mergeImage(org.odftoolkit.odfdom.dom.element.draw.DrawImageElement drawImageElement, OdfPackage bodyPack, TextDocument targetDoc, OdfPackage mergedPack) throws Exception {
-        String href=drawImageElement.getAttributes().getNamedItem("xlink:href").getNodeValue();
-        byte[] bytes=bodyPack.getBytes(href);
-        String mimeType=drawImageElement.getAttributes().getNamedItem("draw:mime-type").getNodeValue();
-        if(bytes!=null) {
+        String href = drawImageElement.getAttributes().getNamedItem("xlink:href").getNodeValue();
+        byte[] bytes = bodyPack.getBytes(href);
+        String mimeType = drawImageElement.getAttributes().getNamedItem("draw:mime-type").getNodeValue();
+        if (bytes != null) {
             //mergedPack.insert(new URI("./" + href.substring(href.lastIndexOf("/")+1)), href, mimeType);
             mergedPack.insert(bytes, href, mimeType);
-                        
-            File tmpImage=File.createTempFile(""+System.currentTimeMillis(), null);
-            FileOutputStream fout=new FileOutputStream(tmpImage);
+
+            File tmpImage = File.createTempFile("" + System.currentTimeMillis(), null);
+            FileOutputStream fout = new FileOutputStream(tmpImage);
             fout.write(bytes);
             fout.close();
-            
+
             // nothing visible
             //targetDoc.newImage(new URI("./" + href.substring(href.lastIndexOf("/")+1)));
             //targetDoc.newImage(new URI(href));
-            
             // works, but image is large and misplaced
             Paragraph imgParagraph = targetDoc.addParagraph("");
-            Image newImage=Image.newImage(imgParagraph, tmpImage.toURI());
+            Image newImage = Image.newImage(imgParagraph, tmpImage.toURI());
             //targetDoc.newImage(tmpImage.toURI());
-            
-            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgXAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgXAttribute());
-            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgYAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgYAttribute());
-            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgHeightAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgHeightAttribute());
-            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setSvgWidthAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getSvgWidthAttribute());
-            
-            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setTextAnchorTypeAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getTextAnchorTypeAttribute());
-            
+
+            ((OdfDrawFrame) newImage.getOdfElement().getParentNode()).setSvgXAttribute(((OdfDrawFrame) drawImageElement.getParentNode()).getSvgXAttribute());
+            ((OdfDrawFrame) newImage.getOdfElement().getParentNode()).setSvgYAttribute(((OdfDrawFrame) drawImageElement.getParentNode()).getSvgYAttribute());
+            ((OdfDrawFrame) newImage.getOdfElement().getParentNode()).setSvgHeightAttribute(((OdfDrawFrame) drawImageElement.getParentNode()).getSvgHeightAttribute());
+            ((OdfDrawFrame) newImage.getOdfElement().getParentNode()).setSvgWidthAttribute(((OdfDrawFrame) drawImageElement.getParentNode()).getSvgWidthAttribute());
+
+            ((OdfDrawFrame) newImage.getOdfElement().getParentNode()).setTextAnchorTypeAttribute(((OdfDrawFrame) drawImageElement.getParentNode()).getTextAnchorTypeAttribute());
+
 //            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawCopyOfAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawCopyOfAttribute());
 //            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawIdAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawIdAttribute());
 //            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setDrawLayerAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getDrawLayerAttribute());
@@ -943,9 +937,7 @@ public class LibreOfficeAccess {
 //// problematisch Ende
 //
 //            ((OdfDrawFrame)newImage.getOdfElement().getParentNode()).setTextAnchorPageNumberAttribute(((OdfDrawFrame)drawImageElement.getParentNode()).getTextAnchorPageNumberAttribute());
-            
             //newImage.getRectangle().setX(((OdfDrawFrame)drawImageElement.getParentNode()).get);
-            
 //            newImage.getRectangle().setHeight(((DrawFrameElement)drawImageElement.getParentNode()).get;
 //            
 //            
@@ -974,10 +966,7 @@ public class LibreOfficeAccess {
 //                    aFrame.setRectangle(newRect);
 //                }
 //            }
-            
-            
             //targetDoc.addParagraph("").getFrameContainerElement().appendChild(drawImageElement.cloneNode(true));
-            
         }
     }
 
@@ -1114,10 +1103,12 @@ public class LibreOfficeAccess {
                     CalculationTable tab = (CalculationTable) values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                            String cellContent=t.getCellByPosition(0, 0).getStringValue();
-                            if(cellContent!=null)
-                                cellContent=cellContent.trim();
+                            String cellContent = t.getCellByPosition(0, 0).getStringValue();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
                             if (key.equals(cellContent)) {
+
                                 Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
                                 for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.appendColumn();
@@ -1126,7 +1117,7 @@ public class LibreOfficeAccess {
                                     t.appendRow();
                                 }
                                 int firstDataRow = 0;
-                                if (tab.getColumnLabels().size() > 0) {
+                                if (!tab.getColumnLabels().isEmpty()) {
                                     firstDataRow = 1;
                                     t.appendRow();
                                     for (int i = 0; i < tab.getColumnLabels().size(); i++) {
@@ -1176,9 +1167,10 @@ public class LibreOfficeAccess {
                     StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                            String cellContent=t.getCellByPosition(0, 0).getStringValue();
-                            if(cellContent!=null)
-                                cellContent=cellContent.trim();
+                            String cellContent = t.getCellByPosition(0, 0).getStringValue();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
                             if (key.equals(cellContent)) {
                                 Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
                                 border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
@@ -1256,7 +1248,6 @@ public class LibreOfficeAccess {
                                     }
                                 }
 
-
 //                                for (int i = 0; i < tab.getColumnCount(); i++) {
 //                                    if (tab.getColumnWidth(i) > -1) {
 //                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
@@ -1264,7 +1255,6 @@ public class LibreOfficeAccess {
 //                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
 //                                    }
 //                                }
-                                
                                 int numColumns = t.getColumnCount();
                                 for (int col = 0; col < numColumns; col++) {
                                     double maxColumnWidth = 0;
@@ -1285,6 +1275,34 @@ public class LibreOfficeAccess {
                                     // Set the column width to the calculated maximum width
                                     t.getColumnByIndex(col).setWidth(maxColumnWidth);
                                 }
+                            }
+                        }
+                    }
+                } else if (values.get(key) instanceof byte[]) {
+                    List<Table> allTables = outputOdt.getTableList();
+                    for (Table t : allTables) {
+                        if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
+                            String cellContent = t.getCellByPosition(0, 0).getStringValue();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
+                            if (key.equals(cellContent)) {
+                                t.getCellByPosition(0, 0).removeTextContent();
+                                byte[] imageByteArray = (byte[]) values.get(key);
+                                
+                                try {
+                                    File tmpImage = File.createTempFile("" + System.currentTimeMillis(), null);
+                                    FileOutputStream fout = new FileOutputStream(tmpImage);
+                                    fout.write(imageByteArray);
+                                    fout.close();
+
+                                    Paragraph imgParagraph = t.getCellByPosition(0, 0).addParagraph("");
+                                    Image newImage = Image.newImage(imgParagraph, tmpImage.toURI());
+
+                                } catch (Exception ex) {
+                                    log.error("Could not add Girocode to document", ex);
+                                }
+
                             }
                         }
                     }
@@ -1376,7 +1394,7 @@ public class LibreOfficeAccess {
         }
 
     }
-    
+
     private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
         // Create a temporary image to obtain FontMetrics
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
@@ -1396,7 +1414,7 @@ public class LibreOfficeAccess {
 
         return (double) textWidth;
     }
-    
+
     public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
@@ -1429,9 +1447,10 @@ public class LibreOfficeAccess {
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
                 for (Table t : allTables) {
                     if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
-                        String cellContent=t.getCellByPosition(0, 0).getStringValue();
-                        if(cellContent!=null)
-                            cellContent=cellContent.trim();
+                        String cellContent = t.getCellByPosition(0, 0).getStringValue();
+                        if (cellContent != null) {
+                            cellContent = cellContent.trim();
+                        }
                         if (r.equals(cellContent)) {
                             resultList.add(r);
                         }
@@ -1529,7 +1548,7 @@ public class LibreOfficeAccess {
 
         // required for "WENNVORHANDEN"
         // scriptContent = scriptContent.replace("\"\"", "\"");
-        try ( InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");  InputStreamReader isr = new InputStreamReader(is);  BufferedReader br = new BufferedReader(isr);) {
+        try (InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy"); InputStreamReader isr = new InputStreamReader(is); BufferedReader br = new BufferedReader(isr);) {
 
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();

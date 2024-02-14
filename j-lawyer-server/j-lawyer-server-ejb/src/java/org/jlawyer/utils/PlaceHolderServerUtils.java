@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -693,7 +692,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
     
     private static final String DATE_FORMAT="dd.MM.yyyy";
 
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
+    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception {
 
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
         DecimalFormat currencyFormat = new DecimalFormat("#,##0.00", symbols);
@@ -1106,6 +1105,10 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         
         if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable!=null) {
             placeHolders.put(BEL_TABELLE, invoiceTable);
+        }
+        
+        if (placeHolders.containsKey(BEL_GIROCODE) && giroCode!=null) {
+            placeHolders.put(BEL_GIROCODE, giroCode);
         }
         
         if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable!=null) {

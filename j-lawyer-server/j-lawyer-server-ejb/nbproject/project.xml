@@ -68,6 +68,10 @@
             <included-library dirs="200">file.reference.hk2-utils-2.2.0-b21.jar</included-library>
             <included-library dirs="200">file.reference.cglib-2.2.0-b21.jar</included-library>
             <included-library dirs="200">file.reference.groovy-4.0.16.jar</included-library>
+            <included-library dirs="200">file.reference.core-3.3.0.jar</included-library>
+            <included-library dirs="200">file.reference.jai-imageio-core-1.3.1.jar</included-library>
+            <included-library dirs="200">file.reference.javase-3.3.0.jar</included-library>
+            <included-library dirs="200">file.reference.jcommander-1.48.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

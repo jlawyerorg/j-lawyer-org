@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.documents;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -673,7 +674,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
+import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
+import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.IRunBody;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -757,9 +760,10 @@ public class MicrosoftOfficeAccess {
                     CalculationTable tab = (CalculationTable) values.get(key);
                     for (XWPFTable t : allTables) {
                         if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            String cellContent=t.getRow(0).getCell(0).getText();
-                            if(cellContent!=null)
-                                cellContent=cellContent.trim();
+                            String cellContent = t.getRow(0).getCell(0).getText();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
                             if (key.equals(cellContent)) {
                                 for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.addNewCol();
@@ -791,9 +795,10 @@ public class MicrosoftOfficeAccess {
                     XWPFTable t = null;
                     for (XWPFTable tableCandidate : allTables) {
                         if (tableCandidate.getRow(0).getTableCells().size() == 1 && tableCandidate.getNumberOfRows() == 1) {
-                            String cellContent=tableCandidate.getRow(0).getCell(0).getText();
-                            if(cellContent!=null)
-                                cellContent=cellContent.trim();
+                            String cellContent = tableCandidate.getRow(0).getCell(0).getText();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
                             if (key.equals(cellContent)) {
 
                                 t = tableCandidate;
@@ -869,6 +874,32 @@ public class MicrosoftOfficeAccess {
                         }
                         t.removeRow(0);
                     }
+                } else if (values.get(key) instanceof byte[]) {
+                    List<XWPFTable> allTables = outputDocx.getTables();
+                    XWPFTable t = null;
+                    for (XWPFTable tableCandidate : allTables) {
+                        if (tableCandidate.getRow(0).getTableCells().size() == 1 && tableCandidate.getNumberOfRows() == 1) {
+                            String cellContent = tableCandidate.getRow(0).getCell(0).getText();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
+                            if (key.equals(cellContent)) {
+
+                                t = tableCandidate;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (t != null) {
+
+                        XWPFTableRow newrow = t.createRow();
+                        XWPFTableCell cell = newrow.getCell(0);
+
+                        cell.addParagraph().createRun().addPicture(new ByteArrayInputStream((byte[])values.get(key)), Document.PICTURE_TYPE_PNG, "Girocode", Units.toEMU(150), Units.toEMU(150)); // Adjust width and height as needed
+
+                        t.removeRow(0);
+                    }
                 }
 
             }
@@ -930,9 +961,10 @@ public class MicrosoftOfficeAccess {
                 for (XWPFTable t : allTables) {
                     try {
                         if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            String cellContent=t.getRow(0).getCell(0).getText();
-                            if(cellContent!=null)
-                                cellContent=cellContent.trim();
+                            String cellContent = t.getRow(0).getCell(0).getText();
+                            if (cellContent != null) {
+                                cellContent = cellContent.trim();
+                            }
                             if (r.equals(cellContent)) {
                                 resultList.add(r);
                             }
@@ -1172,13 +1204,13 @@ public class MicrosoftOfficeAccess {
                 }
             } else {
                 log.warn("script found in paragraph, but finding its position in runs failed");
-                String newParagraphText=fullParagraph.replace(find, repl);
+                String newParagraphText = fullParagraph.replace(find, repl);
                 for (int runPos = 0; runPos < runs.size(); runPos++) {
                     XWPFRun replRun = runs.get(runPos);
-                    if(runPos==0) {    
-                        replRun.setText(newParagraphText,0);
+                    if (runPos == 0) {
+                        replRun.setText(newParagraphText, 0);
                     } else {
-                        replRun.setText("",0);
+                        replRun.setText("", 0);
                     }
                 }
             }
@@ -1444,18 +1476,18 @@ public class MicrosoftOfficeAccess {
         XWPFDocument mergedDoc = new XWPFDocument(
                 new FileInputStream(intoDocument));
 
-        for(IBodyElement child: bodyDoc.getBodyElements()) {
-            if(child instanceof XWPFParagraph) {
+        for (IBodyElement child : bodyDoc.getBodyElements()) {
+            if (child instanceof XWPFParagraph) {
                 XWPFParagraph newParagraph = mergedDoc.createParagraph();
-                copyParagraph((XWPFParagraph)child, newParagraph);
-            } else if(child instanceof XWPFTable) {
-                XWPFTable tab=(XWPFTable)child;
+                copyParagraph((XWPFParagraph) child, newParagraph);
+            } else if (child instanceof XWPFTable) {
+                XWPFTable tab = (XWPFTable) child;
                 XWPFTable mergedTable1 = mergedDoc.createTable(tab.getRows().size(),
-                    tab.getRow(0).getTableCells().size());
+                        tab.getRow(0).getTableCells().size());
                 copyTable(tab, mergedTable1);
             }
         }
-   
+
         // Save the merged document as a new file
         File mergedFile = new File(intoDocument);
         FileOutputStream fos = new FileOutputStream(mergedFile);
@@ -1485,12 +1517,13 @@ public class MicrosoftOfficeAccess {
     // Helper method to copy a paragraph from one document to another
     private static void copyParagraph(XWPFParagraph sourceParagraph, XWPFParagraph targetParagraph) {
         for (XWPFRun run : sourceParagraph.getRuns()) {
-            int fontSize=run.getFontSize();
-            if(fontSize<0 || fontSize > 100) {
+            int fontSize = run.getFontSize();
+            if (fontSize < 0 || fontSize > 100) {
                 try {
                     // prone to NPE
-                    fontSize=run.getDocument().getStyles().getDefaultRunStyle().getFontSize();
-                } catch (Throwable t) {}
+                    fontSize = run.getDocument().getStyles().getDefaultRunStyle().getFontSize();
+                } catch (Throwable t) {
+                }
             }
             XWPFRun newRun = targetParagraph.createRun();
             newRun.setText(run.getText(0));

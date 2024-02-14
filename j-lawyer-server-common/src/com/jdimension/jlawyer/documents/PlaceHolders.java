@@ -799,6 +799,7 @@ public class PlaceHolders {
     public static final String BEL_TOTAL = "{{BEL_TOTAL}}";
     public static final String BEL_WHRG = "{{BEL_WHRG}}";
     public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
+    public static final String BEL_GIROCODE = "{{BEL_GIROCODE}}";
     
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     
@@ -808,6 +809,7 @@ public class PlaceHolders {
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
         ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(BEL_GIROCODE);
         ALLTABLEPLACEHOLDERS.add(ZE_TABELLE);
     }
     

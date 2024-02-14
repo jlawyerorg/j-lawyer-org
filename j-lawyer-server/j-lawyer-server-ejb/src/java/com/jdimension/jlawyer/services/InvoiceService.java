@@ -663,6 +663,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -675,14 +681,23 @@ import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -708,9 +723,9 @@ import org.jlawyer.notification.OutgoingMailRequest;
 public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal {
 
     private static final Logger log = Logger.getLogger(InvoiceService.class.getName());
-    
-    SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-    NumberFormat nf=NumberFormat.getCurrencyInstance(Locale.GERMANY);
+
+    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
     @Resource
     private SessionContext context;
@@ -729,6 +744,8 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     private InvoicePositionTemplateFacadeLocal posTemplates;
     @EJB
     private AppUserBeanFacadeLocal users;
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -736,7 +753,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
 
     @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
     private javax.jms.Queue outgoingMailQueue;
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoicePool> getAllInvoicePools() throws Exception {
@@ -969,47 +986,49 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
                         log.info("Setting invoice " + i.getInvoiceNumber() + " to first dunning level");
                         i.setStatus(Invoice.STATUS_OPEN_REMINDER1);
                         this.invoices.edit(i);
-                        
-                        
+
                         String assistant = i.getArchiveFileKey().getAssistant();
-                        String assistantEmail=null;
-                        boolean assistantNotification=false;
+                        String assistantEmail = null;
+                        boolean assistantNotification = false;
                         String lawyer = i.getArchiveFileKey().getLawyer();
-                        String lawyerEmail=null;
-                        boolean lawyerNotification=false;
-                        
-                        if(!ServerStringUtils.isEmpty(assistant)) {
+                        String lawyerEmail = null;
+                        boolean lawyerNotification = false;
+
+                        if (!ServerStringUtils.isEmpty(assistant)) {
                             AppUserBean assUser = this.users.find(assistant);
-                            if(assUser!=null && !ServerStringUtils.isEmpty(assUser.getEmail())) {
-                                assistantEmail=assUser.getEmail();
-                                assistantNotification=assUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
+                            if (assUser != null && !ServerStringUtils.isEmpty(assUser.getEmail())) {
+                                assistantEmail = assUser.getEmail();
+                                assistantNotification = assUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
                             }
                         }
-                        if(!ServerStringUtils.isEmpty(lawyer)) {
+                        if (!ServerStringUtils.isEmpty(lawyer)) {
                             AppUserBean lawUser = this.users.find(lawyer);
-                            if(lawUser!=null && !ServerStringUtils.isEmpty(lawUser.getEmail())) {
-                                lawyerEmail=lawUser.getEmail();
-                                lawyerNotification=lawUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
+                            if (lawUser != null && !ServerStringUtils.isEmpty(lawUser.getEmail())) {
+                                lawyerEmail = lawUser.getEmail();
+                                lawyerNotification = lawUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
                             }
                         }
-                        
+
                         if (lawyerNotification || assistantNotification) {
                             OutgoingMailRequest omr = new OutgoingMailRequest();
-                            if(lawyerNotification)
+                            if (lawyerNotification) {
                                 omr.addTo(lawyerEmail);
-                            if(assistantNotification)
+                            }
+                            if (assistantNotification) {
                                 omr.addTo(assistantEmail);
+                            }
                             omr.setSubject(i.getInvoiceType().getDisplayName() + " fällig");
                             omr.setMainCaption(i.getInvoiceType().getDisplayName() + " " + i.getInvoiceNumber() + " ist seit heute fällig");
-                            
-                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotalGross())+ ")");
-                            
+
+                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotalGross()) + ")");
+
                             StringBuilder body = new StringBuilder();
                             body.append("Erstellt: ").append(df.format(i.getCreationDate())).append("\n");
                             body.append("Fällig: ").append(df.format(i.getDueDate())).append("\n");
                             body.append("Betrag: ").append(nf.format(i.getTotalGross())).append("\n");
-                            if(i.getContact()!=null)
+                            if (i.getContact() != null) {
                                 body.append("zahlungspflichtig: ").append(i.getContact().toDisplayName()).append("\n");
+                            }
                             body.append("Akte: ").append(i.getArchiveFileKey().getFileNumber()).append(" ").append(i.getArchiveFileKey().getName());
                             omr.setBodyContent(body.toString());
                             this.publishOutgoingMailRequest(omr);
@@ -1022,7 +1041,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
 
     }
-    
+
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {
         try {
             ObjectMessage msg = this.jmsContext.createObjectMessage(req);
@@ -1031,6 +1050,59 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         } catch (Exception ex) {
             log.error("could not publish outgoing mail request", ex);
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] getGiroCode(float amount, String purpose) throws Exception {
+        
+        ServerSettingsBean s = this.settingsFacade.find("profile.company.name");
+        if (s == null || s.getSettingValue().trim().isEmpty()) {
+            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname im Profil ist leer");
+        }
+        String name=s.getSettingValue().trim();
+        
+        s = this.settingsFacade.find("profile.company.bankcode");
+        if (s == null || s.getSettingValue().trim().isEmpty()) {
+            throw new Exception("Girocode kann nicht erstellt werden - BIC im Profil ist leer");
+        }
+        String bic=s.getSettingValue().trim();
+        bic=bic.replace(" ", "");
+        
+        s = this.settingsFacade.find("profile.company.accountno");
+        if (s == null || s.getSettingValue().trim().isEmpty()) {
+            throw new Exception("Girocode kann nicht erstellt werden - IBAN im Profil ist leer");
+        }
+        String iban=s.getSettingValue().trim();
+        iban=iban.replace(" ", "");
+        
+        try {
+
+            // Encode invoice data as a Girocode string
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+            DecimalFormat amountFormat = new DecimalFormat("0.00", symbols);
+            String girocodeData = String.format("BCD\n002\n1\nSCT\n%s\n%s\n%s\nEUR%s\n\n\n%s\n", bic, name, iban, amountFormat.format(amount), purpose);
+
+            // Generate QR code from Girocode string
+            QRCodeWriter qrWriter = new QRCodeWriter();
+            BitMatrix matrix = qrWriter.encode(girocodeData, BarcodeFormat.QR_CODE, 150, 150, getHints());
+
+            ByteArrayOutputStream pngStream=new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, "PNG", pngStream);
+
+            return pngStream.toByteArray();
+
+        } catch (Exception ex) {
+            log.error("Could not create Girocode",ex);
+            throw new Exception("Girocode kann nicht erstellt werden: " + ex.getMessage());
+        }
+    }
+    
+    private static java.util.Map<EncodeHintType, Object> getHints() {
+        java.util.Map<EncodeHintType, Object> hints = new java.util.EnumMap<>(EncodeHintType.class);
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
+        return hints;
     }
 
 }

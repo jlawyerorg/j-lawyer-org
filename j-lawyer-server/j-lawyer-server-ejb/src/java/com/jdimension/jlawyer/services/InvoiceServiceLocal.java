@@ -679,5 +679,7 @@ public interface InvoiceServiceLocal {
     String nextInvoiceNumber(InvoicePool pool) throws Exception;
 
     void checkInvoicesDue();
+
+    byte[] getGiroCode(float amount, String purpose) throws Exception;
     
 }
