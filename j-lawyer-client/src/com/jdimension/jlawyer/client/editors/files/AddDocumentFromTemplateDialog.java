@@ -712,7 +712,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
-    private JTable tblReviewReasons = null;
     private GenericCalculationTable calculationTable = null;
     private Invoice invoice=null;
     private StyledCalculationTable invoiceTable=null;
@@ -726,8 +725,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     
     private ArchiveFilePanel casePanel=null;
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, tblReviewReasons, null, null, null, null, null);
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
+        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null);
     }
 
     /**
@@ -739,13 +738,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param targetTable
      * @param calculationTable
      * @param involved
-     * @param tblReviewReasons
      * @param aFile
      * @param invoice
      * @param invoiceTable
      * @param timesheetsTable
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
@@ -755,7 +753,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.timesheetsTable=timesheetsTable;
 
         this.targetTable = targetTable;
-        this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
         
         this.casePanel=casePanel;
@@ -1950,7 +1947,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null).setVisible(true);
+            new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
