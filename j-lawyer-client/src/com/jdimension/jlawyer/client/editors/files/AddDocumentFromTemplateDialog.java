@@ -1545,11 +1545,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     EditorsRegistry.getInstance().clearStatus();
                     return;
                 }
-
-                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-                model.addRow(row);
-                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
             
         }
