@@ -722,9 +722,14 @@ public class EpostQueueStatusTask extends java.util.TimerTask {
             List<EpostLetterStatus> newStatuus = new ArrayList<>();
             try {
                 for (String principal : unfinishedLetterIds.keySet()) {
-                    // todo: different principals might still use the same epost credentials and we still run into the rate limit
+                    // different principals might use the same epost credentials and we may run into the rate limit of 5s --> add delay
                     List<EpostLetterStatus> allForUser = voip.getLetterStatus(unfinishedLetterIds.get(principal), principal);
                     newStatuus.addAll(allForUser);
+                    try {
+                        Thread.sleep(5500);
+                    } catch (Throwable threadEx) {
+                        log.error("Could not delay next EPOST status query", threadEx);
+                    }
                 }
             } catch (Throwable t) {
                 log.error("Could not update status for multiple letters, skipping...", t);
