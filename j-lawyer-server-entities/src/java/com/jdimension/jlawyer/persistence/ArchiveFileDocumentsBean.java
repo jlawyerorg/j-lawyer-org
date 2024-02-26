@@ -682,6 +682,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileDocumentsBean.findById", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.id = :id"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByExternalId", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByName", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.name = :name"),
+    @NamedQuery(name = "ArchiveFileDocumentsBean.findLocked", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.lockedBy is not null and a.lockedDate is not null"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByCreationDate", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.creationDate = :creationDate")})
 public class ArchiveFileDocumentsBean implements Serializable {
     

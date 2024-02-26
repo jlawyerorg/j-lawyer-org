@@ -671,7 +671,7 @@ import java.util.ArrayList;
  */
 public class CommandHandlerFactory {
     
-    private static ArrayList<CommandHandler> handlerList=new ArrayList<CommandHandler>();
+    private static ArrayList<CommandHandler> handlerList=new ArrayList<>();
     
     static {
         handlerList.add(new BoxSyncHandler(true));
@@ -683,6 +683,7 @@ public class CommandHandlerFactory {
         handlerList.add(new SetBindingsHandler(true));
         handlerList.add(new SysPropertiesHandler(true));
         handlerList.add(new SetReferenceNumberHandler(true));
+        handlerList.add(new UnlockDocumentsHandler(true));
         
     }
     

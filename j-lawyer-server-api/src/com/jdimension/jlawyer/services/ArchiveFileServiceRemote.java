@@ -929,4 +929,6 @@ public interface ArchiveFileServiceRemote {
     void setDocumentLock(String docId, boolean locked, boolean force) throws Exception;
 
     boolean isDocumentLocked(String docId) throws Exception;
+    
+    public int unlockDocuments() throws Exception;
 }
