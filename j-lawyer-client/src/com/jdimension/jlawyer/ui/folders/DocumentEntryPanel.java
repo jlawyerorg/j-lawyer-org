@@ -1194,13 +1194,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     private void lblChangeDateMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblChangeDateMouseEntered
         if(this.document!=null) {
-            this.lblChangeDate.setText(dfDateTime.format(this.document.getCreationDate()));
+            this.lblChangeDate.setText(DateUtils.getHumanReadableTime(this.document.getChangeDate()));
         }
     }//GEN-LAST:event_lblChangeDateMouseEntered
 
     private void lblChangeDateMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblChangeDateMouseExited
         if(this.document!=null) {
-            this.lblChangeDate.setText(DateUtils.getHumanReadableTime(this.document.getChangeDate()));
+            this.lblChangeDate.setText(dfDateTime.format(this.document.getChangeDate()));
         }
     }//GEN-LAST:event_lblChangeDateMouseExited
 
@@ -1279,7 +1279,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblFileName.setText(doc.getName());
         this.lblFileName.setToolTipText(doc.getName());
         this.lblFileIcon.setToolTipText(doc.getName());
-        this.lblChangeDate.setText(DateUtils.getHumanReadableTime(doc.getChangeDate()));
+        this.lblChangeDate.setText(dfDateTime.format(this.document.getChangeDate()));
         this.lblChangeDate.setToolTipText("erstellt: " + dfDateTime.format(doc.getCreationDate()) + System.lineSeparator() + "geändert: " + dfDateTime.format(doc.getChangeDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
         if(this.document.getFolder()==null) {
