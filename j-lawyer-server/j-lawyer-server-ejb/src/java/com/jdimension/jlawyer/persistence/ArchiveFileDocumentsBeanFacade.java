@@ -738,8 +738,6 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
     
     @Override
     public List<ArchiveFileDocumentsBean> findLocked() {
-        
-        List<ArchiveFileDocumentsBean> list = getEntityManager().createNamedQuery("ArchiveFileDocumentsBean.findLocked").getResultList();
-        return list;
+        return getEntityManager().createNamedQuery("ArchiveFileDocumentsBean.findLocked").getResultList();
     }
 }

@@ -757,10 +757,7 @@ public class ServerStringUtils {
         if (list == null) {
             return new String[0];
         }
-
-        String[] ary = list.split(delimiter);
-
-        return ary;
+        return list.split(delimiter);
     }
     
 }
