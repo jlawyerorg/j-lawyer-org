@@ -724,7 +724,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     /**
      * Returns a contacts metadata given its external ID
      *
-     * @param extId the contacts external ID
+     * @param extIdIndex the index of the external id column. Valid values are 1..5.
+     * @param extId the contacts external ID value, expected in the specified external id with index {extIdIndex} 
      * @response 401 User not authorized
      * @response 403 User not authenticated
      * @response 404 No contact found with this external ID
@@ -732,14 +733,64 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Path("/byexternalid/{extId}")
+    @Path("/byexternalid/{extIdIndex}/{extId}")
     @RolesAllowed({"readAddressRole"})
-    public Response getContactByExternalId(@PathParam("extId") String extId) {
+    public Response getContactByExternalId(@PathParam("extIdIndex") int extIdIndex, @PathParam("extId") String extId) {
         try {
 
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
-            AddressBean adr = addresses.getAddressByExternalId(extId);
+            AddressBean adr = null;
+            switch (extIdIndex) {
+                case 1:
+                    adr = addresses.getAddressByExternalId1(extId);
+                    break;
+                case 2:
+                    adr = addresses.getAddressByExternalId2(extId);
+                    break;
+                case 3:
+                    adr = addresses.getAddressByExternalId3(extId);
+                    break;
+                case 4:
+                    adr = addresses.getAddressByExternalId4(extId);
+                    break;
+                case 5:
+                    adr = addresses.getAddressByExternalId5(extId);
+                    break;
+                default:
+                    break;
+            }
+            
+            if(adr!=null) {
+                return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get address by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a contacts metadata given any of its external IDs
+     *
+     * @param extId the contacts external ID value - which may be persisted in any of the five supported external ID columns
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No contact found with this external ID (none of the five external IDs match)
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/byexternalid/{extId}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContactByAnyExternalId(@PathParam("extId") String extId) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr = addresses.getAddressByAnyExternalId(extId);
             if(adr!=null) {
                 return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
             } else {
@@ -812,7 +863,19 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             
             // only overwrite external ID if the client provided one
             if(!ServerStringUtils.isEmpty(contact.getExternalId())) {
-                currentContact.setExternalId(contact.getExternalId());
+                currentContact.setExternalId1(contact.getExternalId());
+            }
+            if(!ServerStringUtils.isEmpty(contact.getExternalId2())) {
+                currentContact.setExternalId2(contact.getExternalId2());
+            }
+            if(!ServerStringUtils.isEmpty(contact.getExternalId3())) {
+                currentContact.setExternalId3(contact.getExternalId3());
+            }
+            if(!ServerStringUtils.isEmpty(contact.getExternalId4())) {
+                currentContact.setExternalId4(contact.getExternalId4());
+            }
+            if(!ServerStringUtils.isEmpty(contact.getExternalId5())) {
+                currentContact.setExternalId5(contact.getExternalId5());
             }
             
             // file number must not be changed

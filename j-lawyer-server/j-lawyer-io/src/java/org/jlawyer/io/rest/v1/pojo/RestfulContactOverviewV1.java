@@ -671,6 +671,10 @@ public class RestfulContactOverviewV1 {
     
     private String id=null;
     private String externalId=null;
+    private String externalId2=null;
+    private String externalId3=null;
+    private String externalId4=null;
+    private String externalId5=null;
     private String name=null;
     private String firstName=null;
     private String company=null;
@@ -776,6 +780,62 @@ public class RestfulContactOverviewV1 {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the externalId2
+     */
+    public String getExternalId2() {
+        return externalId2;
+    }
+
+    /**
+     * @param externalId2 the externalId2 to set
+     */
+    public void setExternalId2(String externalId2) {
+        this.externalId2 = externalId2;
+    }
+
+    /**
+     * @return the externalId3
+     */
+    public String getExternalId3() {
+        return externalId3;
+    }
+
+    /**
+     * @param externalId3 the externalId3 to set
+     */
+    public void setExternalId3(String externalId3) {
+        this.externalId3 = externalId3;
+    }
+
+    /**
+     * @return the externalId4
+     */
+    public String getExternalId4() {
+        return externalId4;
+    }
+
+    /**
+     * @param externalId4 the externalId4 to set
+     */
+    public void setExternalId4(String externalId4) {
+        this.externalId4 = externalId4;
+    }
+
+    /**
+     * @return the externalId5
+     */
+    public String getExternalId5() {
+        return externalId5;
+    }
+
+    /**
+     * @param externalId5 the externalId5 to set
+     */
+    public void setExternalId5(String externalId5) {
+        this.externalId5 = externalId5;
     }
 
     

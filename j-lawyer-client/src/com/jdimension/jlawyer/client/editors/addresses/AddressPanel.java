@@ -4080,18 +4080,38 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
 
             String id = null;
-            String externalId = null;
+            String externalId1 = null;
+            String externalId2 = null;
+            String externalId3 = null;
+            String externalId4 = null;
+            String externalId5 = null;
             if (this.dto != null) {
                 id = this.dto.getId();
-                externalId = this.dto.getExternalId();
+                externalId1 = this.dto.getExternalId1();
+                externalId2 = this.dto.getExternalId2();
+                externalId3 = this.dto.getExternalId3();
+                externalId4 = this.dto.getExternalId4();
+                externalId5 = this.dto.getExternalId5();
             }
 
             this.dto = new AddressBean();
             if (id != null) {
                 this.dto.setId(id);
             }
-            if (externalId != null) {
-                this.dto.setExternalId(externalId);
+            if (externalId1 != null) {
+                this.dto.setExternalId1(externalId1);
+            }
+            if (externalId2 != null) {
+                this.dto.setExternalId2(externalId2);
+            }
+            if (externalId3 != null) {
+                this.dto.setExternalId3(externalId3);
+            }
+            if (externalId4 != null) {
+                this.dto.setExternalId4(externalId4);
+            }
+            if (externalId5 != null) {
+                this.dto.setExternalId5(externalId5);
             }
 
             this.fillDTO(this.dto);

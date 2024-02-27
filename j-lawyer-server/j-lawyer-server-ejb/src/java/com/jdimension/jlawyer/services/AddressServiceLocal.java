@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -680,7 +679,12 @@ public interface AddressServiceLocal {
     public int getAddressCount();
     
     public AddressBean getAddress(String id);
-    public AddressBean getAddressByExternalId(String extId);
+    public AddressBean getAddressByAnyExternalId(String extId);
+    public AddressBean getAddressByExternalId1(String extId);
+    public AddressBean getAddressByExternalId2(String extId);
+    public AddressBean getAddressByExternalId3(String extId);
+    public AddressBean getAddressByExternalId4(String extId);
+    public AddressBean getAddressByExternalId5(String extId);
     
     public AddressBean createAddress(AddressBean dto);
 

@@ -686,7 +686,6 @@ import javax.ejb.*;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.SecurityDomain;
 
 /**
  *
@@ -910,8 +909,38 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     
     @Override
     @RolesAllowed({"readAddressRole"})
-    public AddressBean getAddressByExternalId(String extId) {
-        return this.addressFacade.findByExternalId(extId);
+    public AddressBean getAddressByAnyExternalId(String extId) {
+        return this.addressFacade.findByAnyExternalId(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId1(String extId) {
+        return this.addressFacade.findByExternalId1(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId2(String extId) {
+        return this.addressFacade.findByExternalId2(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId3(String extId) {
+        return this.addressFacade.findByExternalId3(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId4(String extId) {
+        return this.addressFacade.findByExternalId4(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId5(String extId) {
+        return this.addressFacade.findByExternalId5(extId);
     }
 
     @Override

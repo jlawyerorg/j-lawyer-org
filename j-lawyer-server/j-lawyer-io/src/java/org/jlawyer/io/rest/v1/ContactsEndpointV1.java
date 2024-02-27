@@ -775,7 +775,11 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 AddressBean afb = addresses.getAddress(id);
                 RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
                 rco.setId(id);
-                rco.setExternalId(afb.getExternalId());
+                rco.setExternalId(afb.getExternalId1());
+                rco.setExternalId2(afb.getExternalId2());
+                rco.setExternalId3(afb.getExternalId3());
+                rco.setExternalId4(afb.getExternalId4());
+                rco.setExternalId5(afb.getExternalId5());
                 rco.setName(afb.getName());
                 rco.setCity(afb.getCity());
                 rco.setFirstName(afb.getFirstName());

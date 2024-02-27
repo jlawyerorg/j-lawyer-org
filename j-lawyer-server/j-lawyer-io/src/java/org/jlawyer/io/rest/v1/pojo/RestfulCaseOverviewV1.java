@@ -749,7 +749,7 @@ public class RestfulCaseOverviewV1 {
     public void setDateChanged(Date dateChanged) {
         this.dateChanged = dateChanged;
     }
-    
-    
+
+
     
 }

@@ -674,6 +674,10 @@ public class RestfulContactV2 {
     
     private String id=null;
     protected String externalId=null;
+    private String externalId2=null;
+    private String externalId3=null;
+    private String externalId4=null;
+    private String externalId5=null;
     private String firstName=null;
     private String firstName2=null;
     private String name=null;
@@ -763,7 +767,11 @@ public class RestfulContactV2 {
         ad.setFirstName(this.getFirstName());
         ad.setFirstName2(this.getFirstName2());
         ad.setId(this.getId());
-        ad.setExternalId(this.getExternalId());
+        ad.setExternalId1(this.getExternalId());
+        ad.setExternalId2(this.getExternalId2());
+        ad.setExternalId3(this.getExternalId3());
+        ad.setExternalId4(this.getExternalId4());
+        ad.setExternalId5(this.getExternalId5());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
         ad.setLastModifier(this.getLastModifier());
@@ -827,7 +835,11 @@ public class RestfulContactV2 {
         ad.setFirstName(a.getFirstName());
         ad.setFirstName2(a.getFirstName2());
         ad.setId(a.getId());
-        ad.setExternalId(a.getExternalId());
+        ad.setExternalId(a.getExternalId1());
+        ad.setExternalId2(a.getExternalId2());
+        ad.setExternalId3(a.getExternalId3());
+        ad.setExternalId4(a.getExternalId4());
+        ad.setExternalId5(a.getExternalId5());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
         ad.setLastModifier(a.getLastModifier());
@@ -1713,6 +1725,62 @@ public class RestfulContactV2 {
      */
     public void setFirstName2(String firstName2) {
         this.firstName2 = firstName2;
+    }
+
+    /**
+     * @return the externalId2
+     */
+    public String getExternalId2() {
+        return externalId2;
+    }
+
+    /**
+     * @param externalId2 the externalId2 to set
+     */
+    public void setExternalId2(String externalId2) {
+        this.externalId2 = externalId2;
+    }
+
+    /**
+     * @return the externalId3
+     */
+    public String getExternalId3() {
+        return externalId3;
+    }
+
+    /**
+     * @param externalId3 the externalId3 to set
+     */
+    public void setExternalId3(String externalId3) {
+        this.externalId3 = externalId3;
+    }
+
+    /**
+     * @return the externalId4
+     */
+    public String getExternalId4() {
+        return externalId4;
+    }
+
+    /**
+     * @param externalId4 the externalId4 to set
+     */
+    public void setExternalId4(String externalId4) {
+        this.externalId4 = externalId4;
+    }
+
+    /**
+     * @return the externalId5
+     */
+    public String getExternalId5() {
+        return externalId5;
+    }
+
+    /**
+     * @param externalId5 the externalId5 to set
+     */
+    public void setExternalId5(String externalId5) {
+        this.externalId5 = externalId5;
     }
     
     

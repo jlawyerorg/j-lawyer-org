@@ -702,7 +702,12 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "AddressBean.findByBankAccount", query = "SELECT a FROM AddressBean a WHERE a.bankAccount = :bankAccount"),
     @NamedQuery(name = "AddressBean.findByEmail", query = "SELECT a FROM AddressBean a WHERE a.email = :email"),
     @NamedQuery(name = "AddressBean.findByWebsite", query = "SELECT a FROM AddressBean a WHERE a.website = :website"),
-    @NamedQuery(name = "AddressBean.findByExternalId", query = "SELECT a FROM AddressBean a WHERE a.externalId = :externalId"),
+    @NamedQuery(name = "AddressBean.findByExternalId", query = "SELECT a FROM AddressBean a WHERE a.externalId1 = :externalId1 OR a.externalId2 = :externalId2 OR a.externalId3 = :externalId3 OR a.externalId4 = :externalId4 OR a.externalId5 = :externalId5"),
+    @NamedQuery(name = "AddressBean.findByExternalId1", query = "SELECT a FROM AddressBean a WHERE a.externalId1 = :externalId1"),
+    @NamedQuery(name = "AddressBean.findByExternalId2", query = "SELECT a FROM AddressBean a WHERE a.externalId2 = :externalId2"),
+    @NamedQuery(name = "AddressBean.findByExternalId3", query = "SELECT a FROM AddressBean a WHERE a.externalId3 = :externalId3"),
+    @NamedQuery(name = "AddressBean.findByExternalId4", query = "SELECT a FROM AddressBean a WHERE a.externalId4 = :externalId4"),
+    @NamedQuery(name = "AddressBean.findByExternalId5", query = "SELECT a FROM AddressBean a WHERE a.externalId5 = :externalId5"),
     @NamedQuery(name = "AddressBean.findByCreator", query = "SELECT a FROM AddressBean a WHERE a.creator = :creator"),
     @NamedQuery(name = "AddressBean.findByLastModifier", query = "SELECT a FROM AddressBean a WHERE a.lastModifier = :lastModifier"),
     @NamedQuery(name = "AddressBean.findByCreationDate", query = "SELECT a FROM AddressBean a WHERE a.creationDate = :creationDate"),
@@ -856,8 +861,20 @@ public class AddressBean implements Serializable {
     @Column(name = "default_role")
     protected String defaultRole;
     
-    @Column(name = "ext_id")
-    protected String externalId;
+    @Column(name = "ext_id_1")
+    protected String externalId1;
+    
+    @Column(name = "ext_id_2")
+    private String externalId2;
+    
+    @Column(name = "ext_id_3")
+    private String externalId3;
+    
+    @Column(name = "ext_id_4")
+    private String externalId4;
+    
+    @Column(name = "ext_id_5")
+    private String externalId5;
 
     public AddressBean() {
     }
@@ -1700,17 +1717,17 @@ public class AddressBean implements Serializable {
     }
 
     /**
-     * @return the externalId
+     * @return the externalId1
      */
-    public String getExternalId() {
-        return externalId;
+    public String getExternalId1() {
+        return externalId1;
     }
 
     /**
      * @param externalId the externalId to set
      */
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
+    public void setExternalId1(String externalId) {
+        this.externalId1 = externalId;
     }
 
     /**
@@ -1725,6 +1742,62 @@ public class AddressBean implements Serializable {
      */
     public void setFirstName2(String firstName2) {
         this.firstName2 = firstName2;
+    }
+
+    /**
+     * @return the externalId2
+     */
+    public String getExternalId2() {
+        return externalId2;
+    }
+
+    /**
+     * @param externalId2 the externalId2 to set
+     */
+    public void setExternalId2(String externalId2) {
+        this.externalId2 = externalId2;
+    }
+
+    /**
+     * @return the externalId3
+     */
+    public String getExternalId3() {
+        return externalId3;
+    }
+
+    /**
+     * @param externalId3 the externalId3 to set
+     */
+    public void setExternalId3(String externalId3) {
+        this.externalId3 = externalId3;
+    }
+
+    /**
+     * @return the externalId4
+     */
+    public String getExternalId4() {
+        return externalId4;
+    }
+
+    /**
+     * @param externalId4 the externalId4 to set
+     */
+    public void setExternalId4(String externalId4) {
+        this.externalId4 = externalId4;
+    }
+
+    /**
+     * @return the externalId5
+     */
+    public String getExternalId5() {
+        return externalId5;
+    }
+
+    /**
+     * @param externalId5 the externalId5 to set
+     */
+    public void setExternalId5(String externalId5) {
+        this.externalId5 = externalId5;
     }
     
 }
