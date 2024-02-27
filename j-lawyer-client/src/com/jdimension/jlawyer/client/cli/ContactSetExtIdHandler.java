@@ -661,278 +661,99 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.cli;
 
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.pojo.DataBucket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import javax.swing.JTextArea;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ArchiveFileServiceRemote {
-
-    int getArchiveFileCount();
-
-    ArchiveFileBean[] searchSimple(String query);
-
-    void removeArchiveFile(String id) throws Exception;
-
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
-
-    void updateArchiveFile(ArchiveFileBean dto) throws Exception;
-    
-    void updateArchivedFlag(String caseId, boolean archived) throws Exception;
-
-    List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit);
-
-    ArchiveFileBean getArchiveFile(String id) throws Exception;
-
-    Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
-
-    boolean archiveFileExists(String id);
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
-
-    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
-
-    int getArchiveFileArchivedCount();
-
-    int getDocumentCount();
-
-    void removeDocument(String id) throws Exception;
-
-    boolean setDocumentContent(String id, byte[] content) throws Exception;
-
-    byte[] getDocumentContent(String id) throws Exception;
-    
-    ArchiveFileDocumentsBean getDocument(String id) throws Exception;
-
-    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
-
-    boolean renameDocument(String id, String newName) throws Exception;
-
-    ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
-
-    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
-
-    void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
-    
-    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
-
-    Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
-    
-    HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
-    
-    Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
-    
-    HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
-
-    List<String> searchTagsInUse();
-    
-    List<String> searchDocumentTagsInUse();
-
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    String getDocumentPreview(String id) throws Exception;
-
-    Date[] getHistoryInterval(String principalId);
-
-    List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileBean> getLastChanged(int limit);
-
-    String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
-
-    Collection<ArchiveFileBean> getAllWithMissingReviews();
-
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-    
-    DataBucket loadHtmlCaseExport(String caseId) throws Exception;
-
-    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
-
-    boolean setDocumentDate(String id, Date date) throws Exception;
-    
-    boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
-
-    HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
-
-    List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
-
-    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
-
-    boolean udpateFileNumber(String from, String to) throws Exception;
-
-    boolean doesDocumentExist(String caseId, String documentName);
-    
-    boolean doesDocumentExist(String id);
-
-    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
-
-    Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
-
-    void renameTag(String fromName, String toName) throws Exception;
-
-    void renameDocumentTag(String fromName, String toName) throws Exception;
-
-    List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
-
-    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
-
-    String getFileNumber(String id);
-
-    List<DocumentFolderTemplate> getAllFolderTemplates();
-
-    void addFolderTemplate(DocumentFolderTemplate template) throws Exception;
-
-    void removeFolderTemplate(String name);
-
-    void updateFolderTemplate(DocumentFolderTemplate template);
-
-    DocumentFolderTemplate getFolderTemplate(String name);
-
-    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
-
-    void removeFolderFromTemplate(String folderId) throws Exception;
-
-    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
-
-    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
-
-    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
-
-    void deleteCaseFolder(String folderId) throws Exception;
-
-    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
-
-    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
-
-    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
-
-    DocumentFolderTemplate getFolderTemplateById(String id);
-
-    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
-
-    void removeDocumentFromBin(String docId) throws Exception;
-
-    boolean restoreDocumentFromBin(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
-
-    void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception;
-
-    HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
-
-    void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
-
-    List<CaseSyncSettings> getCaseSyncs(String caseId);
-
-    DataBucket getDocumentContentBucket(String id) throws Exception;
-
-    boolean setDocumentHighlights(String id, int highlight1, int highlight2) throws Exception;
-    
-    List<Invoice> getInvoices(String caseId);
-
-    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
-
-    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
-    
-    ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception;
-
-    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
-
-    void removeAllInvoicePositions(String invoiceId) throws Exception;
-
-    Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
-
-    List<Invoice> getInvoicesForAddress(String addressId, boolean turnOverOnly) throws Exception;
-
-    void removeInvoice(String invoiceId) throws Exception;
-
-    void linkInvoiceDocument(String documentId, String invoiceId) throws Exception;
-
-    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception;
-
-    Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
-
-    Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception;
-
-    void removeTimesheet(String timesheetId) throws Exception;
-
-    List<Timesheet> getTimesheets(String caseId) throws Exception;
-
-    List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
-
-    List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
-    List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
-
-    List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
-
-    TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;
-
-    TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception;
-
-    TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
-
-    int hasOpenTimesheetPositions(String principal) throws Exception;
-
-    void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
-
-    TimesheetPosition updateTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
-
-    void removeAllTimesheetPositions(String timesheetId) throws Exception;
-
-    TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception;
-
-    List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
-
-    TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
-
-    ArrayList<String> getAllArchiveFileNumbers() throws Exception;
-
-    List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
-
-    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
-
-    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
-
-    CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
-
-    void removeAccountEntry(String entryId) throws Exception;
-
-    List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception;
-
-    void setDocumentLock(String docId, boolean locked, boolean force) throws Exception;
-
-    boolean isDocumentLocked(String docId) throws Exception;
-    
-    int unlockDocuments() throws Exception;
-    
-    ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
-    
-    void removeParty(String id) throws Exception;
+public class ContactSetExtIdHandler extends CommandHandler {
+
+    public ContactSetExtIdHandler(boolean info) {
+        super(info);
+    }
+
+    @Override
+    public String getDescription() {
+        return "sets an external id for a contact";
+    }
+
+    @Override
+    public String getCommand() {
+        return "contactextid";
+    }
+
+    @Override
+    public boolean handleCommand(String[] params, JTextArea ta) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+
+            if (params.length != 3) {
+                handleHelp(ta);
+                return true;
+            }
+            
+            if(!"1".equals(params[1]) && !"2".equals(params[1]) && !"3".equals(params[1]) && !"4".equals(params[1]) && !"5".equals(params[1])) {
+                outLineError("index must be either 1, 2, 3, 4 or 5", ta);
+                return false;
+            }
+
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressBean adr=locator.lookupAddressServiceRemote().getAddress(params[0]);
+            if(adr==null) {
+                outLineError("There is no contact with ID " + params[0], ta);
+                return false;
+            }
+            
+            if(null != params[1]) switch (params[1]) {
+                case "1":
+                    adr.setExternalId1(params[2]);
+                    break;
+                case "2":
+                    adr.setExternalId2(params[2]);
+                    break;
+                case "3":
+                    adr.setExternalId3(params[2]);
+                    break;
+                case "4":
+                    adr.setExternalId4(params[2]);
+                    break;
+                case "5":
+                    adr.setExternalId5(params[2]);
+                    break;
+                default:
+                    break;
+            }
+            locator.lookupAddressServiceRemote().updateAddress(adr);
+            
+            outLine("successfully set external ID " + params[2] + " with index " + params[1] + " to address with ID " + params[0], ta);
+
+        } catch (Exception ex) {
+            outLineError(ex.getMessage(), ta);
+        }
+
+        return true;
+    }
+
+    @Override
+    public void handleHelp(JTextArea ta) {
+        outLine("contactextid <contact-id> <index> <extid>", ta);
+        outLine("  contact-id: The ID of the contact", ta);
+        outLine("  index: The index of the external id. Valid values: 1, 2, 3, 4, 5", ta);
+        outLine("  extid: The value to be used as the external ID", ta);
+    }
+
+    @Override
+    public boolean handlesCommand(String cmd) {
+        if ("contactextid".equals(cmd)) {
+            return true;
+        }
+
+        return false;
+    }
 }

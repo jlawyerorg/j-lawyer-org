@@ -675,6 +675,8 @@ public class CommandHandlerFactory {
     
     static {
         handlerList.add(new BoxSyncHandler(true));
+        handlerList.add(new ContactSetExtIdHandler(true));
+        handlerList.add(new ContactMigrateHandler(true));
         handlerList.add(new HelpHandler(true));
         handlerList.add(new ServerInfoHandler(true));
         handlerList.add(new GetSettingHandler(true));
@@ -684,6 +686,7 @@ public class CommandHandlerFactory {
         handlerList.add(new SysPropertiesHandler(true));
         handlerList.add(new SetReferenceNumberHandler(true));
         handlerList.add(new UnlockDocumentsHandler(true));
+        
         
     }
     

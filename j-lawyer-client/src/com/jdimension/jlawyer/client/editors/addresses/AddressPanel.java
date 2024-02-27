@@ -710,6 +710,9 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
@@ -1398,6 +1401,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void initComponents() {
 
         btnGroupGender = new javax.swing.ButtonGroup();
+        popHeader = new javax.swing.JPopupMenu();
+        mnuCopyIdToClipboard = new javax.swing.JMenuItem();
+        mnuCopyExtIdToClipboard = new javax.swing.JMenuItem();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel13 = new javax.swing.JPanel();
         jPanel22 = new javax.swing.JPanel();
@@ -1574,6 +1580,24 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmdBackToSearch = new javax.swing.JButton();
         cmdNewSmsWithEncryptionPassword = new javax.swing.JButton();
         lblEncryption = new javax.swing.JLabel();
+
+        mnuCopyIdToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopyIdToClipboard.setText("ID in die Zwischenablage kopieren");
+        mnuCopyIdToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyIdToClipboardActionPerformed(evt);
+            }
+        });
+        popHeader.add(mnuCopyIdToClipboard);
+
+        mnuCopyExtIdToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopyExtIdToClipboard.setText("externe IDs in die Zwischenablage kopieren");
+        mnuCopyExtIdToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyExtIdToClipboardActionPerformed(evt);
+            }
+        });
+        popHeader.add(mnuCopyExtIdToClipboard);
 
         jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -2811,6 +2835,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         lblHeaderInfo.setFont(lblHeaderInfo.getFont().deriveFont(lblHeaderInfo.getFont().getStyle() | java.awt.Font.BOLD, lblHeaderInfo.getFont().getSize()+2));
         lblHeaderInfo.setForeground(new java.awt.Color(255, 255, 255));
         lblHeaderInfo.setText("jLabel26");
+        lblHeaderInfo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lblHeaderInfoMousePressed(evt);
+            }
+        });
 
         jPanel23.setOpaque(false);
 
@@ -3413,6 +3442,34 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         
     }//GEN-LAST:event_cmdAttributesFromClipboardActionPerformed
 
+    private void mnuCopyIdToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyIdToClipboardActionPerformed
+        if (this.dto != null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringSelection strSel = new StringSelection(this.dto.getId());
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_mnuCopyIdToClipboardActionPerformed
+
+    private void mnuCopyExtIdToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyExtIdToClipboardActionPerformed
+        if (this.dto != null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringBuilder sb=new StringBuilder();
+            sb.append("externe ID 1:").append("\t").append(this.dto.getExternalId1()).append(System.lineSeparator());
+            sb.append("externe ID 2:").append("\t").append(this.dto.getExternalId2()).append(System.lineSeparator());
+            sb.append("externe ID 3:").append("\t").append(this.dto.getExternalId3()).append(System.lineSeparator());
+            sb.append("externe ID 4:").append("\t").append(this.dto.getExternalId4()).append(System.lineSeparator());
+            sb.append("externe ID 5:").append("\t").append(this.dto.getExternalId5()).append(System.lineSeparator());
+            StringSelection strSel = new StringSelection(sb.toString());
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_mnuCopyExtIdToClipboardActionPerformed
+
+    private void lblHeaderInfoMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblHeaderInfoMousePressed
+        this.popHeader.show(this.lblHeaderInfo, evt.getX(), evt.getY());
+    }//GEN-LAST:event_lblHeaderInfoMousePressed
+
     private void updateAge() {
         Date birth = null;
         Date death = null;
@@ -3700,8 +3757,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JLabel lblOverviewPhone;
     private javax.swing.JLabel lblOverviewStreet;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
+    private javax.swing.JMenuItem mnuCopyIdToClipboard;
     private javax.swing.JPanel pnlCasesForContact;
     private javax.swing.JPanel pnlInvoicesChart;
+    private javax.swing.JPopupMenu popHeader;
     private javax.swing.JRadioButton rdGenderDivers;
     private javax.swing.JRadioButton rdGenderFemale;
     private javax.swing.JRadioButton rdGenderMale;

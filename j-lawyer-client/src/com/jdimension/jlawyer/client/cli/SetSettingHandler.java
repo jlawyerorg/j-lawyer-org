@@ -663,10 +663,7 @@
  */
 package com.jdimension.jlawyer.client.cli;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import javax.swing.JTextArea;
 
 /**
@@ -692,25 +689,20 @@ public class SetSettingHandler extends CommandHandler {
     @Override
     public boolean handleCommand(String[] params, JTextArea ta) {
         try {
-            ServerSettings set=ServerSettings.getInstance();
-            
-            
+            ServerSettings set = ServerSettings.getInstance();
+
             if (params.length != 2) {
-            handleHelp(ta);
-            return true;
-        }
-            
+                handleHelp(ta);
+                return true;
+            }
+
             set.setSetting(params[0], params[1]);
-            
-            
-            outLine ("  " + params[0] + "=" + set.getSetting(params[0], ""), ta);
-            
-            
+
+            outLine("  " + params[0] + "=" + set.getSetting(params[0], ""), ta);
 
         } catch (Exception ex) {
             outLineError(ex.getMessage(), ta);
         }
-
 
         return true;
     }

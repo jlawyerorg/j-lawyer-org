@@ -1779,6 +1779,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendMessage = new javax.swing.JMenuItem();
         mnuSendCoverage = new javax.swing.JMenuItem();
         mnuSendMotorCoverage = new javax.swing.JMenuItem();
+        popHeader = new javax.swing.JPopupMenu();
+        mnuCopyIdToClipboard = new javax.swing.JMenuItem();
+        mnuCopyExtIdToClipboard = new javax.swing.JMenuItem();
         tabPaneArchiveFile = new javax.swing.JTabbedPane();
         tabGeneralData = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -2321,6 +2324,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         drebisPopup.add(mnuSendMotorCoverage);
 
+        mnuCopyIdToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopyIdToClipboard.setText("ID in die Zwischenablage kopieren");
+        mnuCopyIdToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyIdToClipboardActionPerformed(evt);
+            }
+        });
+        popHeader.add(mnuCopyIdToClipboard);
+
+        mnuCopyExtIdToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        mnuCopyExtIdToClipboard.setText("externe ID in die Zwischenablage kopieren");
+        mnuCopyExtIdToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyExtIdToClipboardActionPerformed(evt);
+            }
+        });
+        popHeader.add(mnuCopyExtIdToClipboard);
+
         tabPaneArchiveFile.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 tabPaneArchiveFileStateChanged(evt);
@@ -2515,7 +2536,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .add(jLabel21)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(lblCaseChanged)
-                                .add(0, 358, Short.MAX_VALUE))
+                                .add(0, 0, Short.MAX_VALUE))
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(txtFileNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3699,6 +3720,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblHeaderInfo.setFont(lblHeaderInfo.getFont().deriveFont(lblHeaderInfo.getFont().getStyle() | java.awt.Font.BOLD, lblHeaderInfo.getFont().getSize()+2));
         lblHeaderInfo.setForeground(new java.awt.Color(255, 255, 255));
         lblHeaderInfo.setText("jLabel15");
+        lblHeaderInfo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lblHeaderInfoMousePressed(evt);
+            }
+        });
 
         jPanel13.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel13.setOpaque(false);
@@ -6613,6 +6639,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdEditCaseNumberActionPerformed
 
+    private void mnuCopyIdToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyIdToClipboardActionPerformed
+        if (this.dto != null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringSelection strSel = new StringSelection(this.dto.getId());
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_mnuCopyIdToClipboardActionPerformed
+
+    private void mnuCopyExtIdToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyExtIdToClipboardActionPerformed
+        if (this.dto != null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringSelection strSel = new StringSelection(this.dto.getExternalId());
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_mnuCopyExtIdToClipboardActionPerformed
+
+    private void lblHeaderInfoMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblHeaderInfoMousePressed
+        this.popHeader.show(this.lblHeaderInfo, evt.getX(), evt.getY());
+    }//GEN-LAST:event_lblHeaderInfoMousePressed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -7159,7 +7207,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblSpendings;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
+    private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
     private javax.swing.JMenuItem mnuCopyFilesToClipboard;
+    private javax.swing.JMenuItem mnuCopyIdToClipboard;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
     private javax.swing.JMenuItem mnuDocumentHighlight1;
@@ -7212,6 +7262,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popDocumentFavorites;
     private javax.swing.JPopupMenu popDocumentTagFilter;
+    private javax.swing.JPopupMenu popHeader;
     private javax.swing.JPopupMenu reviewsPopup;
     private javax.swing.JSplitPane splitDocuments;
     private javax.swing.JSplitPane splitDocumentsMain;
