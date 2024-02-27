@@ -709,7 +709,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         }
         StringUtils.sortIgnoreCase(titleItems);
-        DefaultComboBoxModel titleModel = new DefaultComboBoxModel(titleItems);
+        DefaultComboBoxModel<String> titleModel = new DefaultComboBoxModel<>(titleItems);
         this.cmbTitle.setModel(titleModel);
         
         
@@ -722,7 +722,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         }
         StringUtils.sortIgnoreCase(titleInAddressItems);
-        DefaultComboBoxModel titleInAddressModel = new DefaultComboBoxModel(titleInAddressItems);
+        DefaultComboBoxModel<String> titleInAddressModel = new DefaultComboBoxModel<>(titleInAddressItems);
         this.cmbTitleInAddress.setModel(titleInAddressModel);
         
         this.txtPlaceOfBirth.setDocument(new JTextFieldLimit(249));
