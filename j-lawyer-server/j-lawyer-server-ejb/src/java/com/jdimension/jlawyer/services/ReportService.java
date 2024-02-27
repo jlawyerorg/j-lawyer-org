@@ -1018,7 +1018,7 @@ public class ReportService implements ReportServiceRemote {
 
         } else if (Reports.RPT_ACCOUNTS_BOOKINGS.equals(reportId)) {
             String query = "\n"
-                    + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
+                    + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
                     + "left join cases on cases.id=case_account_entries.case_id \n"
                     + "left join invoices on invoices.id=case_account_entries.invoice_id \n"
                     + "where entry_date>=? and entry_date<=?\n"
