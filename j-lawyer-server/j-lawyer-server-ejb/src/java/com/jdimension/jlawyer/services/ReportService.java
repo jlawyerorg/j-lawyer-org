@@ -673,7 +673,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import javax.annotation.Resource;
@@ -730,6 +729,7 @@ public class ReportService implements ReportServiceRemote {
 
         reportPrivs.put(Reports.RPT_ACCOUNTS_ESCROW, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_ACCOUNTS_EARNINGS, PRIVILEGE_CONFIDENTIAL);
+        reportPrivs.put(Reports.RPT_ACCOUNTS_BOOKINGS, PRIVILEGE_COMMON);
 
         if (!reportPrivs.containsKey(reportId)) {
             throw new Exception("Report " + reportId + " ist nicht definiert");
@@ -1013,6 +1013,17 @@ public class ReportService implements ReportServiceRemote {
                     + "order by Ergebnis desc) t1\n"
                     + "where Ergebnis<>0";
             ReportResultTable mainTable = getTable(true, "Ergebnis pro Akte", query, params);
+
+            result.getTables().add(mainTable);
+
+        } else if (Reports.RPT_ACCOUNTS_BOOKINGS.equals(reportId)) {
+            String query = "\n"
+                    + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
+                    + "left join cases on cases.id=case_account_entries.case_id \n"
+                    + "left join invoices on invoices.id=case_account_entries.invoice_id \n"
+                    + "where entry_date>=? and entry_date<=?\n"
+                    + "order by entry_date asc;";
+            ReportResultTable mainTable = getTable(true, "Buchungen", query, params);
 
             result.getTables().add(mainTable);
 

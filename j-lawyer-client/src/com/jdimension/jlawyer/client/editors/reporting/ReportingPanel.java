@@ -766,6 +766,25 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         revenuePerCustomer.setDateSelectionLabel("Fälligkeitsdatum der Rechnungen");
         allReports.add(revenuePerCustomer);
         
+        Report accountBookings=new Report();
+        accountBookings.setName("Aktenkonto - Buchungen");
+        accountBookings.setDescription("<html>Alle Buchungen in Aktenkonten in einem bestimmten Zeitraum</html>");
+        accountBookings.setClassName(DynamicReportContainerPanel.class.getName());
+        accountBookings.setCategory("Finanzen");
+        accountBookings.setSequence(15);
+        accountBookings.setReportId(Reports.RPT_ACCOUNTS_BOOKINGS);
+        accountBookings.setTypeChart(false);
+        accountBookings.setTypeTable(true);
+        accountBookings.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        accountBookings.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        accountBookings.setDefaultEndDate(toDate);
+        accountBookings.setDateSelectionLabel("Buchungsdatum");
+        allReports.add(accountBookings);
+        
         Report casesWithEscrow=new Report();
         casesWithEscrow.setName("Akten mit nicht ausgeglichenem Fremdgeld");
         casesWithEscrow.setDescription("<html>Akten eines bestimmten Zeitraumes mit  <b>nicht ausgeglichenem Fremdgeld</b></html>");
