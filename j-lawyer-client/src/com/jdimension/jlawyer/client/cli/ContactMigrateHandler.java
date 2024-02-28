@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.cli;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -713,6 +714,27 @@ public class ContactMigrateHandler extends CommandHandler {
                 return false;
             }
             
+            if(!persistExternalId(adrTo, adrFrom.getExternalId1())) {
+                outLineError("Adress " + params[0] + " has an external ID which could not be persisted - cancelling.", ta);
+                return false;
+            }
+            if(!persistExternalId(adrTo, adrFrom.getExternalId2())) {
+                outLineError("Adress " + params[0] + " has an external ID which could not be persisted - cancelling.", ta);
+                return false;
+            }
+            if(!persistExternalId(adrTo, adrFrom.getExternalId3())) {
+                outLineError("Adress " + params[0] + " has an external ID which could not be persisted - cancelling.", ta);
+                return false;
+            }
+            if(!persistExternalId(adrTo, adrFrom.getExternalId4())) {
+                outLineError("Adress " + params[0] + " has an external ID which could not be persisted - cancelling.", ta);
+                return false;
+            }
+            if(!persistExternalId(adrTo, adrFrom.getExternalId5())) {
+                outLineError("Adress " + params[0] + " has an external ID which could not be persisted - cancelling.", ta);
+                return false;
+            }
+            
             Collection<ArchiveFileAddressesBean> involvements=locator.lookupArchiveFileServiceRemote().getArchiveFileAddressesForAddress(adrFrom.getId());
             outLine("from-contact is involved in " + involvements.size() + " cases", ta);
             outLine(" ", ta);
@@ -727,13 +749,11 @@ public class ContactMigrateHandler extends CommandHandler {
                 newAab.setCustom3(aab.getCustom3());
                 newAab.setReference(aab.getReference());
                 newAab.setReferenceType(aab.getReferenceType());
-                locator.lookupArchiveFileServiceRemote().addAddressToCase(newAab);
-                outLine("to-contact added to case " + aab.getArchiveFileKey().getFileNumber(), ta);
-                locator.lookupArchiveFileServiceRemote().removeParty(aab.getId());
                 outLine("from-contact removed from case " + aab.getArchiveFileKey().getFileNumber(), ta);
                 outLine(" ", ta);
             }
             
+            locator.lookupAddressServiceRemote().updateAddress(adrTo);
             locator.lookupAddressServiceRemote().removeAddress(params[0]);
             outLine("contact " + params[0] + " has been deleted", ta);
             outLine(" ", ta);
@@ -744,6 +764,22 @@ public class ContactMigrateHandler extends CommandHandler {
             outLineError(ex.getMessage(), ta);
         }
 
+        return true;
+    }
+    
+    private boolean persistExternalId(AddressBean toAddress, String extId) {
+        if(!StringUtils.isEmpty(extId)) {
+            if(StringUtils.isEmpty(toAddress.getExternalId2()))
+                toAddress.setExternalId2(extId);
+            else if(StringUtils.isEmpty(toAddress.getExternalId3()))
+                toAddress.setExternalId3(extId);
+            else if(StringUtils.isEmpty(toAddress.getExternalId4()))
+                toAddress.setExternalId4(extId);
+            else if(StringUtils.isEmpty(toAddress.getExternalId5()))
+                toAddress.setExternalId5(extId);
+            else
+                return false;
+        }
         return true;
     }
 
