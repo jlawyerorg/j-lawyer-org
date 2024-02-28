@@ -805,7 +805,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=?\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=?\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
 
@@ -865,7 +865,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
                     + "left join cases cases on inv.case_id=cases.id\n"
-                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.created >=? and inv.created<=? and inv.due_date <= curdate()\n"
+                    + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=? and inv.due_date <= curdate()\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Fällige Rechnungen", query, params));
 
