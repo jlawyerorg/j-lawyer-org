@@ -1055,7 +1055,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtExpendituresInKeyReleased
 
     private void txtExpendituresOutKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtExpendituresOutKeyReleased
-        if(this.parentDialog!=null && this.parentDialog instanceof CaseAccountEntryDialog) {
+        if(this.parentDialog!=null && this.parentDialog instanceof CaseAccountEntryDialog && evt.getKeyCode()==KeyEvent.VK_ENTER) {
             ((CaseAccountEntryDialog)this.parentDialog).requestSaveFocus();
         }
     }//GEN-LAST:event_txtExpendituresOutKeyReleased
