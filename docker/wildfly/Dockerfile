@@ -54,6 +54,7 @@ ENV LC_ALL=en_US.UTF-8
 COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 
 COPY ./standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
+COPY ./standalone.conf /opt/jboss/wildfly/bin/standalone.conf
 COPY ./j-lawyer-server.ear /opt/jboss/wildfly/standalone/deployments/j-lawyer-server.ear
 COPY ./mysql/driver8/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/driver8/main/
 
