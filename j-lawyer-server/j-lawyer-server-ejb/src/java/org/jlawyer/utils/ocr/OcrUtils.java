@@ -737,14 +737,16 @@ public class OcrUtils {
 
     public static void updateOcrStatus(File f, int newStatus) throws Exception {
         Properties metaProperties = new Properties();
-        FileReader fr = new FileReader(f.getAbsolutePath() + ".metadata");
-        metaProperties.load(fr);
-        fr.close();
+        try (FileReader fr = new FileReader(f.getAbsolutePath() + ".metadata")) {
+            metaProperties.load(fr);
+            fr.close();    
+        }
         metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + newStatus);
-
-        FileWriter fw = new FileWriter(f.getAbsolutePath() + ".metadata");
-        metaProperties.store(fw, null);
-        fw.close();
+        
+        try (FileWriter fw = new FileWriter(f.getAbsolutePath() + ".metadata")) {
+            metaProperties.store(fw, null);
+            fw.close();
+        }
 
     }
 
