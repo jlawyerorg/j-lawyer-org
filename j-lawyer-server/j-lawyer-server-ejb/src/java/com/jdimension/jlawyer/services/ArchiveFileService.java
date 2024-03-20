@@ -819,6 +819,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
     private javax.jms.Queue searchIndexQueue;
+    
+    private long lastSearchIndexSkipCheck=-1;
+    private boolean skipSearchIndex=false;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
@@ -1798,12 +1801,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     private void publishSearchIndexRequest(SearchIndexRequest req) {
-        try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(searchIndexQueue, msg);
+        if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
+            // only re-check the flag every 5mins
+            if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
+                skipSearchIndex=false;
+                ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
+                if (s != null) {
+                    skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
+                }
+                lastSearchIndexSkipCheck=System.currentTimeMillis();
+            }
+        }
+        if (!skipSearchIndex) {
+            try {
+                ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+                jmsContext.createProducer().send(searchIndexQueue, msg);
 
-        } catch (Exception ex) {
-            log.error("could not publish search index request", ex);
+            } catch (Exception ex) {
+                log.error("could not publish search index request", ex);
+            }
         }
     }
 
@@ -6278,19 +6294,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             if (extensionList == null || "".equals(extensionList)) {
                 extensionList = "doc,docx,xls,xlsx,fodp,fodt,odp,ods,odt,ppt,pptx";
             }
-            extensionList=extensionList.toLowerCase();
+            extensionList = extensionList.toLowerCase();
 
             String[] lockExtensions = ServerStringUtils.toArray(extensionList, ",");
-            boolean doLock=false;
-            String docFileName=db.getName().toLowerCase();
-            for(String lockExt: lockExtensions) {
-                if(docFileName.endsWith("."+lockExt)) {
-                    doLock=true;
+            boolean doLock = false;
+            String docFileName = db.getName().toLowerCase();
+            for (String lockExt : lockExtensions) {
+                if (docFileName.endsWith("." + lockExt)) {
+                    doLock = true;
                     break;
                 }
             }
-            
-            if(doLock) {
+
+            if (doLock) {
                 db.setLockedDate(new Date());
                 db.setLockedBy(context.getCallerPrincipal().getName());
                 this.archiveFileDocumentsFacade.edit(db);
@@ -6300,7 +6316,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             db.setLockedBy(null);
             this.archiveFileDocumentsFacade.edit(db);
         }
-        
 
     }
 
@@ -6310,15 +6325,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
         return db.isLocked();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public int unlockDocuments() throws Exception {
-        List<ArchiveFileDocumentsBean> lockedDocs=this.archiveFileDocumentsFacade.findLocked();
-        int numberOfLocked=0;
-        if(lockedDocs!=null) {
-            numberOfLocked=lockedDocs.size();
-            for(ArchiveFileDocumentsBean doc: lockedDocs) {
+        List<ArchiveFileDocumentsBean> lockedDocs = this.archiveFileDocumentsFacade.findLocked();
+        int numberOfLocked = 0;
+        if (lockedDocs != null) {
+            numberOfLocked = lockedDocs.size();
+            for (ArchiveFileDocumentsBean doc : lockedDocs) {
                 log.info("unlocking document " + doc.getId());
                 this.setDocumentLock(doc.getId(), false, true);
             }
