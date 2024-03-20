@@ -739,13 +739,11 @@ public class OcrUtils {
         Properties metaProperties = new Properties();
         try (FileReader fr = new FileReader(f.getAbsolutePath() + ".metadata")) {
             metaProperties.load(fr);
-            fr.close();    
         }
         metaProperties.put(METAPROPERTIES_KEY_OCRSTATUS, "" + newStatus);
         
         try (FileWriter fw = new FileWriter(f.getAbsolutePath() + ".metadata")) {
             metaProperties.store(fw, null);
-            fw.close();
         }
 
     }

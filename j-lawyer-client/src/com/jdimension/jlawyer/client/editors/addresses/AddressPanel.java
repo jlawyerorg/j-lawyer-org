@@ -3091,18 +3091,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection col = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
-//                Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType = new Hashtable<>();
                 Hashtable<String, PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypesTable();
-//                for (Object o : col) {
-//                    ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-//                    if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
-//                        ArrayList<ArchiveFileAddressesBean> cases = new ArrayList<>();
-//                        casesByPartyType.put(afb.getReferenceType().getName(), cases);
-//                    }
-//                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb);
-//
-//                }
-//                this.fillCasesForContactPanel(casesByPartyType, partyTypes);
                 this.fillCasesForContactPanel(col, partyTypes);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);
