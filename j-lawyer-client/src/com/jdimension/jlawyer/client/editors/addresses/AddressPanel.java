@@ -721,6 +721,8 @@ import java.time.Period;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -995,7 +997,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtStreet.setText(dto.getStreet());
         this.txtWebsite.setText(dto.getWebsite());
         this.txtZipCode.setText(dto.getZipCode());
-        //this.lblArchiveFilesForAddress.setText("");
         this.pnlCasesForContact.removeAll();
 
         this.txtCustom1.setText(dto.getCustom1());
@@ -1091,7 +1092,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         }
 
-        this.jTabbedPane1StateChanged(null);
+        this.jTabbedPane1.setSelectedIndex(0);
 
         List<Invoice> invoices = new ArrayList<>();
         try {
@@ -3090,18 +3091,19 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection col = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
-                Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType = new Hashtable<>();
+//                Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType = new Hashtable<>();
                 Hashtable<String, PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypesTable();
-                for (Object o : col) {
-                    ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                    if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
-                        ArrayList<ArchiveFileAddressesBean> cases = new ArrayList<>();
-                        casesByPartyType.put(afb.getReferenceType().getName(), cases);
-                    }
-                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb);
-
-                }
-                this.fillCasesForContactPanel(casesByPartyType, partyTypes);
+//                for (Object o : col) {
+//                    ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
+//                    if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
+//                        ArrayList<ArchiveFileAddressesBean> cases = new ArrayList<>();
+//                        casesByPartyType.put(afb.getReferenceType().getName(), cases);
+//                    }
+//                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb);
+//
+//                }
+//                this.fillCasesForContactPanel(casesByPartyType, partyTypes);
+                this.fillCasesForContactPanel(col, partyTypes);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akten zur Adresse: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -3559,30 +3561,38 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
-    private void fillCasesForContactPanel(Hashtable<String, ArrayList<ArchiveFileAddressesBean>> casesByPartyType, Hashtable<String, PartyTypeBean> partyTypes) {
+    private void fillCasesForContactPanel(Collection<ArchiveFileAddressesBean> allCases, Hashtable<String, PartyTypeBean> partyTypes) {
         this.pnlCasesForContact.removeAll();
+        
+        List<ArchiveFileAddressesBean> allCasesList=new ArrayList<>(allCases);
+        Collections.sort(allCasesList, (ArchiveFileAddressesBean o1, ArchiveFileAddressesBean o2) -> {
+            ArchiveFileBean c1=o1.getArchiveFileKey();
+            ArchiveFileBean c2=o2.getArchiveFileKey();
+            if(c1!=null && c2!=null) {
+                Date d1=c1.getDateCreated();
+                Date d2=c2.getDateCreated();
+                if(d1!=null && d2!=null) {
+                    return d2.compareTo(d1);
+                }
+            }
+            return 1;
+        });
 
-        int totalSize = 0;
-        for (ArrayList<ArchiveFileAddressesBean> list : casesByPartyType.values()) {
-            totalSize = totalSize + list.size();
-        }
-
-        GridLayout layout = new GridLayout(totalSize, 1);
+        GridLayout layout = new GridLayout(allCases.size(), 1);
         this.pnlCasesForContact.setLayout(layout);
         int i = 0;
-        for (String key : casesByPartyType.keySet()) {
+        for (ArchiveFileAddressesBean aFile: allCasesList) {
 
-            ArrayList<ArchiveFileAddressesBean> partyFiles = casesByPartyType.get(key);
-            for (ArchiveFileAddressesBean aFile : partyFiles) {
+            
                 CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
                 if (i % 2 == 0) {
                     ep.setBackground(ep.getBackground().brighter());
                 }
                 CaseForContactEntry lce = new CaseForContactEntry();
-                lce.setRoleForeground(new Color(partyTypes.get(key).getColor()));
+                lce.setRoleForeground(new Color(partyTypes.get(aFile.getReferenceType().getName()).getColor()));
                 lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());
                 lce.setId(aFile.getArchiveFileKey().getId());
-                lce.setRole(key);
+                lce.setRole(aFile.getReferenceType().getName());
                 lce.setName(aFile.getArchiveFileKey().getName());
                 lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
                 lce.setArchived(aFile.getArchiveFileKey().isArchived());
@@ -3597,7 +3607,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
                 this.pnlCasesForContact.add(ep);
                 i++;
-            }
+            
         }
 
         layout.setRows(i);

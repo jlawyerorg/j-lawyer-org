@@ -746,15 +746,19 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
         this.lblTotal.setText("");
         DecimalFormat df=new DecimalFormat("0.00");
         if(invoices!=null) {
-            float total=invoices.get(Invoice.STATUS_NEW) + invoices.get(Invoice.STATUS_OPEN) + invoices.get(Invoice.STATUS_PAID) - invoices.get(Invoice.STATUS_CANCELLED);
+            float total=invoices.get(Invoice.STATUS_NEW) + invoices.get(Invoice.STATUS_OPEN) + invoices.get(Invoice.STATUS_OPEN_REMINDER1) + invoices.get(Invoice.STATUS_OPEN_REMINDER2) + invoices.get(Invoice.STATUS_OPEN_REMINDER3) + invoices.get(Invoice.STATUS_OPEN_NONENFORCEABLE) - invoices.get(Invoice.STATUS_PAID) - invoices.get(Invoice.STATUS_CANCELLED);
             StringBuilder sb=new StringBuilder();
             sb.append("<html><b>Umsatzrelevante Werte gesamt: ").append(df.format(total)).append("</b><br/>");
             sb.append("<table><tr><td>neu:</td><td>").append(df.format(invoices.get(Invoice.STATUS_NEW))).append("</td></tr>");
             sb.append("<tr><td>offen:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN))).append("</td></tr>");
+            sb.append("<tr><td>offen - 1. Mahnstufe:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN_REMINDER1))).append("</td></tr>");
+            sb.append("<tr><td>offen - 2. Mahnstufe:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN_REMINDER2))).append("</td></tr>");
+            sb.append("<tr><td>offen - 3. Mahnstufe:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN_REMINDER3))).append("</td></tr>");
+            sb.append("<tr><td>offen - nicht vollstreckbar:</td><td>").append(df.format(invoices.get(Invoice.STATUS_OPEN_NONENFORCEABLE))).append("</td></tr>");
             sb.append("<tr><td>bezahlt:</td><td>").append(df.format(invoices.get(Invoice.STATUS_PAID))).append("</td></tr>");
             sb.append("<tr><td>storniert:</td><td>").append(df.format(invoices.get(Invoice.STATUS_CANCELLED))).append("</td></tr></table></html>");
             this.lblTotal.setText(df.format(total));
-            if(invoices.get(Invoice.STATUS_OPEN)>0)
+            if(total>0)
                 this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
             else
                 this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
