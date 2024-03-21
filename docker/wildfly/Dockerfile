@@ -22,28 +22,24 @@ RUN yum -y install mysql
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
 
-RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
-RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
-RUN yum update
-RUN yum install tesseract 
-RUN yum install tesseract-langpack-deu
-
-RUN yum -y install ghostscript \
-      icc-profiles-free \
-      libxml2 \
-      pngquant \
-      python3-pip \
-      liblept5 \
-      libsm6 libxext6 libxrender-dev \
-      zlib1g \
-      pngquant \
-      python3 \
-      qpdf \
-      unpaper
-
-# ugly as hell
-# ADD sleep.sh /tmp/sleep.sh
-# RUN chmod +x /tmp/sleep.sh
+#RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
+#RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
+#RUN yum update
+#RUN yum install tesseract 
+#RUN yum install tesseract-langpack-deu
+#
+#RUN yum -y install ghostscript \
+#      icc-profiles-free \
+#      libxml2 \
+#      pngquant \
+#      python3-pip \
+#      liblept5 \
+#      libsm6 libxext6 libxrender-dev \
+#      zlib1g \
+#      pngquant \
+#      python3 \
+#      qpdf \
+#      unpaper
 
 # Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
 # Make sure the distribution is available from a well-known place
