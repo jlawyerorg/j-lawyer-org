@@ -958,7 +958,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setCaseId(archiveFileKey);
             
             caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
-            caseFolders.sortByDateDesc();
             caseFolders.sort();
 
             List<DocumentFolderTemplate> allTemplates = fileService.getAllFolderTemplates();

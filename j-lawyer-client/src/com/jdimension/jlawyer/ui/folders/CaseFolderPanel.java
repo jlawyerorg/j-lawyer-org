@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -701,6 +702,21 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer {
+    
+    private static final String LASTSORT_CREATIONDATE_ASC="creationdate.asc";
+    private static final String LASTSORT_CREATIONDATE_DESC="creationdate.desc";
+    private static final String LASTSORT_CHANGEDATE_ASC="changedate.asc";
+    private static final String LASTSORT_CHANGEDATE_DESC="changedate.desc";
+    private static final String LASTSORT_SIZE_ASC="size.asc";
+    private static final String LASTSORT_SIZE_DESC="size.desc";
+    private static final String LASTSORT_NAME_ASC="name.asc";
+    private static final String LASTSORT_NAME_DESC="name.desc";
+    private static final String LASTSORT_FAVORITE_ASC="fav.asc";
+    private static final String LASTSORT_FAVORITE_DESC="fav.desc";
+    private static final String LASTSORT_FILETYPE_ASC="type.asc";
+    private static final String LASTSORT_FILETYPE_DESC="type.desc";
+    private static final String LASTSORT_FOLDER_ASC="folder.asc";
+    private static final String LASTSORT_FOLDER_DESC="folder.desc";
 
     private boolean readonly = false;
     private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
@@ -719,7 +735,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.readonly = readonly;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
-        this.sortByDateDesc();
+        this.restoreSortState();
 
         this.cmdSelectAll.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
@@ -759,7 +775,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.readonly = false;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
-        this.sortByDateDesc();
+        this.restoreSortState();
 
         this.cmdSelectAll.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
@@ -988,14 +1004,77 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
             return -1;
         });
+        
         this.setDocuments(documents, linkedInvoices);
     }
-
-    public final void sortByDateDesc() {
-        this.sortChangeDate.setSortState(SortButton.SORT_DESC);
-
+    
+    private void saveSortState() {
+        if (sortChangeDate.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CHANGEDATE_ASC);
+        } else if (sortChangeDate.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CHANGEDATE_DESC);
+        } else if (sortCreationDate.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_ASC);
+        } else if (sortCreationDate.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
+        } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_SIZE_ASC);
+        } else if (sortSize.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_SIZE_DESC);
+        } else if (sortName.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_NAME_ASC);
+        } else if (sortName.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_NAME_DESC);
+        } else if (sortFavorite.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FAVORITE_ASC);
+        } else if (sortFavorite.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FAVORITE_DESC);
+        } else if (sortFolder.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FOLDER_ASC);
+        } else if (sortFolder.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FOLDER_DESC);
+        } else if (sortFileType.getSortState() == SortButton.SORT_ASC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FILETYPE_ASC);
+        } else if (sortFileType.getSortState() == SortButton.SORT_DESC) {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FILETYPE_DESC);
+        }
     }
-
+    
+    private void restoreSortState() {
+        String lastSort=UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
+        if (LASTSORT_CHANGEDATE_ASC.equals(lastSort)) {
+            sortChangeDate.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_CHANGEDATE_DESC.equals(lastSort)) {
+            sortChangeDate.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_CREATIONDATE_ASC.equals(lastSort)) {
+            sortCreationDate.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_CREATIONDATE_DESC.equals(lastSort)) {
+            sortCreationDate.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_SIZE_ASC.equals(lastSort)) {
+            sortSize.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_SIZE_DESC.equals(lastSort)) {
+            sortSize.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_NAME_ASC.equals(lastSort)) {
+            sortName.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_NAME_DESC.equals(lastSort)) {
+            sortName.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_FAVORITE_ASC.equals(lastSort)) {
+            sortFavorite.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_FAVORITE_DESC.equals(lastSort)) {
+            sortFavorite.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_FOLDER_ASC.equals(lastSort)) {
+            sortFolder.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_FOLDER_DESC.equals(lastSort)) {
+            sortFolder.setSortState(SortButton.SORT_DESC);
+        } else if (LASTSORT_FILETYPE_ASC.equals(lastSort)) {
+            sortFileType.setSortState(SortButton.SORT_ASC);
+        } else if (LASTSORT_FILETYPE_DESC.equals(lastSort)) {
+            sortFileType.setSortState(SortButton.SORT_DESC);
+        } else {
+            sortCreationDate.setSortState(SortButton.SORT_DESC);
+        }
+    }
+    
     public void setCaseContainer(ArchiveFilePanel p) {
         this.caseContainer = p;
     }
@@ -1353,6 +1432,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortChangeDateMouseClicked
 
@@ -1369,6 +1449,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortNameMouseClicked
 
@@ -1385,6 +1466,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortFavoriteMouseClicked
 
@@ -1401,6 +1483,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortSizeMouseClicked
 
@@ -1417,6 +1500,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortFolderMouseClicked
 
@@ -1471,6 +1555,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFileType.setSortState(SortButton.SORT_DESC);
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortFileTypeMouseClicked
 
@@ -1489,6 +1574,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         }
 
+        this.saveSortState();
         this.sort();
     }//GEN-LAST:event_sortCreationDateMouseClicked
 

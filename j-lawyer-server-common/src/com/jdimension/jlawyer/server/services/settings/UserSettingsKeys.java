@@ -718,6 +718,8 @@ public class UserSettingsKeys {
     public static final String CONF_DREBIS_LASTUSEDTEMPLATE = "user.drebis.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDMAILBOX = "user.bea.lastusedmailbox";
+    
+    public static final String CONF_DOCUMENTS_LASTSORTMODE="client.documents.lastsortmode";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
 
@@ -747,5 +749,7 @@ public class UserSettingsKeys {
     
     public static final String NOTIFICATION_SCHEDULED_DAILY_AGENDA="notify.sched.daily.agenda";
     public static final String NOTIFICATION_SCHEDULED_WEEKLY_DIGEST="notify.sched.weekly.digest";
+    
+    
     
 }
