@@ -920,13 +920,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             
             this.progress("Lade Akte: Beteiligte...");
 
-            long start1=System.currentTimeMillis();
             addressesForCase = fileService.getAddressesForCase(archiveFileKey);
-            long start2=System.currentTimeMillis();
             involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey, false);
-            long start3=System.currentTimeMillis();
-            System.out.println("XXX addresses: " + (start2-start1));
-            System.out.println("XXX involved: " + (start3-start2));
             
             this.progress("Lade Akte: Kalender...");
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
