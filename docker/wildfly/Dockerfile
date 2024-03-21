@@ -21,6 +21,13 @@ RUN yum -y install mysql
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
+
+RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
+RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
+RUN yum update
+RUN yum install tesseract 
+RUN yum install tesseract-langpack-deu
+
 RUN yum -y install ghostscript \
       icc-profiles-free \
       libxml2 \
@@ -32,14 +39,7 @@ RUN yum -y install ghostscript \
       pngquant \
       python3 \
       qpdf \
-      unpaper \
-      tesseract-ocr \
-      tesseract-ocr-deu \
-      tesseract-ocr-eng \
-      tesseract-ocr-fra \
-      tesseract-ocr-por \
-      tesseract-ocr-spa \
-      inotify-tools
+      unpaper
 
 # ugly as hell
 # ADD sleep.sh /tmp/sleep.sh
