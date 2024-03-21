@@ -21,6 +21,26 @@ RUN yum -y install mysql
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
+RUN yum -y install ghostscript \
+      icc-profiles-free \
+      libxml2 \
+      pngquant \
+      python3-pip \
+      liblept5 \
+      libsm6 libxext6 libxrender-dev \
+      zlib1g \
+      pngquant \
+      python3 \
+      qpdf \
+      unpaper \
+      tesseract-ocr \
+      tesseract-ocr-deu \
+      tesseract-ocr-eng \
+      tesseract-ocr-fra \
+      tesseract-ocr-por \
+      tesseract-ocr-spa \
+      inotify-tools
+
 # ugly as hell
 # ADD sleep.sh /tmp/sleep.sh
 # RUN chmod +x /tmp/sleep.sh
