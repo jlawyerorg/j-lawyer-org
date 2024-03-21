@@ -722,6 +722,7 @@ public interface ArchiveFileServiceLocal {
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
     
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
 

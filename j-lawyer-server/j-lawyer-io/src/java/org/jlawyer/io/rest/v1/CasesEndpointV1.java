@@ -1145,7 +1145,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
 
-            Collection<ArchiveFileAddressesBean> involvements = cases.getInvolvementDetailsForCase(id);
+            Collection<ArchiveFileAddressesBean> involvements = cases.getInvolvementDetailsForCase(id, false);
             ArrayList<RestfulPartyV1> invList = new ArrayList<>();
             for (ArchiveFileAddressesBean inv : involvements) {
                 RestfulPartyV1 i = new RestfulPartyV1();

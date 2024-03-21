@@ -776,6 +776,20 @@ public class ArchiveFileAddressesBean implements Serializable {
         }
         return true;
     }
+    
+    public ArchiveFileAddressesBean cloneWithoutCase() {
+        ArchiveFileAddressesBean clone=new ArchiveFileAddressesBean();
+        clone.setAddressKey(getAddressKey());
+        clone.setArchiveFileKey(null);
+        clone.setContact(getContact());
+        clone.setCustom1(getCustom1());
+        clone.setCustom2(getCustom2());
+        clone.setCustom3(getCustom3());
+        clone.setId(getId());
+        clone.setReference(getReference());
+        clone.setReferenceType(getReferenceType());
+        return clone;
+    }
 
     @Override
     public String toString() {

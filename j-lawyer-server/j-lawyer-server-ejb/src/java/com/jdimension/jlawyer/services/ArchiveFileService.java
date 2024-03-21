@@ -3580,11 +3580,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return sortString;
     }
 
-    private List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseImpl(String archiveFileKey) {
+    private List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseImpl(String archiveFileKey, boolean includeCases) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
-        List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
+        List<ArchiveFileAddressesBean> resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (resultList != null) {
-            if (resultList.size() > 0) {
+            if (!resultList.isEmpty()) {
                 try {
                     Collections.sort(resultList, (Object o1, Object o2) -> {
                         if (o1 != null && o2 != null) {
@@ -3601,18 +3601,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        return resultList;
+        
+        if(!includeCases) {
+            // can be a porentially large graph because all the cases are contained as well
+            // exclude cases upon a clients request
+            List<ArchiveFileAddressesBean> shallowList=new ArrayList<>();
+            for(ArchiveFileAddressesBean aab: resultList) {
+                shallowList.add(aab.cloneWithoutCase());
+            }
+            return shallowList;
+        } else {
+            return resultList;
+        }
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
-        return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey, true);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases) {
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey, includeCases);
     }
 
     @Override
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey) {
-        return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey, true);
     }
 
     @Override

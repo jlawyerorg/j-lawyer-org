@@ -957,7 +957,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                List<ArchiveFileAddressesBean> list = afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
+                List<ArchiveFileAddressesBean> list = afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId(), false);
                 for (ArchiveFileAddressesBean aab : list) {
                     dlg.addParty(aab);
                 }

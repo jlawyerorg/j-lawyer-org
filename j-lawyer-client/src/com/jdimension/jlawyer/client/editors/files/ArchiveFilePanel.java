@@ -4387,7 +4387,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
+                involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
             } catch (Throwable t) {
                 log.error("Error loading parties", t);
             }
@@ -4425,7 +4425,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
+                involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
 
             } catch (Throwable t) {
                 log.error("Error loading parties", t);
@@ -7397,7 +7397,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
+            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
 
             if (!containsSameInvolvements(involved, this.pnlInvolvedParties.getInvolvedParties())) {
                 return true;
