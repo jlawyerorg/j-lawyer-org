@@ -839,6 +839,12 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesSince(Date since) throws Exception {
+        return getMessagesSince(since, 500);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception {
         // only query the database if mentions are requested 
         if(this.singleton.getLatestInstantMessageReceived()<0) {
             // after server startup
@@ -849,7 +855,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
                 this.singleton.setLatestInstantMessageReceived(since.getTime());
             }
             
-            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName());
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
         } else if(since.getTime()<this.singleton.getLatestInstantMessageReceived()) {
             // new message have been received
             List<InstantMessage> messages=this.messageFacade.findSince(since);
@@ -858,19 +864,21 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             } else {
                 this.singleton.setLatestInstantMessageReceived(since.getTime());
             }
-            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName());
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
         } else {
             return null;
         }
     }
     
-    private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId) {
+    private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId, int maxNumberOfMessages) {
         ArrayList<InstantMessage> filtered=new ArrayList<>();
         for(InstantMessage m: unfiltered) {
             if(messageRelevantForUser(m, principalId))
                 filtered.add(m);
         }
-        return filtered;
+        
+        int size = filtered.size();
+        return new ArrayList<> (filtered.subList(Math.max(0, size - maxNumberOfMessages), size));
     }
     
     private boolean messageRelevantForUser(InstantMessage m, String principalId) {

@@ -681,6 +681,8 @@ public interface MessagingServiceRemote {
     boolean deleteMessage(String messageId) throws Exception;
 
     List<InstantMessage> getMessagesSince(Date since) throws Exception;
+    
+    List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception;
 
     List<InstantMessage> getMessagesForCase(String caseId) throws Exception;
 
