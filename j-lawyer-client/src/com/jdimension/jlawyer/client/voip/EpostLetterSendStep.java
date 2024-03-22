@@ -1060,7 +1060,9 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
                 this.txtAdressLine1.setText(name);
                 this.txtAdressLine2.setText(rec.getAdjunct());
                 this.txtAdressLine3.setText(rec.getStreet() + " " + rec.getStreetNumber());
+                this.txtAdressLine4.setText("");
             }
+            this.txtAdressLine5.setText("");
             this.txtCity.setText(rec.getCity());
             this.txtZipCode.setText(rec.getZipCode());
             this.txtCountry.setText(rec.getCountry());
