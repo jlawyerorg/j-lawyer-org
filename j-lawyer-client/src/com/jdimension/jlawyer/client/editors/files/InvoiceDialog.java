@@ -2432,9 +2432,21 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void cmdGiroCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGiroCodeActionPerformed
         try {
-            GirocodeDialog gcd = new GirocodeDialog(this, true, cf.parse(this.lblInvoiceTotal.getText()).floatValue(), this.lblInvoiceNumber.getText());
-            FrameUtils.centerDialog(gcd, this);
-            gcd.setVisible(true);
+            float amount=0f;
+            boolean validAmount=false;
+            try {
+                amount=cf.parse(this.lblInvoiceTotal.getText()).floatValue();
+                validAmount=true;
+            } catch (Throwable t) {
+                log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);
+            }
+            if(validAmount) {
+                GirocodeDialog gcd = new GirocodeDialog(this, true, amount, this.lblInvoiceNumber.getText());
+                FrameUtils.centerDialog(gcd, this);
+                gcd.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Der Rechnungsbetrag ist ungültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            }
         } catch (Exception ex) {
             log.error("error loading invoice document", ex);
             JOptionPane.showMessageDialog(this, "Girocode kann nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
