@@ -2149,27 +2149,33 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         } else {
             ct.setRowBold(footerRowIndex, false);
         }
-        ct.getCellAt(footerRowIndex, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
+        ct.getCellAt(footerRowIndex, 5).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
             if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(true);
+                ct.getCellAt(ct.getRowCount() - 3, 5).setUnderline(true);
             } else {
-                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(true);
+                ct.getCellAt(ct.getRowCount() - 2, 5).setUnderline(true);
             }
         } else {
             if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(false);
+                ct.getCellAt(ct.getRowCount() - 3, 5).setUnderline(false);
             } else {
-                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(false);
+                ct.getCellAt(ct.getRowCount() - 2, 5).setUnderline(false);
             }
         }
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Italic", true)) {
             ct.getCellAt(footerRowIndex, 1).setItalic(true);
             ct.getCellAt(footerRowIndex, 2).setItalic(true);
+            ct.getCellAt(footerRowIndex, 3).setItalic(true);
+            ct.getCellAt(footerRowIndex,4).setItalic(true);
+            ct.getCellAt(footerRowIndex, 5).setItalic(true);
         } else {
             ct.getCellAt(footerRowIndex, 1).setItalic(false);
             ct.getCellAt(footerRowIndex, 2).setItalic(false);
+            ct.getCellAt(footerRowIndex, 3).setItalic(false);
+            ct.getCellAt(footerRowIndex, 4).setItalic(false);
+            ct.getCellAt(footerRowIndex, 5).setItalic(false);
         }
         ct.setRowForeGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
         ct.setRowBackGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
