@@ -777,6 +777,7 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
     public void display() {
 
         this.pdfFiles.clear();
+        this.pnlConversionList.removeAll();
 
         if (this.wizard != null) {
             this.wizard.enableButtons(false, false, true, false);
