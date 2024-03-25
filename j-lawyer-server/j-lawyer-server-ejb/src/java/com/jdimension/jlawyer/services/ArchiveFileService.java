@@ -1769,26 +1769,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
 
-        String preview = "";
-        try {
-            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
-            preview = pg.createPreview(archiveFileId, docId, fileName);
-        } catch (Throwable t) {
-            log.error("Error creating document preview", t);
-        }
+        if(!this.skipSearchIndex()) {
+            String preview = "";
+            try {
+                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
+                preview = pg.createPreview(archiveFileId, docId, fileName);
+            } catch (Throwable t) {
+                log.error("Error creating document preview", t);
+            }
 
-        try {
-            SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_ADD);
-            req.setArchiveFileId(archiveFileId);
-            req.setArchiveFileName(aFile.getName());
-            req.setArchiveFileNumber(aFile.getFileNumber());
-            req.setFileName(fileName);
-            req.setId(docId);
-            req.setText(preview);
+            try {
+                SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_ADD);
+                req.setArchiveFileId(archiveFileId);
+                req.setArchiveFileName(aFile.getName());
+                req.setArchiveFileNumber(aFile.getFileNumber());
+                req.setFileName(fileName);
+                req.setId(docId);
+                req.setText(preview);
 
-            this.publishSearchIndexRequest(req);
-        } catch (Throwable t) {
-            log.error("Error publishing search index request ADD", t);
+                this.publishSearchIndexRequest(req);
+            } catch (Throwable t) {
+                log.error("Error publishing search index request ADD", t);
+            }
         }
 
         DocumentCreatedEvent evt = new DocumentCreatedEvent();
@@ -1799,20 +1801,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return this.archiveFileDocumentsFacade.find(docId);
     }
+    
+    private boolean skipSearchIndex() {
+        if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
+            skipSearchIndex = false;
+            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
+            if (s != null) {
+                skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
+            }
+            lastSearchIndexSkipCheck = System.currentTimeMillis();
+        }
+        return skipSearchIndex;
+    }
 
     private void publishSearchIndexRequest(SearchIndexRequest req) {
-        if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
-            // only re-check the flag every 5mins
-            if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
-                skipSearchIndex=false;
-                ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
-                if (s != null) {
-                    skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
-                }
-                lastSearchIndexSkipCheck=System.currentTimeMillis();
-            }
-        }
-        if (!skipSearchIndex) {
+        if (!this.skipSearchIndex()) {
             try {
                 ObjectMessage msg = this.jmsContext.createObjectMessage(req);
                 jmsContext.createProducer().send(searchIndexQueue, msg);
