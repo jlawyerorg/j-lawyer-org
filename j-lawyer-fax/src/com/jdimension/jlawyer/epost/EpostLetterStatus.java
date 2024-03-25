@@ -685,6 +685,7 @@ public class EpostLetterStatus {
     protected int noOfPages = 0;
     protected String registeredLetterStatus = null;
     protected Date registeredLetterStatusDate = null;
+    protected String registeredLetterId = null;
     protected String destinationAreaStatus = null;
     protected Date destinationAreaStatusDate = null;
     
@@ -892,6 +893,20 @@ public class EpostLetterStatus {
      */
     public void setErrorList(ArrayList<EpostLetterStatusError> errorList) {
         this.errorList = errorList;
+    }
+
+    /**
+     * @return the registeredLetterId
+     */
+    public String getRegisteredLetterId() {
+        return registeredLetterId;
+    }
+
+    /**
+     * @param registeredLetterId the registeredLetterId to set
+     */
+    public void setRegisteredLetterId(String registeredLetterId) {
+        this.registeredLetterId = registeredLetterId;
     }
 
 }

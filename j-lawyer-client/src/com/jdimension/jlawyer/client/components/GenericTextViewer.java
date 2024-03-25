@@ -661,21 +661,22 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.bea;
+package com.jdimension.jlawyer.client.components;
 
 /**
  *
  * @author jens
  */
-public class OsciMessageViewer extends javax.swing.JDialog {
+public class GenericTextViewer extends javax.swing.JDialog {
 
     /**
      * Creates new form OsciMessageViewer
      */
-    public OsciMessageViewer(java.awt.Frame parent, boolean modal, String messageId, String content) {
+    public GenericTextViewer(java.awt.Frame parent, boolean modal, String caption, String message, String content) {
         super(parent, modal);
         initComponents();
-        this.lblMessageId.setText(messageId);
+        this.lblCaption.setText(caption);
+        this.lblMessage.setText(message);
         this.taContent.setText(content);
     }
 
@@ -690,8 +691,8 @@ public class OsciMessageViewer extends javax.swing.JDialog {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         taContent = new javax.swing.JTextArea();
-        jLabel1 = new javax.swing.JLabel();
-        lblMessageId = new javax.swing.JLabel();
+        lblCaption = new javax.swing.JLabel();
+        lblMessage = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("OSCI-Nachrichtenansicht");
@@ -700,9 +701,9 @@ public class OsciMessageViewer extends javax.swing.JDialog {
         taContent.setRows(5);
         jScrollPane1.setViewportView(taContent);
 
-        jLabel1.setText("Nachrichten-ID:");
+        lblCaption.setText("Nachrichten-ID:");
 
-        lblMessageId.setText("-");
+        lblMessage.setText("-");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -713,9 +714,9 @@ public class OsciMessageViewer extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 731, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(lblCaption)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblMessageId, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(lblMessage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -723,8 +724,8 @@ public class OsciMessageViewer extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(lblMessageId))
+                    .addComponent(lblCaption)
+                    .addComponent(lblMessage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 473, Short.MAX_VALUE)
                 .addContainerGap())
@@ -750,20 +751,21 @@ public class OsciMessageViewer extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(OsciMessageViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GenericTextViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(OsciMessageViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GenericTextViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(OsciMessageViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GenericTextViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(OsciMessageViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GenericTextViewer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                OsciMessageViewer dialog = new OsciMessageViewer(new javax.swing.JFrame(), true, null, null);
+                GenericTextViewer dialog = new GenericTextViewer(new javax.swing.JFrame(), true, null, null, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -776,9 +778,9 @@ public class OsciMessageViewer extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblMessageId;
+    private javax.swing.JLabel lblCaption;
+    private javax.swing.JLabel lblMessage;
     private javax.swing.JTextArea taContent;
     // End of variables declaration//GEN-END:variables
 }

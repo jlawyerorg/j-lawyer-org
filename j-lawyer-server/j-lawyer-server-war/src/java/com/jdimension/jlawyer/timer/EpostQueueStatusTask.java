@@ -752,6 +752,7 @@ public class EpostQueueStatusTask extends java.util.TimerTask {
                     eqb.setProcessedDate(newStatus.getProcessedDate());
                     eqb.setRegisteredLetterStatus(newStatus.getRegisteredLetterStatus());
                     eqb.setRegisteredLetterStatusDate(newStatus.getRegisteredLetterStatusDate());
+                    eqb.setRegisteredLetterId(newStatus.getRegisteredLetterId());
                     epostQ.edit(eqb);
 
                     if (EpostUtils.isFailStatus(newStatus.getStatusId())) {

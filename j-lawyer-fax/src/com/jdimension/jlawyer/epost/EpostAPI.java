@@ -1009,6 +1009,7 @@ public class EpostAPI {
                     s.setProcessedDate(parseDate(result.getString(Jsoner.mintJsonKey("processedDate", null))));
                 }
                 s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
+                s.setRegisteredLetterId(result.getString(Jsoner.mintJsonKey("registeredLetterID", null)));
                 if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
                     s.setRegisteredLetterStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
                 }
@@ -1114,6 +1115,7 @@ public class EpostAPI {
                         s.setProcessedDate(parseDate(result.getString(Jsoner.mintJsonKey("processedDate", null))));
                     }
                     s.setRegisteredLetterStatus(result.getString(Jsoner.mintJsonKey("registeredLetterStatus", null)));
+                    s.setRegisteredLetterId(result.getString(Jsoner.mintJsonKey("registeredLetterID", null)));
                     if (result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null)) != null) {
                         s.setRegisteredLetterStatusDate(parseDate(result.getString(Jsoner.mintJsonKey("registeredLetterStatusDate", null))));
                     }

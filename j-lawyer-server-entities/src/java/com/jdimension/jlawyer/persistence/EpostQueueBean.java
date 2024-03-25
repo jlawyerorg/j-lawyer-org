@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -711,6 +712,8 @@ public class EpostQueueBean implements Serializable {
     @Column(name = "reg_letter_status_date")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date registeredLetterStatusDate;
+    @Column(name = "reg_letter_id")
+    protected String registeredLetterId;
     @Column(name = "dest_area_status")
     protected String destinationAreaStatus;
     @Column(name = "dest_area_status_date")
@@ -1015,6 +1018,8 @@ public class EpostQueueBean implements Serializable {
         SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
         StringBuilder sb=new StringBuilder();
         sb.append("Dateiname: ").append(this.getFileName()).append("\r\n");
+        if(this.getLastStatusDetails()!=null)
+            sb.append("letzter Status: ").append(this.getLastStatusDetails()).append("\r\n");
         sb.append("Anzahl Seiten: ").append(this.getNoOfPages()).append("\r\n");
         sb.append("Sendungsnummer: ").append(this.getLetterId()).append("\r\n");
         if(this.getLetterType()!=null)
@@ -1025,8 +1030,6 @@ public class EpostQueueBean implements Serializable {
         if(this.getArchiveFileKey()!=null) {
             sb.append("Akte: ").append(this.getArchiveFileKey().getFileNumber()).append("\r\n");
         }
-        if(this.getLastStatusDetails()!=null)
-            sb.append("letzter Status: ").append(this.getLastStatusDetails()).append("\r\n");
         if(this.getCreatedDate()!=null)
             sb.append("erstellt: ").append(df.format(this.getCreatedDate())).append("\r\n");
         if(this.getProcessedDate()!=null)
@@ -1036,9 +1039,31 @@ public class EpostQueueBean implements Serializable {
         if(this.getPrintFeedbackDate()!=null)
             sb.append("Verarbeitungs-Rückmeldung des Druckzentrums: ").append(df.format(this.getPrintFeedbackDate())).append("\r\n");
         
+        if(!ServerStringUtils.isEmpty(this.getRegisteredLetterId())) {
+            sb.append(" ").append("\r\n");
+            sb.append("Details zum Einschreiben:").append("\r\n");
+            sb.append("Sendungsnummer: ").append(this.getRegisteredLetterId()).append("\r\n");
+            if(this.getRegisteredLetterStatusDate()!=null)
+                sb.append("letzter Status: ").append(this.getRegisteredLetterStatus()).append(" vom ").append(df.format(this.getRegisteredLetterStatusDate())).append("\r\n");
+        }
+        
         
         return sb.toString();
         
+    }
+
+    /**
+     * @return the registeredLetterId
+     */
+    public String getRegisteredLetterId() {
+        return registeredLetterId;
+    }
+
+    /**
+     * @param registeredLetterId the registeredLetterId to set
+     */
+    public void setRegisteredLetterId(String registeredLetterId) {
+        this.registeredLetterId = registeredLetterId;
     }
 
     

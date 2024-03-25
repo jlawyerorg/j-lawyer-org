@@ -764,7 +764,15 @@ public class EpostQueueEntry extends MailingQueueEntry {
 
     @Override
     public String getStatusDetailsString() {
-        return this.getEntry().getLastStatusDetails();
+        StringBuilder statusDetails=new StringBuilder();
+        statusDetails.append(this.getEntry().getLastStatusDetails());
+        if(!StringUtils.isEmpty(this.getEntry().getRegisteredLetterId())) {
+            statusDetails.append("; Einschreiben-Sendungsnummer ").append(this.getEntry().getRegisteredLetterId()).append(", Status: ").append(StringUtils.nonEmpty(this.getEntry().getRegisteredLetterStatus()));
+            if(this.getEntry().getRegisteredLetterStatusDate()!=null) {
+                statusDetails.append(" seit ").append(this.getEntry().getRegisteredLetterStatusDate());
+            }
+        }
+        return statusDetails.toString();
     }
 
     /**

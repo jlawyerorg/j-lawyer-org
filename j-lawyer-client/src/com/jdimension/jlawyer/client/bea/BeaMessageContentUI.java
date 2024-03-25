@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.components.GenericTextViewer;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
@@ -1618,7 +1619,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     private void cmdShowProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowProcessCardActionPerformed
         String osciMsg = this.msgContainer.getProcessCard().getOsciMessage();
-        OsciMessageViewer v = new OsciMessageViewer(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getProcessCard().getMessageId(), osciMsg);
+        GenericTextViewer v = new GenericTextViewer(EditorsRegistry.getInstance().getMainWindow(), true, "Nachrichten-ID:", "" + this.msgContainer.getProcessCard().getMessageId(), osciMsg);
         FrameUtils.centerDialog(v, EditorsRegistry.getInstance().getMainWindow());
         v.setVisible(true);
     }//GEN-LAST:event_cmdShowProcessCardActionPerformed
