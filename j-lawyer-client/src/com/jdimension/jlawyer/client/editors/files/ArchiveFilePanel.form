@@ -1579,7 +1579,6 @@
                   </Properties>
                   <Events>
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDrebisMousePressed"/>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDrebisActionPerformed"/>
                   </Events>
                 </Component>
                 <Container class="javax.swing.JSplitPane" name="splitDocumentsMain">

@@ -725,7 +725,7 @@ public class UserSettings extends UserSettingsKeys {
     }
 
     private void loadCache() {
-        if (this.settingCache == null) {
+        if (this.settingCache == null && this.mgmt!=null) {
             this.settingCache = this.mgmt.getUserSettings(this.currentUser);
         }
     }

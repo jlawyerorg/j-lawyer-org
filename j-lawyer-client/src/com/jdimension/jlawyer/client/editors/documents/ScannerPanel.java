@@ -928,6 +928,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         mnuDelete = new javax.swing.JMenuItem();
         mnuRename = new javax.swing.JMenuItem();
         mnuSaveToCase = new javax.swing.JMenuItem();
+        popConfiguration = new javax.swing.JPopupMenu();
+        mnuSelectLocalFolder = new javax.swing.JMenuItem();
+        mnuDeactivateLocalFolder = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdRefresh = new javax.swing.JButton();
@@ -980,6 +983,24 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
         popActions.add(mnuSaveToCase);
 
+        mnuSelectLocalFolder.setText("konfigurieren");
+        mnuSelectLocalFolder.setToolTipText("lokalen Eingangsordner auswählen");
+        mnuSelectLocalFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSelectLocalFolderActionPerformed(evt);
+            }
+        });
+        popConfiguration.add(mnuSelectLocalFolder);
+
+        mnuDeactivateLocalFolder.setText("zurücksetzen");
+        mnuDeactivateLocalFolder.setToolTipText("deaktiviert den lokalen Eingangsordner");
+        mnuDeactivateLocalFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeactivateLocalFolderActionPerformed(evt);
+            }
+        });
+        popConfiguration.add(mnuDeactivateLocalFolder);
+
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
@@ -996,9 +1017,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdLocalUploadDir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         cmdLocalUploadDir.setToolTipText("Ordner auf diesem Gerät überwachen");
-        cmdLocalUploadDir.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdLocalUploadDirActionPerformed(evt);
+        cmdLocalUploadDir.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdLocalUploadDirMousePressed(evt);
             }
         });
 
@@ -1318,38 +1339,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         settings.setConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "" + delete);
     }//GEN-LAST:event_chkDeleteAfterActionActionPerformed
 
-    private void cmdLocalUploadDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirActionPerformed
-
-        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
-
-        ClientSettings cs = ClientSettings.getInstance();
-        String observedDir = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-
-        String current = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
-        JFileChooser chooser = new JFileChooser(current);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-
-        if (!("".equals(observedDir))) {
-            File observedDirFile = new File(observedDir);
-            if (observedDirFile.exists() && observedDirFile.isDirectory()) {
-                chooser.setSelectedFile(observedDirFile);
-            }
-        }
-
-        chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
-        chooser.setApproveButtonText("Auswählen");
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
-            this.displayLocalScanDir();
-
-        } else {
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-            this.displayLocalScanDir();
-        }
-    }//GEN-LAST:event_cmdLocalUploadDirActionPerformed
-
     private void tblDirContentMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseReleased
         if (evt.isPopupTrigger()) {
             this.popActions.show(evt.getComponent(), evt.getX(), evt.getY());
@@ -1378,6 +1367,47 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.splitPdfCallback();
     }//GEN-LAST:event_mnuSplitPdfActionPerformed
 
+    private void cmdLocalUploadDirMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirMousePressed
+        this.popConfiguration.show(this.cmdLocalUploadDir, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdLocalUploadDirMousePressed
+
+    private void mnuSelectLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSelectLocalFolderActionPerformed
+        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
+
+        ClientSettings cs = ClientSettings.getInstance();
+        String observedDir = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+
+        String current = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
+        JFileChooser chooser = new JFileChooser(current);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+
+        if (!("".equals(observedDir))) {
+            File observedDirFile = new File(observedDir);
+            if (observedDirFile.exists() && observedDirFile.isDirectory()) {
+                chooser.setSelectedFile(observedDirFile);
+            }
+        }
+
+        chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
+        chooser.setApproveButtonText("Auswählen");
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+
+            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
+            this.displayLocalScanDir();
+
+        } else {
+            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+            this.displayLocalScanDir();
+        }
+    }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
+
+    private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed
+        ClientSettings cs = ClientSettings.getInstance();
+        cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        this.displayLocalScanDir();
+    }//GEN-LAST:event_mnuDeactivateLocalFolderActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkDeleteAfterAction;
     private javax.swing.JButton cmdLocalUploadDir;
@@ -1388,14 +1418,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblLocalDir;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JMenuItem mnuDeactivateLocalFolder;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuRename;
     private javax.swing.JMenuItem mnuSaveToCase;
+    private javax.swing.JMenuItem mnuSelectLocalFolder;
     private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popActions;
+    private javax.swing.JPopupMenu popConfiguration;
     private javax.swing.JSplitPane splitContainer;
     private javax.swing.JSplitPane splitTop;
     private javax.swing.JTable tblDirContent;

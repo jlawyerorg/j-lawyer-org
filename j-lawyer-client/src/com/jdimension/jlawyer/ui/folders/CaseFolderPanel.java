@@ -695,6 +695,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -702,6 +703,8 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer {
+    
+    private static final Logger log=Logger.getLogger(CaseFolderPanel.class.getName());
     
     private static final String LASTSORT_CREATIONDATE_ASC="creationdate.asc";
     private static final String LASTSORT_CREATIONDATE_DESC="creationdate.desc";
@@ -1041,37 +1044,41 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
     
     private void restoreSortState() {
-        String lastSort=UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
-        if (LASTSORT_CHANGEDATE_ASC.equals(lastSort)) {
-            sortChangeDate.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_CHANGEDATE_DESC.equals(lastSort)) {
-            sortChangeDate.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_CREATIONDATE_ASC.equals(lastSort)) {
-            sortCreationDate.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_CREATIONDATE_DESC.equals(lastSort)) {
-            sortCreationDate.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_SIZE_ASC.equals(lastSort)) {
-            sortSize.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_SIZE_DESC.equals(lastSort)) {
-            sortSize.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_NAME_ASC.equals(lastSort)) {
-            sortName.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_NAME_DESC.equals(lastSort)) {
-            sortName.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_FAVORITE_ASC.equals(lastSort)) {
-            sortFavorite.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_FAVORITE_DESC.equals(lastSort)) {
-            sortFavorite.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_FOLDER_ASC.equals(lastSort)) {
-            sortFolder.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_FOLDER_DESC.equals(lastSort)) {
-            sortFolder.setSortState(SortButton.SORT_DESC);
-        } else if (LASTSORT_FILETYPE_ASC.equals(lastSort)) {
-            sortFileType.setSortState(SortButton.SORT_ASC);
-        } else if (LASTSORT_FILETYPE_DESC.equals(lastSort)) {
-            sortFileType.setSortState(SortButton.SORT_DESC);
-        } else {
-            sortCreationDate.setSortState(SortButton.SORT_DESC);
+        try {
+            String lastSort = UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
+            if (LASTSORT_CHANGEDATE_ASC.equals(lastSort)) {
+                sortChangeDate.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_CHANGEDATE_DESC.equals(lastSort)) {
+                sortChangeDate.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_CREATIONDATE_ASC.equals(lastSort)) {
+                sortCreationDate.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_CREATIONDATE_DESC.equals(lastSort)) {
+                sortCreationDate.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_SIZE_ASC.equals(lastSort)) {
+                sortSize.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_SIZE_DESC.equals(lastSort)) {
+                sortSize.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_NAME_ASC.equals(lastSort)) {
+                sortName.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_NAME_DESC.equals(lastSort)) {
+                sortName.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_FAVORITE_ASC.equals(lastSort)) {
+                sortFavorite.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_FAVORITE_DESC.equals(lastSort)) {
+                sortFavorite.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_FOLDER_ASC.equals(lastSort)) {
+                sortFolder.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_FOLDER_DESC.equals(lastSort)) {
+                sortFolder.setSortState(SortButton.SORT_DESC);
+            } else if (LASTSORT_FILETYPE_ASC.equals(lastSort)) {
+                sortFileType.setSortState(SortButton.SORT_ASC);
+            } else if (LASTSORT_FILETYPE_DESC.equals(lastSort)) {
+                sortFileType.setSortState(SortButton.SORT_DESC);
+            } else {
+                sortCreationDate.setSortState(SortButton.SORT_DESC);
+            }
+        } catch (Throwable t) {
+            log.error("Unable to restore sort state", t);
         }
     }
     

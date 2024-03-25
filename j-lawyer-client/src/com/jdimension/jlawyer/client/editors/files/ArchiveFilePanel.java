@@ -2829,11 +2829,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 cmdDrebisMousePressed(evt);
             }
         });
-        cmdDrebis.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDrebisActionPerformed(evt);
-            }
-        });
 
         splitDocumentsMain.setDividerLocation(500);
 
@@ -6054,10 +6049,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuSendMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendMessageActionPerformed
         this.mnuFreeTextMessageActionPerformed(evt);
     }//GEN-LAST:event_mnuSendMessageActionPerformed
-
-    private void cmdDrebisActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDrebisActionPerformed
-
-    }//GEN-LAST:event_cmdDrebisActionPerformed
 
     private void cmdDrebisMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDrebisMousePressed
         this.drebisPopup.show(this.cmdDrebis, evt.getX(), evt.getY());
