@@ -1161,7 +1161,9 @@ public class EpostAPI {
         jsonQuery.append("  \"isColor\": ").append(letter.isColor()).append(",\r\n");
         jsonQuery.append("  \"isDuplex\": ").append(letter.isDuplex()).append(",\r\n");
         jsonQuery.append("  \"coverLetter\": ").append(letter.isCoverLetter()).append(",\r\n");
-        //+ "  \"registeredLetter\": \"" + letter + "\",\r\n");
+        if(letter.getRegisteredLetter() != null && !"".equals(letter.getRegisteredLetter()))
+            jsonQuery.append("  \"registeredLetter\": \"").append(letter.getRegisteredLetter()).append("\",\r\n");
+        
         if (validateOnly) {
             jsonQuery.append("  \"testFlag\": " + "true" + ",\r\n");
             jsonQuery.append("  \"testEMail\": \"").append(validateToEmail).append("\",\r\n");

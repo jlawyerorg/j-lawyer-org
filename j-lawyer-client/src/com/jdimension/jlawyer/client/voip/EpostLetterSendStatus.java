@@ -874,6 +874,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                     });
                 } catch (Throwable t) {
                     log.error(t);
+                    
                 }
 
                 try {
