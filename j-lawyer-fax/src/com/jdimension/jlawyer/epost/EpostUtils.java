@@ -664,96 +664,109 @@
 package com.jdimension.jlawyer.epost;
 
 import com.jdimension.jlawyer.StatusLevels;
+import java.util.HashMap;
 
 /**
  *
  * @author jens
  */
 public class EpostUtils extends StatusLevels {
+
+    public static final int API_STATUS_ANNAHME = 1;
+    public static final int API_STATUS_VERARBEITUNG = 2;
+    public static final int API_STATUS_EINLIEFERUNG = 3;
+    public static final int API_STATUS_VERARBEITUNGDRUCK = 4;
+    public static final int API_STATUS_FAILED = 99;
+
     
-    public static final int API_STATUS_ANNAHME=1;
-    public static final int API_STATUS_VERARBEITUNG=2;
-    public static final int API_STATUS_EINLIEFERUNG=3;
-    public static final int API_STATUS_VERARBEITUNGDRUCK=4;
-    public static final int API_STATUS_FAILED=99;
-    
-    
-    
+
     /**
-     * 
-     *         1 - Annahme der Sendung
-            Die Sendung wurde erfolreich übermittelt und es wurden keine Schema und Inhalts-Verletzungen im JSON festgestellt.
-            Status-Platzierung: Bei erfolgreichem Upload der Sendung
-        
-        2 - Verarbeitung der Sendung  
-             Die PDF wurde auf EPost-Konformität geprüft und ist für den Versand an das Druckzentrum freigegeben. 
-             Hinweis: Trotz bestmöglicher Prüfungen können technische Fehler in dem jeweiligen PDF Dokument zu 
-             einem Abbruch im Druckzentrum führen. Hierdurch wird nach dem Status 3 zeitnah der Status 99 
-             zusammen mit den Fehlerinformationen signalisiert.
-             Status-Platzierung: Einige Minuten nach Annahme der Sendung
-        
-        3 - Einlieferung in Druckzentrum
-            Die Sendung wurde als "versendet" vom Druckzentrum an die API zurückgemeldet.
-            Hinweis: Sollten technische Fehler in dem jeweiligen PDF Dokument zu einem Abbruch im Druckzentrum führen, 
-            wird dies zeitnah über den Status 99 zusammen mit den Fehlerinformationen signalisiert und der Status 4 wird nicht erreicht.
-            Status-Platzierung: Innerhalb der nächsten Stunden nach Verarbeitung der Sendung
-        
-        4 - Verarbeitung in Druckzentrum 
-            Die Sendung wurde als "versendet" vom Druckzentrum an die API zurückgemeldet.
-            Status-Platzierung: 1-2 Werktage nach Einlieferung in das Druckzentrum
-        
-        
-        99 - Verarbeitungsfehler: Siehe errorList
-     * 
+     *
+     * 1 - Annahme der Sendung Die Sendung wurde erfolreich übermittelt und es
+     * wurden keine Schema und Inhalts-Verletzungen im JSON festgestellt.
+     * Status-Platzierung: Bei erfolgreichem Upload der Sendung
+     *
+     * 2 - Verarbeitung der Sendung Die PDF wurde auf EPost-Konformität geprüft
+     * und ist für den Versand an das Druckzentrum freigegeben. Hinweis: Trotz
+     * bestmöglicher Prüfungen können technische Fehler in dem jeweiligen PDF
+     * Dokument zu einem Abbruch im Druckzentrum führen. Hierdurch wird nach dem
+     * Status 3 zeitnah der Status 99 zusammen mit den Fehlerinformationen
+     * signalisiert. Status-Platzierung: Einige Minuten nach Annahme der Sendung
+     *
+     * 3 - Einlieferung in Druckzentrum Die Sendung wurde als "versendet" vom
+     * Druckzentrum an die API zurückgemeldet. Hinweis: Sollten technische
+     * Fehler in dem jeweiligen PDF Dokument zu einem Abbruch im Druckzentrum
+     * führen, wird dies zeitnah über den Status 99 zusammen mit den
+     * Fehlerinformationen signalisiert und der Status 4 wird nicht erreicht.
+     * Status-Platzierung: Innerhalb der nächsten Stunden nach Verarbeitung der
+     * Sendung
+     *
+     * 4 - Verarbeitung in Druckzentrum Die Sendung wurde als "versendet" vom
+     * Druckzentrum an die API zurückgemeldet. Status-Platzierung: 1-2 Werktage
+     * nach Einlieferung in das Druckzentrum
+     *
+     *
+     * 99 - Verarbeitungsfehler: Siehe errorList
+     *
      * @param status
-     * @return 
+     * @return
      */
     public static boolean isFinalStatus(int status) {
-        return status==API_STATUS_VERARBEITUNGDRUCK || status==API_STATUS_FAILED;
-        
+        return status == API_STATUS_VERARBEITUNGDRUCK || status == API_STATUS_FAILED;
+
     }
-    
+
     public static boolean isFailStatus(int status) {
-        return status==API_STATUS_FAILED;
-        
+        return status == API_STATUS_FAILED;
+
     }
-    
+
     public static int getStatusLevel(int status) {
-        if(API_STATUS_ANNAHME==status)
+        if (API_STATUS_ANNAHME == status) {
             return EpostUtils.STATUSLEVEL_INPROGRESS;
-        
-        if(API_STATUS_VERARBEITUNG==status)
+        }
+
+        if (API_STATUS_VERARBEITUNG == status) {
             return EpostUtils.STATUSLEVEL_INPROGRESS;
-        
-        if(API_STATUS_EINLIEFERUNG==status)
+        }
+
+        if (API_STATUS_EINLIEFERUNG == status) {
             return EpostUtils.STATUSLEVEL_INPROGRESS;
-        
-        if(API_STATUS_VERARBEITUNGDRUCK==status)
+        }
+
+        if (API_STATUS_VERARBEITUNGDRUCK == status) {
             return EpostUtils.STATUSLEVEL_SUCCESS;
-        
-        if(API_STATUS_FAILED==status)
+        }
+
+        if (API_STATUS_FAILED == status) {
             return EpostUtils.STATUSLEVEL_ERROR;
-        
+        }
+
         return EpostUtils.STATUSLEVEL_SUCCESS;
     }
-    
+
     public static String getDisplayableStatus(int status) {
-        if(API_STATUS_ANNAHME==status)
+        if (API_STATUS_ANNAHME == status) {
             return "Angenommen";
-        
-        if(API_STATUS_VERARBEITUNG==status)
+        }
+
+        if (API_STATUS_VERARBEITUNG == status) {
             return "Freigegeben für Druckzentrum";
-        
-        if(API_STATUS_EINLIEFERUNG==status)
+        }
+
+        if (API_STATUS_EINLIEFERUNG == status) {
             return "Verarbeitung im Druckzentrum";
-        
-        if(API_STATUS_VERARBEITUNGDRUCK==status)
+        }
+
+        if (API_STATUS_VERARBEITUNGDRUCK == status) {
             return "Versand erfolgt";
-        
-        if(API_STATUS_FAILED==status)
+        }
+
+        if (API_STATUS_FAILED == status) {
             return "Fehler bei der Verarbeitung";
-        
+        }
+
         return "Unbekannt: " + status;
     }
-    
+
 }

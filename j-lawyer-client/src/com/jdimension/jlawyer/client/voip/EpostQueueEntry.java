@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.epost.EpostUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -674,6 +675,8 @@ import java.util.Date;
  * @author jens
  */
 public class EpostQueueEntry extends MailingQueueEntry {
+    
+    private static final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
     
     protected EpostQueueBean entry=null;
     
@@ -767,9 +770,9 @@ public class EpostQueueEntry extends MailingQueueEntry {
         StringBuilder statusDetails=new StringBuilder();
         statusDetails.append(this.getEntry().getLastStatusDetails());
         if(!StringUtils.isEmpty(this.getEntry().getRegisteredLetterId())) {
-            statusDetails.append("; Einschreiben-Sendungsnummer ").append(this.getEntry().getRegisteredLetterId()).append(", Status: ").append(StringUtils.nonEmpty(this.getEntry().getRegisteredLetterStatus()));
+            statusDetails.append("; Einschreiben-Sendungsnummer ").append(this.getEntry().getRegisteredLetterId());
             if(this.getEntry().getRegisteredLetterStatusDate()!=null) {
-                statusDetails.append(" seit ").append(this.getEntry().getRegisteredLetterStatusDate());
+                statusDetails.append(", zuletzt aktualisiert am ").append(df.format(this.getEntry().getRegisteredLetterStatusDate()));
             }
         }
         return statusDetails.toString();

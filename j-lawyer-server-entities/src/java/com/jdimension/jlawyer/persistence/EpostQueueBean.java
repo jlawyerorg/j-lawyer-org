@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -683,6 +684,40 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "EpostQueueBean.findByLastStatusId", query = "SELECT f FROM EpostQueueBean f WHERE f.lastStatusId = :lastStatusId")})
 public class EpostQueueBean implements Serializable {
     protected static long serialVersionUID = 1L;
+    
+    private static final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private static HashMap<String, String> regLetterStatusValues = new HashMap<>();
+    static {
+        regLetterStatusValues.put("ANNOUNCED", "Die Sendung wurde (vor)angekündigt. Eine Einlieferung erfolgte noch nicht.");
+        regLetterStatusValues.put("INITIATED", "Das Label (Funketikett) für den Auslieferungsnachweis wurde aktiviert.");
+        regLetterStatusValues.put("POSTED", "Die Sendung wurde eingeliefert.");
+        regLetterStatusValues.put("PASSED_LETTER_CENTER", "Die Sendung wurde im Briefzentrum verarbeitet.");
+        regLetterStatusValues.put("IN_DELIVERY", "Die Sendung befindet sich in der Zustellung.");
+        regLetterStatusValues.put("REDIRECTED", "Sendung wird nachgesandt.");
+        regLetterStatusValues.put("NOTIFIED", "Der Empfänger konnte nicht angetroffen werden und wurde vom Zusteller benachrichtigt.");
+        regLetterStatusValues.put("NOTIFIED_KEY_ACCOUNT", "Die Sendung wurde für die Auslieferung an einen Großkunden (Empfänger) bereitgestellt.");
+        regLetterStatusValues.put("NOTIFIED_PO_BOX", "Die Benachrichtigung für die Sendung wurde in das Postfach des Empfängers eingelegt.");
+        regLetterStatusValues.put("NOTIFIED_PACKSTATION", "Die Sendung wurde in die Packstation eingelegt.");
+        regLetterStatusValues.put("SENT_BACK", "Die Sendung geht an den Absender zurück.");
+        regLetterStatusValues.put("DELIVERED", "Die Sendung wurde zugestellt.");
+        regLetterStatusValues.put("MARBURG", "Die Sendung lagert / lagerte in Briefermittlung Marburg.");
+        regLetterStatusValues.put("FETCHED_PACKSTATION", "Die Sendung wurde aus der Packstation abgeholt");
+        regLetterStatusValues.put("FETCHED", "Die Sendung wurde ausgeliefert.");
+        regLetterStatusValues.put("FETCHED_NOTIFIED", "Die Sendung wurde nach Benachrichtigung abgeholt.");
+        regLetterStatusValues.put("DELIVERED_PO_BOX", "Auslieferung via Postfach");
+        regLetterStatusValues.put("CONFIRMED", "Der Empfang der Sendung wurde vom Großkunden (Empfänger) quittiert.");
+        regLetterStatusValues.put("CONFIRMATION_PENDING", "Sendung wurde vom Großkunden (Empfänger) angenommen, aber der Auslieferungsbeleg liegt noch nicht vor.");
+        regLetterStatusValues.put("FETCHED_PENDING_DELIVERY_CONFIRMATION", "Benachrichtigte / postlagernde Sendung wurde vom Empfänger abgeholt, aber der Auslieferungsbeleg liegt noch nicht vor.");
+        regLetterStatusValues.put("FETCHED_PO_BOX_PENDING_DELIVERY_CONFIRMATION", "Zeigt an, dass die Sendung an einen Postfach-Kunden ausgegeben wurde, der Auslieferungsbeleg aber noch fehlt bzw. noch nicht erfasst wurde.");
+        regLetterStatusValues.put("FETCHED_KEY_ACCOUNT_PENDING_DELIVERY_CONFIRMATION", "Die Sendung wurde ausgeliefert, aber der Auslieferungsbeleg liegt noch nicht vor.");
+        regLetterStatusValues.put("RETURNED_TO_SENDER", "Die Sendung wurde dem Absender zugestellt.");
+        regLetterStatusValues.put("CONFIRMED_BY_SENDER", "Der Empfang der unzustellbaren Sendung wurde vom Großkunden (Absender) quittiert.");
+        regLetterStatusValues.put("UNDELIVERABLE", "Die Sendung ist unanbringlich. Sie konnte weder dem Empfänger noch dem Absender zugestellt werden. Sie wird an die Briefermittlungsstelle nach Marburg abgeleitet.");
+        regLetterStatusValues.put("NO_INFO", "Es liegen keine Informationen zur Sendung mit der angegebenen Sendungsnummer vor.");
+        regLetterStatusValues.put("AMBIGUOUS", "Die vorliegenden Sendungsinformationen lassen keine eindeutige Statusbildung zu.");
+        regLetterStatusValues.put("POSTED_WRONG_DATE", "Das angegebene Einlieferungsdatum ist falsch.");
+    }
+    
     @Id
     @Basic(optional = false)
     @Column(name = "letter_id")
@@ -1022,8 +1057,8 @@ public class EpostQueueBean implements Serializable {
             sb.append("letzter Status: ").append(this.getLastStatusDetails()).append("\r\n");
         sb.append("Anzahl Seiten: ").append(this.getNoOfPages()).append("\r\n");
         sb.append("Sendungsnummer: ").append(this.getLetterId()).append("\r\n");
-        if(this.getLetterType()!=null)
-            sb.append("Einschreiben: ").append(this.getLetterType()).append("\r\n");
+        if(!ServerStringUtils.isEmpty(this.getLetterType()))
+            sb.append("Sendungsart: ").append(this.getLetterType()).append("\r\n");
         if(this.getRecipientInformation()!=null)
             sb.append("Empfaenger: ").append(this.getRecipientInformation()).append("\r\n");
         sb.append("Gesendet von Nutzer: ").append(this.getSentBy()).append("\r\n");
@@ -1043,8 +1078,19 @@ public class EpostQueueBean implements Serializable {
             sb.append(" ").append("\r\n");
             sb.append("Details zum Einschreiben:").append("\r\n");
             sb.append("Sendungsnummer: ").append(this.getRegisteredLetterId()).append("\r\n");
-            if(this.getRegisteredLetterStatusDate()!=null)
-                sb.append("letzter Status: ").append(this.getRegisteredLetterStatus()).append(" vom ").append(df.format(this.getRegisteredLetterStatusDate())).append("\r\n");
+            if(this.getRegisteredLetterStatus()!=null) {
+                String displayableStatus="unbekannt";
+                if(regLetterStatusValues.containsKey(this.getRegisteredLetterStatus()))
+                    displayableStatus=regLetterStatusValues.get(this.getRegisteredLetterStatus());
+                sb.append("letzter Status: ").append(displayableStatus);
+                if(this.getRegisteredLetterStatusDate()!=null) {
+                    
+                    sb.append(" (am/vom ").append(df.format(this.getRegisteredLetterStatusDate())).append(")");
+                }
+                sb.append("\r\n");
+                sb.append("Sendungsverfolgung: ").append("https://www.deutschepost.de/de/s/sendungsverfolgung.html?piececode=").append(this.getRegisteredLetterId());
+                sb.append("\r\n");
+            }
         }
         
         
