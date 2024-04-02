@@ -664,6 +664,7 @@
 package org.jlawyer.async;
 
 import com.jdimension.jlawyer.documents.PreviewGenerator;
+import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -761,7 +762,7 @@ public class SearchIndexProcessor implements MessageListener {
                         return;
                     }
 
-                    Tika tika = new Tika();
+                    Tika tika = TikaConfigurator.newTika(f.getName());
                     String result = "";
                     try {
                         try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {

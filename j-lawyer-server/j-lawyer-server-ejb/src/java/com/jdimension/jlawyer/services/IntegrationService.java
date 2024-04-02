@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
 import com.jdimension.jlawyer.events.HookType;
@@ -1030,7 +1031,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return "";
         }
 
-        Tika tika = new Tika();
+        Tika tika = TikaConfigurator.newTika(fileName);
         String result = null;
         try {
             try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {

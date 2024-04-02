@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -1960,7 +1961,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String read = localBaseDir + File.separator + fileName;
 
-        Tika tika = new Tika();
+        Tika tika = TikaConfigurator.newTika(fileName);
         try {
             Reader r = tika.parse(new File(read));
             BufferedReader br = new BufferedReader(r);
