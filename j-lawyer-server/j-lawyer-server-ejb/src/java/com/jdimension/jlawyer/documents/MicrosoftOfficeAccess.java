@@ -794,15 +794,17 @@ public class MicrosoftOfficeAccess {
                     StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
                     XWPFTable t = null;
                     for (XWPFTable tableCandidate : allTables) {
-                        if (tableCandidate.getRow(0).getTableCells().size() == 1 && tableCandidate.getNumberOfRows() == 1) {
-                            String cellContent = tableCandidate.getRow(0).getCell(0).getText();
-                            if (cellContent != null) {
-                                cellContent = cellContent.trim();
-                            }
-                            if (key.equals(cellContent)) {
+                        for (int r = 0; r < tableCandidate.getNumberOfRows(); r++) {
+                            for (int c = 0; c < tableCandidate.getRow(r).getTableCells().size(); c++) {
+                                String cellContent = tableCandidate.getRow(r).getCell(c).getText();
+                                if (cellContent != null) {
+                                    cellContent = cellContent.trim();
+                                }
+                                if (key.equals(cellContent)) {
 
-                                t = tableCandidate;
-                                break;
+                                    t = tableCandidate;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -819,60 +821,118 @@ public class MicrosoftOfficeAccess {
                             t.setBottomBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
                         }
 
-                        for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
-                            XWPFTableCell cell = t.getRow(0).addNewTableCell();
+                        if (t.getNumberOfRows() == 1 && t.getRow(0).getTableCells().size() == 1) {
+                            for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
+                                XWPFTableCell cell = t.getRow(0).addNewTableCell();
 //                            if (tab.getColumnWidth(i2) > -1) {
 //                                        cell.setWidth(""+tab.getColumnWidth(i2));
 //                                    } else {
 //                                        cell.setWidth("auto");
 //                                    }
-                        }
+                            }
+                            for (int i = 0; i < tab.getRowCount(); i++) {
+                                XWPFTableRow newrow = t.createRow();
+                                for (int i2 = 0; i2 < tab.getColumnCount(); i2++) {
 
-                        for (int i = 0; i < tab.getRowCount(); i++) {
-                            XWPFTableRow newrow = t.createRow();
-                            for (int i2 = 0; i2 < tab.getColumnCount(); i2++) {
+                                    Cell styledCell = tab.getCellAt(i, i2);
 
-                                Cell styledCell = tab.getCellAt(i, i2);
-
-                                XWPFTableCell cell = newrow.getCell(i2);
-                                //cell.setText(tab.getValueAt(i, i2));
-                                cell.getParagraphs().get(0).createRun().setText(tab.getValueAt(i, i2));
+                                    XWPFTableCell cell = newrow.getCell(i2);
+                                    //cell.setText(tab.getValueAt(i, i2));
+                                    cell.getParagraphs().get(0).createRun().setText(tab.getValueAt(i, i2));
 //                                if (tab.getColumnWidth(i2) > -1) {
 //                                        cell.setWidth(""+tab.getColumnWidth(i2));
 //                                    } else {
 //                                        cell.setWidth("auto");
 //                                    }
-                                cell.setColor(Integer.toHexString(styledCell.getBackGround().getRGB()).substring(2));
-                                for (XWPFParagraph par : cell.getParagraphs()) {
-                                    int alignment = styledCell.getAlignment();
-                                    if (alignment == Cell.ALIGNMENT_CENTER) {
-                                        par.setAlignment(ParagraphAlignment.CENTER);
-                                    } else if (alignment == Cell.ALIGNMENT_RIGHT) {
-                                        par.setAlignment(ParagraphAlignment.RIGHT);
-                                    } else {
-                                        par.setAlignment(ParagraphAlignment.LEFT);
-                                    }
-                                    for (XWPFRun run : par.getRuns()) {
-                                        if (!("".equals(tab.getFontFamily()))) {
-                                            run.setFontFamily(tab.getFontFamily());
+                                    cell.setColor(Integer.toHexString(styledCell.getBackGround().getRGB()).substring(2));
+                                    for (XWPFParagraph par : cell.getParagraphs()) {
+                                        int alignment = styledCell.getAlignment();
+                                        if (alignment == Cell.ALIGNMENT_CENTER) {
+                                            par.setAlignment(ParagraphAlignment.CENTER);
+                                        } else if (alignment == Cell.ALIGNMENT_RIGHT) {
+                                            par.setAlignment(ParagraphAlignment.RIGHT);
+                                        } else {
+                                            par.setAlignment(ParagraphAlignment.LEFT);
                                         }
-                                        run.setColor(Integer.toHexString(styledCell.getForeGround().getRGB()).substring(2));
-                                        run.setBold(styledCell.isBold());
-                                        run.setItalic(styledCell.isItalic());
-                                        if (styledCell.isUnderline()) {
-                                            run.setUnderline(UnderlinePatterns.SINGLE);
-                                        }
+                                        for (XWPFRun run : par.getRuns()) {
+                                            if (!("".equals(tab.getFontFamily()))) {
+                                                run.setFontFamily(tab.getFontFamily());
+                                            }
+                                            run.setColor(Integer.toHexString(styledCell.getForeGround().getRGB()).substring(2));
+                                            run.setBold(styledCell.isBold());
+                                            run.setItalic(styledCell.isItalic());
+                                            if (styledCell.isUnderline()) {
+                                                run.setUnderline(UnderlinePatterns.SINGLE);
+                                            }
 
-                                        if (styledCell.getFontSize() > 0) {
-                                            run.setFontSize(styledCell.getFontSize());
+                                            if (styledCell.getFontSize() > 0) {
+                                                run.setFontSize(styledCell.getFontSize());
+                                            }
+
+                                        }
+                                    }
+
+                                }
+                            }
+                            t.removeRow(0);
+                        } else {
+                            if (t.getRow(0).getTableCells().size() != tab.getColumnCount()) {
+                                t.getRow(0).getCell(0).getParagraphs().get(0).createRun().setText("Tabelle muss " + tab.getColumnCount() + " Spalten haben");
+
+                            } else {
+                                int initialRowCount = t.getNumberOfRows();
+                                for (int i = 0; i < tab.getRowCount(); i++) {
+                                    XWPFTableRow newrow = t.createRow();
+                                    for (int i2 = 0; i2 < tab.getColumnCount(); i2++) {
+
+                                        Cell styledCell = tab.getCellAt(i, i2);
+
+                                        XWPFTableCell cell = newrow.getCell(i2);
+                                        //cell.setText(tab.getValueAt(i, i2));
+                                        cell.getParagraphs().get(0).createRun().setText(tab.getValueAt(i, i2));
+//                                if (tab.getColumnWidth(i2) > -1) {
+//                                        cell.setWidth(""+tab.getColumnWidth(i2));
+//                                    } else {
+//                                        cell.setWidth("auto");
+//                                    }
+                                        cell.setColor(Integer.toHexString(styledCell.getBackGround().getRGB()).substring(2));
+                                        for (XWPFParagraph par : cell.getParagraphs()) {
+                                            int alignment = styledCell.getAlignment();
+                                            if (alignment == Cell.ALIGNMENT_CENTER) {
+                                                par.setAlignment(ParagraphAlignment.CENTER);
+                                            } else if (alignment == Cell.ALIGNMENT_RIGHT) {
+                                                par.setAlignment(ParagraphAlignment.RIGHT);
+                                            } else {
+                                                par.setAlignment(ParagraphAlignment.LEFT);
+                                            }
+                                            for (XWPFRun run : par.getRuns()) {
+                                                if (!("".equals(tab.getFontFamily()))) {
+                                                    run.setFontFamily(tab.getFontFamily());
+                                                }
+                                                run.setColor(Integer.toHexString(styledCell.getForeGround().getRGB()).substring(2));
+                                                run.setBold(styledCell.isBold());
+                                                run.setItalic(styledCell.isItalic());
+                                                if (styledCell.isUnderline()) {
+                                                    run.setUnderline(UnderlinePatterns.SINGLE);
+                                                }
+
+                                                if (styledCell.getFontSize() > 0) {
+                                                    run.setFontSize(styledCell.getFontSize());
+                                                }
+
+                                            }
                                         }
 
                                     }
                                 }
+                                
 
+                                for (int i = 0; i < initialRowCount; i++) {
+                                    t.removeRow(0);
+                                }
                             }
                         }
-                        t.removeRow(0);
+
                     }
                 } else if (values.get(key) instanceof byte[]) {
                     List<XWPFTable> allTables = outputDocx.getTables();
@@ -896,7 +956,7 @@ public class MicrosoftOfficeAccess {
                         XWPFTableRow newrow = t.createRow();
                         XWPFTableCell cell = newrow.getCell(0);
 
-                        cell.addParagraph().createRun().addPicture(new ByteArrayInputStream((byte[])values.get(key)), Document.PICTURE_TYPE_PNG, "Girocode", Units.toEMU(150), Units.toEMU(150)); // Adjust width and height as needed
+                        cell.addParagraph().createRun().addPicture(new ByteArrayInputStream((byte[]) values.get(key)), Document.PICTURE_TYPE_PNG, "Girocode", Units.toEMU(150), Units.toEMU(150)); // Adjust width and height as needed
 
                         t.removeRow(0);
                     }
@@ -960,15 +1020,20 @@ public class MicrosoftOfficeAccess {
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
                 for (XWPFTable t : allTables) {
                     try {
-                        if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
-                            String cellContent = t.getRow(0).getCell(0).getText();
-                            if (cellContent != null) {
-                                cellContent = cellContent.trim();
-                            }
-                            if (r.equals(cellContent)) {
-                                resultList.add(r);
+
+                        for (int row = 0; row < t.getNumberOfRows(); row++) {
+                            for (int c = 0; c < t.getRow(0).getTableCells().size(); c++) {
+                                String cellContent = t.getRow(row).getCell(c).getText();
+                                if (cellContent != null) {
+                                    cellContent = cellContent.trim();
+                                }
+                                if (r.equals(cellContent)) {
+                                    resultList.add(r);
+                                }
+
                             }
                         }
+
                     } catch (Throwable th) {
                         log.error("Could not check content of cell [0,0] in DOCX table", th);
                     }
