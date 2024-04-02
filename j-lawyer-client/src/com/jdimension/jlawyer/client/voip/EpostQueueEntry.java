@@ -676,7 +676,7 @@ import java.util.Date;
  */
 public class EpostQueueEntry extends MailingQueueEntry {
     
-    private static final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
     
     protected EpostQueueBean entry=null;
     
