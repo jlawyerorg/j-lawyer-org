@@ -1402,12 +1402,20 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MIME part for further traversal - skipping", t);
                 }
 
-                if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                    resultList.add(mimePart.getContent().toString());
+                try {
+                    if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
+                        resultList.add(mimePart.getContent().toString());
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MIME part as result - skipping", t);
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -1419,8 +1427,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.isMimeType(mimeType)) {
-                    resultList.add(mimePart.getContent().toString());
+                try {
+                    if (mimePart.isMimeType(mimeType)) {
+                        resultList.add(mimePart.getContent().toString());
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of inline MIME part as result - skipping", t);
                 }
             }
         }
