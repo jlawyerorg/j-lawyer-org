@@ -685,7 +685,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class EpostQueueBean implements Serializable {
     protected static long serialVersionUID = 1L;
     
-    private static final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private static HashMap<String, String> regLetterStatusValues = new HashMap<>();
     static {
         regLetterStatusValues.put("ANNOUNCED", "Die Sendung wurde (vor)angekündigt. Eine Einlieferung erfolgte noch nicht.");
@@ -1084,7 +1083,6 @@ public class EpostQueueBean implements Serializable {
                     displayableStatus=regLetterStatusValues.get(this.getRegisteredLetterStatus());
                 sb.append("letzter Status: ").append(displayableStatus);
                 if(this.getRegisteredLetterStatusDate()!=null) {
-                    
                     sb.append(" (am/vom ").append(df.format(this.getRegisteredLetterStatusDate())).append(")");
                 }
                 sb.append("\r\n");
