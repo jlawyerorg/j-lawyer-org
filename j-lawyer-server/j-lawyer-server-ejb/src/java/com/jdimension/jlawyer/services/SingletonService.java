@@ -784,6 +784,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
         HashMap<FileMetadata, Date> fileObjects = new HashMap<>();
         File files[] = scanDirectory.listFiles();
+        OcrRequest req = new OcrRequest();
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory() && !f.getName().endsWith(".metadata")) {
@@ -794,11 +795,12 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
                             if (!OcrUtils.hasMetadata(f)) {
                                 FileMetadata newMetadata = OcrUtils.generateMetadata(f, "", "zentraler Scanordner");
-                                if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
-                                    // send request to perform OCR
-                                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
-                                    this.publishOcrRequest(req);
-                                }
+                            }
+                            FileMetadata existingMetadata = OcrUtils.getMetadata(f);
+                            if (existingMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
+                                // send request to perform OCR
+                                req.getAbsolutePaths().add(f.getAbsolutePath());
+
                             }
 
                             fileObjects.put(OcrUtils.getMetadata(f), new Date(f.lastModified()));
@@ -812,6 +814,10 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
         } else {
             log.error("observed directory returns null for #listFiles");
+        }
+        
+        if(!req.getAbsolutePaths().isEmpty()) {
+            this.publishOcrRequest(req);
         }
 
         this.setObservedFiles(fileObjects);

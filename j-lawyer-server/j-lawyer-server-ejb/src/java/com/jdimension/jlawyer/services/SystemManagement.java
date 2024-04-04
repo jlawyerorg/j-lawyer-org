@@ -2190,14 +2190,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             fout.write(content);
         }
         
+        OcrRequest req = new OcrRequest();
         if (!OcrUtils.hasMetadata(uploadFile)) {
             FileMetadata newMetadata = OcrUtils.generateMetadata(uploadFile, context.getCallerPrincipal().getName(), source);
             if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                 // send request to perform OCR
-                OcrRequest req = new OcrRequest(uploadFile.getAbsolutePath());
-                this.publishOcrRequest(req);
+                req.getAbsolutePaths().add(uploadFile.getAbsolutePath());
+                
             }
         }
+        if(!req.getAbsolutePaths().isEmpty())
+            this.publishOcrRequest(req);
 
     }
     

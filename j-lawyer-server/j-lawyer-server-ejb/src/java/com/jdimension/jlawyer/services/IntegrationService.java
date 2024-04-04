@@ -769,6 +769,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         HashMap<FileMetadata, Date> fileObjects = new HashMap<>();
         File files[] = scanDirectory.listFiles();
+        OcrRequest req = new OcrRequest();
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory() && !f.getName().endsWith(".metadata")) {
@@ -780,8 +781,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                                 FileMetadata newMetadata = OcrUtils.generateMetadata(f, "", "zentraler Scanordner");
                                 if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                                     // send request to perform OCR
-                                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
-                                    this.publishOcrRequest(req);
+                                    req.getAbsolutePaths().add(f.getAbsolutePath());
                                 }
                             }
 
@@ -795,6 +795,9 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             }
         } else {
             log.error("observed directory returns null for #listFiles");
+        }
+        if(!req.getAbsolutePaths().isEmpty()) {
+            this.publishOcrRequest(req);
         }
         return fileObjects;
     }
@@ -1213,7 +1216,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             FileMetadata newMetadata = OcrUtils.generateMetadata(f, context.getCallerPrincipal().getName(), source);
             if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                 // send request to perform OCR
-                OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                OcrRequest req = new OcrRequest();
+                req.getAbsolutePaths().add(f.getAbsolutePath());
                 this.publishOcrRequest(req);
             }
         }
@@ -1352,7 +1356,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 String name = f.getName();
                 if (name.equals(fileName)) {
 
-                    OcrRequest req = new OcrRequest(f.getAbsolutePath());
+                    OcrRequest req = new OcrRequest();
+                    req.getAbsolutePaths().add(f.getAbsolutePath());
                     this.publishOcrRequest(req);
 
                     return true;

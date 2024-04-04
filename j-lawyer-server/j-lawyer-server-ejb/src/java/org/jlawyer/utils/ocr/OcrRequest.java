@@ -663,6 +663,7 @@
  */
 package org.jlawyer.utils.ocr;
 
+import java.util.ArrayList;
 import org.jlawyer.search.*;
 
 /**
@@ -671,25 +672,18 @@ import org.jlawyer.search.*;
  */
 public class OcrRequest extends SearchHit {
     
-    private String absolutePath;
+    private ArrayList<String> absolutePaths=new ArrayList<>();
     
-    public OcrRequest(String fileAbsolutePath) {
-        this.absolutePath=fileAbsolutePath;
+    public OcrRequest() {
+        
         
     }
 
     /**
      * @return the absolutePath
      */
-    public String getAbsolutePath() {
-        return absolutePath;
-    }
-
-    /**
-     * @param absolutePath the absolutePath to set
-     */
-    public void setAbsolutePath(String absolutePath) {
-        this.absolutePath = absolutePath;
+    public ArrayList<String> getAbsolutePaths() {
+        return absolutePaths;
     }
 
 }

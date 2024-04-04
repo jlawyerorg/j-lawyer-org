@@ -677,6 +677,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.ejb.*;
@@ -751,76 +752,98 @@ public class SearchIndexProcessor implements MessageListener {
                         }
                     }
                 } else if (o instanceof OcrRequest) {
-                    // Get the parent directory of the original file
-                    File f = new File(((OcrRequest) o).getAbsolutePath());
-                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_PROCESSING);
 
-                    byte[] data = ServerFileUtils.readFile(f);
-                    if (data == null) {
-                        log.error("Error checking for OCR information - content data for file is null");
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                        return;
+                    ArrayList<String> absolutePaths = ((OcrRequest) o).getAbsolutePaths();
+
+                    // set them all to processing immediately
+                    // ocr is performed in batches, and we need to avoid overlapping ocrs for the same file, triggered by different threads or messages
+                    for (String absolutePath : absolutePaths) {
+                        File f = new File(absolutePath);
+                        FileMetadata currentMetadata=OcrUtils.getMetadata(f);
+                        if(currentMetadata.getOcrStatus()!=FileMetadata.OCRSTATUS_OPEN)
+                            continue;
+                        
+                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_PROCESSING);
                     }
+                    
+                    for (String absolutePath : absolutePaths) {
+                        // Get the parent directory of the original file
+                        File f = new File(absolutePath);
+                        
+//                        FileMetadata currentMetadata=OcrUtils.getMetadata(f);
+//                        if(currentMetadata.getOcrStatus()!=FileMetadata.OCRSTATUS_OPEN)
+//                            continue;
+//                        
+//                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_PROCESSING);
 
-                    Tika tika = TikaConfigurator.newTika(f.getName());
-                    String result = "";
-                    try {
-                        try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
-                            char[] buffer = new char[1024];
-                            int bytesRead = -1;
-                            while ((bytesRead = br.read(buffer)) > -1) {
-                                bw.write(buffer, 0, bytesRead);
-                            }
-                            result = sw.toString();
-                        }
-
-                    } catch (Throwable t) {
-                        log.error("Error checking for OCR information - text extraction failed", t);
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                        return;
-                    }
-
-                    if (result.length() > 0) {
-                        // no OCR required
-                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
-                        return;
-                    }
-
-                    String tmpDir = System.getProperty("java.io.tmpdir");
-                    if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-                        tmpDir = tmpDir + System.getProperty("file.separator");
-                    }
-
-                    // Add the "OCR" prefix to the original file name
-                    String tmpFileName = tmpDir + System.currentTimeMillis();
-
-                    // Create a new File instance with the modified file name in the same directory
-                    File outputFile = new File(tmpFileName);
-
-                    ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
-                    String[] cmd = null;
-                    if (s != null) {
-                        if (s.getSettingValue().length() > 0) {
-                            cmd = s.getSettingValue().split(" ");
-                        }
-                    }
-                    if (cmd != null) {
-                        int exitCode=OcrUtils.performOcr(cmd, f, outputFile);
-
-                        if (!outputFile.exists()) {
-                            log.error("OCR failed for file " + f.getAbsolutePath());
+                        byte[] data = ServerFileUtils.readFile(f);
+                        if (data == null) {
+                            log.error("Error checking for OCR information - content data for file is null");
                             OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                        } else {
-                            byte[] ocrFile = ServerFileUtils.readFile(outputFile);
-                            ServerFileUtils.writeFile(f, ocrFile);
-                            outputFile.delete();
-                            if(exitCode<0)
-                                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
-                            else
-                                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+                            continue;
                         }
-                    } else {
-                        log.info("OCR not configured");
+
+                        Tika tika = TikaConfigurator.newTika(f.getName());
+                        String result = "";
+                        try {
+                            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
+                                char[] buffer = new char[1024];
+                                int bytesRead = -1;
+                                while ((bytesRead = br.read(buffer)) > -1) {
+                                    bw.write(buffer, 0, bytesRead);
+                                }
+                                result = sw.toString();
+                            }
+
+                        } catch (Throwable t) {
+                            log.error("Error checking for OCR information - text extraction failed", t);
+                            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                            continue;
+                        }
+
+                        if (result.length() > 0) {
+                            // no OCR required
+                            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+                            continue;
+                        }
+
+                        String tmpDir = System.getProperty("java.io.tmpdir");
+                        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+                            tmpDir = tmpDir + System.getProperty("file.separator");
+                        }
+
+                        // Add the "OCR" prefix to the original file name
+                        String tmpFileName = tmpDir + System.currentTimeMillis();
+
+                        // Create a new File instance with the modified file name in the same directory
+                        File outputFile = new File(tmpFileName);
+
+                        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+                        String[] cmd = null;
+                        if (s != null) {
+                            if (s.getSettingValue().length() > 0) {
+                                cmd = s.getSettingValue().split(" ");
+                            }
+                        }
+                        if (cmd != null) {
+                            int exitCode = OcrUtils.performOcr(cmd, f, outputFile);
+
+                            if (!outputFile.exists()) {
+                                log.error("OCR failed for file " + f.getAbsolutePath());
+                                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                            } else {
+                                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                                ServerFileUtils.writeFile(f, ocrFile);
+                                outputFile.delete();
+                                if (exitCode < 0) {
+                                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                                } else {
+                                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+                                }
+                            }
+                        } else {
+                            log.info("OCR not configured");
+                        }
                     }
 
                 }
