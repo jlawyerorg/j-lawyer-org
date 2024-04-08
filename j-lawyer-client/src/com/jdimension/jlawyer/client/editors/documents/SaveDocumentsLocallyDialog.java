@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -833,8 +832,6 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
 
         try {
             ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             String path = this.txtLastDir.getText();
             if (!path.endsWith(File.separator)) {
                 path = path + File.separator;

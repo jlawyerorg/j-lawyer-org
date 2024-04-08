@@ -667,11 +667,9 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
@@ -714,8 +712,6 @@ public class CopyDocumentsToClipboardAction extends ProgressableAction {
 
         try {
 
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArrayList<File> clipBoardFiles = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : this.docs) {
                 if (!this.isCancelled()) {

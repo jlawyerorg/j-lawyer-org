@@ -845,11 +845,8 @@ public class HitPanel extends javax.swing.JPanel {
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
 
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
         byte[] content=null;
         try {
-            locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             //content = locator.lookupArchiveFileServiceRemote().getDocumentContent(this.hit.getId());
             content=CachingDocumentLoader.getInstance().getDocument(this.hit.getId());
         } catch (Exception ex) {

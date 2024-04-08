@@ -852,19 +852,6 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private void cmdSelectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectActionPerformed
         this.selectedFiles = new File[this.lstCaseDocuments.getSelectedValues().length];
 
-        ArchiveFileServiceRemote afs = null;
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            afs = locator.lookupArchiveFileServiceRemote();
-
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Dokument kann nicht vom Server geladen werden" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            this.selectedFiles = new File[0];
-            return;
-        }
-
         int index = 0;
         for (Object o : this.lstCaseDocuments.getSelectedValues()) {
             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) o;

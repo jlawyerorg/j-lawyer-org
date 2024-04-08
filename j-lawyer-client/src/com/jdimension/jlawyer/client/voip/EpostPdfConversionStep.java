@@ -664,13 +664,11 @@
 package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
@@ -795,11 +793,9 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
 
         new Thread(() -> {
             ThreadUtils.setWaitCursor(this);
-            ClientSettings settings = ClientSettings.getInstance();
-
+            
             for (ArchiveFileDocumentsBean d : docs) {
                 try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     //byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
                     byte[] content=CachingDocumentLoader.getInstance().getDocument(d.getId());
 
