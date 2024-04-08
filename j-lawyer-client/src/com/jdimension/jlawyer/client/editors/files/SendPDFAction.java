@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.mail.SendCommunicationDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
@@ -722,7 +723,8 @@ public class SendPDFAction extends ProgressableAction {
                 }
 
                 this.progress("Konvertiere zu PDF: " + doc.getName());
-                byte[] content = remote.getDocumentContent(doc.getId());
+                //byte[] content = remote.getDocumentContent(doc.getId());
+                byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 
                 String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
                 if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {

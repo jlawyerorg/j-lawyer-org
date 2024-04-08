@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.drebis.freetext;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -812,7 +813,8 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
                 for (ArchiveFileDocumentsBean doc: drebDocs) {
                     
                     ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                    byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                     String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                     if (doc.getName().toLowerCase().endsWith(".pdf")) {
                         DrebisDocument dDoc=new DrebisDocument(doc.getName(), content);

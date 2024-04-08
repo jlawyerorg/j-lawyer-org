@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -799,7 +800,8 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
             for (ArchiveFileDocumentsBean d : docs) {
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
+                    //byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
+                    byte[] content=CachingDocumentLoader.getInstance().getDocument(d.getId());
 
                     if (d.getName().toLowerCase().endsWith(".pdf")) {
 

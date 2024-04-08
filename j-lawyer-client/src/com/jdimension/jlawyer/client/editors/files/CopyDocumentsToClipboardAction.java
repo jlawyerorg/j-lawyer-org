@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -719,7 +720,8 @@ public class CopyDocumentsToClipboardAction extends ProgressableAction {
             for (ArchiveFileDocumentsBean doc : this.docs) {
                 if (!this.isCancelled()) {
                     this.progress("Lade " + doc.getName() + "...");
-                    byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                    byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                     String fullTmpFileLocation = FileUtils.createTempFile(doc.getName(), content);
                     clipBoardFiles.add(new File(fullTmpFileLocation));
                 }

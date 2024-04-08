@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.editors.files.OpenDocumentAction;
 import com.jdimension.jlawyer.client.events.DocumentLockEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -733,33 +734,36 @@ public class CaseUtils {
 
     public static void openDocumentInCustomLauncher(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, String customLauncherName, OpenDocumentAction action) throws Exception {
         if (value != null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            byte[] content = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                DataBucket contentBucket = locator.lookupArchiveFileServiceRemote().getDocumentContentBucket(value.getId());
-                if (action != null) {
-                    action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
-                }
-                ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                bout.write(contentBucket.getPayload());
-                DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
-                while (contentBucket.hasNext()) {
-                    if (action != null && action.isCancelled()) {
-                        return;
-                    }
-                    contentBucket.resetPayload();
-                    contentBucket = bucketLoader.nextBucket(contentBucket);
-                    if (action != null) {
-                        action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
-                    }
-                    bout.write(contentBucket.getPayload());
-                }
-                content = bout.toByteArray();
-            } catch (Exception ex) {
-                log.error("Error loading document [" + value.getId() + " " + value.getName() + "]", ex);
-                throw ex;
-            }
+            
+            byte[] content=CachingDocumentLoader.getInstance().getDocument(value.getId(), action);
+            
+//            ClientSettings settings = ClientSettings.getInstance();
+//            byte[] content = null;
+//            try {
+//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//                DataBucket contentBucket = locator.lookupArchiveFileServiceRemote().getDocumentContentBucket(value.getId());
+//                if (action != null) {
+//                    action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
+//                }
+//                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+//                bout.write(contentBucket.getPayload());
+//                DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
+//                while (contentBucket.hasNext()) {
+//                    if (action != null && action.isCancelled()) {
+//                        return;
+//                    }
+//                    contentBucket.resetPayload();
+//                    contentBucket = bucketLoader.nextBucket(contentBucket);
+//                    if (action != null) {
+//                        action.progress("Lade " + value.getName() + "... " + (int) contentBucket.getPercentage() + "%", contentBucket.getTotalNumberOfBuckets());
+//                    }
+//                    bout.write(contentBucket.getPayload());
+//                }
+//                content = bout.toByteArray();
+//            } catch (Exception ex) {
+//                log.error("Error loading document [" + value.getId() + " " + value.getName() + "]", ex);
+//                throw ex;
+//            }
 
             CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
             Launcher launcher;

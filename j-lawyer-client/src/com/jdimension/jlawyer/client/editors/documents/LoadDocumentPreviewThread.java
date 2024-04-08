@@ -755,7 +755,8 @@ public class LoadDocumentPreviewThread implements Runnable {
             if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
                 preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
             } else {
-                byte[] data = afs.getDocumentContent(this.docDto.getId());
+                //byte[] data = afs.getDocumentContent(this.docDto.getId());
+                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
                 preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             }
             

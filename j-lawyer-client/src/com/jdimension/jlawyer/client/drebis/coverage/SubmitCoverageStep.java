@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.drebis.coverage;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
@@ -875,7 +876,8 @@ public class SubmitCoverageStep extends javax.swing.JPanel implements WizardStep
                     for (ArchiveFileDocumentsBean doc: drebDocs) {
                                                 
                         ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                        byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                        //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                        byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                         String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                         if (doc.getName().toLowerCase().endsWith(".pdf")) {
                             //dlg.addAttachment(tmpUrl, doc.getDictateSign());

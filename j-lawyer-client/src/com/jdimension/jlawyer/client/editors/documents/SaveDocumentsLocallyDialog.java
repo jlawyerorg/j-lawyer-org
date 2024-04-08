@@ -869,7 +869,8 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             }
             
             for (ArchiveFileDocumentsBean doc : this.docs2local) {
-                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 if (this.convertToPdf && conv.supportsInputFormat(doc.getName())) {
                     String tempPath = FileUtils.createTempFile(doc.getName(), content);
                     String tempPdfPath = conv.convertToPDF(tempPath);
