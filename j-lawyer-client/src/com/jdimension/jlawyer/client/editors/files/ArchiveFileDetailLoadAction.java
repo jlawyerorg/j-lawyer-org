@@ -769,7 +769,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 20;
+        return 17;
     }
 
     @Override
@@ -852,22 +852,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 }
             }
             
-            this.progress("Lade Akte: Historie...");
-            fileService = locator.lookupArchiveFileServiceRemote();
-            
-            Date sinceDate = null;
-            if(this.caseDto.getDateChanged()==null) {
-                sinceDate=new Date();
-            } else {
-                sinceDate=this.caseDto.getDateChanged();
-            }
-            LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            localDateTime = localDateTime.minusMonths(6);
-            sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-            
-            dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey, sinceDate);
-            
             this.progress("Lade Akte: Berechtigungen...");
+            fileService = locator.lookupArchiveFileServiceRemote();
             Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
             Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
             boolean userIsInOwnerGroup = false;
@@ -977,28 +963,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             return false;
         }
 
-        this.progress("Aktualisiere Dialog...");
-        
-        this.progress("Aktualisiere Dialog: Historie...");
-        SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
-        this.historyTarget.setModel(model2);
-        DateTimeStringComparator dtComparator = new DateTimeStringComparator(DateUtils.DATEFORMAT_DATETIME_FULL);
-        TableRowSorter htrs = new TableRowSorter(model2);
-        htrs.setComparator(0, dtComparator);
-        this.historyTarget.setRowSorter(htrs);
-        this.historyTarget.getColumnModel().getColumn(1).setCellRenderer(new UserTableCellRenderer());
-        if (dtos != null) {
-            for (int i = 0; i < dtos.length; i++) {
-                Object[] row = new Object[]{dfHistory.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
-                model2.addRow(row);
-            }
-        }
-        ArrayList list = new ArrayList();
-        list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
-        htrs.setSortKeys(list);
-        htrs.sort();
+        ThreadUtils.setTableModel(this.historyTarget, model2);
 
         String sArchivedSince = "";
         if (this.isArchived && caseDto.getDateArchived()!=null) {
@@ -1007,7 +974,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         ThreadUtils.setLabel(this.lblArchivedSince, sArchivedSince);
         
         this.progress("Aktualisiere Dialog: Dokumente...");
-        if (documents != null && documents.size() > 0) {
+        if (documents != null && !documents.isEmpty()) {
 
             ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
 
@@ -1054,7 +1021,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 model3.addRow(row);
             }
         }
-        list = new ArrayList();
+        ArrayList list = new ArrayList();
         list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
         rtrs.setSortKeys(list);
         rtrs.sort();

@@ -777,6 +777,8 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -4273,6 +4275,46 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return false;
     }
 
+    private void loadHistoryEntries(Date since) {
+        if (this.dto != null && this.dto.getId() != null) {
+            ArchiveFileHistoryBean[] dtos = null;
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+                dtos = caseService.getHistoryForArchiveFile(this.dto.getId(), since);
+            } catch (Throwable ex) {
+                log.error("Error enabling case sync", ex);
+                JOptionPane.showMessageDialog(this, "Synchronisation kann nicht aktiviert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
+            String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
+            ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
+            this.tblHistory.setModel(model2);
+            DateTimeStringComparator dtComparator = new DateTimeStringComparator(DateUtils.DATEFORMAT_DATETIME_FULL);
+            TableRowSorter htrs = new TableRowSorter(model2);
+            htrs.setComparator(0, dtComparator);
+            this.tblHistory.setRowSorter(htrs);
+            this.tblHistory.getColumnModel().getColumn(1).setCellRenderer(new UserTableCellRenderer());
+            if (dtos != null) {
+                for (int i = 0; i < dtos.length; i++) {
+                    Object[] row = new Object[]{dfHistory.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
+                    model2.addRow(row);
+                }
+            }
+            ArrayList<RowSorter.SortKey> list = new ArrayList<>();
+            list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
+            htrs.setSortKeys(list);
+            htrs.sort();
+            ComponentUtils.autoSizeColumns(tblHistory);
+        } else {
+            String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
+            ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
+            this.tblHistory.setModel(model2);
+        }
+        
+    }
+    
     private void loadAccountEntries() {
         TableUtils.clearModel(this.tblAccountEntries);
         try {
@@ -4312,7 +4354,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
         if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
-
+            // tabs that require the case to be save before they can be used
             if (this.dto == null || this.dto.getId() == null) {
                 this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
@@ -4321,6 +4363,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.loadAccountEntries();
             }
 
+        } else if (this.tabPaneArchiveFile.getSelectedIndex() == 7) {
+            // tabs that load data that is not loaded yet
+            if(this.tblHistory.getRowCount() == 0) {
+                Date sinceDate = null;
+                if (this.dto != null && this.dto.getDateChanged() != null) {
+                    sinceDate = this.dto.getDateChanged();
+                    LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    localDateTime = localDateTime.minusMonths(6);
+                    sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+                }
+                this.loadHistoryEntries(sinceDate);
+            }
+
+            
         }
     }//GEN-LAST:event_tabPaneArchiveFileStateChanged
 
@@ -6310,38 +6366,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed
 
     private void cmdLoadFullHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoadFullHistoryActionPerformed
-        if (this.dto != null && this.dto.getId() != null) {
-            ArchiveFileHistoryBean[] dtos = null;
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
-                dtos = caseService.getHistoryForArchiveFile(this.dto.getId(), null);
-            } catch (Throwable ex) {
-                log.error("Error enabling case sync", ex);
-                JOptionPane.showMessageDialog(this, "Synchronisation kann nicht aktiviert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-            SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
-            String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
-            ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
-            this.tblHistory.setModel(model2);
-            DateTimeStringComparator dtComparator = new DateTimeStringComparator(DateUtils.DATEFORMAT_DATETIME_FULL);
-            TableRowSorter htrs = new TableRowSorter(model2);
-            htrs.setComparator(0, dtComparator);
-            this.tblHistory.setRowSorter(htrs);
-            this.tblHistory.getColumnModel().getColumn(1).setCellRenderer(new UserTableCellRenderer());
-            if (dtos != null) {
-                for (int i = 0; i < dtos.length; i++) {
-                    Object[] row = new Object[]{dfHistory.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
-                    model2.addRow(row);
-                }
-            }
-            ArrayList<RowSorter.SortKey> list = new ArrayList<>();
-            list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
-            htrs.setSortKeys(list);
-            htrs.sort();
-            ComponentUtils.autoSizeColumns(tblHistory);
-        }
+        // load full history
+        this.loadHistoryEntries(null);
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
 
     private void cmdCopyCaseNumberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyCaseNumberActionPerformed
