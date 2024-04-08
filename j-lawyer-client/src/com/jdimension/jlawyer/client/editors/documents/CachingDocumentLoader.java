@@ -741,6 +741,8 @@ public class CachingDocumentLoader {
         if ((cacheHits + cacheMisses) > 0) {
             if ((cacheHits + cacheMisses) % 50 == 0) {
                 log.info("Document cache statistics: " + (double)((double)cacheHits * 100d/ ((double)cacheHits+(double)cacheMisses)) + "% cache hits");
+                cacheHits=0;
+                cacheMisses=0;
             }
         }
 
