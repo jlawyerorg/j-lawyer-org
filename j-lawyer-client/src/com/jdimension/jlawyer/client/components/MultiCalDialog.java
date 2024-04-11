@@ -665,6 +665,10 @@ package com.jdimension.jlawyer.client.components;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.toedter.calendar.JDayChooser;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -774,6 +778,23 @@ public class MultiCalDialog extends javax.swing.JDialog {
         this.initializing = false;
 
     }
+    
+    private void moveDialogToSameMonitor(Point parentLocation) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] screens = ge.getScreenDevices();
+
+        for (GraphicsDevice screen : screens) {
+            Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
+            if (screenBounds.contains(parentLocation)) {
+                Rectangle dialogBounds = this.getBounds();
+                this.setLocation(
+                        screenBounds.x + (parentLocation.x - screenBounds.x),
+                        screenBounds.y + (parentLocation.y - screenBounds.y)
+                );
+                break;
+            }
+        }
+    }
 
     private void updateMonthLabels() {
         SimpleDateFormat df = new SimpleDateFormat("MMM yyyy");
@@ -805,8 +826,12 @@ public class MultiCalDialog extends javax.swing.JDialog {
         cmdYearForward = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setUndecorated(true);
-        setResizable(false);
+        setTitle("Datumsauswahl");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
 
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(102, 102, 102)));
 
@@ -1014,6 +1039,10 @@ public class MultiCalDialog extends javax.swing.JDialog {
             selectDate(c3, c3Cal);
         }
     }//GEN-LAST:event_c3PropertyChange
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        this.moveDialogToSameMonitor(this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
 
     public void setMaxDate(Date d) {
         this.c1.setMaxSelectableDate(d);
