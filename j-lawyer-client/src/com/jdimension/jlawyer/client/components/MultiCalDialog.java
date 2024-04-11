@@ -786,7 +786,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
         for (GraphicsDevice screen : screens) {
             Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
             if (screenBounds.contains(parentLocation)) {
-                Rectangle dialogBounds = this.getBounds();
                 this.setLocation(
                         screenBounds.x + (parentLocation.x - screenBounds.x),
                         screenBounds.y + (parentLocation.y - screenBounds.y)
