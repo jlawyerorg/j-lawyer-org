@@ -663,16 +663,36 @@
  */
 package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.email.CommonMailUtils;
+import static com.jdimension.jlawyer.email.CommonMailUtils.INBOX;
+import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
+import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.epost.EpostLetterStatus;
 import com.jdimension.jlawyer.epost.EpostUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import com.jdimension.jlawyer.services.VoipServiceLocal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import javax.annotation.security.RunAs;
+import javax.mail.Address;
+import javax.mail.Authenticator;
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Store;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -694,15 +714,309 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
         try {
             InitialContext ic = new InitialContext();
-            VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/VoipService!com.jdimension.jlawyer.services.VoipServiceLocal");
+            ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
+            List<MailboxSetup> entries = mailboxes.findAll();
 
-            EpostQueueBeanFacadeLocal epostQ = (EpostQueueBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/EpostQueueBeanFacade!com.jdimension.jlawyer.persistence.EpostQueueBeanFacadeLocal");
-            List<EpostQueueBean> entries = epostQ.findAll();
-
-            
+            ArrayList<MailboxSetup> scanMailboxes = new ArrayList<>();
+            for (MailboxSetup ms : scanMailboxes) {
+                try {
+                    this.processMailbox(ms, caseSvc);
+                } catch (Throwable ex) {
+                    log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
+                }
+            }
 
         } catch (Throwable ex) {
-             log.error("Error checking ePost letter statuses", ex);
+            log.error("Error processing scanned inboxes", ex);
+        }
+    }
+
+    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc) {
+
+        String server = null;
+        try {
+            String emailInPwd = Crypto.decrypt(ms.getEmailInPwd());
+
+            Properties props = System.getProperties();
+            props.setProperty("mail.imap.partialfetch", "false");
+            props.setProperty("mail.imaps.partialfetch", "false");
+            props.setProperty("mail.store.protocol", ms.getEmailInType());
+
+            if (ms.isEmailInSsl()) {
+                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
+
+            Session session = null;
+            Store store = null;
+            server = ms.getEmailInServer();
+
+            if (ms.isMsExchange()) {
+                String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                props.put("mail.imaps.sasl.enable", "true");
+                props.put("mail.imaps.port", "993");
+
+                props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+                props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+                props.put("mail.imaps.auth.login.disable", "true");
+                props.put("mail.imaps.auth.plain.disable", "true");
+
+                props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                props.setProperty("mail.imaps.socketFactory.fallback", "false");
+                props.setProperty("mail.imaps.socketFactory.port", "993");
+                props.setProperty("mail.imaps.starttls.enable", "true");
+
+                session = Session.getInstance(props);
+
+                // should be imaps for Office 365
+                store = session.getStore("imaps");
+                // server should be outlook.office365.com
+                store.connect(server, ms.getEmailInUser(), authToken);
+
+            } else {
+
+                props.setProperty("mail.imaps.host", server);
+                props.setProperty("mail.imap.host", server);
+
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail.store.protocol", "imaps");
+                }
+
+                InitialContext ic = new InitialContext();
+                ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+                ServerSettingsBean trustedServers = settings.find("mail.imaps.ssl.trust");
+                if (trustedServers != null) {
+                    props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
+                }
+
+                session = Session.getInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(ms.getEmailInUser(), emailInPwd);
+                    }
+                });
+
+                store = session.getStore();
+                store.connect();
+
+            }
+
+            
+            
+            Folder[] accountFolders = null;
+            try {
+                accountFolders = store.getDefaultFolder().list();
+            } catch (Throwable t) {
+                log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+                accountFolders = new Folder[1];
+                accountFolders[0] = (Folder) store.getFolder(INBOX);
+            }
+
+            Folder inboxFolder = CommonMailUtils.getInboxFolder(accountFolders);
+
+            if (!inboxFolder.isOpen()) {
+                inboxFolder.open(Folder.READ_WRITE);
+            }
+
+            Message[] allMessages = inboxFolder.getMessages();
+            HashMap<String, String> decodedMap = new HashMap<>();
+//            for (Message msg : allMessages) {
+//                String fromCheck = "unbekannt";
+//                Address[] froms = msg.getFrom();
+//                if (froms != null) {
+//                    if (froms.length > 0) {
+//                        fromCheck = froms[0].toString();
+//                        String fromKey = fromCheck;
+//                        if (decodedMap.containsKey(fromKey)) {
+//                            fromCheck = decodedMap.get(fromKey);
+//                        } else {
+//                            fromCheck = CommonMailUtils.decodeText(fromKey);
+//                            decodedMap.put(fromKey, fromCheck);
+//                        }
+//                    }
+//
+//                }
+//                final String from = fromCheck;
+//                Address[] to = msg.getRecipients(Message.RecipientType.TO);
+//                String toString = "";
+//                if (to != null) {
+//                    if (to.length > 0) {
+//                        String toStr = to[0].toString();
+//                        if (decodedMap.containsKey(toStr)) {
+//                            toString = decodedMap.get(toStr);
+//                        } else {
+//                            toString = CommonMailUtils.decodeText(toStr);
+//                            decodedMap.put(toStr, toString);
+//                        }
+//
+//                    }
+//                }
+//
+//                //Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
+//                // find any potential cases by looking for file numbers in subject and body
+//                ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbers();
+//                ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
+//                ArrayList<String> actionableFileNumbers = new ArrayList<>();
+//                String subject = msg.getSubject().toLowerCase();
+//                String body = this.mailContentUI.getBody().toLowerCase();
+//                for (String fn : allFileNumbers) {
+//                    String fnLower = fn.toLowerCase();
+//                    if (subject.contains(fnLower)) {
+//                        actionableFileNumbers.add(fn);
+//                        ArchiveFileBean a = caseSvc.getArchiveFileByFileNumber(fn);
+//                        if (a != null) {
+//                            subjectBodyCases.add(a);
+//                        }
+//                        continue;
+//                    } else {
+//                        if (body.contains(fnLower)) {
+//                            actionableFileNumbers.add(fn);
+//                            ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+//                            if (a != null) {
+//                                subjectBodyCases.add(a);
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                Address[] senders = msg.getFrom();
+//                AddressBean[] relevantAddresses = null;
+//                String senderName = "";
+//                String senderAddress = "";
+//                if (senders != null) {
+//                    if (senders.length > 0) {
+//                        Address sender = senders[0];
+//                        if (sender instanceof javax.mail.internet.InternetAddress) {
+//                            relevantAddresses = ads.searchSimple(((javax.mail.internet.InternetAddress) sender).getAddress());
+//                            senderName = ((javax.mail.internet.InternetAddress) sender).getPersonal();
+//                            if (senderName == null) {
+//                                senderName = "";
+//                            }
+//                            senderAddress = ((javax.mail.internet.InternetAddress) sender).getAddress();
+//                            if (senderAddress == null) {
+//                                senderAddress = "";
+//                            }
+//                        }
+//
+//                    }
+//                }
+//                body = this.mailContentUI.getBody();
+//                if (this.mailContentUI.getContentType() != null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
+//                    body = EmailUtils.Html2Text(this.mailContentUI.getBody());
+//                }
+//
+//                CreateNewCasePanel cncp = new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), body, senderName, senderAddress);
+//                actionPanelEntries.add(cncp);
+//
+//                ArrayList<ArchiveFileBean> addressRelatedCases = new ArrayList<>();
+//                if (senders != null) {
+//                    if (senders.length > 0) {
+//                        Address sender = senders[0];
+//                        if (sender instanceof javax.mail.internet.InternetAddress) {
+//                            AddressBean[] hits = ads.searchSimple(((javax.mail.internet.InternetAddress) sender).getAddress());
+//
+//                            if (hits.length == 0) {
+//                                CreateNewAddressPanel nap = new CreateNewAddressPanel(this.getClass().getName());
+//                                nap.setBackground(new Color(153, 204, 255));
+//                                nap.setEmail(((javax.mail.internet.InternetAddress) sender).getAddress());
+//                                nap.setSenderName(((javax.mail.internet.InternetAddress) sender).getPersonal());
+//                                actionPanelEntries.add(nap);
+//                            }
+//
+//                            // empt case reference - will trigger a search
+//                            SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
+//                            sp.setBackground(sp.getBackground().brighter());
+//                            CaseForContactEntry cce = new CaseForContactEntry();
+//                            cce.setFileNumber(null);
+//                            cce.setId(null);
+//                            cce.setRole("");
+//                            cce.setName("Akte suchen und zuordnen");
+//                            cce.setReason(StringUtils.nonEmpty(null));
+//                            cce.setArchived(false);
+//                            sp.setEntry(cce, this);
+//                            actionPanelEntries.add(sp);
+//
+//
+//                            // find cases that might be relevant for the sender of the mail
+//                            for (AddressBean h : hits) {
+//                                NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
+//                                ap.setAddress(h);
+//                                ap.setBackground(new Color(153, 204, 255));
+//                                actionPanelEntries.add(ap);
+//
+//                                Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
+//
+//                                for (Object o : caseCol) {
+//                                    ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
+//                                    ArchiveFileBean a = afab.getArchiveFileKey();
+//                                    if (!actionableFileNumbers.contains(a.getFileNumber())) {
+//                                        actionableFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
+//                                        addressRelatedCases.add(a);
+//                                    }
+//                                }
+//
+//                                Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
+//                                    ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
+//                                    ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
+//
+//                                    if (aFile2.isArchived()) {
+//                                        if (aFile1.isArchived()) {
+//                                            // both archived
+//                                            // sort by changed date
+//                                            //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
+//                                            return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+//                                        } else {
+//                                            // only 2 is archived
+//                                            return -1;
+//                                        }
+//                                    } else if (aFile1.isArchived()) {
+//                                        // only 1 is archived
+//                                        return 1;
+//                                    } else {
+//                                        // both are non-archived
+//                                        // sort by changed date
+//                                        //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
+//                                        return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+//                                    }
+//                                });
+//
+//                            }
+//                        }
+//
+//                    }
+//                }
+//
+//                subjectBodyCases.addAll(addressRelatedCases);
+//                int i = 0;
+//                for (Object c : subjectBodyCases) {
+//                    ArchiveFileBean aFile = (ArchiveFileBean) c;
+//                    SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+//                    if (i % 2 == 0) {
+//                        ep.setBackground(ep.getBackground().darker());
+//                    }
+//                    ep.setBackground(ep.getBackground().brighter());
+//                    CaseForContactEntry lce = new CaseForContactEntry();
+//                    lce.setFileNumber(aFile.getFileNumber());
+//                    lce.setId(aFile.getId());
+//                    lce.setRole("");
+//                    lce.setName(aFile.getName());
+//                    lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+//                    lce.setArchived(aFile.isArchived());
+//                    ep.setEntry(lce, this);
+//
+//                    actionPanelEntries.add(ep);
+//                    i++;
+//                }
+//
+//            }
+
+            inboxFolder.close();
+            store.close();
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server " + server, ex);
+
         }
     }
 

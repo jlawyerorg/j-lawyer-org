@@ -680,6 +680,7 @@ public class TransientTimer {
     private Timer timerFax = null;
     private Timer timerEpost = null;
     private Timer timerPurgeBin = null;
+    private Timer timerMailScanner = null;
 
     private TransientTimer() {
 
@@ -747,6 +748,14 @@ public class TransientTimer {
 
             // start after 40s and run every 3min
             timerEpost.schedule(new EpostQueueStatusTask(), 40000l, 3l * 60l * 1000l);
+
+        }
+        
+        if (timerMailScanner == null) {
+            timerMailScanner = new Timer();
+
+            // start after 40s and run every 15min
+            timerMailScanner.schedule(new MailboxScannerTask(), 20000l, 15l * 60l * 1000l);
 
         }
     }

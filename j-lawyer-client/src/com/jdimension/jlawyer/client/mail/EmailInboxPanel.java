@@ -677,7 +677,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
+import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewCasePanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
@@ -688,6 +688,8 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
+import com.jdimension.jlawyer.email.CommonMailUtils;
+import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -758,7 +760,6 @@ import org.apache.log4j.Logger;
 public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, MessageChangedListener, MessageCountListener, DropTargetListener, DragGestureListener {
 
     private static final Logger log = Logger.getLogger(EmailInboxPanel.class.getName());
-    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     
     private Image backgroundImage = null;
     private EmailFolderTreeCellRenderer renderer = null;
@@ -937,7 +938,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     ServerSettings sset=ServerSettings.getInstance();
                     String trustedServers=sset.getSetting("mail.imaps.ssl.trust", "");
                     if(trustedServers.length()>0)
-                        props.put("mail.imaps.ssl.trust", "mail.your-server.de");
+                        props.put("mail.imaps.ssl.trust", trustedServers);
                     
                     session = Session.getInstance(props, new Authenticator() {
                         @Override
@@ -983,7 +984,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 } catch (Throwable t) {
                     log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
                     accountFolders = new Folder[1];
-                    accountFolders[0] = (Folder) stores.get(ms).getFolder(FolderContainer.INBOX);
+                    accountFolders[0] = (Folder) stores.get(ms).getFolder(CommonMailUtils.INBOX);
                 }
 
                 Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
@@ -992,14 +993,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 if (EmailUtils.isIMAP(accountFolders[0])) {
                     if (sentFolderF == null) {
-                        sentFolderF = inboxFolderF.getFolder(FolderContainer.SENT);
+                        sentFolderF = inboxFolderF.getFolder(CommonMailUtils.SENT);
                         if (!sentFolderF.exists()) {
                             sentFolderF.create(Folder.HOLDS_MESSAGES);
                         }
                     }
 
                     if (trashFolderF == null) {
-                        trashFolderF = inboxFolderF.getFolder(FolderContainer.TRASH);
+                        trashFolderF = inboxFolderF.getFolder(CommonMailUtils.TRASH);
                         if (!trashFolderF.exists()) {
                             trashFolderF.create(Folder.HOLDS_MESSAGES);
                         }
@@ -1738,13 +1739,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             FolderContainer folderC = (FolderContainer) tn.getUserObject();
             Folder f = folderC.getFolder();
-            if (FolderContainer.INBOX.equalsIgnoreCase(f.getName()) || FolderContainer.SENT.equalsIgnoreCase(f.getName()) || FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
+            if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
                 this.mnuRemoveFolder.setEnabled(false);
             } else {
                 this.mnuRemoveFolder.setEnabled(true);
             }
 
-            if (FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
+            if (CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
                 this.mnuEmptyTrash.setEnabled(true);
             } else {
                 this.mnuEmptyTrash.setEnabled(false);
@@ -1808,13 +1809,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             FolderContainer folderC = (FolderContainer) tn.getUserObject();
             Folder f = folderC.getFolder();
-            if (FolderContainer.INBOX.equalsIgnoreCase(f.getName()) || FolderContainer.SENT.equalsIgnoreCase(f.getName()) || FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
+            if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
                 this.mnuRemoveFolder.setEnabled(false);
             } else {
                 this.mnuRemoveFolder.setEnabled(true);
             }
 
-            if (FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
+            if (CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
                 this.mnuEmptyTrash.setEnabled(true);
             } else {
                 this.mnuEmptyTrash.setEnabled(false);
@@ -1952,7 +1953,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         try {
             if (EmailUtils.isIMAP(expungeFolder)) {
 
-                if (!(expungeFolder.getName().equalsIgnoreCase(FolderContainer.TRASH))) {
+                if (!(expungeFolder.getName().equalsIgnoreCase(CommonMailUtils.TRASH))) {
                     // when deleting from trash, we don't move it to trash again :-)
 
                     try {
@@ -2062,7 +2063,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
         FolderContainer folderC = (FolderContainer) tn.getUserObject();
         Folder f = folderC.getFolder();
-        if (FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
+        if (CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
             try {
                 if (!f.isOpen()) {
                     f.open(Folder.READ_WRITE);

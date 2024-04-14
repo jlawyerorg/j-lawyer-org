@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -697,42 +698,9 @@ import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
  *
  * @author jens
  */
-public class EmailUtils {
+public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
-
-    private static ArrayList<String> trashAliases;
-    private static ArrayList<String> draftAliases;
-    private static ArrayList<String> sentAliases;
-    private static ArrayList<String> inboxAliases;
-    private static ArrayList<String> defaultAliases;
-
-    static {
-        trashAliases = new ArrayList<>();
-        trashAliases.add("Papierkorb");
-        trashAliases.add("Gelöscht");
-        trashAliases.add("Trash");
-        trashAliases.add("Gelöschte Elemente");
-
-        sentAliases = new ArrayList<>();
-        sentAliases.add("Gesendet");
-        sentAliases.add("Sent");
-        sentAliases.add("Sent Items");
-        sentAliases.add("Gesendete Elemente");
-        sentAliases.add("Sent Objects");
-        sentAliases.add("Gesendete Objekte");
-
-        inboxAliases = new ArrayList<>();
-        inboxAliases.add("Posteingang");
-
-        draftAliases = new ArrayList<>();
-        draftAliases.add("Entwürfe");
-        draftAliases.add("Drafts");
-        draftAliases.add("Entwuerfe");
-
-        defaultAliases = new ArrayList<>();
-
-    }
 
     public static boolean hasConfig(AppUserBean u) {
 
@@ -1116,193 +1084,16 @@ public class EmailUtils {
         return false;
     }
 
-    public static Folder getSentFolder(Store store) throws Exception {
-        Folder[] accountFolders = null;
-        try {
-            accountFolders = store.getDefaultFolder().list();
-        } catch (Throwable t) {
-            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
-            accountFolders = new Folder[1];
-            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
-        }
-        return getSentFolder(accountFolders);
-    }
+    
 
-    public static Folder getDraftsFolder(Store store) throws Exception {
-        Folder[] accountFolders = null;
-        try {
-            accountFolders = store.getDefaultFolder().list();
-        } catch (Throwable t) {
-            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
-            accountFolders = new Folder[1];
-            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
-        }
-        return getDraftsFolder(accountFolders);
-    }
-
-    public static Folder getInboxFolder(Store store) throws Exception {
-        Folder[] accountFolders = null;
-        try {
-            accountFolders = store.getDefaultFolder().list();
-        } catch (Throwable t) {
-            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
-            accountFolders = new Folder[1];
-            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
-        }
-        return getInboxFolder(accountFolders);
-    }
-
-    public static Folder getSentFolder(Folder inbox) throws Exception {
-        return getFolderByName(inbox, FolderContainer.SENT);
-    }
-
-    public static Folder getSentFolder(Folder[] folders) throws Exception {
-        return getFolderByName(folders, FolderContainer.SENT);
-    }
-
-    public static Folder getInboxFolder(Folder inbox) throws Exception {
-        return getFolderByName(inbox, FolderContainer.INBOX);
-    }
-
-    public static Folder getInboxFolder(Folder[] folders) throws Exception {
-        return getFolderByName(folders, FolderContainer.INBOX);
-    }
-
-    public static Folder getDraftsFolder(Folder inbox) throws Exception {
-        return getFolderByName(inbox, FolderContainer.DRAFTS);
-    }
-
-    public static Folder getDraftsFolder(Folder[] folders) throws Exception {
-        return getFolderByName(folders, FolderContainer.DRAFTS);
-    }
-
-    public static boolean isDrafts(String folderName) {
-        ArrayList<String> aliases = getFolderAliases(FolderContainer.DRAFTS);
-        for (String a : aliases) {
-            if (folderName.equalsIgnoreCase(a)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isInbox(String folderName) {
-        ArrayList<String> aliases = getFolderAliases(FolderContainer.INBOX);
-        for (String a : aliases) {
-            if (folderName.equalsIgnoreCase(a)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isSent(String folderName) {
-        ArrayList<String> aliases = getFolderAliases(FolderContainer.SENT);
-        for (String a : aliases) {
-            if (folderName.equalsIgnoreCase(a)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isTrash(String folderName) {
-        ArrayList<String> aliases = getFolderAliases(FolderContainer.TRASH);
-        for (String a : aliases) {
-            if (folderName.equalsIgnoreCase(a)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static Folder getFolderByName(Folder inbox, String name) throws Exception {
-        if (!isIMAP(inbox)) {
-            return null;
-        }
-
-        if (inbox.getName().equalsIgnoreCase(name)) {
-            return inbox;
-        }
-
-        ArrayList<String> aliases = getFolderAliases(name);
-        for (String a : aliases) {
-            if (inbox.getName().equalsIgnoreCase(a)) {
-                return inbox;
-            }
-        }
-
-        Folder[] children = inbox.list();
-        for (Folder f : children) {
-            if (f.getName().equalsIgnoreCase(name)) {
-                return f;
-            }
-            for (String a : aliases) {
-                if (f.getName().equalsIgnoreCase(a)) {
-                    return f;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static ArrayList<String> getFolderAliases(String folderName) {
-        if (FolderContainer.TRASH.equalsIgnoreCase(folderName)) {
-            return trashAliases;
-        } else if (FolderContainer.SENT.equalsIgnoreCase(folderName)) {
-            return sentAliases;
-        } else if (FolderContainer.INBOX.equalsIgnoreCase(folderName)) {
-            return inboxAliases;
-        } else if (FolderContainer.DRAFTS.equalsIgnoreCase(folderName)) {
-            return draftAliases;
-        } else {
-            return defaultAliases;
-        }
-    }
-
-    public static Folder getFolderByName(Folder[] folders, String name) throws Exception {
-
-        for (Folder f : folders) {
-            Folder sent = getFolderByName(f, name);
-            if (sent != null) {
-                return sent;
-            }
-        }
-        return null;
-
-    }
-
-    public static String decodeText(String t) {
-        //iso-8859-1
-        if (t != null) {
-            t = t.replaceAll("x-unknown", "iso-8859-1");
-            try {
-                return MimeUtility.decodeText(t);
-            } catch (UnsupportedEncodingException usee) {
-                return t;
-            }
-        }
-        return t;
-    }
-
-    public static String encodeText(String t) {
-        try {
-            return MimeUtility.encodeText(t);
-        } catch (UnsupportedEncodingException ex) {
-            return t;
-        }
-    }
+    
 
     public static Folder getTrashFolder(Folder inbox) throws Exception {
-        return getFolderByName(inbox, FolderContainer.TRASH);
+        return getFolderByName(inbox, CommonMailUtils.TRASH);
     }
 
     public static Folder getTrashFolder(Folder[] inbox) throws Exception {
-        return getFolderByName(inbox, FolderContainer.TRASH);
-    }
-
-    public static boolean isIMAP(Folder f) {
-        return (f instanceof IMAPFolder);
+        return getFolderByName(inbox, CommonMailUtils.TRASH);
     }
 
     public static boolean sameCryptoPassword(AddressBean[] addresses) throws Exception {

@@ -661,74 +661,242 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail.oauth;
+package com.jdimension.jlawyer.email;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
+import com.sun.mail.imap.IMAPFolder;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import javax.mail.Folder;
+import javax.mail.Store;
+import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
-import org.json.simple.JsonKey;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsoner;
 
 /**
  *
  * @author jens
  */
-public class MsExchangeUtils {
+public class CommonMailUtils {
+    
+    private static final Logger log=Logger.getLogger(CommonMailUtils.class.getName());
+    
+    public static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    public static final String INBOX = "INBOX";
+    public static final String TRASH = "Trash";
+    public static final String SENT = "Sent";
+    public static final String DRAFTS = "Drafts";
+    
+    private static ArrayList<String> trashAliases;
+    private static ArrayList<String> draftAliases;
+    private static ArrayList<String> sentAliases;
+    private static ArrayList<String> inboxAliases;
+    private static ArrayList<String> defaultAliases;
 
-    private static final Logger log = Logger.getLogger(MsExchangeUtils.class.getName());
+    static {
+        trashAliases = new ArrayList<>();
+        trashAliases.add("Papierkorb");
+        trashAliases.add("Gelöscht");
+        trashAliases.add("Trash");
+        trashAliases.add("Gelöschte Elemente");
 
-    public static String getAuthToken(String tenantId, String clientId, String clientSecret, String user, String password) throws MissingConsentException, Exception {
+        sentAliases = new ArrayList<>();
+        sentAliases.add("Gesendet");
+        sentAliases.add("Sent");
+        sentAliases.add("Sent Items");
+        sentAliases.add("Gesendete Elemente");
+        sentAliases.add("Sent Objects");
+        sentAliases.add("Gesendete Objekte");
+
+        inboxAliases = new ArrayList<>();
+        inboxAliases.add("Posteingang");
+
+        draftAliases = new ArrayList<>();
+        draftAliases.add("Entwürfe");
+        draftAliases.add("Drafts");
+        draftAliases.add("Entwuerfe");
+
+        defaultAliases = new ArrayList<>();
+
+    }
+    
+    public static Folder getSentFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
         try {
-            CloseableHttpClient client = HttpClients.createDefault();
-            HttpPost loginPost = new HttpPost("https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token");
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(INBOX);
+        }
+        return getSentFolder(accountFolders);
+    }
 
-            String scopes = "https://outlook.office365.com/.default";
+    public static Folder getDraftsFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(INBOX);
+        }
+        return getDraftsFolder(accountFolders);
+    }
 
-            String encodedBody = "client_id=" + clientId
-                    + "&scope=" + scopes
-                    + "&client_secret=" + clientSecret
-                    + "&username=" + user
-                    + "&password=" + password
-                    + "&grant_type=password";
+    public static Folder getInboxFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(INBOX);
+        }
+        return getInboxFolder(accountFolders);
+    }
 
-            loginPost.setEntity(new StringEntity(encodedBody, ContentType.APPLICATION_FORM_URLENCODED));
+    public static Folder getSentFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, SENT);
+    }
 
-            loginPost.addHeader(new BasicHeader("cache-control", "no-cache"));
-            CloseableHttpResponse loginResponse = client.execute(loginPost);
-            byte[] response = new byte[16384];
-            int length = loginResponse.getEntity().getContent().read(response);
-            String stringResponse = new String(response, 0, length);
-            
-            if(stringResponse.toLowerCase().contains("aadsts65001") || stringResponse.toLowerCase().contains("user or administrator has not consented") || stringResponse.toLowerCase().contains("send an interactive authorization request")) {
-                throw new MissingConsentException(stringResponse);
+    public static Folder getSentFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, SENT);
+    }
+
+    public static Folder getInboxFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, INBOX);
+    }
+
+    public static Folder getInboxFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, INBOX);
+    }
+
+    public static Folder getDraftsFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, DRAFTS);
+    }
+
+    public static Folder getDraftsFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, DRAFTS);
+    }
+
+    public static boolean isDrafts(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(DRAFTS);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
             }
-            
-            Object jsonOutput = Jsoner.deserialize(stringResponse);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey aTokenKey = Jsoner.mintJsonKey("access_token", null);
-                String aToken = result.getString(aTokenKey);
-                if(aToken==null) {
-                    log.error("Unable to retrieve authorization token");
-                    log.info(stringResponse);
-                } else {
-                    log.debug("successfully retrieved authorization token for client id " + clientId);
+        }
+        return false;
+    }
+
+    public static boolean isInbox(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(INBOX);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isSent(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(SENT);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isTrash(String folderName) {
+        ArrayList<String> aliases = getFolderAliases(TRASH);
+        for (String a : aliases) {
+            if (folderName.equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static Folder getFolderByName(Folder inbox, String name) throws Exception {
+        if (!isIMAP(inbox)) {
+            return null;
+        }
+
+        if (inbox.getName().equalsIgnoreCase(name)) {
+            return inbox;
+        }
+
+        ArrayList<String> aliases = getFolderAliases(name);
+        for (String a : aliases) {
+            if (inbox.getName().equalsIgnoreCase(a)) {
+                return inbox;
+            }
+        }
+
+        Folder[] children = inbox.list();
+        for (Folder f : children) {
+            if (f.getName().equalsIgnoreCase(name)) {
+                return f;
+            }
+            for (String a : aliases) {
+                if (f.getName().equalsIgnoreCase(a)) {
+                    return f;
                 }
-                return aToken;
-            } else {
-                throw new Exception("Autorisierungs-Token für Microsoft Exchange konnte nicht ermittelt werden!");
             }
+        }
+        return null;
+    }
 
-        } catch (Exception e) {
-            log.error("unable to get MS Exchange authorization token for client id " + clientId, e);
-            throw e;
+    public static ArrayList<String> getFolderAliases(String folderName) {
+        if (TRASH.equalsIgnoreCase(folderName)) {
+            return trashAliases;
+        } else if (SENT.equalsIgnoreCase(folderName)) {
+            return sentAliases;
+        } else if (INBOX.equalsIgnoreCase(folderName)) {
+            return inboxAliases;
+        } else if (DRAFTS.equalsIgnoreCase(folderName)) {
+            return draftAliases;
+        } else {
+            return defaultAliases;
         }
     }
 
+    public static Folder getFolderByName(Folder[] folders, String name) throws Exception {
+
+        for (Folder f : folders) {
+            Folder sent = getFolderByName(f, name);
+            if (sent != null) {
+                return sent;
+            }
+        }
+        return null;
+
+    }
+    
+    public static boolean isIMAP(Folder f) {
+        return (f instanceof IMAPFolder);
+    }
+    
+    public static String decodeText(String t) {
+        //iso-8859-1
+        if (t != null) {
+            t = t.replaceAll("x-unknown", "iso-8859-1");
+            try {
+                return MimeUtility.decodeText(t);
+            } catch (UnsupportedEncodingException usee) {
+                return t;
+            }
+        }
+        return t;
+    }
+
+    public static String encodeText(String t) {
+        try {
+            return MimeUtility.encodeText(t);
+        } catch (UnsupportedEncodingException ex) {
+            return t;
+        }
+    }
+    
 }

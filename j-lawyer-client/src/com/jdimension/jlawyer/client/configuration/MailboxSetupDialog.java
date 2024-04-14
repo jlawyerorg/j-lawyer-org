@@ -664,8 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.mail.oauth.MissingConsentException;
-import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
+import com.jdimension.jlawyer.email.MissingConsentException;
+import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.client.mail.oauth.OAuthUserConsentDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;

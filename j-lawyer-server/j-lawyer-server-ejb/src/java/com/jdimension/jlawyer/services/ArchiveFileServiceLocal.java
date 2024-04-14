@@ -699,6 +699,8 @@ public interface ArchiveFileServiceLocal {
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
     public Date getLastChangedForArchiveFile(String archiveFileKey);
+    public ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
     
     
     public int getDocumentCount();

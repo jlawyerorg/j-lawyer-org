@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
@@ -677,10 +678,6 @@ import org.apache.log4j.Logger;
  */
 public class FolderContainer {
 
-    public static final String INBOX = "INBOX";
-    public static final String SENT = "Sent";
-    public static final String TRASH = "Trash";
-    public static final String DRAFTS = "Drafts";
 
     private long cachedToStringUpdated = -1;
     private String cachedToString = null;
@@ -692,10 +689,10 @@ public class FolderContainer {
     private static Hashtable<String, String> folderNameMapping = new Hashtable<>();
 
     static {
-        folderNameMapping.put(INBOX, "Posteingang");
-        folderNameMapping.put(SENT, "Gesendet");
-        folderNameMapping.put(TRASH, "Papierkorb");
-        folderNameMapping.put(DRAFTS, "Entwürfe");
+        folderNameMapping.put(CommonMailUtils.INBOX, "Posteingang");
+        folderNameMapping.put(CommonMailUtils.SENT, "Gesendet");
+        folderNameMapping.put(CommonMailUtils.TRASH, "Papierkorb");
+        folderNameMapping.put(CommonMailUtils.DRAFTS, "Entwürfe");
     }
 
     private Folder folder;

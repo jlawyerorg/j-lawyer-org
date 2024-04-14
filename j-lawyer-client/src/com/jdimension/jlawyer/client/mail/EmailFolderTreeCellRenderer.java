@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -742,14 +743,14 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     this.setIcon(inboxIcon);
                 } else {
                     boolean iconIsSet = false;
-                    for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
+                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.TRASH)) {
                         if (a.equalsIgnoreCase(f.getName())) {
                             this.setIcon(trashIcon);
                             iconIsSet = true;
                             break;
                         }
                     }
-                    for (String a : EmailUtils.getFolderAliases(FolderContainer.DRAFTS)) {
+                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.DRAFTS)) {
                         if (a.equalsIgnoreCase(f.getName())) {
                             this.setIcon(draftsIcon);
                             iconIsSet = true;
@@ -757,7 +758,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                         }
                     }
                     if (!iconIsSet) {
-                        for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
+                        for (String a : EmailUtils.getFolderAliases(CommonMailUtils.SENT)) {
                             if (a.equalsIgnoreCase(f.getName())) {
                                 this.setIcon(sentIcon);
                                 iconIsSet = true;
@@ -766,7 +767,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                         }
                     }
                     if (!iconIsSet) {
-                        for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
+                        for (String a : EmailUtils.getFolderAliases(CommonMailUtils.INBOX)) {
                             if (a.equalsIgnoreCase(f.getName())) {
                                 this.setIcon(inboxIcon);
                                 break;
