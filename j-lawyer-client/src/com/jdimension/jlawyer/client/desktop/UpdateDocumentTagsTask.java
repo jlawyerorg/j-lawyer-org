@@ -685,9 +685,8 @@ import org.apache.log4j.Logger;
 public class UpdateDocumentTagsTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(UpdateDocumentTagsTask.class.getName());
-    private Component owner;
-    private QuickArchiveFileSearchPanel p1;
-    //private QuickArchiveFileSearchPanel p2;
+    private final Component owner;
+    private final QuickArchiveFileSearchPanel p1;
 
     /**
      * Creates a new instance of UpdateDocumentTagsTask
@@ -698,7 +697,6 @@ public class UpdateDocumentTagsTask extends java.util.TimerTask {
         super();
         this.owner = owner;
         this.p1 = p1;
-        //this.p2=p2;
 
     }
 
