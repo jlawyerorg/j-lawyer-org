@@ -811,7 +811,13 @@ FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
 
 insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.12.0.7') ON DUPLICATE KEY UPDATE settingValue     = '1.12.0.7';
 
+
+
+ALTER TABLE cases DROP FOREIGN KEY fk_group;
 alter table cases modify owner_group VARCHAR(50) BINARY;
+ALTER TABLE cases ADD FOREIGN KEY fk_group (owner_group) REFERENCES security_groups (id) ON DELETE RESTRICT;
+
+
 insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.12.0.8') ON DUPLICATE KEY UPDATE settingValue     = '1.12.0.8';
 
 alter table cases add `filenumberext` VARCHAR(100) BINARY;
