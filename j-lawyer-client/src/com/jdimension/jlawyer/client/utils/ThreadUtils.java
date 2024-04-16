@@ -831,6 +831,13 @@ public class ThreadUtils {
             label.setIcon(icon);
         });
     }
+    
+    public static void updateLabelIcon(final JLabel label, final ImageIcon icon, final String text) {
+        SwingUtilities.invokeLater(() -> {
+            label.setText(text);
+            label.setIcon(icon);
+        });
+    }
 
     public static void updateProgressBar(final JProgressBar progress, final String text, final int value, final int max, final boolean indeterminate) {
         SwingUtilities.invokeLater(() -> {

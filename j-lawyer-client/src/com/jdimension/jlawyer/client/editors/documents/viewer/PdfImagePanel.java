@@ -663,8 +663,10 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Image;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import javax.swing.ImageIcon;
@@ -682,14 +684,22 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
     private static final Logger log = Logger.getLogger(PdfImagePanel.class.getName());
 
     BufferedImage orgImage = null;
+    // page for which the buffered image was created last
+    // initially set to -1, so that the first request for page 0 will cause the image to be extracted
+    int orgImagePage = -1;
+
+    // current page / request page for displaying / rendering
     int currentPage = 0;
     private byte[] content = null;
     private int totalPages = 1;
     private String fileName = null;
-    private String documentId=null;
+    private String documentId = null;
+
+    private int zoomFactor = 100;
 
     /**
      * Creates new form PlaintextPanel
+     *
      * @param fileName
      * @param content
      */
@@ -697,6 +707,21 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         initComponents();
         this.fileName = fileName;
         ThreadUtils.updateLabel(this.lblContent, "");
+
+        String zoomFactorString = ClientSettings.getInstance().getConfiguration("pdf.zoomfactor", "100");
+        this.zoomFactor = 100;
+        try {
+            this.zoomFactor = Integer.parseInt(zoomFactorString);
+            if (this.zoomFactor > 300) {
+                this.zoomFactor = 300;
+            }
+            if (this.zoomFactor < 25) {
+                this.zoomFactor = 25;
+            }
+            this.sliderZoom.setValue(this.zoomFactor);
+        } catch (Throwable t) {
+            log.warn("invalid zoom factor: " + zoomFactorString);
+        }
 
     }
 
@@ -716,10 +741,17 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         lblCurrentPage = new javax.swing.JLabel();
         cmdFirstPage = new javax.swing.JButton();
         cmdLastPage = new javax.swing.JButton();
+        sliderZoom = new javax.swing.JSlider();
+        cmdFitToScreen = new javax.swing.JButton();
 
         lblContent.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblContent.setText("Lade...");
         lblContent.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        lblContent.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+                lblContentMouseWheelMoved(evt);
+            }
+        });
         jScrollPane1.setViewportView(lblContent);
 
         cmdPageForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
@@ -752,6 +784,23 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
             }
         });
 
+        sliderZoom.setMaximum(300);
+        sliderZoom.setMinimum(25);
+        sliderZoom.setPaintLabels(true);
+        sliderZoom.setValue(100);
+        sliderZoom.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderZoomStateChanged(evt);
+            }
+        });
+
+        cmdFitToScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_fit_screen_black_48dp.png"))); // NOI18N
+        cmdFitToScreen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFitToScreenActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -767,7 +816,10 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                 .addComponent(cmdLastPage)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblCurrentPage)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdFitToScreen))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -777,46 +829,66 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                         .addComponent(cmdFirstPage)
                         .addComponent(cmdPageBackward)
                         .addComponent(cmdPageForward)
-                        .addComponent(lblCurrentPage, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblCurrentPage)
+                            .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdFitToScreen)))
                     .addComponent(cmdLastPage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     public void reRenderPage() {
-        this.showPage(this.content, this.currentPage);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
     }
-    
+
     private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
         this.currentPage = this.currentPage - 1;
-        this.showPage(this.content, this.currentPage);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
     }//GEN-LAST:event_cmdPageBackwardActionPerformed
 
     private void cmdPageForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageForwardActionPerformed
         this.currentPage = this.currentPage + 1;
-        this.showPage(this.content, this.currentPage);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
     }//GEN-LAST:event_cmdPageForwardActionPerformed
 
     private void cmdFirstPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFirstPageActionPerformed
         this.currentPage = 0;
-        this.showPage(this.content, this.currentPage);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
     }//GEN-LAST:event_cmdFirstPageActionPerformed
 
     private void cmdLastPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLastPageActionPerformed
         this.currentPage = this.totalPages - 1;
-        this.showPage(this.content, this.currentPage);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
     }//GEN-LAST:event_cmdLastPageActionPerformed
+
+    private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
+        this.zoomFactor = this.sliderZoom.getValue();
+        ClientSettings.getInstance().setConfiguration("pdf.zoomfactor", "" + this.zoomFactor);
+        this.showPage(this.content, this.currentPage, this.zoomFactor);
+    }//GEN-LAST:event_sliderZoomStateChanged
+
+    private void lblContentMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_lblContentMouseWheelMoved
+       this.sliderZoom.setValue(this.sliderZoom.getValue()+(-3*evt.getUnitsToScroll()));
+       
+    }//GEN-LAST:event_lblContentMouseWheelMoved
+
+    private void cmdFitToScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFitToScreenActionPerformed
+        this.sliderZoom.setValue(100);
+    }//GEN-LAST:event_cmdFitToScreenActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdFirstPage;
+    private javax.swing.JButton cmdFitToScreen;
     private javax.swing.JButton cmdLastPage;
     private javax.swing.JButton cmdPageBackward;
     private javax.swing.JButton cmdPageForward;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblContent;
     private javax.swing.JLabel lblCurrentPage;
+    private javax.swing.JSlider sliderZoom;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -824,7 +896,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         ThreadUtils.updateLabel(this.lblContent, text);
     }
 
-    private void showPage(byte[] content, int page) {
+    private void showPage(byte[] content, int page, int zoomFactor) {
         this.content = content;
         try {
             if (content != null) {
@@ -836,45 +908,53 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                 this.showStatus("Daten für die Vorschaudarstellung sind ungültig.");
                 return;
             }
-                        
-            PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
-            PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
 
-            this.totalPages = inputPDF.getNumberOfPages();
+            if (page != this.orgImagePage) {
+                PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
+                PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
 
-            if (page == 0) {
-                this.cmdPageBackward.setEnabled(false);
-            } else {
-                this.cmdPageBackward.setEnabled(true);
+                this.totalPages = inputPDF.getNumberOfPages();
+
+                if (page == 0) {
+                    this.cmdPageBackward.setEnabled(false);
+                } else {
+                    this.cmdPageBackward.setEnabled(true);
+                }
+                this.cmdFirstPage.setEnabled(this.cmdPageBackward.isEnabled());
+
+                if (page < (this.totalPages - 1)) {
+                    this.cmdPageForward.setEnabled(true);
+                } else {
+                    this.cmdPageForward.setEnabled(false);
+                }
+                this.cmdLastPage.setEnabled(this.cmdPageForward.isEnabled());
+
+                if (page > (this.totalPages - 1)) {
+                    page = (this.totalPages - 1);
+                }
+
+                this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
+
+                this.orgImage = pdfRenderer.renderImageWithDPI(page, 200, ImageType.RGB);
+                this.orgImagePage=page;
+                inputPDF.close();
             }
-            this.cmdFirstPage.setEnabled(this.cmdPageBackward.isEnabled());
 
-            if (page < (this.totalPages - 1)) {
-                this.cmdPageForward.setEnabled(true);
-            } else {
-                this.cmdPageForward.setEnabled(false);
-            }
-            this.cmdLastPage.setEnabled(this.cmdPageForward.isEnabled());
-
-            if (page > (this.totalPages - 1)) {
-                page = (this.totalPages - 1);
-            }
-
-            this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
-
-            this.orgImage = pdfRenderer.renderImageWithDPI(page, 200, ImageType.RGB);
-            
             // need to subtract the height of the page navigation buttons, but
             // the panel has not been layed out yet, so there is no height we could query
             int height = Math.max(this.getHeight() - 55, 400);
-            
+
             float scaleFactor = (float) height / (float) this.orgImage.getHeight();
             int width = (int) ((float) this.orgImage.getWidth() * scaleFactor);
-            width=Math.min(width, this.getWidth());
-            Image bi2 = this.orgImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            inputPDF.close();
+            //width = Math.min(width, this.getWidth());
 
-            ThreadUtils.updateLabelIcon(this.lblContent, new ImageIcon(bi2));
+            height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
+            width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
+
+            Image bi2 = this.orgImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            
+
+            ThreadUtils.updateLabelIcon(this.lblContent, new ImageIcon(bi2), "");
 
         } catch (Throwable t) {
             log.error("error rendering PDF preview for " + this.fileName, t);
@@ -886,12 +966,12 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
     @Override
     public void showContent(String documentId, byte[] content) {
-        this.documentId=documentId;
+        this.documentId = documentId;
         this.currentPage = 0;
-        this.showPage(content, 0);
+        this.showPage(content, 0, this.zoomFactor);
 
     }
-    
+
     public void showContent(byte[] content) {
         this.showContent(null, content);
 
