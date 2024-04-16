@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Image;
-import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import javax.swing.ImageIcon;
@@ -787,6 +786,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         sliderZoom.setMaximum(300);
         sliderZoom.setMinimum(25);
         sliderZoom.setPaintLabels(true);
+        sliderZoom.setToolTipText("Zoom 25% .. 300%");
         sliderZoom.setValue(100);
         sliderZoom.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -795,6 +795,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
         });
 
         cmdFitToScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_fit_screen_black_48dp.png"))); // NOI18N
+        cmdFitToScreen.setToolTipText("auf Seitenhöhe einpassen");
         cmdFitToScreen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdFitToScreenActionPerformed(evt);
@@ -935,7 +936,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
                 this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
 
-                this.orgImage = pdfRenderer.renderImageWithDPI(page, 200, ImageType.RGB);
+                this.orgImage = pdfRenderer.renderImageWithDPI(page, 300, ImageType.RGB);
                 this.orgImagePage=page;
                 inputPDF.close();
             }
@@ -946,8 +947,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
             float scaleFactor = (float) height / (float) this.orgImage.getHeight();
             int width = (int) ((float) this.orgImage.getWidth() * scaleFactor);
-            //width = Math.min(width, this.getWidth());
-
+            
             height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
             width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
 

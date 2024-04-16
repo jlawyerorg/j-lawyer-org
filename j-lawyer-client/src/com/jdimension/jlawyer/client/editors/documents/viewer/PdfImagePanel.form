@@ -123,6 +123,7 @@
         <Property name="maximum" type="int" value="300"/>
         <Property name="minimum" type="int" value="25"/>
         <Property name="paintLabels" type="boolean" value="true"/>
+        <Property name="toolTipText" type="java.lang.String" value="Zoom 25% .. 300%"/>
         <Property name="value" type="int" value="100"/>
       </Properties>
       <Events>
@@ -134,6 +135,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_fit_screen_black_48dp.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="auf Seitenh&#xf6;he einpassen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdFitToScreenActionPerformed"/>
