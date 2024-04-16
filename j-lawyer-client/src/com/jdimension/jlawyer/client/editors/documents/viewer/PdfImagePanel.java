@@ -862,7 +862,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
             this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
 
-            this.orgImage = pdfRenderer.renderImageWithDPI(page, 100, ImageType.RGB);
+            this.orgImage = pdfRenderer.renderImageWithDPI(page, 200, ImageType.RGB);
             
             // need to subtract the height of the page navigation buttons, but
             // the panel has not been layed out yet, so there is no height we could query
