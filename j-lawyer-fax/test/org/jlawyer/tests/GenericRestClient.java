@@ -673,7 +673,7 @@ import org.json.simple.Jsoner;
  *
  * @author jens
  */
-public class GenericRestTest {
+public class GenericRestClient {
     
     private static final String AUTH_HEADERNAME = "Authorization";
     private static final String AUTH_HEADERPREFIX = "Bearer ";
