@@ -904,7 +904,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
-                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant())) {
+                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
+                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant()) || caseWithoutResponsibles) {
                         filteredDocumentList.add(x);
 
                     }
