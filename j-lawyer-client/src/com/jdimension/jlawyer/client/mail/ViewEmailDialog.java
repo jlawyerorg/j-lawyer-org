@@ -898,7 +898,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -927,7 +927,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -994,7 +994,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -1050,7 +1050,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 }

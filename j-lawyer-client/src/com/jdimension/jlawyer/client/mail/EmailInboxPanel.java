@@ -2167,7 +2167,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
                 dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
@@ -2270,7 +2270,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
                 dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
@@ -2513,7 +2513,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
             body=this.mailContentUI.getBody();
             if(this.mailContentUI.getContentType()!=null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
-                body=EmailUtils.Html2Text(this.mailContentUI.getBody());
+                body=EmailUtils.html2Text(this.mailContentUI.getBody());
             }
             
             CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), body, senderName, senderAddress);

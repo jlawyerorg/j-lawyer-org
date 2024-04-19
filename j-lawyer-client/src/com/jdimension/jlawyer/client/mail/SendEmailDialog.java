@@ -824,7 +824,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
             if (!mailboxes.isEmpty()) {
                 MailboxSetup ms = mailboxes.iterator().next();
-                this.tp.setText(EmailUtils.Html2Text(ms.getEmailSignature()));
+                this.tp.setText(EmailUtils.html2Text(ms.getEmailSignature()));
                 this.hp.setText(ms.getEmailSignature());
             }
 
@@ -833,7 +833,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 this.cmbFrom.setSelectedItem(lastSetup);
                 for (MailboxSetup t : mailboxes) {
                     if (t.getDisplayName().equals(lastSetup)) {
-                        this.tp.setText(EmailUtils.Html2Text(t.getEmailSignature()));
+                        this.tp.setText(EmailUtils.html2Text(t.getEmailSignature()));
                         this.hp.setText(t.getEmailSignature());
                         break;
                     }
@@ -1146,7 +1146,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
-                this.tp.setText(b + EmailUtils.Html2Text(ms.getEmailSignature()));
+                this.tp.setText(b + EmailUtils.html2Text(ms.getEmailSignature()));
                 this.tp.setCaretPosition(0);
             }
         } else {
@@ -2114,7 +2114,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature());
+                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.html2Text(ms.getEmailSignature());
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");

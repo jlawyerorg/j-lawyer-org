@@ -883,8 +883,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         StringBuilder sb = new StringBuilder();
                         sb.append("<html>");
                         for (String p : partsFound) {
-                            String pNew = p;
-                            pNew = p.trim();
+                            String pNew = p.trim();
                             if (pNew.startsWith("<html>")) {
                                 pNew = pNew.substring(6);
                             }
@@ -895,7 +894,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         }
                         sb.append("</html>");
                         String html = sb.toString();
-                        body = CommonMailUtils.Html2Text(html);
+                        body = CommonMailUtils.html2Text(html);
 
                     } else {
                         CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
@@ -930,7 +929,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             }
                             log.warn("bytes represent the following string:");
                             log.warn(body);
-                            body = CommonMailUtils.Html2Text(body);
+                            body = CommonMailUtils.html2Text(body);
                         }
 
                     } else {

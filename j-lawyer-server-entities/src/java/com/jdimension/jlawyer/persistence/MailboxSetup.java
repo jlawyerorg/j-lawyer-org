@@ -1082,9 +1082,8 @@ public class MailboxSetup implements Serializable, EventTypes {
             scanDocumentTags="";
         }
 
-        String[] ary = scanDocumentTags.split(ARRAY_DELIMITER);
+        return scanDocumentTags.split(ARRAY_DELIMITER);
 
-        return ary;
     }
 
     /**

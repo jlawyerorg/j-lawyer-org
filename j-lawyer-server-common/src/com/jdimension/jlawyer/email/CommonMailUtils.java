@@ -1035,7 +1035,7 @@ public class CommonMailUtils {
         return null;
     }
     
-    public static String Html2Text(String html) {
+    public static String html2Text(String html) {
         try {
             if (html == null) {
                 return "";
@@ -1045,8 +1045,7 @@ public class CommonMailUtils {
             Document doc = editorKit.createDefaultDocument();
             doc.putProperty("IgnoreCharsetDirective", true);
             editorKit.read(new StringReader(html), doc, 0);
-            String strText = doc.getText(0, doc.getLength());
-            return strText;
+            return doc.getText(0, doc.getLength());
         } catch (Exception ex) {
             log.error(ex);
             return html;
