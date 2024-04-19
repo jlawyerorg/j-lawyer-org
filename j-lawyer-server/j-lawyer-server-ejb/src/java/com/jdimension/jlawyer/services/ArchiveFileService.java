@@ -4917,6 +4917,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setPeriodTo(new Date());
             i.setStatus(Invoice.STATUS_NEW);
 
+            // check for conflicting invoice numbers
+            Invoice conflictingInvoice = this.invoicesFacade.findByInvoiceNumber(i.getInvoiceNumber());
+            if (conflictingInvoice != null) {
+                throw new Exception("Es gibt bereits einen Beleg mit der Nummer '" + i.getInvoiceNumber() + "' - bitte die Einstellungen des Nummernkreises '" + pool.getDisplayName() + "' prüfen!");
+            }
+
             this.invoicesFacade.create(i);
 
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg erstellt (" + i.getInvoiceNumber() + ", " + i.getInvoiceType().getDisplayName() + ")");

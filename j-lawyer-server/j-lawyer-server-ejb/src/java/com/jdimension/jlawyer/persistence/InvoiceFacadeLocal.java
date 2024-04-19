@@ -694,4 +694,6 @@ public interface InvoiceFacadeLocal {
     
     List<Invoice> findByStatus(int status);
     
+    Invoice findByInvoiceNumber(String invoiceNumber);
+    
 }
