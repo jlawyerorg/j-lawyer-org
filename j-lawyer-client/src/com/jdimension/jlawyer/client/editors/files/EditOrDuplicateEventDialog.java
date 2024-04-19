@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -692,14 +693,14 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
+public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
     public static final int MODE_DUPLICATE = 10;
     public static final int MODE_EDIT = 20;
 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
-    private static final Logger log = Logger.getLogger(EditorOrDuplicateEventDialog.class.getName());
+    private static final Logger log = Logger.getLogger(EditOrDuplicateEventDialog.class.getName());
 
     private ArchiveFileReviewsBean targetReview = null;
     private JTable tblReviewReasons = null;
@@ -720,7 +721,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
      * @param rev
      * @param tblReviewReasons
      */
-    public EditorOrDuplicateEventDialog(int editMode, java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto, ArchiveFileReviewsBean rev, JTable tblReviewReasons) {
+    public EditOrDuplicateEventDialog(int editMode, java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto, ArchiveFileReviewsBean rev, JTable tblReviewReasons) {
         super(parent, modal);
         if (editMode == MODE_DUPLICATE || editMode == MODE_EDIT) {
             this.mode = editMode;
@@ -847,6 +848,11 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         setTitle("Ereignis bearbeiten oder duplizieren");
         setModal(true);
         setResizable(false);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
 
         jLabel1.setText("Grund / Beschreibung:");
 
@@ -1119,6 +1125,10 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdEventEndDateSelectorActionPerformed
 
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
+
     /**
      * @param args the command line arguments
      */
@@ -1140,14 +1150,18 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(EditorOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EditOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(EditorOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EditOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(EditorOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EditOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(EditorOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EditOrDuplicateEventDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
         //</editor-fold>
         //</editor-fold>
@@ -1157,7 +1171,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
          * Create and display the dialog
          */
         java.awt.EventQueue.invokeLater(() -> {
-            EditorOrDuplicateEventDialog dialog = new EditorOrDuplicateEventDialog(MODE_DUPLICATE, new javax.swing.JFrame(), true, null, null, null);
+            EditOrDuplicateEventDialog dialog = new EditOrDuplicateEventDialog(MODE_DUPLICATE, new javax.swing.JFrame(), true, null, null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
                 @Override

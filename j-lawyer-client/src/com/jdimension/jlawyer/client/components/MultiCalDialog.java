@@ -780,22 +780,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
 
     }
     
-    private void moveDialogToSameMonitor(Point parentLocation) {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] screens = ge.getScreenDevices();
-
-        for (GraphicsDevice screen : screens) {
-            Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
-            if (screenBounds.contains(parentLocation)) {
-                this.setLocation(
-                        screenBounds.x + (parentLocation.x - screenBounds.x),
-                        screenBounds.y + (parentLocation.y - screenBounds.y)
-                );
-                break;
-            }
-        }
-    }
-
     private void updateMonthLabels() {
         SimpleDateFormat df = new SimpleDateFormat("MMM yyyy");
         this.lblC1.setText(df.format(c1Cal.getTime()));
@@ -1038,7 +1022,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_c3PropertyChange
 
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
-        //this.moveDialogToSameMonitor(this.getOwner().getLocation());
         FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
     }//GEN-LAST:event_formComponentShown
 

@@ -4796,8 +4796,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(EditOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             dlg.setVisible(true);
 
             break;
@@ -5827,8 +5826,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             //evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(EditOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             dlg.setVisible(true);
 
             break;
