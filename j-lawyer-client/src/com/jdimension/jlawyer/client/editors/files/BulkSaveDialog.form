@@ -166,6 +166,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblCommonTags">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="lblCommonTags" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" value="Tag 1, Tag 3, Tag 7"/>
       </Properties>
     </Component>
@@ -182,6 +187,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblCommonFolder">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="lblCommonFolder" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" value="Dokumente &gt; Unterordner"/>
       </Properties>
     </Component>
@@ -232,6 +242,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblCaseTags">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="lblCaseTags" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" value="aktentag"/>
       </Properties>
     </Component>

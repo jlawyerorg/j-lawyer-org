@@ -890,6 +890,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         lblFileCount.setFont(lblFileCount.getFont().deriveFont(lblFileCount.getFont().getStyle() | java.awt.Font.BOLD, lblFileCount.getFont().getSize()-2));
         lblFileCount.setText("11/13 Dateien");
 
+        lblCommonTags.setFont(lblCommonTags.getFont());
         lblCommonTags.setText("Tag 1, Tag 3, Tag 7");
 
         cmdTagAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
@@ -900,6 +901,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             }
         });
 
+        lblCommonFolder.setFont(lblCommonFolder.getFont());
         lblCommonFolder.setText("Dokumente > Unterordner");
 
         cmdFolderAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
@@ -927,6 +929,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"))); // NOI18N
         lblCase.setText("00123/22 eine Aktenbezeichnung");
 
+        lblCaseTags.setFont(lblCaseTags.getFont());
         lblCaseTags.setText("aktentag");
 
         cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N

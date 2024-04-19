@@ -854,63 +854,7 @@ public class EmailUtils extends CommonMailUtils {
         }
     }
 
-    public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
-
-        ArrayList<String> attachmentNames = new ArrayList<>();
-
-        if (partObject == null) {
-            return attachmentNames;
-        }
-
-        if (partObject instanceof Multipart) {
-            Multipart mp = (Multipart) partObject;
-            for (int i = 0; i < mp.getCount(); i++) {
-                Part childPart = mp.getBodyPart(i);
-                attachmentNames.addAll(getAttachmentNames(childPart));
-
-            }
-        } else {
-
-            if (partObject instanceof Part) {
-
-                Part part = (Part) partObject;
-                String disposition = part.getDisposition();
-
-                if (disposition == null) {
-                    MimeBodyPart mimePart = (MimeBodyPart) part;
-
-                    try {
-                        if (mimePart.getContent() instanceof Multipart) {
-                            attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
-                        }
-                    } catch (Throwable t) {
-                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
-                    }
-
-                } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
-                    //Anhang wird in ein Verzeichnis gespeichert
-                    //saveFile(part.getFileName(), part.getInputStream());
-                    if (part.getFileName() != null) {
-                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
-                    } else {
-                        if (part.getContentType().toLowerCase().contains("message/rfc822")) {
-                            attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
-                        }
-                    }
-                } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
-                    //Anhang wird in ein Verzeichnis gespeichert
-                    //saveFile(part.getFileName(), part.getInputStream());
-                    if (part.getFileName() != null) {
-                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
-                    }
-
-                } else {
-                    log.error("unknown content disposition: " + disposition);
-                }
-            }
-        }
-        return attachmentNames;
-    }
+    
 
     private static Part getAttachmentPart(String name, Object partObject, Folder folder) throws Exception {
 
@@ -1287,23 +1231,7 @@ public class EmailUtils extends CommonMailUtils {
         }
     }
 
-    public static String Html2Text(String html) {
-        try {
-            if (html == null) {
-                return "";
-            }
-
-            HTMLEditorKit editorKit = new HTMLEditorKit();
-            Document doc = editorKit.createDefaultDocument();
-            doc.putProperty("IgnoreCharsetDirective", true);
-            editorKit.read(new StringReader(html), doc, 0);
-            String strText = doc.getText(0, doc.getLength());
-            return strText;
-        } catch (Exception ex) {
-            log.error(ex);
-            return html;
-        }
-    }
+    
 
     public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);

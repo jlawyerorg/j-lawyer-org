@@ -690,6 +690,7 @@ import javax.ejb.Local;
 public interface ArchiveFileServiceLocal {
 
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
     public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
@@ -700,7 +701,9 @@ public interface ArchiveFileServiceLocal {
     public ArrayList<String> getAllArchiveFileIds();
     public Date getLastChangedForArchiveFile(String archiveFileKey);
     public ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    public ArrayList<String> getAllArchiveFileNumbersUnrestricted() throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
+    public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception;
     
     
     public int getDocumentCount();
@@ -729,6 +732,7 @@ public interface ArchiveFileServiceLocal {
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
 
     boolean doesDocumentExist(String caseId, String documentName);
+    boolean doesDocumentExistUnrestricted(String caseId, String documentName);
     
     boolean doesDocumentExist(String id);
 
@@ -789,10 +793,12 @@ public interface ArchiveFileServiceLocal {
     List<CaseSyncSettings> getCaseSyncsForUser(String principalId) throws Exception;
     
     Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
+    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddressUnrestricted(String adressId);
     
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
     
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
+    void setDocumentTagUnrestricted(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
     
     public ArchiveFileBean getCaseByExternalId(String extId);
     public ArchiveFileDocumentsBean getDocumentByExternalId(String extId);

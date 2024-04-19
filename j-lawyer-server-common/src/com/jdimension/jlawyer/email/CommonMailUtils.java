@@ -664,11 +664,20 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.email;
 
 import com.sun.mail.imap.IMAPFolder;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.Multipart;
+import javax.mail.Part;
 import javax.mail.Store;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeUtility;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLEditorKit;
 import org.apache.log4j.Logger;
 
 /**
@@ -897,6 +906,203 @@ public class CommonMailUtils {
         } catch (UnsupportedEncodingException ex) {
             return t;
         }
+    }
+    
+    public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
+
+        ArrayList<String> attachmentNames = new ArrayList<>();
+
+        if (partObject == null) {
+            return attachmentNames;
+        }
+
+        if (partObject instanceof Multipart) {
+            Multipart mp = (Multipart) partObject;
+            for (int i = 0; i < mp.getCount(); i++) {
+                Part childPart = mp.getBodyPart(i);
+                attachmentNames.addAll(getAttachmentNames(childPart));
+
+            }
+        } else {
+
+            if (partObject instanceof Part) {
+
+                Part part = (Part) partObject;
+                String disposition = part.getDisposition();
+
+                if (disposition == null) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                    try {
+                        if (mimePart.getContent() instanceof Multipart) {
+                            attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
+                        }
+                    } catch (Throwable t) {
+                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
+                    }
+
+                } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
+                    //Anhang wird in ein Verzeichnis gespeichert
+                    //saveFile(part.getFileName(), part.getInputStream());
+                    if (part.getFileName() != null) {
+                        attachmentNames.add(decodeText(part.getFileName()));
+                    } else {
+                        if (part.getContentType().toLowerCase().contains("message/rfc822")) {
+                            attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
+                        }
+                    }
+                } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
+                    //Anhang wird in ein Verzeichnis gespeichert
+                    //saveFile(part.getFileName(), part.getInputStream());
+                    if (part.getFileName() != null) {
+                        attachmentNames.add(decodeText(part.getFileName()));
+                    }
+
+                } else {
+                    log.error("unknown content disposition: " + disposition);
+                }
+            }
+        }
+        return attachmentNames;
+    }
+    
+    public static byte[] getAttachmentBytes(String name, Message msg) throws Exception {
+
+        Part att = getAttachmentPart(name, msg.getContent());
+        if (att != null) {
+            InputStream is = att.getInputStream();
+            byte[] buffer = new byte[1024];
+            ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+            int len = 0;
+            while ((len = is.read(buffer)) > -1) {
+
+                bOut.write(buffer, 0, len);
+            }
+            is.close();
+            bOut.close();
+            return bOut.toByteArray();
+
+        }
+        return null;
+    }
+    
+    public static Part getAttachmentPart(String name, Object partObject) throws Exception {
+
+        if (partObject instanceof Multipart) {
+            Multipart mp = (Multipart) partObject;
+            for (int i = 0; i < mp.getCount(); i++) {
+                Part childPart = mp.getBodyPart(i);
+                Part attPart = getAttachmentPart(name, childPart);
+                if (attPart != null) {
+                    return attPart;
+                }
+
+            }
+        } else {
+
+            if (partObject == null) {
+                return null;
+            }
+
+            Part part = (Part) partObject;
+            String disposition = part.getDisposition();
+
+            if (disposition == null) {
+                MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                if (mimePart.getContent() instanceof Multipart) {
+                    Part attPart = getAttachmentPart(name, mimePart.getContent());
+                    if (attPart != null) {
+                        return attPart;
+                    }
+                }
+
+            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                if (name.equals(decodeText(part.getFileName()))) {
+                    return part;
+                } else if (name.equals("Nachricht_" + part.getSize() + ".eml")) {
+                    return part;
+                }
+            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                if (name.equals(decodeText(part.getFileName()))) {
+                    return part;
+                }
+
+            } else {
+                log.error("unkown content");
+            }
+        }
+        return null;
+    }
+    
+    public static String Html2Text(String html) {
+        try {
+            if (html == null) {
+                return "";
+            }
+
+            HTMLEditorKit editorKit = new HTMLEditorKit();
+            Document doc = editorKit.createDefaultDocument();
+            doc.putProperty("IgnoreCharsetDirective", true);
+            editorKit.read(new StringReader(html), doc, 0);
+            String strText = doc.getText(0, doc.getLength());
+            return strText;
+        } catch (Exception ex) {
+            log.error(ex);
+            return html;
+        }
+    }
+    
+    public static void recursiveFindPart(Object partObject, String mimeType, ArrayList<String> resultList) throws Exception {
+        if (partObject instanceof Multipart) {
+            Multipart mp = (Multipart) partObject;
+            for (int i = 0; i < mp.getCount(); i++) {
+                Part childPart = mp.getBodyPart(i);
+                recursiveFindPart(childPart, mimeType, resultList);
+            }
+        } else {
+
+            Part part = (Part) partObject;
+            String disposition = part.getDisposition();
+
+            if (disposition == null) {
+                MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MIME part for further traversal - skipping", t);
+                }
+
+                try {
+                    if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
+                        resultList.add(mimePart.getContent().toString());
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MIME part as result - skipping", t);
+                }
+
+            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                //Anhang wird in ein Verzeichnis gespeichert
+                //saveFile(part.getFileName(), part.getInputStream());
+            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                //Anhang wird in ein Verzeichnis gespeichert
+                //saveFile(part.getFileName(), part.getInputStream());
+
+                MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                try {
+                    if (mimePart.isMimeType(mimeType)) {
+                        resultList.add(mimePart.getContent().toString());
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to get content of inline MIME part as result - skipping", t);
+                }
+            }
+        }
+
     }
     
 }

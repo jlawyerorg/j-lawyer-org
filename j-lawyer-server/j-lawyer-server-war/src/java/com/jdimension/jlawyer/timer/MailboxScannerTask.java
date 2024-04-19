@@ -667,32 +667,43 @@ import com.jdimension.jlawyer.email.CommonMailUtils;
 import static com.jdimension.jlawyer.email.CommonMailUtils.INBOX;
 import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
 import com.jdimension.jlawyer.email.MsExchangeUtils;
-import com.jdimension.jlawyer.epost.EpostLetterStatus;
-import com.jdimension.jlawyer.epost.EpostUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.EpostQueueBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
-import com.jdimension.jlawyer.services.SingletonServiceLocal;
-import com.jdimension.jlawyer.services.VoipServiceLocal;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import javax.annotation.security.RunAs;
+import java.util.Set;
 import javax.mail.Address;
 import javax.mail.Authenticator;
+import javax.mail.Flags;
 import javax.mail.Folder;
+import javax.mail.FolderClosedException;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.MimeMessage;
+import javax.mail.util.SharedByteArrayInputStream;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -700,7 +711,6 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-@RunAs("loginRole")
 public class MailboxScannerTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(MailboxScannerTask.class.getName());
@@ -715,15 +725,20 @@ public class MailboxScannerTask extends java.util.TimerTask {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            AddressServiceLocal adrSvc = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
             List<MailboxSetup> entries = mailboxes.findAll();
 
-            ArrayList<MailboxSetup> scanMailboxes = new ArrayList<>();
-            for (MailboxSetup ms : scanMailboxes) {
-                try {
-                    this.processMailbox(ms, caseSvc);
-                } catch (Throwable ex) {
-                    log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
+            ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted();
+            for (MailboxSetup ms : entries) {
+                if (ms.isScanInbox()) {
+                    try {
+                        List<String> documentTags = Arrays.asList(ms.getScanDocumentTagsArray());
+                        List<String> blacklistedTypes = Arrays.asList(ms.getScanBlacklistedTypes().split(","));
+                        this.processMailbox(ms, caseSvc, adrSvc, allFileNumbers, documentTags, blacklistedTypes);
+                    } catch (Throwable ex) {
+                        log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
+                    }
                 }
             }
 
@@ -732,13 +747,16 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
     }
 
-    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc) {
+    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes) {
+
+        log.info("Processing mailbox " + ms.getEmailAddress());
 
         String server = null;
         try {
             String emailInPwd = Crypto.decrypt(ms.getEmailInPwd());
 
-            Properties props = System.getProperties();
+            //Properties props = System.getProperties();
+            Properties props = new Properties();
             props.setProperty("mail.imap.partialfetch", "false");
             props.setProperty("mail.imaps.partialfetch", "false");
             props.setProperty("mail.store.protocol", ms.getEmailInType());
@@ -802,8 +820,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
             }
 
-            
-            
             Folder[] accountFolders = null;
             try {
                 accountFolders = store.getDefaultFolder().list();
@@ -820,196 +836,235 @@ public class MailboxScannerTask extends java.util.TimerTask {
             }
 
             Message[] allMessages = inboxFolder.getMessages();
-            HashMap<String, String> decodedMap = new HashMap<>();
-//            for (Message msg : allMessages) {
-//                String fromCheck = "unbekannt";
-//                Address[] froms = msg.getFrom();
-//                if (froms != null) {
-//                    if (froms.length > 0) {
-//                        fromCheck = froms[0].toString();
-//                        String fromKey = fromCheck;
-//                        if (decodedMap.containsKey(fromKey)) {
-//                            fromCheck = decodedMap.get(fromKey);
-//                        } else {
-//                            fromCheck = CommonMailUtils.decodeText(fromKey);
-//                            decodedMap.put(fromKey, fromCheck);
-//                        }
-//                    }
-//
-//                }
-//                final String from = fromCheck;
-//                Address[] to = msg.getRecipients(Message.RecipientType.TO);
-//                String toString = "";
-//                if (to != null) {
-//                    if (to.length > 0) {
-//                        String toStr = to[0].toString();
-//                        if (decodedMap.containsKey(toStr)) {
-//                            toString = decodedMap.get(toStr);
-//                        } else {
-//                            toString = CommonMailUtils.decodeText(toStr);
-//                            decodedMap.put(toStr, toString);
-//                        }
-//
-//                    }
-//                }
-//
-//                //Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
-//                // find any potential cases by looking for file numbers in subject and body
-//                ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbers();
-//                ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
-//                ArrayList<String> actionableFileNumbers = new ArrayList<>();
-//                String subject = msg.getSubject().toLowerCase();
-//                String body = this.mailContentUI.getBody().toLowerCase();
-//                for (String fn : allFileNumbers) {
-//                    String fnLower = fn.toLowerCase();
-//                    if (subject.contains(fnLower)) {
-//                        actionableFileNumbers.add(fn);
-//                        ArchiveFileBean a = caseSvc.getArchiveFileByFileNumber(fn);
-//                        if (a != null) {
-//                            subjectBodyCases.add(a);
-//                        }
-//                        continue;
-//                    } else {
-//                        if (body.contains(fnLower)) {
-//                            actionableFileNumbers.add(fn);
-//                            ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
-//                            if (a != null) {
-//                                subjectBodyCases.add(a);
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                Address[] senders = msg.getFrom();
-//                AddressBean[] relevantAddresses = null;
-//                String senderName = "";
-//                String senderAddress = "";
-//                if (senders != null) {
-//                    if (senders.length > 0) {
-//                        Address sender = senders[0];
-//                        if (sender instanceof javax.mail.internet.InternetAddress) {
-//                            relevantAddresses = ads.searchSimple(((javax.mail.internet.InternetAddress) sender).getAddress());
-//                            senderName = ((javax.mail.internet.InternetAddress) sender).getPersonal();
-//                            if (senderName == null) {
-//                                senderName = "";
-//                            }
-//                            senderAddress = ((javax.mail.internet.InternetAddress) sender).getAddress();
-//                            if (senderAddress == null) {
-//                                senderAddress = "";
-//                            }
-//                        }
-//
-//                    }
-//                }
-//                body = this.mailContentUI.getBody();
-//                if (this.mailContentUI.getContentType() != null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
-//                    body = EmailUtils.Html2Text(this.mailContentUI.getBody());
-//                }
-//
-//                CreateNewCasePanel cncp = new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), body, senderName, senderAddress);
-//                actionPanelEntries.add(cncp);
-//
-//                ArrayList<ArchiveFileBean> addressRelatedCases = new ArrayList<>();
-//                if (senders != null) {
-//                    if (senders.length > 0) {
-//                        Address sender = senders[0];
-//                        if (sender instanceof javax.mail.internet.InternetAddress) {
-//                            AddressBean[] hits = ads.searchSimple(((javax.mail.internet.InternetAddress) sender).getAddress());
-//
-//                            if (hits.length == 0) {
-//                                CreateNewAddressPanel nap = new CreateNewAddressPanel(this.getClass().getName());
-//                                nap.setBackground(new Color(153, 204, 255));
-//                                nap.setEmail(((javax.mail.internet.InternetAddress) sender).getAddress());
-//                                nap.setSenderName(((javax.mail.internet.InternetAddress) sender).getPersonal());
-//                                actionPanelEntries.add(nap);
-//                            }
-//
-//                            // empt case reference - will trigger a search
-//                            SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
-//                            sp.setBackground(sp.getBackground().brighter());
-//                            CaseForContactEntry cce = new CaseForContactEntry();
-//                            cce.setFileNumber(null);
-//                            cce.setId(null);
-//                            cce.setRole("");
-//                            cce.setName("Akte suchen und zuordnen");
-//                            cce.setReason(StringUtils.nonEmpty(null));
-//                            cce.setArchived(false);
-//                            sp.setEntry(cce, this);
-//                            actionPanelEntries.add(sp);
-//
-//
-//                            // find cases that might be relevant for the sender of the mail
-//                            for (AddressBean h : hits) {
-//                                NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
-//                                ap.setAddress(h);
-//                                ap.setBackground(new Color(153, 204, 255));
-//                                actionPanelEntries.add(ap);
-//
-//                                Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
-//
-//                                for (Object o : caseCol) {
-//                                    ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
-//                                    ArchiveFileBean a = afab.getArchiveFileKey();
-//                                    if (!actionableFileNumbers.contains(a.getFileNumber())) {
-//                                        actionableFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
-//                                        addressRelatedCases.add(a);
-//                                    }
-//                                }
-//
-//                                Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
-//                                    ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
-//                                    ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
-//
-//                                    if (aFile2.isArchived()) {
-//                                        if (aFile1.isArchived()) {
-//                                            // both archived
-//                                            // sort by changed date
-//                                            //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
-//                                            return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-//                                        } else {
-//                                            // only 2 is archived
-//                                            return -1;
-//                                        }
-//                                    } else if (aFile1.isArchived()) {
-//                                        // only 1 is archived
-//                                        return 1;
-//                                    } else {
-//                                        // both are non-archived
-//                                        // sort by changed date
-//                                        //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
-//                                        return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-//                                    }
-//                                });
-//
-//                            }
-//                        }
-//
-//                    }
-//                }
-//
-//                subjectBodyCases.addAll(addressRelatedCases);
-//                int i = 0;
-//                for (Object c : subjectBodyCases) {
-//                    ArchiveFileBean aFile = (ArchiveFileBean) c;
-//                    SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-//                    if (i % 2 == 0) {
-//                        ep.setBackground(ep.getBackground().darker());
-//                    }
-//                    ep.setBackground(ep.getBackground().brighter());
-//                    CaseForContactEntry lce = new CaseForContactEntry();
-//                    lce.setFileNumber(aFile.getFileNumber());
-//                    lce.setId(aFile.getId());
-//                    lce.setRole("");
-//                    lce.setName(aFile.getName());
-//                    lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-//                    lce.setArchived(aFile.isArchived());
-//                    ep.setEntry(lce, this);
-//
-//                    actionPanelEntries.add(ep);
-//                    i++;
-//                }
-//
-//            }
+            ArrayList<Message> deleteMessages = new ArrayList<>();
+            for (Message msg : allMessages) {
+
+                // FIRST - A: try to find matching case by file number in the subject line
+                // find any potential cases by looking for file numbers in subject
+                // this should force the message to be fully loaded
+                // try two times, i've seen sporadic FolderClosedException
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                try {
+                    msg.writeTo(bos);
+                } catch (FolderClosedException fce) {
+                    msg.getFolder().open(Folder.READ_WRITE);
+                    msg.writeTo(bos);
+                }
+                bos.close();
+                SharedByteArrayInputStream bis = new SharedByteArrayInputStream(bos.toByteArray());
+                Message copiedMsg = new MimeMessage(session, bis);
+                bis.close();
+
+                String subject="";
+                if(copiedMsg.getSubject()!=null)
+                    subject=copiedMsg.getSubject();
+                boolean foundInSubject = false;
+                for (String fn : allFileNumbers) {
+                    if (subject.contains(fn.toLowerCase())) {
+                        log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject");
+                        ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
+                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
+                        if(saved)
+                            deleteMessages.add(msg);
+                        foundInSubject = true;
+                        break;
+                    }
+                }
+                if (foundInSubject) {
+                    continue;
+                }
+
+                // FIRST - B: try to find matching case by file number in the body
+                String body = null;
+                if (copiedMsg.isMimeType("multipart/*")) {
+                    ArrayList<String> partsFound = new ArrayList<>();
+                    CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
+                    if (!partsFound.isEmpty()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("<html>");
+                        for (String p : partsFound) {
+                            String pNew = p;
+                            pNew = p.trim();
+                            if (pNew.startsWith("<html>")) {
+                                pNew = pNew.substring(6);
+                            }
+                            if (pNew.endsWith("</html>")) {
+                                pNew = pNew.substring(0, pNew.length() - 7);
+                            }
+                            sb.append(pNew);
+                        }
+                        sb.append("</html>");
+                        String html = sb.toString();
+                        body = CommonMailUtils.Html2Text(html);
+
+                    } else {
+                        CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
+                        if (!partsFound.isEmpty()) {
+                            String text = partsFound.get(0);
+                            body = text;
+                        } else {
+                            log.warn("email with unkown content type");
+                            body = "";
+                        }
+                    }
+                } else {
+                    if (copiedMsg.isMimeType(ContentTypes.TEXT_PLAIN)) {
+                        body = copiedMsg.getContent().toString();
+
+                    } else if (copiedMsg.isMimeType(ContentTypes.TEXT_HTML)) {
+                        body = copiedMsg.getContent().toString();
+                        if (copiedMsg.getContent() instanceof InputStream) {
+                            log.warn("content of mail is of type inputstream!");
+                            BufferedInputStream contentBis = new BufferedInputStream((InputStream) copiedMsg.getContent());
+                            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                            byte[] buffer = new byte[1024];
+                            int bytesRead = -1;
+                            while ((bytesRead = contentBis.read(buffer)) > -1) {
+                                bout.write(buffer, 0, bytesRead);
+                            }
+                            bout.close();
+                            try {
+                                body = new String(bout.toByteArray());
+                            } catch (Throwable t) {
+                                log.error("mail content byte array cannot be converted to string", t);
+                            }
+                            log.warn("bytes represent the following string:");
+                            log.warn(body);
+                            body = CommonMailUtils.Html2Text(body);
+                        }
+
+                    } else {
+                        log.debug("unkown content");
+                    }
+                }
+
+                if (body == null) {
+                    body = "";
+                }
+
+                body = body.toLowerCase();
+                boolean foundInBody = false;
+                for (String fn : allFileNumbers) {
+                    if (body.contains(fn.toLowerCase())) {
+                        log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body");
+                        ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
+                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
+                        if(saved)
+                            deleteMessages.add(msg);
+                        foundInBody = true;
+                        break;
+                    }
+                }
+                if (foundInBody) {
+                    continue;
+                }
+
+                // SECOND: try to find matching sender FROM that only has ONE case
+                String from = null;
+                Address[] froms = msg.getFrom();
+                if (froms != null) {
+                    if (froms.length > 0 && (froms[0] instanceof javax.mail.internet.InternetAddress)) {
+                        from = ((javax.mail.internet.InternetAddress) froms[0]).getAddress();
+                        from = from.toLowerCase();
+                    }
+
+                }
+                AddressBean[] fromAddresses = adrSvc.searchSimpleUnrestricted(from);
+                if (fromAddresses.length > 1) {
+                    log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be uniquely associated by its FROM because there was more than one match for " + from);
+                } else if (fromAddresses.length == 0) {
+                    log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be associated by its FROM because there was no match for " + from);
+                } else {
+                    Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(fromAddresses[0].getId());
+                    ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                    if (uniqueCase != null) {
+                        log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its FROM because there was exactly one match for " + from);
+                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                        if(saved)
+                            deleteMessages.add(msg);
+                        continue;
+                    }
+
+                }
+
+                // THIRD: try to find matching sender CC that only has ONE case
+                Address[] ccAdrs = msg.getRecipients(Message.RecipientType.CC);
+                boolean foundInCC = false;
+                if (ccAdrs != null) {
+                    for (Address cc : ccAdrs) {
+                        String ccString = null;
+                        if ((cc instanceof javax.mail.internet.InternetAddress)) {
+                            ccString = ((javax.mail.internet.InternetAddress) cc).getAddress();
+                            ccString = ccString.toLowerCase();
+                        }
+
+                        AddressBean[] ccAddresses = adrSvc.searchSimpleUnrestricted(ccString);
+                        if (ccAddresses.length > 1) {
+                            log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be uniquely associated by its CC because there was more than one match for " + ccString);
+                        } else if (ccAddresses.length == 0) {
+                            log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be associated by its CC because there was no match for " + ccString);
+                        } else {
+                            Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(ccAddresses[0].getId());
+                            ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                            if (uniqueCase != null) {
+                                log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its CC because there was exactly one match for " + ccString);
+                                boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                                if(saved)
+                                    deleteMessages.add(msg);
+                                foundInCC = true;
+                                break;
+                            }
+
+                        }
+                    }
+                }
+                if (foundInCC) {
+                    continue;
+                }
+
+                // FOURTH: try to find matching sender TO that only has ONE case
+                Address[] toAdrs = msg.getRecipients(Message.RecipientType.TO);
+                boolean foundInTo = false;
+                if (toAdrs != null) {
+                    for (Address to : toAdrs) {
+                        String toString = null;
+                        if ((to instanceof javax.mail.internet.InternetAddress)) {
+                            toString = ((javax.mail.internet.InternetAddress) to).getAddress();
+                            toString = toString.toLowerCase();
+                        }
+
+                        AddressBean[] toAddresses = adrSvc.searchSimpleUnrestricted(toString);
+                        if (toAddresses.length > 1) {
+                            log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be uniquely associated by its TO because there was more than one match for " + toString);
+                        } else if (toAddresses.length == 0) {
+                            log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be associated by its TO because there was no match for " + toString);
+                        } else {
+                            Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(toAddresses[0].getId());
+                            ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                            if (uniqueCase != null) {
+                                log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its TO because there was exactly one match for " + toString);
+                                boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                                if(saved)
+                                    deleteMessages.add(msg);
+                                foundInTo = true;
+                                break;
+                            }
+
+                        }
+                    }
+                }
+                if (foundInTo) {
+                    continue;
+                }
+
+            }
+
+            if(!inboxFolder.isOpen())
+                inboxFolder.open(Folder.READ_WRITE);
+            
+            Flags deleteFlags = new Flags(Flags.Flag.DELETED);
+            Message[] toBeDeleted=deleteMessages.toArray(new Message[0]);
+            inboxFolder.setFlags(toBeDeleted, deleteFlags, true);
 
             inboxFolder.close();
             store.close();
@@ -1018,6 +1073,111 @@ public class MailboxScannerTask extends java.util.TimerTask {
             log.error("Error connecting to server " + server, ex);
 
         }
+    }
+
+    private boolean saveToCase(Message msg, Date received, ArchiveFileBean toCase, ArchiveFileServiceLocal caseSvc, List<String> documentTags, List<String> blacklistedFileTypes) {
+        try {
+
+            if (toCase == null) {
+                log.error("missing case when storing message - skipping message");
+                return false;
+            }
+
+            ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+            msg.writeTo(bOut);
+            bOut.close();
+            byte[] msgData = bOut.toByteArray();
+
+            String newNameMsg = msg.getSubject();
+            if (newNameMsg == null) {
+                newNameMsg = "";
+            }
+            newNameMsg = newNameMsg + ".eml";
+            newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
+            java.util.Date receivedPrefix = received;
+            if (receivedPrefix == null) {
+                receivedPrefix = new java.util.Date();
+            }
+
+            newNameMsg = ServerFileUtils.getNewFileNamePrefix(receivedPrefix) + newNameMsg;
+            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), newNameMsg)) {
+                log.error("There is already a document '" + newNameMsg + "' in case " + toCase.getFileNumber() + " - skipping entire message");
+                return false;
+            } else {
+                ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), newNameMsg, msgData, "", null);
+                for (String tag : documentTags) {
+                    DocumentTagsBean dtb = new DocumentTagsBean();
+                    dtb.setArchiveFileKey(newDoc);
+                    dtb.setTagName(tag);
+                    caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
+                }
+            }
+
+            ArrayList<String> attachmentNames = CommonMailUtils.getAttachmentNames(msg.getContent());
+            for (String attachmentName : attachmentNames) {
+
+                boolean blacklisted = false;
+                for (String fileType : blacklistedFileTypes) {
+                    if (attachmentName.toLowerCase().endsWith("." + fileType)) {
+                        blacklisted = true;
+                        break;
+                    }
+                }
+                if (blacklisted) {
+                    log.warn("Attachment " + attachmentName + " is a blacklisted file type, it will not be stored.");
+                    continue;
+                }
+
+                byte[] attachmentData = CommonMailUtils.getAttachmentBytes(attachmentName, msg);
+
+                String newName = attachmentName;
+                if (newName == null) {
+                    newName = "";
+                }
+                newName = ServerFileUtils.sanitizeFileName(newName);
+                String attFileName = ServerFileUtils.getNewFileNamePrefix(receivedPrefix) + newName;
+
+                if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), attFileName)) {
+                    log.error("There is already a document '" + attFileName + "' in case " + toCase.getFileNumber() + " - skipping this attachment");
+                    continue;
+                } else {
+                    ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), attFileName, attachmentData, "", null);
+                    for (String tag : documentTags) {
+                        DocumentTagsBean dtb = new DocumentTagsBean();
+                        dtb.setArchiveFileKey(newDoc);
+                        dtb.setTagName(tag);
+                        caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
+                    }
+                }
+
+            }
+
+        } catch (Exception ex) {
+            try {
+                log.error("Unable to save message with subject '" + msg.getSubject() + "'", ex);
+            } catch (Exception t) {
+                log.error("Unable to save message with subject '" + msg.toString() + "'", ex);
+            }
+        }
+        return true;
+    }
+
+    private ArchiveFileAddressesBean getUniqueCase(Collection<ArchiveFileAddressesBean> parties) {
+        // never return an inactive case - the tag section on desktop would never display it
+        HashMap<String, ArchiveFileAddressesBean> activeCases = new HashMap<>();
+        for (ArchiveFileAddressesBean aab : parties) {
+            if (!aab.getArchiveFileKey().isArchived()) {
+                if (!activeCases.containsKey(aab.getId())) {
+                    activeCases.put(aab.getId(), aab);
+                }
+            }
+        }
+        // return unique active case, if any
+        if (activeCases.size() == 1) {
+            return activeCases.values().iterator().next();
+        }
+        // in case of multiple active cases, return nothing
+        return null;
     }
 
 }

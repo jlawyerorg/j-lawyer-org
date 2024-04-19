@@ -1164,8 +1164,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         if (copiedMsg.isMimeType("multipart/*")) {
             ArrayList<String> partsFound = new ArrayList<>();
-            recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
-            if (partsFound.size() > 0) {
+            EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
+            if (!partsFound.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("<html>");
                 for (String p : partsFound) {
@@ -1213,7 +1213,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
 
             } else {
-                recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
+                EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
                 if (!partsFound.isEmpty()) {
                     String text = partsFound.get(0);
                     contentUI.setBody(text, ContentTypes.TEXT_PLAIN);
@@ -1385,58 +1385,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     public void setCachedHtml(String html) {
         this.cachedHtml = html;
-    }
-
-    private static void recursiveFindPart(Object partObject, String mimeType, ArrayList<String> resultList) throws Exception {
-        if (partObject instanceof Multipart) {
-            Multipart mp = (Multipart) partObject;
-            for (int i = 0; i < mp.getCount(); i++) {
-                Part childPart = mp.getBodyPart(i);
-                recursiveFindPart(childPart, mimeType, resultList);
-            }
-        } else {
-
-            Part part = (Part) partObject;
-            String disposition = part.getDisposition();
-
-            if (disposition == null) {
-                MimeBodyPart mimePart = (MimeBodyPart) part;
-
-                try {
-                    if (mimePart.getContent() instanceof Multipart) {
-                        recursiveFindPart(mimePart.getContent(), mimeType, resultList);
-                    }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part for further traversal - skipping", t);
-                }
-
-                try {
-                    if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
-                    }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part as result - skipping", t);
-                }
-
-            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-
-                MimeBodyPart mimePart = (MimeBodyPart) part;
-
-                try {
-                    if (mimePart.isMimeType(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
-                    }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of inline MIME part as result - skipping", t);
-                }
-            }
-        }
-
     }
 
     private static void recursiveLoadInlineImages(Object partObject, CidCache cids) throws Exception {

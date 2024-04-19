@@ -789,6 +789,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     }
 
+    
     @Override
     @RolesAllowed({"removeAddressRole"})
     public void removeAddress(String id) {
@@ -818,6 +819,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public AddressBean[] searchSimple(String query) {
+        return this.searchSimpleUnrestricted(query);
+    }
+    
+    @Override
+    public AddressBean[] searchSimpleUnrestricted(String query) {
 
         if (query == null) {
             query = "";
@@ -868,7 +874,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
         }
 
-        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+        return (AddressBean[]) list.toArray(new AddressBean[0]);
     }
 
     @Override

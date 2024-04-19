@@ -890,7 +890,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             try {
                 String emailInPwd=Crypto.decrypt(ms.getEmailInPwd());
                 
-                Properties props = System.getProperties();
+                //Properties props = System.getProperties();
+                // using system properties would require to clean some properties for each new mailbox --> use new ones
+                Properties props = new Properties();
                 props.setProperty("mail.imap.partialfetch", "false");
                 props.setProperty("mail.imaps.partialfetch", "false");
                 props.setProperty("mail.store.protocol", ms.getEmailInType());

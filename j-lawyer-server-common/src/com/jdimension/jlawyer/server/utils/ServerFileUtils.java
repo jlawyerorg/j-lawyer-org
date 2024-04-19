@@ -673,6 +673,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.apache.log4j.Logger;
 
 /**
@@ -695,6 +697,37 @@ public class ServerFileUtils {
     protected ServerFileUtils() {
         
 
+    }
+    
+    public static String sanitizeFileName(String fileName) {
+        String name = fileName;
+        name = name.replace(",", " ");
+        name = name.replace("\"", "");
+        name = name.replace("§", " ");
+        name = name.replace("%", " ");
+        name = name.replace("&", "_");
+        name = name.replace("/", "_");
+        name = name.replace("=", "_");
+        name = name.replace("?", " ");
+        name = name.replace("{", "(");
+        name = name.replace("}", ")");
+        name = name.replace("[", "(");
+        name = name.replace("]", ")");
+        name = name.replace("\\", "_");
+        name = name.replace("*", "-");
+        name = name.replace("#", "-");
+        name = name.replace("'", "");
+        name = name.replace(":", " ");
+        name = name.replace(";", " ");
+        name = name.replace(">", "");
+        name = name.replace("<", "");
+        name = name.replace("|", "_");
+        return name.trim();
+    }
+    
+    public static String getNewFileNamePrefix(Date d) {
+        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
+        return datePrefix.format(d);
     }
 
     public static byte[] readFile(File file) throws Exception {

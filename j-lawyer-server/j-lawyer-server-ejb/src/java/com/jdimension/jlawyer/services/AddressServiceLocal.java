@@ -698,4 +698,7 @@ public interface AddressServiceLocal {
 
     void deleteContactTagById(String tagId) throws Exception;
     
+    public AddressBean[] searchSimple(String query);
+    public AddressBean[] searchSimpleUnrestricted(String query);
+    
 }

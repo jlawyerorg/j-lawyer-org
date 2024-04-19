@@ -857,32 +857,6 @@ public class FileUtils extends ServerFileUtils {
 
     }
 
-    public static String sanitizeFileName(String fileName) {
-        String name = fileName;
-        name = name.replace(",", " ");
-        name = name.replace("\"", "");
-        name = name.replace("§", " ");
-        name = name.replace("%", " ");
-        name = name.replace("&", "_");
-        name = name.replace("/", "_");
-        name = name.replace("=", "_");
-        name = name.replace("?", " ");
-        name = name.replace("{", "(");
-        name = name.replace("}", ")");
-        name = name.replace("[", "(");
-        name = name.replace("]", ")");
-        name = name.replace("\\", "_");
-        name = name.replace("*", "-");
-        name = name.replace("#", "-");
-        name = name.replace("'", "");
-        name = name.replace(":", " ");
-        name = name.replace(";", " ");
-        name = name.replace(">", "");
-        name = name.replace("<", "");
-        name = name.replace("|", "_");
-        return name.trim();
-    }
-    
     public static String sanitizeAttachmentName(String fileName) {
         String name = sanitizeFileName(fileName);
         name = name.replace("ä", "ae");
@@ -1082,11 +1056,6 @@ public class FileUtils extends ServerFileUtils {
         File remDir = new File(dir);
         remDir.deleteOnExit();
 
-    }
-
-    public static String getNewFileNamePrefix(Date d) {
-        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-        return datePrefix.format(d);
     }
     
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {

@@ -685,6 +685,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class MailboxSetup implements Serializable, EventTypes {
 
     protected static long serialVersionUID = 1L;
+    private static final String ARRAY_DELIMITER = "#####";
     
     @Id
     @Basic(optional = false)
@@ -732,6 +733,14 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected boolean msExchange;
     @Column(name = "tenant_id")
     protected String tenantId;
+    
+    // for mailbox scanner
+    @Column(name = "scan_inbox")
+    private boolean scanInbox=false;
+    @Column(name = "scan_documenttags")
+    private String scanDocumentTags="Posteingang";
+    @Column(name = "scan_blacklistedtypes")
+    private String scanBlacklistedTypes="bas,bat,com,exe,html,jar,jnlp,js,lnk,msi,pl,reg,vbs";
 
     public String getId() {
         return id;
@@ -1045,6 +1054,71 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+
+    /**
+     * @return the scanInbox
+     */
+    public boolean isScanInbox() {
+        return scanInbox;
+    }
+
+    /**
+     * @param scanInbox the scanInbox to set
+     */
+    public void setScanInbox(boolean scanInbox) {
+        this.scanInbox = scanInbox;
+    }
+
+    /**
+     * @return the scanDocumentTags
+     */
+    public String getScanDocumentTags() {
+        return scanDocumentTags;
+    }
+    
+    public String[] getScanDocumentTagsArray() {
+        if (scanDocumentTags == null) {
+            scanDocumentTags="";
+        }
+
+        String[] ary = scanDocumentTags.split(ARRAY_DELIMITER);
+
+        return ary;
+    }
+
+    /**
+     * @param scanDocumentTags the scanDocumentTags to set
+     */
+    public void setScanDocumentTags(String scanDocumentTags) {
+        this.scanDocumentTags = scanDocumentTags;
+    }
+    
+    public void setScanDocumentTagsArray(String[] value) {
+        StringBuilder sb = new StringBuilder();
+        if (value == null) {
+            value = new String[]{""};
+        }
+        for (String v : value) {
+            sb.append(v).append(ARRAY_DELIMITER);
+        }
+        this.scanDocumentTags=sb.toString();
+    }
+
+    /**
+     * @return the scanBlacklistedTypes
+     */
+    public String getScanBlacklistedTypes() {
+        if(scanBlacklistedTypes==null)
+            scanBlacklistedTypes="";
+        return scanBlacklistedTypes;
+    }
+
+    /**
+     * @param scanBlacklistedTypes the scanBlacklistedTypes to set
+     */
+    public void setScanBlacklistedTypes(String scanBlacklistedTypes) {
+        this.scanBlacklistedTypes = scanBlacklistedTypes;
     }
 
     

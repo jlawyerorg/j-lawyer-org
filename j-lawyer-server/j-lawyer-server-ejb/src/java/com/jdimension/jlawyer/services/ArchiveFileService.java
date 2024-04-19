@@ -1706,8 +1706,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, false);
+    }
+    
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, true);
+    }
+    
+    private ArchiveFileDocumentsBean addDocumentImpl(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, boolean roleCheck) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -1715,7 +1724,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        
+        if(roleCheck)
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
@@ -2049,6 +2060,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddressUnrestricted(String adressId) {
+
+        AddressBean ab = this.addressFacade.find(adressId);
+        return this.archiveFileAddressesFacade.findByAddressKey(ab);
+    }
+    
+    @Override
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         List<Group> userGroups = new ArrayList<>();
@@ -2145,9 +2163,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return true;
     }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception {
+    private ArchiveFileBean getArchiveFileByFileNumberImpl(String fileNumber, boolean roleCheck) throws Exception {
 
         boolean extension = false;
         String dividerMain = null;
@@ -2197,7 +2213,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         ArchiveFileBean aFile = result.get(0);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0), this.securityFacade, this.getAllowedGroups(aFile));
+        
+        if(roleCheck)
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0), this.securityFacade, this.getAllowedGroups(aFile));
 
         CaseFolder rootFolder = aFile.getRootFolder();
         StringGenerator idGen = new StringGenerator();
@@ -2212,6 +2230,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return aFile;
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception {
+        return this.getArchiveFileByFileNumberImpl(fileNumber, true);
+    }
+    
+    
+    
+    @Override
+    public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception {
+
+        return this.getArchiveFileByFileNumberImpl(fileNumber, false);
     }
 
     @Override
@@ -2266,11 +2298,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public void setDocumentTagUnrestricted(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
+        this.setDocumentTagImpl(documentId, tag, active, false);
+    }
+    
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
+        this.setDocumentTagImpl(documentId, tag, active, true);
+    }
+    
+    private void setDocumentTagImpl(String documentId, DocumentTagsBean tag, boolean active, boolean roleCheck) throws Exception {
 
         ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aFile.getArchiveFileKey()));
+        
+        if(roleCheck)
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aFile.getArchiveFileKey()));
+        
         List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
         StringGenerator idGen = new StringGenerator();
         String historyText = "";
@@ -2284,7 +2328,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.documentTagsFacade.create(tag);
                 historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }
-        } else if (check.size() > 0) {
+        } else if (!check.isEmpty()) {
             DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
             this.documentTagsFacade.remove(remove);
             historyText = "Dokument-Etikett entfernt von " + aFile.getName() + ": " + tag.getTagName();
@@ -3672,8 +3716,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public boolean doesDocumentExistUnrestricted(String caseId, String documentName) {
+        return this.doesDocumentExistImpl(caseId, documentName);
+    }
+    
+    @Override
     @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String caseId, String documentName) {
+        return this.doesDocumentExistImpl(caseId, documentName);
+    }
+    
+    private boolean doesDocumentExistImpl(String caseId, String documentName) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
 
         List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, false);
@@ -6038,8 +6091,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
-    public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
+    public ArrayList<String> getAllArchiveFileNumbersUnrestricted() throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
         try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select fileNumber from cases"); ResultSet rs = st.executeQuery()) {
@@ -6054,6 +6106,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return list;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
+        return this.getAllArchiveFileNumbersUnrestricted();
     }
 
     @Override
