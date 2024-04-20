@@ -663,265 +663,417 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
-import com.jdimension.jlawyer.client.mail.MessageContainer;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import java.awt.Dimension;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import javax.mail.Flags.Flag;
-import javax.mail.internet.MimeMessage;
-import javax.swing.JComponent;
+import java.util.HashMap;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 import org.apache.log4j.Logger;
-import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
-import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
  *
  * @author jens
  */
-public class DocumentViewerFactory {
+public class PdfImageScrollingPanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
-    
-    private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
+    private static final Logger log = Logger.getLogger(PdfImageScrollingPanel.class.getName());
+    private static final int MAX_RENDER_PAGES = 20;
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
+    HashMap<Integer, BufferedImage> orgImage = new HashMap<>();
+
+    // current page / request page for displaying / rendering
+    int currentPage = 0;
+    private byte[] content = null;
+    private int renderedPages = 0;
+    private String fileName = null;
+    private String documentId = null;
+
+    private int zoomFactor = 100;
+
+    /**
+     * Creates new form PlaintextPanel
+     *
+     * @param fileName
+     * @param content
+     */
+    public PdfImageScrollingPanel(String fileName, byte[] content) {
+        initComponents();
+        this.fileName = fileName;
+        ThreadUtils.updateLabel(this.lblContent, "");
+
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
+
+        this.jScrollPane1.getVerticalScrollBar().addAdjustmentListener((AdjustmentEvent e) -> {
+            // Assuming scrollPane is your JScrollPane instance
+            
+            int viewPosition = jScrollPane1.getViewport().getViewPosition().y;
+            
+            int totalHeight = 0;
+            Component[] components = pnlPages.getComponents();
+            int labelIndex = -1;
+            
+            // Calculate the index of the JLabel currently displayed
+            for (int i = 0; i < components.length; i++) {
+                totalHeight += components[i].getHeight();
+                if (totalHeight > viewPosition) {
+                    labelIndex = i;
+                    break;
+                }
+            }
+            
+            // Now you have the index of the JLabel currently displayed
+            // You can access it like this:
+            if (labelIndex != -1 && labelIndex < components.length) {
+                //JLabel currentLabel = (JLabel) components[labelIndex];
+                // Do whatever you need with the currentLabel
+                
+                lblCurrentPage.setText("" + (labelIndex+1) + "/" + renderedPages);
+                currentPage = labelIndex;
+                cmdFirstPage.setEnabled(currentPage > 0);
+                cmdPageBackward.setEnabled(currentPage > 0);
+                cmdLastPage.setEnabled((currentPage+1) < renderedPages);
+                cmdPageForward.setEnabled((currentPage+1) < renderedPages);
+                
+            }
+        });
+
+        String zoomFactorString = ClientSettings.getInstance().getConfiguration("pdf.zoomfactor", "100");
+        this.zoomFactor = 100;
+        try {
+            this.zoomFactor = Integer.parseInt(zoomFactorString);
+            if (this.zoomFactor > 300) {
+                this.zoomFactor = 300;
+            }
+            if (this.zoomFactor < 25) {
+                this.zoomFactor = 25;
+            }
+            this.sliderZoom.setValue(this.zoomFactor);
+        } catch (Throwable t) {
+            log.warn("invalid zoom factor: " + zoomFactorString);
+        }
+
     }
 
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content);
-            pdfP.setSize(new Dimension(width, height));
-            pdfP.setMaximumSize(new Dimension(width, height));
-            pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(id, content);
-            return pdfP;
+        jScrollPane1 = new javax.swing.JScrollPane();
+        pnlPages = new javax.swing.JPanel();
+        lblContent = new javax.swing.JLabel();
+        cmdPageForward = new javax.swing.JButton();
+        cmdPageBackward = new javax.swing.JButton();
+        lblCurrentPage = new javax.swing.JLabel();
+        cmdFirstPage = new javax.swing.JButton();
+        cmdLastPage = new javax.swing.JButton();
+        sliderZoom = new javax.swing.JSlider();
+        cmdFitToScreen = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        lblTotalPages = new javax.swing.JLabel();
 
-        } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
-            GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(id, content);
-            return ip;
+        pnlPages.setLayout(new javax.swing.BoxLayout(pnlPages, javax.swing.BoxLayout.PAGE_AXIS));
 
-        } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
-            BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(id, content);
-            return ip;
-        } else if (fileName.toLowerCase().endsWith(".txt")) {
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.setSize(new Dimension(width, height));
-            ptp.setMaximumSize(new Dimension(width, height));
-            ptp.setPreferredSize(new Dimension(width, height));
-            try {
-                ptp.showContent(id, previewProvider.getPreview().getBytes());
-            } catch (Exception ex) {
-                ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+        lblContent.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblContent.setText("Lade...");
+        lblContent.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        pnlPages.add(lblContent);
+
+        jScrollPane1.setViewportView(pnlPages);
+
+        cmdPageForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
+        cmdPageForward.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPageForwardActionPerformed(evt);
             }
-            return ptp;
-        } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
-            HtmlPanel hp = new HtmlPanel(id, readOnly);
-            hp.setSize(new Dimension(width, height));
-            hp.setFileName(fileName);
-            hp.setMaximumSize(new Dimension(width, height));
-            hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(id, content);
-            return hp;
-        } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
-            XjustizPanel xjp = new XjustizPanel(id, fileName);
-            xjp.setSize(new Dimension(width, height));
-            xjp.setMaximumSize(new Dimension(width, height));
-            xjp.setPreferredSize(new Dimension(width, height));
-            xjp.showContent(id, content);
-            return xjp;
-        } else if (fileName.toLowerCase().endsWith(".eml")) {
-            try {
-                InputStream source = new ByteArrayInputStream(content);
-                MimeMessage message = new MimeMessage(null, source);
-                // need to set this to avoid sending read receipts
-                message.setFlag(Flag.SEEN, true);
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                ep.setMessage(id, new MessageContainer(message, message.getSubject(), true), ms);
-                ep.setCaseContext(caseDto);
-                return ep;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus(STR_PREVIEWFAIL);
-                return ep;
+        });
+
+        cmdPageBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1leftarrow.png"))); // NOI18N
+        cmdPageBackward.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPageBackwardActionPerformed(evt);
             }
-        } else if (fileName.toLowerCase().endsWith(".msg")) {
-            try {
-                
-                
-                InputStream source = new ByteArrayInputStream(content);
-                OutlookMessage om=new OutlookMessageParser().parseMsg(source);
-                
-                
-                OutlookMessagePanel op = new OutlookMessagePanel();
-                op.setSize(new Dimension(width, height));
-                op.setMaximumSize(new Dimension(width, height));
-                op.setPreferredSize(new Dimension(width, height));
-                
-                //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                op.setMessage(id, om);
-                op.setCaseContext(caseDto);
-                return op;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus(STR_PREVIEWFAIL);
-                return ep;
+        });
+
+        lblCurrentPage.setText("1/3");
+
+        cmdFirstPage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/2leftarrow.png"))); // NOI18N
+        cmdFirstPage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFirstPageActionPerformed(evt);
             }
-//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-//            try {
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                InputStream in = new FileInputStream(tempPath);
-//                OdfDocument document = OdfDocument.loadDocument(in);
-//
-//                PdfOptions options = PdfOptions.create();
-//
-//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
-//                OutputStream out = new FileOutputStream(tempPdf);
-//                PdfConverter.getInstance().convert(document, out, options);
-//                
-//                byte[] pdfContent=FileUtils.readFile(tempPdf);
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdf.getPath());
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error("could not convert file to PDF: " + fileName, t);
-//            }
-        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-            try {
-                byte[] thumbBytes = null;
-                ZipInputStream zis
-                        = new ZipInputStream(new ByteArrayInputStream(content));
-                //get the zipped file list entry
-                ZipEntry ze = zis.getNextEntry();
+        });
 
-                while (ze != null) {
-
-                    String thumbName = ze.getName();
-                    if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
-                        byte[] buffer = new byte[1024];
-                        //create all non exists folders
-                        //else you will hit FileNotFoundException for compressed folder
-
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            bos.write(buffer, 0, len);
-                        }
-
-                        bos.close();
-                        thumbBytes = bos.toByteArray();
-                        break;
-                    }
-
-                    ze = zis.getNextEntry();
-                }
-
-                zis.closeEntry();
-                zis.close();
-
-                if (thumbBytes != null) {
-                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewProvider.getPreview().getBytes());
-                    ip.setSize(width, height);
-                    ip.setMaximumSize(new Dimension(width, height));
-                    ip.setPreferredSize(new Dimension(width, height));
-                    ip.showContent(id, thumbBytes);
-                    return ip;
-                }
-            } catch (Throwable t) {
-                log.error("Error extracting thumbnail from " + fileName, t);
+        cmdLastPage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/2rightarrow.png"))); // NOI18N
+        cmdLastPage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdLastPageActionPerformed(evt);
             }
-        } else if (fileName.toLowerCase().endsWith(".bea")) {
-            try {
-                BeaPanel bp = new BeaPanel(id);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showContent(id, content);
-                bp.setCaseContext(caseDto);
-                return bp;
-            } catch (Throwable t) {
-                log.error(t);
-                BeaPanel bp = new BeaPanel(null);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showStatus(STR_PREVIEWFAIL);
-                return bp;
-            }
-        } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
+        });
 
-            // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
-            // this cases LO to launch twice, which seems to fail...
-//            try {
-//                FileConverter conv=FileConverter.getInstance();
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                
-//                try {
-//                    Thread.sleep(1500);
-//                } catch (Throwable t) {
-//
-//                }
-//                
-//                String tempPdfPath=conv.convertToPDF(tempPath);
-//                byte[] pdfContent=FileUtils.readFile(new File(tempPdfPath));
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdfPath);
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error(t);
-//                // fall back to text preview 
-//            }
+        sliderZoom.setMaximum(300);
+        sliderZoom.setMinimum(25);
+        sliderZoom.setPaintLabels(true);
+        sliderZoom.setToolTipText("Zoom 25% .. 300%");
+        sliderZoom.setValue(100);
+        sliderZoom.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderZoomStateChanged(evt);
+            }
+        });
+
+        cmdFitToScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_fit_screen_black_48dp.png"))); // NOI18N
+        cmdFitToScreen.setToolTipText("auf Seitenhöhe einpassen");
+        cmdFitToScreen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFitToScreenActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("gesamt:");
+
+        lblTotalPages.setText("100");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(cmdFirstPage)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdPageBackward)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdPageForward)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdLastPage)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblCurrentPage)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblTotalPages)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 307, Short.MAX_VALUE)
+                .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdFitToScreen))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(cmdFirstPage)
+                        .addComponent(cmdPageBackward)
+                        .addComponent(cmdPageForward)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE, false)
+                            .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdFitToScreen)
+                            .addComponent(jLabel1)
+                            .addComponent(lblCurrentPage, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblTotalPages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(cmdLastPage))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void scrollToPage(int page) {
+
+        int totalHeight = 0;
+        Component[] components = pnlPages.getComponents();
+
+        // Calculate the index of the JLabel currently displayed
+        for (int i = 0; i < components.length; i++) {
+            
+            if (i == page) {
+                this.currentPage = page;
+                this.jScrollPane1.getViewport().setViewPosition(new Point(0, totalHeight));
+                this.lblCurrentPage.setText("" + (page + 1) + "/" + this.renderedPages);
+                cmdFirstPage.setEnabled(currentPage > 0);
+                cmdPageBackward.setEnabled(currentPage > 0);
+                cmdLastPage.setEnabled((currentPage+1) < renderedPages);
+                cmdPageForward.setEnabled((currentPage+1) < renderedPages);
+
+                break;
+            }
+            totalHeight += components[i].getHeight();
+
         }
-        // plain text preview is default
-        PlaintextPanel ptp = new PlaintextPanel();
-        ptp.setSize(new Dimension(width, height));
-        ptp.setMaximumSize(new Dimension(width, height));
-        ptp.setPreferredSize(new Dimension(width, height));
+    }
 
-        //ptp.showStatus("Vorschau wird geladen...");
-        // we just reuse the showStatus method because it is doing the same thing
-        //ptp.showStatus(previewContent);
+    private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
+        this.scrollToPage(this.currentPage - 1);
+    }//GEN-LAST:event_cmdPageBackwardActionPerformed
+
+    private void cmdPageForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageForwardActionPerformed
+        this.scrollToPage(this.currentPage + 1);
+    }//GEN-LAST:event_cmdPageForwardActionPerformed
+
+    private void cmdFirstPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFirstPageActionPerformed
+        this.scrollToPage(0);
+    }//GEN-LAST:event_cmdFirstPageActionPerformed
+
+    private void cmdLastPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLastPageActionPerformed
+        this.scrollToPage(this.renderedPages-1);
+    }//GEN-LAST:event_cmdLastPageActionPerformed
+
+    private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
+        this.zoomFactor = this.sliderZoom.getValue();
+        ClientSettings.getInstance().setConfiguration("pdf.zoomfactor", "" + this.zoomFactor);
+        // this.showPage(this.content, this.currentPage, this.zoomFactor);
+
+        this.pnlPages.removeAll();
+
+        int i = 0;
+        while (this.orgImage.containsKey(i)) {
+            // need to subtract the height of the page navigation buttons, but
+            // the panel has not been layed out yet, so there is no height we could query
+            int height = Math.max(this.getHeight() - 55, 400);
+
+            float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
+            int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
+
+            height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
+            width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
+
+            Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+
+            JLabel lblPage = new JLabel();
+            lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+            lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+            this.pnlPages.add(lblPage);
+
+            ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
+            i++;
+        }
+
+    }//GEN-LAST:event_sliderZoomStateChanged
+
+    private void cmdFitToScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFitToScreenActionPerformed
+        this.sliderZoom.setValue(100);
+    }//GEN-LAST:event_cmdFitToScreenActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdFirstPage;
+    private javax.swing.JButton cmdFitToScreen;
+    private javax.swing.JButton cmdLastPage;
+    private javax.swing.JButton cmdPageBackward;
+    private javax.swing.JButton cmdPageForward;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblContent;
+    private javax.swing.JLabel lblCurrentPage;
+    private javax.swing.JLabel lblTotalPages;
+    private javax.swing.JPanel pnlPages;
+    private javax.swing.JSlider sliderZoom;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void showStatus(String text) {
+        ThreadUtils.updateLabel(this.lblContent, text);
+    }
+
+    private void renderContent(byte[] content, int zoomFactor) {
+        this.content = content;
         try {
-            ptp.showContent(id, previewProvider.getPreview().getBytes());
-        } catch (Exception ex) {
-            ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+            if (content != null) {
+                if (content.length > 5000000) {
+                    log.info("Rendering large PDF " + this.fileName + " with " + content.length + " bytes.");
+                }
+            } else {
+                log.info("PDF to render has no byte content (null)");
+                this.showStatus("Daten für die Vorschaudarstellung sind ungültig.");
+                return;
+            }
+
+            if (this.orgImage.isEmpty()) {
+
+                PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
+                PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
+
+                this.lblTotalPages.setText("" + inputPDF.getNumberOfPages());
+
+                
+                this.cmdFirstPage.setEnabled(false);
+                this.cmdPageBackward.setEnabled(false);
+                this.cmdLastPage.setEnabled(inputPDF.getNumberOfPages() > 1);
+                this.cmdPageForward.setEnabled(inputPDF.getNumberOfPages() > 1);
+
+                this.pnlPages.removeAll();
+
+                for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
+                    BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 300, ImageType.RGB);
+                    this.orgImage.put(i, buffImg);
+
+                    // need to subtract the height of the page navigation buttons, but
+                    // the panel has not been layed out yet, so there is no height we could query
+                    int height = Math.max(this.getHeight() - 55, 400);
+
+                    float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
+                    int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
+
+                    height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
+                    width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
+
+                    Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+
+                    JLabel lblPage = new JLabel();
+                    lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+                    lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+                    this.pnlPages.add(lblPage);
+
+                    ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
+
+                    this.renderedPages = i + 1;
+
+                }
+                this.lblCurrentPage.setText("1" + "/" + this.renderedPages);
+
+                inputPDF.close();
+
+            }
+
+        } catch (Throwable t) {
+            log.error("error rendering PDF preview for " + this.fileName, t);
+            showStatus("Vorschau nicht verfügbar");
         }
+    }
 
-        return ptp;
+    @Override
+    public void showContent(String documentId, byte[] content) {
+        this.documentId = documentId;
+        this.currentPage = 0;
+        this.renderContent(content, this.zoomFactor);
 
+    }
+
+    public void showContent(byte[] content) {
+        this.showContent(null, content);
+
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }
