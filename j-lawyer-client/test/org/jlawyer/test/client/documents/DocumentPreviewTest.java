@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFact
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImagePanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
+import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImageScrollingPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PlaintextPanel;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.io.File;
@@ -737,7 +738,7 @@ public class DocumentPreviewTest {
             Assert.fail(ex.getMessage());
         }
         Assert.assertNotNull(pdfPanel);
-        Assert.assertTrue(pdfPanel instanceof PdfImagePanel);
+        Assert.assertTrue(pdfPanel instanceof PdfImageScrollingPanel);
      }
      
      @Test
