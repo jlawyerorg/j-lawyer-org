@@ -683,6 +683,10 @@ public class CaseNumberGenerator {
 
     public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
 
+        if(pattern.equals("C") || pattern.equals("CC") || pattern.equals("CCC")) {
+            throw new InvalidSchemaPatternException("C muss mindestens als CCCC (4 Zeichen) enthalten sein oder in Verbindung mit anderen Parametern genutzt werden");
+        }
+        
         if (pattern.contains("YYY") && !pattern.contains("YYYY")) {
             throw new InvalidSchemaPatternException("Y muss als YY oder YYYY enthalten sein");
         }
