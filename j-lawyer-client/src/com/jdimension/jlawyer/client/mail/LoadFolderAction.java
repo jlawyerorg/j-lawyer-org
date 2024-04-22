@@ -803,7 +803,7 @@ public class LoadFolderAction extends ProgressableAction {
 
                 if (this.isCancelled()) {
                     try {
-                        ComponentUtils.autoSizeColumns(table);
+                        ComponentUtils.autoSizeColumns(table, 0);
                     } catch (Throwable t) {
                         log.error("Could not auto-size columns", t);
                     }
@@ -910,7 +910,7 @@ public class LoadFolderAction extends ProgressableAction {
             }
 
             SwingUtilities.invokeLater(() -> {
-                ComponentUtils.autoSizeColumns(table);
+                ComponentUtils.autoSizeColumns(table, 0);
             });
 
             EditorsRegistry.getInstance().clearStatus(true);
