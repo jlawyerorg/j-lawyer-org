@@ -741,7 +741,7 @@ public class DocumentViewerFactory {
             try {
                 spp.showContent(id, content);
             } catch (Exception ex) {
-                //spp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+                spp.showStatus("FEHLER: " + ex.getMessage());
             }
             return spp;
         } else if (lFileName.endsWith(".html") || lFileName.endsWith(".htm")) {
