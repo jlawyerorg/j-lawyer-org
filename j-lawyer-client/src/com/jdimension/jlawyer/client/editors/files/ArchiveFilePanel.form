@@ -1468,16 +1468,18 @@
                                   <Component id="cmdClearSearch" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblDocumentHits" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="220" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                                   <Component id="cmdNewDocument" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdUploadDocument" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cmdAddVoiceMemo" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdAddNote" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDrebis" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="splitDocumentsMain" alignment="0" max="32767" attributes="0"/>
+                              <Component id="splitDocumentsMain" alignment="0" pref="1084" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1496,11 +1498,12 @@
                                   <Component id="lblDocumentHits" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdClearSearch" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAddNote" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdAddVoiceMemo" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="splitDocumentsMain" pref="715" max="32767" attributes="0"/>
+                          <Component id="splitDocumentsMain" pref="781" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -1694,6 +1697,17 @@
                     </Container>
                   </SubComponents>
                 </Container>
+                <Component class="javax.swing.JButton" name="cmdAddVoiceMemo">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_mic_black_48dp.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Memo"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddVoiceMemoActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
           </SubComponents>

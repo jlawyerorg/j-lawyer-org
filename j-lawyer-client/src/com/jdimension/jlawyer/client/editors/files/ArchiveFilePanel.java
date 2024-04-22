@@ -1852,6 +1852,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         documentTagPanel = new javax.swing.JPanel();
+        cmdAddVoiceMemo = new javax.swing.JButton();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel15 = new javax.swing.JPanel();
@@ -2886,6 +2887,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         splitDocumentsMain.setLeftComponent(splitDocuments);
 
+        cmdAddVoiceMemo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdAddVoiceMemo.setText("Memo");
+        cmdAddVoiceMemo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddVoiceMemoActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -2903,15 +2912,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 220, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdAddVoiceMemo)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAddNote)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDrebis))
-                    .add(splitDocumentsMain))
+                    .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -2926,10 +2937,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(lblDocumentHits)
                         .add(cmdClearSearch)
-                        .add(cmdAddNote))
+                        .add(cmdAddNote)
+                        .add(cmdAddVoiceMemo))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 715, Short.MAX_VALUE)
+                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 781, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -6748,6 +6760,36 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
     }//GEN-LAST:event_mnuMoveDocumentToOtherCaseActionPerformed
 
+    private void cmdAddVoiceMemoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddVoiceMemoActionPerformed
+        AddVoiceMemoDialog dlg = new AddVoiceMemoDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setTitle("Sprachmemo hinzufügen");
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        byte[] result=dlg.getMemoBytes();
+        if(result==null)
+            return;
+        String fileName=dlg.getMemoFilename();
+        if(fileName==null || fileName.length()==0) {
+            fileName="Sprachmemo";
+        }
+        if(!fileName.toLowerCase().endsWith(".wav"))
+            fileName=fileName+".wav";
+        
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, result, "", null);
+            this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+                        
+        } catch (Exception ioe) {
+            log.error("Error saving voice memo", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Sprachmemos: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_cmdAddVoiceMemoActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -7177,6 +7219,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdAddForm;
     private javax.swing.JButton cmdAddHistory;
     private javax.swing.JButton cmdAddNote;
+    private javax.swing.JButton cmdAddVoiceMemo;
     protected javax.swing.JButton cmdBackToSearch;
     private javax.swing.JButton cmdClearSearch;
     private javax.swing.JButton cmdCopyCaseNumber;
