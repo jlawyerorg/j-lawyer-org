@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
-import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -674,7 +673,6 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ComboBoxModel;
@@ -693,11 +691,9 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
-import org.jdesktop.swingx.autocomplete.ComboBoxAdaptor;
 import org.jdesktop.swingx.autocomplete.ListAdaptor;
 import themes.colors.DefaultColorTheme;
 
@@ -773,8 +769,8 @@ public class ComponentUtils {
     }
 
     public static void addAllItemsToCombobox(JComboBox cmb, Object[] objects) {
-        for (int i = 0; i < objects.length; i++) {
-            cmb.addItem(objects[i]);
+        for (Object object : objects) {
+            cmb.addItem(object);
         }
     }
 
@@ -931,7 +927,7 @@ public class ComponentUtils {
                 }
             }
         }
-        return list.toArray(new String[list.size()]);
+        return list.toArray(String[]::new);
     }
 
     public static void unSelectMenuItems(JPopupMenu pop) {
@@ -984,11 +980,7 @@ public class ComponentUtils {
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
-                if (selectedItems.contains(mi.getText())) {
-                    mi.setSelected(true);
-                } else {
-                    mi.setSelected(false);
-                }
+                mi.setSelected(selectedItems.contains(mi.getText()));
             }
         }
     }
