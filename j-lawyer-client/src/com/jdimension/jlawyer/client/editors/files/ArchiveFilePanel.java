@@ -6769,7 +6769,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if(result==null)
             return;
         String fileName=dlg.getMemoFilename();
-        if(fileName==null || fileName.length()==0) {
+        if(fileName==null || fileName.trim().length()==0) {
             fileName="Sprachmemo";
         }
         if(!fileName.toLowerCase().endsWith(".wav"))
@@ -6779,9 +6779,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            
+            if(!remote.doesDocumentExist(this.dto.getId(), fileName)) {
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, result, "", null);
+                this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+            } else {
+                for(int i=2;i<50;i++) {
+                    String indexedFileName="(" + i + ") " + fileName;
+                    if(!remote.doesDocumentExist(this.dto.getId(), indexedFileName)) {
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), indexedFileName, result, "", null);
+                        this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+                        break;
+                    }
+                }
+            }
 
-            ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, result, "", null);
-            this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+            
                         
         } catch (Exception ioe) {
             log.error("Error saving voice memo", ioe);

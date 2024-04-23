@@ -672,7 +672,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.sound.sampled.LineEvent;
 import org.apache.log4j.Logger;
 
 /**
@@ -681,13 +681,13 @@ import org.apache.log4j.Logger;
  */
 public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log=Logger.getLogger(SoundplayerPanel.class.getName());
-    
-    private String documentId=null;
-    
+    private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
+
+    private String documentId = null;
+
     private Clip clip;
     private Timer timer;
-    
+
     /**
      * Creates new form PlaintextPanel
      */
@@ -790,7 +790,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public void showStatus(String text) {
         this.lblStatus.setText(text);
     }
-    
+
     @Override
     public void removeNotify() {
         super.removeNotify();
@@ -799,14 +799,24 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void showContent(String documentId, byte[] content) {
-        this.documentId=documentId;
-        
+        this.documentId = documentId;
+
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
+
+            clip.addLineListener((LineEvent event) -> {
+                if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition()==clip.getMicrosecondLength())) {
+                    clip.setMicrosecondPosition(0);
+                    timer.stop();
+                    updateTimeLabel();
+                    cmdPlayPause.setText("Play");
+                }
+            });
+
             this.prgTime.setMinimum(0);
-            this.prgTime.setMaximum((int)(clip.getMicrosecondLength()/1000l/1000l));
+            this.prgTime.setMaximum((int) (clip.getMicrosecondLength() / 1000l / 1000l));
             this.prgTime.setValue(0);
         } catch (UnsupportedAudioFileException uae) {
             log.error(uae);
@@ -819,15 +829,14 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         timer = new Timer(1000, (ActionEvent e) -> {
             updateTimeLabel();
         });
-        
-    }
 
+    }
 
     @Override
     public String getDocumentId() {
         return this.documentId;
     }
-    
+
     private void togglePlayPause() {
         if (clip != null) {
             if (clip.isRunning()) {
@@ -854,11 +863,11 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     private void updateTimeLabel() {
         long microseconds = clip.getMicrosecondPosition();
-        this.prgTime.setValue((int)(clip.getMicrosecondPosition()/1000l/1000l));
+        this.prgTime.setValue((int) (clip.getMicrosecondPosition() / 1000l / 1000l));
         long minutes = (microseconds / 1000000) / 60;
         long seconds = (microseconds / 1000000) % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
         timeLabel.setText(timeString);
     }
-    
+
 }

@@ -663,7 +663,10 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -676,6 +679,7 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -705,7 +709,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         this.txtFileName.setText(df.format(new Date()) + "_Sprachmemo");
-
+        this.lblInfo.setText(" ");
+        
         ComponentUtils.restoreDialogSize(this);
 
         this.cmbDevices.removeAllItems();
@@ -714,6 +719,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     }
 
     private void populateMicrophoneDevices(AudioFormat audioFormat) {
+        String lastDevice=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, null);
+        
         Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
         for (Mixer.Info mixerInfo : mixerInfos) {
             Mixer mixer = AudioSystem.getMixer(mixerInfo);
@@ -734,6 +741,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 }
             }
         }
+        
+        if(lastDevice!=null)
+            this.cmbDevices.setSelectedItem(lastDevice);
     }
 
     /**
@@ -752,11 +762,12 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         cmdRecord = new javax.swing.JButton();
         cmbDevices = new javax.swing.JComboBox<>();
+        lblInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
+        cmdCancel.setText("Verwerfen");
         cmdCancel.setToolTipText("");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -765,7 +776,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         });
 
         cmdAddDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdAddDocument.setText("Erstellen");
+        cmdAddDocument.setText("Aufnahme speichern");
         cmdAddDocument.setToolTipText("");
         cmdAddDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -817,23 +828,30 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        lblInfo.setText("info");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .add(layout.createSequentialGroup()
-                .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 662, Short.MAX_VALUE)
-                        .add(cmdAddDocument)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdCancel))
                     .add(layout.createSequentialGroup()
-                        .add(cmdRecord)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(0, 316, Short.MAX_VALUE)
+                                .add(cmdAddDocument)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdCancel))
+                            .add(layout.createSequentialGroup()
+                                .add(cmdRecord)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                    .add(layout.createSequentialGroup()
+                        .add(12, 12, 12)
+                        .add(lblInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -844,7 +862,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdRecord)
                     .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 210, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(lblInfo)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
                     .add(cmdAddDocument))
@@ -951,6 +971,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void cmdRecordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecordActionPerformed
         if (!isRecording) {
             startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
             this.cmdRecord.setText("Pause / Stop");
             cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
         } else {
@@ -976,6 +997,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRecord;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JLabel lblInfo;
     private javax.swing.JTextField txtFileName;
     // End of variables declaration//GEN-END:variables
 
@@ -1030,11 +1052,13 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                         byteArrayOutputStream.write(buffer, 0, bytesRead);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Unable to start recording microphone audio stream", ex);
+            JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1045,6 +1069,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             targetDataLine.close();
         }
         this.memoParts.add(byteArrayOutputStream.toByteArray());
+        long byteCount=0;
+        for(byte[] bytes: this.memoParts) {
+            byteCount+=bytes.length;
+        }
+        this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
     }
 
     private AudioFormat getAudioFormat() {
