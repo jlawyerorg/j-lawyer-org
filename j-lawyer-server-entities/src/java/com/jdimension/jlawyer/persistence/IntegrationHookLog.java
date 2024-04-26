@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,62 +660,266 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.events;
+package com.jdimension.jlawyer.persistence;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
+@Entity
+@Table(name = "integration_hooks_log")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "IntegrationHookLog.findAll", query = "SELECT h FROM IntegrationHookLog h"),
+    @NamedQuery(name = "IntegrationHookLog.findOlderThan", query = "SELECT h FROM IntegrationHookLog h WHERE h.requestDate < :requestDate"),
+    @NamedQuery(name = "IntegrationHookLog.findByHookType", query = "SELECT h FROM IntegrationHookLog h WHERE h.hookType = :hookType")})
+
+public class IntegrationHookLog implements Serializable {
+
+    private static long serialVersionUID = 1L;
     
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
+    @Id
+    @Basic(optional = false)
+    @Column(name = "hook_id")
+    private String hookId;
     
-    protected String caseId=null;
+    @Column(name = "hook_type")
+    private String hookType;
     
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
+    @Column(name = "date_request")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date requestDate;
+    
+    @Column(name = "payload_size")
+    private long payloadSize;
+    
+    @Column(name = "duration")
+    private long duration;
+    
+    @Column(name = "status")
+    private int status;
+    
+    @Column(name = "url")
+    private String url;
+
+    @Column(name = "auth_user")
+    private String authenticationUser;
+    
+    @Column(name = "failed")
+    private boolean failed;
+    
+    @Column(name = "fail_message")
+    private String failureMessage;
+    
+    @Column(name = "response")
+    private String response;
+    
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (getHookId() != null ? getHookId().hashCode() : 0);
+        return hash;
     }
 
     @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
-        try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
-            return null;
+    public boolean equals(Object object) {
+        if (!(object instanceof IntegrationHookLog)) {
+            return false;
         }
-        return writable.toString();
+        IntegrationHookLog other = (IntegrationHookLog) object;
+        if ((this.getHookId() == null && other.getHookId() != null) || (this.getHookId() != null && !this.getHookId().equals(other.hookId))) {
+            return false;
+        }
+        return true;
     }
 
     @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.IntegrationHookLog[ id=" + getHookId() + " ]";
     }
 
     /**
-     * @return the caseId
+     * @return the serialVersionUID
      */
-    public String getCaseId() {
-        return caseId;
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
     }
 
     /**
-     * @param caseId the caseId to set
+     * @param aSerialVersionUID the serialVersionUID to set
      */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+    public static void setSerialVersionUID(long aSerialVersionUID) {
+        serialVersionUID = aSerialVersionUID;
     }
+
+    /**
+     * @return the hookId
+     */
+    public String getHookId() {
+        return hookId;
+    }
+
+    /**
+     * @param hookId the hookId to set
+     */
+    public void setHookId(String hookId) {
+        this.hookId = hookId;
+    }
+
+    /**
+     * @return the hookType
+     */
+    public String getHookType() {
+        return hookType;
+    }
+
+    /**
+     * @param hookType the hookType to set
+     */
+    public void setHookType(String hookType) {
+        this.hookType = hookType;
+    }
+
+    /**
+     * @return the requestDate
+     */
+    public Date getRequestDate() {
+        return requestDate;
+    }
+
+    /**
+     * @param requestDate the requestDate to set
+     */
+    public void setRequestDate(Date requestDate) {
+        this.requestDate = requestDate;
+    }
+
+    /**
+     * @return the duration
+     */
+    public long getDuration() {
+        return duration;
+    }
+
+    /**
+     * @param duration the duration to set
+     */
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    /**
+     * @return the status
+     */
+    public int getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    /**
+     * @return the authenticationUser
+     */
+    public String getAuthenticationUser() {
+        return authenticationUser;
+    }
+
+    /**
+     * @param authenticationUser the authenticationUser to set
+     */
+    public void setAuthenticationUser(String authenticationUser) {
+        this.authenticationUser = authenticationUser;
+    }
+
+    /**
+     * @return the failed
+     */
+    public boolean isFailed() {
+        return failed;
+    }
+
+    /**
+     * @param failed the failed to set
+     */
+    public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
+    /**
+     * @return the failureMessage
+     */
+    public String getFailureMessage() {
+        return failureMessage;
+    }
+
+    /**
+     * @param failureMessage the failureMessage to set
+     */
+    public void setFailureMessage(String failureMessage) {
+        this.failureMessage = failureMessage;
+    }
+
+    /**
+     * @return the payloadSize
+     */
+    public long getPayloadSize() {
+        return payloadSize;
+    }
+
+    /**
+     * @param payloadSize the payloadSize to set
+     */
+    public void setPayloadSize(long payloadSize) {
+        this.payloadSize = payloadSize;
+    }
+
+    /**
+     * @return the response
+     */
+    public String getResponse() {
+        return response;
+    }
+
+    /**
+     * @param response the response to set
+     */
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    
     
 }

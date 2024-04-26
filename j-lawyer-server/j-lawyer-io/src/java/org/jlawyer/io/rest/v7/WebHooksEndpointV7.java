@@ -661,62 +661,124 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.events;
+package org.jlawyer.io.rest.v7;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import com.jdimension.jlawyer.persistence.IntegrationHookLog;
+import com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog;
+import org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLogOverview;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/security/metadata
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
+@Stateless
+@Path("/v7/webhooks")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
+    private static final Logger log = Logger.getLogger(WebHooksEndpointV7.class.getName());
+    private static final String LOOKUP_HOOKS = "java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationHookLogFacade!com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal";
     
-    protected String caseId=null;
-    
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
-    }
 
+    /**
+     * Lists all logs for executed web hooks and their basic information.
+     *
+     * @return list of logs for recorded web hooks including their basic information
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
+    @Path("/list")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    public Response listHooks() {
+
         try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
-            return null;
+
+            InitialContext ic = new InitialContext();
+            IntegrationHookLogFacadeLocal logs = (IntegrationHookLogFacadeLocal) ic.lookup(LOOKUP_HOOKS);
+            List<IntegrationHookLog> logList=logs.findAll();
+            
+            ArrayList<RestfulIntegrationHookLogOverview> resultList = new ArrayList<>();
+            for (IntegrationHookLog l : logList) {
+                RestfulIntegrationHookLogOverview o=new RestfulIntegrationHookLogOverview();
+                o.setFailed(l.isFailed());
+                o.setHookId(l.getHookId());
+                o.setHookType(l.getHookType());
+                o.setRequestDate(l.getRequestDate());
+                resultList.add(o);
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("Could not list web hook logs", ex);
+            Response res = Response.serverError().build();
+            return res;
         }
-        return writable.toString();
-    }
 
+    }
+    
+    /**
+     * Returns a specific web hooks execution log by its ID
+     *
+     * @param hookId the id of the web hook
+     * @return details for the given single hook log
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No log found with this ID
+     */
     @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
-    }
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{hookId}")
+    @RolesAllowed({"loginRole"})
+    public Response getHookLog(@PathParam("hookId") String hookId) {
 
-    /**
-     * @return the caseId
-     */
-    public String getCaseId() {
-        return caseId;
-    }
+        try {
 
-    /**
-     * @param caseId the caseId to set
-     */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+            InitialContext ic = new InitialContext();
+            IntegrationHookLogFacadeLocal logs = (IntegrationHookLogFacadeLocal) ic.lookup(LOOKUP_HOOKS);
+            IntegrationHookLog l=logs.find(hookId);
+            
+            if (l != null) {
+                
+                RestfulIntegrationHookLog r=new RestfulIntegrationHookLog();
+                r.setFailed(l.isFailed());
+                r.setHookId(l.getHookId());
+                r.setHookType(l.getHookType());
+                r.setRequestDate(l.getRequestDate());
+                r.setAuthenticationUser(l.getAuthenticationUser());
+                r.setDuration(l.getDuration());
+                r.setFailureMessage(l.getFailureMessage());
+                r.setPayloadSize(l.getPayloadSize());
+                r.setResponse(l.getResponse());
+                r.setStatus(l.getStatus());
+                r.setUrl(l.getUrl());
+                
+                return Response.ok(r).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get web hook log by id " + hookId, ex);
+            return Response.serverError().build();
+        }
+
     }
     
 }

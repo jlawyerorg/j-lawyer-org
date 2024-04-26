@@ -661,62 +661,41 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.events;
+package com.jdimension.jlawyer.persistence;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import java.util.Date;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 
 /**
  *
  * @author jens
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
-    
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
-    
-    protected String caseId=null;
-    
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
-    }
+@Stateless
+public class IntegrationHookLogFacade extends AbstractFacade<IntegrationHookLog> implements IntegrationHookLogFacadeLocal {
+
+    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
+    private EntityManager em;
 
     @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
+    protected EntityManager getEntityManager() {
+        return em;
+    }
+
+    public IntegrationHookLogFacade() {
+        super(IntegrationHookLog.class);
+    }
+    
+    @Override
+    public List<IntegrationHookLog> findOlderThan(Date requestDate) {
         try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
+            return em.createNamedQuery("IntegrationHookLog.findOlderThan").setParameter("requestDate", requestDate).getResultList();
+        } catch (NoResultException nre) {
             return null;
         }
-        return writable.toString();
-    }
-
-    @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
-    }
-
-    /**
-     * @return the caseId
-     */
-    public String getCaseId() {
-        return caseId;
-    }
-
-    /**
-     * @param caseId the caseId to set
-     */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
     }
     
 }

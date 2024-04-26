@@ -712,6 +712,7 @@ public class InstantMessageCreatedEvent extends CustomHook implements Jsonable {
         
         final JsonObject json = new JsonObject();
         json.put("hookType", this.hookType.name());
+        json.put("hookId", this.hookId);
         json.put("messageId", this.getMessageId());
         if(this.getSent()!=null)
             json.put("sent", formatter.format(this.getSent()));

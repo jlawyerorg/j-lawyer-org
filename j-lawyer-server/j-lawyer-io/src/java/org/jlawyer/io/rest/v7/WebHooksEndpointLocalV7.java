@@ -660,63 +660,23 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
- */
-package com.jdimension.jlawyer.events;
+*/
+package org.jlawyer.io.rest.v7;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import javax.ejb.Local;
+import javax.ws.rs.core.Response;
 
 /**
  *
  * @author jens
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
+@Local
+public interface WebHooksEndpointLocalV7 {
+
+    public Response listHooks();
     
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
+    public Response getHookLog(String hookId);
     
-    protected String caseId=null;
     
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
-    }
-
-    @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
-        try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
-            return null;
-        }
-        return writable.toString();
-    }
-
-    @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
-    }
-
-    /**
-     * @return the caseId
-     */
-    public String getCaseId() {
-        return caseId;
-    }
-
-    /**
-     * @param caseId the caseId to set
-     */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
-    }
     
 }

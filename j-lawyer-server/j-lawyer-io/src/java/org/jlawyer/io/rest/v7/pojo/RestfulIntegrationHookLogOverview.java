@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,62 +660,78 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.events;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
-    
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
-    
-    protected String caseId=null;
-    
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
-    }
+public class RestfulIntegrationHookLogOverview {
 
-    @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
-        try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
-            return null;
-        }
-        return writable.toString();
-    }
+    private String hookId;
+    private String hookType;
+    private Date requestDate;
+    private boolean failed;
 
-    @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
+    /**
+     * @return the hookId
+     */
+    public String getHookId() {
+        return hookId;
     }
 
     /**
-     * @return the caseId
+     * @param hookId the hookId to set
      */
-    public String getCaseId() {
-        return caseId;
+    public void setHookId(String hookId) {
+        this.hookId = hookId;
     }
 
     /**
-     * @param caseId the caseId to set
+     * @return the hookType
      */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+    public String getHookType() {
+        return hookType;
     }
+
+    /**
+     * @param hookType the hookType to set
+     */
+    public void setHookType(String hookType) {
+        this.hookType = hookType;
+    }
+
+    /**
+     * @return the requestDate
+     */
+    public Date getRequestDate() {
+        return requestDate;
+    }
+
+    /**
+     * @param requestDate the requestDate to set
+     */
+    public void setRequestDate(Date requestDate) {
+        this.requestDate = requestDate;
+    }
+
+    /**
+     * @return the failed
+     */
+    public boolean isFailed() {
+        return failed;
+    }
+
+    /**
+     * @param failed the failed to set
+     */
+    public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+        
+
+    
     
 }

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.events;
 
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import java.io.Serializable;
 
 /**
@@ -672,9 +673,11 @@ import java.io.Serializable;
 public class CustomHook implements Serializable {
     
     protected HookType hookType=null;
+    protected String hookId=null;
     
     protected CustomHook(HookType hook) {
         this.hookType=hook;
+        this.hookId=new StringGenerator().getID().toString();
     }
     
     public HookType getHookType() {
@@ -686,5 +689,19 @@ public class CustomHook implements Serializable {
      */
     public void setHookType(HookType hookType) {
         this.hookType = hookType;
+    }
+
+    /**
+     * @return the hookId
+     */
+    public String getHookId() {
+        return hookId;
+    }
+
+    /**
+     * @param hookId the hookId to set
+     */
+    public void setHookId(String hookId) {
+        this.hookId = hookId;
     }
 }

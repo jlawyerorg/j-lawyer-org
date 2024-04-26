@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,62 +660,182 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.events;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsonable;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-public class CaseUpdatedEvent extends CustomHook implements Jsonable {
-    
-    private static final Logger log=Logger.getLogger(CaseUpdatedEvent.class.getName());
-    
-    protected String caseId=null;
-    
-    public CaseUpdatedEvent() {
-        super(HookType.CASE_UPDATED);
-    }
+public class RestfulIntegrationHookLog {
 
-    @Override
-    public String toJson() {
-        final StringWriter writable = new StringWriter();
-        try {
-            this.toJson(writable);
-        } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
-            return null;
-        }
-        return writable.toString();
-    }
-
-    @Override
-    public void toJson(Writer writer) throws IOException {
-        final JsonObject json = new JsonObject();
-        json.put("hookType", this.hookType.name());
-        json.put("hookId", this.hookId);
-        json.put("caseId", this.caseId);
-        json.toJson(writer);
+    private String hookId;
+    private String hookType;
+    private Date requestDate;
+    private long payloadSize;
+    private long duration;
+    private int status;
+    private String url;
+    private String authenticationUser;
+    private boolean failed;
+    private String failureMessage;
+    private String response;
+    
+    /**
+     * @return the hookId
+     */
+    public String getHookId() {
+        return hookId;
     }
 
     /**
-     * @return the caseId
+     * @param hookId the hookId to set
      */
-    public String getCaseId() {
-        return caseId;
+    public void setHookId(String hookId) {
+        this.hookId = hookId;
     }
 
     /**
-     * @param caseId the caseId to set
+     * @return the hookType
      */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+    public String getHookType() {
+        return hookType;
     }
+
+    /**
+     * @param hookType the hookType to set
+     */
+    public void setHookType(String hookType) {
+        this.hookType = hookType;
+    }
+
+    /**
+     * @return the requestDate
+     */
+    public Date getRequestDate() {
+        return requestDate;
+    }
+
+    /**
+     * @param requestDate the requestDate to set
+     */
+    public void setRequestDate(Date requestDate) {
+        this.requestDate = requestDate;
+    }
+
+    /**
+     * @return the duration
+     */
+    public long getDuration() {
+        return duration;
+    }
+
+    /**
+     * @param duration the duration to set
+     */
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    /**
+     * @return the status
+     */
+    public int getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    /**
+     * @return the authenticationUser
+     */
+    public String getAuthenticationUser() {
+        return authenticationUser;
+    }
+
+    /**
+     * @param authenticationUser the authenticationUser to set
+     */
+    public void setAuthenticationUser(String authenticationUser) {
+        this.authenticationUser = authenticationUser;
+    }
+
+    /**
+     * @return the failed
+     */
+    public boolean isFailed() {
+        return failed;
+    }
+
+    /**
+     * @param failed the failed to set
+     */
+    public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
+    /**
+     * @return the failureMessage
+     */
+    public String getFailureMessage() {
+        return failureMessage;
+    }
+
+    /**
+     * @param failureMessage the failureMessage to set
+     */
+    public void setFailureMessage(String failureMessage) {
+        this.failureMessage = failureMessage;
+    }
+
+    /**
+     * @return the payloadSize
+     */
+    public long getPayloadSize() {
+        return payloadSize;
+    }
+
+    /**
+     * @param payloadSize the payloadSize to set
+     */
+    public void setPayloadSize(long payloadSize) {
+        this.payloadSize = payloadSize;
+    }
+
+    /**
+     * @return the response
+     */
+    public String getResponse() {
+        return response;
+    }
+
+    /**
+     * @param response the response to set
+     */
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    
     
 }
