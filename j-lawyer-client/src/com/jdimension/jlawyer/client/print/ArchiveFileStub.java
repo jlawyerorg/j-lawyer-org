@@ -678,15 +678,14 @@ public class ArchiveFileStub extends GenericStub {
     private String fileNumber;
     private String claimNumber;
     private float claimValue;
-//    private String dictateSign;
     private String notice;
     private String reason;
     private String lawyer;
     private String assistant;
     
-    private List<ReviewsDetail> reviews = new ArrayList<ReviewsDetail>();
+    private List<ReviewsDetail> reviews = new ArrayList<>();
     
-    private List<AddressDetail> parties=new ArrayList<AddressDetail>();
+    private List<AddressDetail> parties=new ArrayList<>();
 
     public ArchiveFileStub() {
         super();
@@ -700,42 +699,38 @@ public class ArchiveFileStub extends GenericStub {
     }
 
     public void sortReviews() {
-        Comparator c = new Comparator() {
-
-            public int compare(Object t, Object t1) {
-                try {
-
-                    if (t == null) {
-                        return -1;
-                    }
-
-                    if (t1 == null) {
-                        return 1;
-                    }
-                    
-                    String s1 = ((ReviewsDetail)t).getReviewDate();
-                    String s2 = ((ReviewsDetail)t1).getReviewDate();
-
-
-                    if ("".equals(s1)) {
-                        return -1;
-                    }
-
-                    if ("".equals(s2)) {
-                        return 1;
-                    }
-
-                    Date d1 = df.parse(s1);
-                    Date d2 = df.parse(s2);
-
-                    return d1.compareTo(d2);
-
-
-
-                } catch (Throwable thr) {
-                    //log.error("error sorting by date string", thr);
+        Comparator c = (Comparator) (Object t, Object t1) -> {
+            try {
+                
+                if (t == null) {
                     return -1;
                 }
+                
+                if (t1 == null) {
+                    return 1;
+                }
+                
+                String s1 = ((ReviewsDetail)t).getReviewDate();
+                String s2 = ((ReviewsDetail)t1).getReviewDate();
+                
+                
+                if ("".equals(s1)) {
+                    return -1;
+                }
+                
+                if ("".equals(s2)) {
+                    return 1;
+                }
+                
+                Date d1 = df.parse(s1);
+                Date d2 = df.parse(s2);
+                
+                return d1.compareTo(d2);
+                
+                
+                
+            } catch (Throwable thr) {
+                return -1;
             }
         };
         Collections.sort(this.reviews, c);

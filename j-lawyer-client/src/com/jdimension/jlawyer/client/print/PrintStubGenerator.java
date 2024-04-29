@@ -775,7 +775,14 @@ public class PrintStubGenerator {
         } else {
             d.setFax(b.getFax());
         }
-        d.setFirstName(b.getFirstName() + " " + b.getFirstName2());
+        String name1=b.getFirstName();
+        if(name1==null)
+            name1="";
+        String name2=b.getFirstName2();
+        if(name2==null)
+            name2="";
+        
+        d.setFirstName(name1 + " " + name2);
         d.setName(b.getName());
         if (StringUtils.isEmpty(b.getPhone())) {
             d.setPhone("                         ");
