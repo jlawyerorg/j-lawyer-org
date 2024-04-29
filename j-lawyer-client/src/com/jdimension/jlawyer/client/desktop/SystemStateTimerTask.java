@@ -675,6 +675,7 @@ import java.awt.Component;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -692,7 +693,13 @@ public class SystemStateTimerTask extends java.util.TimerTask {
     private JLabel voipLabel;
     private DecimalFormat dfCurrency=new DecimalFormat("0.00");
     
-    /** Creates a new instance of SystemStateTimerTask */
+    /** Creates a new instance of SystemStateTimerTask
+     * @param owner
+     * @param addressCountLabel
+     * @param archiveFileCountLabel
+     * @param archiveFileArchivedLabel
+     * @param documentLabel
+     * @param voipLabel */
     public SystemStateTimerTask(Component owner, JLabel addressCountLabel, JLabel archiveFileCountLabel, JLabel archiveFileArchivedLabel, JLabel documentLabel, JLabel voipLabel) {
         super();
         this.owner=owner;
@@ -712,14 +719,10 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //AddressServiceRemoteHome home = (AddressServiceRemoteHome)locator.getRemoteHome("ejb/AddressServiceBean", AddressServiceRemoteHome.class);
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             addressCount=addressService.getAddressCount();
             ThreadUtils.updateLabel(this.addressCountLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.addresses"), new Object[] {addressCount}));
             
-            //addressService.remove();
-            
-            //ArchiveFileServiceRemoteHome fHome = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             archiveFileCount=fileService.getArchiveFileCount();
             ThreadUtils.updateLabel(this.archiveFileCountLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.cases"), new Object[] {archiveFileCount}));
@@ -729,38 +732,31 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             
             docCount=fileService.getDocumentCount();
             ThreadUtils.updateLabel(this.documentLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.documents"), new Object[] {docCount}));
-            //fileService.remove();
-            
-//            ServerInformation si=locator.lookupSystemManagementRemote().getServerInformation();
-//            if(si.getState()==ServerInformation.STATE_GREEN)
-//                this.stateLabel.setForeground(Color.GREEN);
-//            else if(si.getState()==ServerInformation.STATE_YELLOW)
-//                this.stateLabel.setForeground(Color.YELLOW);
-//            else
-//                this.stateLabel.setForeground(Color.RED);
-//            this.stateLabel.setText(si.getStateString());
-//            this.stateLabel.setToolTipText(si.getStateDescription());
             
             VoipServiceRemote voipService=locator.lookupVoipServiceRemote();
             BalanceInformation bi=voipService.getBalance();
             NumberFormat nf=NumberFormat.getCurrencyInstance();
             ThreadUtils.updateLabel(voipLabel, nf.format(bi.getTotal()));
             
+            if(this.owner instanceof DesktopPanel) {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        ((DesktopPanel)owner).updateCurrentDay();
+                    } catch (Throwable t) {
+                        log.error("unable to update current date on desktop", t);
+                    }
+                });
+                
+            }
+            
             
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //String errorMsg=java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.connectionerror"), new Object[] {ex.getMessage()});
             if(ex instanceof SipgateException) {
                 String errorMsg="Keine Sipgate-Verbindung: " + ex.getMessage();
                 ThreadUtils.showErrorDialog(this.owner, errorMsg, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.error"));
             }
-            
-            return;
         }
-        
-        
-        
-        
         
     }
     

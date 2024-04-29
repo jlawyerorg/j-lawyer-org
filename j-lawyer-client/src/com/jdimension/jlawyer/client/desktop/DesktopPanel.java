@@ -769,12 +769,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
         ComponentUtils.decorateSplitPane(jSplitPane2, splitPaneColor);
         
-        Date now = new Date();
-        SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
-        SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
-        SimpleDateFormat dfDay = new SimpleDateFormat("dd");
-        this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
-
+        updateCurrentDay();
+        
         this.jSplitPane1.setDividerLocation(0.5d);
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -886,6 +882,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         UserSettings us = UserSettings.getInstance();
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
+    }
+    
+    public void updateCurrentDay() {
+        
+        Date now = new Date();
+        SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
+        SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
+        SimpleDateFormat dfDay = new SimpleDateFormat("dd");
+        this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
+        
     }
     
     private void buildUsersPopup() {
@@ -1194,10 +1200,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel5)
-                    .add(chkOnlyMyCases)
-                    .add(cmdRefreshLastChanged))
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdRefreshLastChanged)
+                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel5)
+                        .add(chkOnlyMyCases)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                 .addContainerGap())
