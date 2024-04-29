@@ -46,12 +46,14 @@
                       <Component id="cmdFirstPage" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPageBackward" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPageForward" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="1" groupAlignment="3" max="-2" attributes="0">
-                          <Component id="sliderZoom" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdFitToScreen" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="1" groupAlignment="0" max="-2" attributes="0">
                           <Component id="lblCurrentPage" alignment="0" min="-2" pref="28" max="-2" attributes="0"/>
                           <Component id="lblTotalPages" alignment="0" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="sliderZoom" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdFitToScreen" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                   </Group>
                   <Component id="cmdLastPage" min="-2" max="-2" attributes="0"/>

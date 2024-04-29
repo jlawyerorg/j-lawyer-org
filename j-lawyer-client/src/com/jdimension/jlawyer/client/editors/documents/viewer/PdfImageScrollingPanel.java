@@ -713,7 +713,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.fileName = fileName;
         ThreadUtils.updateLabel(this.lblContent, "");
 
-        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(32);
         this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
 
         this.jScrollPane1.getVerticalScrollBar().addAdjustmentListener((AdjustmentEvent e) -> {
@@ -883,12 +883,13 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         .addComponent(cmdFirstPage)
                         .addComponent(cmdPageBackward)
                         .addComponent(cmdPageForward)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE, false)
-                            .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmdFitToScreen)
-                            .addComponent(jLabel1)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lblCurrentPage, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblTotalPages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(lblTotalPages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(cmdFitToScreen)
+                                .addComponent(jLabel1))))
                     .addComponent(cmdLastPage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
