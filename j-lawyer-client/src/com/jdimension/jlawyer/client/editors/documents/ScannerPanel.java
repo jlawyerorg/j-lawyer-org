@@ -873,8 +873,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void displayLocalScanDir() {
-        ClientSettings settings = ClientSettings.getInstance();
-        String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        String temp = ScannerUtils.getInstance().getLocalScanDir("");
         if ("".equalsIgnoreCase(temp)) {
             this.lblLocalDir.setText("kein Eingangsordner auf diesem Gerät");
         } else {
@@ -1374,10 +1373,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void mnuSelectLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSelectLocalFolderActionPerformed
         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
 
-        ClientSettings cs = ClientSettings.getInstance();
-        String observedDir = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        String observedDir = ScannerUtils.getInstance().getLocalScanDir("");
 
-        String current = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
+        String current = ScannerUtils.getInstance().getLocalScanDir(System.getProperty("user.home"));
         JFileChooser chooser = new JFileChooser(current);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
@@ -1392,19 +1390,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
+            ScannerUtils.getInstance().setLocalScanDir(chooser.getSelectedFile().getAbsolutePath());
             this.displayLocalScanDir();
 
         } else {
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+            ScannerUtils.getInstance().setLocalScanDir("");
             this.displayLocalScanDir();
         }
     }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
 
     private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed
-        ClientSettings cs = ClientSettings.getInstance();
-        cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        ScannerUtils.getInstance().setLocalScanDir("");
         this.displayLocalScanDir();
     }//GEN-LAST:event_mnuDeactivateLocalFolderActionPerformed
 

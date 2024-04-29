@@ -691,7 +691,7 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String localDirConfiguration=settings.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+            String localDirConfiguration=ScannerUtils.getInstance().getLocalScanDir("");
             
             if("".equals(localDirConfiguration))
                 return;
