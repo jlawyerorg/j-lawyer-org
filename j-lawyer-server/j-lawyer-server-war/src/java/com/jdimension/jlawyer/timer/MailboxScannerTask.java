@@ -835,6 +835,33 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 inboxFolder.open(Folder.READ_WRITE);
             }
 
+            // create "imported" folder
+            boolean importFolderExists = false;
+            Folder importFolder = null;
+            try {
+                if (!inboxFolder.isOpen()) {
+                    inboxFolder.open(Folder.READ_WRITE);
+                }
+                importFolder = inboxFolder.getFolder("in Akte importiert");
+                boolean created = false;
+                if (!importFolder.exists()) {
+                    created = importFolder.create(Folder.HOLDS_MESSAGES);
+                    importFolder = inboxFolder.getFolder("in Akte importiert");
+                } else {
+                    importFolderExists = true;
+                }
+
+                if (created) {
+                    importFolderExists = true;
+                }
+                if (!importFolderExists) {
+                    log.error("Folder for imported mails does not exist and creation failed!");
+                }
+
+            } catch (Exception ex) {
+                log.error("Folder for imported mails could not be checked / created!", ex);
+            }
+
             Message[] allMessages = inboxFolder.getMessages();
             ArrayList<Message> deleteMessages = new ArrayList<>();
             for (Message msg : allMessages) {
@@ -855,18 +882,31 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 Message copiedMsg = new MimeMessage(session, bis);
                 bis.close();
 
-                String subject="";
-                if(copiedMsg.getSubject()!=null)
-                    subject=copiedMsg.getSubject();
+                if (copiedMsg.getSubject() != null) {
+                    log.info("processing message with subject: " + copiedMsg.getSubject());
+                }
+
+                String subject = "";
+                if (copiedMsg.getSubject() != null) {
+                    subject = copiedMsg.getSubject();
+                }
                 boolean foundInSubject = false;
                 for (String fn : allFileNumbers) {
                     if (subject.contains(fn.toLowerCase())) {
-                        log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject");
+
                         ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
-                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
-                        if(saved)
-                            deleteMessages.add(msg);
-                        foundInSubject = true;
+                        if (toCase.isArchived()) {
+                            // need to avoid saving to an archived case - the tag would never be displayed on the desktop
+                            log.warn("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject, but the case is already archived - skipping!");
+                        } else {
+                            log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject");
+                            boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
+                            if (saved) {
+                                deleteMessages.add(msg);
+                            }
+                            foundInSubject = true;
+
+                        }
                         break;
                     }
                 }
@@ -876,65 +916,70 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
                 // FIRST - B: try to find matching case by file number in the body
                 String body = null;
-                if (copiedMsg.isMimeType("multipart/*")) {
-                    ArrayList<String> partsFound = new ArrayList<>();
-                    CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
-                    if (!partsFound.isEmpty()) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("<html>");
-                        for (String p : partsFound) {
-                            String pNew = p.trim();
-                            if (pNew.startsWith("<html>")) {
-                                pNew = pNew.substring(6);
-                            }
-                            if (pNew.endsWith("</html>")) {
-                                pNew = pNew.substring(0, pNew.length() - 7);
-                            }
-                            sb.append(pNew);
-                        }
-                        sb.append("</html>");
-                        String html = sb.toString();
-                        body = CommonMailUtils.html2Text(html);
+                try {
 
-                    } else {
-                        CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
+                    if (copiedMsg.isMimeType("multipart/*")) {
+                        ArrayList<String> partsFound = new ArrayList<>();
+                        CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
                         if (!partsFound.isEmpty()) {
-                            String text = partsFound.get(0);
-                            body = text;
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("<html>");
+                            for (String p : partsFound) {
+                                String pNew = p.trim();
+                                if (pNew.startsWith("<html>")) {
+                                    pNew = pNew.substring(6);
+                                }
+                                if (pNew.endsWith("</html>")) {
+                                    pNew = pNew.substring(0, pNew.length() - 7);
+                                }
+                                sb.append(pNew);
+                            }
+                            sb.append("</html>");
+                            String html = sb.toString();
+                            body = CommonMailUtils.html2Text(html);
+
                         } else {
-                            log.warn("email with unkown content type");
-                            body = "";
-                        }
-                    }
-                } else {
-                    if (copiedMsg.isMimeType(ContentTypes.TEXT_PLAIN)) {
-                        body = copiedMsg.getContent().toString();
-
-                    } else if (copiedMsg.isMimeType(ContentTypes.TEXT_HTML)) {
-                        body = copiedMsg.getContent().toString();
-                        if (copiedMsg.getContent() instanceof InputStream) {
-                            log.warn("content of mail is of type inputstream!");
-                            BufferedInputStream contentBis = new BufferedInputStream((InputStream) copiedMsg.getContent());
-                            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[1024];
-                            int bytesRead = -1;
-                            while ((bytesRead = contentBis.read(buffer)) > -1) {
-                                bout.write(buffer, 0, bytesRead);
+                            CommonMailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
+                            if (!partsFound.isEmpty()) {
+                                String text = partsFound.get(0);
+                                body = text;
+                            } else {
+                                log.warn("email with unkown content type");
+                                body = "";
                             }
-                            bout.close();
-                            try {
-                                body = new String(bout.toByteArray());
-                            } catch (Throwable t) {
-                                log.error("mail content byte array cannot be converted to string", t);
-                            }
-                            log.warn("bytes represent the following string:");
-                            log.warn(body);
-                            body = CommonMailUtils.html2Text(body);
                         }
-
                     } else {
-                        log.debug("unkown content");
+                        if (copiedMsg.isMimeType(ContentTypes.TEXT_PLAIN)) {
+                            body = copiedMsg.getContent().toString();
+
+                        } else if (copiedMsg.isMimeType(ContentTypes.TEXT_HTML)) {
+                            body = copiedMsg.getContent().toString();
+                            if (copiedMsg.getContent() instanceof InputStream) {
+                                log.warn("content of mail is of type inputstream!");
+                                BufferedInputStream contentBis = new BufferedInputStream((InputStream) copiedMsg.getContent());
+                                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                                byte[] buffer = new byte[1024];
+                                int bytesRead = -1;
+                                while ((bytesRead = contentBis.read(buffer)) > -1) {
+                                    bout.write(buffer, 0, bytesRead);
+                                }
+                                bout.close();
+                                try {
+                                    body = new String(bout.toByteArray());
+                                } catch (Throwable t) {
+                                    log.error("mail content byte array cannot be converted to string", t);
+                                }
+                                log.warn("bytes represent the following string:");
+                                log.warn(body);
+                                body = CommonMailUtils.html2Text(body);
+                            }
+
+                        } else {
+                            log.debug("unkown content");
+                        }
                     }
+                } catch (Throwable t) {
+                    log.error("unable to check body for context information", t);
                 }
 
                 if (body == null) {
@@ -942,20 +987,28 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 }
 
                 body = body.toLowerCase();
-                boolean foundInBody = false;
-                for (String fn : allFileNumbers) {
-                    if (body.contains(fn.toLowerCase())) {
-                        log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body");
-                        ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
-                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
-                        if(saved)
-                            deleteMessages.add(msg);
-                        foundInBody = true;
-                        break;
+                if (body.length() > 0) {
+                    boolean foundInBody = false;
+                    for (String fn : allFileNumbers) {
+                        if (body.contains(fn.toLowerCase())) {
+                            ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
+                            if (toCase.isArchived()) {
+                                // need to avoid saving to an archived case - the tag would never be displayed on the desktop
+                                log.warn("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body, but the case is already archived - skipping!");
+                            } else {
+                                log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body");
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes);
+                                if (saved) {
+                                    deleteMessages.add(msg);
+                                }
+                                foundInBody = true;
+                            }
+                            break;
+                        }
                     }
-                }
-                if (foundInBody) {
-                    continue;
+                    if (foundInBody) {
+                        continue;
+                    }
                 }
 
                 // SECOND: try to find matching sender FROM that only has ONE case
@@ -978,9 +1031,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                     if (uniqueCase != null) {
                         log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its FROM because there was exactly one match for " + from);
-                        boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
-                        if(saved)
+                        boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                        if (saved) {
                             deleteMessages.add(msg);
+                        }
                         continue;
                     }
 
@@ -1007,9 +1061,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                             if (uniqueCase != null) {
                                 log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its CC because there was exactly one match for " + ccString);
-                                boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
-                                if(saved)
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                                if (saved) {
                                     deleteMessages.add(msg);
+                                }
                                 foundInCC = true;
                                 break;
                             }
@@ -1042,9 +1097,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                             if (uniqueCase != null) {
                                 log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its TO because there was exactly one match for " + toString);
-                                boolean saved=this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
-                                if(saved)
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes);
+                                if (saved) {
                                     deleteMessages.add(msg);
+                                }
                                 foundInTo = true;
                                 break;
                             }
@@ -1058,15 +1114,45 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
             }
 
-            if(!inboxFolder.isOpen())
-                inboxFolder.open(Folder.READ_WRITE);
-            
-            Flags deleteFlags = new Flags(Flags.Flag.DELETED);
-            Message[] toBeDeleted=deleteMessages.toArray(new Message[0]);
-            inboxFolder.setFlags(toBeDeleted, deleteFlags, true);
+            if (!deleteMessages.isEmpty()) {
+                if (!inboxFolder.isOpen()) {
+                    inboxFolder.open(Folder.READ_WRITE);
+                }
+                if (importFolder != null) {
+                    if (!importFolder.isOpen()) {
+                        importFolder.open(Folder.READ_WRITE);
+                    }
+                    Flags deleteFlags = new Flags(Flags.Flag.DELETED);
+                    Message[] toBeMoved = deleteMessages.toArray(new Message[0]);
 
-            inboxFolder.close();
-            store.close();
+                    // move to "imported" folder
+                    inboxFolder.copyMessages(toBeMoved, importFolder);
+                    inboxFolder.setFlags(toBeMoved, deleteFlags, true);
+
+                } else {
+                    log.error("message have been processed but the import folder does not exist, so they cannot be moved");
+                }
+            }
+
+            try {
+                if (inboxFolder.isOpen()) {
+                    inboxFolder.close();
+                }
+            } catch (Throwable t) {
+                log.warn("unable to close inbox folder", t);
+            }
+            try {
+                if (importFolder != null && importFolder.isOpen()) {
+                    importFolder.close();
+                }
+            } catch (Throwable t) {
+                log.warn("unable to close import folder", t);
+            }
+            try {
+                store.close();
+            } catch (Throwable t) {
+                log.warn("unable to close mailbox store", t);
+            }
 
         } catch (Exception ex) {
             log.error("Error connecting to server " + server, ex);

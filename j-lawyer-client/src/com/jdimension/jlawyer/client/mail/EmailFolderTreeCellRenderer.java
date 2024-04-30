@@ -693,6 +693,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
     private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
     private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
     private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
+    private final ImageIcon importedIcon = new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png"));
     
     private Font boldFont=null;
     private Font plainFont=null;
@@ -741,6 +742,8 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     this.setIcon(draftsIcon);
                 } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
                     this.setIcon(inboxIcon);
+                } else if ("in Akte importiert".equalsIgnoreCase(f.getName())) {
+                    this.setIcon(importedIcon);
                 } else {
                     boolean iconIsSet = false;
                     for (String a : EmailUtils.getFolderAliases(CommonMailUtils.TRASH)) {
