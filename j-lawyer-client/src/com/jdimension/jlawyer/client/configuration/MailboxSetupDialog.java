@@ -765,6 +765,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         
         this.chkScanInbox.setSelected(false);
         this.txtScanBlacklist.setText("");
+        this.txtScanExclusionList.setText("");
         this.lblScanTags.setText("");
 
     }
@@ -889,6 +890,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel20 = new javax.swing.JLabel();
         cmdScanTags = new javax.swing.JButton();
         lblScanTags = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        txtScanExclusionList = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("E-Mail - Postfächer");
@@ -1274,6 +1277,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         lblScanTags.setText("Tag 1, Tag 2");
 
+        jLabel21.setText("Nachrichten von / an nicht automatisch verarbeiten (kommaseparierte Liste):");
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1287,17 +1292,19 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(txtScanExclusionList, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtScanBlacklist, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 704, Short.MAX_VALUE)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(cmdScanTags)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel20)
                                     .addComponent(jLabel19))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(jPanel5Layout.createSequentialGroup()
-                                .addComponent(cmdScanTags)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1317,7 +1324,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(220, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel21)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtScanExclusionList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(154, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Automation", jPanel5);
@@ -1445,6 +1456,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             
             ms.setScanInbox(this.chkScanInbox.isSelected());
             ms.setScanBlacklistedTypes(this.txtScanBlacklist.getText());
+            ms.setScanExclusionList(this.txtScanExclusionList.getText());
             List<String> al = ComponentUtils.getSelectedPopupMenuItems(popScanTags);
             ms.setScanDocumentTagsArray(al.toArray(String[]::new));
 
@@ -1593,6 +1605,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         
         this.chkScanInbox.setSelected(ms.isScanInbox());
         this.txtScanBlacklist.setText(ms.getScanBlacklistedTypes());
+        this.txtScanExclusionList.setText(ms.getScanExclusionList());
         
         this.buildScanTagsPopup(this.availableDocumentTags, ms.getScanDocumentTagsArray());
 
@@ -1665,6 +1678,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1698,6 +1712,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
     private javax.swing.JTextField txtScanBlacklist;
+    private javax.swing.JTextField txtScanExclusionList;
     private javax.swing.JTextField txtTenantId;
     // End of variables declaration//GEN-END:variables
 }

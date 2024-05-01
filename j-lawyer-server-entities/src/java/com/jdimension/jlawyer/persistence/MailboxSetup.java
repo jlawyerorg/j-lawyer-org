@@ -741,6 +741,8 @@ public class MailboxSetup implements Serializable, EventTypes {
     private String scanDocumentTags="Posteingang";
     @Column(name = "scan_blacklistedtypes")
     private String scanBlacklistedTypes="bas,bat,com,exe,html,jar,jnlp,js,lnk,msi,pl,reg,vbs";
+    @Column(name = "scan_excludeadresses")
+    private String scanExclusionList="";
 
     public String getId() {
         return id;
@@ -1118,6 +1120,20 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setScanBlacklistedTypes(String scanBlacklistedTypes) {
         this.scanBlacklistedTypes = scanBlacklistedTypes;
+    }
+
+    /**
+     * @return the scanExclusionList
+     */
+    public String getScanExclusionList() {
+        return scanExclusionList;
+    }
+
+    /**
+     * @param scanExclusionList the scanExclusionList to set
+     */
+    public void setScanExclusionList(String scanExclusionList) {
+        this.scanExclusionList = scanExclusionList;
     }
 
     

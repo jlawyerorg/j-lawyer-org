@@ -734,8 +734,16 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 if (ms.isScanInbox()) {
                     try {
                         List<String> documentTags = Arrays.asList(ms.getScanDocumentTagsArray());
-                        List<String> blacklistedTypes = Arrays.asList(ms.getScanBlacklistedTypes().split(","));
-                        this.processMailbox(ms, caseSvc, adrSvc, allFileNumbers, documentTags, blacklistedTypes);
+                        String t = ms.getScanBlacklistedTypes();
+                        if (t == null) {
+                            t = "";
+                        }
+                        List<String> blacklistedTypes = Arrays.asList(t.split(","));
+                        t = ms.getScanExclusionList();
+                        if (t == null) {
+                            t = "";
+                        }
+                        this.processMailbox(ms, caseSvc, adrSvc, allFileNumbers, documentTags, blacklistedTypes, t);
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
                     }
@@ -747,7 +755,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
     }
 
-    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes) {
+    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList) {
 
         log.info("Processing mailbox " + ms.getEmailAddress());
 
@@ -865,6 +873,37 @@ public class MailboxScannerTask extends java.util.TimerTask {
             Message[] allMessages = inboxFolder.getMessages();
             ArrayList<Message> deleteMessages = new ArrayList<>();
             for (Message msg : allMessages) {
+
+                String from = null;
+                Address[] froms = msg.getFrom();
+                if (froms != null) {
+                    if (froms.length > 0 && (froms[0] instanceof javax.mail.internet.InternetAddress)) {
+                        from = ((javax.mail.internet.InternetAddress) froms[0]).getAddress();
+                        from = from.toLowerCase();
+                    }
+
+                }
+                if (from != null) {
+                    if (exclusionList.toLowerCase().contains(from)) {
+                        log.info("FROM address is excluded from mailscanner processing: " + from);
+                        continue;
+                    }
+                }
+
+                Address[] toAdrs = msg.getRecipients(Message.RecipientType.TO);
+                if (toAdrs != null) {
+                    for (Address to : toAdrs) {
+                        String toString = null;
+                        if ((to instanceof javax.mail.internet.InternetAddress)) {
+                            toString = ((javax.mail.internet.InternetAddress) to).getAddress();
+                            toString = toString.toLowerCase();
+                            if (exclusionList.toLowerCase().contains(toString)) {
+                                log.info("TO address is excluded from mailscanner processing: " + from);
+                                continue;
+                            }
+                        }
+                    }
+                }
 
                 // FIRST - A: try to find matching case by file number in the subject line
                 // find any potential cases by looking for file numbers in subject
@@ -1012,15 +1051,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 }
 
                 // SECOND: try to find matching sender FROM that only has ONE case
-                String from = null;
-                Address[] froms = msg.getFrom();
-                if (froms != null) {
-                    if (froms.length > 0 && (froms[0] instanceof javax.mail.internet.InternetAddress)) {
-                        from = ((javax.mail.internet.InternetAddress) froms[0]).getAddress();
-                        from = from.toLowerCase();
-                    }
-
-                }
                 AddressBean[] fromAddresses = adrSvc.searchSimpleUnrestricted(from);
                 if (fromAddresses.length > 1) {
                     log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can not be uniquely associated by its FROM because there was more than one match for " + from);
@@ -1077,7 +1107,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 }
 
                 // FOURTH: try to find matching sender TO that only has ONE case
-                Address[] toAdrs = msg.getRecipients(Message.RecipientType.TO);
                 boolean foundInTo = false;
                 if (toAdrs != null) {
                     for (Address to : toAdrs) {
@@ -1191,10 +1220,13 @@ public class MailboxScannerTask extends java.util.TimerTask {
             } else {
                 ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), newNameMsg, msgData, "", null);
                 for (String tag : documentTags) {
-                    DocumentTagsBean dtb = new DocumentTagsBean();
-                    dtb.setArchiveFileKey(newDoc);
-                    dtb.setTagName(tag);
-                    caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
+                    tag = tag.trim();
+                    if (!tag.isEmpty()) {
+                        DocumentTagsBean dtb = new DocumentTagsBean();
+                        dtb.setArchiveFileKey(newDoc);
+                        dtb.setTagName(tag);
+                        caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
+                    }
                 }
             }
 

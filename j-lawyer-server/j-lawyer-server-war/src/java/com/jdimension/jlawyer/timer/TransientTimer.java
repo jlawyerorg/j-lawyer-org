@@ -756,6 +756,7 @@ public class TransientTimer {
 
             // start after 40s and run every 10min
             timerMailScanner.schedule(new MailboxScannerTask(), 180000l, 10l * 60l * 1000l);
+            //timerMailScanner.schedule(new MailboxScannerTask(), 20000l, 2l * 60l * 1000l);
 
         }
     }
