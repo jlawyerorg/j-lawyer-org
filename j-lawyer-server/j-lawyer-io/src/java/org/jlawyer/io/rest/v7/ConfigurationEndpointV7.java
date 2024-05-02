@@ -692,6 +692,8 @@ import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(ConfigurationEndpointV7.class.getName());
+    
+    private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
 
     /**
      * Returns all option groups available in the system who have at least one
@@ -723,7 +725,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             ArrayList<String> allGroups = new ArrayList<>();
             allGroups.addAll(system.getAllOptionGroups());
             Response res = Response.ok(allGroups).build();
@@ -752,7 +754,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             AppOptionGroupBean[] group = system.getOptionGroup(optiongroup);
             ArrayList<RestfulOptionV7> resultList = new ArrayList<>();
             for (AppOptionGroupBean aog : group) {
@@ -790,7 +792,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
             for (AppOptionGroupBean aog : group) {
                 if (aog.getOptionGroup().equals(option.getOptionGroup()) && aog.getValue().equals(option.getValue())) {
@@ -838,7 +840,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
             for (AppOptionGroupBean aog : group) {
                 if (aog.getId().equals(option.getId())) {
@@ -873,7 +875,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
             for (AppOptionGroupBean aog : group) {
                 if (aog.getId().equals(option.getId())) {
