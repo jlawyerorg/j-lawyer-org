@@ -2380,12 +2380,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressTagsActionPerformed
 
     private void mnuCustomLauncherOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCustomLauncherOptionsActionPerformed
-        
-            if (checkAdmin()) {
-                CustomLauncherOptionsDialog dlg = new CustomLauncherOptionsDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+        CustomLauncherOptionsDialog dlg = new CustomLauncherOptionsDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
     }//GEN-LAST:event_mnuCustomLauncherOptionsActionPerformed
 
     private void mnuAddressCustomFieldsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressCustomFieldsActionPerformed
