@@ -1883,6 +1883,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblEscrowTotal = new javax.swing.JLabel();
         lblExpendituresTotal = new javax.swing.JLabel();
         cmdExportAccountEntries = new javax.swing.JButton();
+        cmdDuplicateAccountEntry = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         cmdNewInvoice = new javax.swing.JButton();
@@ -2967,6 +2968,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         subTabsFinance.setFont(subTabsFinance.getFont());
 
         cmdAddAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddAccountEntry.setToolTipText("Buchung erstellen");
         cmdAddAccountEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddAccountEntryActionPerformed(evt);
@@ -3006,6 +3008,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jScrollPane10.setViewportView(tblAccountEntries);
 
         cmdEditAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEditAccountEntry.setToolTipText("Buchung bearbeiten");
         cmdEditAccountEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdEditAccountEntryActionPerformed(evt);
@@ -3013,6 +3016,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdRemoveAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveAccountEntry.setToolTipText("Buchung löschen");
         cmdRemoveAccountEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRemoveAccountEntryActionPerformed(evt);
@@ -3168,6 +3172,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdDuplicateAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdDuplicateAccountEntry.setToolTipText("Buchung duplizieren");
+        cmdDuplicateAccountEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateAccountEntryActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel15Layout = new org.jdesktop.layout.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
         jPanel15Layout.setHorizontalGroup(
@@ -3176,11 +3188,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane10)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 925, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 943, Short.MAX_VALUE)
                     .add(jPanel15Layout.createSequentialGroup()
                         .add(cmdAddAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdEditAccountEntry)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDuplicateAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdRemoveAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -3199,7 +3213,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(cmdAddAccountEntry)
                             .add(cmdEditAccountEntry))
                         .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
-                    .add(cmdExportAccountEntries))
+                    .add(cmdExportAccountEntries)
+                    .add(cmdDuplicateAccountEntry))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -6803,6 +6818,56 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
     }//GEN-LAST:event_cmdAddVoiceMemoActionPerformed
 
+    private void cmdDuplicateAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateAccountEntryActionPerformed
+        int[] selected = this.tblAccountEntries.getSelectedRows();
+        if (selected.length != 1) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
+
+        ArrayList<Invoice> invoices = new ArrayList<>();
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            invoices.add(inv);
+        }
+
+        CaseAccountEntry newEntry=new CaseAccountEntry();
+        newEntry.setArchiveFileKey(ae.getAccountEntry().getArchiveFileKey());
+        newEntry.setContact(ae.getAccountEntry().getContact());
+        newEntry.setDescription(ae.getAccountEntry().getDescription());
+        newEntry.setEarnings(ae.getAccountEntry().getEarnings());
+        newEntry.setEntryDate(new Date());
+        newEntry.setEscrowIn(        ae.getAccountEntry().getEscrowIn());
+        newEntry.setEscrowOut(ae.getAccountEntry().getEscrowOut());
+        newEntry.setExpendituresIn(ae.getAccountEntry().getExpendituresIn());
+        newEntry.setExpendituresOut(ae.getAccountEntry().getExpendituresOut());
+        newEntry.setId(null);
+        newEntry.setInvoice(ae.getAccountEntry().getInvoice());
+        newEntry.setSpendings(ae.getAccountEntry().getSpendings());
+        
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, newEntry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if (dlg.getEntry() != null) {
+            CaseAccountEntry e = dlg.getEntry();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+                e = caseService.addAccountEntry(this.dto.getId(), e);
+                this.addAccountEntry(e);
+
+                this.updateAccountTotals();
+            } catch (Throwable ex) {
+                log.error("Error saving account entry", ex);
+                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdDuplicateAccountEntryActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -7238,6 +7303,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdCopyCaseNumber;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDrebis;
+    private javax.swing.JButton cmdDuplicateAccountEntry;
     private javax.swing.JButton cmdEditAccountEntry;
     private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;

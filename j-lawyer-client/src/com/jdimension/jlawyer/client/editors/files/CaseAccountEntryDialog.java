@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -700,6 +701,10 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
         this.caseAccountEntryPanel1.setAddresses(addresses);
         this.caseAccountEntryPanel1.setInvoices(invoices);
         this.caseAccountEntryPanel1.setEntry(entry);
+    }
+    
+    public void setSelectedDate(Date d) {
+        this.caseAccountEntryPanel1.selectDate(d);
     }
 
     /**

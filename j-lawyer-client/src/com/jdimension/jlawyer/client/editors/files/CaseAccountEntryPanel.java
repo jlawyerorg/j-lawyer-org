@@ -763,6 +763,13 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         this.cmbInvoice.setSelectedIndex(0);
 
     }
+    
+    public void selectDate(Date d) {
+        if(d!=null) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            this.txtDate.setText(df.format(d));
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
