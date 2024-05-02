@@ -4357,7 +4357,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             HashMap<String, Float> invoiceTotals = new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
-                this.addAccountEntry(cae);
+                this.addAccountEntryRow(cae);
                 if (cae.getInvoice() != null) {
                     if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
                         invoiceTotals.put(cae.getInvoice().getId(), 0f);
@@ -6500,7 +6500,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
 
-    private void addAccountEntry(CaseAccountEntry e) {
+    private void addAccountEntryRow(CaseAccountEntry e) {
         ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings(), e.getSpendings(), e.getEscrowIn(), e.getEscrowOut(), e.getExpendituresIn(), e.getExpendituresOut(), e.getInvoice(), e.getDescription()});
         this.updateAccountTotals();
     }
@@ -6541,8 +6541,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    private void cmdAddAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddAccountEntryActionPerformed
-
+    public boolean addAccountEntry(CaseAccountEntry entry) {
         ArrayList<Invoice> invoices = new ArrayList<>();
         for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
             InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
@@ -6550,7 +6549,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             invoices.add(inv);
         }
 
-        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, entry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         if (dlg.getEntry() != null) {
@@ -6560,13 +6559,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
                 e = caseService.addAccountEntry(this.dto.getId(), e);
-                this.addAccountEntry(e);
+                this.addAccountEntryRow(e);
                 this.updateAccountTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            return true;
+        } else {
+            return false;
         }
+    }
+    
+    private void cmdAddAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddAccountEntryActionPerformed
+        this.addAccountEntry(null);
+        
     }//GEN-LAST:event_cmdAddAccountEntryActionPerformed
 
     private void cmdRemoveAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAccountEntryActionPerformed
@@ -6622,7 +6629,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
                 e = caseService.updateAccountEntry(this.dto.getId(), e);
                 ((DefaultTableModel) this.tblAccountEntries.getModel()).removeRow(this.tblAccountEntries.convertRowIndexToModel(this.tblAccountEntries.getSelectedRow()));
-                this.addAccountEntry(e);
+                this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
             } catch (Throwable ex) {
@@ -6858,7 +6865,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
                 e = caseService.addAccountEntry(this.dto.getId(), e);
-                this.addAccountEntry(e);
+                this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
             } catch (Throwable ex) {
