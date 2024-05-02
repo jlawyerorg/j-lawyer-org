@@ -773,6 +773,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private MappingEntryFacadeLocal mappingEntryFacade;
     @EJB
     private FormsServiceLocal formsService;
+    @EJB
+    private AssistantConfigFacadeLocal assistantFacade;
     
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -2361,6 +2363,28 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception {
         return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceTable, timesheetsTable, giroCode);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<AssistantConfig> getAssistants() {
+        return this.assistantFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public AssistantConfig addAssistant(AssistantConfig assistant) throws Exception {
+        String id=new StringGenerator().getID().toString();
+        assistant.setId(id);
+        this.assistantFacade.create(assistant);
+        return this.assistantFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception {
+        this.assistantFacade.edit(assistant);
+        return this.assistantFacade.find(assistant.getId());
     }
 
 }
