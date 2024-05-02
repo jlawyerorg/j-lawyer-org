@@ -713,6 +713,10 @@ public interface SystemManagementLocal {
     
     List<String> getAllOptionGroups();
     
+    AppOptionGroupBean createOptionGroup(AppOptionGroupBean dto);
+    
+    void removeOptionGroup(String id);
+    
     AppOptionGroupBean[] getOptionGroup(String optionGroup);
     
     GenericNode getAllTemplatesTree(int templateType) throws Exception;

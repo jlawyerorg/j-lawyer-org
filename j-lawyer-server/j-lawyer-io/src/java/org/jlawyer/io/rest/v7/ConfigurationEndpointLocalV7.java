@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v7;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 
 /**
  *
@@ -676,5 +677,11 @@ public interface ConfigurationEndpointLocalV7 {
     Response getOptionGroups();
     
     Response getOptionGroup(String optiongroup);
+    
+    Response createOption(RestfulOptionV7 option);
+    
+    Response deleteOption(RestfulOptionV7 option);
+    
+    Response renameOption(RestfulOptionV7 option);
     
 }
