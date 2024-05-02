@@ -766,7 +766,6 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     
     public void selectDate(Date d) {
         if(d!=null) {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
             this.txtDate.setText(df.format(d));
         }
     }

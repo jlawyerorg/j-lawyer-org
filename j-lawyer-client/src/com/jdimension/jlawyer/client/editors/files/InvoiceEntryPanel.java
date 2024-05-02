@@ -1013,7 +1013,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.invoice.setStatus(Invoice.STATUS_PAID);
 
         ClientSettings settings = ClientSettings.getInstance();
-        float paid = 0f;
+        float currentPaid = 0f;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
@@ -1021,17 +1021,17 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
 
             for (CaseAccountEntry ce : payments) {
-                paid = paid + ce.getEarnings() - ce.getSpendings();
+                currentPaid = currentPaid + ce.getEarnings() - ce.getSpendings();
             }
 
             this.setEntry(caseDto, this.invoice, addresses);
 
-            if(this.invoice.getTotalGross() - paid > 0) {
+            if(this.invoice.getTotalGross() - currentPaid > 0) {
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(caseDto);
                 entry.setContact(this.invoice.getContact());
                 entry.setDescription("");
-                entry.setEarnings(invoice.getTotalGross() - paid);
+                entry.setEarnings(invoice.getTotalGross() - currentPaid);
                 entry.setEntryDate(new Date());
                 entry.setEscrowIn(0f);
                 entry.setEscrowOut(0f);
