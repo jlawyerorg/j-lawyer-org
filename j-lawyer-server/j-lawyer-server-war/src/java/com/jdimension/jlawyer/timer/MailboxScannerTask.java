@@ -883,13 +883,12 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     }
 
                 }
-                if (from != null) {
-                    if (exclusionList.toLowerCase().contains(from)) {
-                        log.info("FROM address is excluded from mailscanner processing: " + from);
-                        continue;
-                    }
+                if (from != null && exclusionList.toLowerCase().contains(from)) {
+                    log.info("FROM address is excluded from mailscanner processing: " + from);
+                    continue;
                 }
 
+                boolean excludedTo=false;
                 Address[] toAdrs = msg.getRecipients(Message.RecipientType.TO);
                 if (toAdrs != null) {
                     for (Address to : toAdrs) {
@@ -899,10 +898,14 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             toString = toString.toLowerCase();
                             if (exclusionList.toLowerCase().contains(toString)) {
                                 log.info("TO address is excluded from mailscanner processing: " + from);
-                                continue;
+                                excludedTo=true;
+                                break;
                             }
                         }
                     }
+                }
+                if(excludedTo) {
+                    continue;
                 }
 
                 // FIRST - A: try to find matching case by file number in the subject line
