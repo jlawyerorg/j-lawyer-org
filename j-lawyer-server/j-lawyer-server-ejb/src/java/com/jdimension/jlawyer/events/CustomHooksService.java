@@ -709,6 +709,7 @@ public class CustomHooksService implements CustomHooksServiceLocal {
     private HashMap<String, String> hookPwd = new HashMap<>();
 
     @Override
+    @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
     public void onEvent(@ObservesAsync CustomHook evt) {
         if (allHooks == null) {
             resetCache();
