@@ -800,7 +800,7 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/warning.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;Hinweise:&#xa;&lt;ul&gt;&#xa;&lt;li&gt;Postfach wird &amp;uuml;berwacht&lt;/li&gt;&#xa;&lt;li&gt;eingehende Nachrichten werden automatisch zur Akte gespeichert&lt;/li&gt;&#xa;&lt;li&gt;es wird ein optionales Etikett angebracht&lt;/li&gt;&#xa;&lt;li&gt;die Nachricht wird in einen Ordner &lt;b&gt;&amp;quot;in Akte importiert&amp;quot;&lt;/b&gt; verschoben&lt;/li&gt;&#xa;&lt;li&gt;ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang&lt;/li&gt;&#xa;&lt;/ul&gt;&#xa;&#xa;&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;Hinweise:&#xa;&lt;ul&gt;&#xa;&lt;li&gt;Postfach wird &amp;uuml;berwacht&lt;/li&gt;&#xa;&lt;li&gt;&lt;b&gt;alle&lt;/b&gt; Nachrichten im Posteingang werden automatisch zur Akte gespeichert&lt;/li&gt;&#xa;&lt;li&gt;es wird ein optionales Etikett angebracht&lt;/li&gt;&#xa;&lt;li&gt;die Nachricht wird in einen Ordner &lt;b&gt;&amp;quot;in Akte importiert&amp;quot;&lt;/b&gt; verschoben&lt;/li&gt;&#xa;&lt;li&gt;ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang&lt;/li&gt;&#xa;&lt;/ul&gt;&#xa;&#xa;&lt;/html&gt;"/>
                 <Property name="opaque" type="boolean" value="true"/>
               </Properties>
             </Component>

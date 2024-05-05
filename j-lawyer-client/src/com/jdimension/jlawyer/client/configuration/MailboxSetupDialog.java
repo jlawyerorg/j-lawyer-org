@@ -1261,7 +1261,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel12.setForeground(new java.awt.Color(255, 255, 255));
         jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
-        jLabel12.setText("<html>Hinweise:\n<ul>\n<li>Postfach wird &uuml;berwacht</li>\n<li>eingehende Nachrichten werden automatisch zur Akte gespeichert</li>\n<li>es wird ein optionales Etikett angebracht</li>\n<li>die Nachricht wird in einen Ordner <b>&quot;in Akte importiert&quot;</b> verschoben</li>\n<li>ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang</li>\n</ul>\n\n</html>");
+        jLabel12.setText("<html>Hinweise:\n<ul>\n<li>Postfach wird &uuml;berwacht</li>\n<li><b>alle</b> Nachrichten im Posteingang werden automatisch zur Akte gespeichert</li>\n<li>es wird ein optionales Etikett angebracht</li>\n<li>die Nachricht wird in einen Ordner <b>&quot;in Akte importiert&quot;</b> verschoben</li>\n<li>ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang</li>\n</ul>\n\n</html>");
         jLabel12.setOpaque(true);
 
         jLabel19.setText("Anhänge ausschließen (kommaseparierte Liste):");
