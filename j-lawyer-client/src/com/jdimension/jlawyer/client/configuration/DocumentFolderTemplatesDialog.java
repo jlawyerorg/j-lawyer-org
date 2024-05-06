@@ -728,6 +728,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
+        mnuRenameFolder = new javax.swing.JMenuItem();
         cmbTemplates = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
@@ -754,6 +755,15 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             }
         });
         popFolders.add(mnuRemoveFolder);
+
+        mnuRenameFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        mnuRenameFolder.setText("Ordner umbenennen");
+        mnuRenameFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRenameFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuRenameFolder);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dokumentordner");
@@ -1038,6 +1048,27 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdCloneTemplateActionPerformed
 
+    private void mnuRenameFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameFolderActionPerformed
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        DocumentFolder gn = (DocumentFolder) tn.getUserObject();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        String newFolderName = gn.getName();
+        Object newNameObject = JOptionPane.showInputDialog(this, "neuer Name: ", "Ordner umbenennen", JOptionPane.QUESTION_MESSAGE, null, null, newFolderName);
+        if (newNameObject == null) {
+            return;
+        }
+        newFolderName = newNameObject.toString();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            DocumentFolder updatedFolderNode = locator.lookupArchiveFileServiceRemote().renameFolderInTemplate(gn.getId(), newFolderName);
+            tn.setUserObject(updatedFolderNode);
+            this.cmbTemplatesActionPerformed(null);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuRenameFolderActionPerformed
+
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
@@ -1125,6 +1156,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
+    private javax.swing.JMenuItem mnuRenameFolder;
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JTree treeFolders;
     // End of variables declaration//GEN-END:variables

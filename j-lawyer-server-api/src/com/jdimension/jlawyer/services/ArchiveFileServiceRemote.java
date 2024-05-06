@@ -814,6 +814,8 @@ public interface ArchiveFileServiceRemote {
     void removeFolderFromTemplate(String folderId) throws Exception;
 
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+    
+    DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception;
 
     CaseFolder createCaseFolder(String parentId, String name) throws Exception;
 

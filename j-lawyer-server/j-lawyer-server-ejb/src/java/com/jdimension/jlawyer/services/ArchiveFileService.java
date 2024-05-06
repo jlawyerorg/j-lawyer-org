@@ -4205,6 +4205,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.folderFacade.remove(df);
 
     }
+    
+    @Override
+    public DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception {
+
+        if (folderId == null || "".equals(folderId)) {
+            throw new Exception("Ordner-ID darf nicht leer sein!");
+        }
+
+        DocumentFolder df = this.folderFacade.find(folderId);
+        if (df == null) {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+
+        df.setName(newName);
+        this.folderFacade.edit(df);
+        return df;
+
+    }
 
     @Override
     public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
