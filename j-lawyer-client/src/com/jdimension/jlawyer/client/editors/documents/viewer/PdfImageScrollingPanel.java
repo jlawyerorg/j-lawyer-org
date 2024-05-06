@@ -690,7 +690,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
     private static final Logger log = Logger.getLogger(PdfImageScrollingPanel.class.getName());
     private static final int MAX_RENDER_PAGES = 20;
-    private Object zoomSemaphore = "";
+    private transient Object zoomSemaphore = "";
 
     HashMap<Integer, BufferedImage> orgImage = new HashMap<>();
 
@@ -993,7 +993,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     i++;
                 }
             } catch (Throwable t) {
-                log.error(t);
+                log.error("Error adjust PDF zoom factor in separate thread", t);
             }
         }).start();
 
@@ -1080,7 +1080,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                             renderedPages = i + 1;
                         } catch (Throwable t) {
-                            log.error(t);
+                            log.error("Error rendering PDF page " + i, t);
                             this.sliderZoom.setEnabled(true);
                             this.cmdFitToScreen.setEnabled(true);
                         }
@@ -1091,39 +1091,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         lblCurrentPage.setText("1" + "/" + renderedPages);
                         inputPDF.close();
                     } catch (Throwable t) {
-                        log.error(t);
+                        log.error("Error rendering PDF in separate thread", t);
                     }
                 }).start();
-
-//                for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
-//                    BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 200, ImageType.RGB);
-//                    this.orgImage.put(i, buffImg);
-//
-//                    // need to subtract the height of the page navigation buttons, but
-//                    // the panel has not been layed out yet, so there is no height we could query
-//                    int height = Math.max(this.getHeight() - 55, 400);
-//
-//                    float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
-//                    int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
-//
-//                    height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
-//                    width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
-//
-//                    Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
-//
-//                    JLabel lblPage = new JLabel();
-//                    lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-//                    lblPage.setHorizontalAlignment(SwingConstants.CENTER);
-//                    this.pnlPages.add(lblPage);
-//
-//                    ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
-//
-//                    this.renderedPages = i + 1;
-//
-//                }
-//                this.lblCurrentPage.setText("1" + "/" + this.renderedPages);
-//
-//                inputPDF.close();
             }
 
         } catch (Throwable t) {
