@@ -669,13 +669,13 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -690,6 +690,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
     private static final Logger log = Logger.getLogger(PdfImageScrollingPanel.class.getName());
     private static final int MAX_RENDER_PAGES = 20;
+    private Object zoomSemaphore = "";
 
     HashMap<Integer, BufferedImage> orgImage = new HashMap<>();
 
@@ -701,6 +702,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     private String documentId = null;
 
     private int zoomFactor = 100;
+    private int lastZoomFactorRequest=-1;
 
     /**
      * Creates new form PlaintextPanel
@@ -718,13 +720,13 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         this.jScrollPane1.getVerticalScrollBar().addAdjustmentListener((AdjustmentEvent e) -> {
             // Assuming scrollPane is your JScrollPane instance
-            
+
             int viewPosition = jScrollPane1.getViewport().getViewPosition().y;
-            
+
             int totalHeight = 0;
             Component[] components = pnlPages.getComponents();
             int labelIndex = -1;
-            
+
             // Calculate the index of the JLabel currently displayed
             for (int i = 0; i < components.length; i++) {
                 totalHeight += components[i].getHeight();
@@ -733,20 +735,20 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     break;
                 }
             }
-            
+
             // Now you have the index of the JLabel currently displayed
             // You can access it like this:
             if (labelIndex != -1 && labelIndex < components.length) {
                 //JLabel currentLabel = (JLabel) components[labelIndex];
                 // Do whatever you need with the currentLabel
-                
-                lblCurrentPage.setText("" + (labelIndex+1) + "/" + renderedPages);
+
+                lblCurrentPage.setText("" + (labelIndex + 1) + "/" + renderedPages);
                 currentPage = labelIndex;
                 cmdFirstPage.setEnabled(currentPage > 0);
                 cmdPageBackward.setEnabled(currentPage > 0);
-                cmdLastPage.setEnabled((currentPage+1) < renderedPages);
-                cmdPageForward.setEnabled((currentPage+1) < renderedPages);
-                
+                cmdLastPage.setEnabled((currentPage + 1) < renderedPages);
+                cmdPageForward.setEnabled((currentPage + 1) < renderedPages);
+
             }
         });
 
@@ -903,15 +905,15 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         // Calculate the index of the JLabel currently displayed
         for (int i = 0; i < components.length; i++) {
-            
+
             if (i == page) {
                 this.currentPage = page;
                 this.jScrollPane1.getViewport().setViewPosition(new Point(0, totalHeight));
                 this.lblCurrentPage.setText("" + (page + 1) + "/" + this.renderedPages);
                 cmdFirstPage.setEnabled(currentPage > 0);
                 cmdPageBackward.setEnabled(currentPage > 0);
-                cmdLastPage.setEnabled((currentPage+1) < renderedPages);
-                cmdPageForward.setEnabled((currentPage+1) < renderedPages);
+                cmdLastPage.setEnabled((currentPage + 1) < renderedPages);
+                cmdPageForward.setEnabled((currentPage + 1) < renderedPages);
 
                 break;
             }
@@ -933,38 +935,67 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     }//GEN-LAST:event_cmdFirstPageActionPerformed
 
     private void cmdLastPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLastPageActionPerformed
-        this.scrollToPage(this.renderedPages-1);
+        this.scrollToPage(this.renderedPages - 1);
     }//GEN-LAST:event_cmdLastPageActionPerformed
 
     private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
-        this.zoomFactor = this.sliderZoom.getValue();
-        ClientSettings.getInstance().setConfiguration("pdf.zoomfactor", "" + this.zoomFactor);
-        // this.showPage(this.content, this.currentPage, this.zoomFactor);
-
-        this.pnlPages.removeAll();
-
-        int i = 0;
-        while (this.orgImage.containsKey(i)) {
-            // need to subtract the height of the page navigation buttons, but
-            // the panel has not been layed out yet, so there is no height we could query
-            int height = Math.max(this.getHeight() - 55, 400);
-
-            float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
-            int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
-
-            height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
-            width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
-
-            Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
-
-            JLabel lblPage = new JLabel();
-            lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-            lblPage.setHorizontalAlignment(SwingConstants.CENTER);
-            this.pnlPages.add(lblPage);
-
-            ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
-            i++;
+        if(this.sliderZoom.getValue()==this.lastZoomFactorRequest) {
+            return;
         }
+        this.lastZoomFactorRequest=this.sliderZoom.getValue();
+
+        new Thread(() -> {
+
+            this.zoomFactor = this.sliderZoom.getValue();
+            int threadZoomFactor = this.sliderZoom.getValue();
+            ClientSettings.getInstance().setConfiguration("pdf.zoomfactor", "" + this.zoomFactor);
+
+            try {
+                synchronized (zoomSemaphore) {
+                    if (threadZoomFactor != sliderZoom.getValue()) {
+                        return;
+                    }
+                }
+
+                SwingUtilities.invokeAndWait(() -> {
+                    this.pnlPages.removeAll();
+                });
+
+                int i = 0;
+                while (this.orgImage.containsKey(i)) {
+                    // need to subtract the height of the page navigation buttons, but
+                    // the panel has not been layed out yet, so there is no height we could query
+                    int height = Math.max(this.getHeight() - 55, 400);
+
+                    float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
+                    int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
+
+                    height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
+                    width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
+
+                    Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+
+                    SwingUtilities.invokeAndWait(() -> {
+
+                        synchronized (zoomSemaphore) {
+                            if (threadZoomFactor != sliderZoom.getValue()) {
+                                return;
+                            }
+                            JLabel lblPage = new JLabel();
+                            lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+                            lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+                            this.pnlPages.add(lblPage);
+
+                            lblPage.setIcon(new ImageIcon(bi2));
+                            lblPage.setText("");
+                        }
+                    });
+                    i++;
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }).start();
 
     }//GEN-LAST:event_sliderZoomStateChanged
 
@@ -994,6 +1025,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     }
 
     private void renderContent(byte[] content, int zoomFactor) {
+        this.sliderZoom.setEnabled(false);
+        this.cmdFitToScreen.setEnabled(false);
         this.content = content;
         try {
             if (content != null) {
@@ -1003,6 +1036,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             } else {
                 log.info("PDF to render has no byte content (null)");
                 this.showStatus("Daten für die Vorschaudarstellung sind ungültig.");
+                this.sliderZoom.setEnabled(true);
+                this.cmdFitToScreen.setEnabled(true);
                 return;
             }
 
@@ -1013,7 +1048,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                 this.lblTotalPages.setText("" + inputPDF.getNumberOfPages());
 
-                
                 this.cmdFirstPage.setEnabled(false);
                 this.cmdPageBackward.setEnabled(false);
                 this.cmdLastPage.setEnabled(inputPDF.getNumberOfPages() > 1);
@@ -1021,41 +1055,82 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                 this.pnlPages.removeAll();
 
-                for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
-                    BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 300, ImageType.RGB);
-                    this.orgImage.put(i, buffImg);
+                new Thread(() -> {
+                    for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
+                        try {
+                            BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 200, ImageType.RGB);
+                            orgImage.put(i, buffImg);
+                            // need to subtract the height of the page navigation buttons, but
+                            // the panel has not been layed out yet, so there is no height we could query
+                            int height1 = Math.max(getHeight() - 55, 400);
+                            float scaleFactor = (float) height1 / (float) orgImage.get(i).getHeight();
+                            int width1 = (int) ((float) orgImage.get(i).getWidth() * scaleFactor);
+                            height1 = (int) ((float) height1 * ((float) ((float) zoomFactor / 100f)));
+                            width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
+                            Image bi2 = orgImage.get(i).getScaledInstance(width1, height1, Image.SCALE_SMOOTH);
 
-                    // need to subtract the height of the page navigation buttons, but
-                    // the panel has not been layed out yet, so there is no height we could query
-                    int height = Math.max(this.getHeight() - 55, 400);
+                            SwingUtilities.invokeAndWait(() -> {
+                                JLabel lblPage = new JLabel();
+                                lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+                                lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+                                pnlPages.add(lblPage);
+                                lblPage.setIcon(new ImageIcon(bi2));
+                                lblPage.setText("");
+                            });
 
-                    float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
-                    int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
+                            renderedPages = i + 1;
+                        } catch (Throwable t) {
+                            log.error(t);
+                            this.sliderZoom.setEnabled(true);
+                            this.cmdFitToScreen.setEnabled(true);
+                        }
+                    }
+                    try {
+                        this.sliderZoom.setEnabled(true);
+                        this.cmdFitToScreen.setEnabled(true);
+                        lblCurrentPage.setText("1" + "/" + renderedPages);
+                        inputPDF.close();
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                }).start();
 
-                    height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
-                    width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
-
-                    Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
-
-                    JLabel lblPage = new JLabel();
-                    lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-                    lblPage.setHorizontalAlignment(SwingConstants.CENTER);
-                    this.pnlPages.add(lblPage);
-
-                    ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
-
-                    this.renderedPages = i + 1;
-
-                }
-                this.lblCurrentPage.setText("1" + "/" + this.renderedPages);
-
-                inputPDF.close();
-
+//                for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
+//                    BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 200, ImageType.RGB);
+//                    this.orgImage.put(i, buffImg);
+//
+//                    // need to subtract the height of the page navigation buttons, but
+//                    // the panel has not been layed out yet, so there is no height we could query
+//                    int height = Math.max(this.getHeight() - 55, 400);
+//
+//                    float scaleFactor = (float) height / (float) this.orgImage.get(i).getHeight();
+//                    int width = (int) ((float) this.orgImage.get(i).getWidth() * scaleFactor);
+//
+//                    height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
+//                    width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
+//
+//                    Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+//
+//                    JLabel lblPage = new JLabel();
+//                    lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+//                    lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+//                    this.pnlPages.add(lblPage);
+//
+//                    ThreadUtils.updateLabelIcon(lblPage, new ImageIcon(bi2), "");
+//
+//                    this.renderedPages = i + 1;
+//
+//                }
+//                this.lblCurrentPage.setText("1" + "/" + this.renderedPages);
+//
+//                inputPDF.close();
             }
 
         } catch (Throwable t) {
             log.error("error rendering PDF preview for " + this.fileName, t);
             showStatus("Vorschau nicht verfügbar");
+            this.sliderZoom.setEnabled(true);
+            this.cmdFitToScreen.setEnabled(true);
         }
     }
 
