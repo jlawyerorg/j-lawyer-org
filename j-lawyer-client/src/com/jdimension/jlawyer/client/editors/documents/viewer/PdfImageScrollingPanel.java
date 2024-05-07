@@ -814,7 +814,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             }
         });
 
-        lblCurrentPage.setText("1/3");
+        lblCurrentPage.setText("1/1");
 
         cmdFirstPage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/2leftarrow.png"))); // NOI18N
         cmdFirstPage.addActionListener(new java.awt.event.ActionListener() {
