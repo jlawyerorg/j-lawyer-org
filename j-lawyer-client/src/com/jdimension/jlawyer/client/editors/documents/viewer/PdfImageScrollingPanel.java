@@ -713,6 +713,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     public PdfImageScrollingPanel(String fileName, byte[] content) {
         initComponents();
         this.fileName = fileName;
+        this.lblTotalPages.setIcon(null);
         ThreadUtils.updateLabel(this.lblContent, "");
 
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(32);
@@ -851,6 +852,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         jLabel1.setText("gesamt:");
 
+        lblTotalPages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
         lblTotalPages.setText("100");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -872,7 +874,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTotalPages)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 307, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 282, Short.MAX_VALUE)
                 .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdFitToScreen))
@@ -1089,6 +1091,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         this.sliderZoom.setEnabled(true);
                         this.cmdFitToScreen.setEnabled(true);
                         lblCurrentPage.setText("1" + "/" + renderedPages);
+                        if(inputPDF.getNumberOfPages()>MAX_RENDER_PAGES && lblTotalPages.getIcon()==null) {
+                            lblTotalPages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                            lblTotalPages.setToolTipText("Das Dokument hat mehr Seiten als in der Vorschau angezeigt werden können - ggf. in externer Anwendung öffnen.");
+                        }
                         inputPDF.close();
                     } catch (Throwable t) {
                         log.error("Error rendering PDF in separate thread", t);
