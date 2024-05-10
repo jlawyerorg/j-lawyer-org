@@ -761,6 +761,9 @@ public class SendEncryptedAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         Properties props = new Properties();
+        props.setProperty("mail.imap.partialfetch", "false");
+        props.setProperty("mail.imaps.partialfetch", "false");
+        props.setProperty("mail.store.protocol", ms.getEmailInType());
 
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
@@ -777,11 +780,9 @@ public class SendEncryptedAction extends ProgressableAction {
         }
 
         props.put("mail.smtp.host", ms.getEmailOutServer());
-        //props.put("mail.smtp.port", "25");
         props.put("mail.smtp.user", ms.getEmailOutUser());
         props.put("mail.smtp.auth", true);
         props.put("mail.smtps.host", ms.getEmailOutServer());
-        //props.put("mail.smtps.port", "25");
         if (ms.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }
@@ -806,19 +807,32 @@ public class SendEncryptedAction extends ProgressableAction {
             props.setProperty("mail.imaps.socketFactory.port", "993");
             props.setProperty("mail.imaps.starttls.enable", "true");
         } else {
+
+            props.setProperty("mail.imaps.host", ms.getEmailInServer());
+            props.setProperty("mail.imap.host", ms.getEmailInServer());
+
+            if (ms.isEmailInSsl())
+                props.setProperty("mail.store.protocol", "imaps");
+
             props.setProperty("mail.store.protocol", ms.getEmailInType());
             if (ms.isEmailInSsl()) {
                 props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
             }
+            ServerSettings sset = ServerSettings.getInstance();
+            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+            if (trustedServers.length() > 0) {
+                props.put("mail.imaps.ssl.trust", trustedServers);
+            }
+
         }
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
             public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd=ms.getEmailOutPwd();
+                String outPwd = ms.getEmailOutPwd();
                 try {
-                    outPwd=Crypto.decrypt(ms.getEmailOutPwd());
+                    outPwd = Crypto.decrypt(ms.getEmailOutPwd());
                 } catch (Throwable t) {
                     log.error(t);
                 }
@@ -986,6 +1000,7 @@ public class SendEncryptedAction extends ProgressableAction {
                     store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
 
                 } else {
+
                     props.setProperty("mail.imaps.host", ms.getEmailInServer());
                     props.setProperty("mail.imap.host", ms.getEmailInServer());
 
@@ -993,10 +1008,15 @@ public class SendEncryptedAction extends ProgressableAction {
                         props.setProperty("mail.store.protocol", "imaps");
                     }
 
-                    ServerSettings sset=ServerSettings.getInstance();
-                    String trustedServers=sset.getSetting("mail.imaps.ssl.trust", "");
-                    if(trustedServers.length()>0)
-                        props.put("mail.imaps.ssl.trust", "mail.your-server.de");
+                props.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                }
+                ServerSettings sset = ServerSettings.getInstance();
+                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                if (trustedServers.length() > 0) {
+                    props.put("mail.imaps.ssl.trust", trustedServers);
+                }
 
                     store = session.getStore();
                     //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));

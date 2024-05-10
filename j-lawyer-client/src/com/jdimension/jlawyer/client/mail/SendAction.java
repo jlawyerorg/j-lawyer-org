@@ -702,7 +702,7 @@ public class SendAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendAction.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-    
+
     private List<String> attachments = null;
     private MailboxSetup ms = null;
     private boolean readReceipt = false;
@@ -751,6 +751,9 @@ public class SendAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         Properties props = new Properties();
+        props.setProperty("mail.imap.partialfetch", "false");
+        props.setProperty("mail.imaps.partialfetch", "false");
+        props.setProperty("mail.store.protocol", ms.getEmailInType());
 
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
@@ -794,11 +797,23 @@ public class SendAction extends ProgressableAction {
             props.setProperty("mail.imaps.socketFactory.port", "993");
             props.setProperty("mail.imaps.starttls.enable", "true");
         } else {
+            
+            props.setProperty("mail.imaps.host", ms.getEmailInServer());
+            props.setProperty("mail.imap.host", ms.getEmailInServer());
+
+            if (ms.isEmailInSsl())
+                props.setProperty("mail.store.protocol", "imaps");
+            
             props.setProperty("mail.store.protocol", ms.getEmailInType());
             if (ms.isEmailInSsl()) {
                 props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
             }
-            
+            ServerSettings sset = ServerSettings.getInstance();
+            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+            if (trustedServers.length() > 0) {
+                props.put("mail.imaps.ssl.trust", trustedServers);
+            }
+
         }
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -952,25 +967,31 @@ public class SendAction extends ProgressableAction {
             Store store = null;
             if (ms.isMsExchange()) {
                 String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
-                
+
                 session = Session.getInstance(props);
                 store = session.getStore("imaps");
                 store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
 
             } else {
-                
+
                 props.setProperty("mail.imaps.host", ms.getEmailInServer());
                 props.setProperty("mail.imap.host", ms.getEmailInServer());
-                
-                if(ms.isEmailInSsl())
+
+                if (ms.isEmailInSsl()) {
                     props.setProperty("mail.store.protocol", "imaps");
-                    
+                }
+
+                props.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                }
                 ServerSettings sset = ServerSettings.getInstance();
                 String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-                if (trustedServers.length() > 0)
-                    props.put("mail.imaps.ssl.trust", "mail.your-server.de");
+                if (trustedServers.length() > 0) {
+                    props.put("mail.imaps.ssl.trust", trustedServers);
+                }
                 
-                store=session.getStore();
+                store = session.getStore();
                 //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
                 store.connect();
             }
@@ -983,13 +1004,15 @@ public class SendAction extends ProgressableAction {
             Folder sent = EmailUtils.getSentFolder(store);
             if (sent != null) {
                 this.progress("Kopiere Nachricht in 'Gesendet'...");
-                boolean closed=!sent.isOpen();
-                if(!sent.isOpen())
+                boolean closed = !sent.isOpen();
+                if (!sent.isOpen()) {
                     sent.open(Folder.READ_WRITE);
+                }
                 msg.setFlag(Flags.Flag.SEEN, true);
                 sent.appendMessages(new Message[]{msg});
-                if(closed)
+                if (closed) {
                     EmailUtils.closeIfIMAP(sent);
+                }
 
             } else {
                 log.error("Unable to determine 'Sent' folder for mailbox");
