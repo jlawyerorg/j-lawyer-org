@@ -748,11 +748,11 @@ public class VersionUtils {
     }
     
     public static String getClientVersion() {
-        return "2.6";
+        return "2.7";
     }
 
     public static String getPatchLevel() {
-        return "1";
+        return "0";
     }
 
     public static String getBuild() {

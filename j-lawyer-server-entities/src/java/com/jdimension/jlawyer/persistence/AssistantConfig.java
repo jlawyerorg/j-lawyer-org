@@ -683,12 +683,18 @@ public class AssistantConfig implements Serializable {
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
+    @Column(name = "assistant_name")
+    private String name;
     @Column(name = "url")
     private String url;
     @Column(name = "user_name")
     private String userName;
     @Column(name = "password")
     private String password;
+    @Column(name = "timeout_connect")
+    private long connectionTimeout;
+    @Column(name = "timeout_read")
+    private long readTimeout;
 
     public AssistantConfig() {
     }
@@ -772,6 +778,48 @@ public class AssistantConfig implements Serializable {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * @return the connectionTimeout
+     */
+    public long getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    /**
+     * @param connectionTimeout the connectionTimeout to set
+     */
+    public void setConnectionTimeout(long connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    /**
+     * @return the readTimeout
+     */
+    public long getReadTimeout() {
+        return readTimeout;
+    }
+
+    /**
+     * @param readTimeout the readTimeout to set
+     */
+    public void setReadTimeout(long readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
     }
     
 }

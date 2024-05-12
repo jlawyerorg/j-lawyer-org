@@ -661,117 +661,563 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.client.configuration;
 
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.Input;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class AssistantAccess {
+public class AssistantSetupDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(AssistantAccess.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantSetupDialog.class.getName());
 
-    private static AssistantAccess instance = null;
-    private Map<AssistantConfig, List<com.jdimension.jlawyer.ai.AiCapability>> capabilities = null;
+    /**
+     * Creates new form AssistantSetupDialog
+     *
+     * @param parent
+     * @param modal
+     */
+    public AssistantSetupDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    private AssistantAccess() {
+        this.resetDetails();
 
-    }
+        this.tblAssistants.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-    public static synchronized AssistantAccess getInstance() {
-        if (instance == null) {
-            instance = new AssistantAccess();
-        }
-        return instance;
-    }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<AssistantConfig> assistants = locator.lookupIntegrationServiceRemote().getAllAssistantConfigs();
 
-    public Map<AssistantConfig, List<AiCapability>> getCapabilities() throws Exception {
-        if (this.capabilities == null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.capabilities = locator.lookupIntegrationServiceRemote().getAssistantCapabilities();
-            } catch (Exception ex) {
-                log.error("Error getting AI capabilities", ex);
-                throw new Exception("Assistenten-Funktionen können nicht ermittelt werden: " + ex.getMessage());
+            this.tblAssistants.setDefaultRenderer(Object.class, new AssistantConfigTableCellRenderer());
+
+            for (AssistantConfig ac : assistants) {
+                ((DefaultTableModel) this.tblAssistants.getModel()).addRow(new Object[]{ac, ac.getUrl()});
+
             }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblAssistants.getModel());
+            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            this.tblAssistants.setRowSorter(sorter);
+            this.tblAssistants.getRowSorter().toggleSortOrder(0);
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        return this.capabilities;
+
+        ComponentUtils.autoSizeColumns(tblAssistants);
+    }
+
+    private void resetDetails() {
+        this.txtName.setText("");
+        this.txtUrl.setText("");
+        this.txtPwd.setText("");
+        this.txtUser.setText("");
+        this.spnConnectTimeout.setValue(3);
+        this.spnReadTimeout.setValue(5);
+
     }
 
     /**
-     * Filters available capabilities of the backends to match what the client
-     * requests, e.g. it might only have a STRING instead of a FILE and only
-     * wants to transcribe instead of summarize
-     *
-     * @param requestType
-     * @param inputType
-     * @return
-     * @throws Exception
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
-        Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
-        Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
-        for (AssistantConfig config : all.keySet()) {
-            for (AiCapability c : all.get(config)) {
-                if (requestType != null && !c.getRequestType().equals(requestType)) {
-                    continue;
-                }
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-                boolean inputSupported = false;
-                if (inputType != null) {
-                    for (Input i : c.getInput()) {
-                        if (i.getId().contains(inputType)) {
-                            inputSupported = true;
-                        }
-                    }
-                }
-                if (!inputSupported) {
-                    continue;
-                }
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblAssistants = new javax.swing.JTable();
+        cmdAdd = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        txtUrl = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        txtUser = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        txtPwd = new javax.swing.JPasswordField();
+        jLabel9 = new javax.swing.JLabel();
+        spnConnectTimeout = new javax.swing.JSpinner();
+        spnReadTimeout = new javax.swing.JSpinner();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
 
-                if (!filtered.containsKey(config)) {
-                    filtered.put(config, new ArrayList<>());
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Assistent Ingo");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Assistenten"));
+
+        tblAssistants.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Name", "URL"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblAssistants.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblAssistants.getTableHeader().setReorderingAllowed(false);
+        tblAssistants.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblAssistantsMouseClicked(evt);
+            }
+        });
+        tblAssistants.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblAssistantsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblAssistants);
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Name:");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD, jLabel4.getFont().getSize()-2));
+        jLabel4.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel4.setText("HTTP Basic - Authentifizierung (optional)");
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
+        jLabel5.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel5.setText("Assistenten - Konfiguration");
+
+        jLabel3.setText("URL:");
+
+        jLabel7.setText("Nutzer:");
+
+        jLabel8.setText("Passwort:");
+
+        txtPwd.setText("jPasswordField1");
+
+        jLabel9.setText("verbinden");
+
+        spnConnectTimeout.setModel(new javax.swing.SpinnerNumberModel(3, 1, 10, 1));
+
+        spnReadTimeout.setModel(new javax.swing.SpinnerNumberModel(5, 1, 60, 1));
+
+        jLabel10.setText("lesen");
+
+        jLabel11.setText("Timeouts:");
+
+        jLabel12.setText("Sekunden");
+
+        jLabel13.setText("Sekunden");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose))
+                    .addComponent(jSeparator1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel11))
+                        .addGap(22, 22, 22)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtUrl)
+                            .addComponent(txtName)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel9)
+                                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(spnReadTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(spnConnectTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel12)))
+                                .addGap(0, 242, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel8))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdSave)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(txtPwd)
+                            .addComponent(txtUser)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtUrl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel9)
+                            .addComponent(spnConnectTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel11)
+                            .addComponent(jLabel12))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnReadTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10)
+                            .addComponent(jLabel13))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel7))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel8)
+                            .addComponent(txtPwd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+
+        getAccessibleContext().setAccessibleName("Assistent Ingo");
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void tblAssistantsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAssistantsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+
+            int row = this.tblAssistants.getSelectedRow();
+
+            if (row < 0) {
+                this.resetDetails();
+            } else {
+
+                AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
+                this.updatedUI(ac);
+            }
+
+        }
+    }//GEN-LAST:event_tblAssistantsMouseClicked
+
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Logischer Bezeichner: ", "Neuen Assistanten verbinden", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Assistent");
+        if (newNameObject == null) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AssistantConfig ac = new AssistantConfig();
+            ac.setName(newNameObject.toString());
+            ac.setUrl("");
+            ac.setConnectionTimeout(3);
+            ac.setReadTimeout(5);
+            ac.setUserName(null);
+            ac.setPassword(null);
+
+            AssistantConfig savedAssistant = locator.lookupIntegrationServiceRemote().addAssistantConfig(ac);
+
+            ((DefaultTableModel) this.tblAssistants.getModel()).addRow(new Object[]{savedAssistant, savedAssistant.getUrl()});
+            this.tblAssistants.getSelectionModel().setSelectionInterval(this.tblAssistants.getRowCount()-1, this.tblAssistants.getRowCount()-1);
+
+        } catch (Exception ex) {
+            log.error("Error creating new assistant", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        
+        int row = this.tblAssistants.getSelectedRow();
+
+        if (row >= 0) {
+
+            AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
+            ac.setName(this.txtName.getText());
+            ac.setUserName(this.txtUser.getText());
+            ac.setConnectionTimeout(((Number) this.spnConnectTimeout.getValue()).longValue());
+            ac.setReadTimeout(((Number) this.spnReadTimeout.getValue()).longValue());
+            ac.setUrl(this.txtUrl.getText());
+            try {
+                if (this.txtPwd.getPassword().length > 0) {
+                    ac.setPassword(Crypto.encrypt(new String(this.txtPwd.getPassword())));
+                } else {
+                    ac.setPassword("");
                 }
-                filtered.get(config).add(c);
+            } catch (Exception ex) {
+                log.error("Error accessing assistant credentials", ex);
+                JOptionPane.showMessageDialog(this, "Fehler bzgl. Authentifizierungsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                AssistantConfig savedConfig = locator.lookupIntegrationServiceRemote().updateAssistantConfig(ac);
+                row = this.tblAssistants.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblAssistants.getModel()).setValueAt(savedConfig, row, 0);
+                ((DefaultTableModel) this.tblAssistants.getModel()).setValueAt(savedConfig.getUrl(), row, 1);
+
+            } catch (Exception ex) {
+                log.error("Error updating assistant config", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            AssistantAccess.getInstance().resetCapabilities();
+        }
+
+
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int row = this.tblAssistants.getSelectedRow();
+
+        if (row >= 0) {
+
+            AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                locator.lookupIntegrationServiceRemote().removeAssistantConfig(ac);
+                row = this.tblAssistants.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblAssistants.getModel()).removeRow(row);
+
+                this.resetDetails();
+            } catch (Exception ex) {
+                log.error("Error removing assistant config", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-        return filtered;
+    }//GEN-LAST:event_cmdRemoveActionPerformed
 
-    }
+    private void tblAssistantsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblAssistantsKeyReleased
+        int row = this.tblAssistants.getSelectedRow();
 
-    public void resetCapabilities() {
-        this.capabilities = null;
-    }
+        if (row < 0) {
+            this.resetDetails();
+        } else {
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities) {
+            AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
+            this.updatedUI(ac);
+        }
+    }//GEN-LAST:event_tblAssistantsKeyReleased
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + "(" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
-                    
-                });
-                menu.add(mi);
+    private void updatedUI(AssistantConfig ac) {
+        
+        try {
+            if (ac.getPassword() != null && !"".equalsIgnoreCase(ac.getPassword())) {
+                this.txtPwd.setText(Crypto.decrypt(ac.getPassword()));
+            } else {
+                this.txtPwd.setText(null);
             }
+        } catch (Exception ex) {
+            log.error("Error accessing assistant credentials", ex);
+            this.txtPwd.setText("");
+            JOptionPane.showMessageDialog(this, "Fehler bzgl. Authentifizierungsdaten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
+        this.txtName.setText(ac.getName());
+        this.txtUrl.setText(ac.getUrl());
+        this.txtUser.setText(ac.getUserName());
+        this.spnConnectTimeout.setValue(ac.getConnectionTimeout());
+        this.spnReadTimeout.setValue(ac.getReadTimeout());
+
     }
 
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(AssistantSetupDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+
+        //</editor-fold>
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            AssistantSetupDialog dialog = new AssistantSetupDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSpinner spnConnectTimeout;
+    private javax.swing.JSpinner spnReadTimeout;
+    private javax.swing.JTable tblAssistants;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JPasswordField txtPwd;
+    private javax.swing.JTextField txtUrl;
+    private javax.swing.JTextField txtUser;
+    // End of variables declaration//GEN-END:variables
 }

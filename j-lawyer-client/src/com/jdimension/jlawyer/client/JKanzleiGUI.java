@@ -1190,6 +1190,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuProfileInfo = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuMailboxSettings = new javax.swing.JMenuItem();
+        mnuAssistantConfigs = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuDrebisSettings = new javax.swing.JMenuItem();
@@ -1875,6 +1876,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuOptions.add(mnuMailboxSettings);
+
+        mnuAssistantConfigs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        mnuAssistantConfigs.setText("Assistent Ingo");
+        mnuAssistantConfigs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAssistantConfigsActionPerformed(evt);
+            }
+        });
+        mnuOptions.add(mnuAssistantConfigs);
 
         mnuVoipSoftphoneSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
         mnuVoipSoftphoneSettings.setText("Telefonie per Softphone");
@@ -2821,6 +2831,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuSystemMailboxActionPerformed
 
+    private void mnuAssistantConfigsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantConfigsActionPerformed
+        if (checkAdmin()) {
+            AssistantSetupDialog dlg = new AssistantSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuAssistantConfigsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2872,6 +2890,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuArchiveFileOptionsReviewReasons;
     private javax.swing.JMenuItem mnuArchiveFileOptionsSubjectFields;
     private javax.swing.JMenuItem mnuArchiveFileTags;
+    private javax.swing.JMenuItem mnuAssistantConfigs;
     private javax.swing.JMenuItem mnuBackupConfiguration;
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;

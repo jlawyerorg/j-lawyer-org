@@ -2,18 +2,26 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.ai;
 
-import com.jdimension.jlawyer.persistence.AssistantConfig;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  *
  * @author jens
  */
-public class AiCapability {
+public class AiCapability implements Serializable {
     
-    private AssistantConfig assistantConfig=null;
+    public static final String REQUESTTYPE_TRANSCRIBE="transcribe";
+    public static final String REQUESTTYPE_TRANSLATE="translate";
+    public static final String REQUESTTYPE_SUMMARIZE="summarize";
+    public static final String REQUESTTYPE_EXPLAIN="explain";
+    public static final String REQUESTTYPE_CHAT="chat";
+    
+    public static final String INPUTTYPE_STRING="STRING";
+    public static final String INPUTTYPE_FILE="FILE";
     
     private String name;
     private String description;
@@ -153,20 +161,6 @@ public class AiCapability {
      */
     public void setOutput(List<Output> output) {
         this.output = output;
-    }
-
-    /**
-     * @return the assistantConfig
-     */
-    public AssistantConfig getAssistantConfig() {
-        return assistantConfig;
-    }
-
-    /**
-     * @param assistantConfig the assistantConfig to set
-     */
-    public void setAssistantConfig(AssistantConfig assistantConfig) {
-        this.assistantConfig = assistantConfig;
     }
     
     

@@ -661,117 +661,156 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.ai;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.Input;
-import java.awt.event.ActionEvent;
+import com.jdimension.jlawyer.fax.utils.Base64;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonKey;
+import org.json.simple.JsonObject;
+import org.json.simple.Jsoner;
 
 /**
  *
  * @author jens
  */
-public class AssistantAccess {
+public class AssistantAPI {
 
-    private static final Logger log = Logger.getLogger(AssistantAccess.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantAPI.class.getName());
+    private static final String AUTH_HEADERNAME = "Authorization";
+    private static final String AUTH_HEADERPREFIX = "Basic ";
+    private static final String MIMETYPE_JSON = "application/json";
 
-    private static AssistantAccess instance = null;
-    private Map<AssistantConfig, List<com.jdimension.jlawyer.ai.AiCapability>> capabilities = null;
+    private SimpleDateFormat dfMilliseconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private SimpleDateFormat dfSeconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    private AssistantAccess() {
+    private String baseUri = null;
+    private String user=null;
+    private String password=null;
 
+    
+    public AssistantAPI(String baseUri, String user, String password) {
+        this.baseUri=baseUri;
+        if(!this.baseUri.endsWith("/"))
+            this.baseUri=this.baseUri+"/";
+        this.user=user;
+        this.password=password;
+    }
+    
+    private String getAuthString() {
+        String authString = this.user + ":" + this.password;
+        Base64 encoder = new Base64();
+        return encoder.encode(authString.getBytes());
     }
 
-    public static synchronized AssistantAccess getInstance() {
-        if (instance == null) {
-            instance = new AssistantAccess();
-        }
-        return instance;
-    }
-
-    public Map<AssistantConfig, List<AiCapability>> getCapabilities() throws Exception {
-        if (this.capabilities == null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.capabilities = locator.lookupIntegrationServiceRemote().getAssistantCapabilities();
-            } catch (Exception ex) {
-                log.error("Error getting AI capabilities", ex);
-                throw new Exception("Assistenten-Funktionen können nicht ermittelt werden: " + ex.getMessage());
+    public List<AiCapability> getCapabilities() throws AssistantException {
+        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/capabilities");
+        List<AiCapability> allCapabilities=new ArrayList<>();
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not determine assistant capabilities: " + returnValue + " [" + response.getStatus() + "]");
+                throw new AssistantException("Could not determine assistant capabilities: " + returnValue + " [" + response.getStatus() + "]");
             }
-        }
-        return this.capabilities;
-    }
 
-    /**
-     * Filters available capabilities of the backends to match what the client
-     * requests, e.g. it might only have a STRING instead of a FILE and only
-     * wants to transcribe instead of summarize
-     *
-     * @param requestType
-     * @param inputType
-     * @return
-     * @throws Exception
-     */
-    public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
-        Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
-        Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
-        for (AssistantConfig config : all.keySet()) {
-            for (AiCapability c : all.get(config)) {
-                if (requestType != null && !c.getRequestType().equals(requestType)) {
-                    continue;
-                }
-
-                boolean inputSupported = false;
-                if (inputType != null) {
-                    for (Input i : c.getInput()) {
-                        if (i.getId().contains(inputType)) {
-                            inputSupported = true;
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonArray) {
+                
+                JsonArray capabilities = (JsonArray)jsonOutput;
+                for(Object cObj: capabilities) {
+                    JsonObject c=(JsonObject)cObj;
+                    AiCapability capability=new AiCapability();
+                    
+                    JsonKey stringKey = Jsoner.mintJsonKey("name", null);
+                    capability.setName(c.getString(stringKey));
+                    
+                    JsonObject promptObject=(JsonObject)c.get(Jsoner.mintJsonKey("defaultPrompt", null));
+                    if ( promptObject!= null) {
+                        Prompt p=new Prompt();
+                        capability.setDefaultPrompt(p);
+                        p.setDefaultPrompt(promptObject.getString(Jsoner.mintJsonKey("defaultPrompt", null)));
+                        p.setMaxTokens(promptObject.getInteger(Jsoner.mintJsonKey("maxTokens", null)));
+                    }
+                    
+                    stringKey = Jsoner.mintJsonKey("async", null);
+                    capability.setAsync(c.getBoolean(stringKey));
+                    
+                    stringKey = Jsoner.mintJsonKey("description", null);
+                    capability.setDescription(c.getString(stringKey));
+                    
+                    Object inputs=c.getCollection(Jsoner.mintJsonKey("input", null));
+                    if ( inputs!= null && inputs instanceof JsonArray) {
+                        JsonArray inputArray=(JsonArray)inputs;
+                        for(Object iObj: inputArray) {
+                            JsonObject i=(JsonObject)iObj;
+                            Input input=new Input();
+                            input.setId(i.getString(Jsoner.mintJsonKey("id", null)));
+                            capability.getInput().add(input);
                         }
                     }
-                }
-                if (!inputSupported) {
-                    continue;
-                }
-
-                if (!filtered.containsKey(config)) {
-                    filtered.put(config, new ArrayList<>());
-                }
-                filtered.get(config).add(c);
-            }
-        }
-        return filtered;
-
-    }
-
-    public void resetCapabilities() {
-        this.capabilities = null;
-    }
-
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities) {
-
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + "(" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
                     
-                });
-                menu.add(mi);
+                    stringKey = Jsoner.mintJsonKey("modelType", null);
+                    capability.setModelType(c.getString(stringKey));
+                    
+                    Object outputs=c.getCollection(Jsoner.mintJsonKey("output", null));
+                    if ( outputs!= null && outputs instanceof JsonArray) {
+                        JsonArray outputArray=(JsonArray)outputs;
+                        for(Object oObj: outputArray) {
+                            JsonObject o=(JsonObject)oObj;
+                            Output output=new Output();
+                            output.setId(o.getString(Jsoner.mintJsonKey("id", null)));
+                            capability.getOutput().add(output);
+                        }
+                    }
+                    
+                    Object params=c.getCollection(Jsoner.mintJsonKey("parameters", null));
+                    if ( params!= null && params instanceof JsonArray) {
+                        JsonArray paramsArray=(JsonArray)params;
+                        for(Object oObj: paramsArray) {
+                            JsonObject o=(JsonObject)oObj;
+                            Parameter parameter=new Parameter();
+                            parameter.setDefaultValue(o.getString(Jsoner.mintJsonKey("defaultValue", null)));
+                            parameter.setId(o.getString(Jsoner.mintJsonKey("id", null)));
+                            parameter.setList(o.getString(Jsoner.mintJsonKey("list", null)));
+                            parameter.setName(o.getString(Jsoner.mintJsonKey("name", null)));
+                            parameter.setType(o.getString(Jsoner.mintJsonKey("type", null)));
+                            capability.getParameters().add(parameter);
+                        }
+                    }
+                    
+                    stringKey = Jsoner.mintJsonKey("requestType", null);
+                    capability.setRequestType(c.getString(stringKey));
+                    
+                    allCapabilities.add(capability);
+                    
+                }
+                
             }
-        }
+            response.close();
 
+        } catch (Exception ex) {
+            log.error("Could not determine assistant capabilities", ex);
+            throw new AssistantException(ex);
+        } finally {
+            restClient.close();
+        }
+        return allCapabilities;
+        
     }
+
+    
+
+    
+    
 
 }

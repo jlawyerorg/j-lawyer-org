@@ -2,9 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.ai;
 
-public class Prompt {
+import java.io.Serializable;
+
+public class Prompt implements Serializable {
     
     private String defaultPrompt;
     
@@ -25,7 +27,15 @@ public class Prompt {
     public void setDefaultPrompt(String defaultPrompt) {
         this.defaultPrompt = defaultPrompt;
     }
-    
+
+  
+    public static int countTokens(String text) {
+        // Split the text into words using whitespace as the delimiter
+        String[] words = text.split("\\s+");
+        // Return the number of words
+        return words.length;
+    }
+
     /**
      * @return the maxTokens
      */

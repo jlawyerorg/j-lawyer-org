@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import javax.sound.sampled.AudioInputStream;
@@ -672,7 +675,10 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
+import java.util.List;
+import java.util.Map;
 import javax.sound.sampled.LineEvent;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -704,11 +710,13 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popAssistant = new javax.swing.JPopupMenu();
         cmdPlayPause = new javax.swing.JButton();
         cmdStop = new javax.swing.JButton();
         timeLabel = new javax.swing.JLabel();
         prgTime = new javax.swing.JProgressBar();
         lblStatus = new javax.swing.JLabel();
+        cmdAssistant = new javax.swing.JButton();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -735,6 +743,14 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));
         lblStatus.setText("   ");
 
+        cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdAssistant.setToolTipText("Assistent Ingo");
+        cmdAssistant.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdAssistantMouseReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -743,12 +759,15 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(prgTime, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(34, 34, 34))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdPlayPause)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdStop)
-                        .addGap(0, 223, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 195, Short.MAX_VALUE)
+                        .addComponent(cmdAssistant))
                     .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -756,16 +775,18 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdPlayPause)
-                    .addComponent(cmdStop))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdPlayPause)
+                        .addComponent(cmdStop))
+                    .addComponent(cmdAssistant))
                 .addGap(18, 18, 18)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeLabel)
                 .addGap(18, 18, 18)
                 .addComponent(lblStatus)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(270, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -777,11 +798,26 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         stop();
     }//GEN-LAST:event_cmdStopActionPerformed
 
+    private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
+        AssistantAccess ingo=AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig,List<AiCapability>> capabilities=ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
+            this.popAssistant.removeAll();
+            ingo.populateMenu(this.popAssistant, capabilities);
+            this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAssistantMouseReleased
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdPlayPause;
     private javax.swing.JButton cmdStop;
     private javax.swing.JLabel lblStatus;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar prgTime;
     private javax.swing.JLabel timeLabel;
     // End of variables declaration//GEN-END:variables

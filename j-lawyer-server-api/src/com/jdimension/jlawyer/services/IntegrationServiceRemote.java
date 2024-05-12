@@ -663,13 +663,16 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -724,5 +727,15 @@ public interface IntegrationServiceRemote {
     List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception;
 
     boolean performOcrForObservedFile(String fileName) throws Exception;
+
+    List<AssistantConfig> getAllAssistantConfigs() throws Exception;
+
+    AssistantConfig addAssistantConfig(AssistantConfig ac) throws Exception;
+
+    AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception;
+
+    void removeAssistantConfig(AssistantConfig ac) throws Exception;
+
+    Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
     
 }

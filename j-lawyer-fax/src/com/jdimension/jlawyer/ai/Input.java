@@ -2,10 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.ai;
 
-public class Output {
-        
+import java.io.Serializable;
+
+public class Input implements Serializable {
+    
     private String id;
 
     // Getters and setters with XmlElement annotations
@@ -23,4 +25,8 @@ public class Output {
     public void setId(String id) {
         this.id = id;
     }
+
+    
+
+
 }
