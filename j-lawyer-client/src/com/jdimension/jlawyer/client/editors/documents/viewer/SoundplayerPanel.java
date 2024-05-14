@@ -664,7 +664,12 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -675,6 +680,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.sound.sampled.LineEvent;
@@ -685,11 +691,12 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel {
+public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
 
     private String documentId = null;
+    private byte[] content=null;
 
     private Clip clip;
     private Timer timer;
@@ -717,6 +724,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         prgTime = new javax.swing.JProgressBar();
         lblStatus = new javax.swing.JLabel();
         cmdAssistant = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taTranscription = new javax.swing.JTextArea();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -751,42 +761,54 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             }
         });
 
+        taTranscription.setColumns(20);
+        taTranscription.setRows(5);
+        jScrollPane1.setViewportView(taTranscription);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(prgTime, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(prgTime, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(34, 34, 34))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdPlayPause)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdStop)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 195, Short.MAX_VALUE)
-                        .addComponent(cmdAssistant))
-                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdPlayPause)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdStop))
+                            .addComponent(cmdAssistant))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmdPlayPause)
-                        .addComponent(cmdStop))
-                    .addComponent(cmdAssistant))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdPlayPause)
+                    .addComponent(cmdStop))
                 .addGap(18, 18, 18)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeLabel)
                 .addGap(18, 18, 18)
                 .addComponent(lblStatus)
-                .addContainerGap(270, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdAssistant)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -803,7 +825,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         try {
             Map<AssistantConfig,List<AiCapability>> capabilities=ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
             this.popAssistant.removeAll();
-            ingo.populateMenu(this.popAssistant, capabilities);
+            ingo.populateMenu(this.popAssistant, capabilities, this);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -816,9 +838,12 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdPlayPause;
     private javax.swing.JButton cmdStop;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar prgTime;
+    private javax.swing.JTextArea taTranscription;
     private javax.swing.JLabel timeLabel;
     // End of variables declaration//GEN-END:variables
 
@@ -836,6 +861,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     @Override
     public void showContent(String documentId, byte[] content) {
         this.documentId = documentId;
+        this.content=content;
 
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
@@ -904,6 +930,50 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         long seconds = (microseconds / 1000000) % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
         timeLabel.setText(timeString);
+    }
+
+    @Override
+    public String getPrompt(AiCapability c) {
+        return "";
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        ArrayList<ParameterData> params=new ArrayList<>();
+        ParameterData p=new ParameterData();
+        p.setId("PARAM-1");
+        p.setValue("FR");
+        params.add(p);
+        return params;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+        ArrayList<InputData> inputs=new ArrayList<>();
+        InputData i=new InputData();
+        i.setFileName("sound.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(this.content);
+        inputs.add(i);
+        return inputs;
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        status.getResponse();
+        StringBuilder result=new StringBuilder();
+        for(OutputData o: status.getResponse().getOutputData()) {
+            if(o.getType().equalsIgnoreCase("string"))
+                result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+            
+        }
+        taTranscription.setText(result.toString());
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        status.getResponse();
     }
 
 }

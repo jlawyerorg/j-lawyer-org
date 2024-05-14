@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.Input;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -758,15 +759,27 @@ public class AssistantAccess {
         this.capabilities = null;
     }
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities) {
+    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantFlowAdapter adapter) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + "(" + config.getName() + ")");
+                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        AiRequestStatus status=locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), adapter.getParameters(c), adapter.getInputs(c));
+                        if(status.getStatus().equalsIgnoreCase("error")) {
+                            adapter.processError(c, status);
+                        } else {
+                            adapter.processOutput(c, status);
+                        }
+                    } catch (Exception ex) {
+                        log.error("Error getting AI capabilities", ex);
+                        
+                    }
                 });
                 menu.add(mi);
             }

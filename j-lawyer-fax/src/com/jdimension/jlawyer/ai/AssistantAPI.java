@@ -693,28 +693,212 @@ public class AssistantAPI {
     private SimpleDateFormat dfSeconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private String baseUri = null;
-    private String user=null;
-    private String password=null;
+    private String user = null;
+    private String password = null;
 
-    
     public AssistantAPI(String baseUri, String user, String password) {
-        this.baseUri=baseUri;
-        if(!this.baseUri.endsWith("/"))
-            this.baseUri=this.baseUri+"/";
-        this.user=user;
-        this.password=password;
+        this.baseUri = baseUri;
+        if (!this.baseUri.endsWith("/")) {
+            this.baseUri = this.baseUri + "/";
+        }
+        this.user = user;
+        this.password = password;
     }
-    
+
     private String getAuthString() {
         String authString = this.user + ":" + this.password;
         Base64 encoder = new Base64();
         return encoder.encode(authString.getBytes());
     }
 
+    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws AssistantException {
+        log.info("submitting j-lawyer.AI request");
+
+
+        /*
+        {
+  "prompt": "string",
+  "parameterData": [
+    {
+      "id": "string",
+      "value": "string"
+    }
+  ],
+  "inputData": [
+    {
+      "type": "string",
+      "data": "string",
+      "fileName": "string",
+      "base64Encoded": true
+    }
+  ],
+  "requestType": "string",
+  "modelType": "string"
+}
+         */
+        String authStringEnc = this.getAuthString();
+
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/request-submit");
+
+        StringBuilder jsonQuery = new StringBuilder();
+        jsonQuery.append("{");
+        if (prompt != null) {
+            jsonQuery.append("\"prompt\": \"").append(Jsoner.escape(prompt)).append("\",");
+        }
+
+        if (params != null && !params.isEmpty()) {
+            jsonQuery.append("\"parameterData\": [");
+
+            for (int i = 0; i < params.size(); i++) {
+                jsonQuery.append("{");
+                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
+                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
+                jsonQuery.append("}");
+                if (i < params.size() - 1) {
+                    jsonQuery.append(",");
+                }
+            }
+
+            jsonQuery.append("],");
+        }
+        if (params != null && !params.isEmpty()) {
+            jsonQuery.append("\"parameterData\": [");
+
+            for (int i = 0; i < params.size(); i++) {
+                jsonQuery.append("{");
+                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
+                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
+                jsonQuery.append("}");
+                if (i < params.size() - 1) {
+                    jsonQuery.append(",");
+                }
+            }
+
+            jsonQuery.append("],");
+        }
+        if (inputs != null && !inputs.isEmpty()) {
+            jsonQuery.append("\"inputData\": [");
+
+            for (int i = 0; i < inputs.size(); i++) {
+                jsonQuery.append("{");
+                jsonQuery.append("\"type\": \"").append(Jsoner.escape(inputs.get(i).getType())).append("\",");
+                if(inputs.get(i).getFileName()!=null)
+                    jsonQuery.append("\"fileName\": \"").append(Jsoner.escape(inputs.get(i).getFileName())).append("\",");
+                jsonQuery.append("\"base64Encoded\": ").append("" + inputs.get(i).isBase64()).append(",");
+                if (inputs.get(i).isBase64()) {
+                    String b64=null;
+                    try {
+                        Base64 encoder = new Base64();
+                        b64 = encoder.encode(inputs.get(i).getData());
+                    } catch (Throwable t) {
+                        log.error(t);
+                        throw new AssistantException("Datei " + inputs.get(i).getFileName() + " konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
+                    }
+                    jsonQuery.append("\"data\": \"").append(b64).append("\"");
+                } else {
+                    jsonQuery.append("\"data\": \"").append(Jsoner.escape(inputs.get(i).getStringData())).append("\"");
+                }
+                jsonQuery.append("}");
+                if (i < inputs.size() - 1) {
+                    jsonQuery.append(",");
+                }
+            }
+
+            jsonQuery.append("],");
+        }
+        jsonQuery.append("\"requestType\": \"").append(Jsoner.escape(requestType)).append("\",");
+        jsonQuery.append("\"modelType\": \"").append(Jsoner.escape(modelType)).append("\"");
+        jsonQuery.append("}");
+
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not send j-lawyer.AI request: " + returnValue + " [" + response.getStatus() + "]");
+                throw new AssistantException("Could not submit j-lawyer.AI request: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            AiRequestStatus status=new AiRequestStatus();
+            if (jsonOutput instanceof JsonObject) {
+                JsonObject result = (JsonObject) jsonOutput;
+                JsonKey key = Jsoner.mintJsonKey("requestId", null);
+                status.setRequestId(result.getString(key));
+                
+                key = Jsoner.mintJsonKey("status", null);
+                status.setStatus(result.getString(key));
+                
+                key = Jsoner.mintJsonKey("statusDetails", null);
+                status.setStatusDetails(result.getString(key));
+                
+                key = Jsoner.mintJsonKey("statusDetails", null);
+                status.setStatusDetails(result.getString(key));
+                
+                AiResponse res=new AiResponse();
+                status.setResponse(res);
+                JsonObject r=(JsonObject)result.get("response");
+                
+                key = Jsoner.mintJsonKey("prompt", null);
+                status.getResponse().setPrompt(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("requestType", null);
+                status.getResponse().setRequestType(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("modelType", null);
+                status.getResponse().setModelType(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("requestId", null);
+                status.getResponse().setRequestId(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("status", null);
+                status.getResponse().setStatus(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("statusMessage", null);
+                status.getResponse().setStatusMessage(r.getString(key));
+                
+                key = Jsoner.mintJsonKey("progress", null);
+                status.getResponse().setProgress(r.getFloat(key));
+                
+                key = Jsoner.mintJsonKey("executionMillis", null);
+                status.getResponse().setExecutionMillis(r.getLong(key));
+                
+                JsonArray o=(JsonArray)r.get("outputData");
+                for(Object outputObj: o) {
+                    JsonObject oo=(JsonObject)outputObj;
+                    OutputData od=new OutputData();
+                    od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                    if(od.isBase64Encoded()) {
+                        String b64=oo.getString(Jsoner.mintJsonKey("data", null));
+                        
+                        od.setData(new Base64().decode(b64));
+                    } else {
+                        od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+                    }
+                    
+                    od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
+                    od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
+                    res.getOutputData().add(od);
+                }
+                
+
+            }
+            response.close();
+            return status;
+
+        } catch (Exception ex) {
+            log.error("Could not submit j-lawyer.AI request", ex);
+            throw new AssistantException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
+        }
+        
+    }
+
     public List<AiCapability> getCapabilities() throws AssistantException {
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/capabilities");
-        List<AiCapability> allCapabilities=new ArrayList<>();
+        List<AiCapability> allCapabilities = new ArrayList<>();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -725,60 +909,60 @@ public class AssistantAPI {
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonArray) {
-                
-                JsonArray capabilities = (JsonArray)jsonOutput;
-                for(Object cObj: capabilities) {
-                    JsonObject c=(JsonObject)cObj;
-                    AiCapability capability=new AiCapability();
-                    
+
+                JsonArray capabilities = (JsonArray) jsonOutput;
+                for (Object cObj : capabilities) {
+                    JsonObject c = (JsonObject) cObj;
+                    AiCapability capability = new AiCapability();
+
                     JsonKey stringKey = Jsoner.mintJsonKey("name", null);
                     capability.setName(c.getString(stringKey));
-                    
-                    JsonObject promptObject=(JsonObject)c.get(Jsoner.mintJsonKey("defaultPrompt", null));
-                    if ( promptObject!= null) {
-                        Prompt p=new Prompt();
+
+                    JsonObject promptObject = (JsonObject) c.get(Jsoner.mintJsonKey("defaultPrompt", null));
+                    if (promptObject != null) {
+                        Prompt p = new Prompt();
                         capability.setDefaultPrompt(p);
                         p.setDefaultPrompt(promptObject.getString(Jsoner.mintJsonKey("defaultPrompt", null)));
                         p.setMaxTokens(promptObject.getInteger(Jsoner.mintJsonKey("maxTokens", null)));
                     }
-                    
+
                     stringKey = Jsoner.mintJsonKey("async", null);
                     capability.setAsync(c.getBoolean(stringKey));
-                    
+
                     stringKey = Jsoner.mintJsonKey("description", null);
                     capability.setDescription(c.getString(stringKey));
-                    
-                    Object inputs=c.getCollection(Jsoner.mintJsonKey("input", null));
-                    if ( inputs!= null && inputs instanceof JsonArray) {
-                        JsonArray inputArray=(JsonArray)inputs;
-                        for(Object iObj: inputArray) {
-                            JsonObject i=(JsonObject)iObj;
-                            Input input=new Input();
+
+                    Object inputs = c.getCollection(Jsoner.mintJsonKey("input", null));
+                    if (inputs != null && inputs instanceof JsonArray) {
+                        JsonArray inputArray = (JsonArray) inputs;
+                        for (Object iObj : inputArray) {
+                            JsonObject i = (JsonObject) iObj;
+                            Input input = new Input();
                             input.setId(i.getString(Jsoner.mintJsonKey("id", null)));
                             capability.getInput().add(input);
                         }
                     }
-                    
+
                     stringKey = Jsoner.mintJsonKey("modelType", null);
                     capability.setModelType(c.getString(stringKey));
-                    
-                    Object outputs=c.getCollection(Jsoner.mintJsonKey("output", null));
-                    if ( outputs!= null && outputs instanceof JsonArray) {
-                        JsonArray outputArray=(JsonArray)outputs;
-                        for(Object oObj: outputArray) {
-                            JsonObject o=(JsonObject)oObj;
-                            Output output=new Output();
+
+                    Object outputs = c.getCollection(Jsoner.mintJsonKey("output", null));
+                    if (outputs != null && outputs instanceof JsonArray) {
+                        JsonArray outputArray = (JsonArray) outputs;
+                        for (Object oObj : outputArray) {
+                            JsonObject o = (JsonObject) oObj;
+                            Output output = new Output();
                             output.setId(o.getString(Jsoner.mintJsonKey("id", null)));
                             capability.getOutput().add(output);
                         }
                     }
-                    
-                    Object params=c.getCollection(Jsoner.mintJsonKey("parameters", null));
-                    if ( params!= null && params instanceof JsonArray) {
-                        JsonArray paramsArray=(JsonArray)params;
-                        for(Object oObj: paramsArray) {
-                            JsonObject o=(JsonObject)oObj;
-                            Parameter parameter=new Parameter();
+
+                    Object params = c.getCollection(Jsoner.mintJsonKey("parameters", null));
+                    if (params != null && params instanceof JsonArray) {
+                        JsonArray paramsArray = (JsonArray) params;
+                        for (Object oObj : paramsArray) {
+                            JsonObject o = (JsonObject) oObj;
+                            Parameter parameter = new Parameter();
                             parameter.setDefaultValue(o.getString(Jsoner.mintJsonKey("defaultValue", null)));
                             parameter.setId(o.getString(Jsoner.mintJsonKey("id", null)));
                             parameter.setList(o.getString(Jsoner.mintJsonKey("list", null)));
@@ -787,14 +971,14 @@ public class AssistantAPI {
                             capability.getParameters().add(parameter);
                         }
                     }
-                    
+
                     stringKey = Jsoner.mintJsonKey("requestType", null);
                     capability.setRequestType(c.getString(stringKey));
-                    
+
                     allCapabilities.add(capability);
-                    
+
                 }
-                
+
             }
             response.close();
 
@@ -805,12 +989,7 @@ public class AssistantAPI {
             restClient.close();
         }
         return allCapabilities;
-        
+
     }
-
-    
-
-    
-    
 
 }

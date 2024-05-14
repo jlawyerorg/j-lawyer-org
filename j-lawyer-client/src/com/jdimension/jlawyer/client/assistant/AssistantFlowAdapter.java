@@ -661,37 +661,25 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.tests;
+package com.jdimension.jlawyer.client.assistant;
 
-import com.jdimension.jlawyer.ai.AssistantAPI;
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.ai.ParameterData;
+import java.util.List;
 
 /**
  *
  * @author jens
  */
-public class AssistantClient {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        
-        try {
-            AssistantAPI api = new AssistantAPI("http://localhost:8081", "admin", "a");
-            api.getCapabilities();
-            ArrayList<InputData> inputs=new ArrayList<>();
-            InputData i=new InputData();
-            i.setBase64(false);
-            i.setType("string");
-            i.setStringData("§218 BGB");
-            inputs.add(i);
-            api.submitRequest("explain", "occiglot-short", "Erläutere den folgenden Begriff oder Sachverhalt: ", null, inputs);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-    }
-
+public interface AssistantFlowAdapter {
+    
+    public String getPrompt(AiCapability c);
+    public List<ParameterData> getParameters(AiCapability c);
+    public List<InputData> getInputs(AiCapability c);
+    
+    public void processOutput(AiCapability c, AiRequestStatus status);
+    public void processError(AiCapability c, AiRequestStatus status);
+    
 }
