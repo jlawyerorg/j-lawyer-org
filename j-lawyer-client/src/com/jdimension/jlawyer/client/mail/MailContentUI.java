@@ -663,6 +663,13 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantResultDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache;
@@ -676,6 +683,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
@@ -695,6 +703,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -731,7 +741,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener {
+public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
     private static final String HTML_WARNING = "<html><head>\n"
@@ -1506,6 +1516,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSaveAsFile = new javax.swing.JMenuItem();
         jLabel5 = new javax.swing.JLabel();
+        popAssistant = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1519,6 +1530,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         jLabel6 = new javax.swing.JLabel();
         lblBCC = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
+        cmdAssistant = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1584,6 +1596,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         lblBCC.setText(" ");
 
+        cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdAssistant.setToolTipText("Assistent Ingo");
+        cmdAssistant.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdAssistantMouseReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1591,9 +1611,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jSeparator1)
-                        .addContainerGap())
+                    .addComponent(jSeparator1)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -1606,15 +1624,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(lblSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE))
+                                .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addComponent(lblFrom, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
                                     .addComponent(lblTo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblBCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addGap(12, 12, 12))))
+                                    .addComponent(lblCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(lblBCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdAssistant)))))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1639,7 +1660,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
-                    .addComponent(lblBCC))
+                    .addComponent(lblBCC)
+                    .addComponent(cmdAssistant))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -1709,7 +1731,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         );
         fxContainerLayout.setVerticalGroup(
             fxContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 191, Short.MAX_VALUE)
+            .addGap(0, 183, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1927,6 +1949,22 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
+    private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
+
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            this.popAssistant.removeAll();
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities, this);
+            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities2, this);
+            this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAssistantMouseReleased
+
     private static String getFromAddress(String from, Message msg) {
         String whiteListEntry = from;
         try {
@@ -1956,6 +1994,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAssistant;
     private javax.swing.JPanel fxContainer;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1979,6 +2018,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private javax.swing.JMenu mnuSave;
     private javax.swing.JMenuItem mnuSaveAsFile;
     private javax.swing.JMenuItem mnuSearchSave;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JPopupMenu popAttachments;
     // End of variables declaration//GEN-END:variables
 
@@ -2003,5 +2043,78 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
+    }
+
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+
+        AtomicReference<Object> selectionRef = new AtomicReference<>();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                WebViewRegister reg = WebViewRegister.getInstance();
+                WebView webView1 = reg.get(webViewId);
+
+                Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
+                        + "    var text = \"\";\n"
+                        + "    if (window.getSelection) {\n"
+                        + "        text = window.getSelection().toString();\n"
+                        + "    } else if (document.selection && document.selection.type != \"Control\") {\n"
+                        + "        text = document.selection.createRange().text;\n"
+                        + "    }\n"
+                        + "    return text;\n"
+                        + "})()");
+
+                selectionRef.set(selection);
+
+            } catch (Throwable t) {
+                log.error("Unable to display mail content", t);
+            } finally {
+                latch.countDown(); // Signal that the task is done
+            }
+        });
+        try {
+            latch.await(); // Wait until the task is finished
+        } catch (InterruptedException e) {
+            // Handle interruption
+        }
+
+        Object selection = selectionRef.get();
+        String selectedText = null;
+        if (selection instanceof String) {
+            selectedText = selection.toString();
+        }
+
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        //i.setFileName("sound.wav");
+        i.setType("string");
+        i.setBase64(false);
+        //i.setData(selectedText);
+        i.setStringData(selectedText);
+        inputs.add(i);
+        return inputs;
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
+        dlg.setVisible(true);
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        System.out.println("Kacke");
     }
 }
