@@ -2259,6 +2259,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdCalculationMousePressed
 
     private void cmdRemoveAllPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAllPositionsActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Alle Positionen aus dem Beleg entfernen?", "Belegpositionen löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
