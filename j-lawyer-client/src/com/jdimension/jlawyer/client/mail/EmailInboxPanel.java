@@ -2516,7 +2516,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 body=EmailUtils.html2Text(this.mailContentUI.getBody());
             }
             
-            CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), body, senderName, senderAddress);
+            CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), this.mailContentUI, senderName, senderAddress);
             actionPanelEntries.add(cncp);
             
             ArrayList<ArchiveFileBean> addressRelatedCases=new ArrayList<>();

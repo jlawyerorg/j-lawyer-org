@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.EmailInboxPanel;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
+import com.jdimension.jlawyer.client.mail.MailContentUI;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
@@ -682,7 +684,7 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
     private AddressBean[] relevantAddresses=null;
     private String subject=null;
     private String senderAddress=null;
-    private String textBody=null;
+    private MailContentUI mailContentUI=null;
     private String senderName=null;
     private EmailInboxPanel panelParent=null;
 
@@ -692,16 +694,16 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
      * @param parent
      * @param senderAddress
      * @param relevantAddresses
-     * @param body
+     * @param mailContentUI
      * @param subject
      * @param senderName
      */
-    public CreateNewCasePanel(String editorClassName, EmailInboxPanel parent, AddressBean[] relevantAddresses, String subject, String body, String senderName, String senderAddress) {
+    public CreateNewCasePanel(String editorClassName, EmailInboxPanel parent, AddressBean[] relevantAddresses, String subject, MailContentUI mailContentUI, String senderName, String senderAddress) {
         initComponents();
         this.editorClass = editorClassName;
         this.relevantAddresses=relevantAddresses;
         this.subject=subject;
-        this.textBody=body;
+        this.mailContentUI=mailContentUI;
         this.senderName=senderName;
         this.panelParent=parent;
         this.senderAddress=senderAddress;
@@ -770,10 +772,15 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
         steps.addStep(new AddCalendarEventStep());
         steps.addStep(new ConfirmationStep());
         
+        String textBody = this.mailContentUI.getBody();
+        if (this.mailContentUI.getContentType() != null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
+            textBody = EmailUtils.html2Text(this.mailContentUI.getBody());
+        }
+        
         WizardDataContainer data = steps.getData();
         data.put("newcase.addresses", this.relevantAddresses);
         data.put("newcase.subject", this.subject);
-        data.put("newcase.body", this.textBody);
+        data.put("newcase.body", textBody);
         data.put("newcase.senderaddress", this.senderAddress);
         data.put("newcase.sendername", this.senderName);
                         
