@@ -1091,6 +1091,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
 
         this.jTabbedPane1.setSelectedIndex(0);
+        this.updateOverview();
 
         List<Invoice> invoices = new ArrayList<>();
         try {
@@ -3052,11 +3053,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.lblOverviewStreet.setText("");
     }
     
-    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        if (this.jTabbedPane1.getSelectedIndex() == 0) {
-            this.clearOverview();
-
-            if (!this.txtZipCode.getText().isEmpty() || !this.txtCity.getText().isEmpty()) {
+    private void updateOverview() {
+        this.clearOverview();
+        if (!this.txtZipCode.getText().isEmpty() || !this.txtCity.getText().isEmpty()) {
                 this.lblOverviewCity.setText(this.txtZipCode.getText() + " " + this.txtCity.getText());
             }
             if (!this.txtDepartment.getText().isEmpty()) {
@@ -3077,7 +3076,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             if (!this.txtStreet.getText().isEmpty() || !this.txtStreetNr.getText().isEmpty()) {
                 this.lblOverviewStreet.setText(this.txtStreet.getText() + " " + this.txtStreetNr.getText());
             }
-
+    }
+    
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+        if (this.jTabbedPane1.getSelectedIndex() == 0) {
+            this.updateOverview();
         } else if (this.jTabbedPane1.getSelectedIndex() == 7) {
             if (this.dto == null) {
                 this.pnlCasesForContact.removeAll();
