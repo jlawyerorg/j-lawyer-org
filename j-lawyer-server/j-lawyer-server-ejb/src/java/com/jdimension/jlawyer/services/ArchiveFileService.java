@@ -5478,6 +5478,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"writeArchiveFileRole"})
     public Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
+        
+        if(ServerStringUtils.isEmpty(timesheet.getName())) {
+            throw new Exception("Projektname darf nicht leer sein!");
+        }
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
         boolean allowed = false;
@@ -5515,6 +5519,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"writeArchiveFileRole"})
     public Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
+        
+        if(ServerStringUtils.isEmpty(timesheet.getName())) {
+            throw new Exception("Projektname darf nicht leer sein!");
+        }
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
         boolean allowed = false;

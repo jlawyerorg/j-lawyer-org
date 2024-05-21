@@ -791,7 +791,8 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         dlg.setEntry(this.getTimesheet());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        this.setEntry(caseDto, dlg.getEntry());
+        if(dlg.getEntry()!=null)
+            this.setEntry(caseDto, dlg.getEntry());
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed

@@ -6408,9 +6408,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-        TimesheetEntryPanel tp = new TimesheetEntryPanel(this);
-        tp.setEntry(this.dto, dlg.getEntry());
-        this.pnlTimesheets.add(tp);
+        if (dlg.getEntry() != null) {
+            TimesheetEntryPanel tp = new TimesheetEntryPanel(this);
+            tp.setEntry(this.dto, dlg.getEntry());
+            this.pnlTimesheets.add(tp);
+        }
 
     }//GEN-LAST:event_cmdNewTimesheetActionPerformed
 
@@ -6570,10 +6572,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return false;
         }
     }
-    
+
     private void cmdAddAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddAccountEntryActionPerformed
         this.addAccountEntry(null);
-        
+
     }//GEN-LAST:event_cmdAddAccountEntryActionPerformed
 
     private void cmdRemoveAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAccountEntryActionPerformed
@@ -6755,9 +6757,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             docList.add(newDoc.getId());
                             remote.moveDocumentsToFolder(docList, folder.getId());
                         }
-                        Collection<DocumentTagsBean> docTags=remote.getDocumentTags(doc.getId());
-                        if(docTags!=null) {
-                            for(DocumentTagsBean dtb: docTags) {
+                        Collection<DocumentTagsBean> docTags = remote.getDocumentTags(doc.getId());
+                        if (docTags != null) {
+                            for (DocumentTagsBean dtb : docTags) {
                                 remote.setDocumentTag(newDoc.getId(), dtb, true);
                             }
                         }
@@ -6779,7 +6781,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error("Error duplicating document", ioe);
             JOptionPane.showMessageDialog(this, "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_mnuMoveDocumentToOtherCaseActionPerformed
 
     private void cmdAddVoiceMemoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddVoiceMemoActionPerformed
@@ -6787,28 +6789,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setTitle("Sprachmemo hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        byte[] result=dlg.getMemoBytes();
-        if(result==null)
+        byte[] result = dlg.getMemoBytes();
+        if (result == null) {
             return;
-        String fileName=dlg.getMemoFilename();
-        if(fileName==null || fileName.trim().length()==0) {
-            fileName="Sprachmemo";
         }
-        if(!fileName.toLowerCase().endsWith(".wav"))
-            fileName=fileName+".wav";
-        
+        String fileName = dlg.getMemoFilename();
+        if (fileName == null || fileName.trim().length() == 0) {
+            fileName = "Sprachmemo";
+        }
+        if (!fileName.toLowerCase().endsWith(".wav")) {
+            fileName = fileName + ".wav";
+        }
+
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
-            if(!remote.doesDocumentExist(this.dto.getId(), fileName)) {
+
+            if (!remote.doesDocumentExist(this.dto.getId(), fileName)) {
                 ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, result, "", null);
                 this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
             } else {
-                for(int i=2;i<50;i++) {
-                    String indexedFileName="(" + i + ") " + fileName;
-                    if(!remote.doesDocumentExist(this.dto.getId(), indexedFileName)) {
+                for (int i = 2; i < 50; i++) {
+                    String indexedFileName = "(" + i + ") " + fileName;
+                    if (!remote.doesDocumentExist(this.dto.getId(), indexedFileName)) {
                         ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), indexedFileName, result, "", null);
                         this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
                         break;
@@ -6816,13 +6820,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
 
-            
-                        
         } catch (Exception ioe) {
             log.error("Error saving voice memo", ioe);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Sprachmemos: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_cmdAddVoiceMemoActionPerformed
 
     private void cmdDuplicateAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateAccountEntryActionPerformed
@@ -6841,22 +6843,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             invoices.add(inv);
         }
 
-        CaseAccountEntry newEntry=new CaseAccountEntry();
+        CaseAccountEntry newEntry = new CaseAccountEntry();
         newEntry.setArchiveFileKey(ae.getAccountEntry().getArchiveFileKey());
         newEntry.setContact(ae.getAccountEntry().getContact());
         newEntry.setDescription(ae.getAccountEntry().getDescription());
         newEntry.setEarnings(ae.getAccountEntry().getEarnings());
         newEntry.setEntryDate(new Date());
-        newEntry.setEscrowIn(        ae.getAccountEntry().getEscrowIn());
+        newEntry.setEscrowIn(ae.getAccountEntry().getEscrowIn());
         newEntry.setEscrowOut(ae.getAccountEntry().getEscrowOut());
         newEntry.setExpendituresIn(ae.getAccountEntry().getExpendituresIn());
         newEntry.setExpendituresOut(ae.getAccountEntry().getExpendituresOut());
         newEntry.setId(null);
         newEntry.setInvoice(ae.getAccountEntry().getInvoice());
         newEntry.setSpendings(ae.getAccountEntry().getSpendings());
-        
+
         CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, newEntry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
-        
+
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         if (dlg.getEntry() != null) {

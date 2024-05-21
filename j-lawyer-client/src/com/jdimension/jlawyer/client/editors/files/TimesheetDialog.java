@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -1130,13 +1131,15 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.currentEntry=null;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void fillCurrentEntry() throws Exception {
         this.currentEntry.setDescription(this.taDescription.getText());
-        this.currentEntry.setName(this.txtName.getText());
+        if(!StringUtils.isEmpty(this.txtName.getText()))
+            this.currentEntry.setName(this.txtName.getText());
         this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
         this.currentEntry.setInterval(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
         this.currentEntry.setLimit(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue());
@@ -1144,19 +1147,23 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
     }
 
-    private void save() {
+    private boolean save() {
 
         if (this.currentEntry == null) {
             // creation
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                Timesheet newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), new Timesheet());
+                Timesheet newTimesheet = new Timesheet();
+                newTimesheet.setName(this.txtName.getText());
+                newTimesheet.setDescription(this.taDescription.getText());
+                newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), newTimesheet);
                 this.currentEntry = newTimesheet;
 
             } catch (Exception ex) {
-                log.error("Error creating invoice", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                log.error("Error creating timesheet", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return false;
             }
         }
 
@@ -1173,6 +1180,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
                 } catch (Exception ex) {
                     log.error("Error updating timesheet position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return false;
                 }
             }
         }
@@ -1186,14 +1194,19 @@ public class TimesheetDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("error saving timesheet", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
+        
+        return true;
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
-        this.save();
-        this.setVisible(false);
-        this.dispose();
+        boolean saved=this.save();
+        if(saved) {
+            this.setVisible(false);
+            this.dispose();
+        }
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdRemoveAllPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveAllPositionsActionPerformed
