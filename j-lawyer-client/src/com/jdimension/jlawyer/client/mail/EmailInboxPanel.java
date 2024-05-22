@@ -2511,10 +2511,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 }
             }
-            body=this.mailContentUI.getBody();
-            if(this.mailContentUI.getContentType()!=null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
-                body=EmailUtils.html2Text(this.mailContentUI.getBody());
-            }
             
             CreateNewCasePanel cncp=new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, msgC.getMessage().getSubject(), this.mailContentUI, senderName, senderAddress);
             actionPanelEntries.add(cncp);
@@ -2547,7 +2543,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         sp.setEntry(cce, this);
                         actionPanelEntries.add(sp);
 
-                        if (phoneNumbers.size() > 0) {
+                        if (!phoneNumbers.isEmpty()) {
                             ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                             pnp.setPhoneNumbers(phoneNumbers);
                             actionPanelEntries.add(pnp);
@@ -2580,7 +2576,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                     if (aFile1.isArchived()) {
                                         // both archived
                                         // sort by changed date
-                                        //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
                                         return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                     } else {
                                         // only 2 is archived
@@ -2592,7 +2587,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 } else {
                                     // both are non-archived
                                     // sort by changed date
-                                    //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
                                     return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                 }
                             });
