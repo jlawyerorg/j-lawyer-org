@@ -918,7 +918,8 @@ public class AssistantAPI {
                     JsonKey stringKey = Jsoner.mintJsonKey("name", null);
                     capability.setName(c.getString(stringKey));
 
-                    JsonObject promptObject = (JsonObject) c.get(Jsoner.mintJsonKey("defaultPrompt", null));
+                    JsonKey promptKey = Jsoner.mintJsonKey("defaultPrompt", null);
+                    JsonObject promptObject=(JsonObject)c.getMap(promptKey);
                     if (promptObject != null) {
                         Prompt p = new Prompt();
                         capability.setDefaultPrompt(p);

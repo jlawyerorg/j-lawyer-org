@@ -663,159 +663,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.Input;
-import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.jdimension.jlawyer.ai.InputData;
 import java.util.List;
-import java.util.Map;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class AssistantAccess {
-
-    private static final Logger log = Logger.getLogger(AssistantAccess.class.getName());
-
-    private static AssistantAccess instance = null;
-    private Map<AssistantConfig, List<com.jdimension.jlawyer.ai.AiCapability>> capabilities = null;
-
-    private AssistantAccess() {
-
-    }
-
-    public static synchronized AssistantAccess getInstance() {
-        if (instance == null) {
-            instance = new AssistantAccess();
-        }
-        return instance;
-    }
-
-    public Map<AssistantConfig, List<AiCapability>> getCapabilities() throws Exception {
-        if (this.capabilities == null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.capabilities = locator.lookupIntegrationServiceRemote().getAssistantCapabilities();
-            } catch (Exception ex) {
-                log.error("Error getting AI capabilities", ex);
-                throw new Exception("Assistenten-Funktionen können nicht ermittelt werden: " + ex.getMessage());
-            }
-        }
-        return this.capabilities;
-    }
-
-    /**
-     * Filters available capabilities of the backends to match what the client
-     * requests, e.g. it might only have a STRING instead of a FILE and only
-     * wants to transcribe instead of summarize
-     *
-     * @param requestType
-     * @param inputType
-     * @return
-     * @throws Exception
-     */
-    public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
-        Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
-        Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
-        for (AssistantConfig config : all.keySet()) {
-            for (AiCapability c : all.get(config)) {
-                if (requestType != null && !c.getRequestType().equals(requestType)) {
-                    continue;
-                }
-
-                boolean inputSupported = false;
-                if (inputType != null) {
-                    for (Input i : c.getInput()) {
-                        if (i.getId().contains(inputType)) {
-                            inputSupported = true;
-                        }
-                    }
-                }
-                if (!inputSupported) {
-                    continue;
-                }
-
-                if (!filtered.containsKey(config)) {
-                    filtered.put(config, new ArrayList<>());
-                }
-                filtered.get(config).add(c);
-            }
-        }
-        return filtered;
-
-    }
-
-    public void resetCapabilities() {
-        this.capabilities = null;
-    }
-
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantFlowAdapter adapter) {
-
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    try {
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                        List<ParameterData> params = new ArrayList<>();
-                        if (c.getParameters() != null && !c.getParameters().isEmpty()) {
-                            params = adapter.getParameters(c);
-                            if (params == null) {
-                                // user cancelled parameters dialog
-                                return;
-                            }
-                        }
-
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c));
-                        if (status.getStatus().equalsIgnoreCase("error")) {
-                            adapter.processError(c, status);
-                        } else {
-                            adapter.processOutput(c, status);
-                        }
-                    } catch (Exception ex) {
-                        log.error("Error getting AI capabilities", ex);
-
-                    }
-                });
-                menu.add(mi);
-            }
-        }
-
-    }
-
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
-
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
-                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, true, EditorsRegistry.getInstance().getMainWindow(), false);
-                    FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
-                    dlg.setVisible(true);
-                });
-                menu.add(mi);
-            }
-        }
-
-    }
-
+public interface AssistantInputAdapter {
+    
+    public List<InputData> getInputs(AiCapability c);
+    
+    
 }

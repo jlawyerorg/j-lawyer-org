@@ -663,159 +663,496 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.Input;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.ai.Prompt;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import java.awt.event.ActionEvent;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.DefaultListModel;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class AssistantAccess {
+public class GenericAssistantDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(AssistantAccess.class.getName());
+    private static final Logger log = Logger.getLogger(GenericAssistantDialog.class.getName());
 
-    private static AssistantAccess instance = null;
-    private Map<AssistantConfig, List<com.jdimension.jlawyer.ai.AiCapability>> capabilities = null;
+    private AssistantConfig config = null;
+    private AiCapability capability = null;
+    private AssistantInputAdapter inputAdapter = null;
 
-    private AssistantAccess() {
+    /**
+     * Creates new form GenericAssistantDialog
+     *
+     * @param config
+     * @param c
+     * @param inputAdapter
+     * @param autoExecute
+     * @param parent
+     * @param modal
+     */
+    public GenericAssistantDialog(AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    }
+        this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.progress.setIndeterminate(false);
+        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
 
-    public static synchronized AssistantAccess getInstance() {
-        if (instance == null) {
-            instance = new AssistantAccess();
+        this.config = config;
+        this.capability = c;
+        this.inputAdapter = inputAdapter;
+
+        this.taPrompt.setEnabled(false);
+        if (c.getDefaultPrompt() != null && c.getDefaultPrompt().getDefaultPrompt() != null) {
+            this.taPrompt.setText(c.getDefaultPrompt().getDefaultPrompt());
+            this.taPrompt.setEnabled(true);
+        } else {
+            //this.getContentPane().remove(this.jScrollPane1);
+            this.taPrompt.setEnabled(false);
         }
-        return instance;
-    }
 
-    public Map<AssistantConfig, List<AiCapability>> getCapabilities() throws Exception {
-        if (this.capabilities == null) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.capabilities = locator.lookupIntegrationServiceRemote().getAssistantCapabilities();
-            } catch (Exception ex) {
-                log.error("Error getting AI capabilities", ex);
-                throw new Exception("Assistenten-Funktionen können nicht ermittelt werden: " + ex.getMessage());
+        this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
+
+        this.lstInputFiles.setCellRenderer(new AttachmentListCellRenderer());
+        this.lstInputFiles.setModel(new DefaultListModel());
+
+        this.lstOutputFiles.setCellRenderer(new AttachmentListCellRenderer());
+        this.lstOutputFiles.setModel(new DefaultListModel());
+
+        ((DefaultListModel) this.lstInputFiles.getModel()).removeAllElements();
+        ((DefaultListModel) this.lstOutputFiles.getModel()).removeAllElements();
+
+        this.taInputString.setText("");
+
+        for (InputData i : inputAdapter.getInputs(c)) {
+            if ("string".equalsIgnoreCase(i.getType())) {
+                this.taInputString.append(i.getStringData());
+                this.taInputString.append(System.lineSeparator());
+            } else {
+                ((DefaultListModel) lstInputFiles.getModel()).addElement(i.getFileName());
             }
         }
-        return this.capabilities;
+
+        this.tabInputs.setEnabledAt(0, this.lstInputFiles.getModel().getSize() > 0);
+        this.tabInputs.setEnabledAt(1, this.taInputString.getText().length() > 0);
+
+        if (this.taInputString.getText().length() > 0) {
+            this.tabInputs.setSelectedIndex(1);
+        } else {
+            this.tabInputs.setSelectedIndex(0);
+        }
+
+        if (autoExecute) {
+            //this.cmdSubmitActionPerformed(null);
+            // Display the dialog first, then start the background task
+            SwingUtilities.invokeLater(this::startBackgroundTask);
+        }
+
     }
 
     /**
-     * Filters available capabilities of the backends to match what the client
-     * requests, e.g. it might only have a STRING instead of a FILE and only
-     * wants to transcribe instead of summarize
-     *
-     * @param requestType
-     * @param inputType
-     * @return
-     * @throws Exception
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
-        Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
-        Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
-        for (AssistantConfig config : all.keySet()) {
-            for (AiCapability c : all.get(config)) {
-                if (requestType != null && !c.getRequestType().equals(requestType)) {
-                    continue;
-                }
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-                boolean inputSupported = false;
-                if (inputType != null) {
-                    for (Input i : c.getInput()) {
-                        if (i.getId().contains(inputType)) {
-                            inputSupported = true;
-                        }
-                    }
-                }
-                if (!inputSupported) {
-                    continue;
-                }
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taPrompt = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taResult = new javax.swing.JTextArea();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        lstOutputFiles = new javax.swing.JList<>();
+        cmdCopy = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        tabInputs = new javax.swing.JTabbedPane();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        lstInputFiles = new javax.swing.JList<>();
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        taInputString = new javax.swing.JTextArea();
+        pnlTitle = new javax.swing.JPanel();
+        lblRequestType = new javax.swing.JLabel();
+        cmdSubmit = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        progress = new javax.swing.JProgressBar();
 
-                if (!filtered.containsKey(config)) {
-                    filtered.put(config, new ArrayList<>());
-                }
-                filtered.get(config).add(c);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Assistent Ingo");
+
+        taPrompt.setColumns(20);
+        taPrompt.setLineWrap(true);
+        taPrompt.setRows(5);
+        taPrompt.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(taPrompt);
+
+        taResult.setColumns(20);
+        taResult.setLineWrap(true);
+        taResult.setRows(5);
+        taResult.setWrapStyleWord(true);
+        jScrollPane2.setViewportView(taResult);
+
+        lstOutputFiles.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        lstOutputFiles.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
+        lstOutputFiles.setVisibleRowCount(3);
+        jScrollPane3.setViewportView(lstOutputFiles);
+
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        tabInputs.setTabPlacement(javax.swing.JTabbedPane.RIGHT);
+
+        lstInputFiles.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        lstInputFiles.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
+        lstInputFiles.setVisibleRowCount(3);
+        jScrollPane4.setViewportView(lstInputFiles);
+
+        tabInputs.addTab("Dateien", jScrollPane4);
+
+        taInputString.setColumns(20);
+        taInputString.setLineWrap(true);
+        taInputString.setRows(5);
+        taInputString.setWrapStyleWord(true);
+        jScrollPane5.setViewportView(taInputString);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 980, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane5))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 86, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE))
+        );
+
+        tabInputs.addTab("Text", jPanel1);
+
+        lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize()+2));
+        lblRequestType.setForeground(new java.awt.Color(255, 255, 255));
+        lblRequestType.setText("Transkribieren");
+
+        cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_slideshow_black_48dp.png"))); // NOI18N
+        cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSubmitActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
+        pnlTitle.setLayout(pnlTitleLayout);
+        pnlTitleLayout.setHorizontalGroup(
+            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlTitleLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSubmit)
+                .addContainerGap())
+        );
+        pnlTitleLayout.setVerticalGroup(
+            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlTitleLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblRequestType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlTitleLayout.createSequentialGroup()
+                        .addComponent(cmdSubmit)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        progress.setFont(progress.getFont().deriveFont(progress.getFont().getStyle() | java.awt.Font.BOLD, progress.getFont().getSize()+2));
+        progress.setIndeterminate(true);
+        progress.setOpaque(true);
+        progress.setString("Transkribieren");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(pnlTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addComponent(tabInputs)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCopy))
+                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tabInputs, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdCopy)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(cmdClose)
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
+
+        
+        
+        SwingUtilities.invokeLater(this::startBackgroundTask);
+        
+//        List<ParameterData> params = new ArrayList<>();
+//        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
+//            params = getParameters();
+//            if (params == null) {
+//                // user cancelled parameters dialog
+//                return;
+//            }
+//        }
+//
+//        final List<ParameterData> fParams = params;
+//
+//        this.progress.setIndeterminate(true);
+//        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+//
+//        CountDownLatch latch = new CountDownLatch(1);
+//        new Thread(() -> {
+//            ClientSettings settings = ClientSettings.getInstance();
+//            try {
+//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//
+//                AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), this.taPrompt.getText(), fParams, this.inputAdapter.getInputs(capability));
+//                resultRef.set(status);
+//
+//            } catch (Throwable t) {
+//                log.error("Error processing AI request", t);
+//            } finally {
+//                latch.countDown(); // Signal that the task is done
+//            }
+//        }).start();
+//
+//        try {
+//            latch.await(); // Wait until the task is finished
+//        } catch (InterruptedException e) {
+//            // Handle interruption
+//        }
+//
+//        AiRequestStatus status = resultRef.get();
+//        if (status != null) {
+//            if (status.getStatus().equalsIgnoreCase("error")) {
+//                this.taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
+//            } else {
+//                StringBuilder result = new StringBuilder();
+//                for (OutputData o : status.getResponse().getOutputData()) {
+//                    if (o.getType().equalsIgnoreCase("string")) {
+//                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+//                    }
+//
+//                }
+//                this.taResult.setText(result.toString());
+//            }
+//        }
+//
+//        this.progress.setIndeterminate(false);
+
+    }//GEN-LAST:event_cmdSubmitActionPerformed
+
+    private void startBackgroundTask() {
+
+        this.taResult.setText("");
+        ((DefaultListModel)this.lstOutputFiles.getModel()).removeAllElements();
+        
+        List<ParameterData> params = new ArrayList<>();
+        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
+            params = getParameters();
+            if (params == null) {
+                // user cancelled parameters dialog
+                return;
             }
         }
-        return filtered;
 
-    }
+        final List<ParameterData> fParams=params;
+        
+        this.progress.setIndeterminate(true);
 
-    public void resetCapabilities() {
-        this.capabilities = null;
-    }
+        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantFlowAdapter adapter) {
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    try {
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            @Override
+            protected Void doInBackground() throws Exception {
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        List<ParameterData> params = new ArrayList<>();
-                        if (c.getParameters() != null && !c.getParameters().isEmpty()) {
-                            params = adapter.getParameters(c);
-                            if (params == null) {
-                                // user cancelled parameters dialog
-                                return;
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputAdapter.getInputs(capability));
+                    resultRef.set(status);
+
+                } catch (Throwable t) {
+                    log.error("Error processing AI request", t);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Task completion actions
+                AiRequestStatus status = resultRef.get();
+                if (status != null) {
+                    if (status.getStatus().equalsIgnoreCase("error")) {
+                        taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
+                    } else {
+                        StringBuilder result = new StringBuilder();
+                        for (OutputData o : status.getResponse().getOutputData()) {
+                            if (o.getType().equalsIgnoreCase("string")) {
+                                result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
                             }
-                        }
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c));
-                        if (status.getStatus().equalsIgnoreCase("error")) {
-                            adapter.processError(c, status);
-                        } else {
-                            adapter.processOutput(c, status);
                         }
-                    } catch (Exception ex) {
-                        log.error("Error getting AI capabilities", ex);
-
+                        taResult.setText(result.toString());
                     }
-                });
-                menu.add(mi);
-            }
-        }
+                }
 
+                progress.setIndeterminate(false);
+            }
+        };
+
+        worker.execute();
     }
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
-                mi.addActionListener((ActionEvent e) -> {
-                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, true, EditorsRegistry.getInstance().getMainWindow(), false);
-                    FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
-                    dlg.setVisible(true);
-                });
-                menu.add(mi);
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
             }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
 
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            GenericAssistantDialog dialog = new GenericAssistantDialog(null, null, null, false, new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
     }
 
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdSubmit;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel lblRequestType;
+    private javax.swing.JList<String> lstInputFiles;
+    private javax.swing.JList<String> lstOutputFiles;
+    private javax.swing.JPanel pnlTitle;
+    private javax.swing.JProgressBar progress;
+    private javax.swing.JTextArea taInputString;
+    private javax.swing.JTextArea taPrompt;
+    private javax.swing.JTextArea taResult;
+    private javax.swing.JTabbedPane tabInputs;
+    // End of variables declaration//GEN-END:variables
+
+    private List<ParameterData> getParameters() {
+        AssistantParameterDialog dlg = new AssistantParameterDialog(this, true, capability, capability.getName());
+        FrameUtils.centerDialogOnParentMonitor(dlg, getParent().getLocation());
+        dlg.setVisible(true);
+
+        return dlg.getParameters();
+    }
 }
