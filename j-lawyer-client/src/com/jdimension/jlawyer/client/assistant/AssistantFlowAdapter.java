@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import java.util.List;
 
@@ -673,11 +672,10 @@ import java.util.List;
  *
  * @author jens
  */
-public interface AssistantFlowAdapter {
+public interface AssistantFlowAdapter extends AssistantInputAdapter {
     
     public String getPrompt(AiCapability c);
     public List<ParameterData> getParameters(AiCapability c);
-    public List<InputData> getInputs(AiCapability c);
     
     public void processOutput(AiCapability c, AiRequestStatus status);
     public void processError(AiCapability c, AiRequestStatus status);

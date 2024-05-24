@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantParameterDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -828,7 +829,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         try {
             Map<AssistantConfig,List<AiCapability>> capabilities=ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
             this.popAssistant.removeAll();
-            ingo.populateMenu(this.popAssistant, capabilities, this);
+            //ingo.populateMenu(this.popAssistant, capabilities, this);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -955,7 +957,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public List<InputData> getInputs(AiCapability c) {
         ArrayList<InputData> inputs=new ArrayList<>();
         InputData i=new InputData();
-        i.setFileName("sound.wav");
+        i.setFileName("Sounddatei.wav");
         i.setType("file");
         i.setBase64(true);
         i.setData(this.content);

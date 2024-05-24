@@ -713,6 +713,36 @@ public class AssistantParameterDialog extends javax.swing.JDialog {
             }
         }
     }
+    
+    /**
+     * Creates new form AssistantParameterDialog
+     * @param parent
+     * @param modal
+     * @param c
+     * @param confirmButtonCaption
+     */
+    public AssistantParameterDialog(java.awt.Dialog parent, boolean modal, AiCapability c, String confirmButtonCaption) {
+        super(parent, modal);
+        initComponents();
+        this.cmdConfirm.setText(confirmButtonCaption);
+        this.capability=c;
+        
+        this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
+        for(Parameter p: this.capability.getParameters()) {
+            this.pnlParameters.add(new JLabel(p.getName()));
+            if(p.getList()!=null && p.getList().length()>0) {
+                Vector v=new Vector(Arrays.asList(p.getList().split(",")));
+                JComboBox combo=new JComboBox(v);
+                combo.setEditable(false);
+                combo.setSelectedItem(p.getDefaultValue());
+                this.pnlParameters.add(combo);
+            } else {
+                JTextField tf=new JTextField();
+                tf.setText(p.getDefaultValue());
+                this.pnlParameters.add(tf);
+            }
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
