@@ -749,6 +749,10 @@ public class ContactMigrateHandler extends CommandHandler {
                 newAab.setCustom3(aab.getCustom3());
                 newAab.setReference(aab.getReference());
                 newAab.setReferenceType(aab.getReferenceType());
+                
+                locator.lookupArchiveFileServiceRemote().addAddressToCase(newAab);
+                outLine("to-contact added to case " + aab.getArchiveFileKey().getFileNumber(), ta);
+                locator.lookupArchiveFileServiceRemote().removeParty(aab.getId());
                 outLine("from-contact removed from case " + aab.getArchiveFileKey().getFileNumber(), ta);
                 outLine(" ", ta);
             }
