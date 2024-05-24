@@ -813,7 +813,8 @@ insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.
 
 
 
-ALTER TABLE cases DROP FOREIGN KEY fk_group;
+-- ALTER TABLE cases DROP FOREIGN KEY fk_group;
+ALTER TABLE cases DROP FOREIGN KEY cases_ibfk_1;
 alter table cases modify owner_group VARCHAR(50) BINARY;
 ALTER TABLE cases ADD FOREIGN KEY fk_group (owner_group) REFERENCES security_groups (id) ON DELETE RESTRICT;
 
