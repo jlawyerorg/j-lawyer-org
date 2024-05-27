@@ -666,9 +666,11 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.AdjustmentEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
@@ -698,11 +700,12 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     int currentPage = 0;
     private byte[] content = null;
     private int renderedPages = 0;
+    private int totalPages = 0;
     private String fileName = null;
     private String documentId = null;
 
     private int zoomFactor = 100;
-    private int lastZoomFactorRequest=-1;
+    private int lastZoomFactorRequest = -1;
 
     /**
      * Creates new form PlaintextPanel
@@ -742,6 +745,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             if (labelIndex != -1 && labelIndex < components.length) {
                 //JLabel currentLabel = (JLabel) components[labelIndex];
                 // Do whatever you need with the currentLabel
+
+                if ((labelIndex + 1) == renderedPages && renderedPages < totalPages) {
+                    this.renderContent(content, labelIndex, labelIndex + 1, labelIndex + MAX_RENDER_PAGES, zoomFactor);
+                }
 
                 lblCurrentPage.setText("" + (labelIndex + 1) + "/" + renderedPages);
                 currentPage = labelIndex;
@@ -791,6 +798,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         cmdFitToScreen = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         lblTotalPages = new javax.swing.JLabel();
+        cmdRotateRight = new javax.swing.JButton();
+        cmdRotateLeft = new javax.swing.JButton();
 
         pnlPages.setLayout(new javax.swing.BoxLayout(pnlPages, javax.swing.BoxLayout.PAGE_AXIS));
 
@@ -855,6 +864,22 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         lblTotalPages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
         lblTotalPages.setText("100");
 
+        cmdRotateRight.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/rotate_right_20dp.png"))); // NOI18N
+        cmdRotateRight.setToolTipText("alle Seiten des Dokuments um 90° nach rechts drehen");
+        cmdRotateRight.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRotateRightActionPerformed(evt);
+            }
+        });
+
+        cmdRotateLeft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/rotate_left_20dp.png"))); // NOI18N
+        cmdRotateLeft.setToolTipText("alle Seiten des Dokuments um 90° nach links drehen");
+        cmdRotateLeft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRotateLeftActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -874,7 +899,11 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTotalPages)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 282, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
+                .addComponent(cmdRotateLeft)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdRotateRight)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdFitToScreen))
@@ -891,8 +920,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             .addComponent(lblCurrentPage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(cmdFitToScreen))
+                                .addComponent(cmdFitToScreen)
+                                .addComponent(cmdRotateRight))
                             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdRotateLeft, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lblTotalPages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(cmdLastPage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -941,10 +972,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     }//GEN-LAST:event_cmdLastPageActionPerformed
 
     private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
-        if(this.sliderZoom.getValue()==this.lastZoomFactorRequest) {
+        if (this.sliderZoom.getValue() == this.lastZoomFactorRequest) {
             return;
         }
-        this.lastZoomFactorRequest=this.sliderZoom.getValue();
+        this.lastZoomFactorRequest = this.sliderZoom.getValue();
 
         new Thread(() -> {
 
@@ -977,19 +1008,25 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                     Image bi2 = this.orgImage.get(i).getScaledInstance(width, height, Image.SCALE_SMOOTH);
 
+                    final int iIndex = i;
                     SwingUtilities.invokeAndWait(() -> {
 
                         synchronized (zoomSemaphore) {
                             if (threadZoomFactor != sliderZoom.getValue()) {
                                 return;
                             }
-                            JLabel lblPage = new JLabel();
-                            lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-                            lblPage.setHorizontalAlignment(SwingConstants.CENTER);
-                            this.pnlPages.add(lblPage);
+//                            JLabel lblPage = new JLabel();
+//                            lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+//                            lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+//                            this.pnlPages.add(lblPage);
+//
+//                            lblPage.setIcon(new ImageIcon(bi2));
+//                            lblPage.setText("");
 
-                            lblPage.setIcon(new ImageIcon(bi2));
-                            lblPage.setText("");
+                            PdfPageImage pnlPage = new PdfPageImage(this);
+                            pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+                            pnlPage.setPage(iIndex, new ImageIcon(bi2));
+                            pnlPages.add(pnlPage);
                         }
                     });
                     i++;
@@ -1005,6 +1042,27 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.sliderZoom.setValue(100);
     }//GEN-LAST:event_cmdFitToScreenActionPerformed
 
+    private void cmdRotateRightActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRotateRightActionPerformed
+        this.rotateAllPages(90);
+    }//GEN-LAST:event_cmdRotateRightActionPerformed
+
+    private void cmdRotateLeftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRotateLeftActionPerformed
+        this.rotateAllPages(-90);
+    }//GEN-LAST:event_cmdRotateLeftActionPerformed
+
+    private void rotateAllPages(int degrees) {
+        if(this.renderedPages < this.totalPages) {
+            // load entire document
+            this.renderContent(content, currentPage+1, renderedPages - 1, totalPages - 1, zoomFactor);
+
+        }
+        int[] pageIndexes = new int[totalPages];
+        for (int i = 0; i < this.totalPages; i++) {
+            pageIndexes[i] = i;
+        }
+        this.rotatePage(pageIndexes, degrees);
+    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdFirstPage;
@@ -1012,6 +1070,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     private javax.swing.JButton cmdLastPage;
     private javax.swing.JButton cmdPageBackward;
     private javax.swing.JButton cmdPageForward;
+    private javax.swing.JButton cmdRotateLeft;
+    private javax.swing.JButton cmdRotateRight;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblContent;
@@ -1026,7 +1086,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         ThreadUtils.updateLabel(this.lblContent, text);
     }
 
-    private void renderContent(byte[] content, int zoomFactor) {
+    private void renderContent(byte[] content, int currentIndex, int fromPageIndex, int toPageIndex, int zoomFactor) {
         this.sliderZoom.setEnabled(false);
         this.cmdFitToScreen.setEnabled(false);
         this.content = content;
@@ -1043,22 +1103,28 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 return;
             }
 
-            if (this.orgImage.isEmpty()) {
+            if (this.orgImage.isEmpty() || this.orgImage.size() < (toPageIndex + 1)) {
 
                 PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
                 PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
 
                 this.lblTotalPages.setText("" + inputPDF.getNumberOfPages());
+                this.totalPages = inputPDF.getNumberOfPages();
 
                 this.cmdFirstPage.setEnabled(false);
                 this.cmdPageBackward.setEnabled(false);
                 this.cmdLastPage.setEnabled(inputPDF.getNumberOfPages() > 1);
                 this.cmdPageForward.setEnabled(inputPDF.getNumberOfPages() > 1);
 
-                this.pnlPages.removeAll();
+                if (fromPageIndex < 0) {
+                    fromPageIndex = 0;
+                }
+
+                final int fromIndex = fromPageIndex;
+                final int toIndex = Math.min(toPageIndex, inputPDF.getNumberOfPages() - 1);
 
                 new Thread(() -> {
-                    for (int i = 0; i < Math.min(inputPDF.getNumberOfPages(), MAX_RENDER_PAGES); i++) {
+                    for (int i = fromIndex; i <= toIndex; i++) {
                         try {
                             BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, 200, ImageType.RGB);
                             orgImage.put(i, buffImg);
@@ -1071,13 +1137,20 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
                             Image bi2 = orgImage.get(i).getScaledInstance(width1, height1, Image.SCALE_SMOOTH);
 
+                            final int iIndex = i;
                             SwingUtilities.invokeAndWait(() -> {
-                                JLabel lblPage = new JLabel();
-                                lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-                                lblPage.setHorizontalAlignment(SwingConstants.CENTER);
-                                pnlPages.add(lblPage);
-                                lblPage.setIcon(new ImageIcon(bi2));
-                                lblPage.setText("");
+//                                JLabel lblPage = new JLabel();
+//                                lblPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+//                                lblPage.setHorizontalAlignment(SwingConstants.CENTER);
+//                                pnlPages.add(lblPage);
+//                                lblPage.setIcon(new ImageIcon(bi2));
+//                                lblPage.setText("");
+
+                                PdfPageImage pnlPage = new PdfPageImage(this);
+                                pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
+                                pnlPage.setPage(iIndex, new ImageIcon(bi2));
+                                pnlPages.add(pnlPage);
+
                             });
 
                             renderedPages = i + 1;
@@ -1090,11 +1163,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     try {
                         this.sliderZoom.setEnabled(true);
                         this.cmdFitToScreen.setEnabled(true);
-                        lblCurrentPage.setText("1" + "/" + renderedPages);
-                        if(inputPDF.getNumberOfPages()>MAX_RENDER_PAGES && lblTotalPages.getIcon()==null) {
-                            lblTotalPages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
-                            lblTotalPages.setToolTipText("Das Dokument hat mehr Seiten als in der Vorschau angezeigt werden können - ggf. in externer Anwendung öffnen.");
-                        }
+                        lblCurrentPage.setText(currentIndex + "/" + renderedPages);
                         inputPDF.close();
                     } catch (Throwable t) {
                         log.error("Error rendering PDF in separate thread", t);
@@ -1114,7 +1183,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     public void showContent(String documentId, byte[] content) {
         this.documentId = documentId;
         this.currentPage = 0;
-        this.renderContent(content, this.zoomFactor);
+        this.pnlPages.removeAll();
+        this.renderContent(content, 0, 0, 19, this.zoomFactor);
 
     }
 
@@ -1126,6 +1196,59 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     @Override
     public String getDocumentId() {
         return this.documentId;
+    }
+
+    public void rotatePage(int[] pageIndexes, int degrees) {
+        for (int pageIndex : pageIndexes) {
+            if (this.orgImage.containsKey(pageIndex)) {
+                BufferedImage bi = this.orgImage.get(pageIndex);
+                BufferedImage rotated = rotateImage(bi, degrees);
+                this.orgImage.put(pageIndex, rotated);
+
+                int height1 = Math.max(getHeight() - 55, 400);
+                float scaleFactor = (float) height1 / (float) orgImage.get(pageIndex).getHeight();
+                int width1 = (int) ((float) orgImage.get(pageIndex).getWidth() * scaleFactor);
+                height1 = (int) ((float) height1 * ((float) ((float) zoomFactor / 100f)));
+                width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
+                Image bi2 = orgImage.get(pageIndex).getScaledInstance(width1, height1, Image.SCALE_SMOOTH);
+
+                Component[] components = pnlPages.getComponents();
+                if (components[pageIndex] instanceof PdfPageImage) {
+                    ((PdfPageImage) components[pageIndex]).setPage(pageIndex, new ImageIcon(bi2));
+                }
+            }
+        }
+    }
+
+    private static BufferedImage rotateImage(BufferedImage originalImage, double degrees) {
+        int width = originalImage.getWidth();
+        int height = originalImage.getHeight();
+        double radians = Math.toRadians(degrees);
+
+        // Calculate the new dimensions of the image based on the angle of rotation
+        double sin = Math.abs(Math.sin(radians));
+        double cos = Math.abs(Math.cos(radians));
+        int newWidth = (int) Math.floor(width * cos + height * sin);
+        int newHeight = (int) Math.floor(height * cos + width * sin);
+
+        // Create a new BufferedImage with the calculated dimensions
+        BufferedImage rotatedImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
+
+        // Create a Graphics2D object from the rotated image
+        Graphics2D g2d = rotatedImage.createGraphics();
+
+        // Define the transformation: rotation around the center of the image
+        AffineTransform transform = new AffineTransform();
+        transform.translate(newWidth / 2.0, newHeight / 2.0); // Translate to the center of the new image
+        transform.rotate(radians); // Rotate by the specified angle
+        transform.translate(-width / 2.0, -height / 2.0); // Translate back to the origin
+
+        // Draw the original image onto the rotated image with the transformation applied
+        g2d.setTransform(transform);
+        g2d.drawImage(originalImage, 0, 0, null);
+        g2d.dispose();
+
+        return rotatedImage;
     }
 
 }
