@@ -676,36 +676,32 @@ import org.apache.log4j.Logger;
 public class UserUtils {
 
     private static final Logger log = Logger.getLogger(UserUtils.class.getName());
+    private static Boolean currentUserAdmin = null;
 
     public static boolean isCurrentUserAdmin(Component parent) {
         return isCurrentUserAdmin(parent, true);
     }
-    
+
     public static boolean isCurrentUserAdmin(Component parent, boolean displayWarning) {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (!currentlyAdmin && displayWarning) {
-                JOptionPane.showMessageDialog(parent, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
-            }
-            return currentlyAdmin;
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(parent, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchconsole") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-            return false;
+        boolean admin = isCurrentUserAdmin();
+
+        if (!admin && displayWarning) {
+            JOptionPane.showMessageDialog(parent, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
         }
+        return admin;
     }
-    
+
     public static boolean isCurrentUserAdmin() {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            return currentlyAdmin;
-        } catch (Exception ex) {
-            log.error(ex);
-            return false;
+        if (currentUserAdmin == null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                currentUserAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            } catch (Exception ex) {
+                log.error(ex);
+                return false;
+            }
         }
+        return currentUserAdmin;
     }
 }

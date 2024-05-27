@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
@@ -687,6 +688,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.ImageIcon;
@@ -704,6 +706,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(CalloutPanelComponent.class.getName());
     private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
     private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
+    private static final ImageIcon ICON_MARKREAD=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/mark_chat_read_20dp.png"));
 
     private static int READ = 10;
     private static int UNREAD = 20;
@@ -716,6 +719,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private int deleteY=10;
     private int copyX=1000;
     private int copyY=10;
+    private int markReadX=1000;
+    private int markReadY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
     private Font miniFont = null;
@@ -727,6 +732,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     protected int read = READ_NOTAPPLICABLE;
 
     private SimpleDateFormat dfSent = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    
+    private String tooltipText="";
 
     /**
      * Creates new form CalloutPanelComponent
@@ -792,6 +799,22 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                         && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
                     copyMessageToClipboard();
                 }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    if(message.getMentions()!=null) {
+                        List<String> mentionIds=new ArrayList<>();
+                        for(InstantMessageMention mention: message.getMentions()) {
+                            if(!mention.isDone()) {
+                                mentionIds.add(mention.getId());
+                            }
+                        }
+                        markAllMentionsDone(message.getId(), mentionIds, true);
+                        if(!mentionIds.isEmpty()) {
+                            setRead(READ);
+                            updateTooltip();
+                        }
+                    }
+                }
             }
 
             
@@ -804,19 +827,29 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                 if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
                         && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("als erledigt markieren");
                     return;
                 }
                 if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
                         && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Nachricht löschen");
                     return;
                 }
                 if (e.getX() >= (copyX) && e.getX() <= copyX + 20
                         && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Nachrichtentext kopieren");
+                    return;
+                }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("für alle als erledigt markieren");
                     return;
                 }
                 setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                setToolTipText(tooltipText);
             }
         });
     }
@@ -835,7 +868,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
         if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {
             sb.append(System.lineSeparator()).append(System.lineSeparator());
-            sb.append("Foldende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
+            sb.append("Folgende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
             for (InstantMessageMention imm : this.message.getMentions()) {
                 sb.append("- ").append(imm.getPrincipal());
                 if (imm.isDone()) {
@@ -846,9 +879,17 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                 sb.append(System.lineSeparator());
             }
         }
-        this.setToolTipText(sb.toString());
+        this.tooltipText=sb.toString();
+        this.setToolTipText(this.tooltipText);
     }
 
+    public void markAllMentionsDone(String messageId, List<String> mentionIds, boolean done) {
+        
+        for(String mId: mentionIds) {
+            markMentionDone(messageId, mId, done);
+        }
+    }
+    
     public void markMentionDone(String messageId, String mentionId, boolean done) {
         try {
 
@@ -897,6 +938,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        if(!(getParent() instanceof MessagePanel))
+            return;
+        
         int width = ((MessagePanel) getParent()).getCalloutWidth();
         int height = getHeight();
 
@@ -994,6 +1038,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         // copy icon
         this.copyX=this.deleteX-20;
         ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
+        
+        if(this.ownMessage || UserUtils.isCurrentUserAdmin()) {
+            // mark read icon
+            this.markReadX = this.copyX - 20;
+            ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
+        }
 
         this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
     }
