@@ -750,6 +750,7 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
     public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
+    public static final String SERVERCONF_CASENUMBERING_INCREMENT="jlawyer.server.numbering.increment";
     
     public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
     public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";

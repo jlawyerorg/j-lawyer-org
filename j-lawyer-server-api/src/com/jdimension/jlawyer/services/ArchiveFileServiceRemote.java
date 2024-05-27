@@ -755,7 +755,7 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileBean> getLastChanged(int limit);
 
-    String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
+    String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
 
     Collection<ArchiveFileBean> getAllWithMissingReviews();
 
