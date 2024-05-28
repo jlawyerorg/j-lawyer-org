@@ -1339,30 +1339,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         dto.setDateChanged(new Date());
         this.archiveFileFacade.edit(dto);
 
-//        remove all existing parties
-//        List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
-//        if (addList != null) {
-//            log.info("updating case... removing " + addList.size() + " existing parties from case " + aFile.getId());
-//            for (ArchiveFileAddressesBean add : addList) {
-//                this.archiveFileAddressesFacade.remove(add);
-//            }
-//        }
-//
-//        // create all new addresse with their respective types
-//        List<ArchiveFileAddressesBean> newAdds = dto.getArchiveFileAddressesBeanList();
-//        if (newAdds != null) {
-//            log.info("updating case... adding " + newAdds.size() + " new parties to case " + aFile.getId());
-//            for (ArchiveFileAddressesBean add : newAdds) {
-//                add.setId(idGen.getID().toString());
-//                if (add.getArchiveFileKey() == null) {
-//                    add.setArchiveFileKey(dto);
-//                }
-//                this.archiveFileAddressesFacade.create(add);
-//            }
-//        } else {
-//            log.info("updating case... client did not provide any parties");
-//        }
-
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(dto.getId());
         this.updatedCaseEvent.fireAsync(evt);
