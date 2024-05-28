@@ -1148,8 +1148,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             height1 = (int) ((float) height1 * ((float) ((float) zoomFactor / 100f)));
                             width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
                             
-                            //Image scaledImage = buffImg.getScaledInstance(width1, height1, Image.SCALE_SMOOTH);
-                            // More efficient image scaling
                             BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
                             Graphics2D g2d = scaledImage.createGraphics();
                             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -1201,8 +1199,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     }
     
     public static int calculateDpi(int totalPages) {
-        int BASE_DPI=200;
-        int MIN_DPI=100;
+        int baseDpi=200;
+        int minDpi=100;
         
         
         if(totalPages<=20)
@@ -1212,10 +1210,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         double factor = 0.01;
 
         // Calculate DPI using an exponential decay function
-        int dpi = (int) (BASE_DPI * Math.exp(-factor * totalPages));
+        int dpi = (int) (baseDpi * Math.exp(-factor * totalPages));
         
-        // Ensure DPI does not go below MIN_DPI
-        return Math.max(dpi, MIN_DPI);
+        // Ensure DPI does not go below minDpi
+        return Math.max(dpi, minDpi);
     }
     
     private File saveBufferedImage(BufferedImage img) {
