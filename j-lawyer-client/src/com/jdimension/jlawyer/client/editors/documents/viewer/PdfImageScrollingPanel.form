@@ -31,7 +31,11 @@
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblTotalPages" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="282" max="32767" attributes="0"/>
+              <EmptySpace pref="90" max="32767" attributes="0"/>
+              <Component id="cmdRotateLeft" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="cmdRotateRight" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="sliderZoom" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdFitToScreen" min="-2" max="-2" attributes="0"/>
@@ -51,8 +55,10 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="sliderZoom" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdFitToScreen" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdRotateRight" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jLabel1" alignment="0" max="32767" attributes="0"/>
+                          <Component id="cmdRotateLeft" alignment="0" max="32767" attributes="0"/>
                           <Component id="lblTotalPages" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -166,6 +172,28 @@
         </Property>
         <Property name="text" type="java.lang.String" value="100"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdRotateRight">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/rotate_right_20dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="alle Seiten des Dokuments um 90&#xb0; nach rechts drehen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRotateRightActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdRotateLeft">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/rotate_left_20dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="alle Seiten des Dokuments um 90&#xb0; nach links drehen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRotateLeftActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

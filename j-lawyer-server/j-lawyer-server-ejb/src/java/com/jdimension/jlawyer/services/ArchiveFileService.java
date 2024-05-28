@@ -944,6 +944,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
+        
+        ServerSettingsBean incrementSetting = this.settingsFacade.find("jlawyer.server.numbering.increment");
+        int increment = 1;
+        if (incrementSetting != null) {
+            if (incrementSetting.getSettingValue() != null) {
+                try {
+                    increment = Integer.parseInt(incrementSetting.getSettingValue());
+                } catch (Throwable t) {
+                    // do nothing
+                }
+            }
+        }
 
         if (!legacy) {
 
@@ -961,7 +973,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 throw new EJBException("Es konnte kein neues Aktenzeichen ermittelt werden.", sqle);
             }
 
-            return CaseNumberGenerator.getNextCaseNumber(allExisting, numberingPattern, startFromIndex);
+            return CaseNumberGenerator.getNextCaseNumber(allExisting, numberingPattern, startFromIndex, increment);
 
         } else {
             String forYear = System.getProperty("jlawyer.server.numbering.foryear");
@@ -2816,7 +2828,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"loginRole"})
-    public String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception {
+    public String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception {
         ArrayList<String> existing = new ArrayList<>();
         ArrayList<String> previews = new ArrayList<>();
 
@@ -2839,28 +2851,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
 
             for (int i = 0; i < 3; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now, startFrom);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now, startFrom, increment);
                 existing.add(next);
                 previews.add(next + ext);
             }
 
             Date now2 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now2, startFrom);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now2, startFrom, increment);
                 existing.add(next);
                 previews.add(next + ext);
             }
 
             Date now3 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l + 31l * 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now3, startFrom);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now3, startFrom, increment);
                 existing.add(next);
                 previews.add(next + ext);
             }
 
             Date now4 = new Date(now3.getTime() + 366l * 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now4, startFrom);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now4, startFrom, increment);
                 existing.add(next);
                 previews.add(next + ext);
             }
