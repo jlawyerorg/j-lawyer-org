@@ -719,7 +719,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private InvolvedPartiesPanel container = null;
     private ArchiveFilePanel casePanel = null;
 
-    private List<PartyTypeBean> partyTypes = new ArrayList<PartyTypeBean>();
+    private List<PartyTypeBean> partyTypes = new ArrayList<>();
     private boolean initializing = false;
 
     /**
@@ -730,11 +730,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
      * @param container
      * @param openedFromClassName
      * @param beaEnabled
+     * @param partyTypesConfig
      */
-    public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
+    public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled, List<PartyTypeBean> partyTypesConfig) {
         this.initializing = true;
         initComponents();
-        
+
         this.openedFromEditorClass = openedFromClassName;
         this.container = container;
         this.casePanel = casePanel;
@@ -752,24 +753,16 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
         this.txtReference.setDocument(new JTextFieldLimit(249));
 
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
-            this.partyTypes = sys.getPartyTypes();
+        this.partyTypes = partyTypesConfig;
 
-            this.cmbRefType.removeAllItems();
-            ArrayList<String> refTypeNames = new ArrayList<>();
-            for (PartyTypeBean p : this.partyTypes) {
-                refTypeNames.add(p.getName());
-            }
-            Collections.sort(refTypeNames);
-            for (String s : refTypeNames) {
-                this.cmbRefType.addItem(s);
-            }
-
-        } catch (Throwable t) {
-            log.error("Unable to get party types", t);
+        this.cmbRefType.removeAllItems();
+        ArrayList<String> refTypeNames = new ArrayList<>();
+        for (PartyTypeBean p : this.partyTypes) {
+            refTypeNames.add(p.getName());
+        }
+        Collections.sort(refTypeNames);
+        for (String s : refTypeNames) {
+            this.cmbRefType.addItem(s);
         }
 
         EventBroker b = EventBroker.getInstance();
@@ -1263,11 +1256,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            
-            if(this.casePanel!=null) {
+
+            if (this.casePanel != null) {
                 this.casePanel.saveFormData();
+                this.casePanel.saveInvolvements();
             }
-            
+
             SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
@@ -1311,11 +1305,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
-            if(this.casePanel!=null) {
+
+            if (this.casePanel != null) {
                 this.casePanel.saveFormData();
+                this.casePanel.saveInvolvements();
             }
-            
+
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
@@ -1455,7 +1450,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }//GEN-LAST:event_lblAddressMouseClicked
 
     private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
-        if(this.a!=null) {
+        if (this.a != null) {
             AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
@@ -1494,10 +1489,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     // End of variables declaration//GEN-END:variables
 
     public void close() {
-        EventBroker b=EventBroker.getInstance();
+        EventBroker b = EventBroker.getInstance();
         b.unsubscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
     }
-    
+
     @Override
     public void onEvent(Event e) {
         if (e instanceof ContactUpdatedEvent) {

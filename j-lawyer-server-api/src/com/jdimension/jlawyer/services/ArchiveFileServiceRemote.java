@@ -939,4 +939,6 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
     
     void removeParty(String id) throws Exception;
+    
+    ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
 }

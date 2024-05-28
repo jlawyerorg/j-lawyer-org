@@ -783,7 +783,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.DefaultStyledDocument;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -1416,7 +1415,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdClearSearchActionPerformed(null);
 
         this.closeInvolvedPartyEntryPanelSubscriptions();
-        this.pnlInvolvedParties.removeAll();
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
             this.tabPaneForms.remove(t);
@@ -4225,7 +4223,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         afab.setArchiveFileKey(dto);
-        InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
+        List<PartyTypeBean> allPartyTypes=null;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            afab=fileService.addAddressToCase(afab);
+            allPartyTypes=locator.lookupSystemManagementRemote().getPartyTypes();
+        } catch (Exception ex) {
+            log.error("Error adding party to case", ex);
+            JOptionPane.showMessageDialog(this, "Beteiligte(r) konnte nicht hinzugefügt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled(), allPartyTypes);
         ipep.setEntry(adrb, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -4489,11 +4500,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             fip.save();
         }
     }
+    
+    public void saveInvolvements() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
+
+            
+            for (ArchiveFileAddressesBean ab : this.pnlInvolvedParties.getInvolvedParties()) {
+                if(isInvolvementChanged(involved, ab)) {
+                    fileService.updateParty(this.dto.getId(), ab);
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Error updating involved party", ex);
+        }
+    }
 
     private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
 
         // save all forms to have the latest data available for document creation
         this.saveFormData();
+        this.saveInvolvements();
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -4835,6 +4867,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDuplicateReviewActionPerformed
 
     public void removeInvolvedParty(InvolvedPartyEntryPanel ipep) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().removeParty(ipep.getInvolvement().getId());
+        } catch (Exception ex) {
+            log.error("Error removing party", ex);
+            JOptionPane.showMessageDialog(this, "Beteiligte(r) konnte nicht entfernt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+        
         ipep.close();
         this.pnlInvolvedParties.remove(ipep);
         this.pnlInvolvedParties.revalidate();
@@ -4917,6 +4960,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
+            this.saveInvolvements();
         }
 
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
@@ -4978,6 +5022,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
+            this.saveInvolvements();
         }
 
         SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
@@ -5721,6 +5766,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (!this.readOnly) {
             this.saveFormData();
+            this.saveInvolvements();
         }
 
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -5784,6 +5830,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (!this.readOnly) {
             this.saveFormData();
+            this.saveInvolvements();
         }
 
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -7122,6 +7169,40 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         return true;
     }
+    
+    private boolean isInvolvementChanged(List<ArchiveFileAddressesBean> server, ArchiveFileAddressesBean local) {
+        for (ArchiveFileAddressesBean f : server) {
+            
+                if (f.getId().equals(local.getId())) {
+                    if (!StringUtils.nonNull(f.getContact()).equals(local.getContact())) {
+                        return true;
+                    }
+                    if (!StringUtils.nonNull(f.getCustom1()).equals(local.getCustom1())) {
+                        return true;
+                    }
+                    if (!StringUtils.nonNull(f.getCustom2()).equals(local.getCustom2())) {
+                        return true;
+                    }
+                    if (!StringUtils.nonNull(f.getCustom3()).equals(local.getCustom3())) {
+                        return true;
+                    }
+                    if (!StringUtils.nonNull(f.getReference()).equals(local.getReference())) {
+                        return true;
+                    }
+                    if(!f.getReferenceType().equals(local.getReferenceType())) {
+                        return true;
+                    }
+                    if(!f.getAddressKey().getId().equals(local.getAddressKey().getId())) {
+                        return true;
+                    }
+                    // found, but not changed
+                    return false;
+                }
+          
+        }
+
+        return false;
+    }
 
     public void applyFolderTemplate(String s) {
         try {
@@ -7535,6 +7616,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.saveFormData();
+        this.saveInvolvements();
 
         // todo: check all data here for changes
         if (this.dto.isArchived() != this.chkArchived.isSelected()) {
@@ -7608,22 +7690,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
         if (claimValueFloat != dto.getClaimValue()) {
-            return true;
-        }
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
-
-            if (!containsSameInvolvements(involved, this.pnlInvolvedParties.getInvolvedParties())) {
-                return true;
-            }
-
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
             return true;
         }
 
@@ -7746,6 +7812,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             this.saveFormData();
+            this.saveInvolvements();
 
             if (this.groupPrivilegesChanged) {
                 ArrayList<Group> allowedGroups = new ArrayList<>();

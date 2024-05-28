@@ -1231,6 +1231,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setId(idGen.getID().toString());
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
+                if(ad.getAddressKey()!=null)
+                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
             }
         }
 
@@ -1336,30 +1338,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         dto.setDateCreated(aFile.getDateCreated());
         dto.setDateChanged(new Date());
         this.archiveFileFacade.edit(dto);
-
-        // remove all existing parties
-        List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
-        if (addList != null) {
-            log.info("updating case... removing " + addList.size() + " existing parties from case " + aFile.getId());
-            for (ArchiveFileAddressesBean add : addList) {
-                this.archiveFileAddressesFacade.remove(add);
-            }
-        }
-
-        // create all new addresse with their respective types
-        List<ArchiveFileAddressesBean> newAdds = dto.getArchiveFileAddressesBeanList();
-        if (newAdds != null) {
-            log.info("updating case... adding " + newAdds.size() + " new parties to case " + aFile.getId());
-            for (ArchiveFileAddressesBean add : newAdds) {
-                add.setId(idGen.getID().toString());
-                if (add.getArchiveFileKey() == null) {
-                    add.setArchiveFileKey(dto);
-                }
-                this.archiveFileAddressesFacade.create(add);
-            }
-        } else {
-            log.info("updating case... client did not provide any parties");
-        }
 
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(dto.getId());
@@ -1681,6 +1659,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setId(idGen.getID().toString());
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
+                if(ad.getAddressKey()!=null)
+                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
             }
         }
 
@@ -4000,6 +3980,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), address.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(address.getArchiveFileKey()));
 
         this.archiveFileAddressesFacade.create(address);
+        this.addCaseHistory(idGen.getID().toString(), address.getArchiveFileKey(), "Beteiligte(n) hinzugefügt: " + address.getAddressKey().toDisplayName());
 
         address = this.archiveFileAddressesFacade.find(id);
 
@@ -4051,7 +4032,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
-        this.addCaseHistory(idGen.getID().toString(), aFile, "Beteiligter gelöscht: " + db.getAddressKey().toDisplayName());
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Beteiligte(r) gelöscht: " + db.getAddressKey().toDisplayName());
 
         this.archiveFileAddressesFacade.remove(db);
 
