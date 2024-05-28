@@ -7133,42 +7133,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             });
         }
     }
-
-    private boolean containsSameInvolvements(List<ArchiveFileAddressesBean> first, List<ArchiveFileAddressesBean> second) {
-        if (first.size() != second.size()) {
-            return false;
-        }
-        for (ArchiveFileAddressesBean f : first) {
-            String adrId = f.getAddressKey().getId();
-            PartyTypeBean rt = f.getReferenceType();
-            boolean contained = false;
-            for (ArchiveFileAddressesBean s : second) {
-                if (adrId.equals(s.getAddressKey().getId()) && rt.equals(s.getReferenceType())) {
-                    contained = true;
-                    if (!StringUtils.nonNull(f.getContact()).equals(s.getContact())) {
-                        return false;
-                    }
-                    if (!StringUtils.nonNull(f.getCustom1()).equals(s.getCustom1())) {
-                        return false;
-                    }
-                    if (!StringUtils.nonNull(f.getCustom2()).equals(s.getCustom2())) {
-                        return false;
-                    }
-                    if (!StringUtils.nonNull(f.getCustom3()).equals(s.getCustom3())) {
-                        return false;
-                    }
-                    if (!StringUtils.nonNull(f.getReference()).equals(s.getReference())) {
-                        return false;
-                    }
-                    break;
-                }
-            }
-            if (!contained) {
-                return false;
-            }
-        }
-        return true;
-    }
     
     private boolean isInvolvementChanged(List<ArchiveFileAddressesBean> server, ArchiveFileAddressesBean local) {
         for (ArchiveFileAddressesBean f : server) {
