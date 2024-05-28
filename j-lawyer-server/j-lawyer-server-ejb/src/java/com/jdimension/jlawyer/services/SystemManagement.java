@@ -2097,7 +2097,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void removePartyType(PartyTypeBean partyType) throws Exception {
 
         List<ArchiveFileAddressesBean> list = this.archiveFileAddressesFacade.findByReferenceType(partyType);
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             throw new Exception("Beteiligtentyp " + partyType.getName() + " wird noch benutzt und kann nicht gelöscht werden!");
         }
 
