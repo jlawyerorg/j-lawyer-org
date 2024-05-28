@@ -793,11 +793,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.documentTagPanel.removeAll();
 
         ArchiveFileServiceRemote fileService = null;
-        ClientSettings settings = null;
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         try {
-            settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
+            
             this.progress("Lade Akte: Sofortnachrichten...");
             this.pnlMessages.removeAll();
             List<InstantMessage> instantMessages=locator.lookupMessagingServiceRemote().getMessagesForCase(this.archiveFileKey);
@@ -979,6 +978,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.contactsForCasePanel.removeAll();
         int i = 0;
+        List<PartyTypeBean> allPartyTypes=locator.lookupSystemManagementRemote().getPartyTypes();
         for (ArchiveFileAddressesBean afab : involvementForCase) {
             AddressBean address = null;
             for (AddressBean ab : addressesForCase) {
@@ -988,7 +988,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 }
             }
 
-            InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled);
+            InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled, allPartyTypes);
             ep.setEntry(address, afab, false);
             if (i % 2 == 0) {
                 ep.setBackground(ep.getBackground().brighter());
