@@ -1020,7 +1020,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
                     width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
 
-                    // Image bi2 = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
                     BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                     Graphics2D g2d = scaledImage.createGraphics();
                     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
