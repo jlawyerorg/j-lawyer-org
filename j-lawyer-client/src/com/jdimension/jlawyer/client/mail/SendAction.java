@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
@@ -751,6 +752,14 @@ public class SendAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         Properties props = new Properties();
+        boolean authenticate=true;
+        try {
+            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(Crypto.decrypt(ms.getEmailOutPwd())))
+                authenticate=false;
+        } catch (Throwable t) {
+            log.error("Could not decrypt outgoing password", t);
+        }
+        
         props.setProperty("mail.imap.partialfetch", "false");
         props.setProperty("mail.imaps.partialfetch", "false");
         props.setProperty("mail.store.protocol", ms.getEmailInType());
@@ -769,6 +778,7 @@ public class SendAction extends ProgressableAction {
             }
         }
 
+        props.put("mail.from", ms.getEmailAddress());
         props.put("mail.smtp.host", ms.getEmailOutServer());
         props.put("mail.smtp.user", ms.getEmailOutUser());
         props.put("mail.smtp.auth", true);
@@ -776,9 +786,40 @@ public class SendAction extends ProgressableAction {
         if (ms.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }
-        props.put("mail.smtps.user", ms.getEmailOutUser());
-        props.put("mail.smtps.auth", true);
-        props.put("mail.from", ms.getEmailAddress());
+        Session session = null;
+        if (!authenticate) {
+            props.put("mail.smtps.auth", false);
+            props.put("mail.smtp.auth", false);
+            session = Session.getInstance(props);
+        } else {
+            props.put("mail.smtps.auth", true);
+            props.put("mail.smtp.auth", true);
+            props.put("mail.smtp.user", ms.getEmailOutUser());
+            props.put("mail.smtps.user", ms.getEmailOutUser());
+            String outPwd = "";
+            try {
+                outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            props.put("mail.password", outPwd);
+
+            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
+
+                @Override
+                public PasswordAuthentication getPasswordAuthentication() {
+                    String outPwd = "";
+                    try {
+                        outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                    return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
+                }
+            };
+            session = Session.getInstance(props, auth);
+        }
+        
         props.put("mail.password", Crypto.decrypt(ms.getEmailOutPwd()));
 
         // add outbox properties for storing in "sent"
@@ -816,29 +857,16 @@ public class SendAction extends ProgressableAction {
 
         }
 
-        javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-
-            @Override
-            public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd = ms.getEmailOutPwd();
-                try {
-                    outPwd = Crypto.decrypt(ms.getEmailOutPwd());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
-            }
-        };
-
-        Session session = Session.getInstance(props, auth);
-
         try {
             Transport bus = session.getTransport("smtp");
 
             // Connect only once here
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
-            bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+            if(authenticate)
+                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+            else
+                bus.connect(ms.getEmailOutServer(), null, null);
 
             this.progress("Erstelle Nachricht...");
             MimeMessage msg = new MimeMessage(session);

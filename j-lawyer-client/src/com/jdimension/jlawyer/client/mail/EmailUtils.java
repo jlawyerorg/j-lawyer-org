@@ -708,37 +708,36 @@ public class EmailUtils extends CommonMailUtils {
             }
 
             MailboxSetup ms = mailboxes.get(0);
-            if (empty(ms.getEmailAddress())) {
+            if (StringUtils.isEmpty(ms.getEmailAddress())) {
                 return false;
             }
 
-            if (empty(Crypto.decrypt(ms.getEmailInPwd()))) {
+            if (StringUtils.isEmpty(Crypto.decrypt(ms.getEmailInPwd()))) {
                 return false;
             }
 
-            if (empty(ms.getEmailInServer())) {
+            if (StringUtils.isEmpty(ms.getEmailInServer())) {
                 return false;
             }
 
-            if (empty(ms.getEmailInUser())) {
+            if (StringUtils.isEmpty(ms.getEmailInUser())) {
                 return false;
             }
 
-            if (empty(ms.getEmailInType())) {
+            if (StringUtils.isEmpty(ms.getEmailInType())) {
                 return false;
             }
 
-            if (empty(Crypto.decrypt(ms.getEmailOutPwd()))) {
+//            if (StringUtils.isEmpty(Crypto.decrypt(ms.getEmailOutPwd()))) {
+//                return false;
+//            }
+            if (StringUtils.isEmpty(ms.getEmailOutServer())) {
                 return false;
             }
 
-            if (empty(ms.getEmailOutServer())) {
-                return false;
-            }
-
-            if (empty(ms.getEmailOutUser())) {
-                return false;
-            }
+//            if (StringUtils.isEmpty(ms.getEmailOutUser())) {
+//                return false;
+//            }
             return true;
 
         } catch (Exception ex) {
@@ -755,11 +754,12 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     public static MailboxSetup getMailboxSetup(Message msg) throws Exception {
-        
-        if(msg==null)
+
+        if (msg == null) {
             return null;
-        
-        boolean opened=false;
+        }
+
+        boolean opened = false;
         try {
             UserSettings uset = UserSettings.getInstance();
             List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
@@ -849,8 +849,6 @@ public class EmailUtils extends CommonMailUtils {
             return null;
         }
     }
-
-    
 
     private static Part getAttachmentPart(String name, Object partObject, Folder folder) throws Exception {
 
@@ -943,10 +941,10 @@ public class EmailUtils extends CommonMailUtils {
 
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
 
-        boolean opened=openFolder(msgContainer.getMessage().getFolder());
+        boolean opened = openFolder(msgContainer.getMessage().getFolder());
         Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
-        opened=opened || openFolder(msgContainer.getMessage().getFolder());
+        opened = opened || openFolder(msgContainer.getMessage().getFolder());
         if (att != null) {
             InputStream is = att.getInputStream();
             byte[] buffer = new byte[1024];
@@ -1011,22 +1009,6 @@ public class EmailUtils extends CommonMailUtils {
         }
         return false;
     }
-
-    private static boolean empty(String s) {
-        if (s == null) {
-            return true;
-        }
-
-        if ("".equals(s.trim())) {
-            return true;
-        }
-
-        return false;
-    }
-
-    
-
-    
 
     public static Folder getTrashFolder(Folder inbox) throws Exception {
         return getFolderByName(inbox, CommonMailUtils.TRASH);
@@ -1142,6 +1124,14 @@ public class EmailUtils extends CommonMailUtils {
     public static void sendReceipt(final MailboxSetup ms, String subject, String to) {
         Properties props = new Properties();
 
+        boolean authenticate=true;
+        try {
+            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(Crypto.decrypt(ms.getEmailOutPwd())))
+                authenticate=false;
+        } catch (Throwable t) {
+            log.error("Could not decrypt outgoing password", t);
+        }
+        
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
         }
@@ -1161,43 +1151,53 @@ public class EmailUtils extends CommonMailUtils {
         }
 
         props.put("mail.smtp.host", ms.getEmailOutServer());
-        props.put("mail.smtp.user", ms.getEmailOutUser());
-        props.put("mail.smtp.auth", true);
         props.put("mail.smtps.host", ms.getEmailOutServer());
-        props.put("mail.smtps.user", ms.getEmailOutUser());
-        props.put("mail.smtps.auth", true);
         props.put("mail.from", ms.getEmailAddress());
-        String outPwd = "";
-        try {
-            outPwd = Crypto.decrypt(ms.getEmailOutPwd());
-        } catch (Throwable t) {
-            log.error(t);
-        }
-        props.put("mail.password", outPwd);
-
-        javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-
-            @Override
-            public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd = "";
-                try {
-                    outPwd = Crypto.decrypt(ms.getEmailOutPwd());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
+        
+        Session session = null;
+        if (!authenticate) {
+            props.put("mail.smtps.auth", false);
+            props.put("mail.smtp.auth", false);
+            session = Session.getInstance(props);
+        } else {
+            props.put("mail.smtps.auth", true);
+            props.put("mail.smtp.auth", true);
+            props.put("mail.smtp.user", ms.getEmailOutUser());
+            props.put("mail.smtps.user", ms.getEmailOutUser());
+            String outPwd = "";
+            try {
+                outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+            } catch (Throwable t) {
+                log.error(t);
             }
-        };
+            props.put("mail.password", outPwd);
 
-        Session session = Session.getInstance(props, auth);
+            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
+                @Override
+                public PasswordAuthentication getPasswordAuthentication() {
+                    String outPwd = "";
+                    try {
+                        outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                    return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
+                }
+            };
+            session = Session.getInstance(props, auth);
+        }
+        
         try {
             Transport bus = session.getTransport("smtp");
 
             // Connect only once here
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
-            bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+            if(authenticate)
+                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+            else
+                bus.connect(ms.getEmailOutServer(), null, null);
 
             MimeMessage msg = new MimeMessage(session);
 
@@ -1221,13 +1221,9 @@ public class EmailUtils extends CommonMailUtils {
             bus.send(msg);
             bus.close();
         } catch (Throwable t) {
-
             log.error("Could not send read receipt", t);
-
         }
     }
-
-    
 
     public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
