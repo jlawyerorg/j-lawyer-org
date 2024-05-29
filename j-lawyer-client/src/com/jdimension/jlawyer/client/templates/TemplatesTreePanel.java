@@ -669,23 +669,19 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFact
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
 import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
-import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.BorderLayout;
@@ -1256,12 +1252,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         GenericNode gn = (GenericNode) tn.getUserObject();
 
         ClientSettings settings = ClientSettings.getInstance();
-        String newFolderName = "Neuer Ordner";
         Object newNameObject = JOptionPane.showInputDialog(this, "Name des Ordners: ", "Neuen Ordner anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Ordner");
         if (newNameObject == null) {
             return;
         }
-        newFolderName = newNameObject.toString();
+        String newFolderName = newNameObject.toString();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean created = locator.lookupSystemManagementRemote().addTemplateFolder(this.templateType, gn, newFolderName);
@@ -1293,12 +1288,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         String oldFolderName=gn.getName();
         
         ClientSettings settings = ClientSettings.getInstance();
-        String newFolderName = "Umbenannter Ordner";
         Object newNameObject = JOptionPane.showInputDialog(this, "Name des Ordners: ", "Ordner umbenennen", JOptionPane.QUESTION_MESSAGE, null, null, oldFolderName);
         if (newNameObject == null) {
             return;
         }
-        newFolderName = newNameObject.toString();
+        String newFolderName = newNameObject.toString();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean renamed = locator.lookupSystemManagementRemote().renameTemplateFolder(this.templateType, gn.getParent(), oldFolderName, newFolderName);
@@ -1739,7 +1733,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             this.pnlPreview.setVisible(false);
             this.pnlPreview.removeAll();
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, new FixedStringPreviewProvider(newText), null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, new FixedStringPreviewProvider(newText), null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), null);
             this.pnlPreview.setVisible(false);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
             this.pnlPreview.add(preview, BorderLayout.CENTER);

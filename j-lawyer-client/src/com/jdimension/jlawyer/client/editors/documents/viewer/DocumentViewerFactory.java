@@ -691,16 +691,16 @@ public class DocumentViewerFactory {
     
     private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
+    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
+        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height, saveCallback);
     }
 
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
+    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
 
         String lFileName=fileName.toLowerCase();
         
         if (lFileName.endsWith(".pdf")) {
-            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content);
+            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content, saveCallback);
             pdfP.setSize(new Dimension(width, height));
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));

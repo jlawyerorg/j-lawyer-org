@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.editors.documents.viewer.CaseDocumentPreviewProvider;
+import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel;
@@ -698,13 +699,15 @@ public class LoadDocumentPreviewThread implements Runnable {
     private ArchiveFileBean caseDto=null;
     ArchiveFileDocumentsBean docDto=null;
     private boolean forceAnyDocumentSize=false;
+    private DocumentPreviewSaveCallback saveCallback=null;
 
-    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize) {
+    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
         this.docDto=value;
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
         this.caseDto=caseDto;
         this.forceAnyDocumentSize=forceAnyDocumentSize;
+        this.saveCallback=saveCallback;
     }
 
     public static boolean isRunning() {
@@ -753,11 +756,10 @@ public class LoadDocumentPreviewThread implements Runnable {
 
             JComponent preview = null;
             if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
+                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
             } else {
-                //byte[] data = afs.getDocumentContent(this.docDto.getId());
                 byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
-                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
             }
             
             

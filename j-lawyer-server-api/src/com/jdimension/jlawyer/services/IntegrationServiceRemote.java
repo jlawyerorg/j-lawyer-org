@@ -743,5 +743,7 @@ public interface IntegrationServiceRemote {
     Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
 
     AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception;
+
+    boolean updateObservedFile(String fileName, byte[] data) throws Exception;
     
 }

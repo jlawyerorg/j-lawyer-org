@@ -1133,7 +1133,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value = {"readArchiveFileRole"})
+    @RolesAllowed(value = {"loginRole"})
     public boolean renameObservedFile(String fromName, String toName) throws Exception {
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
         if (obs == null) {
@@ -1443,6 +1443,42 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return api.submitRequest(requestType, modelType, prompt, params, inputs);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public boolean updateObservedFile(String fileName, byte[] data) throws Exception {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
+            log.info("directory observation is switched off");
+            return false;
+        }
+
+        String scanDir = obs.getSettingValue();
+        if (scanDir == null) {
+            log.error("directory observation is switched off");
+            return false;
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+            log.error("observed directory does not exist / is not a directory");
+            return false;
+        }
+        
+        if(!scanDir.endsWith(File.separator))
+            scanDir=scanDir+File.separator;
+        
+        File updatedFile=new File(scanDir + fileName);
+        if(!updatedFile.exists() || !updatedFile.isFile()) {
+            throw new Exception("Datei " + fileName + " existiert nicht!");
+        }
+
+        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+            fout.write(data);
+        }
+        
+        return true;
     }
 
 }
