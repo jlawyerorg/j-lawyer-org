@@ -698,6 +698,7 @@ import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
 import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
 import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawFrame;
+import org.odftoolkit.odfdom.incubator.doc.text.OdfTextParagraph;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
@@ -1294,10 +1295,10 @@ public class LibreOfficeAccess {
                             if (keyFound) {
 
                                 // remove additional rows that the user may have added
-                                if(t.getRowCount()>1) {
-                                    t.removeRowsByIndex(1, t.getRowCount()-1);
+                                if (t.getRowCount() > 1) {
+                                    t.removeRowsByIndex(1, t.getRowCount() - 1);
                                 }
-                                
+
                                 if (tab.getColumnCount() != t.getColumnCount()) {
                                     t.getCellByPosition(0, 0).setStringValue("Tabelle muss " + tab.getColumnCount() + " Spalten haben");
                                 } else {
@@ -1414,14 +1415,54 @@ public class LibreOfficeAccess {
             }
 
             // replace script placeholders
+            ArrayList<Node> removalNodes = new ArrayList<>();
+            ArrayList<String> removalNodesItemText = new ArrayList<>();
             String scriptRegExKey = "\\[\\[SCRIPT:[^\\]]*\\]\\]";
             TextNavigation search = new TextNavigation(scriptRegExKey, outputOdt);
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
                 String scriptContent = item.getText();
                 String scriptResult = evaluateScript(caseId, scriptContent, values, formsPrefixes);
-                item.replaceWith(scriptResult);
+                if (scriptResult == null) {
+                    scriptResult = "";
+                }
+                if (scriptResult.trim().length() == 0) {
+//                    if(isContainedAsSeparateParagraph(item.getContainerElement(), item.getText())) {
+//                        removalNodes.add(item.getContainerElement());
+//                        removalNodesItemText.add(item.getText());
+//                    } else {
+//                        item.replaceWith("");
+//                    }
+                    
+                    if(isContainedAsSeparateParagraph(item.getContainerElement(), item.getText())) {
+                        removalNodes.add(item.getContainerElement());
+                        removalNodesItemText.add(item.getText());
+                    }
+                    item.replaceWith("");
+                    
+                } else {
+                    item.replaceWith(scriptResult);
+                }
 
+            }
+            for (int rn=0;rn<removalNodes.size();rn++) {
+                Node rNode=removalNodes.get(rn);
+                Node parentNode = rNode.getParentNode();
+                if(parentNode==null)
+                    continue;
+                
+                parentNode.removeChild(rNode);
+                
+//                NodeList childNodes = parentNode.getChildNodes();
+//                for (int i = 0; i < childNodes.getLength(); i++) {
+//                    Node child = childNodes.item(i);
+//                    if (child.getTextContent().equals(removalNodesItemText.get(rn))) {
+//                        // script place holder is contained in its own paragraph
+//                        // Remove the specific child node containing the target text
+//                        parentNode.removeChild(child);
+//                        break;
+//                    }
+//                }
             }
 
             outputOdt.save(new File(fileInFileSystem));
@@ -1491,6 +1532,26 @@ public class LibreOfficeAccess {
 
     }
 
+    private static boolean isContainedAsSeparateParagraph(Node rNode, String searchText) {
+
+        Node parentNode = rNode.getParentNode();
+        if (parentNode == null) {
+            return false;
+        }
+
+        NodeList childNodes = parentNode.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node child = childNodes.item(i);
+            if(child.getTextContent().contains(searchText) && child.getTextContent().length()>searchText.length()) {
+                return false;
+            }
+            if (child.getTextContent().equals(searchText)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
         // Create a temporary image to obtain FontMetrics
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
@@ -1542,8 +1603,8 @@ public class LibreOfficeAccess {
             List<Table> allTables = outputOdt.getTableList();
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
                 for (Table t : allTables) {
-                    
-                    for(int row = 0; row < t.getRowCount(); row++) {
+
+                    for (int row = 0; row < t.getRowCount(); row++) {
                         for (int c = 0; c < t.getColumnCount(); c++) {
                             String cellContent = t.getCellByPosition(c, row).getStringValue();
                             if (cellContent != null) {
