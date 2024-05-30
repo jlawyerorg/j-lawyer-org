@@ -764,7 +764,7 @@ public class ReportService implements ReportServiceRemote {
             result.getBarCharts().add(getBarChart(false, "Akten pro Monat", "Monat", "Anzahl Akten", query2, 1, 2, 3, params));
             
             // determine all lawyers for the timeframe
-            String queryLawyers = "SELECT distinct(lawyer) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by lawyer asc";
+            String queryLawyers = "SELECT distinct(lawyer) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by upper(lawyer) asc";
             ReportResultTable lawyerTable=getTable(false, "lawyers", queryLawyers, params);
             
             StringBuilder casesByLawyerQuery=new StringBuilder();
@@ -776,7 +776,7 @@ public class ReportService implements ReportServiceRemote {
                     casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN 1 ELSE 0 END) AS UNSIGNED) AS '").append(lawyer).append("',");
                 }
             }
-            casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS Unbekannt\n"
+            casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS unbekannt\n"
                     + "FROM cases c\n"
                     + "WHERE c.date_created >= ? AND c.date_created <= ?\n"
                     + "GROUP BY Monat\n"
@@ -1037,13 +1037,35 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(mainTable);
 
         } else if (Reports.RPT_ACCOUNTS_BOOKINGS.equals(reportId)) {
+            
+            // determine all lawyers for the timeframe
+            String queryLawyers = "SELECT distinct(lawyer) FROM cases c, case_account_entries ca WHERE ca.entry_date >= ? AND ca.entry_date <= ? and c.id=ca.case_id order by upper(lawyer) asc";
+            ReportResultTable lawyerTable=getTable(false, "lawyers", queryLawyers, params);
+            
+            StringBuilder casesByLawyerQuery=new StringBuilder();
+            casesByLawyerQuery.append("SELECT DATE_FORMAT(entry_date, '%Y-%m') AS Monat, ");
+            ArrayList<Object[]> lawyerRows=lawyerTable.getValues();
+            for(Object[] lawyerRow: lawyerRows) {
+                String lawyer=(String)lawyerRow[0];
+                if(lawyer!=null && !("".equalsIgnoreCase(lawyer))) {
+                    casesByLawyerQuery.append("SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN ca.in_earnings ELSE 0 END) AS '").append(lawyer).append("',");
+                }
+            }
+            casesByLawyerQuery.append("SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN ca.in_earnings ELSE 0 END) AS unbekannt\n"
+                    + "FROM cases c, case_account_entries ca\n"
+                    + "WHERE ca.entry_date >= ? AND ca.entry_date <= ? and ca.case_id = c.id\n"
+                    + "GROUP BY Monat\n"
+                    + "ORDER BY Monat ASC");
+            result.getTables().add(getTable(false, "pro Monat", casesByLawyerQuery.toString(), params));
+            
+            
             String query = "\n"
                     + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
                     + "left join cases on cases.id=case_account_entries.case_id \n"
                     + "left join invoices on invoices.id=case_account_entries.invoice_id \n"
                     + "where entry_date>=? and entry_date<=?\n"
                     + "order by entry_date asc;";
-            ReportResultTable mainTable = getTable(true, "Buchungen", query, params);
+            ReportResultTable mainTable = getTable(true, "alle Buchungen", query, params);
 
             result.getTables().add(mainTable);
             
@@ -1062,6 +1084,10 @@ public class ReportService implements ReportServiceRemote {
                 return s1.compareTo(s2);
             });
             result.getTables().addAll(sortedSubTables);
+            
+            
+            
+            
 
         }
 
