@@ -704,12 +704,10 @@ public class PdfPageImage extends javax.swing.JPanel {
     
     public void highlightPage(boolean highlight) {
         if(highlight) {
-            //this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
             LineBorder lb=new LineBorder(DefaultColorTheme.COLOR_LOGO_GREEN,10);
             this.lblPage.setBorder(lb);
             this.lblPageNumber.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
-            //this.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
             LineBorder lb=new LineBorder(DefaultColorTheme.COLOR_DARK_GREY,10);
             this.lblPage.setBorder(lb);
             this.lblPageNumber.setForeground(Color.WHITE);

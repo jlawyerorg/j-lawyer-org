@@ -1293,7 +1293,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                 PDPage page = inputPDF.getPage(pageNumber);
 
-                //page.setRotation(degrees);
                 page.setRotation(page.getRotation()+degrees);
             }
 

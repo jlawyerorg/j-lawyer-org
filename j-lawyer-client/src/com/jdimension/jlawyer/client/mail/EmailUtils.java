@@ -728,16 +728,10 @@ public class EmailUtils extends CommonMailUtils {
                 return false;
             }
 
-//            if (StringUtils.isEmpty(Crypto.decrypt(ms.getEmailOutPwd()))) {
-//                return false;
-//            }
             if (StringUtils.isEmpty(ms.getEmailOutServer())) {
                 return false;
             }
 
-//            if (StringUtils.isEmpty(ms.getEmailOutUser())) {
-//                return false;
-//            }
             return true;
 
         } catch (Exception ex) {
