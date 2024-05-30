@@ -710,8 +710,7 @@ public class ReportService implements ReportServiceRemote {
     public ReportResult invokeReport(String reportId, Object... params) throws Exception {
         // fixed values - could be refactored later to be taken from database
         HashMap<String, String> reportPrivs = new HashMap<>();
-        reportPrivs.put(Reports.RPT_INV_OPEN, PRIVILEGE_COMMON);
-        reportPrivs.put(Reports.RPT_CASES_BYMONTH, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_CASES_BYMONTH, PRIVILEGE_CONFIDENTIAL);
         reportPrivs.put(Reports.RPT_CASES_BYYEAR, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_INV_ALL, PRIVILEGE_COMMON);
@@ -763,6 +762,27 @@ public class ReportService implements ReportServiceRemote {
 
             String query2 = "select 'Akten' as Serie, DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getBarCharts().add(getBarChart(false, "Akten pro Monat", "Monat", "Anzahl Akten", query2, 1, 2, 3, params));
+            
+            // determine all lawyers for the timeframe
+            String queryLawyers = "SELECT distinct(lawyer) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by lawyer asc";
+            ReportResultTable lawyerTable=getTable(false, "lawyers", queryLawyers, params);
+            
+            StringBuilder casesByLawyerQuery=new StringBuilder();
+            casesByLawyerQuery.append("SELECT DATE_FORMAT(date_created,'%Y-%m') AS Monat, ");
+            ArrayList<Object[]> lawyerRows=lawyerTable.getValues();
+            for(Object[] lawyerRow: lawyerRows) {
+                String lawyer=(String)lawyerRow[0];
+                if(lawyer!=null && !("".equalsIgnoreCase(lawyer))) {
+                    casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN 1 ELSE 0 END) AS UNSIGNED) AS '").append(lawyer).append("',");
+                }
+            }
+            casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS Unbekannt\n"
+                    + "FROM cases c\n"
+                    + "WHERE c.date_created >= ? AND c.date_created <= ?\n"
+                    + "GROUP BY Monat\n"
+                    + "ORDER BY Monat ASC");
+            result.getTables().add(getTable(false, "Akten pro Monat und Anwalt", casesByLawyerQuery.toString(), params));
+            
         } else if (Reports.RPT_INV_ALL.equals(reportId)) {
             String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
                     + "    case \n"
@@ -777,7 +797,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -800,7 +820,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -860,7 +880,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -992,8 +1012,8 @@ public class ReportService implements ReportServiceRemote {
 
         } else if (Reports.RPT_ACCOUNTS_ESCROW.equals(reportId)) {
             String query = "select * from (\n"
-                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, sum(in_escrow) as FremdgeldEin, sum(out_escrow) as FremdgeldAus, sum(in_escrow)-sum(out_escrow) as Differenz from (\n"
-                    + "select case_id, fileNumber, name, reason, date_created, in_escrow, out_escrow from case_account_entries\n"
+                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, sum(in_escrow) as FremdgeldEin, sum(out_escrow) as FremdgeldAus, sum(in_escrow)-sum(out_escrow) as Differenz from (\n"
+                    + "select case_id, fileNumber, name, reason, lawyer, assistant, date_created, in_escrow, out_escrow from case_account_entries\n"
                     + "left join cases on cases.id=case_account_entries.case_id where date_created>=? and date_created<=?\n"
                     + ") bookings \n"
                     + "group by case_id\n"
@@ -1005,8 +1025,8 @@ public class ReportService implements ReportServiceRemote {
 
         } else if (Reports.RPT_ACCOUNTS_EARNINGS.equals(reportId)) {
             String query = "select * from (\n"
-                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, subjectField as Sachgebiet, sum(in_earnings) as Einnahmen, sum(out_spendings) as Ausgaben, sum(in_earnings)-sum(out_spendings) as Ergebnis from (\n"
-                    + "select case_id, fileNumber, name, reason, date_created, subjectField, in_earnings, out_spendings from case_account_entries\n"
+                    + "select case_id, fileNumber as Aktenzeichen, name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, subjectField as Sachgebiet, sum(in_earnings) as Einnahmen, sum(out_spendings) as Ausgaben, sum(in_earnings)-sum(out_spendings) as Ergebnis from (\n"
+                    + "select case_id, fileNumber, name, reason, lawyer, assistant, date_created, subjectField, in_earnings, out_spendings from case_account_entries\n"
                     + "left join cases on cases.id=case_account_entries.case_id where date_created>=? and date_created<=? \n"
                     + ") bookings \n"
                     + "group by case_id\n"
@@ -1018,7 +1038,7 @@ public class ReportService implements ReportServiceRemote {
 
         } else if (Reports.RPT_ACCOUNTS_BOOKINGS.equals(reportId)) {
             String query = "\n"
-                    + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
+                    + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
                     + "left join cases on cases.id=case_account_entries.case_id \n"
                     + "left join invoices on invoices.id=case_account_entries.invoice_id \n"
                     + "where entry_date>=? and entry_date<=?\n"
@@ -1026,6 +1046,22 @@ public class ReportService implements ReportServiceRemote {
             ReportResultTable mainTable = getTable(true, "Buchungen", query, params);
 
             result.getTables().add(mainTable);
+            
+            Collection<ReportResultTable> subTables = this.splitTable(mainTable, "Anwalt");
+            ArrayList<ReportResultTable> sortedSubTables = new ArrayList<>();
+            sortedSubTables.addAll(subTables);
+            Collections.sort(sortedSubTables, (ReportResultTable o1, ReportResultTable o2) -> {
+                String s1 = o1.getTableName();
+                String s2 = o2.getTableName();
+                if (s1 == null) {
+                    s1 = "";
+                }
+                if (s2 == null) {
+                    s2 = "";
+                }
+                return s1.compareTo(s2);
+            });
+            result.getTables().addAll(sortedSubTables);
 
         }
 
