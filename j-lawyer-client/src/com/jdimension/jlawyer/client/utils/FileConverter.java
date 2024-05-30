@@ -723,7 +723,7 @@ public class FileConverter {
 
     private FileConverter() {
     }
-
+    
     public static class WindowsFileConverter extends FileConverter {
 
         private WindowsFileConverter() {
@@ -937,6 +937,9 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
+            if(url.toLowerCase().endsWith(".eml"))
+                return EmailToPDFConverter.convertToPdf(url);
+            
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
