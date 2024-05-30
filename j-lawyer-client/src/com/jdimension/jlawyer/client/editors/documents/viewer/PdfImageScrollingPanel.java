@@ -680,6 +680,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.apache.log4j.Logger;
@@ -753,11 +754,13 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             // Now you have the index of the JLabel currently displayed
             // You can access it like this:
             if (labelIndex != -1 && labelIndex < components.length) {
-                //JLabel currentLabel = (JLabel) components[labelIndex];
-                // Do whatever you need with the currentLabel
-
-                // begin rendering additional pages once the user scrolls to the 2nd last page
-                if (((labelIndex + 1) == renderedPages || (labelIndex + 1) == renderedPages - 1) && renderedPages < totalPages && !rendering) {
+                
+                // begin rendering additional pages once the user scrolls to the bottom
+                JScrollBar scrollBar = (JScrollBar) e.getAdjustable();
+                int max = scrollBar.getMaximum();
+                int extent = scrollBar.getModel().getExtent();
+                int value = scrollBar.getValue();
+                if (value + extent >= max) {
                     this.renderContent(labelIndex, renderedPages, renderedPages + MAX_RENDER_PAGES, zoomFactor);
                 }
 
