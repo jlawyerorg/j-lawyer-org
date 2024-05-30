@@ -728,7 +728,7 @@ public class ReportService implements ReportServiceRemote {
 
         reportPrivs.put(Reports.RPT_ACCOUNTS_ESCROW, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_ACCOUNTS_EARNINGS, PRIVILEGE_CONFIDENTIAL);
-        reportPrivs.put(Reports.RPT_ACCOUNTS_BOOKINGS, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_ACCOUNTS_BOOKINGS, PRIVILEGE_CONFIDENTIAL);
 
         if (!reportPrivs.containsKey(reportId)) {
             throw new Exception("Report " + reportId + " ist nicht definiert");
@@ -1056,7 +1056,7 @@ public class ReportService implements ReportServiceRemote {
                     + "WHERE ca.entry_date >= ? AND ca.entry_date <= ? and ca.case_id = c.id\n"
                     + "GROUP BY Monat\n"
                     + "ORDER BY Monat ASC");
-            result.getTables().add(getTable(false, "pro Monat", casesByLawyerQuery.toString(), params));
+            result.getTables().add(getTable(false, "Einnahmen pro Monat", casesByLawyerQuery.toString(), params));
             
             
             String query = "\n"

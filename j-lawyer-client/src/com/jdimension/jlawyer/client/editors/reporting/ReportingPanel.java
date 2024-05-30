@@ -775,7 +775,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         accountBookings.setReportId(Reports.RPT_ACCOUNTS_BOOKINGS);
         accountBookings.setTypeChart(false);
         accountBookings.setTypeTable(true);
-        accountBookings.setSecurityType(Report.SECURITY_COMMON);
+        accountBookings.setSecurityType(Report.SECURITY_CONFIDENTIAL);
         fromDate=new Date();
         fromDate.setMonth(0);
         fromDate.setDate(1);
@@ -900,7 +900,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesPerMonth.setSequence(10);
         casesPerMonth.setTypeTable(true);
         casesPerMonth.setTypeChart(true);
-        casesPerMonth.setSecurityType(Report.SECURITY_COMMON);
+        casesPerMonth.setSecurityType(Report.SECURITY_CONFIDENTIAL);
         fromDate=new Date();
         fromDate.setYear(fromDate.getYear()-1);
         fromDate.setMonth(0);
