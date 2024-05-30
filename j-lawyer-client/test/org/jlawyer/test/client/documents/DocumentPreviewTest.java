@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.BmpTiffImagePanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImagePanel;
-import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImageScrollingPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PlaintextPanel;
 import com.jdimension.jlawyer.client.utils.FileUtils;
