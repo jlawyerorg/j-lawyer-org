@@ -190,7 +190,7 @@
                   </FontInfo>
                 </Property>
                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                  <SpinnerModel initial="200" maximum="5000" minimum="200" numberType="java.lang.Integer" stepSize="50" type="number"/>
+                  <SpinnerModel initial="1000" maximum="5000" minimum="200" numberType="java.lang.Integer" stepSize="100" type="number"/>
                 </Property>
               </Properties>
             </Component>
@@ -283,7 +283,7 @@
                   </FontInfo>
                 </Property>
                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                  <SpinnerModel initial="200" maximum="5000" minimum="200" numberType="java.lang.Integer" stepSize="50" type="number"/>
+                  <SpinnerModel initial="1000" maximum="5000" minimum="200" numberType="java.lang.Integer" stepSize="100" type="number"/>
                 </Property>
               </Properties>
             </Component>
