@@ -729,7 +729,7 @@ public class EditScanPanel extends javax.swing.JPanel {
             for (String f : selectedDocuments) {
                 if (f.toLowerCase().endsWith(".pdf")) {
                     FileMetadata meta = isr.getObservedFileMetadata(f);
-                    if (meta.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOUTOCR) {
+                    if (meta!=null && meta.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOUTOCR) {
                         noOcrFiles.add(meta);
                     }
                 }
