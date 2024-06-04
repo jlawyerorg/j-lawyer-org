@@ -937,8 +937,18 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
-            if(url.toLowerCase().endsWith(".eml"))
-                return EmailToPDFConverter.convertToPdf(url);
+            if(url.toLowerCase().endsWith(".eml")) {
+                String emlPdf=EmailToPDFConverter.convertToPdf(url);
+                
+                List<String> attachmentsPdf=EmailToPDFConverter.convertAttachmentsToPdf(url);
+                if(!attachmentsPdf.isEmpty()) {
+                    // merge
+                }
+                
+                return emlPdf;
+                
+                
+            }
             
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());

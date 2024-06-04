@@ -667,9 +667,12 @@ package com.jdimension.jlawyer.client.utils;
  *
  * @author jens
  */
+import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.mail.*;
 import javax.mail.internet.*;
 import org.apache.log4j.Logger;
@@ -682,6 +685,27 @@ public class EmailToPDFConverter {
     
     private static final Logger log=Logger.getLogger(EmailToPDFConverter.class.getName());
 
+    public static List<String> convertAttachmentsToPdf(String emlFile) throws Exception {
+        File file = new File(emlFile);
+        byte[] content=FileUtils.readFile(file);
+        MimeMessage message = new MimeMessage(null, new ByteArrayInputStream(content));
+        
+        List<String> attachmentNames=EmailUtils.getAttachmentNames(message.getContent());
+        FileConverter conv=FileConverter.getInstance();
+        List<String> attachmentsAsPdf=new ArrayList<>();
+        for(String att: attachmentNames) {
+            byte[] attData=EmailUtils.getAttachmentBytes(att, message);
+            File attFile=File.createTempFile("eml-attachment-to-pdf", att);
+            attFile.deleteOnExit();
+            FileOutputStream fout=new FileOutputStream(attFile);
+            fout.write(attData);
+            fout.close();
+            attachmentsAsPdf.add(conv.convertToPDF(attFile.getAbsolutePath()));
+            
+        }
+        return attachmentsAsPdf;
+    }
+    
     public static String convertToPdf(String emlFile) throws Exception {
         // Load the email message from a file
         File file = new File(emlFile);
@@ -747,6 +771,7 @@ public class EmailToPDFConverter {
         contentStream.close();
         document.save(newPath);
         document.close();
+        inputStream.close();
         return newPath;
     }
 
