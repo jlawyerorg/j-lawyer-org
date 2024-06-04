@@ -668,6 +668,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 
 /**
  *
@@ -706,11 +708,11 @@ public class FileConverter {
     }
 
     public boolean supportsInputFormat(String url) {
-        
+
         return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
-        
+
     }
-    
+
     protected boolean supportsInputFormat(String url, List<String> supportedFormats) {
         String lUrl = url.toLowerCase();
         for (String s : supportedFormats) {
@@ -723,7 +725,7 @@ public class FileConverter {
 
     private FileConverter() {
     }
-    
+
     public static class WindowsFileConverter extends FileConverter {
 
         private WindowsFileConverter() {
@@ -937,19 +939,38 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
-            if(url.toLowerCase().endsWith(".eml")) {
-                String emlPdf=EmailToPDFConverter.convertToPdf(url);
-                
-                List<String> attachmentsPdf=EmailToPDFConverter.convertAttachmentsToPdf(url);
-                if(!attachmentsPdf.isEmpty()) {
-                    // merge
-                }
-                
-                return emlPdf;
-                
-                
+            if (url.toLowerCase().endsWith(".pdf")) {
+                File inputFile = new File(url);
+                byte[] data = FileUtils.readFile(inputFile);
+                String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
+                new File(tempFile).deleteOnExit();;
+                return tempFile;
             }
-            
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                
+                String emlPdf = EmailToPDFConverter.convertToPdf(url);
+
+                List<String> attachmentsPdf = EmailToPDFConverter.convertAttachmentsToPdf(url);
+                if (!attachmentsPdf.isEmpty()) {
+                    PDFMergerUtility merger = new PDFMergerUtility();
+                    
+                    merger.addSource(new File(emlPdf));
+                    for (String file : attachmentsPdf) {
+                        merger.addSource(new File(file));
+                    }
+
+                    File outputFile=File.createTempFile(url, ".pdf");
+                    merger.setDestinationFileName(outputFile.getAbsolutePath());
+                    merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                    return outputFile.getAbsolutePath();
+                    
+                } else {
+                    return emlPdf;
+                }
+
+            }
+
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }

@@ -754,7 +754,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             // Now you have the index of the JLabel currently displayed
             // You can access it like this:
             if (labelIndex != -1 && labelIndex < components.length) {
-                
+
                 // begin rendering additional pages once the user scrolls to the bottom
                 JScrollBar scrollBar = (JScrollBar) e.getAdjustable();
                 int max = scrollBar.getMaximum();
@@ -1024,8 +1024,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                     height = (int) ((float) height * ((float) ((float) zoomFactor / 100f)));
                     width = (int) ((float) width * ((float) ((float) zoomFactor / 100f)));
-                    
-                    if(width > height) {
+
+                    if (width > height) {
                         // landscape format
                         height = (int) (height / (297f / 210f));
                         width = (int) (width / (297f / 210f));
@@ -1170,11 +1170,11 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             int width1 = (int) ((float) buffImg.getWidth() * scaleFactor);
                             height1 = (int) ((float) height1 * ((float) ((float) zoomFactor / 100f)));
                             width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
-                            
-                            if(width1>height1) {
+
+                            if (width1 > height1) {
                                 // landscape format
-                                height1=(int)(height1/(297f/210f));
-                                width1=(int)(width1/(297f/210f));
+                                height1 = (int) (height1 / (297f / 210f));
+                                width1 = (int) (width1 / (297f / 210f));
                             }
 
                             // todo: check for landscape mode and display those pages with lower height
@@ -1212,6 +1212,14 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                     } catch (Throwable t) {
                         log.error("Error rendering PDF in separate thread", t);
+                    }
+                    try {
+                        SwingUtilities.invokeAndWait(() -> {
+                            pnlPages.invalidate();
+                            pnlPages.repaint();
+                        });
+                    } catch (Throwable t) {
+                        log.error("unable to update UI after PDF has been rendered", t);
                     }
                     rendering = false;
                 }).start();
@@ -1296,7 +1304,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                 PDPage page = inputPDF.getPage(pageNumber);
 
-                page.setRotation(page.getRotation()+degrees);
+                page.setRotation(page.getRotation() + degrees);
             }
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -1324,8 +1332,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 int width1 = (int) ((float) rotated.getWidth() * scaleFactor);
                 height1 = (int) ((float) height1 * ((float) ((float) zoomFactor / 100f)));
                 width1 = (int) ((float) width1 * ((float) ((float) zoomFactor / 100f)));
-                
-                if(width1 > height1) {
+
+                if (width1 > height1) {
                     // landscape format
                     height1 = (int) (height1 / (297f / 210f));
                     width1 = (int) (width1 / (297f / 210f));

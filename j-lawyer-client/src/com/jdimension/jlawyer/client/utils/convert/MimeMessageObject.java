@@ -70,7 +70,11 @@ class MimeMessageObject {
             // use text/plain entries only when we found nothing before
             if (isBlank(this.entry) || p.isMimeType("text/html")) {
                 this.entry = stringContent;
-                this.contentType = new ContentType(p.getContentType());
+                try {
+                    this.contentType = new ContentType(p.getContentType());
+                } catch (javax.mail.internet.ParseException pe) {
+                    this.contentType = new ContentType("text/html; charset=UTF-8");
+                }
             }
         });
     }
@@ -120,7 +124,7 @@ class MimeMessageObject {
         } else {
             htmlBody = "<div style=\"white-space: pre-wrap\">" + htmlBody.replace("\n", "<br>").replace("\r", "") + "</div>";
             htmlBody = String.format(HTML_WRAPPER_TEMPLATE, charset, htmlBody);
-            if (inlinedImages.size() > 0) {
+            if (!inlinedImages.isEmpty()) {
                 // find embedded images and embed them into the html
                 htmlBody = replace(htmlBody, IMG_CID_PLAIN_REGEX, appendImage(inlinedImages, Boolean.TRUE));
             }
