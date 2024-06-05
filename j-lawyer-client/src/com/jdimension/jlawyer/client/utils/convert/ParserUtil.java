@@ -139,7 +139,7 @@ public class ParserUtil {
 //        }
 //        return convertedFile;
 //    }
-    public String convertToFullHtml(List<String> attachments, List<String> containedAttachments) throws Exception {
+    public String convertToFullHtml(List<String> attachments) throws Exception {
         String htmlBody = messageParser.getMimeMessageObject().getHtmlBody();
         final Document document = Jsoup.parse(htmlBody);
         //document.outputSettings() .syntax(Document.OutputSettings.Syntax.xml);
@@ -164,10 +164,6 @@ public class ParserUtil {
             }
         }
         document.body().append("</table>\n");
-        
-        if(containedAttachments!=null) {
-            
-        }
         
         
         //renderer.setDocumentFromString(document.html());
