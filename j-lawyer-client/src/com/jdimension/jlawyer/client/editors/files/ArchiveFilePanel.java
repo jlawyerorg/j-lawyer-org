@@ -1944,6 +1944,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdBackToSearch = new javax.swing.JButton();
         cmdExportHtml = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
+        cmdExportPdf = new javax.swing.JButton();
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
@@ -3785,7 +3786,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdExportHtml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
-        cmdExportHtml.setToolTipText("Akte als HTML exportieren");
+        cmdExportHtml.setToolTipText("gesamte Akte als HTML exportieren");
         cmdExportHtml.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdExportHtmlActionPerformed(evt);
@@ -3797,6 +3798,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdExportPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        cmdExportPdf.setToolTipText("selektierte Dokument als zusammengeführtes PDF exportieren");
+        cmdExportPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportPdfActionPerformed(evt);
             }
         });
 
@@ -3812,16 +3821,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdExportHtml)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdExportPdf)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdToEditMode)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSave)
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel13Layout.setVerticalGroup(
             jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel13Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdExportPdf)
                     .add(cmdSave)
                     .add(cmdToEditMode)
                     .add(cmdPrint)
@@ -3888,7 +3900,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(0, 0, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -6925,6 +6937,88 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdDuplicateAccountEntryActionPerformed
 
+    private void cmdExportPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportPdfActionPerformed
+        ClientSettings s = ClientSettings.getInstance();
+        String lastDir = s.getConfiguration("client.archivefiles.htmlexport.lastdir", System.getProperty("user.home"));
+
+        if (!lastDir.endsWith(File.separator)) {
+            lastDir = lastDir + File.separator;
+        }
+
+        if (!(new File(lastDir).exists())) {
+            lastDir = System.getProperty("user.home");
+            if (!lastDir.endsWith(File.separator)) {
+                lastDir = lastDir + File.separator;
+            }
+        }
+
+        JFileChooser chooser = new JFileChooser(lastDir);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setDialogTitle("Verzeichnis wählen");
+        chooser.setApproveButtonText("Auswählen");
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File dir = chooser.getSelectedFile();
+            try {
+                s.setConfiguration("client.archivefiles.htmlexport.lastdir", dir.getCanonicalPath());
+            } catch (Throwable t) {
+                log.error("can not get canonical path during html export", t);
+            }
+
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
+            if (!open.isEmpty()) {
+                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for (String o : open) {
+                    question = question + "<li>" + o + "</li>";
+                }
+                question = question + "</ul></html>";
+                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            HashMap<String, CaseFolder> folders = new HashMap<>();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                if (doc.getFolder() != null) {
+                    if (!folders.containsKey(doc.getFolder().getId())) {
+                        folders.put(doc.getFolder().getId(), doc.getFolder());
+                    }
+                }
+            }
+
+//            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+//            dlg.setShowCancelButton(true);
+//            dlg.setInfinite(false);
+//            dlg.progress("Lade Export vom Server...");
+//            ExportAsHtmlAction exact = new ExportAsHtmlAction(dlg, this, dir, this.dto.getId());
+//            exact.start();
+//            
+//            
+//            try {
+//            ClientSettings settings = ClientSettings.getInstance();
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+//                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+//                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
+//                dlg.addAttachment(tmpUrl, doc.getDictateSign());
+//
+//            }
+
+//        } catch (Exception ioe) {
+//            log.error("Error sending document", ioe);
+//            JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//        }
+            
+
+        }
+
+        
+        
+        
+    }//GEN-LAST:event_cmdExportPdfActionPerformed
+
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -7375,6 +7469,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;
     private javax.swing.JButton cmdExportHtml;
+    private javax.swing.JButton cmdExportPdf;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
