@@ -661,27 +661,47 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.test.similarity;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
+import junit.framework.Assert;
+import static org.jlawyer.text.similarity.JaroWinkler.jaroWinklerDistance;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocalV1 {
-
-    Response getContact(String id);
-
-    Response createContact(RestfulContactV1 contact);
-
-    Response listContacts();
-
-    Response updateContact(RestfulContactV1 contact);
+public class SimilarityTest {
     
-    Response searchSimilarContacts(RestfulContactV1 contact);
+    public SimilarityTest() {
+    }
     
+    @BeforeClass
+    public static void setUpClass() {
+    }
+    
+    @AfterClass
+    public static void tearDownClass() {
+    }
+    
+    @Before
+    public void setUp() {
+    }
+    
+    @After
+    public void tearDown() {
+    }
+
+    @Test
+    public void testSimilarity() {
+        
+        double similarity = jaroWinklerDistance("Meier", "Maier");
+        assertTrue(similarity>0.8f);
+        
+    }
 }

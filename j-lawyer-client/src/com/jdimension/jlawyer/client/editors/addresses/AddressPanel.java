@@ -1199,6 +1199,22 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
                 this.dto = new AddressBean();
                 this.fillDTO(this.dto);
+                
+                List<AddressBean> similarAddresses = aService.similaritySearch(dto, 0.85f);
+                if (!similarAddresses.isEmpty()) {
+                    StringBuilder html = new StringBuilder();
+                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+                    html.append("<ul>");
+                    for (AddressBean s : similarAddresses) {
+                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+                    }
+                    html.append("</ul>");
+                    html.append("</html>");
+                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    if (simResponse == JOptionPane.NO_OPTION) {
+                        return false;
+                    }
+                }
 
                 this.dto = aService.createAddress(this.dto);
 
@@ -3052,32 +3068,32 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.lblOverviewPhone.setText("");
         this.lblOverviewStreet.setText("");
     }
-    
+
     private void updateOverview() {
         this.clearOverview();
         if (!this.txtZipCode.getText().isEmpty() || !this.txtCity.getText().isEmpty()) {
-                this.lblOverviewCity.setText(this.txtZipCode.getText() + " " + this.txtCity.getText());
-            }
-            if (!this.txtDepartment.getText().isEmpty()) {
-                this.lblOverviewDept.setText(this.txtDepartment.getText());
-            }
-            if (!this.txtEmail.getText().isEmpty()) {
-                this.lblOverviewEmail.setText(this.txtEmail.getText());
-            }
-            if (!this.txtFirstName.getText().isEmpty() || !this.txtName.getText().isEmpty()) {
-                this.lblOverviewName.setText(this.txtFirstName.getText() + " " + this.txtName.getText());
-            }
-            if (!this.txtCompany.getText().isEmpty()) {
-                this.lblOverviewOrg.setText(this.txtCompany.getText());
-            }
-            if (!this.txtPhone.getText().isEmpty() || !this.txtMobile.getText().isEmpty()) {
-                this.lblOverviewPhone.setText(this.txtPhone.getText() + "  " + this.txtMobile.getText());
-            }
-            if (!this.txtStreet.getText().isEmpty() || !this.txtStreetNr.getText().isEmpty()) {
-                this.lblOverviewStreet.setText(this.txtStreet.getText() + " " + this.txtStreetNr.getText());
-            }
+            this.lblOverviewCity.setText(this.txtZipCode.getText() + " " + this.txtCity.getText());
+        }
+        if (!this.txtDepartment.getText().isEmpty()) {
+            this.lblOverviewDept.setText(this.txtDepartment.getText());
+        }
+        if (!this.txtEmail.getText().isEmpty()) {
+            this.lblOverviewEmail.setText(this.txtEmail.getText());
+        }
+        if (!this.txtFirstName.getText().isEmpty() || !this.txtName.getText().isEmpty()) {
+            this.lblOverviewName.setText(this.txtFirstName.getText() + " " + this.txtName.getText());
+        }
+        if (!this.txtCompany.getText().isEmpty()) {
+            this.lblOverviewOrg.setText(this.txtCompany.getText());
+        }
+        if (!this.txtPhone.getText().isEmpty() || !this.txtMobile.getText().isEmpty()) {
+            this.lblOverviewPhone.setText(this.txtPhone.getText() + "  " + this.txtMobile.getText());
+        }
+        if (!this.txtStreet.getText().isEmpty() || !this.txtStreetNr.getText().isEmpty()) {
+            this.lblOverviewStreet.setText(this.txtStreet.getText() + " " + this.txtStreetNr.getText());
+        }
     }
-    
+
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
         if (this.jTabbedPane1.getSelectedIndex() == 0) {
             this.updateOverview();
@@ -3391,47 +3407,47 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_txtDeathDateFocusLost
 
     private void cmdAttributesFromClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttributesFromClipboardActionPerformed
-        AddressFromClipboardDialog dlg=new AddressFromClipboardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        AddressFromClipboardDialog dlg = new AddressFromClipboardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        
-        HashMap<String,String> attributes=dlg.getAttributes();
-        for(String att: attributes.keySet()) {
-            if(att.equals(AttributeCellEditor.ATTRIBUTE_ABTEILUNG)) {
+
+        HashMap<String, String> attributes = dlg.getAttributes();
+        for (String att : attributes.keySet()) {
+            if (att.equals(AttributeCellEditor.ATTRIBUTE_ABTEILUNG)) {
                 this.txtDepartment.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_BERUF)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_BERUF)) {
                 this.cmbProfession.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
                 this.txtEmail.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
                 this.txtFax.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FUNKTION)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_FUNKTION)) {
                 this.cmbRole.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
                 this.txtStreetNr.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
                 this.cmbCountry.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
                 this.txtMobile.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
                 this.txtName.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
                 this.txtCity.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
                 this.txtZipCode.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
                 this.txtStreet.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
                 this.txtPhone.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
                 this.txtCompany.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
                 this.txtFirstName.setText(attributes.get(att));
             }
-                
+
         }
         this.jTabbedPane1StateChanged(null);
-        
+
     }//GEN-LAST:event_cmdAttributesFromClipboardActionPerformed
 
     private void mnuCopyIdToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyIdToClipboardActionPerformed
@@ -3447,7 +3463,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (this.dto != null) {
             Toolkit toolkit = Toolkit.getDefaultToolkit();
             Clipboard clipboard = toolkit.getSystemClipboard();
-            StringBuilder sb=new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.append("externe ID 1:").append("\t").append(this.dto.getExternalId1()).append(System.lineSeparator());
             sb.append("externe ID 2:").append("\t").append(this.dto.getExternalId2()).append(System.lineSeparator());
             sb.append("externe ID 3:").append("\t").append(this.dto.getExternalId3()).append(System.lineSeparator());
@@ -3553,15 +3569,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void fillCasesForContactPanel(Collection<ArchiveFileAddressesBean> allCases, Hashtable<String, PartyTypeBean> partyTypes) {
         this.pnlCasesForContact.removeAll();
-        
-        List<ArchiveFileAddressesBean> allCasesList=new ArrayList<>(allCases);
+
+        List<ArchiveFileAddressesBean> allCasesList = new ArrayList<>(allCases);
         Collections.sort(allCasesList, (ArchiveFileAddressesBean o1, ArchiveFileAddressesBean o2) -> {
-            ArchiveFileBean c1=o1.getArchiveFileKey();
-            ArchiveFileBean c2=o2.getArchiveFileKey();
-            if(c1!=null && c2!=null) {
-                Date d1=c1.getDateCreated();
-                Date d2=c2.getDateCreated();
-                if(d1!=null && d2!=null) {
+            ArchiveFileBean c1 = o1.getArchiveFileKey();
+            ArchiveFileBean c2 = o2.getArchiveFileKey();
+            if (c1 != null && c2 != null) {
+                Date d1 = c1.getDateCreated();
+                Date d2 = c2.getDateCreated();
+                if (d1 != null && d2 != null) {
                     return d2.compareTo(d1);
                 }
             }
@@ -3571,33 +3587,32 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         GridLayout layout = new GridLayout(allCases.size(), 1);
         this.pnlCasesForContact.setLayout(layout);
         int i = 0;
-        for (ArchiveFileAddressesBean aFile: allCasesList) {
+        for (ArchiveFileAddressesBean aFile : allCasesList) {
 
-            
-                CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-                if (i % 2 == 0) {
-                    ep.setBackground(ep.getBackground().brighter());
-                }
-                CaseForContactEntry lce = new CaseForContactEntry();
-                lce.setRoleForeground(new Color(partyTypes.get(aFile.getReferenceType().getName()).getColor()));
-                lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());
-                lce.setId(aFile.getArchiveFileKey().getId());
-                lce.setRole(aFile.getReferenceType().getName());
-                lce.setName(aFile.getArchiveFileKey().getName());
-                lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
-                lce.setArchived(aFile.getArchiveFileKey().isArchived());
-                lce.setOwnReference(aFile.getReference());
+            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
+            if (i % 2 == 0) {
+                ep.setBackground(ep.getBackground().brighter());
+            }
+            CaseForContactEntry lce = new CaseForContactEntry();
+            lce.setRoleForeground(new Color(partyTypes.get(aFile.getReferenceType().getName()).getColor()));
+            lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());
+            lce.setId(aFile.getArchiveFileKey().getId());
+            lce.setRole(aFile.getReferenceType().getName());
+            lce.setName(aFile.getArchiveFileKey().getName());
+            lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
+            lce.setArchived(aFile.getArchiveFileKey().isArchived());
+            lce.setOwnReference(aFile.getReference());
 
-                if (this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
-                    HashMap<Integer, Float> invoicesForCase = this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
-                    lce.setInvoicesByStatus(invoicesForCase);
-                }
+            if (this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
+                HashMap<Integer, Float> invoicesForCase = this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
+                lce.setInvoicesByStatus(invoicesForCase);
+            }
 
-                ep.setEntry(lce);
+            ep.setEntry(lce);
 
-                this.pnlCasesForContact.add(ep);
-                i++;
-            
+            this.pnlCasesForContact.add(ep);
+            i++;
+
         }
 
         layout.setRows(i);
@@ -4177,7 +4192,24 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             this.fillDTO(this.dto);
 
             if (id == null) {
-                addressService.createAddress(this.dto);
+                List<AddressBean> similarAddresses = addressService.similaritySearch(dto, 0.85f);
+                if (!similarAddresses.isEmpty()) {
+                    StringBuilder html = new StringBuilder();
+                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+                    html.append("<ul>");
+                    for (AddressBean s : similarAddresses) {
+                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+                    }
+                    html.append("</ul>");
+                    html.append("</html>");
+                    int response = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.NO_OPTION) {
+                        return true;
+                    }
+                    addressService.createAddress(this.dto);
+                }
+
+                
             } else {
                 addressService.updateAddress(this.dto);
                 EventBroker eb = EventBroker.getInstance();

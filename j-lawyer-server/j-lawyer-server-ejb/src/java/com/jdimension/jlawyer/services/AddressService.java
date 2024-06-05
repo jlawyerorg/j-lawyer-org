@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.events.AddressUpdatedEvent;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -686,6 +687,7 @@ import javax.ejb.*;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import org.apache.log4j.Logger;
+import org.jlawyer.text.similarity.JaroWinkler;
 
 /**
  *
@@ -1289,5 +1291,40 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             ab.setDefaultRole(defaultRole);
             this.addressFacade.edit(ab);
         }
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception {
+        
+        ArrayList<AddressBean> resultList=new ArrayList<>();
+        if(ServerStringUtils.isEmpty(candidate.getZipCode())) {
+            log.info("similarity search requires at least a zip code - skipping!");
+            return resultList;
+        }
+        
+        AddressBean[] comparisonList=this.searchSimple(candidate.getZipCode());
+        if(comparisonList!=null) {
+            for(AddressBean c: comparisonList) {
+                double sim=calculateSimilarity(c, candidate);
+                if(sim>=minimumSimilarityPercentage)
+                    resultList.add(c);
+            }
+        }
+        return resultList;
+    }
+    
+    private static double calculateSimilarity(AddressBean c1, AddressBean c2) {
+        double firstNameSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getFirstName()), ServerStringUtils.nonEmpty(c2.getFirstName()));
+        double lastNameSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getName()), ServerStringUtils.nonEmpty(c2.getName()));
+        double streetSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getStreet()), ServerStringUtils.nonEmpty(c2.getStreet()));
+        double streetNoSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getStreetNumber()), ServerStringUtils.nonEmpty(c2.getStreetNumber()));
+        double zipCodeSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getZipCode()), ServerStringUtils.nonEmpty(c2.getZipCode()));
+        double citySim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getCity()), ServerStringUtils.nonEmpty(c2.getCity()));
+        
+
+        // Weighted average or simple average of the similarities
+        double overallSim = (firstNameSim + lastNameSim + streetSim + streetNoSim + zipCodeSim + citySim) / 6.0d;
+        return overallSim;
     }
 }

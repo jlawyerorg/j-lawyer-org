@@ -666,11 +666,13 @@ package org.jlawyer.io.rest.v1;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -796,6 +798,53 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
         }
     }
 
+    /**
+     * Performs a similarity search using Jaro Winkler distance over name, first name, street and number, zip code and city. Anything with a similarity of 85% or higher will be returned.
+     *
+     * @param contact the contacts data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/similar")
+    @RolesAllowed({"readAddressRole"})
+    public Response searchSimilarContacts(RestfulContactV1 contact) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            AddressBean a=new AddressBean();
+            a = addresses.createAddress(contact.toAddressBean(a));
+            
+            List<AddressBean> similars=addresses.similaritySearch(a, 0.85f);
+            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
+            for (AddressBean sim : similars) {
+                RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
+                rco.setId(sim.getId());
+                rco.setExternalId(sim.getExternalId1());
+                rco.setExternalId2(sim.getExternalId2());
+                rco.setExternalId3(sim.getExternalId3());
+                rco.setExternalId4(sim.getExternalId4());
+                rco.setExternalId5(sim.getExternalId5());
+                rco.setName(sim.getName());
+                rco.setCity(sim.getCity());
+                rco.setFirstName(sim.getFirstName());
+                rco.setCompany(sim.getCompany());
+                rco.setZipCode(sim.getZipCode());
+                rcoList.add(rco);
+            }
+            Response res = Response.ok(rcoList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list similar contacts", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
     /**
      * Updates an existing contact based on its ID
      *

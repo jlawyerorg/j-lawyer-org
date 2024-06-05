@@ -1139,7 +1139,14 @@ public class AddressBean implements Serializable {
     }
     
     public String toShortHtml() {
-        String toolTip = "<html>";
+        return toShortHtml(true);
+    }
+    
+    public String toShortHtml(boolean includeHtmlRootTag) {
+        String toolTip = "";
+        if(includeHtmlRootTag) {
+            toolTip = "<html>";
+        }
         if (getName() != null && !("".equals(getName()))) {
             toolTip = toolTip + "<b>Name:</b> " + getName() + "<br>";
         }
@@ -1166,7 +1173,10 @@ public class AddressBean implements Serializable {
             toolTip = toolTip + "<b>Mobil:</b> " + getMobile() + "<br>";
         }
 
-        toolTip = toolTip + "</html>";
+        if(includeHtmlRootTag) {
+            toolTip = toolTip + "</html>";
+        }
+        
         return toolTip;
     }
     

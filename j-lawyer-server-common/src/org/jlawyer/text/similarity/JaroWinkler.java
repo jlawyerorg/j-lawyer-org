@@ -661,27 +661,92 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
-
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
+package org.jlawyer.text.similarity;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocalV1 {
+public class JaroWinkler {
 
-    Response getContact(String id);
+    private static final double DEFAULT_SCALING_FACTOR = 0.1;
 
-    Response createContact(RestfulContactV1 contact);
+    public static double jaroWinklerDistance(String s1, String s2) {
+        if (s1.equals(s2)) {
+            return 1.0;
+        }
 
-    Response listContacts();
+        // Lengths of the strings
+        int s1Length = s1.length();
+        int s2Length = s2.length();
 
-    Response updateContact(RestfulContactV1 contact);
-    
-    Response searchSimilarContacts(RestfulContactV1 contact);
-    
+        if (s1Length == 0 || s2Length == 0) {
+            return 0.0;
+        }
+
+        // Maximum matching distance
+        int matchDistance = Integer.max(s1Length, s2Length) / 2 - 1;
+
+        // Arrays to keep track of matches
+        boolean[] s1Matches = new boolean[s1Length];
+        boolean[] s2Matches = new boolean[s2Length];
+
+        // Count matches and transpositions
+        int matches = 0;
+        int transpositions = 0;
+
+        // Find matches
+        for (int i = 0; i < s1Length; i++) {
+            int start = Integer.max(0, i - matchDistance);
+            int end = Integer.min(i + matchDistance + 1, s2Length);
+            for (int j = start; j < end; j++) {
+                if (s2Matches[j]) continue;
+                if (s1.charAt(i) != s2.charAt(j)) continue;
+                s1Matches[i] = true;
+                s2Matches[j] = true;
+                matches++;
+                break;
+            }
+        }
+
+        if (matches == 0) {
+            return 0.0;
+        }
+
+        // Find transpositions
+        int k = 0;
+        for (int i = 0; i < s1Length; i++) {
+            if (!s1Matches[i]) continue;
+            while (!s2Matches[k]) k++;
+            if (s1.charAt(i) != s2.charAt(k)) transpositions++;
+            k++;
+        }
+
+        transpositions /= 2;
+
+        double jaroDistance = ((matches / (double) s1Length) +
+                               (matches / (double) s2Length) +
+                               ((matches - transpositions) / (double) matches)) / 3.0;
+
+        // Jaro-Winkler distance
+        int prefixLength = 0;
+        for (int i = 0; i < Integer.min(4, Integer.min(s1Length, s2Length)); i++) {
+            if (s1.charAt(i) == s2.charAt(i)) {
+                prefixLength++;
+            } else {
+                break;
+            }
+        }
+
+        return jaroDistance + (prefixLength * DEFAULT_SCALING_FACTOR * (1 - jaroDistance));
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        String s1 = "DWAYNE";
+        String s2 = "DUANE";
+
+        double similarity = jaroWinklerDistance(s1, s2);
+        System.out.println("Similarity: " + (similarity * 100) + "%");
+    }
 }

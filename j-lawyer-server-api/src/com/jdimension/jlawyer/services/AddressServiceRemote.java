@@ -709,5 +709,7 @@ public interface AddressServiceRemote {
     void runFullAddressBookSync();
 
     void setDefaultRole(String addressId, String defaultRole) throws Exception;
+
+    List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception;
     
 }
