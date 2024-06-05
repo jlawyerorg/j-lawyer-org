@@ -728,7 +728,7 @@ public class FileConverter {
             File inputFile = new File(url);
             byte[] data = FileUtils.readFile(inputFile);
             String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
-            new File(tempFile).deleteOnExit();;
+            new File(tempFile).deleteOnExit();
             return tempFile;
         }
         return url;
