@@ -717,7 +717,7 @@ public class EmailToPDFConverter {
         
         List<String> attachmentNames=EmailUtils.getAttachmentNames(message.getContent());
         
-        String html=new ParserUtil(emlFile, true, true).convertToFullHtml(attachmentNames, null);
+        String html=new ParserUtil(emlFile, true, true).convertToFullHtml(attachmentNames);
         File htmlTemp=File.createTempFile(emlFile, ".html");
         htmlTemp.deleteOnExit();
         FileUtils.writeFile(htmlTemp, html.getBytes());
