@@ -716,12 +716,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean adr=addresses.getAddress(id);
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
@@ -744,12 +742,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean a=new AddressBean();
             a = addresses.createAddress(contact.toAddressBean(a));
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(a)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(a)).build();
         } catch (Exception ex) {
             log.error("can not create new address " + contact.toString(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     
@@ -789,12 +785,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setZipCode(afb.getZipCode());
                 rcoList.add(rco);
             }
-            Response res = Response.ok(rcoList).build();
-            return res;
+            return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list contacts", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
@@ -836,12 +830,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setZipCode(sim.getZipCode());
                 rcoList.add(rco);
             }
-            Response res = Response.ok(rcoList).build();
-            return res;
+            return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list similar contacts", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
@@ -871,8 +863,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             AddressBean currentContact = addresses.getAddress(contact.getId());
             if (currentContact == null) {
                 log.error("contact with id " + contact.getId() + " does not exist - skipping update");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             // file number must not be changed
 
@@ -913,12 +904,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             addresses.updateAddress(currentContact);
             AddressBean addressData = addresses.getAddress(currentContact.getId());
 
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
         } catch (Exception ex) {
             log.error("can not update address " + contact.getId(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
