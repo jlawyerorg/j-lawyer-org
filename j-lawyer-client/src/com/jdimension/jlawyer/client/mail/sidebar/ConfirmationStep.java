@@ -677,7 +677,9 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -790,8 +792,24 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
                 label1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
                 this.pnlStatus.add(label1);
 
-                newAddress = locator.lookupAddressServiceRemote().createAddress((AddressBean) this.data.get("newaddress.addressbean"));
-
+                List<AddressBean> similarAddresses = locator.lookupAddressServiceRemote().similaritySearch((AddressBean) this.data.get("newaddress.addressbean"), 0.85f);
+                if (!similarAddresses.isEmpty()) {
+                    StringBuilder html = new StringBuilder();
+                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+                    html.append("<ul>");
+                    for (AddressBean s : similarAddresses) {
+                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+                    }
+                    html.append("</ul>");
+                    html.append("</html>");
+                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    if (simResponse == JOptionPane.YES_OPTION) {
+                        newAddress = locator.lookupAddressServiceRemote().createAddress((AddressBean) this.data.get("newaddress.addressbean"));
+                    }
+                } else {
+                    newAddress = locator.lookupAddressServiceRemote().createAddress((AddressBean) this.data.get("newaddress.addressbean"));
+                }
+                
                 label1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
             } else {
                 newAddress = (AddressBean) this.data.get("newaddress.selectedaddress");
