@@ -1324,7 +1324,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         
 
         // Weighted average or simple average of the similarities
-        double overallSim = (firstNameSim + lastNameSim + streetSim + streetNoSim + zipCodeSim + citySim) / 6.0d;
-        return overallSim;
+        return (firstNameSim + lastNameSim + streetSim + streetNoSim + zipCodeSim + citySim) / 6.0d;
     }
 }
