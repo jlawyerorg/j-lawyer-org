@@ -1836,6 +1836,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, "" + this.txtSubject.getText() + ed.getText(), null);
+                saDlg.setCancelButtonCaption("Senden ohne zu speichern", "E-Mail wird gesendet, jedoch nicht zu einer Akte gespeichert");
+                saDlg.setConfirmButtonCaption("Senden und speichern", "E-Mail wird gesendet und zur gewählten Akte gespeichert");
+                
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
                 this.contextArchiveFileFolder = saDlg.getFolderSelection();

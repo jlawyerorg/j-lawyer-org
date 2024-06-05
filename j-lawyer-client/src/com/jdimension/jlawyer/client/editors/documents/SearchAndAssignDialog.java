@@ -761,6 +761,16 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         this.initialize();
 
     }
+    
+    public void setCancelButtonCaption(String caption, String tooltipText) {
+        this.cmdCancel.setText(caption);
+        this.cmdCancel.setToolTipText(tooltipText);
+    }
+    
+    public void setConfirmButtonCaption(String caption, String tooltipText) {
+        this.cmdUseSelection.setText(caption);
+        this.cmdUseSelection.setToolTipText(tooltipText);
+    }
 
     private void initialize() {
         ComponentUtils.decorateSplitPane(this.split);

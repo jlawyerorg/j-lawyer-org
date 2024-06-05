@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -1325,10 +1326,26 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             
             this.fillDTO(this.result);
 
+            List<AddressBean> similarAddresses = addressService.similaritySearch(this.result, 0.85f);
+                if (!similarAddresses.isEmpty()) {
+                    StringBuilder html = new StringBuilder();
+                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+                    html.append("<ul>");
+                    for (AddressBean s : similarAddresses) {
+                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+                    }
+                    html.append("</ul>");
+                    html.append("</html>");
+                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    if (simResponse == JOptionPane.NO_OPTION) {
+                        this.result=null;
+                    }
+                }
             
+            if(this.result!=null) {
                 this.result=addressService.createAddress(this.result);
-            
-            EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+                EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+            }
 
         } catch (Exception ex) {
             log.error("Error saving address", ex);
@@ -1338,7 +1355,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         }
         
         this.setVisible(false);
-            this.dispose();
+        this.dispose();
         
     }//GEN-LAST:event_cmdUseSelectionActionPerformed
 

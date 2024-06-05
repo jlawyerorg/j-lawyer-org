@@ -1048,10 +1048,23 @@ public class FileConverter {
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
+            
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath=null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+
+                // Remove trailing slash if it exists
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
+            }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", parentPath, url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
