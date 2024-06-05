@@ -672,13 +672,11 @@ import com.jdimension.jlawyer.client.utils.convert.ParserUtil;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.mail.*;
 import javax.mail.internet.*;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.*;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -701,7 +699,11 @@ public class EmailToPDFConverter {
             FileOutputStream fout=new FileOutputStream(attFile);
             fout.write(attData);
             fout.close();
-            attachmentsAsPdf.add(conv.convertToPDF(attFile.getAbsolutePath()));
+            try {
+                attachmentsAsPdf.add(conv.convertToPDF(attFile.getAbsolutePath()));
+            } catch (Throwable t) {
+                log.error("unable to export attachment " + attFile.getName() + " of mail " + file.getName() + " to PDF - skipping");
+            }
             
         }
         return attachmentsAsPdf;
@@ -709,7 +711,13 @@ public class EmailToPDFConverter {
     
     public static String convertToPdf(String emlFile) throws Exception {
         
-        String html=new ParserUtil(emlFile, true, true).convertToFullHtml();
+        File file = new File(emlFile);
+        byte[] content=FileUtils.readFile(file);
+        MimeMessage message = new MimeMessage(null, new ByteArrayInputStream(content));
+        
+        List<String> attachmentNames=EmailUtils.getAttachmentNames(message.getContent());
+        
+        String html=new ParserUtil(emlFile, true, true).convertToFullHtml(attachmentNames, null);
         File htmlTemp=File.createTempFile(emlFile, ".html");
         htmlTemp.deleteOnExit();
         FileUtils.writeFile(htmlTemp, html.getBytes());

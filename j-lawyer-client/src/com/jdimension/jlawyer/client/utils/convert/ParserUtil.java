@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.ArrayList;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -138,18 +139,37 @@ public class ParserUtil {
 //        }
 //        return convertedFile;
 //    }
-    public String convertToFullHtml() throws Exception {
+    public String convertToFullHtml(List<String> attachments, List<String> containedAttachments) throws Exception {
         String htmlBody = messageParser.getMimeMessageObject().getHtmlBody();
         final Document document = Jsoup.parse(htmlBody);
         //document.outputSettings() .syntax(Document.OutputSettings.Syntax.xml);
         if (addEmailHeaders) {
             messageParser.getHeaderData().forEach(this::append);
-            document.body().prepend("<table id=\"header_fields\"\n" +
-"       style=\"background: white; margin: auto; border: 1px solid #DDD; border-radius: 3px; padding: 8px; width: 90%; box-sizing: border-box;\">\n" +
-"</table>\n" +
-"");
+            document.body().prepend("<table id=\"header_fields\"\n"
+                    + "       style=\"background: white; margin: auto; border: 1px solid #DDD; border-radius: 3px; padding: 8px; width: 90%; box-sizing: border-box;\">\n"
+                    + "</table>\n"
+                    + "");
             document.getElementById(EMAIL_HEADER_ID).append(bodyBuilder.toString());
         }
+        
+        if(attachments!=null && !attachments.isEmpty()) {
+            document.body().append("<p>&nbsp;</p><b>Anlagen:</b><br/><table id=\"header_fields\"\n"
+                    + "       style=\"background: white; margin: auto; border: 1px solid #DDD; border-radius: 3px; padding: 8px; width: 90%; box-sizing: border-box;\">\n"
+                    + "</table>\n"
+                    + "");
+            for(String att: attachments) {
+                document.body().append("<tr><td>");
+                document.body().append(att);
+                document.body().append("</td</tr>\n");
+            }
+        }
+        document.body().append("</table>\n");
+        
+        if(containedAttachments!=null) {
+            
+        }
+        
+        
         //renderer.setDocumentFromString(document.html());
         return document.html();
     }

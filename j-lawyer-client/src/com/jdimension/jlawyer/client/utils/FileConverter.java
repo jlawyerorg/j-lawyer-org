@@ -723,6 +723,44 @@ public class FileConverter {
         return false;
     }
 
+    protected static String pdf2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".pdf")) {
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
+            new File(tempFile).deleteOnExit();;
+            return tempFile;
+        }
+        return url;
+    }
+
+    protected static String eml2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".eml")) {
+
+            String emlPdf = EmailToPDFConverter.convertToPdf(url);
+
+            List<String> attachmentsPdf = EmailToPDFConverter.convertAttachmentsToPdf(url);
+            if (!attachmentsPdf.isEmpty()) {
+                PDFMergerUtility merger = new PDFMergerUtility();
+
+                merger.addSource(new File(emlPdf));
+                for (String file : attachmentsPdf) {
+                    merger.addSource(new File(file));
+                }
+
+                File outputFile = File.createTempFile(url, ".pdf");
+                merger.setDestinationFileName(outputFile.getAbsolutePath());
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                return outputFile.getAbsolutePath();
+
+            } else {
+                return emlPdf;
+            }
+
+        }
+        return url;
+    }
+
     private FileConverter() {
     }
 
@@ -793,6 +831,15 @@ public class FileConverter {
 
         @Override
         public String convertToPDF(String url) throws Exception {
+            
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+            
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
@@ -940,35 +987,11 @@ public class FileConverter {
         public String convertToPDF(String url) throws Exception {
 
             if (url.toLowerCase().endsWith(".pdf")) {
-                File inputFile = new File(url);
-                byte[] data = FileUtils.readFile(inputFile);
-                String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
-                new File(tempFile).deleteOnExit();;
-                return tempFile;
+                return pdf2pdf(url);
             }
 
             if (url.toLowerCase().endsWith(".eml")) {
-                
-                String emlPdf = EmailToPDFConverter.convertToPdf(url);
-
-                List<String> attachmentsPdf = EmailToPDFConverter.convertAttachmentsToPdf(url);
-                if (!attachmentsPdf.isEmpty()) {
-                    PDFMergerUtility merger = new PDFMergerUtility();
-                    
-                    merger.addSource(new File(emlPdf));
-                    for (String file : attachmentsPdf) {
-                        merger.addSource(new File(file));
-                    }
-
-                    File outputFile=File.createTempFile(url, ".pdf");
-                    merger.setDestinationFileName(outputFile.getAbsolutePath());
-                    merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
-                    return outputFile.getAbsolutePath();
-                    
-                } else {
-                    return emlPdf;
-                }
-
+                return eml2pdf(url);
             }
 
             if (!this.supportsInputFormat(url)) {
@@ -1045,13 +1068,21 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+            
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
-            
+
             File inputFile = new File(url);
             File outputDir = inputFile.getParentFile();
-            String parentPath=null;
+            String parentPath = null;
             if (outputDir != null) {
                 parentPath = outputDir.getAbsolutePath();
 
