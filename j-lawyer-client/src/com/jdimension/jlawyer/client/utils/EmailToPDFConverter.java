@@ -668,16 +668,15 @@ package com.jdimension.jlawyer.client.utils;
  * @author jens
  */
 import com.jdimension.jlawyer.client.mail.EmailUtils;
+import com.jdimension.jlawyer.client.utils.convert.ParserUtil;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.mail.*;
 import javax.mail.internet.*;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.*;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -700,79 +699,98 @@ public class EmailToPDFConverter {
             FileOutputStream fout=new FileOutputStream(attFile);
             fout.write(attData);
             fout.close();
-            attachmentsAsPdf.add(conv.convertToPDF(attFile.getAbsolutePath()));
+            try {
+                attachmentsAsPdf.add(conv.convertToPDF(attFile.getAbsolutePath()));
+            } catch (Throwable t) {
+                log.error("unable to export attachment " + attFile.getName() + " of mail " + file.getName() + " to PDF - skipping");
+            }
             
         }
         return attachmentsAsPdf;
     }
     
     public static String convertToPdf(String emlFile) throws Exception {
-        // Load the email message from a file
+        
         File file = new File(emlFile);
-        InputStream inputStream = new FileInputStream(file);
-        Message message = new MimeMessage(null, inputStream);
-
-        // Create a PDF document
-        PDDocument document = new PDDocument();
-
-        // Create a new page in the PDF document
-        PDPage page = new PDPage(PDRectangle.A4);
-        document.addPage(page);
-
-        // Create a new content stream for the PDF page
-        PDPageContentStream contentStream = new PDPageContentStream(document, page);
-
-        // Set the font and font size for the PDF document
-        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-
-        // Get the email metadata
-        String subject = message.getSubject();
-        Address[] from = message.getFrom();
-        Address[] to = message.getRecipients(Message.RecipientType.TO);
-        Address[] cc = message.getRecipients(Message.RecipientType.CC);
-        Date sentDate = message.getSentDate();
-        Date receivedDate = message.getReceivedDate();
-
-        float yPosition = page.getMediaBox().getHeight() - 50;  // start from the top
-
-        yPosition = addText(contentStream, "Subject:", PDType1Font.TIMES_BOLD, 12, 50, yPosition);
-        yPosition = addText(contentStream, subject, PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-
-        yPosition = addText(contentStream, "From:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
-        yPosition = addText(contentStream, formatAddresses(from), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-
-        yPosition = addText(contentStream, "To:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
-        yPosition = addText(contentStream, formatAddresses(to), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-
-        if (cc != null && cc.length > 0) {
-            yPosition = addText(contentStream, "Cc:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
-            yPosition = addText(contentStream, formatAddresses(cc), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-        }
-
-        if (sentDate != null) {
-            yPosition = addText(contentStream, "Sent Date:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
-            yPosition = addText(contentStream, sentDate.toString(), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-        }
-
-        if (receivedDate != null) {
-            yPosition = addText(contentStream, "Received Date:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
-            yPosition = addText(contentStream, receivedDate.toString(), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
-        }
-
-        // Process the email body and attachments
-        yPosition = processPart(message, document, contentStream, yPosition);
-
-        File org = new File(emlFile);
-        String orgName = org.getName();
-        String path = emlFile.substring(0, emlFile.indexOf(orgName));
-        String newPath = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
-
-        // Close the content stream and PDF document
-        contentStream.close();
-        document.save(newPath);
-        document.close();
-        inputStream.close();
-        return newPath;
+        byte[] content=FileUtils.readFile(file);
+        MimeMessage message = new MimeMessage(null, new ByteArrayInputStream(content));
+        
+        List<String> attachmentNames=EmailUtils.getAttachmentNames(message.getContent());
+        
+        String html=new ParserUtil(emlFile, true, true).convertToFullHtml(attachmentNames);
+        File htmlTemp=File.createTempFile(emlFile, ".html");
+        htmlTemp.deleteOnExit();
+        FileUtils.writeFile(htmlTemp, html.getBytes());
+        FileConverter conv=FileConverter.getInstance();
+        return conv.convertToPDF(htmlTemp.getAbsolutePath());
+        
+        
+//        // Load the email message from a file
+//        File file = new File(emlFile);
+//        InputStream inputStream = new FileInputStream(file);
+//        Message message = new MimeMessage(null, inputStream);
+//
+//        // Create a PDF document
+//        PDDocument document = new PDDocument();
+//
+//        // Create a new page in the PDF document
+//        PDPage page = new PDPage(PDRectangle.A4);
+//        document.addPage(page);
+//
+//        // Create a new content stream for the PDF page
+//        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+//
+//        // Set the font and font size for the PDF document
+//        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+//
+//        // Get the email metadata
+//        String subject = message.getSubject();
+//        Address[] from = message.getFrom();
+//        Address[] to = message.getRecipients(Message.RecipientType.TO);
+//        Address[] cc = message.getRecipients(Message.RecipientType.CC);
+//        Date sentDate = message.getSentDate();
+//        Date receivedDate = message.getReceivedDate();
+//
+//        float yPosition = page.getMediaBox().getHeight() - 50;  // start from the top
+//
+//        yPosition = addText(contentStream, "Subject:", PDType1Font.TIMES_BOLD, 12, 50, yPosition);
+//        yPosition = addText(contentStream, subject, PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//
+//        yPosition = addText(contentStream, "From:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
+//        yPosition = addText(contentStream, formatAddresses(from), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//
+//        yPosition = addText(contentStream, "To:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
+//        yPosition = addText(contentStream, formatAddresses(to), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//
+//        if (cc != null && cc.length > 0) {
+//            yPosition = addText(contentStream, "Cc:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
+//            yPosition = addText(contentStream, formatAddresses(cc), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//        }
+//
+//        if (sentDate != null) {
+//            yPosition = addText(contentStream, "Sent Date:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
+//            yPosition = addText(contentStream, sentDate.toString(), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//        }
+//
+//        if (receivedDate != null) {
+//            yPosition = addText(contentStream, "Received Date:", PDType1Font.TIMES_BOLD, 12, 50, yPosition - 15);
+//            yPosition = addText(contentStream, receivedDate.toString(), PDType1Font.TIMES_ROMAN, 12, 50, yPosition - 15);
+//        }
+//
+//        // Process the email body and attachments
+//        yPosition = processPart(message, document, contentStream, yPosition);
+//
+//        File org = new File(emlFile);
+//        String orgName = org.getName();
+//        String path = emlFile.substring(0, emlFile.indexOf(orgName));
+//        String newPath = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+//
+//        // Close the content stream and PDF document
+//        contentStream.close();
+//        document.save(newPath);
+//        document.close();
+//        inputStream.close();
+//        return newPath;
     }
 
     private static float addText(PDPageContentStream contentStream, String text, PDType1Font font, int fontSize, float x, float y) throws IOException {

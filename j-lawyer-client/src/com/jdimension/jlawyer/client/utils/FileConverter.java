@@ -663,11 +663,18 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.jlawyer.bea.model.Attachment;
+import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageExport;
 
 /**
  *
@@ -706,11 +713,11 @@ public class FileConverter {
     }
 
     public boolean supportsInputFormat(String url) {
-        
+
         return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
-        
+
     }
-    
+
     protected boolean supportsInputFormat(String url, List<String> supportedFormats) {
         String lUrl = url.toLowerCase();
         for (String s : supportedFormats) {
@@ -721,9 +728,90 @@ public class FileConverter {
         return false;
     }
 
-    private FileConverter() {
+    protected static String pdf2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".pdf")) {
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
+            new File(tempFile).deleteOnExit();
+            return tempFile;
+        }
+        return url;
     }
     
+    protected String bea2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".bea")) {
+
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            MessageExport export = new MessageExport();
+            export.setContent(data);
+            Message msg = BeaAccess.getMessageFromExport(export);
+            
+            byte[] pdf=msg.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+            String beaPdf=FileUtils.createTempFile(inputFile.getName() + ".pdf", pdf);
+            
+            ArrayList<Attachment> attachments=msg.getAttachments();
+            if (!attachments.isEmpty()) {
+                PDFMergerUtility merger = new PDFMergerUtility();
+
+                merger.addSource(new File(beaPdf));
+                
+                for (Attachment att : attachments) {
+                    
+                    try {
+                        String attFile=FileUtils.createTempFile(att.getFileName(), att.getContent());
+                        String attFilePdf=convertToPDF(attFile);
+                        
+                        merger.addSource(new File(attFilePdf));
+                    
+                    } catch (Throwable t) {
+                        log.error("unable to convert attachment " + att.getFileName() + " of beA message " + url + " to PDF - skipping!", t);
+                    }
+                }
+
+                File outputFile = File.createTempFile(url, ".pdf");
+                merger.setDestinationFileName(outputFile.getAbsolutePath());
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                return outputFile.getAbsolutePath();
+
+            } else {
+                return beaPdf;
+            }
+        }
+        return url;
+    }
+
+    protected static String eml2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".eml")) {
+
+            String emlPdf = EmailToPDFConverter.convertToPdf(url);
+
+            List<String> attachmentsPdf = EmailToPDFConverter.convertAttachmentsToPdf(url);
+            if (!attachmentsPdf.isEmpty()) {
+                PDFMergerUtility merger = new PDFMergerUtility();
+
+                merger.addSource(new File(emlPdf));
+                for (String file : attachmentsPdf) {
+                    merger.addSource(new File(file));
+                }
+
+                File outputFile = File.createTempFile(url, ".pdf");
+                merger.setDestinationFileName(outputFile.getAbsolutePath());
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                return outputFile.getAbsolutePath();
+
+            } else {
+                return emlPdf;
+            }
+
+        }
+        return url;
+    }
+
+    private FileConverter() {
+    }
+
     public static class WindowsFileConverter extends FileConverter {
 
         private WindowsFileConverter() {
@@ -791,6 +879,19 @@ public class FileConverter {
 
         @Override
         public String convertToPDF(String url) throws Exception {
+            
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+            
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
@@ -937,19 +1038,18 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
-            if(url.toLowerCase().endsWith(".eml")) {
-                String emlPdf=EmailToPDFConverter.convertToPdf(url);
-                
-                List<String> attachmentsPdf=EmailToPDFConverter.convertAttachmentsToPdf(url);
-                if(!attachmentsPdf.isEmpty()) {
-                    // merge
-                }
-                
-                return emlPdf;
-                
-                
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
             }
             
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
@@ -1024,13 +1124,25 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+            
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
-            
+
             File inputFile = new File(url);
             File outputDir = inputFile.getParentFile();
-            String parentPath=null;
+            String parentPath = null;
             if (outputDir != null) {
                 parentPath = outputDir.getAbsolutePath();
 

@@ -29,10 +29,10 @@ public class Helper {
     public static final String MULTIPART_TYPE = "multipart/*";
     public static final String IMAGE_TYPE = "image/*";
     public static final String CONTENT_ID = "Content-Id";
-    public static final String HEADER_PARAM_FROM = "Von";
-    public static final String HEADER_PARAM_SUBJECT = "Betreff";
-    public static final String HEADER_PARAM_TO = "An";
-    public static final String HEADER_PARAM_DATE = "Datum";
+    public static final String HEADER_PARAM_FROM = "Von: ";
+    public static final String HEADER_PARAM_SUBJECT = "Betreff: ";
+    public static final String HEADER_PARAM_TO = "An: ";
+    public static final String HEADER_PARAM_DATE = "Datum: ";
     public static final String UNKNOWN = "unknown_";
 
     public static final String TEMP_DIR = "temp_eml_converter_" + now();
