@@ -4401,7 +4401,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
             // tabs that require the case to be save before they can be used
             if (this.dto == null || this.dto.getId() == null) {
-                this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
+                this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuss die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
 
             if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount() == 0) {
@@ -7705,7 +7705,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public boolean save() {
 
         if (this.txtName.getText() == null || "".equals(this.txtName.getText())) {
-            JOptionPane.showMessageDialog(this, "Es muß mindestens ein Kurzrubrum angegeben werden, um eine Akte zu speichern.", "Akten - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Es muss mindestens ein Kurzrubrum angegeben werden, um eine Akte zu speichern.", "Akten - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
 

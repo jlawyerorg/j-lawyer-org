@@ -697,7 +697,7 @@ public class ArchiveFileTagActionListener implements ActionListener {
             if(this.archiveFileId==null) {
                 if(this.caller!=null) {
                     TagToggleButton tb=(TagToggleButton)ae.getSource();
-                    boolean saved=this.caller.confirmSave("Bevor Etiketten aktiviert werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", tb.getText());
+                    boolean saved=this.caller.confirmSave("Bevor Etiketten aktiviert werden können,\nmuss die Akte gespeichert werden.\n\nJetzt speichern?", tb.getText());
                     if(!saved) {
                         
                         tb.setSelected(false);
