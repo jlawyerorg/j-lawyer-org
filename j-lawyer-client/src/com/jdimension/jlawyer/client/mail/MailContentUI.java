@@ -1346,6 +1346,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             htmlContent = msg.getConvertedBodyHTML();
         }
 
+        if(!htmlContent.toLowerCase().contains("<html") && !htmlContent.contains("/>") && !htmlContent.toLowerCase().contains("<p")) {
+            // getConvertedBodyHTML seems to return plain text in some cases
+            htmlContent=null;
+        }
+        
         if (htmlContent != null) {
 
             final String fxHtml = htmlContent;
