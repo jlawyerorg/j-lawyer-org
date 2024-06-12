@@ -5280,7 +5280,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdExportHtmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHtmlActionPerformed
 
         ClientSettings s = ClientSettings.getInstance();
-        String lastDir = s.getConfiguration("client.archivefiles.htmlexport.lastdir", System.getProperty("user.home"));
+        String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
 
         if (!lastDir.endsWith(File.separator)) {
             lastDir = lastDir + File.separator;
@@ -5301,7 +5301,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File dir = chooser.getSelectedFile();
             try {
-                s.setConfiguration("client.archivefiles.htmlexport.lastdir", dir.getCanonicalPath());
+                s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
             } catch (Throwable t) {
                 log.error("can not get canonical path during html export", t);
             }
@@ -6939,7 +6939,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdExportPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportPdfActionPerformed
         ClientSettings s = ClientSettings.getInstance();
-        String lastDir = s.getConfiguration("client.archivefiles.htmlexport.lastdir", System.getProperty("user.home"));
+        String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
 
         if (!lastDir.endsWith(File.separator)) {
             lastDir = lastDir + File.separator;
@@ -6960,7 +6960,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File dir = chooser.getSelectedFile();
             try {
-                s.setConfiguration("client.archivefiles.htmlexport.lastdir", dir.getCanonicalPath());
+                s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
             } catch (Throwable t) {
                 log.error("can not get canonical path during html export", t);
             }
@@ -6968,12 +6968,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
             if (!open.isEmpty()) {
-                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                StringBuilder question = new StringBuilder("<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>");
                 for (String o : open) {
-                    question = question + "<li>" + o + "</li>";
+                    question.append("<li>").append(o).append("</li>");
                 }
-                question = question + "</ul></html>";
-                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                question.append("</ul></html>");
+                int response = JOptionPane.showConfirmDialog(this, question.toString(), "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
                 if (response == JOptionPane.NO_OPTION) {
                     return;
                 }
