@@ -791,6 +791,8 @@ public class ClientSettings {
     
     public static final String CONF_SOUND_LASTRECORDINGDEVICE="client.sound.lastrecordingdevice";
     
+    public static final String CONF_CASES_EXPORT_LASTDIR="client.archivefiles.htmlexport.lastdir";
+    
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
