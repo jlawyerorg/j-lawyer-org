@@ -909,18 +909,31 @@ public class CommonMailUtils {
     }
     
     public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
-
+        
         ArrayList<String> attachmentNames = new ArrayList<>();
+        ArrayList<AttachmentInfo> infos=getAttachmentInfo(partObject);
+        if(infos!=null) {
+            for(AttachmentInfo i: infos) {
+                attachmentNames.add(i.getFileName());
+            }
+        }
+        return attachmentNames;
+        
+    }
+    
+    public static ArrayList<AttachmentInfo> getAttachmentInfo(Object partObject) throws Exception {
+
+        ArrayList<AttachmentInfo> attachmentInfos = new ArrayList<>();
 
         if (partObject == null) {
-            return attachmentNames;
+            return attachmentInfos;
         }
 
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
             for (int i = 0; i < mp.getCount(); i++) {
                 Part childPart = mp.getBodyPart(i);
-                attachmentNames.addAll(getAttachmentNames(childPart));
+                attachmentInfos.addAll(getAttachmentInfo(childPart));
 
             }
         } else {
@@ -935,7 +948,7 @@ public class CommonMailUtils {
 
                     try {
                         if (mimePart.getContent() instanceof Multipart) {
-                            attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
+                            attachmentInfos.addAll(getAttachmentInfo(mimePart.getContent()));
                         }
                     } catch (Throwable t) {
                         log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
@@ -945,17 +958,17 @@ public class CommonMailUtils {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
-                        attachmentNames.add(decodeText(part.getFileName()));
+                        attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), false));
                     } else {
                         if (part.getContentType().toLowerCase().contains("message/rfc822")) {
-                            attachmentNames.add("Nachricht_" + part.getSize() + ".eml");
+                            attachmentInfos.add(new AttachmentInfo("Nachricht_" + part.getSize() + ".eml", false));
                         }
                     }
                 } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
                     if (part.getFileName() != null) {
-                        attachmentNames.add(decodeText(part.getFileName()));
+                        attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), true));
                     }
 
                 } else {
@@ -963,7 +976,7 @@ public class CommonMailUtils {
                 }
             }
         }
-        return attachmentNames;
+        return attachmentInfos;
     }
     
     public static byte[] getAttachmentBytes(String name, Message msg) throws Exception {

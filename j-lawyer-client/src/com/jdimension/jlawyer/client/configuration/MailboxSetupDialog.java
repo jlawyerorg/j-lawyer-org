@@ -767,6 +767,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtScanBlacklist.setText("");
         this.txtScanExclusionList.setText("");
         this.lblScanTags.setText("");
+        this.sldMinAttachmentSizeKb.setValue(0);
+        this.chkIgnoreInlineAttachments.setSelected(true);
 
     }
     
@@ -892,6 +894,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         lblScanTags = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         txtScanExclusionList = new javax.swing.JTextField();
+        jLabel22 = new javax.swing.JLabel();
+        lblMinAttachmentSize = new javax.swing.JLabel();
+        chkIgnoreInlineAttachments = new javax.swing.JCheckBox();
+        sldMinAttachmentSizeKb = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("E-Mail - Postfächer");
@@ -1277,7 +1283,22 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         lblScanTags.setText("Tag 1, Tag 2");
 
-        jLabel21.setText("Nachrichten von / an nicht automatisch verarbeiten (kommaseparierte Liste):");
+        jLabel21.setText("von / an Adresse gesendet (kommaseparierte Liste):");
+
+        jLabel22.setText("Nachrichten samt Anlagen nicht speichern wenn");
+
+        lblMinAttachmentSize.setText("Anlagen nicht speichern, die kleiner als .. KB sind:");
+
+        chkIgnoreInlineAttachments.setText("eingebettete Anlagen nicht speichern (bspw. Logo in Signatur)");
+
+        sldMinAttachmentSizeKb.setMaximum(50);
+        sldMinAttachmentSizeKb.setPaintLabels(true);
+        sldMinAttachmentSizeKb.setValue(10);
+        sldMinAttachmentSizeKb.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sldMinAttachmentSizeKbStateChanged(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -1292,8 +1313,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtScanExclusionList, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtScanBlacklist, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 704, Short.MAX_VALUE)
                             .addGroup(jPanel5Layout.createSequentialGroup()
@@ -1301,10 +1320,21 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
                                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtScanExclusionList)
+                                    .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel22)
                                     .addComponent(jLabel20)
-                                    .addComponent(jLabel19))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                    .addComponent(jLabel19)
+                                    .addComponent(chkIgnoreInlineAttachments))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(lblMinAttachmentSize)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(sldMinAttachmentSizeKb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1325,10 +1355,18 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                     .addComponent(cmdScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel22)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel21)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtScanExclusionList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(154, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkIgnoreInlineAttachments)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMinAttachmentSize)
+                    .addComponent(sldMinAttachmentSizeKb, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(59, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Automation", jPanel5);
@@ -1457,6 +1495,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setScanInbox(this.chkScanInbox.isSelected());
             ms.setScanBlacklistedTypes(this.txtScanBlacklist.getText());
             ms.setScanExclusionList(this.txtScanExclusionList.getText());
+            ms.setScanIgnoreInline(this.chkIgnoreInlineAttachments.isSelected());
+            ms.setScanMinAttachmentSize(this.sldMinAttachmentSizeKb.getValue()*1024);
+            
             List<String> al = ComponentUtils.getSelectedPopupMenuItems(popScanTags);
             ms.setScanDocumentTagsArray(al.toArray(String[]::new));
 
@@ -1558,6 +1599,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.popScanTags.show(this.cmdScanTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdScanTagsMousePressed
 
+    private void sldMinAttachmentSizeKbStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldMinAttachmentSizeKbStateChanged
+        this.lblMinAttachmentSize.setText("<html>Anlagen nicht speichern, die kleiner als <b>" + sldMinAttachmentSizeKb.getValue() + "KB</b> sind:</html>");
+    }//GEN-LAST:event_sldMinAttachmentSizeKbStateChanged
+
     private void updatedUI(MailboxSetup ms) {
 
         this.txtDisplayName.setText(ms.getDisplayName());
@@ -1606,6 +1651,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.chkScanInbox.setSelected(ms.isScanInbox());
         this.txtScanBlacklist.setText(ms.getScanBlacklistedTypes());
         this.txtScanExclusionList.setText(ms.getScanExclusionList());
+        this.chkIgnoreInlineAttachments.setSelected(ms.isScanIgnoreInline());
+        this.sldMinAttachmentSizeKb.setValue((int)((int)ms.getScanMinAttachmentSize()/(int)1024));
         
         this.buildScanTagsPopup(this.availableDocumentTags, ms.getScanDocumentTagsArray());
 
@@ -1655,6 +1702,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkEmailInSsl;
     private javax.swing.JCheckBox chkEmailOutSsl;
     private javax.swing.JCheckBox chkEmailStartTls;
+    private javax.swing.JCheckBox chkIgnoreInlineAttachments;
     private javax.swing.JCheckBox chkMsExchange;
     private javax.swing.JCheckBox chkScanInbox;
     private javax.swing.JComboBox cmbAccountType;
@@ -1679,6 +1727,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1695,11 +1744,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblMinAttachmentSize;
     private javax.swing.JLabel lblScanTags;
     private javax.swing.JLabel lblTestProgress;
     private javax.swing.JPopupMenu popScanTags;
     private javax.swing.JPasswordField pwdInPassword;
     private javax.swing.JPasswordField pwdOutPassword;
+    private javax.swing.JSlider sldMinAttachmentSizeKb;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtClientId;
     private javax.swing.JTextField txtClientSecret;

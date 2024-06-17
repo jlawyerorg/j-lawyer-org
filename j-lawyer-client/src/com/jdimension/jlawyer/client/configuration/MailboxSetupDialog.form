@@ -722,8 +722,6 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="27" pref="27" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jLabel21" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="txtScanExclusionList" alignment="1" max="32767" attributes="0"/>
                                   <Component id="txtScanBlacklist" alignment="1" max="32767" attributes="0"/>
                                   <Component id="jLabel12" pref="704" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
@@ -731,12 +729,26 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lblScanTags" max="32767" attributes="0"/>
                                   </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="txtScanExclusionList" max="32767" attributes="0"/>
+                                          <Component id="jLabel21" max="32767" attributes="0"/>
+                                      </Group>
+                                  </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel20" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel19" min="-2" max="-2" attributes="0"/>
+                                          <Component id="chkIgnoreInlineAttachments" alignment="0" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="lblMinAttachmentSize" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="sldMinAttachmentSizeKb" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -764,10 +776,19 @@
                           <Component id="lblScanTags" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtScanExclusionList" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="154" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="chkIgnoreInlineAttachments" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblMinAttachmentSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sldMinAttachmentSizeKb" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="59" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -833,10 +854,35 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel21">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Nachrichten von / an nicht automatisch verarbeiten (kommaseparierte Liste):"/>
+                <Property name="text" type="java.lang.String" value="von / an Adresse gesendet (kommaseparierte Liste):"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtScanExclusionList">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel22">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Nachrichten samt Anlagen nicht speichern wenn"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblMinAttachmentSize">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Anlagen nicht speichern, die kleiner als .. KB sind:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkIgnoreInlineAttachments">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="eingebettete Anlagen nicht speichern (bspw. Logo in Signatur)"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JSlider" name="sldMinAttachmentSizeKb">
+              <Properties>
+                <Property name="maximum" type="int" value="50"/>
+                <Property name="paintLabels" type="boolean" value="true"/>
+                <Property name="value" type="int" value="10"/>
+              </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="sldMinAttachmentSizeKbStateChanged"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

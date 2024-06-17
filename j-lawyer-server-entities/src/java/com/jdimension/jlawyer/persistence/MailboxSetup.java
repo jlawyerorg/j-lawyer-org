@@ -743,6 +743,10 @@ public class MailboxSetup implements Serializable, EventTypes {
     private String scanBlacklistedTypes="bas,bat,com,exe,html,jar,jnlp,js,lnk,msi,pl,reg,vbs";
     @Column(name = "scan_excludeadresses")
     private String scanExclusionList="";
+    @Column(name = "scan_ignoreinline")
+    private boolean scanIgnoreInline=true;
+    @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
+    private int scanMinAttachmentSize=0;
 
     public String getId() {
         return id;
@@ -1134,6 +1138,34 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setScanExclusionList(String scanExclusionList) {
         this.scanExclusionList = scanExclusionList;
+    }
+
+    /**
+     * @return the scanIgnoreInline
+     */
+    public boolean isScanIgnoreInline() {
+        return scanIgnoreInline;
+    }
+
+    /**
+     * @param scanIgnoreInline the scanIgnoreInline to set
+     */
+    public void setScanIgnoreInline(boolean scanIgnoreInline) {
+        this.scanIgnoreInline = scanIgnoreInline;
+    }
+
+    /**
+     * @return the minAttachmentSize
+     */
+    public int getScanMinAttachmentSize() {
+        return scanMinAttachmentSize;
+    }
+
+    /**
+     * @param minAttachmentSize the minAttachmentSize to set
+     */
+    public void setScanMinAttachmentSize(int minAttachmentSize) {
+        this.scanMinAttachmentSize = minAttachmentSize;
     }
 
     
