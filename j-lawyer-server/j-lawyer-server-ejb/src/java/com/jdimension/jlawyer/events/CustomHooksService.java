@@ -715,9 +715,13 @@ public class CustomHooksService implements CustomHooksServiceLocal {
             resetCache();
         }
 
+        String evtId=evt.getHookId();
+        int index=0;
         for (IntegrationHook hook : allHooks) {
             if (hook.getHookType().equals(evt.getHookType().name())) {
+                evt.setHookId(evtId + index);
                 executeHook(hook, evt);
+                index=index+1;
             }
         }
     }
