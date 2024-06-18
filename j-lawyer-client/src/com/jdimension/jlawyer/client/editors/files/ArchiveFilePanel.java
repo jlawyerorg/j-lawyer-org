@@ -1944,7 +1944,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdBackToSearch = new javax.swing.JButton();
         cmdExportHtml = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
-        cmdExportPdf = new javax.swing.JButton();
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
@@ -3801,14 +3800,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        cmdExportPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
-        cmdExportPdf.setToolTipText("selektierte Dokument als zusammengeführtes PDF exportieren");
-        cmdExportPdf.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdExportPdfActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout jPanel13Layout = new org.jdesktop.layout.GroupLayout(jPanel13);
         jPanel13.setLayout(jPanel13Layout);
         jPanel13Layout.setHorizontalGroup(
@@ -3821,8 +3812,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdExportHtml)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdExportPdf)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdToEditMode)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSave)
@@ -3833,7 +3822,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel13Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdExportPdf)
                     .add(cmdSave)
                     .add(cmdToEditMode)
                     .add(cmdPrint)
@@ -6937,33 +6925,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdDuplicateAccountEntryActionPerformed
 
-    private void cmdExportPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportPdfActionPerformed
-        ClientSettings s = ClientSettings.getInstance();
-        String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
-
-        if (!lastDir.endsWith(File.separator)) {
-            lastDir = lastDir + File.separator;
-        }
-
-        if (!(new File(lastDir).exists())) {
-            lastDir = System.getProperty("user.home");
-            if (!lastDir.endsWith(File.separator)) {
-                lastDir = lastDir + File.separator;
-            }
-        }
-
-        JFileChooser chooser = new JFileChooser(lastDir);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-        chooser.setDialogTitle("Verzeichnis wählen");
-        chooser.setApproveButtonText("Auswählen");
-        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File dir = chooser.getSelectedFile();
-            try {
-                s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
-            } catch (Throwable t) {
-                log.error("can not get canonical path during html export", t);
-            }
+    public void exportSelectedDocumentsAsPdf() {
+        
 
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
@@ -6987,6 +6950,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
             }
+            
+            ExportAsPdfWizardDialog dlg = new ExportAsPdfWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+
+            WizardSteps steps = new WizardSteps(dlg);
+
+            WizardDataContainer data = steps.getData();
+            data.put("export.documents", selectedDocs);
+            data.put("export.case", this.dto);
+
+            steps.addStep(new ExportAsPdfConversionStep());
+            steps.addStep(new ExportAsPdfOrderingStep());
+            steps.addStep(new ExportAsPdfMergeStep());
+            //steps.addStep(new EpostLetterValidationStep());
+            //steps.addStep(new EpostLetterSendStep());
+            //steps.addStep(new EpostLetterSendStatus());
+
+            dlg.setSteps(steps);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            
 
 //            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
 //            dlg.setShowCancelButton(true);
@@ -7012,13 +6995,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //        }
             
 
-        }
-
         
-        
-        
-    }//GEN-LAST:event_cmdExportPdfActionPerformed
-
+    }
+    
     private void updateDocumentHighlights(int highlightIndex) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -7469,7 +7448,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;
     private javax.swing.JButton cmdExportHtml;
-    private javax.swing.JButton cmdExportPdf;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;

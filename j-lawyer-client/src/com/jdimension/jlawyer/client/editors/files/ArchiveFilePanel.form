@@ -3161,8 +3161,6 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdExportHtml" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="cmdExportPdf" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdToEditMode" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
@@ -3175,7 +3173,6 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="cmdExportPdf" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdToEditMode" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPrint" min="-2" max="-2" attributes="0"/>
@@ -3249,17 +3246,6 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="cmdExportPdf">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/pdf.png"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="selektierte Dokument als zusammengef&#xfc;hrtes PDF exportieren"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportPdfActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

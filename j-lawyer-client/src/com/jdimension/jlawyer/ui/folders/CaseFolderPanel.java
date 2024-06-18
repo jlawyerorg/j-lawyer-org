@@ -1126,6 +1126,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         cmdSelectNone1 = new javax.swing.JButton();
         sortFileType = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortCreationDate = new com.jdimension.jlawyer.ui.folders.SortButton();
+        cmdExportSelectedAsPdf = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
@@ -1287,6 +1288,14 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         });
 
+        cmdExportSelectedAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        cmdExportSelectedAsPdf.setToolTipText("alle selektierten Dokumente in ein PDF exportieren");
+        cmdExportSelectedAsPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportSelectedAsPdfActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1313,7 +1322,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addComponent(sortFileType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(48, 48, 48))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdExportSelectedAsPdf)
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1332,8 +1343,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                         .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(sortFileType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sortCreationDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(sortCreationDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdExportSelectedAsPdf))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jScrollPane2.setBorder(null);
@@ -1370,7 +1382,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addComponent(jScrollPane2))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1))))
@@ -1585,6 +1597,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.sort();
     }//GEN-LAST:event_sortCreationDateMouseClicked
 
+    private void cmdExportSelectedAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportSelectedAsPdfActionPerformed
+        if(this.caseContainer!=null) {
+            this.caseContainer.exportSelectedDocumentsAsPdf();
+        }
+    }//GEN-LAST:event_cmdExportSelectedAsPdfActionPerformed
+
     public void setFolderTemplateNames(ArrayList<String> templateNames) {
         this.popFolderTemplates.removeAll();
         StringUtils.sortIgnoreCase(templateNames);
@@ -1602,6 +1620,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdActions;
+    private javax.swing.JButton cmdExportSelectedAsPdf;
     private javax.swing.JButton cmdMoveToFolder;
     private javax.swing.JButton cmdOptions;
     private javax.swing.JButton cmdSelectAll;
