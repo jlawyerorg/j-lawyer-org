@@ -6962,9 +6962,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             steps.addStep(new ExportAsPdfConversionStep());
             steps.addStep(new ExportAsPdfOrderingStep());
             steps.addStep(new ExportAsPdfMergeStep());
-            //steps.addStep(new EpostLetterValidationStep());
-            //steps.addStep(new EpostLetterSendStep());
-            //steps.addStep(new EpostLetterSendStatus());
 
             dlg.setSteps(steps);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
