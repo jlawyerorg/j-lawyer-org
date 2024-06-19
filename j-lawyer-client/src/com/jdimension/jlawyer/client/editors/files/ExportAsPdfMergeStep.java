@@ -666,32 +666,44 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.voip.*;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitDestination;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageXYZDestination;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 
 /**
  *
@@ -851,7 +863,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         new Thread(() -> {
             try {
                 String tempFile = FileUtils.createTempFile(FileUtils.sanitizeFileName(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "_" + caseDto.getFileNumber() + " " + caseDto.getName() + ".pdf"), new byte[0]);
-                mergePDFsWithTOC(pdfFiles, tempFile);
+                mergePDFsWithTOC(pdfFiles, tempFile, caseDto);
                 this.resultFile = tempFile;
                 FileUtils.cleanupTempFile(tempFile);
                 ThreadUtils.updateLabel(this.lblProgress, "Lade Vorschau...");
@@ -915,7 +927,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 //        merger.setDestinationFileName(outputFile);
 //        merger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
 //    }
-    private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile) throws IOException {
+    private static void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws IOException {
         List<Integer> startPages = new ArrayList<>();
         PDFMergerUtility merger = new PDFMergerUtility();
         PDDocument mergedDoc = new PDDocument();
@@ -928,79 +940,142 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             currentPageCount += doc.getNumberOfPages();
             doc.close();
         }
+        PDDocumentInformation info=new PDDocumentInformation();
+        info.setTitle(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+        info.setAuthor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        info.setCreationDate(GregorianCalendar.getInstance());
+        mergedDoc.setDocumentInformation(info);
 
         // Create TOC
         PDDocument tocDoc = new PDDocument();
         PDPage tocPage = new PDPage(PDRectangle.A4);
         tocDoc.addPage(tocPage);
 
-        ArchiveFileBean caseDto = (ArchiveFileBean) data.get("export.case");
-        
         PDPageContentStream contentStream = new PDPageContentStream(tocDoc, tocPage);
-        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 14);
+        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
         contentStream.beginText();
         contentStream.setLeading(14.5f);
         contentStream.newLineAtOffset(50, 750);
-        contentStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + ": Inhaltsverzeichnis");
+        contentStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
         contentStream.newLine();
         contentStream.newLine();
+        
+        contentStream.endText();
 
-        contentStream.setFont(PDType1Font.HELVETICA, 10);
+        contentStream.setFont(PDType1Font.HELVETICA, 12);
 
         List<PDAnnotation> annotations = new ArrayList<>();
 
+        
+        
+        
+        float iconWidth = 16;
+        float iconHeight = 16;
+
+        PDDocumentOutline outline = new PDDocumentOutline();
+        mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
+        
         for (int i = 0; i < pdfFiles.size(); i++) {
             String fileName = pdfFiles.get(i).getName();
+            
+            Icon fileTypeIcon=FileUtils.getInstance().getFileTypeIcon(fileName);
+            byte[] iconBytes=iconToByteArray(fileTypeIcon);
+            //PDImageXObject pdImage = PDImageXObject.createFromFile(iconPath, tocDoc);
+            PDImageXObject pdImage = PDImageXObject.createFromByteArray(tocDoc, iconBytes, ""+System.currentTimeMillis()+".png");
+            
             int tocPageNumber = tocDoc.getNumberOfPages(); // Adjust for TOC pages
             int destinationPageIndex = startPages.get(i) + tocPageNumber;
 
-            // Add text
+            
+            // End the text block before drawing the image
+            //contentStream.endText();
+
+            // Draw the icon at the beginning of each TOC line
+            float iconX = 50;
+            float iconY = 750 - (i + 2) * 14.5f - iconHeight / 2;
+            contentStream.drawImage(pdImage, iconX, iconY, iconWidth, iconHeight);
+
+            // Start a new text block for further text
+            contentStream.beginText();
+            contentStream.newLineAtOffset(65, 750 - (i + 2) * 14.5f);
             contentStream.showText(fileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
-            contentStream.newLine();
+            contentStream.endText();
+            
+            
+            
+            
+//            // Draw the icon at the beginning of each TOC line
+//            float iconX = 50;
+//            float iconY = 750 - (i + 2) * 14.5f - iconHeight / 2;
+//            contentStream.drawImage(pdImage, iconX, iconY, iconWidth, iconHeight);
+//
+//            // Add text
+//            contentStream.newLineAtOffset(15 + iconWidth, 0); // Move text cursor to the right of the icon
+//            contentStream.showText(fileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
+//            contentStream.newLine();
+//            contentStream.newLineAtOffset(-(15 + iconWidth), 0); // Reset text cursor position
 
-            // Create link annotation
-            PDAnnotationLink link = new PDAnnotationLink();
-            PDPageFitDestination destination = new PDPageFitDestination();
-            destination.setPage(mergedDoc.getPage(destinationPageIndex));
-            //destination.setPage(mergedDoc.getPage(destinationPageIndex-1));
-            PDActionGoTo action = new PDActionGoTo();
-            action.setDestination(destination);
-            link.setAction(action);
-
-            PDRectangle position = new PDRectangle();
-            position.setLowerLeftX(50);
-            position.setLowerLeftY(750 - (i + 2) * 14.5f);
-            position.setUpperRightX(500);
-            position.setUpperRightY(750 - (i + 1) * 14.5f);
-            link.setRectangle(position);
-
-            annotations.add(link);
+            addBookmark(mergedDoc, outline, fileName, mergedDoc.getPage(Math.min(destinationPageIndex-1, mergedDoc.getNumberOfPages()-1)), Math.min(destinationPageIndex-1, mergedDoc.getNumberOfPages()-1));
+            
         }
 
-        contentStream.endText();
+        //contentStream.endText();
         contentStream.close();
 
         tocPage.setAnnotations(annotations);
 
+        // Save TOC to temp file
+        File tocTempFile = createTempFileFromPDDocument(tocDoc);
+        tocDoc.close();
+
         // Merge TOC and main document
         PDFMergerUtility finalMerger = new PDFMergerUtility();
-        finalMerger.addSource(createTempFileFromPDDocument(tocDoc));
+        finalMerger.addSource(tocTempFile);
         finalMerger.addSource(createTempFileFromPDDocument(mergedDoc));
         finalMerger.setDestinationFileName(outputFile);
         finalMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
 
-        tocDoc.close();
         mergedDoc.close();
     }
-
+    
     private static File createTempFileFromPDDocument(PDDocument document) throws IOException {
         File tempFile = File.createTempFile("temp_pdf_", ".pdf");
         document.save(tempFile);
         return tempFile;
     }
+    
+    private static void addBookmark(PDDocument document, PDDocumentOutline outline, String title, PDPage page, int pageIndex) {
+        PDOutlineItem bookmark = new PDOutlineItem();
+        bookmark.setTitle(title);
+
+        PDPageXYZDestination destination = new PDPageXYZDestination();
+        destination.setPage(page);
+        destination.setTop((int) page.getMediaBox().getHeight());
+
+        bookmark.setDestination(destination);
+        outline.addLast(bookmark);
+    }
 
     @Override
     public void setWizardPanel(WizardMainPanel wizard) {
         this.wizard = wizard;
+    }
+    
+    private static byte[] iconToByteArray(Icon icon) {
+        // Create a buffered image with transparency
+        BufferedImage bi = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics g = bi.createGraphics();
+        // paint the Icon to the BufferedImage
+        icon.paintIcon(null, g, 0, 0);
+        g.dispose();
+
+        // Write the image to a byte array
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(bi, "png", baos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return baos.toByteArray();
     }
 }
