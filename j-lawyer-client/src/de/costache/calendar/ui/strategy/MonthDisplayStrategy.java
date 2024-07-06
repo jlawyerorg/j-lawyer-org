@@ -18,16 +18,21 @@ package de.costache.calendar.ui.strategy;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.ContentPanel;
 import de.costache.calendar.ui.DayPanel;
+import de.costache.calendar.ui.HeaderPanel;
 import de.costache.calendar.util.CalendarUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 /**
- * @author theodorcostache
+ * Month display strategy for the calendar UI.
+ * 
+ * Author: theodorcostache
  */
 class MonthDisplayStrategy implements DisplayStrategy {
 
@@ -36,23 +41,23 @@ class MonthDisplayStrategy implements DisplayStrategy {
     private final SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy");
     private final DayPanel[] days = new DayPanel[35];
     private JPanel displayPanel;
+    private HeaderPanel headerPanel;
 
     /**
      * Creates a new instance of MonthDisplayStrategy
      *
-     * @param parent
+     * @param parent the parent content panel
      */
     public MonthDisplayStrategy(final ContentPanel parent) {
         this.parent = parent;
         this.calendar = parent.getOwner();
+        this.headerPanel = calendar.getHeaderPanel(); // Hier den HeaderPanel aus JCalendar abrufen
         init();
     }
 
     @Override
     public void init() {
-
-        Calendar start = CalendarUtil.getCalendar(
-                new Date(), true);
+        Calendar start = CalendarUtil.getCalendar(new Date(), true);
         start.set(Calendar.DAY_OF_MONTH, 1);
         Calendar end = CalendarUtil.getCalendar(start.getTime(), true);
         end.add(Calendar.MONTH, 1);
@@ -64,7 +69,7 @@ class MonthDisplayStrategy implements DisplayStrategy {
         displayPanel.setOpaque(false);
         displayPanel.setLayout(new GridLayout(5, 7));
         final Calendar c = CalendarUtil.copyCalendar(start, true);
-        c.set(Calendar.DAY_OF_WEEK,c.getFirstDayOfWeek());
+        c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
             days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f);
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
@@ -72,6 +77,21 @@ class MonthDisplayStrategy implements DisplayStrategy {
             c.add(Calendar.DATE, 1);
         }
 
+        // Add mouse wheel listener to handle scrolling
+        displayPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() == Type.MONTH) {
+                    if (e.getWheelRotation() < 0) {
+                        moveIntervalLeft();
+                    } else {
+                        moveIntervalRight();
+                    }
+                }
+            }
+        });
+
+        updateMonthLabel();
     }
 
     @Override
@@ -97,13 +117,14 @@ class MonthDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalEnd(end);
 
         Calendar c = CalendarUtil.copyCalendar(start, true);
-        c.set(Calendar.DAY_OF_WEEK,c.getFirstDayOfWeek());
+        c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
             days[i].setDate(c.getTime());
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             c.add(Calendar.DATE, 1);
         }
 
+        updateMonthLabel();
         parent.validate();
         parent.repaint();
     }
@@ -122,22 +143,18 @@ class MonthDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalEnd(end);
 
         Calendar c = CalendarUtil.copyCalendar(start, true);
-        c.set(Calendar.DAY_OF_WEEK,c.getFirstDayOfWeek());
+        c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
             days[i].setDate(c.getTime());
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             c.add(Calendar.DATE, 1);
         }
 
+        updateMonthLabel();
         parent.validate();
         parent.repaint();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see de.mediamarkt.calendar.strategy.DisplayStrategy#getDisplayInterval()
-     */
     @Override
     public String getDisplayInterval() {
         Calendar c = CalendarUtil.copyCalendar(calendar.getConfig().getIntervalStart(), true);
@@ -156,25 +173,25 @@ class MonthDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalEnd(end);
 
         Calendar c = CalendarUtil.copyCalendar(start, true);
-        c.set(Calendar.DAY_OF_WEEK,c.getFirstDayOfWeek());
+        c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
             days[i].setDate(c.getTime());
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             c.add(Calendar.DATE, 1);
         }
 
+        updateMonthLabel();
         parent.validate();
         parent.repaint();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see de.mediamarkt.calendar.strategy.DisplayStrategy#getType()
-     */
+    private void updateMonthLabel() {
+        headerPanel.updateIntervalLabel(getDisplayInterval());
+    }
+
     @Override
     public Type getType() {
         return Type.MONTH;
     }
-
 }
+

@@ -203,5 +203,14 @@ public class HeaderPanel extends JPanel {
 	public JLabel getIntervalLabel() {
 		return intervalLabel;
 	}
+        
+        /**
+        * Updates the interval label text.
+        *
+        * @param text the new text for the interval label
+        */
+       public void updateIntervalLabel(String text) {
+           intervalLabel.setText(text);
+       }
 
 }

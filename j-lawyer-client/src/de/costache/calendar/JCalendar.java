@@ -331,4 +331,8 @@ public class JCalendar extends JPanel {
     public void setTooltipFormater(final CalendarEventFormat formater) {
         this.formater = formater;
     }
+    
+    public HeaderPanel getHeaderPanel() {
+        return headerPane;
+    }
 }
