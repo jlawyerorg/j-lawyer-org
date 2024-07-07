@@ -1067,7 +1067,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtExpendituresOutKeyReleased
 
     private void cmdSearchRecipientKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cmdSearchRecipientKeyReleased
-        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+        if(evt.getKeyCode()==KeyEvent.VK_SPACE) {
             evt.consume();
             this.popRecipients.show(this.cmdSearchRecipient, 0,0);
         }
@@ -1081,7 +1081,12 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
     private void taDescriptionKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_taDescriptionKeyPressed
         if(evt.getKeyCode()==KeyEvent.VK_TAB) {
-            this.txtEarnings.requestFocus();
+            if(evt.isShiftDown()) {
+                this.cmbInvoice.requestFocus();
+            }
+            else {
+                this.txtEarnings.requestFocus();
+            }
         }
     }//GEN-LAST:event_taDescriptionKeyPressed
 
