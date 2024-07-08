@@ -729,6 +729,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         this.tblReviewReasons = tblReviewReasons;
         this.caseDto = caseDto;
         initComponents();
+        this.cmbReviewReason.requestFocus();
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
 
