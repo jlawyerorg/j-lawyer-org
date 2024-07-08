@@ -724,7 +724,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                         String name = ((PartiesPanelEntry)value).getAddress().toDisplayName();
                         if(s != null && s.length() > 0) {
                             s = s.concat(" ");
-                            ((JLabel) c).setToolTipText(name + "- Zeichen: " + s);
+                            ((JLabel) c).setToolTipText(name + " - Zeichen: " + s);
                         }
                     } else {
                         ((JLabel) c).setToolTipText(null);
