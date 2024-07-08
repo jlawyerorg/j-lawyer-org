@@ -684,7 +684,7 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
         
         super(parent, java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         initComponents();
-        
+        this.cmdConfirm.requestFocus();
         this.confirmed=false;
     }
     
