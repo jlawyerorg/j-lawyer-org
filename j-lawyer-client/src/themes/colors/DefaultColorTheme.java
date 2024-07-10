@@ -697,7 +697,8 @@ public class DefaultColorTheme {
         
         highlightColors.add(new Color(-3407821));
         highlightColors.add(new Color(-13312));
-        highlightColors.add(COLOR_LOGO_GREEN);
+        highlightColors.add(new Color(-16751616)); // Dark green
+        //highlightColors.add(COLOR_LOGO_GREEN);
         
         // red-ish
         //highlightColors.add(COLOR_LOGO_RED);
