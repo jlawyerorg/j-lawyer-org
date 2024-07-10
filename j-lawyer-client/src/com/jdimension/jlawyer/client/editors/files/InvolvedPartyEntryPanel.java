@@ -693,6 +693,8 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import com.jdimension.jlawyer.client.utils.FindRouteToAddress;
+
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -925,6 +927,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
         mnuCopy = new javax.swing.JMenuItem();
+        mnuFindRouteToAddress = new javax.swing.JMenuItem();
+        mnuFindAddress = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -1027,6 +1031,30 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
         partiesPopup.add(mnuCopy);
+
+        mnuFindRouteToAddress.setText("Route anzeigen");
+        mnuFindRouteToAddress.setToolTipText("Route zur Adresse im Browser öffnen");
+
+        mnuFindRouteToAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCopyActionPerformed(evt);
+            }
+        });
+        mnuFindRouteToAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindRouteToAddressActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuFindRouteToAddress);
+
+        mnuFindAddress.setText("Adresse auf Karte zeigen");
+        mnuFindAddress.setToolTipText("Karte zur Adresse im Browser öffnen");
+        mnuFindAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindAddressActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuFindAddress);
 
         lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
@@ -1455,6 +1483,54 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
 
+    private void mnuFindRouteToAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindRouteToAddressActionPerformed
+        if (this.a != null) {
+            
+            // PROFILE as startAdress
+            ServerSettings sset = ServerSettings.getInstance();
+            String companyCity = sset.getSetting(ServerSettings.PROFILE_COMPANYCITY, "");
+            String companyStreet = sset.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "");
+            String companyZip = sset.getSetting(ServerSettings.PROFILE_COMPANYZIP, "");
+            
+            String startAddress = companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
+            String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
+            
+            // JOptionPane.showMessageDialog(null, startAddress);  
+            
+            try {
+                
+                String coordinates1 = FindRouteToAddress.getCoordinates(startAddress);
+                String coordinates2 = FindRouteToAddress.getCoordinates(destinationAddress);
+   
+                if (coordinates1 != null && coordinates2 != null) {
+                    
+                    FindRouteToAddress.openBrowserWithRoute(coordinates1, coordinates2);
+                    
+                } else {
+                    JOptionPane.showMessageDialog(null, "Die Koordinaten für eine oder beide Adressen konnten nicht abgerufen werden.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }           
+        }
+    }//GEN-LAST:event_mnuFindRouteToAddressActionPerformed
+
+    private void mnuFindAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindAddressActionPerformed
+        if (this.a != null) {
+            
+            String address = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
+            
+            try {
+                
+                    FindRouteToAddress.openBrowserWithAddress(address);
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Die Addresse konnte nicht abgerufen werden.");
+                e.printStackTrace();
+            }           
+        }
+    }//GEN-LAST:event_mnuFindAddressActionPerformed
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdActions;
@@ -1474,6 +1550,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
     private javax.swing.JMenuItem mnuCopy;
+    private javax.swing.JMenuItem mnuFindAddress;
+    private javax.swing.JMenuItem mnuFindRouteToAddress;
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendEmail;
