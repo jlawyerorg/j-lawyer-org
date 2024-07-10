@@ -719,12 +719,14 @@ public class PartiesPanel extends javax.swing.JPanel {
             if (c instanceof JLabel) {
                 if (value instanceof PartiesPanelEntry) {
                     ((JLabel) c).setText(((AddressBean) ((PartiesPanelEntry) value).getAddress()).toDisplayName());
-                    if(((PartiesPanelEntry)value).getInvolvement()!=null) {
-                        String s = ((PartiesPanelEntry)value).getInvolvement().getReference();
-                        String name = ((PartiesPanelEntry)value).getAddress().toDisplayName();
-                        if(s != null && s.length() > 0) {
+                    if (((PartiesPanelEntry) value).getInvolvement() != null) {
+                        String s = ((PartiesPanelEntry) value).getInvolvement().getReference();
+                        String name = ((PartiesPanelEntry) value).getAddress().toDisplayName();
+                        if (s != null && s.length() > 0) {
                             s = s.concat(" ");
                             ((JLabel) c).setToolTipText(name + " - Zeichen: " + s);
+                        } else if (name != null && name.length() > 0) {
+                            ((JLabel) c).setToolTipText(name);
                         }
                     } else {
                         ((JLabel) c).setToolTipText(null);
