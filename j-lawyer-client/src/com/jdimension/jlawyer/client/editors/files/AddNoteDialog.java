@@ -715,7 +715,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
         this.txtFileName.setText(df.format(new Date()) + "_Notiz");
 
         SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
