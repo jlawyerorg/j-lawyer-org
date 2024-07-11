@@ -1166,7 +1166,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         lblPaymentsTotal = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setModalityType(java.awt.Dialog.ModalityType.MODELESS);
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
