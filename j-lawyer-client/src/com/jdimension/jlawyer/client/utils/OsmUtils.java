@@ -668,33 +668,28 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonReader;
 import javax.json.JsonObject;
 import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author Maximilian Steinert
  */
-public class FindRouteToAddress {
-    
+public class OsmUtils {
+
+    private static final Logger log = Logger.getLogger(OsmUtils.class.getName());
+
     public static String getCoordinates(String address) {
-    
-        String encodedAddress = "";
 
         try {
-            encodedAddress = replaceGermanCharacters(address);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            String encodedAddress = URLEncoder.encode(address);
+            String urlStr = "https://nominatim.openstreetmap.org/search?q=" + encodedAddress + "&format=json";
 
-        try {
-            String urlStr = "https://nominatim.openstreetmap.org/search?q="
-                    + encodedAddress.replace("%2B", "+") +"&format=json";
-
-            // JOptionPane.showMessageDialog(null, urlStr);
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -710,68 +705,39 @@ public class FindRouteToAddress {
                 JsonObject jsonObject = jsonArray.getJsonObject(0);
                 String lat = jsonObject.getString("lat").replace(",", ".");
                 String lon = jsonObject.getString("lon").replace(",", ".");
-                String stringCoordinates = lat + "-"+ lon;
+                String stringCoordinates = lat + "-" + lon;
                 return stringCoordinates.replace("-", ",");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("error getting coordinates for address:" + address, e);
         }
         return null;
     }
 
-    public static void openBrowserWithRoute(String startCoordinates, String endCoordinates) {
-        try {
-            
-            String url = "https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route="+
-                startCoordinates + ";"+ endCoordinates;
-            
-            try {
-                DesktopUtils.openBrowser(url);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
-            }
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Fehler: " + e);
-            e.printStackTrace();
-        }
-    }
-    
-    public static void openBrowserWithAddress(String address) {
+    public static void openBrowserWithRoute(String startCoordinates, String endCoordinates) throws Exception {
         
-        String encodedAddress = "";
+            String url = "https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route="
+                    + startCoordinates + ";" + endCoordinates;
 
-        try {
-            encodedAddress = replaceGermanCharacters(address);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        try {
-            
-            String url = "https://www.openstreetmap.org/search?query="+
-                encodedAddress.replace("%2B", "+");
-            
             try {
                 DesktopUtils.openBrowser(url);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
             }
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Fehler: " + e);
-            e.printStackTrace();
+
+    }
+
+    public static void openBrowserWithAddress(String address) throws Exception {
+
+        String encodedAddress = URLEncoder.encode(address);
+
+        String url = "https://www.openstreetmap.org/search?query=" + encodedAddress;
+        try {
+            DesktopUtils.openBrowser(url);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
         }
+
     }
-    
-    
-    private static String replaceGermanCharacters(String input) {
-        return input.replace("ä", "ae")
-                    .replace("ö", "oe")
-                    .replace("ü", "ue")
-                    .replace("Ä", "Ae")
-                    .replace("Ö", "Oe")
-                    .replace("Ü", "Ue")
-                    .replace("ß", "ss");
-    }
+
 }

@@ -693,7 +693,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-import com.jdimension.jlawyer.client.utils.FindRouteToAddress;
+import com.jdimension.jlawyer.client.utils.OsmUtils;
 
 
 import java.awt.Color;
@@ -1032,14 +1032,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuCopy);
 
+        mnuFindRouteToAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
         mnuFindRouteToAddress.setText("Route anzeigen");
         mnuFindRouteToAddress.setToolTipText("Route zur Adresse im Browser öffnen");
-
-        mnuFindRouteToAddress.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuCopyActionPerformed(evt);
-            }
-        });
         mnuFindRouteToAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuFindRouteToAddressActionPerformed(evt);
@@ -1047,6 +1042,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuFindRouteToAddress);
 
+        mnuFindAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
         mnuFindAddress.setText("Adresse auf Karte zeigen");
         mnuFindAddress.setToolTipText("Karte zur Adresse im Browser öffnen");
         mnuFindAddress.addActionListener(new java.awt.event.ActionListener() {
@@ -1494,23 +1490,30 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             
             String startAddress = companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
             String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
-            
-            // JOptionPane.showMessageDialog(null, startAddress);  
+            if(destinationAddress.endsWith("+"))
+                destinationAddress=destinationAddress.substring(0,destinationAddress.length()-1);
+            if(destinationAddress.startsWith("+"))
+                destinationAddress=destinationAddress.substring(1);
             
             try {
                 
-                String coordinates1 = FindRouteToAddress.getCoordinates(startAddress);
-                String coordinates2 = FindRouteToAddress.getCoordinates(destinationAddress);
-   
-                if (coordinates1 != null && coordinates2 != null) {
-                    
-                    FindRouteToAddress.openBrowserWithRoute(coordinates1, coordinates2);
-                    
-                } else {
-                    JOptionPane.showMessageDialog(null, "Die Koordinaten für eine oder beide Adressen konnten nicht abgerufen werden.");
+                String coordinates1 = OsmUtils.getCoordinates(startAddress);
+                if(coordinates1==null) {
+                    JOptionPane.showMessageDialog(this, "Koordinaten der Startadresse können nicht ermittelt werden. Stimmen die Angaben im Kanzleiprofil?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
+                
+                String coordinates2 = OsmUtils.getCoordinates(destinationAddress);
+                if(coordinates2==null) {
+                    JOptionPane.showMessageDialog(this, "Koordinaten der Zieladresse können nicht ermittelt werden. Ist die Adresse des Beteiligten vollständig?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+   
+                OsmUtils.openBrowserWithRoute(coordinates1, coordinates2);
+                
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Unable to get route from OSM: " + startAddress + " TO " + destinationAddress, e);
+                JOptionPane.showMessageDialog(this, "Route konnte nicht ermittelt werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }           
         }
     }//GEN-LAST:event_mnuFindRouteToAddressActionPerformed
@@ -1522,11 +1525,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             
             try {
                 
-                    FindRouteToAddress.openBrowserWithAddress(address);
+                    OsmUtils.openBrowserWithAddress(address);
                 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Die Addresse konnte nicht abgerufen werden.");
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Die Addresse konnte nicht abgerufen werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                log.error("Unable to determine address in OSM: " + address, e);
             }           
         }
     }//GEN-LAST:event_mnuFindAddressActionPerformed

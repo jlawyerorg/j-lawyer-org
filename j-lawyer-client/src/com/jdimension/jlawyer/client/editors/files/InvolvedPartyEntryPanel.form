@@ -110,28 +110,29 @@
         </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuFindRouteToAddress">
           <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="&quot;Route anzeigen&quot;" type="code"/>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/assistant_direction_20dp_0E72B5.png"/>
             </Property>
+            <Property name="text" type="java.lang.String" value="Route anzeigen"/>
+            <Property name="toolTipText" type="java.lang.String" value="Route zur Adresse im Browser &#xf6;ffnen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindRouteToAddressActionPerformed"/>
           </Events>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="mnuFindRouteToAddress.setToolTipText(&quot;Route zur Adresse im Browser &#xf6;ffnen&quot;);&#xa;&#xa;mnuFindRouteToAddress.addActionListener(new java.awt.event.ActionListener() {&#xa;    public void actionPerformed(java.awt.event.ActionEvent evt) {&#xa;        mnuCopyActionPerformed(evt);&#xa;    }&#xa;});"/>
-          </AuxValues>
         </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuFindAddress">
           <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="&quot;Adresse auf Karte zeigen&quot;" type="code"/>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/place_20dp_0E72B5.png"/>
             </Property>
+            <Property name="text" type="java.lang.String" value="Adresse auf Karte zeigen"/>
+            <Property name="toolTipText" type="java.lang.String" value="Karte zur Adresse im Browser &#xf6;ffnen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindAddressActionPerformed"/>
           </Events>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="mnuFindAddress.setToolTipText(&quot;Karte zur Adresse im Browser &#xf6;ffnen&quot;);"/>
+            <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="InvolvedPartyEntryPanel_mnuFindAddress"/>
           </AuxValues>
         </MenuItem>
       </SubComponents>
