@@ -661,76 +661,117 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package themes.colors;
+package com.jdimension.jlawyer.client.utils;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonReader;
+import javax.json.JsonObject;
+import javax.swing.JOptionPane;
 
 /**
  *
- * @author jens
+ * @author Maximilian Steinert
  */
-public class DefaultColorTheme {
+public class FindRouteToAddress {
     
-    private static final ArrayList<Color> highlightColors=new ArrayList<>();
+    public static String getCoordinates(String address) {
     
-    public static final Color COLOR_LOGO_RED=new Color(222, 49, 59);
-    
-    // HEX: #97bf0d    
-    public static final Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
-    
-    // HEX: #0e72b5
-    public static final Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
-    
-    // HEX: #666666
-    public static final Color COLOR_DARK_GREY=new Color(102, 102, 102);
-    
-    public static final Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
-    
-    public static final float DESKTOP_ALPHA_DEFAULT=0.8f;
-    public static final float DESKTOP_ALPHA_HIGHLIGHT=0.99f;
-    public static final Color DESKTOP_ENTRY_BACKGROUND=new Color(238,238,238);
-    
-    static {
-        
-        
-        highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(-13312));
-        highlightColors.add(new Color(-16751616)); // Dark green
-        //highlightColors.add(COLOR_LOGO_GREEN);
-        
-        // red-ish
-        //highlightColors.add(COLOR_LOGO_RED);
-        //highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(170,30,202));
-        //highlightColors.add(new Color(191,13,152));
-        
-        // yellow-ish
-        //highlightColors.add(new Color(-13312));
-        //highlightColors.add(new Color(207,133,30));
-        highlightColors.add(new Color(181,81,14));
-        
-        // green-ish
-        //highlightColors.add(COLOR_LOGO_GREEN);
-//        highlightColors.add(new Color(14,186,68));
-//        highlightColors.add(new Color(57,222,49));
-        
-        // blue-ish
-        highlightColors.add(new Color(51,13,191));
-        //highlightColors.add(COLOR_LOGO_BLUE);
-        highlightColors.add(new Color(49,222,213));
-        
-        
-        
-        highlightColors.add(Color.WHITE);
-        //highlightColors.add(COLOR_LIGHT_GREY);
-        highlightColors.add(COLOR_DARK_GREY);
-        highlightColors.add(Color.BLACK);
+        String encodedAddress = "";
+
+        try {
+            encodedAddress = replaceGermanCharacters(address);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            String urlStr = "https://nominatim.openstreetmap.org/search?q="
+                    + encodedAddress.replace("%2B", "+") +"&format=json";
+
+            // JOptionPane.showMessageDialog(null, urlStr);
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            JsonReader jsonReader = Json.createReader(in);
+            JsonArray jsonArray = jsonReader.readArray();
+            jsonReader.close();
+            in.close();
+
+            if (!jsonArray.isEmpty()) {
+                JsonObject jsonObject = jsonArray.getJsonObject(0);
+                String lat = jsonObject.getString("lat").replace(",", ".");
+                String lon = jsonObject.getString("lon").replace(",", ".");
+                String stringCoordinates = lat + "-"+ lon;
+                return stringCoordinates.replace("-", ",");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void openBrowserWithRoute(String startCoordinates, String endCoordinates) {
+        try {
+            
+            String url = "https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route="+
+                startCoordinates + ";"+ endCoordinates;
+            
+            try {
+                DesktopUtils.openBrowser(url);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Fehler: " + e);
+            e.printStackTrace();
+        }
     }
     
-    public static List<Color> getHighlightColors() {
-        return highlightColors;
+    public static void openBrowserWithAddress(String address) {
+        
+        String encodedAddress = "";
+
+        try {
+            encodedAddress = replaceGermanCharacters(address);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        try {
+            
+            String url = "https://www.openstreetmap.org/search?query="+
+                encodedAddress.replace("%2B", "+");
+            
+            try {
+                DesktopUtils.openBrowser(url);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Service-Website kann nicht geöffnet werden: " + ex.getMessage(), "Browserfehler", JOptionPane.ERROR_MESSAGE);
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Fehler: " + e);
+            e.printStackTrace();
+        }
     }
     
+    
+    private static String replaceGermanCharacters(String input) {
+        return input.replace("ä", "ae")
+                    .replace("ö", "oe")
+                    .replace("ü", "ue")
+                    .replace("Ä", "Ae")
+                    .replace("Ö", "Oe")
+                    .replace("Ü", "Ue")
+                    .replace("ß", "ss");
+    }
 }
