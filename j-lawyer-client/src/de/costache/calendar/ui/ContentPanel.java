@@ -47,7 +47,7 @@ public class ContentPanel extends JPanel {
         this.strategy = DisplayStrategyFactory.getStrategy(this, Type.WEEK);
         this.strategy.display();
 
-        // Add mouse wheel listener to handle scrolling for type month
+        // Add mouse wheel listener to handle scrolling for specified type
         addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
@@ -58,6 +58,22 @@ public class ContentPanel extends JPanel {
                         strategy.moveIntervalRight();
                     }
                 }
+                if (strategy.getType() == Type.WEEK) {
+                    if (e.getWheelRotation() < 0) {
+                        strategy.moveIntervalLeft();
+                    } else {
+                        strategy.moveIntervalRight();
+                    }
+                }
+                
+                if (strategy.getType() == Type.DAY) {
+                    if (e.getWheelRotation() < 0) {
+                        strategy.moveIntervalLeft();
+                    } else {
+                        strategy.moveIntervalRight();
+                    }
+                }
+                
                 // Update the interval label in the header panel
                 owner.getHeaderPanel().getIntervalLabel().setText(strategy.getDisplayInterval());
             }

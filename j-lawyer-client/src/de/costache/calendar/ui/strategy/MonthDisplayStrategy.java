@@ -18,13 +18,10 @@ package de.costache.calendar.ui.strategy;
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.ContentPanel;
 import de.costache.calendar.ui.DayPanel;
-import de.costache.calendar.ui.HeaderPanel;
 import de.costache.calendar.util.CalendarUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -41,7 +38,6 @@ class MonthDisplayStrategy implements DisplayStrategy {
     private final SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy");
     private final DayPanel[] days = new DayPanel[35];
     private JPanel displayPanel;
-    private HeaderPanel headerPanel;
 
     /**
      * Creates a new instance of MonthDisplayStrategy
@@ -51,7 +47,6 @@ class MonthDisplayStrategy implements DisplayStrategy {
     public MonthDisplayStrategy(final ContentPanel parent) {
         this.parent = parent;
         this.calendar = parent.getOwner();
-        this.headerPanel = calendar.getHeaderPanel(); // Hier den HeaderPanel aus JCalendar abrufen
         init();
     }
 
@@ -76,22 +71,6 @@ class MonthDisplayStrategy implements DisplayStrategy {
             displayPanel.add(days[i].layout());
             c.add(Calendar.DATE, 1);
         }
-
-        // Add mouse wheel listener to handle scrolling
-        displayPanel.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if (getType() == Type.MONTH) {
-                    if (e.getWheelRotation() < 0) {
-                        moveIntervalLeft();
-                    } else {
-                        moveIntervalRight();
-                    }
-                }
-            }
-        });
-
-        updateMonthLabel();
     }
 
     @Override
@@ -124,7 +103,6 @@ class MonthDisplayStrategy implements DisplayStrategy {
             c.add(Calendar.DATE, 1);
         }
 
-        updateMonthLabel();
         parent.validate();
         parent.repaint();
     }
@@ -150,7 +128,6 @@ class MonthDisplayStrategy implements DisplayStrategy {
             c.add(Calendar.DATE, 1);
         }
 
-        updateMonthLabel();
         parent.validate();
         parent.repaint();
     }
@@ -180,13 +157,8 @@ class MonthDisplayStrategy implements DisplayStrategy {
             c.add(Calendar.DATE, 1);
         }
 
-        updateMonthLabel();
         parent.validate();
         parent.repaint();
-    }
-
-    private void updateMonthLabel() {
-        headerPanel.updateIntervalLabel(getDisplayInterval());
     }
 
     @Override
