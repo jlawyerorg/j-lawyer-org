@@ -731,8 +731,8 @@ public class AssistantParameterDialog extends javax.swing.JDialog {
         for(Parameter p: this.capability.getParameters()) {
             this.pnlParameters.add(new JLabel(p.getName()));
             if(p.getList()!=null && p.getList().length()>0) {
-                Vector v=new Vector(Arrays.asList(p.getList().split(",")));
-                JComboBox combo=new JComboBox(v);
+                Vector<String> v=new Vector<>(Arrays.asList(p.getList().split(",")));
+                JComboBox<String> combo=new JComboBox<>(v);
                 combo.setEditable(false);
                 combo.setSelectedItem(p.getDefaultValue());
                 this.pnlParameters.add(combo);
