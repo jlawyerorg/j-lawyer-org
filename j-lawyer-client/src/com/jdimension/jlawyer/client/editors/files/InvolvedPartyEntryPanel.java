@@ -1590,7 +1590,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 GoogleMapsUtils.openBrowserWithRoute(startAddress, destinationAddress);
                 
             } catch (Exception e) {
-                log.error("Unable to get route from OSM: " + startAddress + " TO " + destinationAddress, e);
+                log.error("Unable to get route from Google Maps: " + startAddress + " TO " + destinationAddress, e);
                 JOptionPane.showMessageDialog(this, "Route konnte nicht ermittelt werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }           
         }
@@ -1607,7 +1607,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Die Addresse konnte nicht abgerufen werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                log.error("Unable to determine address in OSM: " + address, e);
+                log.error("Unable to determine address in Google Maps: " + address, e);
             }           
         }
     }//GEN-LAST:event_mnuFindAddressGoogleActionPerformed
