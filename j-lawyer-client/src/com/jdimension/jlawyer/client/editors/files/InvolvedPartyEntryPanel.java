@@ -1514,22 +1514,35 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
 
+    private String getMapStartAddress() {
+        // PROFILE as startAdress
+        ServerSettings sset = ServerSettings.getInstance();
+        String companyCity = sset.getSetting(ServerSettings.PROFILE_COMPANYCITY, "");
+        String companyStreet = sset.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "");
+        String companyZip = sset.getSetting(ServerSettings.PROFILE_COMPANYZIP, "");
+
+        return companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
+    }
+    
+    private String getMapDestinationAddress() {
+        if(this.a != null) {
+            String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
+            if (destinationAddress.endsWith("+")) {
+                destinationAddress = destinationAddress.substring(0, destinationAddress.length() - 1);
+            }
+            if (destinationAddress.startsWith("+")) {
+                destinationAddress = destinationAddress.substring(1);
+            }
+            return destinationAddress;
+        }
+        return null;
+    }
+    
     private void mnuFindRouteToAddressOSMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindRouteToAddressOSMActionPerformed
         if (this.a != null) {
             
-            // PROFILE as startAdress
-            ServerSettings sset = ServerSettings.getInstance();
-            String companyCity = sset.getSetting(ServerSettings.PROFILE_COMPANYCITY, "");
-            String companyStreet = sset.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "");
-            String companyZip = sset.getSetting(ServerSettings.PROFILE_COMPANYZIP, "");
-            
-            String startAddress = companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
-            String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
-            if(destinationAddress.endsWith("+"))
-                destinationAddress=destinationAddress.substring(0,destinationAddress.length()-1);
-            if(destinationAddress.startsWith("+"))
-                destinationAddress=destinationAddress.substring(1);
-            
+            String startAddress=getMapStartAddress();
+            String destinationAddress=getMapDestinationAddress();
             try {
                 
                 String coordinates1 = OsmUtils.getCoordinates(startAddress);
@@ -1556,8 +1569,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuFindAddressOSMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindAddressOSMActionPerformed
         if (this.a != null) {
             
-            String address = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
-            
+            String address = this.getMapDestinationAddress();
             try {
                 
                     OsmUtils.openBrowserWithAddress(address);
@@ -1572,19 +1584,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuFindRouteToAddressGoogleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindRouteToAddressGoogleActionPerformed
         if (this.a != null) {
             
-            // PROFILE as startAdress
-            ServerSettings sset = ServerSettings.getInstance();
-            String companyCity = sset.getSetting(ServerSettings.PROFILE_COMPANYCITY, "");
-            String companyStreet = sset.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "");
-            String companyZip = sset.getSetting(ServerSettings.PROFILE_COMPANYZIP, "");
-            
-            String startAddress = companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
-            String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
-            if(destinationAddress.endsWith("+"))
-                destinationAddress=destinationAddress.substring(0,destinationAddress.length()-1);
-            if(destinationAddress.startsWith("+"))
-                destinationAddress=destinationAddress.substring(1);
-            
+            String startAddress=getMapStartAddress();
+            String destinationAddress=getMapDestinationAddress();
             try {
                 
                 GoogleMapsUtils.openBrowserWithRoute(startAddress, destinationAddress);
@@ -1599,8 +1600,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuFindAddressGoogleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindAddressGoogleActionPerformed
         if (this.a != null) {
             
-            String address = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
-            
+            String address = this.getMapDestinationAddress();
             try {
                 
                     GoogleMapsUtils.openBrowserWithAddress(address);
