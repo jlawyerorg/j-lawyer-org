@@ -928,9 +928,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
         mnuCopy = new javax.swing.JMenuItem();
+        mnuFindAddress = new javax.swing.JMenu();
         mnuFindAddressOSM = new javax.swing.JMenuItem();
-        mnuFindRouteToAddressOSM = new javax.swing.JMenuItem();
         mnuFindAddressGoogle = new javax.swing.JMenuItem();
+        mnuFindRoute = new javax.swing.JMenu();
+        mnuFindRouteToAddressOSM = new javax.swing.JMenuItem();
         mnuFindRouteToAddressGoogle = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
@@ -1035,45 +1037,55 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         });
         partiesPopup.add(mnuCopy);
 
+        mnuFindAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
+        mnuFindAddress.setText("Adresse auf Karte zeigen");
+
         mnuFindAddressOSM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
-        mnuFindAddressOSM.setText("Adresse auf Karte zeigen (OSM)");
+        mnuFindAddressOSM.setText("OpenStreetMap");
         mnuFindAddressOSM.setToolTipText("Karte zur Adresse im Browser öffnen");
         mnuFindAddressOSM.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuFindAddressOSMActionPerformed(evt);
             }
         });
-        partiesPopup.add(mnuFindAddressOSM);
-
-        mnuFindRouteToAddressOSM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
-        mnuFindRouteToAddressOSM.setText("Route anzeigen (OSM)");
-        mnuFindRouteToAddressOSM.setToolTipText("Route zur Adresse im Browser öffnen");
-        mnuFindRouteToAddressOSM.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuFindRouteToAddressOSMActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuFindRouteToAddressOSM);
+        mnuFindAddress.add(mnuFindAddressOSM);
 
         mnuFindAddressGoogle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
-        mnuFindAddressGoogle.setText("Adresse auf Karte zeigen (Google)");
+        mnuFindAddressGoogle.setText("Google Maps");
         mnuFindAddressGoogle.setToolTipText("Karte zur Adresse im Browser öffnen");
         mnuFindAddressGoogle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuFindAddressGoogleActionPerformed(evt);
             }
         });
-        partiesPopup.add(mnuFindAddressGoogle);
+        mnuFindAddress.add(mnuFindAddressGoogle);
+
+        partiesPopup.add(mnuFindAddress);
+
+        mnuFindRoute.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
+        mnuFindRoute.setText("Route anzeigen");
+
+        mnuFindRouteToAddressOSM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
+        mnuFindRouteToAddressOSM.setText("OpenStreetMap");
+        mnuFindRouteToAddressOSM.setToolTipText("Route zur Adresse im Browser öffnen");
+        mnuFindRouteToAddressOSM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindRouteToAddressOSMActionPerformed(evt);
+            }
+        });
+        mnuFindRoute.add(mnuFindRouteToAddressOSM);
 
         mnuFindRouteToAddressGoogle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
-        mnuFindRouteToAddressGoogle.setText("Route anzeigen (Google)");
+        mnuFindRouteToAddressGoogle.setText("Google Maps");
         mnuFindRouteToAddressGoogle.setToolTipText("Route zur Adresse im Browser öffnen");
         mnuFindRouteToAddressGoogle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuFindRouteToAddressGoogleActionPerformed(evt);
             }
         });
-        partiesPopup.add(mnuFindRouteToAddressGoogle);
+        mnuFindRoute.add(mnuFindRouteToAddressGoogle);
+
+        partiesPopup.add(mnuFindRoute);
 
         lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
@@ -1619,8 +1631,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
     private javax.swing.JMenuItem mnuCopy;
+    private javax.swing.JMenu mnuFindAddress;
     private javax.swing.JMenuItem mnuFindAddressGoogle;
     private javax.swing.JMenuItem mnuFindAddressOSM;
+    private javax.swing.JMenu mnuFindRoute;
     private javax.swing.JMenuItem mnuFindRouteToAddressGoogle;
     private javax.swing.JMenuItem mnuFindRouteToAddressOSM;
     private javax.swing.JMenuItem mnuRemoveParty;
