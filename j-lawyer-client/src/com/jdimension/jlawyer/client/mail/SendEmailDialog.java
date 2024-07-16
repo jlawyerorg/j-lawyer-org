@@ -1146,7 +1146,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
-                this.tp.setText(b + EmailUtils.html2Text(ms.getEmailSignature()));
+                this.tp.setText(EmailUtils.html2Text(ms.getEmailSignature()) + b);
                 this.tp.setCaretPosition(0);
             }
         } else {
@@ -1155,7 +1155,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 if (sig == null) {
                     sig = "";
                 }
-                this.hp.setText(b + "<br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
+                this.hp.setText("<div>" + sig + "</div><br/><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + b + "</blockquote>");
                 this.hp.setCaretPosition(0);
             }
         }
