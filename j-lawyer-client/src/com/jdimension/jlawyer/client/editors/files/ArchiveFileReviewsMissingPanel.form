@@ -171,8 +171,8 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="ohne Wiedervorlage oder Frist">
-                <Property name="tabTitle" type="java.lang.String" value="ohne Wiedervorlage oder Frist"/>
+              <JTabbedPaneConstraints tabName="ohne Wiedervorlage / Frist / Termin">
+                <Property name="tabTitle" type="java.lang.String" value="ohne Wiedervorlage / Frist / Termin"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>

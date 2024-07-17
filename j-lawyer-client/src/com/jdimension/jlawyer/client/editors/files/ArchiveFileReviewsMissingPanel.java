@@ -836,7 +836,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         });
         jScrollPane1.setViewportView(tblResultsAny);
 
-        tabTables.addTab("ohne Wiedervorlage oder Frist", jScrollPane1);
+        tabTables.addTab("ohne Wiedervorlage / Frist / Termin", jScrollPane1);
 
         tblResultsFollowup.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1061,8 +1061,6 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;
