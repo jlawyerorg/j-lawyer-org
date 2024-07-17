@@ -998,6 +998,7 @@ public class Main {
         reviewsMissing.setModuleName(moduleNameCalendar);
         reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
         reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
+        reviewsMissing.setStatusEventType(Event.TYPE_CASESMISSINGEVENT);
         reviews.addChildModule(reviewsMissing);
 
         ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));

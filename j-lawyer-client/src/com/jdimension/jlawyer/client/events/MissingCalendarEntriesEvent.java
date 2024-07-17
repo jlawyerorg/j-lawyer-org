@@ -661,91 +661,44 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
-
-import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.util.Collection;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import org.apache.log4j.Logger;
+package com.jdimension.jlawyer.client.events;
 
 /**
  *
  * @author jens
  */
-public class ArchiveFileMissingReviewsSearchThread implements Runnable {
+public class MissingCalendarEntriesEvent extends Event {
+
+    private int casesWithoutEvent=0;
     
-    private static final Logger log=Logger.getLogger(ArchiveFileMissingReviewsSearchThread.class.getName());
-    
-    private Component owner;
-    private JTable target;
-    
-    /**
-     * Creates a new instance of ArchiveFileReviewsSearchThread
-     */
-    public ArchiveFileMissingReviewsSearchThread(Component owner, JTable target) {
-        this.owner=owner;
-        this.target=target;
+    public MissingCalendarEntriesEvent(int casesWithoutEvent) {
+        super(Event.TYPE_CASESMISSINGEVENT);
+        this.casesWithoutEvent=casesWithoutEvent;
+        
     }
+
+    
 
     @Override
-    public void run() {
-        long start=System.currentTimeMillis();
-        Collection<ArchiveFileBean> dtos=null;
-        try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            
-            dtos=fileService.getAllWithMissingReviews();
-            log.info("loaded missing review in " + (System.currentTimeMillis()-start) + "ms");
-            
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            return;
-        }
-        
-        String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "Anwalt"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
-
-            @Override
-            public boolean isCellEditable(int i, int i0) {
-                return false;
-            }
-        };
-        ThreadUtils.setTableModel(this.target, model);
-        try {
-            Thread.sleep(750);
-        } catch (Throwable t) {
-            log.error(t);
-        }
-        
-        this.target.getColumnModel().getColumn(3).setCellRenderer(new UserTableCellRenderer());
-        for(ArchiveFileBean b:dtos) {
-            try {
-            Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(b), b.getName(), b.getReason(), b.getLawyer()};
-            
-            model.addRow(row);
-            } catch (Throwable t) {
-                log.error(t);
-            }
-        }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        sorter.setComparator(0, new FileNumberComparator());
-        ThreadUtils.setTableModel(this.target, model, sorter);
-        ThreadUtils.setDefaultCursor(this.owner);
-        log.info("loaded and rendered missing review in " + (System.currentTimeMillis()-start) + "ms");
-        
+    public boolean isUiUpdateTrigger() {
+        return true;
     }
+
+    /**
+     * @return the casesWithoutEvent
+     */
+    public int getCasesWithoutEvent() {
+        return casesWithoutEvent;
+    }
+
+    /**
+     * @param casesWithoutEvent the casesWithoutEvent to set
+     */
+    public void setCasesWithoutEvent(int casesWithoutEvent) {
+        this.casesWithoutEvent = casesWithoutEvent;
+    }
+
     
+
+
 }
