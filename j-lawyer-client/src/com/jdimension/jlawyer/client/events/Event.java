@@ -697,6 +697,8 @@ public abstract class Event {
     
     public static final Integer TYPE_CASESCHANGED=200;
     
+    public static final Integer TYPE_CASESMISSINGEVENT=210;
+    
     
     private Integer type=TYPE_DEFAULT;
     private Object payload=null;

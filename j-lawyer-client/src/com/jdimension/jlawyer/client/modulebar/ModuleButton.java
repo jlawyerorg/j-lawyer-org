@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.MailingStatusEvent;
+import com.jdimension.jlawyer.client.events.MissingCalendarEntriesEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -988,6 +989,8 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
         } else if (e instanceof DrebisStatusEvent) {
             updateIndicator(((DrebisStatusEvent) e).getMessages());
+        } else if (e instanceof MissingCalendarEntriesEvent) {
+            updateIndicator(((MissingCalendarEntriesEvent) e).getCasesWithoutEvent());
         }
     }
 

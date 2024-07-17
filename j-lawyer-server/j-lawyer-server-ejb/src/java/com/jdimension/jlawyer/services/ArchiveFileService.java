@@ -2862,7 +2862,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection<ArchiveFileBean> getAllWithMissingReviews() {
+    public Collection<ArchiveFileBean> getAllWithMissingCalendarEntries() {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
 
@@ -2885,6 +2885,51 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     list.add(dto);
                 }
 
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files", sqle);
+            throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
+        }
+
+        return list;
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception {
+        
+        if(type!=ArchiveFileReviewsBean.EVENTTYPE_EVENT && type!=ArchiveFileReviewsBean.EVENTTYPE_RESPITE && type!=ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP)
+            throw new Exception("Ungültige Typangabe für Kalendereinträge!");
+        
+        JDBCUtils utils = new JDBCUtils();
+        ArrayList<ArchiveFileBean> list = new ArrayList<>();
+
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_events where done=0 and eventType=?) order by fileNumber asc")) {
+
+            st.setInt(1, type);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+
+                if (allowedCases.contains(id)) {
+
+                    ArchiveFileBean dto = this.archiveFileFacade.find(id);
+                    list.add(dto);
+                }
+
+            }
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error("unable to close resultset: " + t.getMessage());
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
