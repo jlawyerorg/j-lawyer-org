@@ -976,19 +976,40 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     @Path("/{id}/documents")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseDocuments(@PathParam("id") String id) {
+        return getCaseDocuments(id, false);
+    }
+    
+    /**
+     * Returns a list of documents for a given case that have been moved to the trash bin but are not finally deleted yet
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/documents/trash")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseDocumentsInTrash(@PathParam("id") String id) {
+        return getCaseDocuments(id, true);
+    }
+    
+    private Response getCaseDocuments(String caseId, boolean deleted) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/documents
         try {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
             if (currentCase == null) {
-                log.error("case with id " + id + " does not exist");
+                log.error("case with id " + caseId + " does not exist");
                 Response res = Response.serverError().build();
                 return res;
             }
 
-            Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(id);
+            Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(caseId, deleted);
             ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : documents) {
                 RestfulDocumentV1 d = new RestfulDocumentV1();
@@ -1010,7 +1031,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             Response res = Response.ok(docList).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not get case " + id, ex);
+            log.error("can not get case " + caseId, ex);
             Response res = Response.serverError().build();
             return res;
         }

@@ -708,6 +708,7 @@ public interface ArchiveFileServiceLocal {
     
     public int getDocumentCount();
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted);
     public byte[] getDocumentContent(String id) throws Exception;
     public DataBucket getDocumentContentBucket(String id) throws Exception;
     

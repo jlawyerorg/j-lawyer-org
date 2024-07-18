@@ -1569,6 +1569,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, false, context.getCallerPrincipal().getName());
     }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted) {
+        return getDocumentsImpl(archiveFileKey, deleted, context.getCallerPrincipal().getName());
+    }
 
     private Collection<ArchiveFileDocumentsBean> getDocumentsImpl(String archiveFileKey, boolean deleted, String principalId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);

@@ -687,7 +687,8 @@ public interface CasesEndpointLocalV1 {
     public Response updateCase(RestfulCaseV1 afb);
 
     Response getCaseDocuments(String id);
-
+    Response getCaseDocumentsInTrash(String id);
+    
     Response getDocumentContent(String id);
 
     Response getDueDates(String id);
