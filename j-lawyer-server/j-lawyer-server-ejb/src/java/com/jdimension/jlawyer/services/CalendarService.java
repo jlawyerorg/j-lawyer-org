@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
@@ -905,7 +904,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " für Dich erstellt");
                         omr.setSubCaption(review.toString()  + " " + review.getSummary());
                         StringBuilder body=new StringBuilder();
-                        body.append(review.getSummary()).append("\n").append(review.getDescription()).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(review.getAssignee()).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
                         this.publishOutgoingMailRequest(omr);
@@ -1240,7 +1239,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
                         omr.setSubCaption(review.toString()  + " " + review.getSummary());
                         StringBuilder body=new StringBuilder();
-                        body.append(review.getSummary()).append("\n").append(review.getDescription()).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(review.getAssignee()).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
                         this.publishOutgoingMailRequest(omr);
