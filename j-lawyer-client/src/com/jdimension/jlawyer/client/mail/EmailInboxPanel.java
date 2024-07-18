@@ -779,6 +779,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    
+    private long lastUpdateTimeUnreadMessageCount=-1;
 
     /**
      * Creates new form EmailInboxPanel
@@ -2690,6 +2692,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     @Override
     public void messageChanged(MessageChangedEvent mce) {
+        long now=System.currentTimeMillis();
+        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
+            return;
+            
+        this.lastUpdateTimeUnreadMessageCount=now;
         try {
             MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessage());
             DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
@@ -2740,6 +2747,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     @Override
     public void messagesAdded(MessageCountEvent mce) {
+        long now=System.currentTimeMillis();
+        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
+            return;
+            
+        this.lastUpdateTimeUnreadMessageCount=now;
         try {
             if (mce.getMessages().length == 0) {
                 return;
@@ -2758,28 +2770,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     @Override
     public void messagesRemoved(MessageCountEvent mce) {
-        try {
-            if (mce.getMessages().length == 0) {
-                return;
-            }
-            if(mce.getMessages()[0]==null)
-                return;
-            
-            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
-            if(ms==null) {
-                log.warn("can not determine mailbox setup of removed message");
-                return;
-            }
-            
-            // currently only INBOX is observed
-            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
-            int unread = this.getInboxUnread();
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new EmailStatusEvent(unread));
-        } catch (Exception ex) {
-            log.error("Unable to handle messagesRemoved event", ex);
-        }
+        // for removed messages, we are not able to determine the right mailbox, therefore just ignore and do not update the message counts in the tree
     }
 
     @Override

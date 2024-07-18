@@ -791,16 +791,10 @@ public class EmailUtils extends CommonMailUtils {
             return null;
 
         } catch (Exception ex) {
-            String subject = "";
-            try {
-                subject = msg.getSubject();
-            } catch (Throwable t) {
-                log.warn("cannot determine message subject", t);
-            }
             if (opened) {
                 closeIfIMAP(msg.getFolder());
             }
-            log.error("Error determining mailbox for message " + subject, ex);
+            log.error("Error determining mailbox for message", ex);
             return null;
         }
     }
@@ -833,13 +827,7 @@ public class EmailUtils extends CommonMailUtils {
             return null;
 
         } catch (Exception ex) {
-            String subject = "";
-            try {
-                subject = msg.getSubject();
-            } catch (Throwable t) {
-                log.warn("cannot determine message subject", t);
-            }
-            log.error("Error determining mailbox for message " + subject, ex);
+            log.error("Error determining mailbox for message", ex);
             return null;
         }
     }

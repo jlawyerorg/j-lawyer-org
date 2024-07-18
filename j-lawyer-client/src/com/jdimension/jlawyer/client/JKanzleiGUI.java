@@ -1044,7 +1044,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblMailingStatus.setForeground(Color.black);
 
             }
-            if (((MailingStatusEvent) e).getMailingList().size() > 0) {
+            if (!((MailingStatusEvent) e).getMailingList().isEmpty()) {
                 this.lblMailingStatus.setEnabled(true);
             } else {
                 this.lblMailingStatus.setEnabled(false);
