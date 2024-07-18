@@ -673,18 +673,10 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Base64;
-import java.util.Hashtable;
-import java.util.Properties;
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
@@ -694,10 +686,6 @@ import org.apache.logging.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
-import org.wildfly.security.auth.client.AuthenticationConfiguration;
-import org.wildfly.security.auth.client.AuthenticationContext;
-import org.wildfly.security.auth.client.MatchRule;
-import org.wildfly.security.sasl.SaslMechanismSelector;
 
 /**
  *
