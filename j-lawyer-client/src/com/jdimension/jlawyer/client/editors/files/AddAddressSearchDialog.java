@@ -713,6 +713,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
      * Creates new form AddAddressSearchDialog
      * @param parent
      * @param modal
+     * @param targetCaseId
      */
     public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, String targetCaseId) {
         super(parent, modal);
@@ -1036,8 +1037,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
 
-        if(this.cmbRefType.getSelectedItem()!=null)
+        if(this.cmbRefType.getSelectedItem()!=null) {
+            
             this.updateTargetReferenceType(this.cmbRefType.getSelectedItem().toString());
+        }
 
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
@@ -1073,10 +1076,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         this.resultAddress = id.getAddressDTO();
         if(this.resultAddress.getDefaultRole()!=null && !("".equalsIgnoreCase(this.resultAddress.getDefaultRole()))) {
             this.updateTargetReferenceType(this.resultAddress.getDefaultRole());
-        } else {
-            UserSettings us = UserSettings.getInstance();
-            String lastPartyType = us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
-            this.updateTargetReferenceType(lastPartyType);
         }
     }
 }
