@@ -1,14 +1,6 @@
-# By default, build on JDK 17
-ARG jdk=17
-FROM eclipse-temurin:${jdk}-centos7
+# Use latest jboss/base-jdk:11 image as the base
+FROM jboss/base-jdk:11
 MAINTAINER j-dimension "info@j-lawyer.org"
-
-# LABEL org.opencontainers.image.source=https://github.com/jboss-dockerfiles/wildfly org.opencontainers.image.title=wildfly org.opencontainers.imag.url=https://github.com/jboss-dockerfiles/wildfly org.opencontainers.image.vendor=WildFly
-
-WORKDIR /opt/jboss
-
-RUN groupadd -r jboss -g 1000 && useradd -u 1000 -r -g jboss -m -d /opt/jboss -s /sbin/nologin -c "JBoss user" jboss && \
-    chmod 755 /opt/jboss
 
 # Set the WILDFLY_VERSION env variable
 ENV WILDFLY_VERSION 26.1.3.Final
@@ -29,16 +21,39 @@ RUN yum -y install mysql
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
+
+#RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
+#RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
+#RUN yum update
+#RUN yum install tesseract 
+#RUN yum install tesseract-langpack-deu
+#
+#RUN yum -y install ghostscript \
+#      icc-profiles-free \
+#      libxml2 \
+#      pngquant \
+#      python3-pip \
+#      liblept5 \
+#      libsm6 libxext6 libxrender-dev \
+#      zlib1g \
+#      pngquant \
+#      python3 \
+#      qpdf \
+#      unpaper
+
 # Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
 # Make sure the distribution is available from a well-known place
 RUN cd $HOME \
-    && curl -L -O https://github.com/wildfly/wildfly/releases/download/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz \
+    && curl -LO https://github.com/wildfly/wildfly/releases/download/26.1.3.Final/wildfly-26.1.3.Final.tar.gz \
     && sha1sum wildfly-$WILDFLY_VERSION.tar.gz | grep $WILDFLY_SHA1 \
     && tar xf wildfly-$WILDFLY_VERSION.tar.gz \
     && mv $HOME/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
     && rm wildfly-$WILDFLY_VERSION.tar.gz \
     && chown -R jboss:0 ${JBOSS_HOME} \
     && chmod -R g+rw ${JBOSS_HOME}
+
+RUN chown -R jboss:0 /opt/jboss
+RUN chmod -R g+rw /opt/jboss
 
 # Ensure signals are forwarded to the JVM process correctly for graceful shutdown
 ENV LAUNCH_JBOSS_IN_BACKGROUND true
@@ -72,5 +87,5 @@ ENTRYPOINT ["/opt/jboss/startup.sh"]
 # CMD ["/tmp/sleep.sh"]
 
 # Set the default command to run on boot
-# This will boot WildFly in standalone mode and bind to all interfaces
+# This will boot WildFly in the standalone mode and bind to all interface
 # CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
