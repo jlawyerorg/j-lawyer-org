@@ -814,7 +814,46 @@ insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.
 
 
 -- ALTER TABLE cases DROP FOREIGN KEY fk_group;
-ALTER TABLE cases DROP FOREIGN KEY cases_ibfk_1;
+SET @db_name = 'jlawyerdb';
+SET @table_name = 'cases';
+SET @foreign_key_name = 'fk_group';
+SELECT IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = @db_name
+          AND TABLE_NAME = @table_name
+          AND CONSTRAINT_NAME = @foreign_key_name
+          AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    ),
+    CONCAT('ALTER TABLE ', @table_name, ' DROP FOREIGN KEY ', @foreign_key_name, ';'),
+    'SELECT "Foreign key does not exist."'
+) INTO @sql;
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- ALTER TABLE cases DROP FOREIGN KEY cases_ibfk_1;
+SET @db_name = 'jlawyerdb';
+SET @table_name = 'cases';
+SET @foreign_key_name = 'cases_ibfk_1';
+SELECT IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = @db_name
+          AND TABLE_NAME = @table_name
+          AND CONSTRAINT_NAME = @foreign_key_name
+          AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    ),
+    CONCAT('ALTER TABLE ', @table_name, ' DROP FOREIGN KEY ', @foreign_key_name, ';'),
+    'SELECT "Foreign key does not exist."'
+) INTO @sql;
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
 alter table cases modify owner_group VARCHAR(50) BINARY;
 ALTER TABLE cases ADD FOREIGN KEY fk_group (owner_group) REFERENCES security_groups (id) ON DELETE RESTRICT;
 
