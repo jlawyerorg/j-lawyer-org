@@ -17,6 +17,10 @@ ENV JBOSS_HOME /opt/jboss/wildfly
 
 USER root
 
+# https://stackoverflow.com/questions/78692851/could-not-retrieve-mirrorlist-http-mirrorlist-centos-org-release-7arch-x86-6
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
 RUN mkdir -p /opt/jboss/j-lawyer-data/templates
 RUN mkdir -p /opt/jboss/j-lawyer-data/emailtemplates
 RUN mkdir -p /opt/jboss/j-lawyer-data/mastertemplates
@@ -25,7 +29,7 @@ RUN mkdir -p /opt/jboss/j-lawyer-data/searchindex
 RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
 RUN mkdir -p /opt/jboss/j-lawyer-data/letterheads
 RUN chmod -R 777 /opt/jboss/j-lawyer-data
-RUN yum -y install mariadb
+RUN yum -y install mysql
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
