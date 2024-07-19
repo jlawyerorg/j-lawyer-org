@@ -684,6 +684,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -811,11 +812,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         ArrayList<JMenuItem> items = new ArrayList<>();
         this.buildMoveToFolderMenu(items, rootFolder, "");
-        Collections.sort(items, (Object t, Object t1) -> {
-            JMenuItem m1 = (JMenuItem) t;
-            JMenuItem m2 = (JMenuItem) t1;
-            return m1.getText().compareTo(m2.getText());
-        });
+        Collections.sort(items, Comparator.comparing(JMenuItem::getText, String.CASE_INSENSITIVE_ORDER));
 
         for (JMenuItem m : items) {
             this.popMoveToFolder.add(m);
@@ -886,7 +883,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         items.add(menu);
 
         if (folder.getChildren() != null) {
-            for (CaseFolder child : folder.getChildren()) {
+            List<CaseFolder> sortedChildren = new ArrayList<>(folder.getChildren());
+            sortedChildren.sort(Comparator.comparing(CaseFolder::getName, String.CASE_INSENSITIVE_ORDER));
+            for (CaseFolder child : sortedChildren) {
                 buildMoveToFolderMenu(items, child, itemName);
             }
         }
