@@ -25,7 +25,7 @@ RUN mkdir -p /opt/jboss/j-lawyer-data/searchindex
 RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
 RUN mkdir -p /opt/jboss/j-lawyer-data/letterheads
 RUN chmod -R 777 /opt/jboss/j-lawyer-data
-RUN yum -y install mysql
+RUN yum -y install mariadb
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
