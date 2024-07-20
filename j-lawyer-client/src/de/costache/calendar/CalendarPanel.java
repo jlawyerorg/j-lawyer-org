@@ -668,9 +668,13 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import de.costache.calendar.events.IntervalChangedEvent;
 import de.costache.calendar.events.IntervalSelectionEvent;
 import de.costache.calendar.events.ModelChangedEvent;
@@ -692,6 +696,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -721,6 +726,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 
     private JPopupMenu popup;
     private JMenuItem mnuOpenCase;
+    private JMenuItem mnuMarkEventAsDone;
 
 //    private JButton removeButton;
 //    private JButton addButton;
@@ -731,6 +737,7 @@ public class CalendarPanel extends javax.swing.JPanel {
     protected int eventAlpha=255;
 
     private Collection<ArchiveFileReviewsBean> cachedEvents = null;
+    private Object chkDescription;
 
     /**
      * Creates new form CalendarPanel
@@ -813,9 +820,32 @@ public class CalendarPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
+        mnuMarkEventAsDone = new JMenuItem("erledigt");
+        mnuMarkEventAsDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+        mnuMarkEventAsDone.setToolTipText("Kalendereintrag als erledigt markieren");
+        mnuMarkEventAsDone.addActionListener((java.awt.event.ActionEvent evt) -> {
+            Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
+            if (!selected.isEmpty()) {
+                CalendarEvent ce = selected.iterator().next();
+
+                int response = JOptionPane.showConfirmDialog(this, 
+                    "Möchten Sie dieses Ereignis wirklich löschen?", 
+                    "Bestätigung", 
+                    JOptionPane.YES_NO_OPTION, 
+                    JOptionPane.QUESTION_MESSAGE);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    this.jCalendar.removeCalendarEvent(ce);
+                    log.info("Deleted Event from Calendar");
+  
+                }
+            }
+        });
 
         popup = new JPopupMenu();
         popup.add(mnuOpenCase);
+        popup.add(mnuMarkEventAsDone);
 
         jCalendar = new JCalendar();
         jCalendar.setPreferredSize(new Dimension(1024, 768));
