@@ -771,7 +771,13 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
-
+            this.pwPassword.addFocusListener(new java.awt.event.FocusAdapter() {
+                public void focusGained(java.awt.event.FocusEvent evt) {
+                    pwPassword.selectAll();
+                }
+            });
+            
+            
             this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 24));
             this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
 
@@ -1647,12 +1653,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
         this.loginPerformed(true);
-        } else if (evt.getKeyCode() == KeyEvent.VK_TAB && evt.isShiftDown()) {
-            evt.consume();
-            SwingUtilities.invokeLater(() -> {
-                txtUser.requestFocus();
-                txtUser.selectAll();
-            });
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
