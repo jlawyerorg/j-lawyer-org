@@ -1917,7 +1917,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel25)
                             .add(jLabel47))
-                        .add(35, 35, 35)
+                        .add(28, 28, 28)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(cmbTitleInAddress, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -2071,7 +2071,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(rdGenderUndefined))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(138, Short.MAX_VALUE))
+                .addContainerGap(180, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Person", new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")), jPanel7); // NOI18N
@@ -3385,27 +3385,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     }//GEN-LAST:event_cmdCopyAddressToClipboardActionPerformed
 
-    private void cmdSelectDeathdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectDeathdayActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtDeathDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
-        dlg.setVisible(true);
-        this.updateAge();
-    }//GEN-LAST:event_cmdSelectDeathdayActionPerformed
-
-    private void cmdSelectBirthdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectBirthdayActionPerformed
-
-        MultiCalDialog dlg = new MultiCalDialog(this.txtBirthDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
-        dlg.setVisible(true);
-        this.updateAge();
-    }//GEN-LAST:event_cmdSelectBirthdayActionPerformed
-
-    private void txtBirthDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtBirthDateFocusLost
-        this.updateAge();
-    }//GEN-LAST:event_txtBirthDateFocusLost
-
-    private void txtDeathDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtDeathDateFocusLost
-        this.updateAge();
-    }//GEN-LAST:event_txtDeathDateFocusLost
-
     private void cmdAttributesFromClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttributesFromClipboardActionPerformed
         AddressFromClipboardDialog dlg = new AddressFromClipboardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -3477,6 +3456,27 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void lblHeaderInfoMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblHeaderInfoMousePressed
         this.popHeader.show(this.lblHeaderInfo, evt.getX(), evt.getY());
     }//GEN-LAST:event_lblHeaderInfoMousePressed
+
+    private void cmdSelectDeathdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectDeathdayActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtDeathDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
+        dlg.setVisible(true);
+        this.updateAge();
+    }//GEN-LAST:event_cmdSelectDeathdayActionPerformed
+
+    private void cmdSelectBirthdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectBirthdayActionPerformed
+
+        MultiCalDialog dlg = new MultiCalDialog(this.txtBirthDate, EditorsRegistry.getInstance().getMainWindow(), true, false);
+        dlg.setVisible(true);
+        this.updateAge();
+    }//GEN-LAST:event_cmdSelectBirthdayActionPerformed
+
+    private void txtBirthDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtBirthDateFocusLost
+        this.updateAge();
+    }//GEN-LAST:event_txtBirthDateFocusLost
+
+    private void txtDeathDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtDeathDateFocusLost
+        this.updateAge();
+    }//GEN-LAST:event_txtDeathDateFocusLost
 
     private void updateAge() {
         Date birth = null;
@@ -3656,7 +3656,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JComboBox<String> cmbProfession;
     private javax.swing.JComboBox<String> cmbRole;
     protected javax.swing.JComboBox cmbSalutation;
-    protected javax.swing.JComboBox cmbTitle;
+    private javax.swing.JComboBox cmbTitle;
     private javax.swing.JComboBox<String> cmbTitleInAddress;
     private javax.swing.JButton cmdAttributesFromClipboard;
     protected javax.swing.JButton cmdBackToSearch;
@@ -3789,24 +3789,24 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     protected javax.swing.JTextField txtBankCode;
     protected javax.swing.JTextField txtBankName;
     protected javax.swing.JTextField txtBeaSafeId;
-    protected javax.swing.JTextField txtBirthDate;
+    private javax.swing.JTextField txtBirthDate;
     private javax.swing.JTextField txtBirthName;
     protected javax.swing.JTextField txtCity;
     protected javax.swing.JTextField txtCompany;
     protected javax.swing.JTextField txtCustom1;
     protected javax.swing.JTextField txtCustom2;
-    protected javax.swing.JTextField txtDeathDate;
+    private javax.swing.JTextField txtDeathDate;
     private javax.swing.JTextField txtDepartment;
     private javax.swing.JTextField txtDistrict;
     protected javax.swing.JTextField txtEmail;
     protected javax.swing.JTextField txtFax;
-    protected javax.swing.JTextField txtFirstName;
+    private javax.swing.JTextField txtFirstName;
     private javax.swing.JTextField txtFirstName2;
     private javax.swing.JTextField txtInitials;
     protected javax.swing.JTextField txtInsuranceNumber;
     protected javax.swing.JTextField txtMobile;
     protected javax.swing.JTextField txtMotorInsuranceNumber;
-    protected javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtName;
     protected javax.swing.JTextArea txtNotice;
     private javax.swing.JScrollPane txtNoticePane;
     protected javax.swing.JTextField txtPhone;
