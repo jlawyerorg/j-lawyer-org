@@ -666,12 +666,10 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.voip.*;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
-import com.jdimension.jlawyer.epost.EpostLetter;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import themes.colors.DefaultColorTheme;
 
 /**
  *

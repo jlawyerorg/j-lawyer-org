@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.voip.*;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -682,6 +681,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
@@ -697,10 +697,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
-import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitDestination;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageXYZDestination;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
@@ -927,7 +924,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 //        merger.setDestinationFileName(outputFile);
 //        merger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
 //    }
-    private static void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws IOException {
+    private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws IOException {
         List<Integer> startPages = new ArrayList<>();
         PDFMergerUtility merger = new PDFMergerUtility();
         PDDocument mergedDoc = new PDDocument();
@@ -975,11 +972,12 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         PDDocumentOutline outline = new PDDocumentOutline();
         mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
         
+        HashMap<String,byte[]> documentIcons=(HashMap<String,byte[]>)data.get("export.documents.icons");
+        
         for (int i = 0; i < pdfFiles.size(); i++) {
             String fileName = pdfFiles.get(i).getName();
             
-            Icon fileTypeIcon=FileUtils.getInstance().getFileTypeIcon(fileName);
-            byte[] iconBytes=iconToByteArray(fileTypeIcon);
+            byte[] iconBytes=documentIcons.get(fileName);
             //PDImageXObject pdImage = PDImageXObject.createFromFile(iconPath, tocDoc);
             PDImageXObject pdImage = PDImageXObject.createFromByteArray(tocDoc, iconBytes, ""+System.currentTimeMillis()+".png");
             
@@ -998,7 +996,11 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             // Start a new text block for further text
             contentStream.beginText();
             contentStream.newLineAtOffset(65, 750 - (i + 2) * 14.5f);
-            contentStream.showText(fileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
+            String shortenedFileName=fileName;
+            if(shortenedFileName.length()>70) {
+                shortenedFileName=shortenedFileName.substring(0,69);
+            }
+            contentStream.showText(shortenedFileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
             contentStream.endText();
             
             
@@ -1061,21 +1063,5 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         this.wizard = wizard;
     }
     
-    private static byte[] iconToByteArray(Icon icon) {
-        // Create a buffered image with transparency
-        BufferedImage bi = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics g = bi.createGraphics();
-        // paint the Icon to the BufferedImage
-        icon.paintIcon(null, g, 0, 0);
-        g.dispose();
-
-        // Write the image to a byte array
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            ImageIO.write(bi, "png", baos);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return baos.toByteArray();
-    }
+    
 }
