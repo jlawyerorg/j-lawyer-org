@@ -38,6 +38,8 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     private boolean holiday;
     
     protected ArchiveFileBean caseDto=null;
+    // ID of the ArchiveFileReviewsBean on the server / in the database
+    private String eventId=null;
 
     /**
      *
@@ -349,6 +351,20 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
      */
     public void setAssignee(String assignee) {
         this.assignee = assignee;
+    }
+
+    /**
+     * @return the eventId
+     */
+    public String getEventId() {
+        return eventId;
+    }
+
+    /**
+     * @param eventId the eventId to set
+     */
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
     
