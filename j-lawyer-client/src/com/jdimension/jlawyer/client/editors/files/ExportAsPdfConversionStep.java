@@ -793,7 +793,7 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         }
 
         List<ArchiveFileDocumentsBean> docs = (List<ArchiveFileDocumentsBean>) data.get("export.documents");
-        HashMap<String,byte[]> documentIcons=new HashMap<String,byte[]>();
+        HashMap<String,byte[]> documentIcons=new HashMap<>();
         data.put("export.documents.icons", documentIcons);
 
         for (ArchiveFileDocumentsBean d : docs) {

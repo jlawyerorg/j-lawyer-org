@@ -782,11 +782,15 @@ public class ServerFileUtils {
     }
     
     public static void copyFile(String srFile, String dtFile) throws Exception {
+        copyFile(srFile, dtFile, false);
+    }
+    
+    public static void copyFile(String srFile, String dtFile, boolean overwrite) throws Exception {
 
         File f1 = new File(srFile);
         File f2 = new File(dtFile);
 
-        if (f2.exists()) {
+        if (f2.exists() && !overwrite) {
             throw new Exception("Zieldatei existiert bereits!");
         }
 
