@@ -668,11 +668,12 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import de.costache.calendar.events.IntervalChangedEvent;
@@ -696,7 +697,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -728,8 +728,6 @@ public class CalendarPanel extends javax.swing.JPanel {
     private JMenuItem mnuOpenCase;
     private JMenuItem mnuMarkEventAsDone;
 
-//    private JButton removeButton;
-//    private JButton addButton;
     private String detailsEditorClass;
     private transient Image backgroundImage = null;
     private String parentClass = null;
@@ -747,7 +745,6 @@ public class CalendarPanel extends javax.swing.JPanel {
         initComponents();
 
         initGui();
-        //initData();
         bindListeners();
     }
 
@@ -828,16 +825,40 @@ public class CalendarPanel extends javax.swing.JPanel {
             Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
             if (!selected.isEmpty()) {
                 CalendarEvent ce = selected.iterator().next();
+                
+                if(ce.getEventId()==null) {
+                    JOptionPane.showMessageDialog(this, "Der Kalendereintrag ist ungültig und kann nicht bearbeitet werden (unbekannter Bezeichner).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
                 int response = JOptionPane.showConfirmDialog(this, 
-                    "Möchten Sie dieses Ereignis wirklich löschen?", 
+                    "Möchten Sie dieses Ereignis wirklich als erledigt markieren?", 
                     "Bestätigung", 
                     JOptionPane.YES_NO_OPTION, 
                     JOptionPane.QUESTION_MESSAGE);
 
                 if (response == JOptionPane.YES_OPTION) {
                     this.jCalendar.removeCalendarEvent(ce);
-                    log.info("Deleted Event from Calendar");
+                    
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        // mark event as done on the server
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                        calService.markReviewDone(ce.getEventId(), true);
+
+                        // publish a notification so the desktop can automatically refresh
+                        ArchiveFileReviewsBean updatedEvent=calService.getReview(ce.getEventId());
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new ReviewUpdatedEvent(null, null, updatedEvent));
+                    } catch (Exception ex) {
+                        log.error("Error updating review", ex);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        EditorsRegistry.getInstance().clearStatus();
+                        return;
+                    }
+                    
+                    log.info("Marked vent " + ce.getEventId() + " as done");
   
                 }
             }
@@ -1084,6 +1105,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
         }
 
+        calendarEvent.setEventId(rev.getId());
         if (rev.getArchiveFileKey() != null) {
             calendarEvent.setCaseDto(rev.getArchiveFileKey());
         }

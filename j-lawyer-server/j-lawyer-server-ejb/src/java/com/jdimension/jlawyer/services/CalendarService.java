@@ -1169,6 +1169,39 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
+    public void markReviewDone(String reviewId, boolean done) throws Exception {
+
+        ArchiveFileReviewsBean currentReview = this.archiveFileReviewsFacade.find(reviewId);
+        if(currentReview.isDone()==done) {
+            log.info("Calendar entry " + reviewId + " is already marked as done=" + done);
+            return;
+        }
+        
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = currentReview.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        currentReview.setDone(done);
+        this.archiveFileReviewsFacade.edit(currentReview);
+        
+        String status = "offen";
+        if (done) {
+            status = "erledigt";
+        }
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, currentReview.getEventTypeName() + " geändert: " + currentReview.getSummary() + " (" + currentReview.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
+        
+        this.publishUpdatedEventMail(currentReview, aFile);
+
+        try {
+            this.calendarSync.eventUpdated(aFile, currentReview);
+        } catch (Throwable ex) {
+            log.error("Failed to sync updated event to cloud", ex);
+        }
+
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
 
         this.validateCalendarSetup(review);
@@ -1225,7 +1258,18 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
         
-        
+        this.publishUpdatedEventMail(review, aFile);
+
+        try {
+            this.calendarSync.eventUpdated(aFile, review);
+        } catch (Throwable ex) {
+            log.error("Failed to sync updated event to cloud", ex);
+        }
+
+        return this.archiveFileReviewsFacade.find(review.getId());
+    }
+    
+    private void publishUpdatedEventMail(ArchiveFileReviewsBean review, ArchiveFileBean aFile) {
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
             if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
@@ -1247,14 +1291,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 }
             }
         }
-
-        try {
-            this.calendarSync.eventUpdated(aFile, review);
-        } catch (Throwable ex) {
-            log.error("Failed to sync updated event to cloud", ex);
-        }
-
-        return this.archiveFileReviewsFacade.find(review.getId());
     }
 
     @Override
@@ -1268,6 +1304,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
 
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileReviewsBean getReview(String eventId) throws Exception {
+        // no security check, a client cannot know the event id without having access to the case
+        return this.archiveFileReviewsFacade.find(eventId);
     }
     
     @Override

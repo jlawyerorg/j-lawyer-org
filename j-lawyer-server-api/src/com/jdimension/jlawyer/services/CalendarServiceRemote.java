@@ -702,8 +702,11 @@ public interface CalendarServiceRemote {
     
     ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     
+    void markReviewDone(String reviewId, boolean done) throws Exception;
+    
     Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
     Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception;
+    ArchiveFileReviewsBean getReview(String eventId) throws Exception;
 
     List<CalendarSetup> getAllCalendarSetups();
     
