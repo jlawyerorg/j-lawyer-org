@@ -725,8 +725,6 @@ public class CalendarPanel extends javax.swing.JPanel {
     HashSet<String> selectedCalTypes = new HashSet<>();
 
     private JPopupMenu popup;
-    private JMenuItem mnuOpenCase;
-    private JMenuItem mnuMarkEventAsDone;
 
     private String detailsEditorClass;
     private transient Image backgroundImage = null;
@@ -735,7 +733,6 @@ public class CalendarPanel extends javax.swing.JPanel {
     protected int eventAlpha=255;
 
     private Collection<ArchiveFileReviewsBean> cachedEvents = null;
-    private Object chkDescription;
 
     /**
      * Creates new form CalendarPanel
@@ -785,7 +782,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 //        }
 //        toolBar.add(addButton);
 //        toolBar.add(removeButton);
-        mnuOpenCase = new JMenuItem("Akte bearbeiten");
+        JMenuItem mnuOpenCase = new JMenuItem("Akte bearbeiten");
         mnuOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")));
         mnuOpenCase.setToolTipText("gewählte Akte bearbeiten");
         mnuOpenCase.addActionListener((java.awt.event.ActionEvent evt) -> {
@@ -818,7 +815,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         });
         
-        mnuMarkEventAsDone = new JMenuItem("erledigt");
+        JMenuItem mnuMarkEventAsDone = new JMenuItem("erledigt");
         mnuMarkEventAsDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         mnuMarkEventAsDone.setToolTipText("Kalendereintrag als erledigt markieren");
         mnuMarkEventAsDone.addActionListener((java.awt.event.ActionEvent evt) -> {
@@ -1149,12 +1146,6 @@ public class CalendarPanel extends javax.swing.JPanel {
 //                }
 //            }
 //        });
-        mnuOpenCase.addActionListener((ActionEvent arg0) -> {
-//				final Collection<CalendarEvent> selected = jCalendar.getSelectedEvents();
-//				for (final CalendarEvent event : selected) {
-//					jCalendar.removeCalendarEvent(event);
-//				}
-        });
 
         jCalendar.addCollectionChangedListener(new ModelChangedListener() {
 
