@@ -763,6 +763,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtUser.putClientProperty("JTextField.placeholderText", "Nutzername");
             this.txtUser.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_face_black_24dp.png")));
             this.txtUser.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
                 public void focusGained(java.awt.event.FocusEvent evt) {
                     txtUser.selectAll();
                 }
@@ -772,6 +773,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
             this.pwPassword.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
                 public void focusGained(java.awt.event.FocusEvent evt) {
                     pwPassword.selectAll();
                 }
