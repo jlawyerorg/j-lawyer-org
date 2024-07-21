@@ -1597,6 +1597,11 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }//GEN-LAST:event_sortCreationDateMouseClicked
 
     private void cmdExportSelectedAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportSelectedAsPdfActionPerformed
+        if(this.getSelectedDocuments().isEmpty()) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Die zu exportierenden Dokumente müssen vorab selektiert werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
         if(this.caseContainer!=null) {
             this.caseContainer.exportSelectedDocumentsAsPdf();
         }
