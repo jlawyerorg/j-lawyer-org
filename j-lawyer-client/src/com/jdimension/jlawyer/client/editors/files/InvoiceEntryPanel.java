@@ -831,7 +831,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy2.png"))); // NOI18N
         cmdDuplicate.setToolTipText("in dieser Akte duplizieren");
         cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -839,7 +839,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy3.png"))); // NOI18N
         cmdCopy.setToolTipText("in andere Akte kopieren");
         cmdCopy.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

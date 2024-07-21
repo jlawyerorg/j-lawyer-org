@@ -224,7 +224,7 @@
     <Component class="javax.swing.JButton" name="cmdDuplicate">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/editcopy.png"/>
+          <Image iconType="3" name="/icons/editcopy2.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="in dieser Akte duplizieren"/>
       </Properties>
@@ -235,7 +235,7 @@
     <Component class="javax.swing.JButton" name="cmdCopy">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/editcopy.png"/>
+          <Image iconType="3" name="/icons/editcopy3.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="in andere Akte kopieren"/>
       </Properties>
