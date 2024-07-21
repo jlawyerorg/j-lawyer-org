@@ -697,6 +697,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
 
 /**
  *
@@ -760,7 +762,12 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtUser.putClientProperty("JTextField.placeholderText", "Nutzername");
             this.txtUser.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_face_black_24dp.png")));
-
+            this.txtUser.addFocusListener(new java.awt.event.FocusAdapter() {
+                public void focusGained(java.awt.event.FocusEvent evt) {
+                    txtUser.selectAll();
+                }
+            });
+            
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
@@ -1639,7 +1646,13 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            this.loginPerformed(true);
+        this.loginPerformed(true);
+        } else if (evt.getKeyCode() == KeyEvent.VK_TAB && evt.isShiftDown()) {
+            evt.consume();
+            SwingUtilities.invokeLater(() -> {
+                txtUser.requestFocus();
+                txtUser.selectAll();
+            });
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
