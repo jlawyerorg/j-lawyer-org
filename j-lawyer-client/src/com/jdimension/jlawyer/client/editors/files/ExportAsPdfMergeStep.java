@@ -672,9 +672,6 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -683,8 +680,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
-import javax.imageio.ImageIO;
-import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -768,8 +763,18 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 } catch (Throwable t) {
                     log.error("can not get canonical path during html export", t);
                 }
+                
+                String fullResultFile=dir.getAbsolutePath() + File.separator + new File(resultFile).getName();
+                if(new File(fullResultFile).exists()) {
+                    int prefix=1;
+                    while(new File(fullResultFile).exists()) {
+                        prefix=prefix+1;
+                        fullResultFile=dir.getAbsolutePath() + File.separator + "(" + prefix + ") " + new File(resultFile).getName();
+                    }
+                }
+                
                 try {
-                    FileUtils.copyFile(resultFile, dir.getAbsolutePath() + File.separator + new File(resultFile).getName());
+                    FileUtils.copyFile(resultFile, fullResultFile);
                 } catch (Exception ex) {
                     log.error(ex);
                 }
@@ -925,14 +930,14 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 //        merger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
 //    }
     private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws IOException {
-        List<Integer> startPages = new ArrayList<>();
+        HashMap<String,Integer> startPages = new HashMap<>();
         PDFMergerUtility merger = new PDFMergerUtility();
         PDDocument mergedDoc = new PDDocument();
 
         int currentPageCount = 0;
         for (File file : pdfFiles) {
             PDDocument doc = PDDocument.load(file);
-            startPages.add(currentPageCount);
+            startPages.put(file.getName(), currentPageCount);
             merger.appendDocument(mergedDoc, doc);
             currentPageCount += doc.getNumberOfPages();
             doc.close();
@@ -945,10 +950,62 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
         // Create TOC
         PDDocument tocDoc = new PDDocument();
-        PDPage tocPage = new PDPage(PDRectangle.A4);
-        tocDoc.addPage(tocPage);
+        
+        // first page with metadata
+        PDPage metaPage = new PDPage(PDRectangle.A4);
+        tocDoc.addPage(metaPage);
+        PDPageContentStream metaStream = new PDPageContentStream(tocDoc, metaPage);
+        metaStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+        metaStream.beginText();
+        metaStream.setLeading(14.5f);
+        metaStream.newLineAtOffset(50, 750);
+        metaStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+        metaStream.newLine();
+        metaStream.newLine();
+        metaStream.endText();
+        metaStream.setFont(PDType1Font.HELVETICA, 12);
+        metaStream.close();
+        
+        int numberOfTocPages=(int) Math.ceil((double) pdfFiles.size() / 45);
+        int numberOfMetaPages=1;
+//        List<PDAnnotation> annotations = new ArrayList<>();
+        PDDocumentOutline outline = new PDDocumentOutline();
+        mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
+        
+        int currentTocPage=1;
+        for (int i = 0; i < pdfFiles.size(); i += 45) {
+            int end = Math.min(pdfFiles.size(), i + 45);
+            List<File> batch = pdfFiles.subList(i, end);
+            processTocPage(tocDoc, mergedDoc, batch, startPages, numberOfTocPages+numberOfMetaPages, caseDto, outline);
+            currentTocPage=currentTocPage+1;
+        }
+        
+        
+        
 
-        PDPageContentStream contentStream = new PDPageContentStream(tocDoc, tocPage);
+        //metaPage.setAnnotations(annotations);
+        
+        
+
+        // Save TOC to temp file
+        File tocTempFile = createTempFileFromPDDocument(tocDoc);
+        tocDoc.close();
+
+        // Merge TOC and main document
+        PDFMergerUtility finalMerger = new PDFMergerUtility();
+        finalMerger.addSource(tocTempFile);
+        finalMerger.addSource(createTempFileFromPDDocument(mergedDoc));
+        finalMerger.setDestinationFileName(outputFile);
+        finalMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+
+        mergedDoc.close();
+    }
+    
+    private void processTocPage(PDDocument tocDoc, PDDocument mergedDoc, List<File> pdfFiles, HashMap<String,Integer> startPages, int totalHeaderPages, ArchiveFileBean caseDto, PDDocumentOutline outline) throws IOException {
+        PDPage tocPage1 = new PDPage(PDRectangle.A4);
+        tocDoc.addPage(tocPage1);
+
+        PDPageContentStream contentStream = new PDPageContentStream(tocDoc, tocPage1);
         contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
         contentStream.beginText();
         contentStream.setLeading(14.5f);
@@ -961,7 +1018,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
         contentStream.setFont(PDType1Font.HELVETICA, 12);
 
-        List<PDAnnotation> annotations = new ArrayList<>();
+        
 
         
         
@@ -969,10 +1026,11 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         float iconWidth = 16;
         float iconHeight = 16;
 
-        PDDocumentOutline outline = new PDDocumentOutline();
-        mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
+        
         
         HashMap<String,byte[]> documentIcons=(HashMap<String,byte[]>)data.get("export.documents.icons");
+        
+        
         
         for (int i = 0; i < pdfFiles.size(); i++) {
             String fileName = pdfFiles.get(i).getName();
@@ -981,8 +1039,8 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             //PDImageXObject pdImage = PDImageXObject.createFromFile(iconPath, tocDoc);
             PDImageXObject pdImage = PDImageXObject.createFromByteArray(tocDoc, iconBytes, ""+System.currentTimeMillis()+".png");
             
-            int tocPageNumber = tocDoc.getNumberOfPages(); // Adjust for TOC pages
-            int destinationPageIndex = startPages.get(i) + tocPageNumber;
+            //int tocPageNumber = tocDoc.getNumberOfPages(); // Adjust for TOC pages
+            int destinationPageIndex = startPages.get(fileName) + totalHeaderPages;
 
             
             // End the text block before drawing the image
@@ -1017,27 +1075,12 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 //            contentStream.newLine();
 //            contentStream.newLineAtOffset(-(15 + iconWidth), 0); // Reset text cursor position
 
-            addBookmark(mergedDoc, outline, fileName, mergedDoc.getPage(Math.min(destinationPageIndex-1, mergedDoc.getNumberOfPages()-1)), Math.min(destinationPageIndex-1, mergedDoc.getNumberOfPages()-1));
+            addBookmark(outline, fileName, mergedDoc.getPage(Math.min(destinationPageIndex-2, mergedDoc.getNumberOfPages()-1)));
             
         }
 
         //contentStream.endText();
         contentStream.close();
-
-        tocPage.setAnnotations(annotations);
-
-        // Save TOC to temp file
-        File tocTempFile = createTempFileFromPDDocument(tocDoc);
-        tocDoc.close();
-
-        // Merge TOC and main document
-        PDFMergerUtility finalMerger = new PDFMergerUtility();
-        finalMerger.addSource(tocTempFile);
-        finalMerger.addSource(createTempFileFromPDDocument(mergedDoc));
-        finalMerger.setDestinationFileName(outputFile);
-        finalMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
-
-        mergedDoc.close();
     }
     
     private static File createTempFileFromPDDocument(PDDocument document) throws IOException {
@@ -1046,7 +1089,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         return tempFile;
     }
     
-    private static void addBookmark(PDDocument document, PDDocumentOutline outline, String title, PDPage page, int pageIndex) {
+    private static void addBookmark(PDDocumentOutline outline, String title, PDPage page) {
         PDOutlineItem bookmark = new PDOutlineItem();
         bookmark.setTitle(title);
 
