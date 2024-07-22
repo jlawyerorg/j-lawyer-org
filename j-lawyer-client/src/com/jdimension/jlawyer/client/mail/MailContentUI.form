@@ -222,16 +222,19 @@
         <Component class="javax.swing.JLabel" name="lblSubject">
           <Properties>
             <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="toolTipText" type="java.lang.String" value="Klicken, um in Zwischenablage zu kopieren"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblFrom">
           <Properties>
             <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="toolTipText" type="java.lang.String" value="Klicken, um in Zwischenablage zu kopieren"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblTo">
           <Properties>
             <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="toolTipText" type="java.lang.String" value="Klicken, um in Zwischenablage zu kopieren"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel4">
@@ -247,6 +250,7 @@
         <Component class="javax.swing.JLabel" name="lblCC">
           <Properties>
             <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="toolTipText" type="java.lang.String" value="Klicken, um in Zwischenablage zu kopieren"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel6">
@@ -262,6 +266,7 @@
         <Component class="javax.swing.JLabel" name="lblBCC">
           <Properties>
             <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="toolTipText" type="java.lang.String" value="Klicken, um in Zwischenablage zu kopieren"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JSeparator" name="jSeparator1">

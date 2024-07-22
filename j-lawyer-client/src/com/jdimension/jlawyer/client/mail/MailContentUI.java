@@ -691,6 +691,10 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -809,6 +813,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
+        // Add mouse listeners to copy labels
+        addCopyFunctionality(lblSubject);
+        addCopyFunctionality(lblFrom);
+        addCopyFunctionality(lblTo);
+        addCopyFunctionality(lblCC);
+        addCopyFunctionality(lblBCC);
+        
         WebViewRegister.getInstance();
 
         Platform.setImplicitExit(false);
@@ -905,6 +916,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         fxContainer.setLayout(new BorderLayout());
         fxContainer.add(jfxPanel);
 
+    }
+    
+    // Method to add copy functionality to JLabels
+    private void addCopyFunctionality(JLabel label) {
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                StringSelection stringSelection = new StringSelection(label.getText());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                JOptionPane.showMessageDialog(null, "In Zwischenablage kopiert: " + label.getText());
+            }
+        });
     }
 
     public void clear() {
@@ -1587,20 +1610,25 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText("Datum");
 
         lblSubject.setText(" ");
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
 
         lblFrom.setText(" ");
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
 
         lblTo.setText(" ");
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
 
         jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("CC:");
 
         lblCC.setText(" ");
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
 
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
         lblBCC.setText(" ");
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
 
         cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
         cmdAssistant.setToolTipText("Assistent Ingo");
