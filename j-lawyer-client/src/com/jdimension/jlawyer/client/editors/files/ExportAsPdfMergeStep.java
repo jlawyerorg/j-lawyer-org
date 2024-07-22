@@ -935,7 +935,27 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         metaStream.newLine();
         metaStream.newLine();
         metaStream.endText();
+        
+         // Set font for additional information
         metaStream.setFont(PDType1Font.HELVETICA, 12);
+        metaStream.beginText();
+        metaStream.setLeading(14.5f);
+        metaStream.newLineAtOffset(50, 710);
+
+        // Add additional lines of text
+        metaStream.showText("wegen: " + caseDto.getReason());
+        metaStream.newLine();
+        metaStream.showText("Sachgebiet: " + caseDto.getSubjectField());
+        metaStream.newLine();
+        metaStream.showText("Anwalt / Anwältin: " + caseDto.getLawyer());
+        metaStream.newLine();
+        metaStream.showText("Sachbearbeiter(-in): " + caseDto.getAssistant());
+        metaStream.newLine();
+        metaStream.showText("erstellt: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateCreated()));
+        metaStream.newLine();
+        metaStream.showText("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged()));
+        metaStream.endText();
+        
         metaStream.close();
         
         // add empty placeholder pages for the TOC
@@ -977,6 +997,25 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             List<File> batch = pdfFiles.subList(i, end);
             processTocPage(currentTocPage, mergedDoc, batch, startPages, caseDto, outline);
             currentTocPage=currentTocPage+1;
+        }
+        
+        
+        int pageCount = mergedDoc.getNumberOfPages();
+        for (int i = 0; i < pageCount; i++) {
+            PDPage page = mergedDoc.getPage(i);
+            try (PDPageContentStream contentStream = new PDPageContentStream(mergedDoc, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+                contentStream.beginText();
+                contentStream.setFont(PDType1Font.HELVETICA, 10);
+
+                // Position the text at the bottom center of the page
+                float margin = 20;
+                float x = (page.getMediaBox().getWidth() - margin) / 2;
+                float y = margin;
+
+                contentStream.newLineAtOffset(x, y);
+                contentStream.showText("" + (i + 1) + " / " + pageCount);
+                contentStream.endText();
+            }
         }
         
         FileUtils.copyFile(createTempFileFromPDDocument(mergedDoc).getAbsolutePath(), outputFile, true);

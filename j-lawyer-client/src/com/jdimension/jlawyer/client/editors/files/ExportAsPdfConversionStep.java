@@ -683,6 +683,7 @@ import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -702,6 +703,9 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
      */
     public ExportAsPdfConversionStep() {
         initComponents();
+        
+        this.progress.setIndeterminate(false);
+        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
     }
 
     @Override
@@ -737,6 +741,8 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlConversionList = new javax.swing.JPanel();
+        progress = new javax.swing.JProgressBar();
+        lblFile = new javax.swing.JLabel();
 
         setName("PDF-Konvertierung"); // NOI18N
 
@@ -749,6 +755,8 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         pnlConversionList.setLayout(new javax.swing.BoxLayout(pnlConversionList, javax.swing.BoxLayout.Y_AXIS));
         jScrollPane1.setViewportView(pnlConversionList);
 
+        lblFile.setText("jLabel2");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -756,8 +764,10 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1))
+                    .addComponent(progress, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 983, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1)
+                    .addComponent(lblFile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -766,7 +776,11 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
+                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFile)
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -774,7 +788,9 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblFile;
     private javax.swing.JPanel pnlConversionList;
+    private javax.swing.JProgressBar progress;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -795,20 +811,32 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         List<ArchiveFileDocumentsBean> docs = (List<ArchiveFileDocumentsBean>) data.get("export.documents");
         HashMap<String,byte[]> documentIcons=new HashMap<>();
         data.put("export.documents.icons", documentIcons);
+        
+        progress.setMinimum(0);
+        progress.setMaximum(docs.size());
+        progress.setValue(0);
+        progress.setStringPainted(true);
 
-        for (ArchiveFileDocumentsBean d : docs) {
-            JLabel docLabel = new JLabel();
-            docLabel.setText(d.getName());
-            docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
-            this.pnlConversionList.add(docLabel);
-        }
+//        for (ArchiveFileDocumentsBean d : docs) {
+//            JLabel docLabel = new JLabel();
+//            docLabel.setText(d.getName());
+//            docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+//            this.pnlConversionList.add(docLabel);
+//        }
 
         new Thread(() -> {
             ThreadUtils.setWaitCursor(this);
             
+            int errors=0;
+            int successes=0;
+            ThreadUtils.updateLabelIcon(lblFile, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
             for (ArchiveFileDocumentsBean d : docs) {
+                
                 try {
                     //byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
+                    
+                    ThreadUtils.updateLabel(lblFile, d.getName());
+                    
                     byte[] content=CachingDocumentLoader.getInstance().getDocument(d.getId());
 
                     Icon pdfIcon=FileUtils.getInstance().getFileTypeIcon("test.pdf");
@@ -837,13 +865,18 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
                         documentIcons.put(pdfFile.getName(), iconBytes);
                     
                     }
+                    
+                    successes++;
 
+                    ThreadUtils.updateProgressBar(progress, "" + (errors+successes) + " / " + docs.size(), progress.getValue()+1, progress.getMaximum(), false);
+                    
                     SwingUtilities.invokeAndWait(() -> {
                         this.setIndicator(d.getName(), true);
                     });
 
                 } catch (Exception ex) {
                     log.error("PDF conversion failed", ex);
+                    errors++;
                     try {
                         SwingUtilities.invokeAndWait(() -> {
                             this.setIndicator(d.getName(), false);
@@ -854,6 +887,13 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
                 }
                 ThreadUtils.setDefaultCursor(this);
 
+            }
+            ThreadUtils.updateProgressBar(progress, "" + (errors+successes) + " / " + docs.size(), progress.getMaximum(), progress.getMaximum(), false);
+            ThreadUtils.updateLabel(lblFile, " ");
+            ThreadUtils.updateLabelIcon(lblFile, null);
+            if(errors>0) {
+                ThreadUtils.updateLabel(lblFile, "fehlgeschlagene / nicht unterstützte Dateien: " + errors);
+                ThreadUtils.updateLabelIcon(lblFile, new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             }
 
             try {
@@ -889,17 +929,26 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
     }
     
     private void setIndicator(String fileName, boolean success) {
-        for (Component c : this.pnlConversionList.getComponents()) {
-            if (c instanceof JLabel) {
-                if (((JLabel) c).getText().equals(fileName)) {
-                    if (success) {
-                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                    } else {
-                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
-                    }
-                }
-            }
+//        for (Component c : this.pnlConversionList.getComponents()) {
+//            if (c instanceof JLabel) {
+//                if (((JLabel) c).getText().equals(fileName)) {
+//                    if (success) {
+//                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+//                    } else {
+//                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+//                    }
+//                }
+//            }
+//        }
+
+        
+        if(!success) {
+        JLabel docLabel = new JLabel();
+        docLabel.setText(fileName);
+        docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.pnlConversionList.add(docLabel);
         }
+
     }
 
     @Override
