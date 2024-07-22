@@ -1611,24 +1611,29 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         lblSubject.setText(" ");
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblSubject.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblFrom.setText(" ");
         lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblFrom.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblTo.setText(" ");
         lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblTo.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("CC:");
 
         lblCC.setText(" ");
         lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
         lblBCC.setText(" ");
         lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblBCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
         cmdAssistant.setToolTipText("Assistent Ingo");
