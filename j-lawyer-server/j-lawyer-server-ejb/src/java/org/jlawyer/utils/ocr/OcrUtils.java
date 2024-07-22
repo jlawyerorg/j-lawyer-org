@@ -698,7 +698,7 @@ public class OcrUtils {
                 cmd[i]=cmd[i].replace("DATEIAUS", outputFile.getAbsolutePath());
         }
         
-        log.info("OCR command line arguments for file " + inputFile.getAbsolutePath() + ": ");
+        log.info("OCR command line arguments for file " + inputFile.getAbsolutePath() + " with " + inputFile.length() + " bytes: ");
         for (String str : cmd) {
             log.info("   " + str);
         }
@@ -707,7 +707,7 @@ public class OcrUtils {
         ProcessBuilder processBuilder = new ProcessBuilder(cmd);
         processBuilder.redirectErrorStream(true); // Redirect standard error to standard output
 
-        log.info("OCR output:");
+        log.info("OCR output for file " + inputFile.getAbsolutePath() + ":");
         try {
             Process process = processBuilder.start();
 
@@ -717,7 +717,7 @@ public class OcrUtils {
 
             String line;
             while ((line = reader.readLine()) != null) {
-                log.info("   " + line);
+                log.info("   " + inputFile.getAbsolutePath() + ": "+ line);
             }
 
             // Wait for the process to finish and get the exit code
