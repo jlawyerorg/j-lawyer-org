@@ -691,6 +691,10 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -809,6 +813,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
+        // Add mouse listeners to copy labels
+        addCopyFunctionality(lblSubject);
+        addCopyFunctionality(lblFrom);
+        addCopyFunctionality(lblTo);
+        addCopyFunctionality(lblCC);
+        addCopyFunctionality(lblBCC);
+        
         WebViewRegister.getInstance();
 
         Platform.setImplicitExit(false);
@@ -906,6 +917,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         fxContainer.add(jfxPanel);
 
     }
+    
+    // Method to add copy functionality to JLabels
+    private void addCopyFunctionality(JLabel label) {
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                StringSelection stringSelection = new StringSelection(label.getText());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                JOptionPane.showMessageDialog(null, "In Zwischenablage kopiert: " + label.getText());
+            }
+        });
+    }
 
     public void clear() {
         this.emlMsgContainer = null;
@@ -993,11 +1016,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             log.error("Error getting contents of Outlook message", ex);
             this.setErrorMessage("Fehler beim Laden der Outlook-Nachricht: " + ex.getMessage());
             this.lblBCC.setText("");
+            this.lblBCC.setToolTipText(null);
             this.lblCC.setText("");
+            this.lblCC.setToolTipText(null);
             this.lblFrom.setText("");
+            this.lblFrom.setToolTipText(null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
+            this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
+            this.lblTo.setToolTipText(null);
         }
     }
 
@@ -1050,11 +1078,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             log.error("Error getting contents of IMAP message", ex);
             this.setErrorMessage("Fehler beim Laden der Nachricht: " + ex.getMessage());
             this.lblBCC.setText("");
+            this.lblBCC.setToolTipText(null);
             this.lblCC.setText("");
+            this.lblCC.setToolTipText(null);
             this.lblFrom.setText("");
+            this.lblFrom.setToolTipText(null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
+            this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
+            this.lblTo.setToolTipText(null);
         }
     }
 
@@ -1131,9 +1164,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
-        lblSubject.setToolTipText(lblSubject.getText());
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
-        lblFrom.setToolTipText(lblFrom.getText());
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
         if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
@@ -1143,7 +1176,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblTo.setText(to);
-        lblTo.setToolTipText(to);
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
 
         String cc = "";
         if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
@@ -1153,7 +1186,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblCC.setText(cc);
-        lblCC.setToolTipText(cc);
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
 
         String bcc = "";
         if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
@@ -1163,7 +1196,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblBCC.setText(bcc);
-        lblBCC.setToolTipText(bcc);
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         if (copiedMsg.isMimeType("multipart/*")) {
@@ -1294,9 +1327,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(msg.getSubject());
-        lblSubject.setToolTipText(lblSubject.getText());
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         lblFrom.setText(msg.getFromName() + "<" + msg.getFromEmail() + ">");
-        lblFrom.setToolTipText(lblFrom.getText());
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
         if (msg.getRecipients() != null && msg.getRecipients().size() > 0) {
@@ -1306,7 +1339,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblTo.setText(to);
-        lblTo.setToolTipText(to);
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
 
         String cc = "";
         if (msg.getCcRecipients() != null && msg.getCcRecipients().size() > 0) {
@@ -1316,7 +1349,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblCC.setText(cc);
-        lblCC.setToolTipText(cc);
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
 
         String bcc = "";
         if (msg.getBccRecipients() != null && msg.getBccRecipients().size() > 0) {
@@ -1326,7 +1359,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblBCC.setText(bcc);
-        lblBCC.setToolTipText(bcc);
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
 
@@ -1587,20 +1620,30 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText("Datum");
 
         lblSubject.setText(" ");
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblSubject.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblFrom.setText(" ");
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblFrom.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblTo.setText(" ");
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblTo.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("CC:");
 
         lblCC.setText(" ");
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
         lblBCC.setText(" ");
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblBCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
         cmdAssistant.setToolTipText("Assistent Ingo");
