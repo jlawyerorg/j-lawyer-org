@@ -661,369 +661,305 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.messenger;
 
-import com.jdimension.jlawyer.events.InstantMessageCreatedEvent;
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
+import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessage;
-import com.jdimension.jlawyer.persistence.InstantMessageFacadeLocal;
-import com.jdimension.jlawyer.persistence.InstantMessageMention;
-import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
-import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
-import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Adjustable;
+import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.List;
-import javax.annotation.Resource;
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
-import javax.ejb.SessionContext;
-import javax.ejb.Stateless;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.jms.JMSConnectionFactory;
-import javax.jms.JMSContext;
-import javax.jms.ObjectMessage;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
-import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
  * @author jens
  */
-@Stateless
-public class MessagingService implements MessagingServiceRemote, MessagingServiceLocal {
-    
-    private static final Logger log = Logger.getLogger(MessagingService.class.getName());
-    
-    SimpleDateFormat dfDate=new SimpleDateFormat("dd.MM.yyyy");
-    SimpleDateFormat dfTime=new SimpleDateFormat("HH:mm");
+public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements EventConsumer {
 
-    @Resource
-    private SessionContext context;
-    
-    @EJB
-    private InstantMessageFacadeLocal messageFacade;
-    @EJB
-    private InstantMessageMentionFacadeLocal mentionFacade;
-    @EJB
-    private ArchiveFileBeanFacadeLocal caseFacade;
-    @EJB
-    private ArchiveFileDocumentsBeanFacadeLocal docFacade;
-    @EJB
-    private SecurityServiceLocal securityFacade;
-    @EJB
-    private SystemManagementLocal systemManagement;
-    @EJB
-    private SingletonServiceLocal singleton;
-    
-    @Inject
-    Event<InstantMessageCreatedEvent> newMessageEvent;
-    
-    @Inject
-    @JMSConnectionFactory("java:/JmsXA")
-    private JMSContext jmsContext;
+    private static final Logger log = Logger.getLogger(PopoutMessengerOtherUsers.class.getName());
 
-    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
-    private javax.jms.Queue outgoingMailQueue;
+    /**
+     * Creates new form PopoutMessengerOtherUsers
+     *
+     * @param parent
+     * @param modal
+     */
+    public PopoutMessengerOtherUsers(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public InstantMessage submitMessage(InstantMessage message) throws Exception {
-        
-        if(message.getContent()==null || message.getContent().trim().isEmpty())
-            throw new Exception("Nachricht ohne Inhalt");
-        
-        StringGenerator idGen = new StringGenerator();
-        String messageId=idGen.getID().toString();
-        message.setId(messageId);
-        Date sentDate=new Date();
-        message.setSent(sentDate);
-        
-        if(message.getDocumentContext()!=null) {
-            ArchiveFileDocumentsBean docContext=message.getDocumentContext();
-            String docId=docContext.getId();
-            if(docId!=null) {
-                ArchiveFileDocumentsBean foundDoc=this.docFacade.find(docId);
-                if(foundDoc!=null) {
-                    message.setCaseContext(foundDoc.getArchiveFileKey());
-                } else {
-                    throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument kann jedoch nicht gefunden werden!");
+        ComponentUtils.restoreDialogSize(this);
+
+        this.jScrollPane1.getViewport().setOpaque(false);
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
+        BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
+        this.pnlMessages.setLayout(layout);
+
+        List<AppUserBean> allUsers = UserSettings.getInstance().getMessagingEnabledUsers();
+        String[] allUserItems = new String[allUsers.size()];
+        for (int i = 0; i < allUsers.size(); i++) {
+            AppUserBean aub = allUsers.get(i);
+            allUserItems[i] = aub.getPrincipalId();
+        }
+        StringUtils.sortIgnoreCase(allUserItems);
+        this.cmbUsers.removeAllItems();
+        OptionsComboBoxModel usersModel = new OptionsComboBoxModel(allUserItems);
+        this.cmbUsers.setModel(usersModel);
+        this.cmbUsers.setRenderer(new UserListCellRenderer());
+        this.cmbUsers.addActionListener((ActionEvent e) -> {
+            this.pnlMessages.removeAll();
+            this.pnlMessages.updateUI();
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                List<InstantMessage> initialMessages = locator.lookupMessagingServiceRemote().getMessagesWithOpenMentions(this.cmbUsers.getSelectedItem().toString());
+                if (initialMessages != null) {
+                    for (InstantMessage m : initialMessages) {
+                        this.addMessageToView(m);
+                    }
                 }
-            } else {
-                throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument hat jedoch keine ID!");
+            } catch (Throwable ex) {
+                log.error("Error connecting to server", ex);
+
             }
-        }
-        
-        this.messageFacade.create(message);
-        InstantMessage newMessage=this.messageFacade.find(messageId);
-        
-        List<AppUserBean> users=this.securityFacade.getUsersHavingRole("loginRole");
-        List<InstantMessageMention> mentions=InstantMessagingUtil.extractMentions(message, users);
-        for(InstantMessageMention m: mentions) {
-            m.setId(idGen.getID().toString());
-            m.setMessage(newMessage);
-            m.setDone(false);
-            m.setStatusChanged(null);
-            this.mentionFacade.create(m);
-            String principalId=m.getPrincipal();
-            AppUserBean notifyTo=this.systemManagement.getUser(principalId);
-            if(notifyTo != null) {
-                boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true);
-                if (notificationEnabled && notifyTo.getEmail() != null) {
-                    OutgoingMailRequest omr = new OutgoingMailRequest();
-                    omr.setTo(notifyTo.getEmail());
-                    omr.setSubject("Du wurdest in einer Nachricht erwähnt");
-                    omr.setMainCaption("Du wurdest in einer Sofortnachricht erwähnt");
-                    omr.setSubCaption(m.getMessage().getSender() + " schrieb am " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + ":");
-                    StringBuilder body=new StringBuilder();
-                    body.append("\"").append(m.getMessage().getContent()).append("\"\n");
-                    if(m.getMessage().getCaseContext()!=null) 
-                        body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
-                    if(m.getMessage().getDocumentContext()!=null) 
-                        body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
-                    omr.setBodyContent(body.toString());
-                    this.publishOutgoingMailRequest(omr);
-                }
-            }
-        }
-        
-        this.singleton.setLatestInstantMessageReceived(sentDate.getTime());
-        
-        InstantMessageCreatedEvent evt = new InstantMessageCreatedEvent();
-        evt.setMessageId(messageId);
-        evt.setContent(newMessage.getContent());
-        if(newMessage.getCaseContext()!=null)
-            evt.setCaseContext(newMessage.getCaseContext().getId());
-        if(newMessage.getDocumentContext()!=null)
-            evt.setDocumentContext(newMessage.getDocumentContext().getId());
-        ArrayList<String> mentioned=new ArrayList<>();
-        for(int i=0;i<mentions.size();i++) {
-            mentioned.add(mentions.get(i).getPrincipal());
-        }
-        evt.setMentioned(mentioned);
-        evt.setSender(newMessage.getSender());
-        evt.setSent(newMessage.getSent());
-        this.newMessageEvent.fireAsync(evt);
-        
-        return this.messageFacade.find(messageId);
+
+        });
+        // initially, display messages of current user
+        this.cmbUsers.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+        EventBroker eb = EventBroker.getInstance();
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
+        eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
     }
-    
-    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        pnlMessages = new javax.swing.JPanel();
+        cmbUsers = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("j-lawyer.org Messages");
+        setBackground(new java.awt.Color(12, 21, 30));
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
+
+        jPanel1.setBackground(new java.awt.Color(12, 21, 30));
+
+        jScrollPane1.setBorder(null);
+        jScrollPane1.setOpaque(false);
+
+        pnlMessages.setOpaque(false);
+
+        javax.swing.GroupLayout pnlMessagesLayout = new javax.swing.GroupLayout(pnlMessages);
+        pnlMessages.setLayout(pnlMessagesLayout);
+        pnlMessagesLayout.setHorizontalGroup(
+            pnlMessagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 850, Short.MAX_VALUE)
+        );
+        pnlMessagesLayout.setVerticalGroup(
+            pnlMessagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 447, Short.MAX_VALUE)
+        );
+
+        jScrollPane1.setViewportView(pnlMessages);
+
+        cmbUsers.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
+        jLabel1.setText("Erwähnungen für den ausgewählten Nutzer");
+        jLabel1.setToolTipText("Erwähnungen werden bei Klick im Namen des ausgewählten Nutzers als erledigt markiert.");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmbUsers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbUsers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        ComponentUtils.storeDialogSize(this);
+    }//GEN-LAST:event_formComponentResized
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
         try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(outgoingMailQueue, msg);
-
-        } catch (Exception ex) {
-            log.error("could not publish outgoing mail request", ex);
-        }
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public boolean deleteMessage(String messageId) throws Exception {
-        InstantMessage m=this.messageFacade.find(messageId);
-        if(m!=null)
-            this.messageFacade.remove(m);
-        else
-            return false;
-        return true;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InstantMessage> getMessagesSince(Date since) throws Exception {
-        return getMessagesSince(since, 500);
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception {
-        // only query the database if mentions are requested 
-        if(this.singleton.getLatestInstantMessageReceived()<0) {
-            // after server startup
-            List<InstantMessage> messages=this.messageFacade.findSince(since);
-            if(messages!=null && !messages.isEmpty()) {
-                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size()-1).getSent().getTime());
-            } else {
-                this.singleton.setLatestInstantMessageReceived(since.getTime());
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
             }
-            
-            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
-        } else if(since.getTime()<this.singleton.getLatestInstantMessageReceived()) {
-            // new message have been received
-            List<InstantMessage> messages=this.messageFacade.findSince(since);
-            if(messages!=null && !messages.isEmpty()) {
-                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size()-1).getSent().getTime());
-            } else {
-                this.singleton.setLatestInstantMessageReceived(since.getTime());
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(PopoutMessengerOtherUsers.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(PopoutMessengerOtherUsers.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(PopoutMessengerOtherUsers.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(PopoutMessengerOtherUsers.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            PopoutMessengerOtherUsers dialog = new PopoutMessengerOtherUsers(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbUsers;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel pnlMessages;
+    // End of variables declaration//GEN-END:variables
+
+    private void addMessageToView(InstantMessage msg) {
+        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), this.cmbUsers.getSelectedItem().toString(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        pnlMessages.add(mp1);
+        pnlMessages.repaint();
+        this.jScrollPane1.doLayout();
+        mp1.revalidate();
+        this.jScrollPane1.revalidate();
+
+        JScrollBar vertical = this.jScrollPane1.getVerticalScrollBar();
+        vertical.setValue(vertical.getMaximum());
+
+        AdjustmentListener downScroller = new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                Adjustable adjustable = e.getAdjustable();
+                adjustable.setValue(adjustable.getMaximum());
+                vertical.removeAdjustmentListener(this);
             }
-            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
-        } else {
-            return null;
-        }
-    }
-    
-    private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId, int maxNumberOfMessages) {
-        ArrayList<InstantMessage> filtered=new ArrayList<>();
-        for(InstantMessage m: unfiltered) {
-            if(messageRelevantForUser(m, principalId))
-                filtered.add(m);
-        }
-        
-        int size = filtered.size();
-        return new ArrayList<> (filtered.subList(Math.max(0, size - maxNumberOfMessages), size));
-    }
-    
-    private boolean messageRelevantForUser(InstantMessage m, String principalId) {
-        // message sent in a case context
-        if(m.getCaseContext()!=null)
-            return true;
+        };
+        vertical.addAdjustmentListener(downScroller);
 
-        // message sent by the user
-        if(m.getSender()!=null && m.getSender().equals(principalId))
-            return true;
-        
-        // user has been mentioned
-        if(m.getMentionFor(principalId)!=null)
-            return true;
-        
-        // no case context, sent to all
-        if(m.getCaseContext()==null && !m.hasMentions())
-            return true;
-        
-        return false;
-        
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
-    public List<InstantMessage> getMessagesForCase(String caseId) throws Exception {
-        ArchiveFileBean caseContext=this.caseFacade.find(caseId);
-        if(caseContext==null) {
-            log.error("message requested for an invalid case id: " + caseId);
-            throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
+    public void onEvent(Event e) {
+        if (e instanceof NewInstantMessagesEvent) {
+
+            SwingUtilities.invokeLater(() -> {
+                if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
+                    for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                        if(msg.hasMentionFor(this.cmbUsers.getSelectedItem().toString()))
+                            this.addMessageToView(msg);
+                    }
+                }
+            });
+        } else if (e instanceof InstantMessageMentionChangedEvent) {
+            this.updateMentionStatus((InstantMessageMentionChangedEvent) e);
+        } else if (e instanceof InstantMessageDeletedEvent) {
+            this.deleteMessage((InstantMessageDeletedEvent) e);
+            this.pnlMessages.updateUI();
         }
-        return this.messageFacade.findByCaseContext(caseContext);
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InstantMessage> getMessagesWithOpenMentions(String principalId) throws Exception {
-        List<InstantMessageMention> openMentions=this.mentionFacade.findOpen(principalId);
-        ArrayList<InstantMessage> messages=new ArrayList<>();
-        if(openMentions!=null) {
-            for(InstantMessageMention mention: openMentions)
-            messages.add(mention.getMessage());
-        }
-        return messages;
     }
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public boolean markMentionDone(String mentionId, boolean done) throws Exception {
-        
-        InstantMessageMention m=this.mentionFacade.find(mentionId);
-        if(m==null)
-            throw new Exception ("Mention " + mentionId + " existiert nicht!");
-        
-        m.setDone(done);
-        Date statusChanged=new Date();
-        m.setStatusChanged(statusChanged);
-        this.mentionFacade.edit(m);
-        
-        this.singleton.setLatestInstantMessageStatusUpdated(statusChanged.getTime());
-        
-        
-        if(m.getPrincipal()!=null && m.getMessage().getSender()!=null && !(m.getPrincipal().equals(m.getMessage().getSender()))) {
-            // only notify if a user other than the sender marked the mention as done
-            AppUserBean notifyTo=this.systemManagement.getUser(m.getMessage().getSender());
-            if(notifyTo != null) {
-                boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, true);
-                if (notificationEnabled && notifyTo.getEmail() != null) {
-                    OutgoingMailRequest omr = new OutgoingMailRequest();
-                    omr.setTo(notifyTo.getEmail());
-                    omr.setSubject("Deine Nachricht wurde als erledigt markiert");
-                    omr.setMainCaption("Deine Nachricht an eine andere Person wurde als erledigt markiert");
-                    omr.setSubCaption(m.getPrincipal() + " hat die folgende Nachricht vom " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + " als erledigt markiert:");
-                    StringBuilder body=new StringBuilder();
-                    body.append("\"").append(m.getMessage().getContent()).append("\"\n");
-                    if(m.getMessage().getCaseContext()!=null) 
-                        body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
-                    if(m.getMessage().getDocumentContext()!=null) 
-                        body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
-                    omr.setBodyContent(body.toString());
-                    this.publishOutgoingMailRequest(omr);
+    private void updateMentionStatus(InstantMessageMentionChangedEvent e) {
+        for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+            if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                ((MessagePanel) this.pnlMessages.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
+            }
+        }
+    }
+
+    private void deleteMessage(InstantMessageDeletedEvent e) {
+        boolean removed = false;
+        for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+            if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                if (((MessagePanel) this.pnlMessages.getComponent(i)).getMessage().getId().equals(e.getMessageId())) {
+                    this.pnlMessages.remove(this.pnlMessages.getComponent(i));
+                    removed = true;
+                    break;
                 }
             }
         }
-        
-        
-        
-        return true;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public InstantMessage getMessage(String id) throws Exception {
-        return this.messageFacade.find(id);
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public int getNumberOfOpenMentions() throws Exception {
-        List<InstantMessageMention> open=this.mentionFacade.findOpen();
-        int openCount=0;
-        if(open!=null) {
-            openCount=open.size();
-        }
-        return openCount;
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public int getNumberOfOpenMentions(String principalId) throws Exception {
-        List<InstantMessageMention> open=this.mentionFacade.findOpen(principalId);
-        int openCount=0;
-        if(open!=null) {
-            openCount=open.size();
-        }
-        return openCount;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception {
-        // only query the database if mentions are requested 
-        if(this.singleton.getLatestInstantMessageStatusUpdated()<0) {
-            // after server startup
-            List<InstantMessageMention> mentions=this.mentionFacade.findSince(since);
-            if(mentions!=null && !mentions.isEmpty()) {
-                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size()-1).getStatusChanged().getTime());
-            } else {
-                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
-            }
-            return mentions;
-        } else if(since.getTime()<this.singleton.getLatestInstantMessageStatusUpdated()) {
-            // new message have been received
-            List<InstantMessageMention> mentions=this.mentionFacade.findSince(since);
-            if(mentions!=null && !mentions.isEmpty()) {
-                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size()-1).getStatusChanged().getTime());
-            } else {
-                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
-            }
-            return mentions;
-        } else {
-            return null;
+        if (removed) {
+            this.pnlMessages.revalidate();
         }
     }
-
-    
-    
 }

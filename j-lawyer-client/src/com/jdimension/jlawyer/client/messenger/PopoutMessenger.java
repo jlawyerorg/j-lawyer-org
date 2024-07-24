@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Adjustable;
-import java.awt.Graphics;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;

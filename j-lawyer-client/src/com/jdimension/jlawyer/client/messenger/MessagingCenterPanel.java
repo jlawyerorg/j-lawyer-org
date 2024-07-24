@@ -878,6 +878,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         lblClearHashtagSelection = new javax.swing.JLabel();
         lblPopoutMessenger = new javax.swing.JLabel();
+        lblOtherUsersMessages = new javax.swing.JLabel();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_chat_white_48dp.png"))); // NOI18N
 
@@ -995,10 +996,21 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         lblPopoutMessenger.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_open_in_new_white_48dp.png"))); // NOI18N
         lblPopoutMessenger.setText(" ");
+        lblPopoutMessenger.setToolTipText("Nachrichten in separatem Fenster öffnen");
         lblPopoutMessenger.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblPopoutMessenger.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblPopoutMessengerMouseClicked(evt);
+            }
+        });
+
+        lblOtherUsersMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/3p_48dp_FFFFFF.png"))); // NOI18N
+        lblOtherUsersMessages.setText(" ");
+        lblOtherUsersMessages.setToolTipText("öffentliche Nachrichten anderer Nutzer einsehen (bspw. Vertretungsfall)");
+        lblOtherUsersMessages.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblOtherUsersMessages.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblOtherUsersMessagesMouseClicked(evt);
             }
         });
 
@@ -1016,6 +1028,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(lblOtherUsersMessages)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPopoutMessenger)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1037,7 +1051,9 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                     .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdRefresh)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPopoutMessenger, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblPopoutMessenger, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(lblOtherUsersMessages))
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1166,6 +1182,12 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         dlgMessenger.setVisible(true);
     }//GEN-LAST:event_lblPopoutMessengerMouseClicked
 
+    private void lblOtherUsersMessagesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblOtherUsersMessagesMouseClicked
+        PopoutMessengerOtherUsers dlgMessenger = new PopoutMessengerOtherUsers(EditorsRegistry.getInstance().getMainWindow(), false);
+        FrameUtils.centerDialog(dlgMessenger, EditorsRegistry.getInstance().getMainWindow());
+        dlgMessenger.setVisible(true);
+    }//GEN-LAST:event_lblOtherUsersMessagesMouseClicked
+
     @Override
     public void notifyStatusBarReady() {
         if (this.statusBarNotified) {
@@ -1189,6 +1211,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblClearHashtagSelection;
+    private javax.swing.JLabel lblOtherUsersMessages;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblPopoutMessenger;
     private javax.swing.JList<String> lstHashtags;
