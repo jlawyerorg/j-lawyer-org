@@ -695,4 +695,6 @@ public interface MessagingServiceRemote {
 
     List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception;
     
+    List<InstantMessage> getMessagesWithOpenMentions(String principalId) throws Exception;
+    
 }
