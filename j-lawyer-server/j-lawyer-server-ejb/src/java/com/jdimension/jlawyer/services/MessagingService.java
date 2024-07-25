@@ -920,7 +920,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         ArrayList<InstantMessage> messages=new ArrayList<>();
         if(openMentions!=null) {
             for(InstantMessageMention mention: openMentions)
-            messages.add(mention.getMessage());
+                messages.add(mention.getMessage());
         }
         return messages;
     }
