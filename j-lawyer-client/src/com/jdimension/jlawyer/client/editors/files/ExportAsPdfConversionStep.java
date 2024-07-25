@@ -703,7 +703,7 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
      */
     public ExportAsPdfConversionStep() {
         initComponents();
-        
+
         this.progress.setIndeterminate(false);
         this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
     }
@@ -809,44 +809,35 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         }
 
         List<ArchiveFileDocumentsBean> docs = (List<ArchiveFileDocumentsBean>) data.get("export.documents");
-        HashMap<String,byte[]> documentIcons=new HashMap<>();
+        HashMap<String, byte[]> documentIcons = new HashMap<>();
         data.put("export.documents.icons", documentIcons);
-        
+
         progress.setMinimum(0);
         progress.setMaximum(docs.size());
         progress.setValue(0);
         progress.setStringPainted(true);
 
-//        for (ArchiveFileDocumentsBean d : docs) {
-//            JLabel docLabel = new JLabel();
-//            docLabel.setText(d.getName());
-//            docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
-//            this.pnlConversionList.add(docLabel);
-//        }
-
         new Thread(() -> {
             ThreadUtils.setWaitCursor(this);
-            
-            int errors=0;
-            int successes=0;
+
+            int errors = 0;
+            int successes = 0;
             ThreadUtils.updateLabelIcon(lblFile, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
             for (ArchiveFileDocumentsBean d : docs) {
-                
-                try {
-                    //byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
-                    
-                    ThreadUtils.updateLabel(lblFile, d.getName());
-                    
-                    byte[] content=CachingDocumentLoader.getInstance().getDocument(d.getId());
 
-                    Icon pdfIcon=FileUtils.getInstance().getFileTypeIcon("test.pdf");
-                    byte[] pdfIconBytes=iconToByteArray(pdfIcon);
-                    
+                try {
+                    ThreadUtils.updateLabel(lblFile, d.getName());
+
+                    byte[] content = CachingDocumentLoader.getInstance().getDocument(d.getId());
+
+                    Icon pdfIcon = FileUtils.getInstance().getFileTypeIcon("test.pdf");
+                    byte[] pdfIconBytes = iconToByteArray(pdfIcon);
+
                     if (d.getName().toLowerCase().endsWith(".pdf")) {
 
                         String tempPath = FileUtils.createTempFile(d.getName(), content);
                         FileUtils.cleanupTempFile(tempPath);
-                        File pdfFile=new File(tempPath);
+                        File pdfFile = new File(tempPath);
                         this.pdfFiles.add(pdfFile);
                         documentIcons.put(pdfFile.getName(), pdfIconBytes);
                     } else {
@@ -854,22 +845,21 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
 
                         String tempPath = FileUtils.createTempFile(d.getName(), content);
                         String tempPdfPath = conv.convertToPDF(tempPath);
-                        //content = FileUtils.readFile(new File(tempPdfPath));
                         FileUtils.cleanupTempFile(tempPdfPath);
                         FileUtils.cleanupTempFile(tempPath);
-                        File pdfFile=new File(tempPdfPath);
+                        File pdfFile = new File(tempPdfPath);
                         this.pdfFiles.add(pdfFile);
-                        
-                        Icon icon=FileUtils.getInstance().getFileTypeIcon(d.getName());
-                        byte[] iconBytes=iconToByteArray(icon);
+
+                        Icon icon = FileUtils.getInstance().getFileTypeIcon(d.getName());
+                        byte[] iconBytes = iconToByteArray(icon);
                         documentIcons.put(pdfFile.getName(), iconBytes);
-                    
+
                     }
-                    
+
                     successes++;
 
-                    ThreadUtils.updateProgressBar(progress, "" + (errors+successes) + " / " + docs.size(), progress.getValue()+1, progress.getMaximum(), false);
-                    
+                    ThreadUtils.updateProgressBar(progress, "" + (errors + successes) + " / " + docs.size(), progress.getValue() + 1, progress.getMaximum(), false);
+
                     SwingUtilities.invokeAndWait(() -> {
                         this.setIndicator(d.getName(), true);
                     });
@@ -888,10 +878,10 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
                 ThreadUtils.setDefaultCursor(this);
 
             }
-            ThreadUtils.updateProgressBar(progress, "" + (errors+successes) + " / " + docs.size(), progress.getMaximum(), progress.getMaximum(), false);
+            ThreadUtils.updateProgressBar(progress, "" + (errors + successes) + " / " + docs.size(), progress.getMaximum(), progress.getMaximum(), false);
             ThreadUtils.updateLabel(lblFile, " ");
             ThreadUtils.updateLabelIcon(lblFile, null);
-            if(errors>0) {
+            if (errors > 0) {
                 ThreadUtils.updateLabel(lblFile, "fehlgeschlagene / nicht unterstützte Dateien: " + errors);
                 ThreadUtils.updateLabelIcon(lblFile, new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             }
@@ -923,30 +913,18 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
         try {
             ImageIO.write(bi, "png", baos);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
         return baos.toByteArray();
     }
-    
-    private void setIndicator(String fileName, boolean success) {
-//        for (Component c : this.pnlConversionList.getComponents()) {
-//            if (c instanceof JLabel) {
-//                if (((JLabel) c).getText().equals(fileName)) {
-//                    if (success) {
-//                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-//                    } else {
-//                        ((JLabel) c).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
-//                    }
-//                }
-//            }
-//        }
 
-        
-        if(!success) {
-        JLabel docLabel = new JLabel();
-        docLabel.setText(fileName);
-        docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
-        this.pnlConversionList.add(docLabel);
+    private void setIndicator(String fileName, boolean success) {
+
+        if (!success) {
+            JLabel docLabel = new JLabel();
+            docLabel.setText(fileName);
+            docLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+            this.pnlConversionList.add(docLabel);
         }
 
     }
