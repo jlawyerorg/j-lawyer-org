@@ -810,4 +810,8 @@ public interface ArchiveFileServiceLocal {
 
     void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate);
     
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames);
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
+    
 }

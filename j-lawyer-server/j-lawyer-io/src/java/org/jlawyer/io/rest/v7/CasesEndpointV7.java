@@ -684,6 +684,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
@@ -847,12 +848,54 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     }
 
+    /**
+     * Returns cases that have a given tag applied to them
+     *
+     * @param tag the tag
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByTag(@PathParam("tag") String tag) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            List<ArchiveFileBean> matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            Response res = Response.ok(rcoList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list cases with tag " + tag, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/document/byexternalid/{extId}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getDocumentByExternalId(@PathParam("extId") String extId) {
+
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -879,6 +922,45 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(d).build();
         } catch (Exception ex) {
             log.error("can not get document for external id " + extId, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentsByTag(@PathParam("tag") String tag) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileDocumentsBean> matches = cases.getTaggedDocuments(new String[]{tag}, Integer.MAX_VALUE);
+
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileDocumentsBean doc : matches) {
+                    RestfulDocumentV1 d = new RestfulDocumentV1();
+                    d.setId(doc.getId());
+                    d.setExternalId(doc.getExternalId());
+                    d.setVersion(doc.getVersion());
+                    d.setName(doc.getName());
+                    d.setCreationDate(doc.getCreationDate());
+                    d.setChangeDate(doc.getChangeDate());
+                    d.setFavorite(doc.isFavorite());
+                    d.setSize(doc.getSize());
+                    d.setHighlight1(doc.getHighlight1());
+                    d.setHighlight2(doc.getHighlight2());
+                    if (doc.getFolder() != null) {
+                        d.setFolderId(doc.getFolder().getId());
+                    }
+                    docList.add(d);
+                }
+            }
+            return Response.ok(docList).build();
+        } catch (Exception ex) {
+            log.error("can not get documents by tag " + tag, ex);
             return Response.serverError().build();
         }
     }

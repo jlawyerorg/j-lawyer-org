@@ -678,6 +678,8 @@ public interface ContactsEndpointLocalV2 {
     
     Response getContactByAnyExternalId(String extId);
     
+    Response getContactsByTag(String tag);
+    
     Response getContactByExternalId(int extIdIndex, String extId);
 
     Response createContact(RestfulContactV2 contact);

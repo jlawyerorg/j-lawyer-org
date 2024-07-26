@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -679,6 +680,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1;
 import org.jlawyer.io.rest.v2.pojo.RestfulContactV2;
 
 /**
@@ -702,7 +704,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
     public Response getContact(@PathParam("id") String id) {
@@ -720,19 +722,21 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             return res;
         }
     }
-    
+
     /**
      * Returns a contacts metadata given its external ID
      *
-     * @param extIdIndex the index of the external id column. Valid values are 1..5.
-     * @param extId the contacts external ID value, expected in the specified external id with index {extIdIndex} 
+     * @param extIdIndex the index of the external id column. Valid values are
+     * 1..5.
+     * @param extId the contacts external ID value, expected in the specified
+     * external id with index {extIdIndex}
      * @response 401 User not authorized
      * @response 403 User not authenticated
      * @response 404 No contact found with this external ID
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byexternalid/{extIdIndex}/{extId}")
     @RolesAllowed({"readAddressRole"})
     public Response getContactByExternalId(@PathParam("extIdIndex") int extIdIndex, @PathParam("extId") String extId) {
@@ -760,8 +764,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
                 default:
                     break;
             }
-            
-            if(adr!=null) {
+
+            if (adr != null) {
                 return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -771,18 +775,20 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             return Response.serverError().build();
         }
     }
-    
+
     /**
      * Returns a contacts metadata given any of its external IDs
      *
-     * @param extId the contacts external ID value - which may be persisted in any of the five supported external ID columns
+     * @param extId the contacts external ID value - which may be persisted in
+     * any of the five supported external ID columns
      * @response 401 User not authorized
      * @response 403 User not authenticated
-     * @response 404 No contact found with this external ID (none of the five external IDs match)
+     * @response 404 No contact found with this external ID (none of the five
+     * external IDs match)
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byexternalid/{extId}")
     @RolesAllowed({"readAddressRole"})
     public Response getContactByAnyExternalId(@PathParam("extId") String extId) {
@@ -791,13 +797,58 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean adr = addresses.getAddressByAnyExternalId(extId);
-            if(adr!=null) {
+            if (adr != null) {
                 return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
         } catch (Exception ex) {
             log.error("can not get address by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of contact metadata given the name of a tag that is
+     * applied to these contacts
+     *
+     * @param tag the tag to be used for searching contacts
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/bytag/{tag}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContactsByTag(@PathParam("tag") String tag) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            Hashtable<String, ArrayList<String>> ids = addresses.searchTagsEnhanced(null, new String[]{tag});
+            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
+            if (ids != null) {
+                for (String contactId : ids.keySet()) {
+                        AddressBean afb = addresses.getAddress(contactId);
+                        RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
+                        rco.setId(contactId);
+                        rco.setExternalId(afb.getExternalId1());
+                        rco.setExternalId2(afb.getExternalId2());
+                        rco.setExternalId3(afb.getExternalId3());
+                        rco.setExternalId4(afb.getExternalId4());
+                        rco.setExternalId5(afb.getExternalId5());
+                        rco.setName(afb.getName());
+                        rco.setCity(afb.getCity());
+                        rco.setFirstName(afb.getFirstName());
+                        rco.setCompany(afb.getCompany());
+                        rco.setZipCode(afb.getZipCode());
+                        rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list contacts", ex);
             return Response.serverError().build();
         }
     }
@@ -811,7 +862,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
     public Response createContact(RestfulContactV2 contact) {
@@ -832,7 +883,10 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     }
 
     /**
-     * Updates an existing contact based on its ID. The external ID of the contact is only changed if provided by the client as a non-empty string. Setting the external ID to null / empty is not possible using this endpoint.
+     * Updates an existing contact based on its ID. The external ID of the
+     * contact is only changed if provided by the client as a non-empty string.
+     * Setting the external ID to null / empty is not possible using this
+     * endpoint.
      *
      * @param contact the contacts data
      * @response 401 User not authorized
@@ -840,7 +894,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
     public Response updateContact(RestfulContactV2 contact) {
@@ -860,26 +914,25 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
                 Response res = Response.serverError().build();
                 return res;
             }
-            
+
             // only overwrite external ID if the client provided one
-            if(!ServerStringUtils.isEmpty(contact.getExternalId())) {
+            if (!ServerStringUtils.isEmpty(contact.getExternalId())) {
                 currentContact.setExternalId1(contact.getExternalId());
             }
-            if(!ServerStringUtils.isEmpty(contact.getExternalId2())) {
+            if (!ServerStringUtils.isEmpty(contact.getExternalId2())) {
                 currentContact.setExternalId2(contact.getExternalId2());
             }
-            if(!ServerStringUtils.isEmpty(contact.getExternalId3())) {
+            if (!ServerStringUtils.isEmpty(contact.getExternalId3())) {
                 currentContact.setExternalId3(contact.getExternalId3());
             }
-            if(!ServerStringUtils.isEmpty(contact.getExternalId4())) {
+            if (!ServerStringUtils.isEmpty(contact.getExternalId4())) {
                 currentContact.setExternalId4(contact.getExternalId4());
             }
-            if(!ServerStringUtils.isEmpty(contact.getExternalId5())) {
+            if (!ServerStringUtils.isEmpty(contact.getExternalId5())) {
                 currentContact.setExternalId5(contact.getExternalId5());
             }
-            
-            // file number must not be changed
 
+            // file number must not be changed
             currentContact.setBankAccount(contact.getBankAccount());
             currentContact.setBankCode(contact.getBankCode());
             currentContact.setBankName(contact.getBankName());
@@ -899,7 +952,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setFirstName(contact.getFirstName());
             currentContact.setInsuranceName(contact.getInsuranceName());
             currentContact.setInsuranceNumber(contact.getInsuranceNumber());
-            currentContact.setLegalProtection(contact.getLegalProtection()==1);
+            currentContact.setLegalProtection(contact.getLegalProtection() == 1);
             currentContact.setMobile(contact.getMobile());
             currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
             currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
@@ -910,7 +963,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
-            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection()==1);
+            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection() == 1);
             currentContact.setWebsite(contact.getWebsite());
             currentContact.setZipCode(contact.getZipCode());
 
