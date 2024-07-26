@@ -865,7 +865,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             List<ArchiveFileBean> matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
             ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
             if (matches != null) {
@@ -879,12 +879,10 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                     rcoList.add(rco);
                 }
             }
-            Response res = Response.ok(rcoList).build();
-            return res;
+            return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with tag " + tag, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }

@@ -667,8 +667,8 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -702,7 +702,7 @@ public interface AddressServiceRemote {
 
     AddressBean[] searchEnhanced(String query, String[] tagName);
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
+    Map<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
 
     void renameTag(String fromName, String toName) throws Exception;
 

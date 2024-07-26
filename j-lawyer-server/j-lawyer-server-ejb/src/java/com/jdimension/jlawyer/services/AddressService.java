@@ -679,8 +679,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.*;
@@ -1122,7 +1124,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1144,7 +1146,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         }
 
-        Hashtable<String, ArrayList<String>> list = new Hashtable<>();
+        HashMap<String, ArrayList<String>> list = new HashMap<>();
         try ( Connection con = utils.getConnection();) {
 
             if (withTag) {

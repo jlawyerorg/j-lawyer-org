@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -826,7 +826,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
 
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
-            Hashtable<String, ArrayList<String>> ids = addresses.searchTagsEnhanced(null, new String[]{tag});
+            Map<String, ArrayList<String>> ids = addresses.searchTagsEnhanced(null, new String[]{tag});
             ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
             if (ids != null) {
                 for (String contactId : ids.keySet()) {

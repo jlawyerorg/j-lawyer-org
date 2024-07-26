@@ -667,8 +667,8 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Local;
 
 /**
@@ -702,7 +702,7 @@ public interface AddressServiceLocal {
     
     public AddressBean[] searchSimple(String query);
     public AddressBean[] searchSimpleUnrestricted(String query);
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
     
     public List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception;
     
