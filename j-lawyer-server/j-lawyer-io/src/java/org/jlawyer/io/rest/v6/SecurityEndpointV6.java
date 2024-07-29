@@ -116,7 +116,7 @@ Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
 implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
-(kernel, window system, and so on) of the specific operating system
+(kernel, window security, and so on) of the specific operating security
 (if any) on which the executable work runs, or a compiler used to
 produce the work, or an object code interpreter used to run it.
 
@@ -664,9 +664,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v6;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -680,6 +682,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
 /**
@@ -695,10 +698,11 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     private static final Logger log = Logger.getLogger(SecurityEndpointV6.class.getName());
     
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+    private static final String LOOKUP_SECSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal";
 
     /**
-     * Returns all user available in the system who have at least the permission
-     * to log in
+     * Returns all user available in the security who have at least the permission
+ to log in
      *
      * @response 401 User not authorized
      * @response 403 User not authenticated
@@ -712,7 +716,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
         try {
 
             InitialContext ic = new InitialContext();
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
             List<AppUserBean> enabledUsers = security.getUsersHavingRole("loginRole");
             ArrayList<RestfulUserV6> resultList = new ArrayList<>();
             for (AppUserBean au : enabledUsers) {
@@ -760,6 +764,38 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
 
     }
     
+    /**
+     * Returns all security groups set up in the security
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/groups")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    public Response listGroups() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            Collection<Group> groups = security.getAllGroups();
+            ArrayList<RestfulGroupV6> resultList = new ArrayList<>();
+            for (Group g : groups) {
+                RestfulGroupV6 group = RestfulGroupV6.fromGroup(g);
+                resultList.add(group);
+            }
+
+            Response res = Response.ok(resultList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not determine enabled users", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+    
         /**
      * Returns a users metadata given its external ID
      *
@@ -776,7 +812,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     public Response getUserByExternalId(@PathParam("extId") String extId) {
         try {
             InitialContext ic = new InitialContext();
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
             AppUserBean au=security.getUserByExternalId(extId);
             
             if(au!=null) {

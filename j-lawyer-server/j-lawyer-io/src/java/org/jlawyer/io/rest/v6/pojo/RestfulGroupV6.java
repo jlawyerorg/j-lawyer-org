@@ -660,28 +660,79 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v6;
+ */
+package org.jlawyer.io.rest.v6.pojo;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
+import com.jdimension.jlawyer.persistence.Group;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface SecurityEndpointLocalV6 {
+public class RestfulGroupV6 {
 
-    Response getEnabledUsers();
+    public static RestfulGroupV6 fromGroup(Group group) {
+        RestfulGroupV6 g=new RestfulGroupV6();
+        g.setAbbreviation(group.getAbbreviation());
+        g.setId(group.getId());
+        g.setName(group.getName());
+        return g;
+    }
     
-    Response listUsers();
+    private String id;
     
-    Response listGroups();
+    private String name;
     
-    Response getUserByExternalId(String extId);
-    
-    Response createUser(RestfulUserV6 userData);
+    private String abbreviation;
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the abbreviation
+     */
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    /**
+     * @param abbreviation the abbreviation to set
+     */
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+    }
+
+    public Group toGroup() {
+        Group g=new Group();
+        g.setAbbreviation(this.getAbbreviation());
+        g.setId(this.getId());
+        g.setName(this.getName());
+        return g;
+    }
     
 }

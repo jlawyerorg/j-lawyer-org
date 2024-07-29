@@ -666,11 +666,14 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -687,6 +690,7 @@ import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
@@ -959,6 +963,71 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(docList).build();
         } catch (Exception ex) {
             log.error("can not get documents by tag " + tag, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Updates a cases allowed groups. All allowed groups must be submitted in one request - existing permissions will be overwritten, not added to. This endpoint can also be used to reset security for a case by sending an empty list of groups.
+     *
+     * @param id case ID
+     * @param allowedGroups the groups allowed to access the case
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAllowedGroups(@PathParam("id") String id, Collection<RestfulGroupV6> allowedGroups) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<Group> groups=new ArrayList<>();
+            for(RestfulGroupV6 g: allowedGroups) {
+                groups.add(g.toGroup());
+            }
+            cases.updateAllowedGroups(id, groups);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Lists a cases allowed groups.
+     *
+     * @param id case ID
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllowedGroups(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileGroupsBean> groups=cases.getAllowedGroups(id);
+            List<RestfulGroupV6> resultList=new ArrayList<>();
+            for(ArchiveFileGroupsBean g: groups) {
+                resultList.add(RestfulGroupV6.fromGroup(g.getAllowedGroup()));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
             return Response.serverError().build();
         }
     }
