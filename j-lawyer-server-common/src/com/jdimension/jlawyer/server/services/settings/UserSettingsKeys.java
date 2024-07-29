@@ -722,6 +722,9 @@ public class UserSettingsKeys {
     public static final String CONF_DOCUMENTS_LASTSORTMODE="client.documents.lastsortmode";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
+    
+    public static final String CONF_CASES_EXPORT_TOLOCAL="user.case.pdfexport.tolocal";
+    public static final String CONF_CASES_EXPORT_TOCASE="user.case.pdfexport.tocase";
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";

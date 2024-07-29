@@ -663,23 +663,30 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -712,16 +719,19 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
      */
     public ExportAsPdfMergeStep() {
         initComponents();
+        UserSettings uset = UserSettings.getInstance();
+        this.chkSaveLocally.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOLOCAL, true));
+        this.chkSaveToCase.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOCASE, true));
     }
 
     @Override
     public void nextEvent() {
-        
+
     }
 
     @Override
     public void previousEvent() {
-        
+
     }
 
     @Override
@@ -732,47 +742,74 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
     @Override
     public void finishedEvent() {
         if (resultFile != null) {
-
             ClientSettings s = ClientSettings.getInstance();
-            String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
-
-            if (!lastDir.endsWith(File.separator)) {
-                lastDir = lastDir + File.separator;
-            }
-
-            if (!(new File(lastDir).exists())) {
-                lastDir = System.getProperty("user.home");
+            UserSettings uset = UserSettings.getInstance();
+            uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOLOCAL, this.chkSaveLocally.isSelected());
+            uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOCASE, this.chkSaveToCase.isSelected());
+            if (this.chkSaveLocally.isSelected()) {
+                
+                String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
                 if (!lastDir.endsWith(File.separator)) {
                     lastDir = lastDir + File.separator;
                 }
-            }
 
-            JFileChooser chooser = new JFileChooser(lastDir);
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            chooser.setAcceptAllFileFilterUsed(false);
-            chooser.setDialogTitle("Verzeichnis wählen");
-            chooser.setApproveButtonText("Speichern");
-            if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File dir = chooser.getSelectedFile();
-                try {
-                    s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
-                } catch (Throwable t) {
-                    log.error("can not get canonical path during html export", t);
-                }
-                
-                String fullResultFile=dir.getAbsolutePath() + File.separator + new File(resultFile).getName();
-                if(new File(fullResultFile).exists()) {
-                    int prefix=1;
-                    while(new File(fullResultFile).exists()) {
-                        prefix=prefix+1;
-                        fullResultFile=dir.getAbsolutePath() + File.separator + "(" + prefix + ") " + new File(resultFile).getName();
+                if (!(new File(lastDir).exists())) {
+                    lastDir = System.getProperty("user.home");
+                    if (!lastDir.endsWith(File.separator)) {
+                        lastDir = lastDir + File.separator;
                     }
                 }
-                
+
+                JFileChooser chooser = new JFileChooser(lastDir);
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                chooser.setAcceptAllFileFilterUsed(false);
+                chooser.setDialogTitle("Verzeichnis wählen");
+                chooser.setApproveButtonText("Speichern");
+                if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    File dir = chooser.getSelectedFile();
+                    try {
+                        s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
+                    } catch (Throwable t) {
+                        log.error("can not get canonical path during html export", t);
+                    }
+
+                    String fullResultFile = dir.getAbsolutePath() + File.separator + new File(resultFile).getName();
+                    if (new File(fullResultFile).exists()) {
+                        int prefix = 1;
+                        while (new File(fullResultFile).exists()) {
+                            prefix = prefix + 1;
+                            fullResultFile = dir.getAbsolutePath() + File.separator + "(" + prefix + ") " + new File(resultFile).getName();
+                        }
+                    }
+
+                    try {
+                        FileUtils.copyFile(resultFile, fullResultFile);
+                    } catch (Exception ex) {
+                        log.error(ex);
+                    }
+                }
+            }
+
+            if (this.chkSaveToCase.isSelected()) {
                 try {
-                    FileUtils.copyFile(resultFile, fullResultFile);
-                } catch (Exception ex) {
-                    log.error(ex);
+                    ArchiveFileBean exportCase=(ArchiveFileBean)this.data.get("export.case");
+                    byte[] content = FileUtils.readFile(new File(resultFile));
+                    String newName = FileUtils.getNewFileName(new File(resultFile).getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
+                    if (newName == null || "".equalsIgnoreCase(newName)) {
+                        return;
+                    }
+                    if (newName.length() == 0) {
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(s.getLookupProperties());
+                    ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(exportCase.getId(), newName, content, "", null);
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentAddedEvent(newDoc));
+                } catch (Exception ioe) {
+                    log.error("Error saving PDF export to case", ioe);
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Exports: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -791,6 +828,9 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         lblProgress = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
+        chkSaveToCase = new javax.swing.JCheckBox();
+        chkSaveLocally = new javax.swing.JCheckBox();
+        jLabel2 = new javax.swing.JLabel();
 
         setName("Dokumente zusammenführen"); // NOI18N
 
@@ -805,18 +845,32 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         pnlPreview.setLayout(new java.awt.BorderLayout());
         jScrollPane1.setViewportView(pnlPreview);
 
+        chkSaveToCase.setText("zur Akte");
+
+        chkSaveLocally.setSelected(true);
+        chkSaveLocally.setText("lokal");
+
+        jLabel2.setText("speichern:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(lblProgress)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkSaveLocally)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkSaveToCase)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -827,13 +881,21 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblProgress)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkSaveToCase)
+                    .addComponent(chkSaveLocally)
+                    .addComponent(jLabel2))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkSaveLocally;
+    private javax.swing.JCheckBox chkSaveToCase;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblProgress;
     private javax.swing.JPanel pnlPreview;
@@ -916,13 +978,13 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
     }
 
     private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws Exception {
-        HashMap<String,Integer> startPages = new HashMap<>();
+        HashMap<String, Integer> startPages = new HashMap<>();
         PDFMergerUtility merger = new PDFMergerUtility();
         PDDocument mergedDoc = new PDDocument();
-        
+
         // Create TOC
         PDDocument tocDoc = new PDDocument();
-        
+
         // first page with metadata
         PDPage metaPage = new PDPage(PDRectangle.A4);
         tocDoc.addPage(metaPage);
@@ -935,8 +997,8 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         metaStream.newLine();
         metaStream.newLine();
         metaStream.endText();
-        
-         // Set font for additional information
+
+        // Set font for additional information
         metaStream.setFont(PDType1Font.HELVETICA, 12);
         metaStream.beginText();
         metaStream.setLeading(14.5f);
@@ -955,21 +1017,19 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         metaStream.newLine();
         metaStream.showText("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged()));
         metaStream.endText();
-        
+
         metaStream.close();
-        
+
         // add empty placeholder pages for the TOC
         for (int i = 0; i < pdfFiles.size(); i += 45) {
             PDPage tocPage = new PDPage(PDRectangle.A4);
             tocDoc.addPage(tocPage);
-            
+
         }
-        
+
         // Save TOC to temp file
         File tocTempFile = createTempFileFromPDDocument(tocDoc);
         tocDoc.close();
-        
-        
 
         int currentPageCount = 0;
         pdfFiles.add(0, tocTempFile);
@@ -980,7 +1040,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             currentPageCount += doc.getNumberOfPages();
             doc.close();
         }
-        PDDocumentInformation info=new PDDocumentInformation();
+        PDDocumentInformation info = new PDDocumentInformation();
         info.setTitle(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
         info.setAuthor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         info.setCreationDate(GregorianCalendar.getInstance());
@@ -988,18 +1048,17 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
         PDDocumentOutline outline = new PDDocumentOutline();
         mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
-        
-        int currentTocPage=1;
+
+        int currentTocPage = 1;
         // remove TOC document to avoid it from being added to the TOC itself
         pdfFiles.remove(0);
         for (int i = 0; i < pdfFiles.size(); i += 45) {
             int end = Math.min(pdfFiles.size(), i + 45);
             List<File> batch = pdfFiles.subList(i, end);
             processTocPage(currentTocPage, mergedDoc, batch, startPages, caseDto, outline);
-            currentTocPage=currentTocPage+1;
+            currentTocPage = currentTocPage + 1;
         }
-        
-        
+
         int pageCount = mergedDoc.getNumberOfPages();
         for (int i = 0; i < pageCount; i++) {
             PDPage page = mergedDoc.getPage(i);
@@ -1017,15 +1076,15 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 contentStream.endText();
             }
         }
-        
+
         FileUtils.copyFile(createTempFileFromPDDocument(mergedDoc).getAbsolutePath(), outputFile, true);
-        
+
         mergedDoc.close();
     }
-    
-    private void processTocPage(int currentTocPage, PDDocument mergedDoc, List<File> pdfFiles, HashMap<String,Integer> startPages, ArchiveFileBean caseDto, PDDocumentOutline outline) throws IOException {
+
+    private void processTocPage(int currentTocPage, PDDocument mergedDoc, List<File> pdfFiles, HashMap<String, Integer> startPages, ArchiveFileBean caseDto, PDDocumentOutline outline) throws IOException {
         PDPage tocPage = mergedDoc.getPage(currentTocPage);
-        
+
         PDPageContentStream contentStream = new PDPageContentStream(mergedDoc, tocPage);
         contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
         contentStream.beginText();
@@ -1034,34 +1093,24 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         contentStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
         contentStream.newLine();
         contentStream.newLine();
-        
+
         contentStream.endText();
 
         contentStream.setFont(PDType1Font.HELVETICA, 12);
 
-        
-
-        
-        
-        
         float iconWidth = 16;
         float iconHeight = 16;
 
-        
-        
-        HashMap<String,byte[]> documentIcons=(HashMap<String,byte[]>)data.get("export.documents.icons");
-        
-        
-        
+        HashMap<String, byte[]> documentIcons = (HashMap<String, byte[]>) data.get("export.documents.icons");
+
         for (int i = 0; i < pdfFiles.size(); i++) {
             String fileName = pdfFiles.get(i).getName();
-            
-            byte[] iconBytes=documentIcons.get(fileName);
-            PDImageXObject pdImage = PDImageXObject.createFromByteArray(mergedDoc, iconBytes, ""+System.currentTimeMillis()+".png");
-            
+
+            byte[] iconBytes = documentIcons.get(fileName);
+            PDImageXObject pdImage = PDImageXObject.createFromByteArray(mergedDoc, iconBytes, "" + System.currentTimeMillis() + ".png");
+
             int destinationPageIndex = startPages.get(fileName);
 
-            
             // Draw the icon at the beginning of each TOC line
             float iconX = 50;
             float iconY = 750 - (i + 2) * 14.5f - iconHeight / 2;
@@ -1070,26 +1119,26 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             // Start a new text block for further text
             contentStream.beginText();
             contentStream.newLineAtOffset(65, 750 - (i + 2) * 14.5f);
-            String shortenedFileName=fileName;
-            if(shortenedFileName.length()>70) {
-                shortenedFileName=shortenedFileName.substring(0,69);
+            String shortenedFileName = fileName;
+            if (shortenedFileName.length() > 70) {
+                shortenedFileName = shortenedFileName.substring(0, 69);
             }
             contentStream.showText(shortenedFileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
             contentStream.endText();
-            
-            addBookmark(outline, fileName, mergedDoc.getPage(Math.min(destinationPageIndex, mergedDoc.getNumberOfPages()-1)));
-            
+
+            addBookmark(outline, fileName, mergedDoc.getPage(Math.min(destinationPageIndex, mergedDoc.getNumberOfPages() - 1)));
+
         }
 
         contentStream.close();
     }
-    
+
     private static File createTempFileFromPDDocument(PDDocument document) throws IOException {
         File tempFile = File.createTempFile("temp_pdf_", ".pdf");
         document.save(tempFile);
         return tempFile;
     }
-    
+
     private static void addBookmark(PDDocumentOutline outline, String title, PDPage page) {
         PDOutlineItem bookmark = new PDOutlineItem();
         bookmark.setTitle(title);
@@ -1106,6 +1155,5 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
     public void setWizardPanel(WizardMainPanel wizard) {
         this.wizard = wizard;
     }
-    
-    
+
 }
