@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -758,6 +759,8 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
     
     List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile);
+    
+    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
 
     List<DocumentFolderTemplate> getAllFolderTemplates();
 

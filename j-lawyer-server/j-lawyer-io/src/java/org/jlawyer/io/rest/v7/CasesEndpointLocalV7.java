@@ -663,8 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
+import java.util.Collection;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 
 /**
@@ -685,5 +687,9 @@ public interface CasesEndpointLocalV7 {
     Response getDocumentsByTag(String tag);
     
     Response getDocumentByExternalId(String extId);
+    
+    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
+    
+    Response getAllowedGroups(String id);
         
 }
