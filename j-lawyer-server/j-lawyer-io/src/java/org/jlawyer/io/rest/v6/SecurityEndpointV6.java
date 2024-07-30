@@ -724,12 +724,10 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
                 resultList.add(u);
             }
 
-            Response res = Response.ok(resultList).build();
-            return res;
+            return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine enabled users", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }
@@ -786,12 +784,10 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
                 resultList.add(group);
             }
 
-            Response res = Response.ok(resultList).build();
-            return res;
+            return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine enabled users", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }
