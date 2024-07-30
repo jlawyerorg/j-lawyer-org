@@ -1914,7 +1914,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletionDate(new Date());
         db.setDeletedBy(context.getCallerPrincipal().getName());
         db.setFolder(aFile.getRootFolder());
-        db.bumpVersion();
+        db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
 
         DocumentRemovedEvent evt = new DocumentRemovedEvent();
@@ -1940,7 +1940,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (content != null) {
             db.setSize(content.length);
-            db.bumpVersion();
+            db.bumpVersion(true);
             this.archiveFileDocumentsFacade.edit(db);
         }
 
@@ -2135,7 +2135,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
 
         db.setName(newName);
-        db.bumpVersion();
+        db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
 
         try {
@@ -3242,7 +3242,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         db.setCreationDate(date);
-        db.bumpVersion();
+        db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
 
         StringGenerator idGen = new StringGenerator();
@@ -3266,7 +3266,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (db.isFavorite() != favorite) {
             db.setFavorite(favorite);
-            db.bumpVersion();
+            db.bumpVersion(false);
             this.archiveFileDocumentsFacade.edit(db);
         }
 
@@ -4412,7 +4412,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         for (ArchiveFileDocumentsBean doc : documents) {
             doc.setFolder(target);
-            doc.bumpVersion();
+            doc.bumpVersion(false);
             this.archiveFileDocumentsFacade.edit(doc);
             this.addCaseHistory(idGen.getID().toString(), afb, "Dokument " + doc.getName() + " in den Ordner " + target.getName() + " verschoben");
         }
@@ -4618,7 +4618,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeleted(false);
         db.setDeletedBy(null);
         db.setDeletionDate(null);
-        db.bumpVersion();
+        db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument aus dem Papierkorb wiederhergestellt: " + db.getName());
@@ -4906,7 +4906,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (db.getHighlight1() != highlight1 || db.getHighlight2() != highlight2) {
             db.setHighlight1(highlight1);
             db.setHighlight2(highlight2);
-            db.bumpVersion();
+            db.bumpVersion(false);
             this.archiveFileDocumentsFacade.edit(db);
         }
 
@@ -6226,7 +6226,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         db.setExternalId(externalId);
-        db.bumpVersion();
+        db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
 
         DocumentUpdatedEvent evt = new DocumentUpdatedEvent();

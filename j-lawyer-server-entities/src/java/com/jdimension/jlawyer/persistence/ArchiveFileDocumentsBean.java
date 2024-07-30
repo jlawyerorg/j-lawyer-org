@@ -939,9 +939,10 @@ public class ArchiveFileDocumentsBean implements Serializable {
         this.version = version;
     }
     
-    public void bumpVersion() {
+    public void bumpVersion(boolean updateChangeDate) {
         this.setVersion(this.version+1);
-        this.setChangeDate(new Date());
+        if(updateChangeDate)
+            this.setChangeDate(new Date());
     }
 
     /**
