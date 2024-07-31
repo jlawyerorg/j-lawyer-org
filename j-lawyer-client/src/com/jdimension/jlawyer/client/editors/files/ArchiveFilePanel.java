@@ -2980,7 +2980,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             },
             new String [] {
-                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
+                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremdgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
             }
         ) {
             Class[] types = new Class [] {
