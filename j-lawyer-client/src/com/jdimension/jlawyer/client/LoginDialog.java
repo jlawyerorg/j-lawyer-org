@@ -697,8 +697,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
 
 /**
  *
