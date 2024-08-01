@@ -4206,9 +4206,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     if (response == JOptionPane.NO_OPTION) {
                         return true;
                     }
-                    addressService.createAddress(this.dto);
                 }
-
+                addressService.createAddress(this.dto);
                 
             } else {
                 addressService.updateAddress(this.dto);
