@@ -2980,7 +2980,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             },
             new String [] {
-                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
+                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremdgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
             }
         ) {
             Class[] types = new Class [] {
@@ -3171,7 +3171,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        cmdDuplicateAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdDuplicateAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy2.png"))); // NOI18N
         cmdDuplicateAccountEntry.setToolTipText("Buchung duplizieren");
         cmdDuplicateAccountEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
