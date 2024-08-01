@@ -2999,6 +2999,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         tblAccountEntries.setShowGrid(false);
+        tblAccountEntries.getTableHeader().setReorderingAllowed(false);
         tblAccountEntries.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tblAccountEntriesMouseClicked(evt);
