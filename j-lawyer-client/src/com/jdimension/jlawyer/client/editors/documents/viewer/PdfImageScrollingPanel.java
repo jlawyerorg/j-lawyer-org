@@ -793,6 +793,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         cmdPageBackward.setEnabled(currentPage > 0);
         cmdLastPage.setEnabled((currentPage + 1) < renderedPages);
         cmdPageForward.setEnabled((currentPage + 1) < renderedPages);
+        
+        if(!this.cmdPageForward.isEnabled()) {
+            this.cmdPageBackward.requestFocus();
+        }
     }
 
     /**
