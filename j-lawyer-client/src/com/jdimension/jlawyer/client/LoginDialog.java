@@ -1695,6 +1695,7 @@ public class LoginDialog extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert - bitte SSH-Passwort erneut eingeben:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
                 }
                 this.cmdLogin.setEnabled(true);
                 launching = false;
