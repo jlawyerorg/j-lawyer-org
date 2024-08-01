@@ -968,7 +968,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     }
     
     /**
-     * Updates a cases allowed groups. All allowed groups must be submitted in one request - existing permissions will be overwritten, not added to. This endpoint can also be used to reset security for a case by sending an empty list of groups.
+     * Updates a cases allowed groups. All allowed groups must be submitted in one request - existing permissions will be overwritten, not added to. This endpoint can also be used to reset security for a case by sending an empty list of groups. Providing the ID of a group is sufficient.
      *
      * @param id case ID
      * @param allowedGroups the groups allowed to access the case
