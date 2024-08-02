@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
@@ -839,7 +840,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesSince(Date since) throws Exception {
-        return getMessagesSince(since, 500);
+        return getMessagesSince(since, 750);
     }
     
     @Override
@@ -871,15 +872,34 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     }
     
     private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId, int maxNumberOfMessages) {
-        ArrayList<InstantMessage> filtered=new ArrayList<>();
-        for(InstantMessage m: unfiltered) {
-            if(messageRelevantForUser(m, principalId))
-                filtered.add(m);
+        List<InstantMessage> relevantMessages = new ArrayList<>();
+        List<InstantMessage> openMentionMessages = new ArrayList<>();
+
+        // Separate the messages with open mentions, those will never be filtered out
+        for (InstantMessage m : unfiltered) {
+            if (messageRelevantForUser(m, principalId)) {
+                if (m.hasOpenMentions()) {
+                    openMentionMessages.add(m);
+                } else {
+                    relevantMessages.add(m);
+                }
+            }
         }
-        
-        int size = filtered.size();
-        return new ArrayList<> (filtered.subList(Math.max(0, size - maxNumberOfMessages), size));
+
+        // Restrict the number of relevant messages
+        int size = relevantMessages.size();
+        List<InstantMessage> limitedRelevantMessages = relevantMessages.subList(Math.max(0, size - maxNumberOfMessages), size);
+
+        // Combine both lists
+        List<InstantMessage> finalMessages = new ArrayList<>(openMentionMessages);
+        finalMessages.addAll(limitedRelevantMessages);
+
+        // Sort the combined list by sent date, handling nulls properly
+        finalMessages.sort(Comparator.comparing(InstantMessage::getSent, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        return finalMessages;
     }
+
     
     private boolean messageRelevantForUser(InstantMessage m, String principalId) {
         // message sent in a case context
