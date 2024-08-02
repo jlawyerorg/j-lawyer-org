@@ -705,8 +705,8 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         }
         this.lblName.setText(timesheet.getName());
         this.lblStatus.setText("(" + timesheet.getStatusString() + ")");
-        this.lblDescription.setText(timesheet.getDescription());
-        this.lblDescription.setToolTipText(timesheet.getDescription());
+        this.taDescription.setText(timesheet.getDescription());
+        this.taDescription.setToolTipText(timesheet.getDescription());
     }
     
     /**
@@ -721,8 +721,9 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
         lblStatus = new javax.swing.JLabel();
-        lblDescription = new javax.swing.JLabel();
         cmdDelete = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taDescription = new javax.swing.JTextArea();
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         cmdOpen.setToolTipText("einsehen / bearbeiten");
@@ -740,9 +741,6 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));
         lblStatus.setText("offen");
 
-        lblDescription.setFont(lblDescription.getFont());
-        lblDescription.setText("<Beschreibung>");
-
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdDelete.setToolTipText("Beleg löschen");
         cmdDelete.addActionListener(new java.awt.event.ActionListener() {
@@ -750,6 +748,13 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                 cmdDeleteActionPerformed(evt);
             }
         });
+
+        taDescription.setEditable(false);
+        taDescription.setColumns(20);
+        taDescription.setLineWrap(true);
+        taDescription.setRows(5);
+        taDescription.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(taDescription);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -765,8 +770,9 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblStatus))
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(lblStatus)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -776,12 +782,11 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdOpen)
                     .addComponent(cmdDelete)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblStatus)
-                            .addComponent(lblName))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblDescription)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblStatus)
+                        .addComponent(lblName)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -817,9 +822,10 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdOpen;
-    private javax.swing.JLabel lblDescription;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblStatus;
+    private javax.swing.JTextArea taDescription;
     // End of variables declaration//GEN-END:variables
 
     /**
