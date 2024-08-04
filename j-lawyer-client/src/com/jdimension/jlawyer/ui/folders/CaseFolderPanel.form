@@ -177,10 +177,10 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
-              <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
                           <Component id="cmdActions" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="sortChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -194,8 +194,8 @@
                           <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="sortFileType" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="sortCreationDate" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="sortFileType" alignment="0" max="32767" attributes="0"/>
+                      <Component id="sortCreationDate" alignment="0" max="32767" attributes="0"/>
                       <Component id="cmdExportSelectedAsPdf" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
