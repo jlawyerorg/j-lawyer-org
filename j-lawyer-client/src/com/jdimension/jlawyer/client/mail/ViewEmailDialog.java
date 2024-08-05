@@ -755,6 +755,9 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
         });
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -762,7 +765,6 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         });
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
@@ -1100,6 +1102,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_formWindowClosing
 
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
+    
     /**
      * @param args the command line arguments
      */
