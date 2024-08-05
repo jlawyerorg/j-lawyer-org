@@ -720,6 +720,12 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         this.odoc = odoc;
 
         ComponentUtils.restoreDialogSize(this);
+        
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
 
     }
 
@@ -1099,7 +1105,11 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             this.odoc.setClosed(true);
         }
     }//GEN-LAST:event_formWindowClosing
-
+    
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {                                    
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    } 
+    
     /**
      * @param args the command line arguments
      */
