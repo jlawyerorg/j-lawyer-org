@@ -671,9 +671,6 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
-import com.jdimension.jlawyer.client.assistant.AssistantParameterDialog;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -945,12 +942,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     @Override
     public List<ParameterData> getParameters(AiCapability c) {
         
-        
-        AssistantParameterDialog dlg = new AssistantParameterDialog(EditorsRegistry.getInstance().getMainWindow(), true, c, c.getName());
-        FrameUtils.centerDialogOnParentMonitor(dlg, getParent().getLocation());
-        dlg.setVisible(true);
-        
-        return dlg.getParameters();
+        return null;
     }
 
     @Override
