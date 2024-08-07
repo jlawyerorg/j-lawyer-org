@@ -2117,12 +2117,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 WebViewRegister reg = WebViewRegister.getInstance();
                 WebView webView1 = reg.get(webViewId);
 
-                Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
+    Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
                         + "    var text = \"\";\n"
                         + "    if (window.getSelection) {\n"
                         + "        text = window.getSelection().toString();\n"
                         + "    } else if (document.selection && document.selection.type != \"Control\") {\n"
                         + "        text = document.selection.createRange().text;\n"
+                        + "    }\n"
+                        + "    if (text === \"\") {\n"
+                        + "        text = document.body.innerText || document.body.textContent;\n"
                         + "    }\n"
                         + "    return text;\n"
                         + "})()");
