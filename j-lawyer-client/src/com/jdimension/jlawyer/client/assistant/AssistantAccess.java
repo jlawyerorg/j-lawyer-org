@@ -677,6 +677,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.apache.log4j.Logger;
@@ -817,5 +818,23 @@ public class AssistantAccess {
         }
 
     }
+    
+    public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
 
+        for (AssistantConfig config : capabilities.keySet()) {
+            for (AiCapability c : capabilities.get(config)) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(c.getName());
+                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+                mi.addActionListener((ActionEvent e) -> {
+                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                    FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
+                    dlg.setVisible(true);
+                });
+                menu.add(mi);
+            }
+        }
+
+    }
+    
 }

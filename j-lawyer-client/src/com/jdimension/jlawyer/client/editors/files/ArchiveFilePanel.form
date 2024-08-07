@@ -397,6 +397,16 @@
         </MenuItem>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator4">
         </Component>
+        <Menu class="javax.swing.JMenu" name="mnuAssistant">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Assistent Ingo"/>
+          </Properties>
+        </Menu>
+        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator10">
+        </Component>
         <MenuItem class="javax.swing.JMenuItem" name="mnuSendEpostLetter">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

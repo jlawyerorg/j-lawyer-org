@@ -663,6 +663,10 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
@@ -803,7 +807,7 @@ import themes.colors.HighlightPicker;
  *
  * @author jens
  */
-public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, NewEventPanelListener, NewMessageConsumer, DocumentPreviewSaveCallback {
+public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, NewEventPanelListener, NewMessageConsumer, DocumentPreviewSaveCallback, AssistantInputAdapter {
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
 
@@ -1043,6 +1047,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         TableRowSorter htrs = new TableRowSorter(this.tblAccountEntries.getModel());
         htrs.setComparator(0, dtComparator);
         this.tblAccountEntries.setRowSorter(htrs);
+        
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this);
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
@@ -1765,6 +1778,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendDocumentFax = new javax.swing.JMenuItem();
         mnuDirectPrint = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
+        mnuAssistant = new javax.swing.JMenu();
+        jSeparator10 = new javax.swing.JPopupMenu.Separator();
         mnuSendEpostLetter = new javax.swing.JMenuItem();
         jSeparator9 = new javax.swing.JPopupMenu.Separator();
         mnuDrebis = new javax.swing.JMenu();
@@ -2251,6 +2266,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuDirectPrint);
         documentsPopup.add(jSeparator4);
+
+        mnuAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        mnuAssistant.setText("Assistent Ingo");
+        documentsPopup.add(mnuAssistant);
+        documentsPopup.add(jSeparator10);
 
         mnuSendEpostLetter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/voip/DP_Logo_SZ_MF_rgb.png"))); // NOI18N
         mnuSendEpostLetter.setText("per E-POST versenden");
@@ -7329,6 +7349,43 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+
+            if (selected.isEmpty()) {
+                return inputs;
+            }
+            if(selected.size()!=1) {
+                return inputs;
+            }
+
+            ArchiveFileDocumentsBean doc = selected.get(0);
+            String docText=remote.getDocumentPreview(doc.getId());
+
+            
+            InputData i = new InputData();
+            //i.setFileName("sound.wav");
+            i.setType("string");
+            i.setBase64(false);
+            //i.setData(selectedText);
+            i.setStringData(docText);
+            inputs.add(i);
+            return inputs;
+            
+        } catch (Exception ioe) {
+            log.error("Error getting document as text", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler bei der Textextraktion: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+
     protected class DropTargetHandler implements DropTargetListener {
 
         private JPanel p = null;
@@ -7526,6 +7583,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane8;
     private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator10;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
@@ -7553,6 +7611,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSpendings;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
+    private javax.swing.JMenu mnuAssistant;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
     private javax.swing.JMenuItem mnuCopyFilesToClipboard;
