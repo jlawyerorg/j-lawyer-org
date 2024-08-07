@@ -127,6 +127,10 @@ public class AiCapability implements Serializable {
     public List<Parameter> getParameters() {
         return parameters;
     }
+    
+    public boolean hasParameters() {
+        return parameters!=null && !parameters.isEmpty();
+    }
 
     /**
      * @param parameters the parameters to set
