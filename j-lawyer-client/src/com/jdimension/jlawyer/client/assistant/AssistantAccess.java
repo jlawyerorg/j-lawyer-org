@@ -808,7 +808,7 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, true, EditorsRegistry.getInstance().getMainWindow(), false);
+                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                     FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
                     dlg.setVisible(true);
                 });
