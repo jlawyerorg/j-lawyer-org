@@ -893,7 +893,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         jLabel23.setText("Grund / Beschreibung:");
 
         txtReviewReason.setToolTipText("Zusammenfassung");
-        txtReviewReason.setMaximumSize(new java.awt.Dimension(275, 25));
+        txtReviewReason.setMaximumSize(new java.awt.Dimension(272, 25));
         txtReviewReason.setPreferredSize(new java.awt.Dimension(272, 25));
 
         taEventDescription.setColumns(20);
