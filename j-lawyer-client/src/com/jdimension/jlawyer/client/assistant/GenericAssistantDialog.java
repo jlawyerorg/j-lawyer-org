@@ -667,19 +667,22 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.ai.Prompt;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
@@ -726,6 +729,22 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         } else {
             //this.getContentPane().remove(this.jScrollPane1);
             this.taPrompt.setEnabled(false);
+        }
+        
+        this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
+        for(Parameter p: this.capability.getParameters()) {
+            this.pnlParameters.add(new JLabel(p.getName()));
+            if(p.getList()!=null && p.getList().length()>0) {
+                Vector v=new Vector(Arrays.asList(p.getList().split(",")));
+                JComboBox combo=new JComboBox(v);
+                combo.setEditable(false);
+                combo.setSelectedItem(p.getDefaultValue());
+                this.pnlParameters.add(combo);
+            } else {
+                JTextField tf=new JTextField();
+                tf.setText(p.getDefaultValue());
+                this.pnlParameters.add(tf);
+            }
         }
 
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
@@ -795,6 +814,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         cmdSubmit = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         progress = new javax.swing.JProgressBar();
+        pnlParameters = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -905,6 +925,17 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         progress.setOpaque(true);
         progress.setString("Transkribieren");
 
+        javax.swing.GroupLayout pnlParametersLayout = new javax.swing.GroupLayout(pnlParameters);
+        pnlParameters.setLayout(pnlParametersLayout);
+        pnlParametersLayout.setHorizontalGroup(
+            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        pnlParametersLayout.setVerticalGroup(
+            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -925,7 +956,8 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                             .addComponent(jScrollPane2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCopy))
-                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -937,15 +969,17 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tabInputs, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdCopy)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1026,10 +1060,6 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         List<ParameterData> params = new ArrayList<>();
         if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
             params = getParameters();
-            if (params == null) {
-                // user cancelled parameters dialog
-                return;
-            }
         }
 
         final List<ParameterData> fParams=params;
@@ -1140,6 +1170,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblRequestType;
     private javax.swing.JList<String> lstInputFiles;
     private javax.swing.JList<String> lstOutputFiles;
+    private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
     private javax.swing.JProgressBar progress;
     private javax.swing.JTextArea taInputString;
@@ -1149,10 +1180,23 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     private List<ParameterData> getParameters() {
-        AssistantParameterDialog dlg = new AssistantParameterDialog(this, true, capability, capability.getName());
-        FrameUtils.centerDialogOnParentMonitor(dlg, getParent().getLocation());
-        dlg.setVisible(true);
 
-        return dlg.getParameters();
+        List<ParameterData> parameters=new ArrayList<>();
+        for(int i=0;i<this.capability.getParameters().size();i++) {
+            ParameterData d=new ParameterData();
+            d.setId(this.capability.getParameters().get(i).getId());
+            Component caption=this.pnlParameters.getComponent(2*i);
+            Component component=this.pnlParameters.getComponent(2*i+1);
+            if(component instanceof JTextField) {
+                String value=((JTextField) component).getText();
+                d.setValue(value);
+            } else if (component instanceof JComboBox) {
+                String value=((JComboBox) component).getEditor().getItem().toString();
+                d.setValue(value);
+            }
+            parameters.add(d);
+        }
+        return parameters;
+
     }
 }
