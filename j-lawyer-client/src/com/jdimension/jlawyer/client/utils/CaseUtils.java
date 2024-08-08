@@ -706,7 +706,8 @@ public class CaseUtils {
     public static boolean optionalUnarchiveCase(ArchiveFileBean caseDto, Component parent) throws Exception {
         if (caseDto.isArchived()) {
             int response = JOptionPane.showConfirmDialog(parent, "Akte " + caseDto.getFileNumber() + " ist abgelegt. Jetzt reaktivieren?", "Akte reaktivieren", JOptionPane.YES_NO_OPTION);
-            if (response == JOptionPane.NO_OPTION) {
+            if (response == JOptionPane.NO_OPTION || response < 0) {
+                // in case of "no" or just closing the dialog, case will not be reactivated
                 return false;
             }
 
