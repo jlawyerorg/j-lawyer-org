@@ -735,8 +735,8 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         for(Parameter p: this.capability.getParameters()) {
             this.pnlParameters.add(new JLabel(p.getName()));
             if(p.getList()!=null && p.getList().length()>0) {
-                Vector v=new Vector(Arrays.asList(p.getList().split(",")));
-                JComboBox combo=new JComboBox(v);
+                Vector<String> v=new Vector<String>(Arrays.asList(p.getList().split(",")));
+                JComboBox<String> combo=new JComboBox<>(v);
                 combo.setEditable(false);
                 combo.setSelectedItem(p.getDefaultValue());
                 this.pnlParameters.add(combo);
@@ -1185,7 +1185,6 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         for(int i=0;i<this.capability.getParameters().size();i++) {
             ParameterData d=new ParameterData();
             d.setId(this.capability.getParameters().get(i).getId());
-            Component caption=this.pnlParameters.getComponent(2*i);
             Component component=this.pnlParameters.getComponent(2*i+1);
             if(component instanceof JTextField) {
                 String value=((JTextField) component).getText();
