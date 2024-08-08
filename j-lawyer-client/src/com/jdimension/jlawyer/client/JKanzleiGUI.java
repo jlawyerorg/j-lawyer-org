@@ -1190,7 +1190,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuProfileInfo = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuMailboxSettings = new javax.swing.JMenuItem();
+        mnuAssistants = new javax.swing.JMenu();
         mnuAssistantConfigs = new javax.swing.JMenuItem();
+        mnuAssistantPrompts = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuDrebisSettings = new javax.swing.JMenuItem();
@@ -1877,14 +1879,28 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuOptions.add(mnuMailboxSettings);
 
+        mnuAssistants.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        mnuAssistants.setText("Assistent Ingo");
+
         mnuAssistantConfigs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
-        mnuAssistantConfigs.setText("Assistent Ingo");
+        mnuAssistantConfigs.setText("Ingo-Server");
         mnuAssistantConfigs.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAssistantConfigsActionPerformed(evt);
             }
         });
-        mnuOptions.add(mnuAssistantConfigs);
+        mnuAssistants.add(mnuAssistantConfigs);
+
+        mnuAssistantPrompts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        mnuAssistantPrompts.setText("eigene Prompts");
+        mnuAssistantPrompts.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAssistantPromptsActionPerformed(evt);
+            }
+        });
+        mnuAssistants.add(mnuAssistantPrompts);
+
+        mnuOptions.add(mnuAssistants);
 
         mnuVoipSoftphoneSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
         mnuVoipSoftphoneSettings.setText("Telefonie per Softphone");
@@ -2839,6 +2855,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuAssistantConfigsActionPerformed
 
+    private void mnuAssistantPromptsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantPromptsActionPerformed
+        if (checkAdmin()) {
+            AssistantPromptSetupDialog dlg = new AssistantPromptSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuAssistantPromptsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2891,6 +2915,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuArchiveFileOptionsSubjectFields;
     private javax.swing.JMenuItem mnuArchiveFileTags;
     private javax.swing.JMenuItem mnuAssistantConfigs;
+    private javax.swing.JMenuItem mnuAssistantPrompts;
+    private javax.swing.JMenu mnuAssistants;
     private javax.swing.JMenuItem mnuBackupConfiguration;
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;

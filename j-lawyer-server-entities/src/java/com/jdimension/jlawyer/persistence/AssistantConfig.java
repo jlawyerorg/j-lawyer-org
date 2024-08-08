@@ -675,8 +675,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "assistant_config")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "AssistantConfig.findAll", query = "SELECT a FROM AppOptionGroupBean a"),
-    @NamedQuery(name = "AssistantConfig.findById", query = "SELECT a FROM AppOptionGroupBean a WHERE a.id = :id")})
+    @NamedQuery(name = "AssistantConfig.findAll", query = "SELECT a FROM AssistantConfig a"),
+    @NamedQuery(name = "AssistantConfig.findById", query = "SELECT a FROM AssistantConfig a WHERE a.id = :id")})
 public class AssistantConfig implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id

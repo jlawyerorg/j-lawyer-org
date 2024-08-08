@@ -2003,6 +2003,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
             this.popAssistant.removeAll();
+            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this);
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);

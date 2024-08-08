@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.persistence.IntegrationHook;
 import java.awt.Color;
 import java.awt.Component;
 import javax.swing.JLabel;

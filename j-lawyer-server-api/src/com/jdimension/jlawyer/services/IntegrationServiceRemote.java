@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
@@ -745,5 +746,13 @@ public interface IntegrationServiceRemote {
     AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception;
 
     boolean updateObservedFile(String fileName, byte[] data) throws Exception;
+    
+    List<AssistantPrompt> getAllAssistantPrompts() throws Exception;
+
+    AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
     
 }

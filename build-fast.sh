@@ -11,7 +11,8 @@ function check_error {
 }
 
 # export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full/
-export JAVA_HOME=/home/jens/bin/jdk1.8.0_131
+# export JAVA_HOME=/home/jens/bin/jdk1.8.0_131
+export JAVA_HOME=/home/jens/bin/jdk-11.0.9.1-full/
 
 # there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
 mvn -f j-lawyer-cloud/pom.xml install -DskipTests

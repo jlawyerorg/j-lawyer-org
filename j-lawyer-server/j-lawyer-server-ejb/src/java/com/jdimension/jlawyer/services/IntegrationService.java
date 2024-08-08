@@ -676,6 +676,8 @@ import com.jdimension.jlawyer.events.HookType;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantConfigFacadeLocal;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.persistence.AssistantPromptFacadeLocal;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -745,6 +747,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     private CustomHooksServiceLocal hookService;
     @EJB
     private AssistantConfigFacadeLocal assistantFacade;
+    @EJB
+    private AssistantPromptFacadeLocal assistantPromptFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -1479,6 +1483,35 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         
         return true;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<AssistantPrompt> getAllAssistantPrompts() throws Exception {
+        return this.assistantPromptFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        ap.setId(id);
+        this.assistantPromptFacade.create(ap);
+        return this.assistantPromptFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception {
+        this.assistantPromptFacade.edit(ap);
+        return ap;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void removeAssistantPrompt(AssistantPrompt ap) throws Exception {
+        this.assistantPromptFacade.remove(ap);
     }
 
 }

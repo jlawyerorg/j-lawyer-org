@@ -19,6 +19,7 @@ public class AiCapability implements Serializable {
     public static final String REQUESTTYPE_SUMMARIZE="summarize";
     public static final String REQUESTTYPE_EXPLAIN="explain";
     public static final String REQUESTTYPE_CHAT="chat";
+    public static final String REQUESTTYPE_GENERATE="generate";
     
     public static final String INPUTTYPE_STRING="STRING";
     public static final String INPUTTYPE_FILE="FILE";
@@ -37,6 +38,21 @@ public class AiCapability implements Serializable {
     
     private List<Output> output=new ArrayList<>();
 
+    private static List<String> capabilities=new ArrayList<>();
+    
+    static {
+        capabilities.add(REQUESTTYPE_CHAT);
+        capabilities.add(REQUESTTYPE_EXPLAIN);
+        capabilities.add(REQUESTTYPE_GENERATE);
+        capabilities.add(REQUESTTYPE_SUMMARIZE);
+        capabilities.add(REQUESTTYPE_TRANSCRIBE);
+        capabilities.add(REQUESTTYPE_TRANSLATE);
+    }
+    
+    public static List<String> capabilities() {
+        return capabilities;
+    }
+    
     /**
      * @return the name
      */
