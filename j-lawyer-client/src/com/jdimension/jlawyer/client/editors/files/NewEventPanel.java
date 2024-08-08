@@ -893,8 +893,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         jLabel23.setText("Grund / Beschreibung:");
 
         txtReviewReason.setToolTipText("Zusammenfassung");
-        txtReviewReason.setMaximumSize(new java.awt.Dimension(272, 25));
-        txtReviewReason.setPreferredSize(new java.awt.Dimension(272, 25));
 
         taEventDescription.setColumns(20);
         taEventDescription.setLineWrap(true);
@@ -936,7 +934,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane5)
-            .addComponent(txtReviewReason, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(txtReviewReason)
             .addComponent(txtEventLocation, javax.swing.GroupLayout.Alignment.TRAILING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel12)
