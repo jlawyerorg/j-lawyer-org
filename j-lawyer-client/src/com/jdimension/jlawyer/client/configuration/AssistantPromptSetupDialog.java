@@ -971,6 +971,7 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
             ap.setPrompt(this.taPrompt.getText());
 
             AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().addAssistantPrompt(ap);
+            AssistantAccess.getInstance().flushCustomPrompts();
 
             ((DefaultTableModel) this.tblPrompts.getModel()).addRow(new Object[]{savedPrompt, savedPrompt.getRequestType()});
             this.tblPrompts.getSelectionModel().setSelectionInterval(this.tblPrompts.getRowCount()-1, this.tblPrompts.getRowCount()-1);
@@ -998,6 +999,7 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().updateAssistantPrompt(ap);
+                AssistantAccess.getInstance().flushCustomPrompts();
                 row = this.tblPrompts.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPrompts.getModel()).setValueAt(savedPrompt, row, 0);
                 ((DefaultTableModel) this.tblPrompts.getModel()).setValueAt(savedPrompt.getRequestType(), row, 1);
@@ -1023,6 +1025,7 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 locator.lookupIntegrationServiceRemote().removeAssistantPrompt(ap);
+                AssistantAccess.getInstance().flushCustomPrompts();
                 row = this.tblPrompts.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPrompts.getModel()).removeRow(row);
 

@@ -929,6 +929,9 @@ public class AssistantAPI {
 
                     stringKey = Jsoner.mintJsonKey("async", null);
                     capability.setAsync(c.getBoolean(stringKey));
+                    
+                    stringKey = Jsoner.mintJsonKey("customPrompts", null);
+                    capability.setCustomPrompts(c.getBoolean(stringKey));
 
                     stringKey = Jsoner.mintJsonKey("description", null);
                     capability.setDescription(c.getString(stringKey));

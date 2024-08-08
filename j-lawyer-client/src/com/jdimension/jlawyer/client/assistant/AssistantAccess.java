@@ -670,8 +670,10 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.Input;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.ai.Prompt;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -693,6 +695,9 @@ public class AssistantAccess {
     private static AssistantAccess instance = null;
     private Map<AssistantConfig, List<com.jdimension.jlawyer.ai.AiCapability>> capabilities = null;
 
+    // request type to list of custom prompts
+    private Map<String, List<AssistantPrompt>> customPrompts = new HashMap<>();
+
     private AssistantAccess() {
 
     }
@@ -702,6 +707,34 @@ public class AssistantAccess {
             instance = new AssistantAccess();
         }
         return instance;
+    }
+
+    public void flushCustomPrompts() {
+        synchronized(customPrompts) {
+            this.customPrompts.clear();
+        }
+    }
+    
+    private Map<String, List<AssistantPrompt>> getCustomPrompts() throws Exception {
+        synchronized (customPrompts) {
+            if (customPrompts.isEmpty()) {
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    List<AssistantPrompt> allPrompts = locator.lookupIntegrationServiceRemote().getAllAssistantPrompts();
+                    for(AssistantPrompt p: allPrompts) {
+                        if(!customPrompts.containsKey(p.getRequestType()))
+                            customPrompts.put(p.getRequestType(), new ArrayList<>());
+                        customPrompts.get(p.getRequestType()).add(p);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error getting AI capabilities", ex);
+                    throw new Exception("Assistenten-Funktionen können nicht ermittelt werden: " + ex.getMessage());
+                }
+            }
+            return customPrompts;
+        }
+
     }
 
     public Map<AssistantConfig, List<AiCapability>> getCapabilities() throws Exception {
@@ -729,6 +762,9 @@ public class AssistantAccess {
      * @throws Exception
      */
     public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
+        
+        Map<String, List<AssistantPrompt>> prompts=this.getCustomPrompts();
+        
         Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
         Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
         for (AssistantConfig config : all.keySet()) {
@@ -753,6 +789,21 @@ public class AssistantAccess {
                     filtered.put(config, new ArrayList<>());
                 }
                 filtered.get(config).add(c);
+                
+                // if capability allows use of custom prompts, add the capability with the custom prompt to the filtered list
+                if(prompts.containsKey(requestType) && c.isCustomPrompts()) {
+                    for(AssistantPrompt p: prompts.get(requestType)) {
+                        AiCapability clone=(AiCapability)c.clone();
+                        clone.setName(p.getName());
+                        Prompt cp=new Prompt();
+                        if(c.getDefaultPrompt()!=null) {
+                            cp.setMaxTokens(c.getDefaultPrompt().getMaxTokens());
+                        }
+                        cp.setDefaultPrompt(p.getPrompt());
+                        clone.setDefaultPrompt(cp);
+                        filtered.get(config).add(clone);
+                    }
+                }
             }
         }
         return filtered;
@@ -818,7 +869,7 @@ public class AssistantAccess {
         }
 
     }
-    
+
     public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
 
         for (AssistantConfig config : capabilities.keySet()) {
@@ -836,5 +887,5 @@ public class AssistantAccess {
         }
 
     }
-    
+
 }

@@ -29,6 +29,7 @@ public class AiCapability implements Serializable {
     private String requestType;
     private String modelType;
     private boolean async=false;
+    private boolean customPrompts=false;
     
     private Prompt defaultPrompt=null;
     
@@ -38,7 +39,7 @@ public class AiCapability implements Serializable {
     
     private List<Output> output=new ArrayList<>();
 
-    private static List<String> capabilities=new ArrayList<>();
+    private static final List<String> capabilities=new ArrayList<>();
     
     static {
         capabilities.add(REQUESTTYPE_CHAT);
@@ -51,6 +52,22 @@ public class AiCapability implements Serializable {
     
     public static List<String> capabilities() {
         return capabilities;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        AiCapability clone=new AiCapability();
+        clone.async=async;
+        clone.customPrompts=customPrompts;
+        clone.defaultPrompt=defaultPrompt;
+        clone.description=description;
+        clone.input=input;
+        clone.modelType=modelType;
+        clone.name=name;
+        clone.output=output;
+        clone.parameters=parameters;
+        clone.requestType=requestType;
+        return clone;
     }
     
     /**
@@ -181,6 +198,20 @@ public class AiCapability implements Serializable {
      */
     public void setOutput(List<Output> output) {
         this.output = output;
+    }
+
+    /**
+     * @return the customPrompts
+     */
+    public boolean isCustomPrompts() {
+        return customPrompts;
+    }
+
+    /**
+     * @param customPrompts the customPrompts to set
+     */
+    public void setCustomPrompts(boolean customPrompts) {
+        this.customPrompts = customPrompts;
     }
     
     
