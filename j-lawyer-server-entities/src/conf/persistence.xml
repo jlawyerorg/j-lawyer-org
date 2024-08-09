@@ -60,6 +60,7 @@
     <class>com.jdimension.jlawyer.persistence.IntegrationHookLog</class>
     <class>com.jdimension.jlawyer.persistence.AssistantConfig</class>
     <class>com.jdimension.jlawyer.persistence.AssistantPrompt</class>
+    <class>com.jdimension.jlawyer.persistence.TimesheetAllowedPositionTpl</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->

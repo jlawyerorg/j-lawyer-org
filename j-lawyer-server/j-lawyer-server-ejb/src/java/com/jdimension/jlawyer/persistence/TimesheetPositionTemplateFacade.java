@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +685,11 @@ public class TimesheetPositionTemplateFacade extends AbstractFacade<TimesheetPos
 
     public TimesheetPositionTemplateFacade() {
         super(TimesheetPositionTemplate.class);
+    }
+    
+    @Override
+    public List<TimesheetPositionTemplate> findByMultipleIds(List<String> ids) {
+        return (List<TimesheetPositionTemplate>) em.createNamedQuery("TimesheetPositionTemplate.findByMultipleIds").setParameter("idList", ids).getResultList();
     }
     
 }

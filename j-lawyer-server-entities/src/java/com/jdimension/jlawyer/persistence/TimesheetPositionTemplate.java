@@ -677,6 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "TimesheetPositionTemplate.findAll", query = "SELECT a FROM TimesheetPositionTemplate a"),
+    @NamedQuery(name = "TimesheetPositionTemplate.findByMultipleIds", query = "SELECT a FROM TimesheetPositionTemplate a where a.id IN :idList order by a.name asc"),
     @NamedQuery(name = "TimesheetPositionTemplate.findById", query = "SELECT a FROM TimesheetPositionTemplate a WHERE a.id = :id")})
 public class TimesheetPositionTemplate implements Serializable {
     

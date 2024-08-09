@@ -663,10 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -684,7 +685,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.Cell;
@@ -728,6 +728,8 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.currencyFormat.setMaximumFractionDigits(2);
 
         initComponents();
+        this.cmdAllowedPositions.setText("");
+        
         ComponentUtils.restoreDialogSize(this);
         ComponentUtils.decorateSplitPane(splitMain);
         ComponentUtils.restoreSplitPane(splitMain, TimesheetDialog.class, "splitMain");
@@ -782,6 +784,25 @@ public class TimesheetDialog extends javax.swing.JDialog {
         return this.currentEntry;
     }
 
+    private void updateAllowedPositions() {
+        
+        if(this.currentEntry==null) {
+            this.lblAllowedPositions.setText("");
+        } else {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                this.lblAllowedPositions.setText("" +locator.lookupTimesheetServiceRemote().getPositionTemplatesForTimesheet(this.currentEntry.getId()).size());
+            } catch (Exception ex) {
+                this.lblAllowedPositions.setText("0");
+                log.error("Error determining position templates for timesheet", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der erlaubten Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
+        
+    }
+    
     private void clearPositionsPanel() {
         this.pnlTimesheetPositions.removeAll();
         this.pnlTimesheetPositions.doLayout();
@@ -844,6 +865,8 @@ public class TimesheetDialog extends javax.swing.JDialog {
             }
 
         }
+        
+        this.updateAllowedPositions();
 
     }
 
@@ -877,6 +900,10 @@ public class TimesheetDialog extends javax.swing.JDialog {
         jLabel5 = new javax.swing.JLabel();
         txtTimesheetTotal = new javax.swing.JFormattedTextField();
         prgTimesheetStatus = new javax.swing.JProgressBar();
+        lblAllowedPositions = new javax.swing.JLabel();
+        cmdAllowedPositions = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlTimesheetPositions = new javax.swing.JPanel();
         lblTimesheetTotal = new javax.swing.JLabel();
@@ -893,7 +920,6 @@ public class TimesheetDialog extends javax.swing.JDialog {
             }
         });
 
-        splitMain.setBorder(null);
         splitMain.setDividerLocation(400);
 
         jLabel2.setText("Beschreibung:");
@@ -957,6 +983,22 @@ public class TimesheetDialog extends javax.swing.JDialog {
         prgTimesheetStatus.setFont(prgTimesheetStatus.getFont().deriveFont(prgTimesheetStatus.getFont().getSize()-2f));
         prgTimesheetStatus.setStringPainted(true);
 
+        lblAllowedPositions.setText("jLabel4");
+
+        cmdAllowedPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        cmdAllowedPositions.setText(" ");
+        cmdAllowedPositions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAllowedPositionsActionPerformed(evt);
+            }
+        });
+
+        jLabel6.setText("Positionen:");
+
+        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/info.png"))); // NOI18N
+        jLabel7.setText(" ");
+        jLabel7.setToolTipText("Optional können für das Projekt die zu nutzenden Positionsvorlagen eingeschränkt werden, um bspw. nur bestimmte Stundensätze zuzulassen.");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -964,22 +1006,6 @@ public class TimesheetDialog extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel12))
-                        .addGap(21, 21, 21)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(cmbTimesheetInterval, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(txtName)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmbStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdRemoveAllPositions)
@@ -997,7 +1023,31 @@ public class TimesheetDialog extends javax.swing.JDialog {
                                 .addGap(2, 2, 2)
                                 .addComponent(txtTimesheetTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(prgTimesheetStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(prgTimesheetStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel12)
+                            .addComponent(jLabel6))
+                        .addGap(21, 21, 21)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 151, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(cmbTimesheetInterval, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel3)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(lblAllowedPositions)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdAllowedPositions)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel7)))))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1016,7 +1066,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
                     .addComponent(cmbTimesheetInterval, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel12)
                     .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAllowedPositions)
+                    .addComponent(lblAllowedPositions)
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel7))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkTimesheetLimit)
                     .addComponent(txtTimesheetLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1031,7 +1087,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
                 .addComponent(lblTimesheetPositions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdRemoveAllPositions)
-                .addContainerGap(119, Short.MAX_VALUE))
+                .addGap(201, 201, 201))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1105,7 +1161,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
+                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 595, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -1247,105 +1303,18 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.updateTotals(null);
     }//GEN-LAST:event_cmbTimesheetIntervalActionPerformed
 
-    private StyledCalculationTable getPositionsAsTable() {
-        float totalTax = 0f;
-        float total = 0f;
-
-        int rowcount = 0;
-
-        StyledCalculationTable ct = new StyledCalculationTable();
-        ct.addHeaders("", "Position", "Menge", "Einzel", "Gesamt");
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+    private void cmdAllowedPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAllowedPositionsActionPerformed
+        if(this.currentEntry==null) {
+            boolean saved=this.save();
+            if(!saved)
+                return;
         }
-
-        int positionIndex = 0;
-        for (Component c : this.pnlTimesheetPositions.getComponents()) {
-            if (c instanceof InvoicePositionEntryPanel) {
-
-                InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-                float u = pos.getUnits();
-                float up = pos.getUnitPrice();
-                float t = pos.getTaxRate();
-
-                totalTax = totalTax + (u * up * (t / 100f));
-                total = total + (u * up * (1 + t / 100f));
-
-                positionIndex = positionIndex + 1;
-                ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription() + " (USt: " + cf.format(pos.getTaxRate()) + "%)", cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), cf.format(u * up));
-                rowcount = rowcount + 1;
-            }
-        }
-
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
-        }
-//        int footerRowTaxes = ct.addRow("", "Umsatzsteuer", "", "", cf.format(totalTax) + " " + this.cmbCurrency.getSelectedItem());
-//        int footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
-
-        //HeaderRow
-        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
-        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
-
-//        this.formatFooterRow(ct, footerRowTaxes);
-//        this.formatFooterRow(ct, footerRowTotal);
-        //TableLayout
-        ct.setColumnAlignment(0, Cell.ALIGNMENT_RIGHT);
-        ct.setColumnAlignment(1, Cell.ALIGNMENT_LEFT);
-        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
-        ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
-        ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
-        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
-        ct.setRowFontSize(0, 12);
-        ct.setColumnWidth(0, 25);
-        ct.setColumnWidth(1, 120);
-        ct.setColumnWidth(2, 35);
-        ct.setColumnWidth(3, 35);
-        ct.setColumnWidth(4, 35);
-        ct.setFontFamily("Arial");
-        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
-        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
-
-        return ct;
-
-    }
-
-    private void formatFooterRow(StyledCalculationTable ct, int footerRowIndex) {
-        //FooterRow
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
-            ct.setRowBold(footerRowIndex, true);
-        } else {
-            ct.setRowBold(footerRowIndex, false);
-        }
-        ct.getCellAt(footerRowIndex, 2).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
-
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
-            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(true);
-            } else {
-                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(true);
-            }
-        } else {
-            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-                ct.getCellAt(ct.getRowCount() - 3, 2).setUnderline(false);
-            } else {
-                ct.getCellAt(ct.getRowCount() - 2, 2).setUnderline(false);
-            }
-        }
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Italic", true)) {
-            ct.getCellAt(footerRowIndex, 1).setItalic(true);
-            ct.getCellAt(footerRowIndex, 2).setItalic(true);
-        } else {
-            ct.getCellAt(footerRowIndex, 1).setItalic(false);
-            ct.getCellAt(footerRowIndex, 2).setItalic(false);
-        }
-        ct.setRowForeGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
-
-    }
+        TimesheetAllowedPositionsDialog dlg = new TimesheetAllowedPositionsDialog(this, true, this.currentEntry.getId());
+        dlg.setTitle("erlaubte Positionsvorlagen auswählen");
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        this.updateAllowedPositions();
+    }//GEN-LAST:event_cmdAllowedPositionsActionPerformed
 
     public void updateTotals(TimesheetPositionEntryPanel ep) {
 
@@ -1437,6 +1406,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkTimesheetLimit;
     private javax.swing.JComboBox<String> cmbStatus;
     private javax.swing.JComboBox<String> cmbTimesheetInterval;
+    private javax.swing.JButton cmdAllowedPositions;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
@@ -1447,10 +1417,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel lblAllowedPositions;
     private javax.swing.JLabel lblTimesheetPositions;
     private javax.swing.JLabel lblTimesheetTax;
     private javax.swing.JLabel lblTimesheetTotal;

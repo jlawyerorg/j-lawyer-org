@@ -678,5 +678,9 @@ public interface TimesheetServiceRemote {
     List<TimesheetPositionTemplate> getAllTimesheetPositionTemplates() throws Exception;
     TimesheetPositionTemplate updateTimesheetPositionTemplate(TimesheetPositionTemplate tpl);
     void removeTimesheetPositionTemplate(TimesheetPositionTemplate tpl);
+
+    List<TimesheetPositionTemplate> getPositionTemplatesForTimesheet(String timesheetId) throws Exception;
+
+    void setPositionTemplatesForTimesheet(String timesheetId, List<TimesheetPositionTemplate> positionTemplates) throws Exception;
     
 }

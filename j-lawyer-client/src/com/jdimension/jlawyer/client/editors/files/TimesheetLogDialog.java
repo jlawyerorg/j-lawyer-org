@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.TimesheetServiceRemote;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -691,8 +692,6 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(TimesheetLogDialog.class.getName());
     
-    private List<TimesheetPositionTemplate> posTemplates=new ArrayList<>();
-
     private List<Timesheet> openSheets = null;
 
     private Timer timer = new Timer();
@@ -732,8 +731,6 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            
-            this.posTemplates=locator.lookupTimesheetServiceRemote().getAllTimesheetPositionTemplates();
             
             this.openSheets = afs.getOpenTimesheets(caseId);
             for (Timesheet ts : openSheets) {
@@ -888,7 +885,15 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     }
 
     public final void existingTimesheetLogEntry(TimesheetPosition tsp) {
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);
+        List<TimesheetPositionTemplate> posTemplates = new ArrayList<>();
+        try {
+            posTemplates=this.getAllowedPositionsForTimesheet(tsp.getTimesheet().getId());
+        } catch (Exception ex) {
+            log.error("Error determining allowed timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Einstellungen zum Projekt '" + tsp.getTimesheet().getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
         tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
 
         this.pnlLogs.add(tlep);
@@ -896,8 +901,31 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         this.splitTimesheetLog.setDividerLocation(this.splitTimesheetLog.getDividerLocation() - 1);
     }
 
+    private List<TimesheetPositionTemplate> getAllowedPositionsForTimesheet(String timesheetId) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        TimesheetServiceRemote ts = locator.lookupTimesheetServiceRemote();
+
+        return ts.getPositionTemplatesForTimesheet(timesheetId);
+
+    }
+    
     public void newTimesheetLogEntry(Timesheet timesheet) {
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, this.posTemplates);
+        List<TimesheetPositionTemplate> posTemplates = new ArrayList<>();
+        try {
+            posTemplates=this.getAllowedPositionsForTimesheet(timesheet.getId());
+        } catch (Exception ex) {
+            log.error("Error determining allowed timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Einstellungen zum Projekt '" + timesheet.getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        if(posTemplates.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Für dieses Projekt sind keine Positionsvorlagen ausgewählt. Bitte Projekteinstellungen korrigieren.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
         TimesheetPosition tsp = new TimesheetPosition();
         tsp.setTimesheet(timesheet);
         tsp.setDescription("");

@@ -793,6 +793,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private TimesheetPositionFacadeLocal timesheetPositionsFacade;
     @EJB
+    private TimesheetPositionTemplateFacadeLocal timesheetPositionTemplateFacade;
+    @EJB
+    private TimesheetAllowedPositionTplFacadeLocal timesheetAllowedTemplatesFacade;
+    @EJB
     private CaseAccountEntryFacadeLocal accountEntries;
 
     // custom hooks support
@@ -5550,6 +5554,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             timesheet.setArchiveFileKey(aFile);
 
             this.timesheetFacade.create(timesheet);
+
+            List<TimesheetPositionTemplate> allTpls=this.timesheetPositionTemplateFacade.findAll();
+            for(TimesheetPositionTemplate tpl: allTpls) {
+                TimesheetAllowedPositionTpl allowedTpl=new TimesheetAllowedPositionTpl();
+                allowedTpl.setId(idGen.getID().toString());
+                allowedTpl.setPositionTemplateId(tpl.getId());
+                allowedTpl.setTimesheetId(timesheet.getId());
+                this.timesheetAllowedTemplatesFacade.create(allowedTpl);
+            }
 
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt erstellt (" + timesheet.getName() + ")");
 
