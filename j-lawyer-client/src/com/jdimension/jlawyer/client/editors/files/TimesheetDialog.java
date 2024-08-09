@@ -665,30 +665,28 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Component;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import org.jlawyer.plugins.calculation.Cell;
-import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -697,16 +695,13 @@ import themes.colors.DefaultColorTheme;
  */
 public class TimesheetDialog extends javax.swing.JDialog {
 
-    private static final String ICON_SUCCESS = "/icons/agt_action_success.png";
-
     private static final Logger log = Logger.getLogger(TimesheetDialog.class.getName());
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private static final DecimalFormat cf = new DecimalFormat("0.00");
 
+    private List<String> sortedPrincipalIds=null;
     private Timesheet currentEntry = null;
     private ArchiveFileBean caseDto = null;
-    private ArchiveFilePanel caseView = null;
-
+    
     private List<String> taxRates = new ArrayList<>();
 
     protected NumberFormat currencyFormat = NumberFormat.getNumberInstance();
@@ -722,7 +717,6 @@ public class TimesheetDialog extends javax.swing.JDialog {
     public TimesheetDialog(ArchiveFilePanel caseView, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         this.caseDto = caseDto;
-        this.caseView = caseView;
 
         this.currencyFormat.setMinimumFractionDigits(2);
         this.currencyFormat.setMaximumFractionDigits(2);
@@ -740,7 +734,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         BoxLayout boxLayout = new BoxLayout(this.pnlTimesheetPositions, BoxLayout.Y_AXIS);
         this.pnlTimesheetPositions.setLayout(boxLayout);
-
+        
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
+        this.sortedPrincipalIds = allUsers.stream()
+                                          .map(AppUserBean::getPrincipalId)
+                                          .sorted()
+                                          .collect(Collectors.toList());
+       
         ClientSettings settings = ClientSettings.getInstance();
 
         try {
@@ -846,7 +846,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<TimesheetPosition> positions = locator.lookupArchiveFileServiceRemote().getTimesheetPositions(timesheet.getId());
                 for (TimesheetPosition pos : positions) {
-                    TimesheetPositionEntryPanel posPanel = new TimesheetPositionEntryPanel(this, this.taxRates);
+                    TimesheetPositionEntryPanel posPanel = new TimesheetPositionEntryPanel(this, this.taxRates, this.sortedPrincipalIds);
 
                     this.pnlTimesheetPositions.add(posPanel);
                     this.pnlTimesheetPositions.doLayout();

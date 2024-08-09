@@ -664,8 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
@@ -700,7 +701,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
      * @param dlgParent
      * @param taxRates
      */
-    public TimesheetPositionEntryPanel(TimesheetDialog dlgParent, List<String> taxRates) {
+    public TimesheetPositionEntryPanel(TimesheetDialog dlgParent, List<String> taxRates, List<String> sortedPrincipalIds) {
         initComponents();
         
         this.dlgParent=dlgParent;
@@ -708,7 +709,12 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
         this.taxRateFormat = (DecimalFormat) nf;
         this.taxRateFormat.applyPattern("0.0");
-
+        
+        String []principalItems = sortedPrincipalIds.toArray(new String[0]);
+        OptionsComboBoxModel assistModel = new OptionsComboBoxModel(principalItems);
+        this.cmbPrincipal.setModel(assistModel);
+        this.cmbPrincipal.setRenderer(new UserListCellRenderer());
+        
         this.txtUnitPrice.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -778,28 +784,38 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.txtUnitPrice.setValue(pos.getUnitPrice());
             this.txtStarted.setValue(pos.getStarted());
             this.txtStopped.setValue(pos.getStopped());
-            this.lblPrincipal.setText(pos.getPrincipal());
-            this.lblPrincipal.setIcon(UserSettings.getInstance().getUserSmallIcon(pos.getPrincipal()));
+            
+            if (!ComponentUtils.containsItem(cmbPrincipal, pos.getPrincipal())) {
+                this.cmbPrincipal.addItem(pos.getPrincipal());
+            }
+            this.cmbPrincipal.setSelectedItem(pos.getPrincipal());
+            
             this.updateEntryTotal(intervalMinutes);
             
             if(pos.getInvoice()!=null) {
-                this.lblBilled.setText("abgerechnet");
+                this.lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+                this.lblBilled.setText("");
                 this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber());
-                this.lblBilled.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.cmbPrincipal.setEnabled(false);
                 this.txtName.setEnabled(false);
                 this.txtStarted.setEnabled(false);
                 this.txtStopped.setEnabled(false);
                 this.txtUnitPrice.setEnabled(false);
                 this.taDescription.setEnabled(false);
                 this.cmbTaxRate.setEnabled(false);
+                this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
             } else {
+                this.lblBilled.setIcon(null);
                 this.lblBilled.setText("");
+                this.lblBilled.setToolTipText(null);
+                this.cmbPrincipal.setEnabled(true);
                 this.txtName.setEnabled(true);
                 this.txtStarted.setEnabled(true);
                 this.txtStopped.setEnabled(true);
                 this.txtUnitPrice.setEnabled(true);
                 this.taDescription.setEnabled(true);
                 this.cmbTaxRate.setEnabled(true);
+                this.lblIndicator.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
             }
        
     }
@@ -814,7 +830,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         clone.setTimesheet(this.position.getTimesheet());
         clone.setStarted((Date)this.txtStarted.getValue());
         clone.setStopped((Date)this.txtStopped.getValue());
-        clone.setPrincipal(this.position.getPrincipal());
+        clone.setPrincipal(this.cmbPrincipal.getSelectedItem().toString());
         
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
@@ -856,19 +872,20 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         txtStarted = new javax.swing.JFormattedTextField();
         jLabel4 = new javax.swing.JLabel();
         txtStopped = new javax.swing.JFormattedTextField();
-        lblPrincipal = new javax.swing.JLabel();
         lblBilled = new javax.swing.JLabel();
+        cmbPrincipal = new javax.swing.JComboBox<>();
+        lblIndicator = new javax.swing.JLabel();
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
 
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont().deriveFont(taDescription.getFont().getSize()-2f));
-        taDescription.setRows(5);
+        taDescription.setRows(2);
         jScrollPane1.setViewportView(taDescription);
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getSize()-2f));
-        jLabel2.setText("Stundensatz:");
+        jLabel2.setText("/h");
 
         txtUnitPrice.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         txtUnitPrice.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
@@ -910,45 +927,49 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         txtStopped.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtStopped.setFont(txtStopped.getFont().deriveFont(txtStopped.getFont().getSize()-2f));
 
-        lblPrincipal.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar16/Mitarbeiter-Icons-25.png"))); // NOI18N
-        lblPrincipal.setText("Jens");
-
         lblBilled.setFont(lblBilled.getFont().deriveFont(lblBilled.getFont().getStyle() | java.awt.Font.BOLD));
-        lblBilled.setText("abgerechnet");
+        lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        lblBilled.setText(" ");
+
+        cmbPrincipal.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        lblIndicator.setBackground(new java.awt.Color(102, 204, 0));
+        lblIndicator.setOpaque(true);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addComponent(lblIndicator, javax.swing.GroupLayout.PREFERRED_SIZE, 8, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1)
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmbPrincipal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRemovePosition))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 205, Short.MAX_VALUE)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblBilled)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                        .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(2, 2, 2)
+                        .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblPrincipal)))
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblBilled)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -958,7 +979,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdRemovePosition))
+                    .addComponent(cmdRemovePosition)
+                    .addComponent(cmbPrincipal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -966,17 +988,15 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                     .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4)
                     .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblPrincipal)
+                    .addComponent(jLabel3)
+                    .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
                     .addComponent(lblBilled))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(0, 0, 0))
+            .addComponent(lblIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1044,6 +1064,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbPrincipal;
     private javax.swing.JComboBox<String> cmbTaxRate;
     private javax.swing.JButton cmdRemovePosition;
     private javax.swing.JLabel jLabel2;
@@ -1052,7 +1073,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblBilled;
-    private javax.swing.JLabel lblPrincipal;
+    private javax.swing.JLabel lblIndicator;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
     private javax.swing.JFormattedTextField txtStarted;

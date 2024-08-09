@@ -6037,6 +6037,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatePos.setTaxRate(position.getTaxRate());
             updatePos.setTotal(position.getTotal());
             updatePos.setUnitPrice(position.getUnitPrice());
+            updatePos.setPrincipal(position.getPrincipal());
 
             this.timesheetPositionsFacade.edit(updatePos);
             return this.timesheetPositionsFacade.find(updatePos.getId());
