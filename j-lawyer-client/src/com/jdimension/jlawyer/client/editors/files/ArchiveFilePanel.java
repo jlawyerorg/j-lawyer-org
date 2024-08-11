@@ -1054,7 +1054,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this);
         } catch (Exception ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Assistent Ingo aktuell nicht erreichbar: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         EventBroker b = EventBroker.getInstance();

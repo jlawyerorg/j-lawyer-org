@@ -1900,6 +1900,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void fillCurrentEntry() throws Exception {
         this.currentEntry.setDescription(this.taDescription.getText());
+        this.currentEntry.setCreationDate(df.parse(this.dtCreated.getText()));
         this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
         this.currentEntry.setName(this.txtName.getText());
         this.currentEntry.setPeriodFrom(df.parse(this.dtFrom.getText()));
