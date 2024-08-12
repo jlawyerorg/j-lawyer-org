@@ -682,71 +682,33 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     private FormPluginsPanel container = null;
     private FormPlugin plugin = null;
     private JDialog panelParent=null;
-    private int state = -1;
     private FormActionCallback callback=null;
 
-    public static final int STATE_INSTALLED = 10;
-    public static final int STATE_INSTALLING = 11;
-    public static final int STATE_NOT_INSTALLED = 20;
-    public static final int STATE_INSTALLED_UPDATEAVAILABLE = 30;
+    
 
     /**
      * Creates new form HitPanel
      * @param parent
-     * @param plugin
      * @param container
      * @param callback
      */
-    public FormPluginEntryPanel(JDialog parent, FormPlugin plugin, FormPluginsPanel container, FormActionCallback callback) {
+    public FormPluginEntryPanel(JDialog parent, FormPluginsPanel container, FormActionCallback callback) {
         initComponents();
         this.container = container;
         this.panelParent=parent;
-        this.plugin = plugin;
         this.callback=callback;
-
-        this.setEntry(plugin);
-    }
-
-    public void setState(int state) {
-        this.state = state;
-        switch (state) {
-            case STATE_INSTALLED:
-                this.lblState.setText("installiert");
-                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-                break;
-            case STATE_INSTALLING:
-                this.lblState.setText("wird installiert...");
-                this.lblState.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-                break;
-            case STATE_INSTALLED_UPDATEAVAILABLE:
-                this.lblState.setText("Update verfügbar");
-                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                break;
-            case STATE_NOT_INSTALLED:
-                this.lblState.setText("nicht installiert");
-                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-
-                break;
-        }
-        if(state==STATE_INSTALLED)
-            this.cmdSettings.setEnabled(plugin.hasSettings());
-        else
-            this.cmdSettings.setEnabled(false);
-
     }
     
     public FormPlugin getEntry() {
         return this.plugin;
     }
     
-    public void setVersionOnServer(String version) {
-        this.lblVersionInstalled.setText(version);
-    }
-
     public void setEntry(FormPlugin plugin) {
+        this.plugin = plugin;
         this.lblName.setText(plugin.getName());
         this.lblDescription.setText(plugin.getDescription());
-        this.lblVersionAvailable.setText(plugin.getVersion());
+        this.lblVersionAvailable.setText(plugin.getVersionInRepository());
+        this.lblVersionInstalled.setText(plugin.getVersionInstalled());
         if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_LIBRARY)) {
             this.lblType.setText("Bibliothek");
         } else if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_PLUGIN)) {
@@ -754,6 +716,30 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         } else {
             this.lblType.setText("");
         }
+        
+        switch (plugin.getState()) {
+            case FormPlugin.STATE_INSTALLED:
+                this.lblState.setText("installiert");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                break;
+            case FormPlugin.STATE_INSTALLING:
+                this.lblState.setText("wird installiert...");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                break;
+            case FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE:
+                this.lblState.setText("Update verfügbar");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                break;
+            case FormPlugin.STATE_NOT_INSTALLED:
+                this.lblState.setText("nicht installiert");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+
+                break;
+        }
+        if(plugin.getState()==FormPlugin.STATE_INSTALLED)
+            this.cmdSettings.setEnabled(plugin.hasSettings());
+        else
+            this.cmdSettings.setEnabled(false);
         
     }
 
@@ -902,7 +888,8 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
 
         try {
             this.plugin.remove();
-            this.setState(STATE_NOT_INSTALLED);
+            this.plugin.setState(FormPlugin.STATE_NOT_INSTALLED);
+            this.setEntry(this.plugin);
             this.container.revalidate();
             this.container.repaint();
         } catch (Exception ex) {
@@ -917,12 +904,12 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdActionsActionPerformed
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
-        if(this.state==STATE_INSTALLED)
+        if(this.plugin.getState()==FormPlugin.STATE_INSTALLED)
             this.mnuDownload.setEnabled(false);
         else
             this.mnuDownload.setEnabled(true);
         
-        if(this.state==STATE_INSTALLED || this.state==STATE_INSTALLED_UPDATEAVAILABLE)
+        if(this.plugin.getState()==FormPlugin.STATE_INSTALLED || this.plugin.getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE)
             this.mnuRemove.setEnabled(true);
         else
             this.mnuRemove.setEnabled(false);
@@ -952,16 +939,19 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
             String[] depends=this.plugin.getDependsOn();
             this.callback.installRequested(this.plugin.getId(), depends);
             
-            if (this.state == STATE_NOT_INSTALLED) {
-                this.setState(STATE_INSTALLING);
+            if (this.plugin.getState() == FormPlugin.STATE_NOT_INSTALLED) {
+                this.plugin.setState(FormPlugin.STATE_INSTALLING);
+                this.setEntry(this.plugin);
                 this.plugin.install();
                 this.lblVersionInstalled.setText(this.lblVersionAvailable.getText());
-            } else if (state == STATE_INSTALLED_UPDATEAVAILABLE) {
-                this.setState(STATE_INSTALLING);
+            } else if (this.plugin.getState() == FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {
+                this.plugin.setState(FormPlugin.STATE_INSTALLING);
+                this.setEntry(this.plugin);
                 this.plugin.update();
                 this.lblVersionInstalled.setText(this.lblVersionAvailable.getText());
             }
-            this.setState(STATE_INSTALLED);
+            this.plugin.setState(FormPlugin.STATE_INSTALLED);
+            this.setEntry(this.plugin);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Plugins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }

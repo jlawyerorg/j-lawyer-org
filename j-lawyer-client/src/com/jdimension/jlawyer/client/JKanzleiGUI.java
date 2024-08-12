@@ -675,15 +675,12 @@ import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
-import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.MailingStatusEvent;
-import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
-import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.OpenTimesheetPositionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
@@ -705,7 +702,6 @@ import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -717,11 +713,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -734,7 +725,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultTreeModel;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.PostBox;
 import themes.colors.DefaultColorTheme;
@@ -764,16 +754,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         // for some reason, initComponents resets the bounds
         initComponents();
         
-        this.lblNewsStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-        
-        
-
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
-        b.subscribeConsumer(this, Event.TYPE_AUTOUPDATE);
         b.subscribeConsumer(this, Event.TYPE_SERVICES);
-        b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SYSTEMSTATUS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
         b.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
@@ -791,14 +775,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else {
             this.mnuChkRandomBackground.setSelected(true);
         }
-        //setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
-
-        ModuleMetadata rootModule = settings.getRootModule();
-
+        
         EditorsRegistry registry = EditorsRegistry.getInstance();
         registry.setMainEditorsPane(this.jPanel1);
 
-        DefaultTreeModel model = new DefaultTreeModel(rootModule);
         registry.setStatusLabel(this.statusLabel);
 
         // will initialize the system tray icon for the first time
@@ -954,13 +934,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     @Override
     public void onEvent(Event e) {
-        if (e instanceof AutoUpdateEvent) {
-
-            this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getSmallIcon());
-            this.lblUpdateStatus.setToolTipText(((AutoUpdateEvent) e).getLongDescriptionHtml());
-            this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
-            this.lblUpdateStatus.setText(((AutoUpdateEvent) e).getDescription());
-        } else if(e instanceof ServicesEvent) {
+        if(e instanceof ServicesEvent) {
             this.mnuServices.removeAll();
             for (ServiceMenuItem si : ((ServicesEvent) e).getServices().values()) {
                 if ("---".equals(si.getName())) {
@@ -981,11 +955,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     this.mnuServices.add(mi);
                 }
             }
-        } else if (e instanceof NewsEvent) {
-            this.lblNewsStatus.setIcon(((NewsEvent) e).getSmallIcon());
-            this.lblNewsStatus.setToolTipText(((NewsEvent) e).getLongDescriptionHtml());
-            this.lblNewsStatus.addMouseListener(((NewsEvent) e).getMouseListener());
-            this.lblNewsStatus.setText(((NewsEvent) e).getDescription());
         } else if (e instanceof SystemStatusEvent) {
 
             Icon newIcon = null;
@@ -1024,7 +993,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.lblScanStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png")));
             this.lblScanStatus.setText("" + ((ScannerStatusEvent) e).getFileMetadata().size());
             this.lblScanStatus.setToolTipText(((ScannerStatusEvent) e).getFileMetadata().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
-            if (((ScannerStatusEvent) e).getFileMetadata().size() > 0) {
+            if (!((ScannerStatusEvent) e).getFileMetadata().isEmpty()) {
                 this.lblScanStatus.setEnabled(true);
             } else {
                 this.lblScanStatus.setEnabled(false);
@@ -1097,10 +1066,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }
 
-    public void setDividerLocation(int size) {
-//        this.jSplitPane1.setDividerLocation(size);
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1111,12 +1076,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         statusPanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
-        lblUpdateStatus = new javax.swing.JLabel();
         lblScanStatus = new javax.swing.JLabel();
         lblMailStatus = new javax.swing.JLabel();
         lblSystemStatus = new javax.swing.JLabel();
         lblMailingStatus = new javax.swing.JLabel();
-        lblNewsStatus = new javax.swing.JLabel();
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
         lblTimesheetStatus = new javax.swing.JLabel();
@@ -1228,9 +1191,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosed(java.awt.event.WindowEvent evt) {
-                formWindowClosed(evt);
-            }
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
             }
@@ -1240,11 +1200,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         statusLabel.setFont(statusLabel.getFont().deriveFont(statusLabel.getFont().getStyle() & ~java.awt.Font.BOLD));
         statusLabel.setText(bundle.getString("status.ready")); // NOI18N
-
-        lblUpdateStatus.setFont(lblUpdateStatus.getFont().deriveFont(lblUpdateStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblUpdateStatus.setForeground(new java.awt.Color(0, 153, 0));
-        lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblUpdateStatus.setText(" ");
 
         lblScanStatus.setFont(lblScanStatus.getFont());
         lblScanStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
@@ -1268,11 +1223,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
         lblMailingStatus.setText("?");
         lblMailingStatus.setEnabled(false);
-
-        lblNewsStatus.setFont(lblNewsStatus.getFont().deriveFont(lblNewsStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblNewsStatus.setForeground(new java.awt.Color(255, 153, 0));
-        lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblNewsStatus.setText(" ");
 
         lblDrebisStatus.setFont(lblDrebisStatus.getFont());
         lblDrebisStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
@@ -1308,13 +1258,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblSystemStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 189, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 211, Short.MAX_VALUE)
                 .add(lblTimesheetStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblUpdateStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblNewsStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(22, 22, 22)
                 .add(lblMailingStatus)
                 .add(12, 12, 12)
                 .add(lblUnreadInstantMessages)
@@ -1330,11 +1276,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         statusPanelLayout.setVerticalGroup(
             statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                .add(lblUpdateStatus)
                 .add(lblScanStatus)
                 .add(lblMailStatus)
                 .add(lblMailingStatus)
-                .add(lblNewsStatus)
                 .add(statusLabel)
                 .add(lblDrebisStatus)
                 .add(lblBeaStatus)
@@ -2225,10 +2169,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }
     
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        //System.out.println("window closed");
-    }//GEN-LAST:event_formWindowClosed
-
     private void mnuExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExitActionPerformed
 
         this.formWindowClosing(null);
@@ -2880,12 +2820,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JLabel lblDrebisStatus;
     private javax.swing.JLabel lblMailStatus;
     private javax.swing.JLabel lblMailingStatus;
-    private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScanStatus;
     private javax.swing.JLabel lblSystemStatus;
     private javax.swing.JLabel lblTimesheetStatus;
     private javax.swing.JLabel lblUnreadInstantMessages;
-    private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;
     private javax.swing.JMenuItem mnuAddressBookSyncNow;

@@ -665,8 +665,11 @@ package com.jdimension.jlawyer.client.editors;
 
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.FormPluginUpdateEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.ServicesEvent;
+import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
+import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -683,6 +686,9 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -703,7 +709,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
     private Component owner;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of AutoUpdateTimerTask
      * @param owner
      */
     public AutoUpdateTimerTask(Component owner) {
@@ -850,6 +856,22 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
         } catch (Throwable t) {
             log.error("Error checking for updates on j-lawyer.org", t);
+        }
+        
+        try {
+            Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRemotePlugins();
+            List<FormPlugin> updatable=new ArrayList<>();
+            for (Map.Entry me : remotePlugins.entrySet()) {
+                if(((FormPlugin)me.getValue()).getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {
+                    updatable.add((FormPlugin)me.getValue());
+                }
+            }
+            if(!updatable.isEmpty()) {
+                EventBroker b = EventBroker.getInstance();
+                b.publishEvent(new FormPluginUpdateEvent(updatable));
+            }
+        } catch (Throwable t) {
+            log.error("Error checking for form plugin updates on j-lawyer.org", t);
         }
 
     }

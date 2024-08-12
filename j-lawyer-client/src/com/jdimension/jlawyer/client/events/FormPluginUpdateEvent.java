@@ -664,118 +664,92 @@
 package com.jdimension.jlawyer.client.events;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.awt.Desktop;
+import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
+import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.net.URI;
+import java.util.List;
 import javax.swing.ImageIcon;
 
 /**
  *
  * @author jens
  */
-public class AutoUpdateEvent extends Event {
+public class FormPluginUpdateEvent extends Event {
 
-    private String newVersion;
-    private String published;
-    private String changeLog;
+    private List<FormPlugin> updatable;
+
+    public FormPluginUpdateEvent(List<FormPlugin> updatable) {
+        super(Event.TYPE_UPDATE_FORMPLUGIN);
+        this.updatable = updatable;
+    }
     
-    
-    public AutoUpdateEvent(String newVersion, String published, String changeLog) {
-        super(Event.TYPE_UPDATE_APPLICATION);
-        this.newVersion=newVersion;
-        this.published=published;
-        this.changeLog=changeLog;
+    public int getNumberOfUpdates() {
+        return this.updatable.size();
     }
 
     public String getLongDescriptionHtml() {
         StringBuilder updBuff = new StringBuilder();
         updBuff.append("<html><p align=\"center\">");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.text"));
-        updBuff.append("<br/> ");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.newversion"));
-        updBuff.append(" ");
-        updBuff.append(newVersion);
-        updBuff.append(" ");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.fromdate"));
-        updBuff.append(" ");
-        updBuff.append(published);
-        updBuff.append("<br>");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.installed"));
-        updBuff.append(": ");
-        updBuff.append(VersionUtils.getFullClientVersion());
-        updBuff.append("<br>");
-        updBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound.moreinfo"));
+        updBuff.append("Es liegen Updates f&uuml;r ").append(updatable.size()).append(" Falldatenbl&auml;tter vor.");
+        updBuff.append("<ul> ");
+        for(FormPlugin p: this.updatable) {
+            updBuff.append("<li>").append(p.getName()).append("</li>");
+        }
+        updBuff.append("</ul> ");
+        updBuff.append("<br/>&nbsp;<br/>");
+        updBuff.append("Klicken, um Updates anzuzeigen");
         updBuff.append("</p></html>");
         return updBuff.toString();
     }
-    
+
     public ImageIcon getIcon() {
-        return new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_system_update_alt_white_48dp.png"));
+        return new javax.swing.ImageIcon(getClass().getResource("/icons/import_contacts_40dp_97BF0D.png"));
     }
-    
+
     public ImageIcon getSmallIcon() {
-        return new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"));
+        return null;
     }
-    
+
     public MouseListener getMouseListener() {
         MouseListener actionListener = new MouseListener() {
 
-                            @Override
-                            public void mouseClicked(MouseEvent me) {
-                                boolean browserSupport = true;
-                                if (Desktop.isDesktopSupported()) {
-                                    Desktop desktop = Desktop.getDesktop();
-                                    if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                                        URI uri = null;
-                                        try {
-                                            uri = new URI(changeLog);
-                                            desktop.browse(uri);
-                                        } catch (Throwable t) {
-                                            ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
-                                            dlg.setVisible(true);
-                                        }
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                if (UserUtils.isCurrentUserAdmin(EditorsRegistry.getInstance().getMainWindow(), true)) {
+                    FormsManagementDialog dlg = new FormsManagementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                }
+            }
 
-                                    } else {
-                                        browserSupport = false;
-                                    }
-                                } else {
-                                    browserSupport = false;
+            @Override
+            public void mousePressed(MouseEvent me) {
+                //throw new UnsupportedOperationException("Not supported yet.");
+            }
 
-                                }
-                                if (!browserSupport) {
-                                    ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
-                                    dlg.setVisible(true);
-                                }
-                            }
-
-                            @Override
-                            public void mousePressed(MouseEvent me) {
-                                //throw new UnsupportedOperationException("Not supported yet.");
-                            }
-
-                            @Override
-                            public void mouseReleased(MouseEvent me) {
+            @Override
+            public void mouseReleased(MouseEvent me) {
 //                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
+            }
 
-                            @Override
-                            public void mouseEntered(MouseEvent me) {
+            @Override
+            public void mouseEntered(MouseEvent me) {
 //                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
+            }
 
-                            @Override
-                            public void mouseExited(MouseEvent me) {
+            @Override
+            public void mouseExited(MouseEvent me) {
 //                                throw new UnsupportedOperationException("Not supported yet.");
-                            }
-                        };
+            }
+        };
         return actionListener;
     }
-    
+
     public String getDescription() {
-        return java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.updatesfound");
+        return "Updates für Falldatenblätter verfügbar";
     }
 
     @Override
