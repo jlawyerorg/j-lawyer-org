@@ -699,7 +699,7 @@ public class FormPluginUpdateEvent extends Event {
             updBuff.append("<li>").append(p.getName()).append("</li>");
         }
         updBuff.append("</ul> ");
-        updBuff.append("<br/>&nbsp;<br/>");
+        updBuff.append("<br/>");
         updBuff.append("Klicken, um Updates anzuzeigen");
         updBuff.append("</p></html>");
         return updBuff.toString();
