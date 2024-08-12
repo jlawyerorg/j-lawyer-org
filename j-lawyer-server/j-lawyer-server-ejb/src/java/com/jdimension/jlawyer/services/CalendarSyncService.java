@@ -817,15 +817,6 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<CloudCalendar> listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
-        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(host, ssl, port, user, password);
-            if(!ServerStringUtils.isEmpty(path))
-                nc.setSubpathPrefix(path);
-            return nc.getAllCalendars();
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
     @Asynchronous
     public void eventDeleted(ArchiveFileReviewsBean event) {
 

@@ -715,7 +715,7 @@ public interface CalendarServiceRemote {
     CalendarSetup addCalendarSetup(CalendarSetup cs);
     
     List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
-
+    
     CalendarSetup updateCalendarSetup(CalendarSetup cs);
 
     void removeCalendarSetup(CalendarSetup cs);

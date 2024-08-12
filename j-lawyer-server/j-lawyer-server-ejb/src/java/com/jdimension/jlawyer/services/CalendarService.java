@@ -712,6 +712,8 @@ import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jlawyer.cloud.NextcloudCalendarConnector;
+import org.jlawyer.cloud.calendar.CloudCalendar;
 import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
@@ -1550,9 +1552,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
-        return this.calendarSync.listCalendars(host, ssl, port, user, password, path);
+        // need to bypass CalendarSyncService because it is a singleton
+        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(host, ssl, port, user, password);
+            if(!ServerStringUtils.isEmpty(path))
+                nc.setSubpathPrefix(path);
+            return nc.getAllCalendars();
     }
-
+    
     @Override
     @PermitAll
     public void sendDailyAgenda() throws Exception {
