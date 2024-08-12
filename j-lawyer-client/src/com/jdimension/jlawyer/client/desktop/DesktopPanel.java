@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.events.FormPluginUpdateEvent;
 import com.jdimension.jlawyer.client.events.MailingFailedEvent;
 import com.jdimension.jlawyer.client.events.MailingStatusEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
@@ -739,6 +740,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
+        this.lblUpdateStatusFormPlugins.setText(" ");
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane3.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane4.getVerticalScrollBar().setUnitIncrement(16);
@@ -756,6 +758,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             lblNewsStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
             lblUpdateStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUpdateStatusFormPlugins.setFont(font.deriveFont(Font.BOLD, 24));
             lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
         } catch (Throwable t) {
             log.error("Unable to load font Exo 2", t);
@@ -790,7 +793,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
-        b.subscribeConsumer(this, Event.TYPE_AUTOUPDATE);
+        b.subscribeConsumer(this, Event.TYPE_UPDATE_APPLICATION);
+        b.subscribeConsumer(this, Event.TYPE_UPDATE_FORMPLUGIN);
         b.subscribeConsumer(this, Event.TYPE_NEWS);
         b.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
         b.subscribeConsumer(this, Event.TYPE_MAILINGSTATUS);
@@ -1015,6 +1019,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadInstantMessages = new javax.swing.JLabel();
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
+        lblUpdateStatusFormPlugins = new javax.swing.JLabel();
         systemInformationWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblArchiveFileCount = new javax.swing.JLabel();
         lblArchiveFileArchivedCount = new javax.swing.JLabel();
@@ -1384,6 +1389,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblNewsStatus.setText("???");
 
+        lblUpdateStatusFormPlugins.setFont(lblUpdateStatusFormPlugins.getFont().deriveFont(lblUpdateStatusFormPlugins.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblUpdateStatusFormPlugins.setForeground(new java.awt.Color(255, 255, 255));
+        lblUpdateStatusFormPlugins.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblUpdateStatusFormPlugins.setText("???");
+
         org.jdesktop.layout.GroupLayout messagesWidgetLayout = new org.jdesktop.layout.GroupLayout(messagesWidget);
         messagesWidget.setLayout(messagesWidgetLayout);
         messagesWidgetLayout.setHorizontalGroup(
@@ -1403,8 +1413,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(18, 18, 18)
                 .add(lblUpdateStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(lblUpdateStatusFormPlugins)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         messagesWidgetLayout.setVerticalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1417,7 +1429,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(org.jdesktop.layout.GroupLayout.TRAILING, messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(lblUpdateStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(lblUpdateStatusFormPlugins))
         );
 
         lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
@@ -1679,6 +1692,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUnreadInstantMessages;
     private javax.swing.JLabel lblUnreadMail;
     private javax.swing.JLabel lblUpdateStatus;
+    private javax.swing.JLabel lblUpdateStatusFormPlugins;
     private javax.swing.JLabel lblUserFilterCount;
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
@@ -1698,7 +1712,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     @Override
     public void onEvent(Event e) {
         if (e instanceof AutoUpdateEvent) {
-
             this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getIcon());
             this.lblUpdateStatus.setToolTipText(((AutoUpdateEvent) e).getLongDescriptionHtml());
             this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
@@ -1706,7 +1719,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.lblUpdateStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             this.revalidate();
             this.repaint();
-            
+        } else if (e instanceof FormPluginUpdateEvent) {
+            this.lblUpdateStatusFormPlugins.setIcon(((FormPluginUpdateEvent) e).getIcon());
+            this.lblUpdateStatusFormPlugins.setToolTipText(((FormPluginUpdateEvent) e).getLongDescriptionHtml());
+            this.lblUpdateStatusFormPlugins.addMouseListener(((FormPluginUpdateEvent) e).getMouseListener());
+            this.lblUpdateStatusFormPlugins.setText("" + ((FormPluginUpdateEvent) e).getNumberOfUpdates());
+            this.lblUpdateStatusFormPlugins.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            this.revalidate();
+            this.repaint();
         } else if (e instanceof NewsEvent) {
             this.lblNewsStatus.setIcon(((NewsEvent) e).getIcon());
             this.lblNewsStatus.setToolTipText(((NewsEvent) e).getLongDescriptionHtml());
