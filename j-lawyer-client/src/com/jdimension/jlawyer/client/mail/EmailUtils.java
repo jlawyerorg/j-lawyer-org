@@ -1208,6 +1208,10 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
+        return reply(m, null, content, contentType);
+    }
+    
+    public static SendEmailDialog reply(OutlookMessage m, String prependContent, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
             // figure out if the message was sent from one of the users accounts
@@ -1261,12 +1265,18 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
+            
+            if(prependContent==null)
+                prependContent="";
+            else
+                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
+            
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);
@@ -1276,6 +1286,10 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     public static SendEmailDialog reply(Message m, String content, String contentType) {
+        return reply(m, null, content, contentType);
+    }
+    
+    public static SendEmailDialog reply(Message m, String prependContent, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
             // figure out if the message was sent from one of the users accounts
@@ -1335,12 +1349,18 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
+            
+            if(prependContent==null)
+                prependContent="";
+            else
+                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
+            
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);

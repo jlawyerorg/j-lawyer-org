@@ -671,9 +671,14 @@ import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -699,6 +704,8 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
     private AssistantConfig config = null;
     private AiCapability capability = null;
     private AssistantInputAdapter inputAdapter = null;
+    
+    private AiRequestStatus result=null;
 
     /**
      * Creates new form GenericAssistantDialog
@@ -778,6 +785,13 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
             this.tabInputs.setSelectedIndex(0);
         }
 
+        ComponentUtils.restoreDialogSize(this);
+        
+        ComponentUtils.decorateSplitPane(this.splitInputOutput);
+        ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
+        ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
+        
+        
         if (autoExecute) {
             //this.cmdSubmitActionPerformed(null);
             // Display the dialog first, then start the background task
@@ -797,39 +811,42 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        taResult = new javax.swing.JTextArea();
         jScrollPane3 = new javax.swing.JScrollPane();
         lstOutputFiles = new javax.swing.JList<>();
         cmdCopy = new javax.swing.JButton();
         cmdClose = new javax.swing.JButton();
+        pnlTitle = new javax.swing.JPanel();
+        lblRequestType = new javax.swing.JLabel();
+        cmdSubmit = new javax.swing.JButton();
+        progress = new javax.swing.JProgressBar();
+        pnlParameters = new javax.swing.JPanel();
+        splitInputOutput = new javax.swing.JSplitPane();
         tabInputs = new javax.swing.JTabbedPane();
         jScrollPane4 = new javax.swing.JScrollPane();
         lstInputFiles = new javax.swing.JList<>();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane5 = new javax.swing.JScrollPane();
         taInputString = new javax.swing.JTextArea();
-        pnlTitle = new javax.swing.JPanel();
-        lblRequestType = new javax.swing.JLabel();
-        cmdSubmit = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
-        progress = new javax.swing.JProgressBar();
-        pnlParameters = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taResult = new javax.swing.JTextArea();
+        cmdProcessOutput = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
 
         taPrompt.setColumns(20);
         taPrompt.setLineWrap(true);
         taPrompt.setRows(5);
         taPrompt.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taPrompt);
-
-        taResult.setColumns(20);
-        taResult.setLineWrap(true);
-        taResult.setRows(5);
-        taResult.setWrapStyleWord(true);
-        jScrollPane2.setViewportView(taResult);
 
         lstOutputFiles.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -841,6 +858,13 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         jScrollPane3.setViewportView(lstOutputFiles);
 
         cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopy.setText("Kopieren");
+        cmdCopy.setToolTipText("Text in Zwischenablage kopieren");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyActionPerformed(evt);
+            }
+        });
 
         cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdClose.setText("Schliessen");
@@ -849,42 +873,6 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                 cmdCloseActionPerformed(evt);
             }
         });
-
-        tabInputs.setTabPlacement(javax.swing.JTabbedPane.RIGHT);
-
-        lstInputFiles.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        lstInputFiles.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
-        lstInputFiles.setVisibleRowCount(3);
-        jScrollPane4.setViewportView(lstInputFiles);
-
-        tabInputs.addTab("Dateien", jScrollPane4);
-
-        taInputString.setColumns(20);
-        taInputString.setLineWrap(true);
-        taInputString.setRows(5);
-        taInputString.setWrapStyleWord(true);
-        jScrollPane5.setViewportView(taInputString);
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 980, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jScrollPane5))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 86, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE))
-        );
-
-        tabInputs.addTab("Text", jPanel1);
 
         lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize()+2));
         lblRequestType.setForeground(new java.awt.Color(255, 255, 255));
@@ -936,6 +924,58 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
             .addGap(0, 0, Short.MAX_VALUE)
         );
 
+        lstInputFiles.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        lstInputFiles.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
+        lstInputFiles.setVisibleRowCount(3);
+        jScrollPane4.setViewportView(lstInputFiles);
+
+        tabInputs.addTab("Dateien", jScrollPane4);
+
+        taInputString.setColumns(20);
+        taInputString.setLineWrap(true);
+        taInputString.setRows(5);
+        taInputString.setWrapStyleWord(true);
+        jScrollPane5.setViewportView(taInputString);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 96, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 321, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE))
+        );
+
+        tabInputs.addTab("Text", jPanel1);
+
+        splitInputOutput.setLeftComponent(tabInputs);
+
+        taResult.setColumns(20);
+        taResult.setLineWrap(true);
+        taResult.setRows(5);
+        taResult.setWrapStyleWord(true);
+        jScrollPane2.setViewportView(taResult);
+
+        splitInputOutput.setRightComponent(jScrollPane2);
+
+        cmdProcessOutput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdProcessOutput.setText("Übernehmen");
+        cmdProcessOutput.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdProcessOutputActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -944,20 +984,17 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(tabInputs)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE)
+                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdClose))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2))
+                        .addComponent(cmdClose)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdProcessOutput)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCopy))
-                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(splitInputOutput)
+                    .addComponent(jScrollPane3))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -967,23 +1004,19 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabInputs, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdCopy)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(splitInputOutput)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdClose)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdClose, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdProcessOutput))
+                    .addComponent(cmdCopy, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1072,11 +1105,18 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
 
             @Override
             protected Void doInBackground() throws Exception {
+                List<InputData> inputs=inputAdapter.getInputs(capability);
+                for (InputData i : inputs) {
+                    if ("string".equalsIgnoreCase(i.getType())) {
+                        i.setStringData(taInputString.getText());
+                    }
+                }
+                
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputAdapter.getInputs(capability));
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs);
                     resultRef.set(status);
 
                 } catch (Throwable t) {
@@ -1089,6 +1129,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
             protected void done() {
                 // Task completion actions
                 AiRequestStatus status = resultRef.get();
+                result=status;
                 if (status != null) {
                     if (status.getStatus().equalsIgnoreCase("error")) {
                         taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
@@ -1109,12 +1150,38 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         };
 
         worker.execute();
+        
+        
     }
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        ComponentUtils.storeDialogSize(this);
+    }//GEN-LAST:event_formComponentResized
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
+
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.taResult.getText());
+        clipboard.setContents(strSel, null);
+    }//GEN-LAST:event_cmdCopyActionPerformed
+
+    private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
+        if(this.inputAdapter instanceof AssistantFlowAdapter && this.result!=null) {
+            // caller is capable of handling results
+            ((AssistantFlowAdapter)this.inputAdapter).processOutput(capability, this.result);
+        }
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdProcessOutputActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1159,6 +1226,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdProcessOutput;
     private javax.swing.JButton cmdSubmit;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -1166,13 +1234,13 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblRequestType;
     private javax.swing.JList<String> lstInputFiles;
     private javax.swing.JList<String> lstOutputFiles;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
     private javax.swing.JProgressBar progress;
+    private javax.swing.JSplitPane splitInputOutput;
     private javax.swing.JTextArea taInputString;
     private javax.swing.JTextArea taPrompt;
     private javax.swing.JTextArea taResult;
@@ -1198,4 +1266,5 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         return parameters;
 
     }
+
 }

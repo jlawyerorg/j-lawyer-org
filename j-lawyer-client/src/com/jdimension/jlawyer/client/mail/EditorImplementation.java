@@ -679,4 +679,6 @@ public interface EditorImplementation {
     
     public int getCaretPosition();
     
+    public String getSelectedText();
+    
 }

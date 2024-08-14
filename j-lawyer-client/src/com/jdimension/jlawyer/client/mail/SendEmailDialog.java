@@ -663,6 +663,14 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -693,6 +701,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -714,6 +723,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -721,7 +731,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
+public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
 
@@ -1172,6 +1182,70 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.lblEncryption.setText("Verschlüsselung nur für PDF");
         }
     }
+    
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        String contentText=ed.getSelectedText();
+        if(ed.getContentType().toLowerCase().contains("html"))
+            contentText=EmailUtils.html2Text(contentText);
+        
+
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        //i.setFileName("sound.wav");
+        i.setType("string");
+        i.setBase64(false);
+        i.setStringData(contentText);
+        
+        i.setStringData(ed.getText());
+        inputs.add(i);
+        return inputs;
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+//        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
+//        dlg.setVisible(true);
+        
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase("string")) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
+        
+        
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -1195,6 +1269,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         btGroupReviews = new javax.swing.ButtonGroup();
         popAttachments = new javax.swing.JPopupMenu();
         mnuRemoveAttachment = new javax.swing.JMenuItem();
+        popAssistant = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel3 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
@@ -1220,6 +1295,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
         cmbFrom = new javax.swing.JComboBox<>();
+        cmdAssistant = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         text = new javax.swing.JRadioButton();
@@ -1367,7 +1443,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         jLabel3.setText("Betreff:");
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         cmdSend.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_send.png"))); // NOI18N
@@ -1418,6 +1493,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
+        cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdAssistant.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdAssistantMouseReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1449,7 +1531,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdAssistant)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1482,8 +1565,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(jLabel3)
                     .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(5, 5, 5))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(cmdAssistant)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
                 .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -2411,6 +2499,25 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 //        }
     }//GEN-LAST:event_cmdSaveDraftActionPerformed
 
+    private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            this.popAssistant.removeAll();
+            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this);
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
+            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this);
+            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this);
+            this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAssistantMouseReleased
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2483,6 +2590,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
+    private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdAttach;
     private javax.swing.JButton cmdRecipients;
     private javax.swing.JButton cmdRecipientsBcc;
@@ -2521,6 +2629,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JMenuItem mnuSearchRecipientBcc;
     private javax.swing.JMenuItem mnuSearchRecipientCc;
     private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlParties;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JPopupMenu popRecipientsBcc;

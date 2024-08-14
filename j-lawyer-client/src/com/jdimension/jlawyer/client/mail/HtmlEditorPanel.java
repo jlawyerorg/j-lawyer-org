@@ -717,6 +717,11 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public String getText() {
         return this.htmlPane.getText();
     }
+    
+    @Override
+    public String getSelectedText() {
+        return this.htmlPane.getText();
+    }
 
     @Override
     public void setText(String t) {

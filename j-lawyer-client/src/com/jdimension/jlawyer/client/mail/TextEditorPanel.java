@@ -752,4 +752,9 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public int getCaretPosition() {
         return this.taText.getCaretPosition();
     }
+
+    @Override
+    public String getSelectedText() {
+        return this.taText.getSelectedText();
+    }
 }

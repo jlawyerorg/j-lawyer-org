@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
@@ -2165,12 +2166,42 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     @Override
     public void processOutput(AiCapability c, AiRequestStatus status) {
-        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
+//        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
+//        dlg.setVisible(true);
+        
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase("string")) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+
+        SendEmailDialog dlg=null;
+        if (this.emlMsgContainer != null) {
+            Message m = emlMsgContainer.getMessage();
+            dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+        } else {
+            dlg = EmailUtils.reply(this.outlookMsgContainer, prependText, this.getBody(), this.getContentType());
+        }
+        dlg.setArchiveFile(caseContext, null);
+        FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
+        
+        
     }
 
     @Override
     public void processError(AiCapability c, AiRequestStatus status) {
-        System.out.println("Kacke");
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
     }
 }

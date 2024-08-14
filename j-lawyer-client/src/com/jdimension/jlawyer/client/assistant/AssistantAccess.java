@@ -861,7 +861,6 @@ public class AssistantAccess {
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
-                    FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
                     dlg.setVisible(true);
                 });
                 menu.add(mi);
@@ -879,7 +878,6 @@ public class AssistantAccess {
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
-                    FrameUtils.centerDialogOnParentMonitor(dlg, EditorsRegistry.getInstance().getMainWindow().getLocation());
                     dlg.setVisible(true);
                 });
                 menu.add(mi);
