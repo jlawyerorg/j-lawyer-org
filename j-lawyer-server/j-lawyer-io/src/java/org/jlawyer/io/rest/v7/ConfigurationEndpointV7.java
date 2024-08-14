@@ -705,7 +705,6 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
      * address.salutation: archiveFile.tags: all tags that can be attached to a
      * case address.tags: all tags that can be attached to an address
      * document.tags: all tags that can be attached to a document address.title:
-     * archiveFile.reviewReason: all descriptions of calendar entries
      * timesheet.intervalminutes: all intervals usable for timesheets, in
      * minutes address.titleinaddress: address.complimentaryclose:
      * address.legalform: all types of legal entities address.nationality: all
