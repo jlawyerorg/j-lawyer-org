@@ -1844,6 +1844,42 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
             }
         }
+        
+        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
+            if (this.txtReviewDateField.getText().length() != 10) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            Date d = null;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                d = df.parse(this.txtReviewDateField.getText());
+            } catch (Throwable t) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+            if (this.radioReviewTypeRespite.isSelected()) {
+                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
+            }
+            reviewDto.setDone(false);
+            reviewDto.setBeginDate(d);
+            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+            reviewDto.setSummary(this.cmbReviewReason.getEditor().getItem().toString());
+            reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
+
+            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
+                try {
+                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile, (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()), this);
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+        }
 
         ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
@@ -1904,41 +1940,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
         }
 
-        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
-            if (this.txtReviewDateField.getText().length() != 10) {
-                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            Date d = null;
-            try {
-                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                d = df.parse(this.txtReviewDateField.getText());
-            } catch (Throwable t) {
-                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-
-            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-            if (this.radioReviewTypeRespite.isSelected()) {
-                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
-            }
-            reviewDto.setDone(false);
-            reviewDto.setBeginDate(d);
-            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-            reviewDto.setSummary(this.cmbReviewReason.getEditor().getItem().toString());
-            reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
-
-            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
-                try {
-                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile.getId(), (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()));
-                } catch (Exception ex) {
-                    log.error("Error adding review", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-        }
+        
 
 
     }//GEN-LAST:event_cmdSendActionPerformed

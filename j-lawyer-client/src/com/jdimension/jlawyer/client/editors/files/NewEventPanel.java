@@ -724,18 +724,22 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 list.repaint(list.getCellBounds(index, index));
 
                 int selectionCount = 0;
-                String selectedItemText = "";
+                String selectedItemSummary = "";
+                String selectedItemDescription = "";
                 for (int i = 0; i < list.getModel().getSize(); i++) {
                     CalendarEntryTemplateListItem cli = (CalendarEntryTemplateListItem) list.getModel().getElementAt(i);
                     if (cli.isSelected()) {
                         selectionCount++;
-                        selectedItemText = cli.toString();
+                        selectedItemSummary = cli.toString();
+                        selectedItemDescription = cli.getEntry().getDescription();
                     }
                 }
                 if (selectionCount == 1) {
-                    txtReviewReason.setText(selectedItemText);
+                    txtReviewReason.setText(selectedItemSummary);
+                    taEventDescription.setText(selectedItemDescription);
                 } else {
                     txtReviewReason.setText("");
+                    taEventDescription.setText("");
                 }
             }
         });
@@ -1272,7 +1276,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             }
         }
     }
-
+    
     public void setBeginDate(Date d) {
 
         this.txtEventBeginDateField.setText(dateFormat.format(d));
@@ -1285,6 +1289,14 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         this.txtEventEndDateField.setText(dateFormat.format(d));
 
         this.cmbEventEndTime.setSelectedItem(timeFormat.format(d));
+    }
+    
+    public void setSummary(String summary) {
+        this.txtReviewReason.setText(summary);
+    }
+    
+    public void setDescription(String description) {
+        this.taEventDescription.setText(description);
     }
 
     public void setEventType(int eventType) {

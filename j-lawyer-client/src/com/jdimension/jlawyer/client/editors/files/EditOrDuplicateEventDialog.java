@@ -1058,7 +1058,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                 if (this.mode == MODE_DUPLICATE) {
                     // when duplicating, do not pass in the template because we do not want to handle adding related events
-                    targetReview = CalendarUtils.getInstance().storeCalendarEntry(targetReview, this.caseDto.getId(), null);
+                    targetReview = CalendarUtils.getInstance().storeCalendarEntry(targetReview, this.caseDto, null, this);
                 } else if (this.mode == MODE_EDIT) {
                     targetReview = calService.updateReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();

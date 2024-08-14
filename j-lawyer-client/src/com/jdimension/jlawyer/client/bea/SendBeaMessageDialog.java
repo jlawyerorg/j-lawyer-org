@@ -1899,28 +1899,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
         }
         
-        BeaListItem priority=null;
-        if(this.cmbPriorities.getSelectedItem() instanceof BeaListItem)
-            // first index is a string (no priority selected)
-            priority=(BeaListItem)this.cmbPriorities.getSelectedItem();
-        
-        if (this.chkSaveAsDocument.isSelected()) {
-            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
-        } else {
-            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
-        }
-        a.start();
-
-        
-        UserSettings uset = UserSettings.getInstance();
-        if (fromSafeId != null) {
-            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDMAILBOX, fromSafeId);
-        }
-        
-        if (this.cmbTemplates.getSelectedItem() != null) {
-            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
-        }
-
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {
                 JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht senden", JOptionPane.INFORMATION_MESSAGE);
@@ -1948,7 +1926,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             if (CalendarUtils.checkForConflicts(this, reviewDto)) {
                 try {
-                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile.getId(), (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()));
+                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile, (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()), this);
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1957,6 +1935,30 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
 
         }
+        
+        BeaListItem priority=null;
+        if(this.cmbPriorities.getSelectedItem() instanceof BeaListItem)
+            // first index is a string (no priority selected)
+            priority=(BeaListItem)this.cmbPriorities.getSelectedItem();
+        
+        if (this.chkSaveAsDocument.isSelected()) {
+            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
+        } else {
+            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
+        }
+        a.start();
+
+        
+        UserSettings uset = UserSettings.getInstance();
+        if (fromSafeId != null) {
+            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDMAILBOX, fromSafeId);
+        }
+        
+        if (this.cmbTemplates.getSelectedItem() != null) {
+            uset.setSetting(UserSettings.CONF_BEA_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
+        }
+
+        
 
 
     }//GEN-LAST:event_cmdSendActionPerformed
@@ -2291,13 +2293,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             log.error("Unable to unarchive case " + this.contextArchiveFile.getFileNumber(), ex);
         }
         
-        if (this.chkSaveAsDocument.isSelected()) {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder, priority);
-        } else {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), priority);
-        }
-        a.start();
-
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {
                 JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht als Entwurf speichern", JOptionPane.INFORMATION_MESSAGE);
@@ -2325,7 +2320,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             if (CalendarUtils.checkForConflicts(this, reviewDto)) {
                 try {
-                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile.getId(), (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()));
+                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.contextArchiveFile, (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()), this);
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -2333,6 +2328,15 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
 
         }
+        
+        if (this.chkSaveAsDocument.isSelected()) {
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder, priority);
+        } else {
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), priority);
+        }
+        a.start();
+
+        
     }//GEN-LAST:event_cmdSaveDraftActionPerformed
 
     private void tblAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAttachmentsMouseClicked

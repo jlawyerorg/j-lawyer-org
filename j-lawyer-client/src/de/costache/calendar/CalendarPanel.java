@@ -688,6 +688,7 @@ import de.costache.calendar.util.CalendarUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -1194,7 +1195,7 @@ public class CalendarPanel extends javax.swing.JPanel {
                 return;
             }
 
-            NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), true, sel);
+            NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), Dialog.ModalityType.APPLICATION_MODAL, sel, false);
             dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());

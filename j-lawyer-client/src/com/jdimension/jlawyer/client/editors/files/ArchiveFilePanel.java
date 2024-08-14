@@ -1054,7 +1054,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this);
         } catch (Exception ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this, "Assistent Ingo aktuell nicht erreichbar: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         EventBroker b = EventBroker.getInstance();
@@ -4216,7 +4215,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
 
-        reviewDto = CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.dto.getId(), template);
+        reviewDto = CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.dto, template, EditorsRegistry.getInstance().getMainWindow());
 
         if (this.chkArchived.isSelected()) {
             this.chkArchived.setSelected(false);

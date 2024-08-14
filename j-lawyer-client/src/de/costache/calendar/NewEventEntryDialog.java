@@ -683,18 +683,20 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
     
     private CalendarPanel calendarPanel = null;
     private ArchiveFileBean eventCase = null;
+    private boolean preventRelatedEvents=true;
 
     /**
      * Creates new form NewEventEntryDialog
      *
      * @param calPanel
      * @param parent
-     * @param modal
+     * @param modalityType
      * @param eventCase
      */
-    public NewEventEntryDialog(CalendarPanel calPanel, java.awt.Frame parent, boolean modal, ArchiveFileBean eventCase) {
-        super(parent, modal);
+    public NewEventEntryDialog(CalendarPanel calPanel, java.awt.Window parent, java.awt.Dialog.ModalityType modalityType, ArchiveFileBean eventCase, boolean preventRelatedEvents) {
+        super(parent, modalityType);
         initComponents();
+        this.preventRelatedEvents=preventRelatedEvents;
         this.eventCase = eventCase;
         this.calendarPanel = calPanel;
         this.newEventPanel.setNewEventListener(this);
@@ -715,6 +717,14 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
 
     public void setReviewAssignee(String assignee) {
         this.newEventPanel.setReviewAssignee(assignee);
+    }
+    
+    public void setSummary(String summary) {
+        this.newEventPanel.setSummary(summary);
+    }
+    
+    public void setDescription(String description) {
+        this.newEventPanel.setDescription(description);
     }
 
     /**
@@ -776,7 +786,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            NewEventEntryDialog dialog = new NewEventEntryDialog(null, new javax.swing.JFrame(), true, null);
+            NewEventEntryDialog dialog = new NewEventEntryDialog(null, new javax.swing.JFrame(), ModalityType.APPLICATION_MODAL, null, true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -806,14 +816,19 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         ev.setCalendarSetup(calSetup);
 
         try {
-            ev = CalendarUtils.getInstance().storeCalendarEntry(ev, this.eventCase.getId(), template);
+            if(this.preventRelatedEvents)
+                ev = CalendarUtils.getInstance().storeCalendarEntry(ev, this.eventCase, null, this);
+            else
+                ev = CalendarUtils.getInstance().storeCalendarEntry(ev, this.eventCase, template, this);
         } catch (Exception ex) {
             log.error("Error adding review", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        this.calendarPanel.addCalendarEvent(ev);
+        if(this.calendarPanel!=null) {
+            this.calendarPanel.addCalendarEvent(ev);
+        }
     }
 
     @Override

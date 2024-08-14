@@ -1145,7 +1145,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
             if (CalendarUtils.checkForConflicts(this, reviewDto)) {
                 try {
-                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.aFile.getId(), (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()));
+                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.aFile, (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()), this);
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

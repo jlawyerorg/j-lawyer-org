@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -682,6 +683,7 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.jdesktop.swingx.util.WindowUtils;
 
 /**
  *
@@ -861,7 +863,7 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
             if(newEvent!=null) {
                 newEvent.setArchiveFileKey(newCase);
                 try {
-                    CalendarUtils.getInstance().storeCalendarEntry(newEvent, newCase.getId(), newEventTpl);
+                    CalendarUtils.getInstance().storeCalendarEntry(newEvent, newCase, newEventTpl, WindowUtils.findWindow(this));
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

@@ -674,11 +674,16 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import de.costache.calendar.NewEventEntryDialog;
+import java.awt.Dialog;
+import java.awt.Window;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -901,7 +906,7 @@ public class CalendarUtils {
         list.setModel(listMod);
     }
 
-    public ArchiveFileReviewsBean storeCalendarEntry(ArchiveFileReviewsBean entry, String caseId, CalendarEntryTemplate template) throws Exception {
+    public ArchiveFileReviewsBean storeCalendarEntry(ArchiveFileReviewsBean entry, ArchiveFileBean entryCase, CalendarEntryTemplate template, Window parent) throws Exception {
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -909,11 +914,37 @@ public class CalendarUtils {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-            entry = calService.addReview(caseId, entry);
+            entry = calService.addReview(entryCase.getId(), entry);
 
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ReviewAddedEvent(entry));
             eb.publishEvent(new CasesChangedEvent());
+            
+            if(template!=null && template.isRelated()) {
+                NewEventEntryDialog relatedEventDlg = new NewEventEntryDialog(null, parent, Dialog.ModalityType.APPLICATION_MODAL, entryCase, true);
+                relatedEventDlg.setTitle("weiterer Eintrag mit " + template.getRelatedOffsetDays() + " Tagen Versatz");
+                relatedEventDlg.setEventType(entry.getEventType());
+                relatedEventDlg.setSummary(template.getRelatedName());
+                relatedEventDlg.setDescription(template.getRelatedDescription());
+                relatedEventDlg.setReviewAssignee(entry.getAssignee());
+                
+                Calendar c = Calendar.getInstance();
+                c.setTime(entry.getBeginDate());
+                c.add(Calendar.DAY_OF_YEAR, template.getRelatedOffsetDays());
+                relatedEventDlg.setBeginDate(c.getTime());
+                
+                Calendar c2=Calendar.getInstance();
+                c2.setTime(entry.getEndDate());
+                c2.add(Calendar.DAY_OF_YEAR, template.getRelatedOffsetDays());
+                relatedEventDlg.setEndDate(c2.getTime());
+                
+                relatedEventDlg.setEndDate(c2.getTime());
+
+                FrameUtils.centerDialog(relatedEventDlg, parent);
+                relatedEventDlg.setVisible(true);
+            }
+            
+            
             return entry;
         } finally {
             EditorsRegistry.getInstance().clearStatus();
