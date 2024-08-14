@@ -1328,27 +1328,6 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
-            
-//            try {
-//
-//                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-//                if(!StringUtils.isEmpty(cs.getCloudPath()))
-//                    nc.setSubpathPrefix(cs.getCloudPath());
-//                List<CloudCalendar> cals = nc.getAllCalendars();
-//                
-//                CloudCalendar selected = null;
-//                for (CloudCalendar ab : cals) {
-//                    ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
-//                    if (ab.getHref().equals(cs.getHref())) {
-//                        selected = ab;
-//                    }
-//                }
-//                this.cmbName.setSelectedItem(selected);
-//            } catch (Exception ex) {
-//                log.error("Error connecting to server", ex);
-//                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//            }
         }
 
         try {

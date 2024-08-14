@@ -665,18 +665,14 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -733,7 +729,6 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
 
-        ClientSettings settings = ClientSettings.getInstance();
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
         allUserItems[0] = "";
@@ -773,18 +768,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
         }
 
-        this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
-        AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
-        String[] reviewReasonItems = new String[reviewReasons.length + 1];
-        reviewReasonItems[0] = "";
-        for (int i = 0; i < reviewReasons.length; i++) {
-            AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
-            reviewReasonItems[i + 1] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
-        }
-        StringUtils.sortIgnoreCase(reviewReasonItems);
-        OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
-        this.cmbReviewReason.setModel(reviewReasonModel);
+        CalendarUtils.populateCalendarEntryTemplatesDropdown(this.cmbReviewReason, true);
 
         if (rev.getSummary() != null) {
             this.cmbReviewReason.setSelectedItem(rev.getSummary());
@@ -1061,7 +1045,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setDone(false);
         targetReview.setBeginDate(beginDate);
         targetReview.setEndDate(endDate);
-        targetReview.setSummary(this.cmbReviewReason.getSelectedItem().toString());
+        targetReview.setSummary(this.cmbReviewReason.getEditor().getItem().toString());
         targetReview.setDescription(this.taEventDescription.getText());
         targetReview.setLocation(this.txtEventLocation.getText());
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
@@ -1073,10 +1057,8 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
                 if (this.mode == MODE_DUPLICATE) {
-                    targetReview = calService.addReview(this.caseDto.getId(), targetReview);
-                    EventBroker eb = EventBroker.getInstance();
-                    eb.publishEvent(new ReviewAddedEvent(targetReview));
-                    eb.publishEvent(new CasesChangedEvent());
+                    // when duplicating, do not pass in the template because we do not want to handle adding related events
+                    targetReview = CalendarUtils.getInstance().storeCalendarEntry(targetReview, this.caseDto.getId(), null);
                 } else if (this.mode == MODE_EDIT) {
                     targetReview = calService.updateReview(this.caseDto.getId(), targetReview);
                     EventBroker eb = EventBroker.getInstance();

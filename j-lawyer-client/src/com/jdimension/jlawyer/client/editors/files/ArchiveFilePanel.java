@@ -4204,7 +4204,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     @Override
-    public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -4216,15 +4216,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
 
-        ClientSettings settings = ClientSettings.getInstance();
-
-        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-
-        reviewDto = calService.addReview(this.dto.getId(), reviewDto);
-
-        EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new ReviewAddedEvent(reviewDto));
+        reviewDto = CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.dto.getId(), template);
 
         if (this.chkArchived.isSelected()) {
             this.chkArchived.setSelected(false);

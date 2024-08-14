@@ -663,9 +663,9 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -856,10 +857,15 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
             eb.publishEvent(new CasesChangedEvent());
 
             ArchiveFileReviewsBean newEvent = (ArchiveFileReviewsBean) this.data.get("newevent.event");
+            CalendarEntryTemplate newEventTpl = (CalendarEntryTemplate)this.data.get("newevent.template");
             if(newEvent!=null) {
                 newEvent.setArchiveFileKey(newCase);
-                ArchiveFileReviewsBean targetReview=locator.lookupCalendarServiceRemote().addReview(newCase.getId(), newEvent);
-                eb.publishEvent(new ReviewAddedEvent(targetReview));
+                try {
+                    CalendarUtils.getInstance().storeCalendarEntry(newEvent, newCase.getId(), newEventTpl);
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
             }
 
             label3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));

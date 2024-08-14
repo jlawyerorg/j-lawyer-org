@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.settings;
 
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.io.File;
 import java.io.FileInputStream;
@@ -806,7 +807,6 @@ public class ClientSettings {
     private AppOptionGroupBean[] salutationDtos=null;
     private AppOptionGroupBean[] complimentaryCloseDtos=null;
     private AppOptionGroupBean[] dictateSignDtos=null;
-    private AppOptionGroupBean[] reviewReasonDtos=null;
     private AppOptionGroupBean[] subjectFieldDtos=null;
     private AppOptionGroupBean[] afTagDtos=null;
     private AppOptionGroupBean[] adrTagDtos=null;
@@ -822,12 +822,14 @@ public class ClientSettings {
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
     protected AppOptionGroupBean[] timesheetIntervals=null;
     
-    private List<String>afTagsInUse=new ArrayList<String>();
-    private List<String>adrTagsInUse=new ArrayList<String>();
-    private List<String>docTagsInUse=new ArrayList<String>();
+    private List<CalendarEntryTemplate> calendarEntryTemplates=null;
     
-    private ArrayList<InsuranceInfo> insurances=new ArrayList<InsuranceInfo>();
-    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<InsuranceInfo>();
+    private List<String>afTagsInUse=new ArrayList<>();
+    private List<String>adrTagsInUse=new ArrayList<>();
+    private List<String>docTagsInUse=new ArrayList<>();
+    
+    private ArrayList<InsuranceInfo> insurances=new ArrayList<>();
+    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<>();
     
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
@@ -980,14 +982,6 @@ public class ClientSettings {
 
     public void setDictateSignDtos(AppOptionGroupBean[] dictateSignDtos) {
         this.dictateSignDtos = dictateSignDtos;
-    }
-
-    public AppOptionGroupBean[] getReviewReasonDtos() {
-        return reviewReasonDtos;
-    }
-
-    public void setReviewReasonDtos(AppOptionGroupBean[] reviewReasonDtos) {
-        this.reviewReasonDtos = reviewReasonDtos;
     }
 
     /**
@@ -1255,6 +1249,20 @@ public class ClientSettings {
      */
     public AppOptionGroupBean[] getTimesheetIntervals() {
         return timesheetIntervals;
+    }
+
+    /**
+     * @return the calendarEntryTemplates
+     */
+    public List<CalendarEntryTemplate> getCalendarEntryTemplates() {
+        return calendarEntryTemplates;
+    }
+
+    /**
+     * @param calendarEntryTemplates the calendarEntryTemplates to set
+     */
+    public void setCalendarEntryTemplates(List<CalendarEntryTemplate> calendarEntryTemplates) {
+        this.calendarEntryTemplates = calendarEntryTemplates;
     }
  
     

@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Date;
 import themes.colors.DefaultColorTheme;
@@ -813,7 +814,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
     }
 
     @Override
-    public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -826,6 +827,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
         reviewDto.setCalendarSetup(calSetup);
 
         this.data.put("newevent.event", reviewDto);
+        this.data.put("newevent.template", template);
         
         this.lblStatus.setText("Ereignis für die Aktenanlage vorgemerkt");
         this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);

@@ -665,19 +665,26 @@ package com.jdimension.jlawyer.client.calendar;
 
 import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.calendar.HolidayDescriptor;
+import com.jdimension.jlawyer.client.controls.CalendarEntryTemplateListItem;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ConflictingEventsDialog;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -751,28 +758,29 @@ public class CalendarUtils {
     public static boolean checkForConflicts(java.awt.Window parent, ArchiveFileReviewsBean newOrChangedEvent) {
 
         ServerSettings s = ServerSettings.getInstance();
-        boolean performCheck=s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true);
-        if(!performCheck)
+        boolean performCheck = s.getSettingAsBoolean(ServerSettings.SERVERCONF_CALENDAR_CONFLICTCHECK, true);
+        if (!performCheck) {
             return true;
-        
-        Date from=newOrChangedEvent.getBeginDate();
-        Date to=newOrChangedEvent.getEndDate();
-        int eventType=newOrChangedEvent.getCalendarSetup().getEventType();
-        if(eventType==ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || eventType==ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
-            
+        }
+
+        Date from = newOrChangedEvent.getBeginDate();
+        Date to = newOrChangedEvent.getEndDate();
+        int eventType = newOrChangedEvent.getCalendarSetup().getEventType();
+        if (eventType == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || eventType == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
+
             from.setHours(0);
             from.setMinutes(0);
             from.setSeconds(1);
             newOrChangedEvent.setBeginDate(new Date(from.getTime()));
-            
-            to=new Date(from.getTime());
+
+            to = new Date(from.getTime());
             to.setHours(23);
             to.setMinutes(59);
             to.setSeconds(59);
             newOrChangedEvent.setEndDate(new Date(to.getTime()));
-            
+
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -780,36 +788,37 @@ public class CalendarUtils {
             List<ArchiveFileReviewsBean> conflictCandidates = calService.getConflictingEvents(eventType, newOrChangedEvent.getBeginDate(), newOrChangedEvent.getEndDate(), null);
             List<ArchiveFileReviewsBean> conflicts = new ArrayList<>();
             for (ArchiveFileReviewsBean c : conflictCandidates) {
-                
-                
-                
+
                 // does not conflict with itself (e.g. when 1hr event is moved by 30mins)
-                if(c.getId().equals(newOrChangedEvent.getId())) {
+                if (c.getId().equals(newOrChangedEvent.getId())) {
                     continue;
                 }
-                
+
                 if (eventType == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP && c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     // new followup does not conflict with existing followup or respite
                     // new followup DOES conflict with existing event
-                    long overlap=getOverlappingTime(c, newOrChangedEvent);
-                    if(overlap>=(8l*60l*60l*1000l))
+                    long overlap = getOverlappingTime(c, newOrChangedEvent);
+                    if (overlap >= (8l * 60l * 60l * 1000l)) {
                         conflicts.add(c);
+                    }
                 } else if (eventType == ArchiveFileReviewsBean.EVENTTYPE_RESPITE && c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     // new respite does not conflict with existing followup or respite
                     // new respite DOES conflict with existing event
-                    long overlap=getOverlappingTime(c, newOrChangedEvent);
-                    if(overlap>=(8l*60l*60l*1000l))
+                    long overlap = getOverlappingTime(c, newOrChangedEvent);
+                    if (overlap >= (8l * 60l * 60l * 1000l)) {
                         conflicts.add(c);
-                } else if (eventType == ArchiveFileReviewsBean.EVENTTYPE_EVENT && (c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE || c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) ) {
+                    }
+                } else if (eventType == ArchiveFileReviewsBean.EVENTTYPE_EVENT && (c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE || c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP)) {
                     // new event might conflict with existing review or respite, e.g. when entering vacation where there is a respite
-                    long overlap=getOverlappingTime(c, newOrChangedEvent);
-                    if(overlap>=(8l*60l*60l*1000l))
+                    long overlap = getOverlappingTime(c, newOrChangedEvent);
+                    if (overlap >= (8l * 60l * 60l * 1000l)) {
                         conflicts.add(c);
+                    }
                 } else if (eventType == ArchiveFileReviewsBean.EVENTTYPE_EVENT && c.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     conflicts.add(c);
                 }
             }
-            if (conflicts.size() > 0) {
+            if (!conflicts.isEmpty()) {
                 Collections.sort(conflicts, (Object r1, Object r2) -> {
                     try {
 
@@ -851,15 +860,64 @@ public class CalendarUtils {
         }
         return true;
     }
-    
+
     public static long getOverlappingTime(ArchiveFileReviewsBean e1, ArchiveFileReviewsBean e2) {
-        if(e1.getBeginDate()!=null && e1.getEndDate()!=null && e2.getBeginDate()!=null && e2.getEndDate()!=null) {
-            long start=Math.max(e1.getBeginDate().getTime(), e2.getBeginDate().getTime());
-            long end=Math.min(e1.getEndDate().getTime(), e2.getEndDate().getTime());
-            return Math.abs(end-start);
+        if (e1.getBeginDate() != null && e1.getEndDate() != null && e2.getBeginDate() != null && e2.getEndDate() != null) {
+            long start = Math.max(e1.getBeginDate().getTime(), e2.getBeginDate().getTime());
+            long end = Math.min(e1.getEndDate().getTime(), e2.getEndDate().getTime());
+            return Math.abs(end - start);
         }
         return 0;
-        
+
     }
-    
+
+    public static void populateCalendarEntryTemplatesDropdown(JComboBox dropdown, boolean includeEmptyDefault) {
+        ClientSettings settings = ClientSettings.getInstance();
+        List<CalendarEntryTemplate> reviewReasons = settings.getCalendarEntryTemplates();
+        dropdown.removeAllItems();
+        if (includeEmptyDefault) {
+            CalendarEntryTemplate t = new CalendarEntryTemplate();
+            t.setName("");
+            t.setDescription("");
+            t.setRelated(false);
+            t.setRelatedName("");
+            t.setRelatedDescription("");
+            t.setRelatedOffsetDays(0);
+            dropdown.addItem(t);
+        }
+        for (CalendarEntryTemplate t : reviewReasons) {
+            dropdown.addItem(t);
+        }
+    }
+
+    public static void populateCalendarEntryTemplatesList(JList list) {
+        ClientSettings settings = ClientSettings.getInstance();
+        List<CalendarEntryTemplate> reviewReasons = settings.getCalendarEntryTemplates();
+        list.removeAll();
+        DefaultListModel listMod = new DefaultListModel();
+        for (CalendarEntryTemplate t : reviewReasons) {
+            listMod.addElement(new CalendarEntryTemplateListItem(t));
+        }
+        list.setModel(listMod);
+    }
+
+    public ArchiveFileReviewsBean storeCalendarEntry(ArchiveFileReviewsBean entry, String caseId, CalendarEntryTemplate template) throws Exception {
+        EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+
+            entry = calService.addReview(caseId, entry);
+
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewAddedEvent(entry));
+            eb.publishEvent(new CasesChangedEvent());
+            return entry;
+        } finally {
+            EditorsRegistry.getInstance().clearStatus();
+        }
+    }
+
 }

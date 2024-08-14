@@ -667,13 +667,11 @@ import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.components.QuickDateSelectionListener;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
-import com.jdimension.jlawyer.client.controls.CheckboxListCellRenderer;
-import com.jdimension.jlawyer.client.controls.CheckboxListItem;
+import com.jdimension.jlawyer.client.controls.CalendarEntryTemplateListCellRenderer;
+import com.jdimension.jlawyer.client.controls.CalendarEntryTemplateListItem;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -712,14 +710,14 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
         this.quickDateSelectionPanel.setListener(this);
 
-        this.lstReviewReasons.setCellRenderer(new CheckboxListCellRenderer());
+        this.lstReviewReasons.setCellRenderer(new CalendarEntryTemplateListCellRenderer());
         this.lstReviewReasons.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
                 JList list = (JList) event.getSource();
                 // Get index of item clicked
                 int index = list.locationToIndex(event.getPoint());
-                CheckboxListItem item = (CheckboxListItem) list.getModel().getElementAt(index);
+                CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) list.getModel().getElementAt(index);
                 // Toggle selected state
                 item.setSelected(!item.isSelected());
                 // Repaint cell
@@ -728,7 +726,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 int selectionCount = 0;
                 String selectedItemText = "";
                 for (int i = 0; i < list.getModel().getSize(); i++) {
-                    CheckboxListItem cli = (CheckboxListItem) list.getModel().getElementAt(i);
+                    CalendarEntryTemplateListItem cli = (CalendarEntryTemplateListItem) list.getModel().getElementAt(i);
                     if (cli.isSelected()) {
                         selectionCount++;
                         selectedItemText = cli.toString();
@@ -745,19 +743,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     }
 
     public void populateOptions() {
-        ClientSettings settings = ClientSettings.getInstance();
-        AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
-        String[] reviewReasonItems = new String[reviewReasons.length];
-        for (int i = 0; i < reviewReasons.length; i++) {
-            AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
-            reviewReasonItems[i] = aogb.getValue();
-        }
-        StringUtils.sortIgnoreCase(reviewReasonItems);
-        DefaultListModel listMod = new DefaultListModel();
-        for (String entry : reviewReasonItems) {
-            listMod.addElement(new CheckboxListItem(entry));
-        }
-        this.lstReviewReasons.setModel(listMod);
+        CalendarUtils.populateCalendarEntryTemplatesList(lstReviewReasons);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
 
@@ -1150,7 +1136,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             try {
                 int selectionCount = 0;
                 for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
-                    CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                    CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
                     if (item.isSelected()) {
                         selectionCount++;
                     }
@@ -1173,35 +1159,38 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 newOrChangedEvent.setEventType(eventType);
 
                 Window parentWindow = WindowUtils.findWindow(this);
-                if (selectionCount <= 1 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
+                if (selectionCount == 0 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
                     if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
-                        this.newEventListener.addReview(eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                        this.newEventListener.addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
                         if (this.newEventListener.getCase() != null) {
                             this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                         }
 
                         // clear selection
-                        for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
-                            CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
-                            item.setSelected(false);
-                            this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
-                        }
+//                        for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
+//                            CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+//                            item.setSelected(false);
+//                            this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+//                        }
                     }
                 } else {
-                    if (!StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
+                    // for a single selected template, the user may override its name
+                    if (selectionCount==1 && !StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
                         if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
-                            this.newEventListener.addReview(eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                            CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(this.lstReviewReasons.getSelectedIndex());
+                            this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
                             if (this.newEventListener.getCase() != null) {
                                 this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                             }
+                            item.setSelected(false);
+                            this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(this.lstReviewReasons.getSelectedIndex(), this.lstReviewReasons.getSelectedIndex()));
                         }
-                    }
-                    if (this.lstReviewReasons.getSelectedIndices().length > 0) {
+                    } else if (this.lstReviewReasons.getSelectedIndices().length > 0) {
                         if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
                             for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
-                                CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                                CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
                                 if (item.isSelected() && this.newEventListener != null) {
-                                    this.newEventListener.addReview(eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                                    this.newEventListener.addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
                                     if (this.newEventListener.getCase() != null) {
                                         this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                                     }

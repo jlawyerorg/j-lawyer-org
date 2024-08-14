@@ -663,16 +663,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package de.costache.calendar;
 
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
-import com.jdimension.jlawyer.services.CalendarServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -680,6 +679,8 @@ import java.util.Date;
  */
 public class NewEventEntryDialog extends javax.swing.JDialog implements NewEventPanelListener {
 
+    private static final Logger log=Logger.getLogger(NewEventEntryDialog.class.getName());
+    
     private CalendarPanel calendarPanel = null;
     private ArchiveFileBean eventCase = null;
 
@@ -699,19 +700,19 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         this.newEventPanel.setNewEventListener(this);
         this.newEventPanel.populateOptions();
     }
-    
+
     public void setBeginDate(Date d) {
         this.newEventPanel.setBeginDate(d);
     }
-    
+
     public void setEndDate(Date d) {
         this.newEventPanel.setEndDate(d);
     }
-    
+
     public void setEventType(int eventType) {
         this.newEventPanel.setEventType(eventType);
     }
-    
+
     public void setReviewAssignee(String assignee) {
         this.newEventPanel.setReviewAssignee(assignee);
     }
@@ -770,7 +771,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
             java.util.logging.Logger.getLogger(NewEventEntryDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         //</editor-fold>
 
         /* Create and display the dialog */
@@ -791,7 +792,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
         ArchiveFileReviewsBean ev = new ArchiveFileReviewsBean();
         ev.setBeginDate(beginDate);
         ev.setEndDate(endDate);
@@ -804,16 +805,15 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         ev.setLocation(location);
         ev.setCalendarSetup(calSetup);
 
-        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            ev = CalendarUtils.getInstance().storeCalendarEntry(ev, this.eventCase.getId(), template);
+        } catch (Exception ex) {
+            log.error("Error adding review", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-
-        ArchiveFileReviewsBean reviewDto = calService.addReview(this.eventCase.getId(), ev);
-        EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new ReviewAddedEvent(reviewDto));
-
-        this.calendarPanel.addCalendarEvent(reviewDto);
+        this.calendarPanel.addCalendarEvent(ev);
     }
 
     @Override

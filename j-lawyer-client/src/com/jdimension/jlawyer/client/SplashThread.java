@@ -820,14 +820,14 @@ public class SplashThread implements Runnable {
             subjectFieldDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
             this.updateProgress(false, 9, 5, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.5"), true);
-            reviewReasonDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_REVIEWREASONS);
+            settings.setCalendarEntryTemplates(locator.lookupCalendarServiceRemote().getCalendarEntryTemplates());
             List<String> tagsInUse = afs.searchTagsInUse();
             settings.setArchiveFileTagsInUse(tagsInUse);
             List<String> docTagsInUse = afs.searchDocumentTagsInUse();
             settings.setDocumentTagsInUse(docTagsInUse);
             this.updateProgress(false, 9, 6, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
-
+            
             loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
             messagingEnabledUsers = security.getMessagingEnabledUsers();
             
@@ -872,7 +872,6 @@ public class SplashThread implements Runnable {
         settings.setComplimentaryCloseDtos(complimentaryCloseDtos);
         settings.setSalutationDtos(salutationDtos);
         settings.setDictateSignDtos(dictateSignDtos);
-        settings.setReviewReasonDtos(reviewReasonDtos);
         settings.setSubjectFieldDtos(subjectFieldDtos);
         settings.setArchiveFileTagDtos(afTagDtos);
         settings.setAddressTagDtos(adrTagDtos);

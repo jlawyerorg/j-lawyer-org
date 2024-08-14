@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.calendar.HolidayDescriptor;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -727,5 +728,13 @@ public interface CalendarServiceRemote {
     void migrateEvents(CalendarSetup fromCalendar, CalendarSetup toCalendar) throws Exception;
 
     List<ArchiveFileReviewsBean> getConflictingEvents(int eventType, Date fromDate, Date toDate, String assignee) throws Exception;
+
+    CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+    
+    CalendarEntryTemplate updateCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+    
+    void removeCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+    
+    List<CalendarEntryTemplate> getCalendarEntryTemplates() throws Exception;
     
 }

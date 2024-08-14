@@ -673,6 +673,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.EventTypes;
@@ -696,6 +698,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -713,7 +716,6 @@ import javax.jms.JMSContext;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 import org.jlawyer.cloud.NextcloudCalendarConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
@@ -741,6 +743,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarSyncServiceLocal calendarSync;
     @EJB
     private CalendarSetupFacadeLocal calendarSetups;
+    @EJB
+    private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
     @EJB
     private CalendarAccessFacadeLocal calendarAccess;
     
@@ -1388,7 +1392,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void removeCalendarSetup(CalendarSetup cs) {
         this.calendarSetups.remove(cs);
     }
-
+    
     @Override
     @RolesAllowed({"adminRole"})
     public void runFullCalendarSync() {
@@ -1562,6 +1566,41 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @PermitAll
     public void sendDailyAgenda() throws Exception {
+        
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        template.setId(id);
+        this.calendarEntryTemplates.create(template);
+        return this.calendarEntryTemplates.find(id);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public CalendarEntryTemplate updateCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        this.calendarEntryTemplates.edit(template);
+        return this.calendarEntryTemplates.find(template.getId());
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void removeCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        this.calendarEntryTemplates.remove(template);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CalendarEntryTemplate> getCalendarEntryTemplates() throws Exception {
+        
+        List<CalendarEntryTemplate> allTemplates=this.calendarEntryTemplates.findAll();
+        allTemplates.sort(Comparator.comparing(
+            entry -> entry.getName().toLowerCase()
+        ));
+        return allTemplates;
         
     }
 
