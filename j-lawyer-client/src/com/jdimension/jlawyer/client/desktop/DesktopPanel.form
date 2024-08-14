@@ -456,7 +456,7 @@
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tabPaneTagged" pref="172" max="32767" attributes="0"/>
+                          <Component id="tabPaneTagged" pref="78" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -651,18 +651,26 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblUnreadMail" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblScans" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblUnreadDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblUnreadBea" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="102" alignment="1" attributes="0">
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                      <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                      <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                  </Group>
               </Group>
-              <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                  <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                  <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                  <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                  <Component id="lblUpdateStatusFormPlugins" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="102" attributes="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblUnreadMail" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblScans" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblUnreadDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblUnreadBea" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="lblUpdateStatusFormPlugins" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
