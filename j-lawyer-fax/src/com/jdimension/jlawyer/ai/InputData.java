@@ -8,6 +8,8 @@ import java.io.Serializable;
 
 public class InputData implements Serializable {
     
+    public static final String TYPE_STRING="string";
+    
     private String type;
     private String stringData;
     private byte[] data;

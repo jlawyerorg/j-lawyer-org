@@ -962,7 +962,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         status.getResponse();
         StringBuilder result=new StringBuilder();
         for(OutputData o: status.getResponse().getOutputData()) {
-            if(o.getType().equalsIgnoreCase("string"))
+            if(o.getType().equalsIgnoreCase(OutputData.TYPE_STRING))
                 result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
             
         }

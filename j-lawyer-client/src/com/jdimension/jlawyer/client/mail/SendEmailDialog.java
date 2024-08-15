@@ -1204,8 +1204,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         ArrayList<InputData> inputs = new ArrayList<>();
         InputData i = new InputData();
-        //i.setFileName("sound.wav");
-        i.setType("string");
+        i.setType(InputData.TYPE_STRING);
         i.setBase64(false);
         i.setStringData(contentText);
         
@@ -1226,7 +1225,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             } else {
                 StringBuilder result = new StringBuilder();
                 for (OutputData o : status.getResponse().getOutputData()) {
-                    if (o.getType().equalsIgnoreCase("string")) {
+                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
                         result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
                     }
 

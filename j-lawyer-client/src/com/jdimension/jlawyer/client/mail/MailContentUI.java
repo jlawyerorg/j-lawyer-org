@@ -2156,7 +2156,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         ArrayList<InputData> inputs = new ArrayList<>();
         InputData i = new InputData();
         //i.setFileName("sound.wav");
-        i.setType("string");
+        i.setType(InputData.TYPE_STRING);
         i.setBase64(false);
         //i.setData(selectedText);
         i.setStringData(selectedText);
@@ -2176,7 +2176,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             } else {
                 StringBuilder result = new StringBuilder();
                 for (OutputData o : status.getResponse().getOutputData()) {
-                    if (o.getType().equalsIgnoreCase("string")) {
+                    if (o.getType().equalsIgnoreCase(InputData.TYPE_STRING)) {
                         result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
                     }
 

@@ -768,7 +768,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
         this.taInputString.setText("");
 
         for (InputData i : inputAdapter.getInputs(c)) {
-            if ("string".equalsIgnoreCase(i.getType())) {
+            if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
                 this.taInputString.append(i.getStringData());
                 this.taInputString.append(System.lineSeparator());
             } else {
@@ -1107,7 +1107,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
             protected Void doInBackground() throws Exception {
                 List<InputData> inputs=inputAdapter.getInputs(capability);
                 for (InputData i : inputs) {
-                    if ("string".equalsIgnoreCase(i.getType())) {
+                    if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
                         i.setStringData(taInputString.getText());
                     }
                 }
@@ -1134,14 +1134,14 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                     if (status.getStatus().equalsIgnoreCase("error")) {
                         taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                     } else {
-                        StringBuilder result = new StringBuilder();
+                        StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
-                            if (o.getType().equalsIgnoreCase("string")) {
-                                result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                            if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
                             }
 
                         }
-                        taResult.setText(result.toString());
+                        taResult.setText(resultString.toString());
                     }
                 }
 

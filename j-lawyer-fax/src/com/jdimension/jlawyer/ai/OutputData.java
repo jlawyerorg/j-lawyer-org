@@ -11,6 +11,9 @@ import java.io.Serializable;
  * @author jens
  */
 public class OutputData implements Serializable {
+    
+    public static final String TYPE_STRING="string";
+    
     private String type;
     private String stringData;
     private byte[] data;

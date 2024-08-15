@@ -7363,7 +7363,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             
             InputData i = new InputData();
             //i.setFileName("sound.wav");
-            i.setType("string");
+            i.setType(InputData.TYPE_STRING);
             i.setBase64(false);
             //i.setData(selectedText);
             i.setStringData(docText);

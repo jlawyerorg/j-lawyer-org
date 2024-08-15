@@ -684,7 +684,7 @@ public class AssistantResultDialog extends javax.swing.JDialog {
         
         if(status.getResponse().getOutputData()!=null && !status.getResponse().getOutputData().isEmpty()) {
             for(OutputData d: status.getResponse().getOutputData()) {
-                if(d.getType().equalsIgnoreCase("string")) {
+                if(d.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
                     this.taString.append(d.getStringData());
                 }
             }
