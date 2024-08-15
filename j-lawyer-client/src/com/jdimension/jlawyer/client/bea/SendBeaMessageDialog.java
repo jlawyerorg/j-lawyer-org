@@ -758,7 +758,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private DropTargetHandler dropTargetHandler;
 
     /**
-     * Creates new form SendEmailDialog
+     * Creates new form SendBeaMessageDialog
      *
      * @param parent
      * @param modal
