@@ -52,7 +52,7 @@
                         <configuration>
                             <target>
  
-                                <!-- copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-client/lib/j-lawyer-cloud/j-lawyer-invoicing.jar"/ -->
+                                <copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-client/lib/j-lawyer-invoicing/j-lawyer-invoicing.jar"/>
                                 <!-- copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-server/j-lawyer-server-ejb/lib/j-lawyer-invoicing.jar"/ -->
                                 
                             </target>

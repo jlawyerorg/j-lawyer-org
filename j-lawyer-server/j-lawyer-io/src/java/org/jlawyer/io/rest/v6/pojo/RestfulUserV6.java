@@ -670,37 +670,74 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
  * @author jens
  */
 public class RestfulUserV6 {
-    
+
     protected String principalId;
     protected boolean lawyer;
     protected String countryCode;
     protected String areaCode;
-    
+
     protected String abbreviation;
-    
     protected String displayName;
-    
-    private String externalId=null;
-    private String email=null;
-    
+
+    private String externalId = null;
+    private String email = null;
+    private String firstName;
+    private String name;
+    private String company;
+    private String role;
+    private String street;
+    private String adjunct;
+    private String zipCode;
+    private String city;
+    private String countryCodeInvoicing;
+    private String phone;
+    private String fax;
+    private String mobile;
+    private String website;
+    private String bankName;
+    private String bankBic;
+    private String bankIban;
+    private String taxNr;
+    private String taxVatId;
+
     public RestfulUserV6() {
-        
+
     }
-    
+
     public AppUserBean toAppUserBean(AppUserBean au) {
-        
+
         au.setPrincipalId(principalId);
         au.setLawyer(lawyer);
         au.setCountryCode(countryCode);
         au.setAreaCode(areaCode);
         au.setAbbreviation(abbreviation);
         au.setDisplayName(displayName);
-        au.setExternalId(externalId);       
+        au.setExternalId(externalId);
         au.setEmail(email);
+
+        au.setFirstName(firstName);
+        au.setName(name);
+        au.setCompany(company);
+        au.setRole(role);
+        au.setStreet(street);
+        au.setAdjunct(adjunct);
+        au.setZipCode(zipCode);
+        au.setCity(city);
+        au.setCountryCodeInvoicing(countryCodeInvoicing);
+        au.setPhone(phone);
+        au.setFax(fax);
+        au.setMobile(mobile);
+        au.setWebsite(website);
+        au.setBankName(bankName);
+        au.setBankBic(bankBic);
+        au.setBankIban(bankIban);
+        au.setTaxNr(taxNr);
+        au.setTaxVatId(taxVatId);
+
         return au;
-        
+
     }
-    
+
     public static RestfulUserV6 fromAppUserBean(AppUserBean au) {
         RestfulUserV6 u = new RestfulUserV6();
         u.setAbbreviation(au.getAbbreviation());
@@ -711,6 +748,26 @@ public class RestfulUserV6 {
         u.setLawyer(au.isLawyer());
         u.setPrincipalId(au.getPrincipalId());
         u.setEmail(au.getEmail());
+
+        u.setFirstName(au.getFirstName());
+        u.setName(au.getName());
+        u.setCompany(au.getCompany());
+        u.setRole(au.getRole());
+        u.setStreet(au.getStreet());
+        u.setAdjunct(au.getAdjunct());
+        u.setZipCode(au.getZipCode());
+        u.setCity(au.getCity());
+        u.setCountryCodeInvoicing(au.getCountryCodeInvoicing());
+        u.setPhone(au.getPhone());
+        u.setFax(au.getFax());
+        u.setMobile(au.getMobile());
+        u.setWebsite(au.getWebsite());
+        u.setBankName(au.getBankName());
+        u.setBankBic(au.getBankBic());
+        u.setBankIban(au.getBankIban());
+        u.setTaxNr(au.getTaxNr());
+        u.setTaxVatId(au.getTaxVatId());
+
         return u;
     }
 
@@ -825,5 +882,257 @@ public class RestfulUserV6 {
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
+    /**
+     * @return the firstName
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * @param firstName the firstName to set
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the company
+     */
+    public String getCompany() {
+        return company;
+    }
+
+    /**
+     * @param company the company to set
+     */
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    /**
+     * @return the role
+     */
+    public String getRole() {
+        return role;
+    }
+
+    /**
+     * @param role the role to set
+     */
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the street
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street the street to set
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the adjunct
+     */
+    public String getAdjunct() {
+        return adjunct;
+    }
+
+    /**
+     * @param adjunct the adjunct to set
+     */
+    public void setAdjunct(String adjunct) {
+        this.adjunct = adjunct;
+    }
+
+    /**
+     * @return the zipCode
+     */
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    /**
+     * @param zipCode the zipCode to set
+     */
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    /**
+     * @return the city
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the city to set
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    /**
+     * @return the countryCodeInvoicing
+     */
+    public String getCountryCodeInvoicing() {
+        return countryCodeInvoicing;
+    }
+
+    /**
+     * @param countryCodeInvoicing the countryCodeInvoicing to set
+     */
+    public void setCountryCodeInvoicing(String countryCodeInvoicing) {
+        this.countryCodeInvoicing = countryCodeInvoicing;
+    }
+
+    /**
+     * @return the phone
+     */
+    public String getPhone() {
+        return phone;
+    }
+
+    /**
+     * @param phone the phone to set
+     */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    /**
+     * @return the fax
+     */
+    public String getFax() {
+        return fax;
+    }
+
+    /**
+     * @param fax the fax to set
+     */
+    public void setFax(String fax) {
+        this.fax = fax;
+    }
+
+    /**
+     * @return the mobile
+     */
+    public String getMobile() {
+        return mobile;
+    }
+
+    /**
+     * @param mobile the mobile to set
+     */
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    /**
+     * @return the website
+     */
+    public String getWebsite() {
+        return website;
+    }
+
+    /**
+     * @param website the website to set
+     */
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    /**
+     * @return the bankName
+     */
+    public String getBankName() {
+        return bankName;
+    }
+
+    /**
+     * @param bankName the bankName to set
+     */
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    /**
+     * @return the bankBic
+     */
+    public String getBankBic() {
+        return bankBic;
+    }
+
+    /**
+     * @param bankBic the bankBic to set
+     */
+    public void setBankBic(String bankBic) {
+        this.bankBic = bankBic;
+    }
+
+    /**
+     * @return the bankIban
+     */
+    public String getBankIban() {
+        return bankIban;
+    }
+
+    /**
+     * @param bankIban the bankIban to set
+     */
+    public void setBankIban(String bankIban) {
+        this.bankIban = bankIban;
+    }
+
+    /**
+     * @return the taxNr
+     */
+    public String getTaxNr() {
+        return taxNr;
+    }
+
+    /**
+     * @param taxNr the taxNr to set
+     */
+    public void setTaxNr(String taxNr) {
+        this.taxNr = taxNr;
+    }
+
+    /**
+     * @return the taxVatId
+     */
+    public String getTaxVatId() {
+        return taxVatId;
+    }
+
+    /**
+     * @param taxVatId the taxVatId to set
+     */
+    public void setTaxVatId(String taxVatId) {
+        this.taxVatId = taxVatId;
+    }
+
 }

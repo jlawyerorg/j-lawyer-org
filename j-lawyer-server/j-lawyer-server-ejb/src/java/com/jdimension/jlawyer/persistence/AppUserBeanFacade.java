@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.util.List;
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -726,7 +725,7 @@ public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements Ap
     @RolesAllowed("loginRole")
     public boolean hasPrincipalId(String principalId) {
         List principals=em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getResultList();
-        return principals!=null && principals.size()>0;
+        return principals!=null && !principals.isEmpty();
     }
     
     

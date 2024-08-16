@@ -684,9 +684,10 @@ import org.apache.log4j.Logger;
     @NamedQuery(name = "AppUserBean.findByExternalId", query = "SELECT a FROM AppUserBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "AppUserBean.findByPassword", query = "SELECT a FROM AppUserBean a WHERE a.password = :password")})
 public class AppUserBean implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    private static final Logger log=Logger.getLogger(AppUserBean.class.getName());
-    
+    private static final Logger log = Logger.getLogger(AppUserBean.class.getName());
+
     @Id
     @Basic(optional = false)
     @Column(name = "principalId")
@@ -699,87 +700,140 @@ public class AppUserBean implements Serializable {
     private String countryCode;
     @Column(name = "areaCode")
     private String areaCode;
-    
+
     @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
     private byte[] settings;
-    
+
     @Column(name = "beaCertificate", columnDefinition = "MEDIUMBLOB")
     private byte[] beaCertificate;
     @Column(name = "beaCertificatePassword")
     private String beaCertificatePassword;
     @Column(name = "beaCertificateAutoLogin")
     private boolean beaCertificateAutoLogin;
-    
+
     @Column(name = "abbreviation")
     private String abbreviation;
-    
+
     //@Column(name = "primary_group")
     @JoinColumn(name = "primary_group", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     private Group primaryGroup;
-    
+
     @Column(name = "cloudHost")
     private String cloudHost;
-    
+
     @Column(name = "cloudPort")
-    private int cloudPort=443;
-    
+    private int cloudPort = 443;
+
     @Column(name = "cloudSsl")
-    private boolean cloudSsl=true;
-    
+    private boolean cloudSsl = true;
+
     @Column(name = "cloudUser")
     private String cloudUser;
-    
+
     @Column(name = "cloudPassword")
     private String cloudPassword;
-    
+
     @Column(name = "displayName")
     protected String displayName;
-    
+
     @Column(name = "voipUser")
     protected String voipUser;
-    
+
     @Column(name = "voipPassword")
     protected String voipPassword;
-    
+
     @Column(name = "voipId")
     protected String voipId;
-    
+
     @Column(name = "cloudPath")
     protected String cloudPath;
-    
+
     @Column(name = "epost_customer")
     protected String epostCustomer;
-    
+
     @Column(name = "epost_password")
     protected String epostPassword;
-    
+
     @Column(name = "epost_secret")
     protected String epostSecret;
-    
+
     @Column(name = "ext_id")
     private String externalId;
-    
+
     @Column(name = "email")
     private String email;
-    
+
     @Column(name = "lock_documents")
-    private boolean autoLockDocuments=true;
-    
-    
+    private boolean autoLockDocuments = true;
+
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "company")
+    private String company;
+
+    @Column(name = "role")
+    private String role;
+
+    @Column(name = "street")
+    private String street;
+
+    @Column(name = "adjunct")
+    private String adjunct;
+
+    @Column(name = "zip_code")
+    private String zipCode;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "country_code_invoicing")
+    private String countryCodeInvoicing;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "fax")
+    private String fax;
+
+    @Column(name = "mobile")
+    private String mobile;
+
+    @Column(name = "website")
+    private String website;
+
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "bank_bic")
+    private String bankBic;
+
+    @Column(name = "bank_iban")
+    private String bankIban;
+
+    @Column(name = "tax_nr")
+    private String taxNr;
+
+    @Column(name = "tax_vatid")
+    private String taxVatId;
+
     public AppUserBean() {
     }
 
     public AppUserBean(String principalId) {
         this.principalId = principalId;
     }
-    
+
     public boolean isVoipEnabled() {
-        return this.voipPassword!=null && !("".equalsIgnoreCase(this.voipPassword)) && this.voipUser!=null && !("".equalsIgnoreCase(this.voipUser));
+        return this.voipPassword != null && !("".equalsIgnoreCase(this.voipPassword)) && this.voipUser != null && !("".equalsIgnoreCase(this.voipUser));
     }
-    
+
     public boolean isEpostEnabled() {
-        return this.epostCustomer!=null && !("".equalsIgnoreCase(this.epostCustomer)) && this.epostPassword!=null && !("".equalsIgnoreCase(this.epostPassword)) && this.epostSecret!=null && !("".equalsIgnoreCase(this.epostSecret));
+        return this.epostCustomer != null && !("".equalsIgnoreCase(this.epostCustomer)) && this.epostPassword != null && !("".equalsIgnoreCase(this.epostPassword)) && this.epostSecret != null && !("".equalsIgnoreCase(this.epostSecret));
     }
 
     public String getPrincipalId() {
@@ -871,7 +925,7 @@ public class AppUserBean implements Serializable {
     public byte[] getSettings() {
         return settings;
     }
-    
+
     public String getSetting(String key, String defaultValue) {
         byte[] settingBytes = getSettings();
         Properties props = new Properties();
@@ -885,15 +939,15 @@ public class AppUserBean implements Serializable {
             }
 
         }
-        String value=props.getProperty(key);
+        String value = props.getProperty(key);
         if (value == null) {
             value = defaultValue;
         }
         return value;
     }
-    
+
     public boolean getSettingAsBoolean(String key, boolean defaultValue) {
-        String s=getSetting(key, "" + defaultValue);
+        String s = getSetting(key, "" + defaultValue);
         return Boolean.parseBoolean(s);
     }
 
@@ -1197,7 +1251,257 @@ public class AppUserBean implements Serializable {
     public void setAutoLockDocuments(boolean autoLockDocuments) {
         this.autoLockDocuments = autoLockDocuments;
     }
-    
-    
-    
+
+    /**
+     * @return the firstName
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * @param firstName the firstName to set
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the company
+     */
+    public String getCompany() {
+        return company;
+    }
+
+    /**
+     * @param company the company to set
+     */
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    /**
+     * @return the role
+     */
+    public String getRole() {
+        return role;
+    }
+
+    /**
+     * @param role the role to set
+     */
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the street
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street the street to set
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the adjunct
+     */
+    public String getAdjunct() {
+        return adjunct;
+    }
+
+    /**
+     * @param adjunct the adjunct to set
+     */
+    public void setAdjunct(String adjunct) {
+        this.adjunct = adjunct;
+    }
+
+    /**
+     * @return the zipCode
+     */
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    /**
+     * @param zipCode the zipCode to set
+     */
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    /**
+     * @return the city
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the city to set
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    /**
+     * @return the countryCodeInvoicing
+     */
+    public String getCountryCodeInvoicing() {
+        return countryCodeInvoicing;
+    }
+
+    /**
+     * @param countryCodeInvoicing the countryCodeInvoicing to set
+     */
+    public void setCountryCodeInvoicing(String countryCodeInvoicing) {
+        this.countryCodeInvoicing = countryCodeInvoicing;
+    }
+
+    /**
+     * @return the phone
+     */
+    public String getPhone() {
+        return phone;
+    }
+
+    /**
+     * @param phone the phone to set
+     */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    /**
+     * @return the fax
+     */
+    public String getFax() {
+        return fax;
+    }
+
+    /**
+     * @param fax the fax to set
+     */
+    public void setFax(String fax) {
+        this.fax = fax;
+    }
+
+    /**
+     * @return the mobile
+     */
+    public String getMobile() {
+        return mobile;
+    }
+
+    /**
+     * @param mobile the mobile to set
+     */
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    /**
+     * @return the website
+     */
+    public String getWebsite() {
+        return website;
+    }
+
+    /**
+     * @param website the website to set
+     */
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    /**
+     * @return the bankName
+     */
+    public String getBankName() {
+        return bankName;
+    }
+
+    /**
+     * @param bankName the bankName to set
+     */
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    /**
+     * @return the bankBic
+     */
+    public String getBankBic() {
+        return bankBic;
+    }
+
+    /**
+     * @param bankBic the bankBic to set
+     */
+    public void setBankBic(String bankBic) {
+        this.bankBic = bankBic;
+    }
+
+    /**
+     * @return the bankIban
+     */
+    public String getBankIban() {
+        return bankIban;
+    }
+
+    /**
+     * @param bankIban the bankIban to set
+     */
+    public void setBankIban(String bankIban) {
+        this.bankIban = bankIban;
+    }
+
+    /**
+     * @return the taxNr
+     */
+    public String getTaxNr() {
+        return taxNr;
+    }
+
+    /**
+     * @param taxNr the taxNr to set
+     */
+    public void setTaxNr(String taxNr) {
+        this.taxNr = taxNr;
+    }
+
+    /**
+     * @return the taxVatId
+     */
+    public String getTaxVatId() {
+        return taxVatId;
+    }
+
+    /**
+     * @param taxVatId the taxVatId to set
+     */
+    public void setTaxVatId(String taxVatId) {
+        this.taxVatId = taxVatId;
+    }
+
 }

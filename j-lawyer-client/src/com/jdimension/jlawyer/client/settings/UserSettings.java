@@ -929,6 +929,41 @@ public class UserSettings extends UserSettingsKeys {
     public AppUserBean[] getAllUsers() {
         return allUsers;
     }
+    
+    // updates any cached objects for this user
+    public void applyChangedUser(AppUserBean user) {
+        
+        if(currentUser!=null && currentUser.equals(user))
+            currentUser=user;
+        
+        if(loginEnabledUsers.indexOf(user)>-1)
+            loginEnabledUsers.set(loginEnabledUsers.indexOf(user), user);
+        
+        if(messagingEnabledUsers.indexOf(user)>-1)
+            messagingEnabledUsers.set(messagingEnabledUsers.indexOf(user), user);
+        
+        for(int i=0;i<lawyerUsers.length;i++) {
+            if(lawyerUsers[i].equals(user)) {
+                lawyerUsers[i]=user;
+                break;
+            }
+        }
+        
+        for(int i=0;i<assistantUsers.length;i++) {
+            if(assistantUsers[i].equals(user)) {
+                assistantUsers[i]=user;
+                break;
+            }
+        }
+        
+        for(int i=0;i<allUsers.length;i++) {
+            if(allUsers[i].equals(user)) {
+                allUsers[i]=user;
+                break;
+            }
+        }
+
+    }
 
     /**
      * @param allUsers the allUsers to set

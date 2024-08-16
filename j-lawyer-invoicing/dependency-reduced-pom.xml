@@ -16,7 +16,9 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <target />
+              <target>
+                <copy />
+              </target>
             </configuration>
           </execution>
         </executions>

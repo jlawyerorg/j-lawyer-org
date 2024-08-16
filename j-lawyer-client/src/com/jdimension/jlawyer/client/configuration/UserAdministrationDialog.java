@@ -706,6 +706,8 @@ import java.util.Hashtable;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.table.DefaultTableModel;
+import org.jlawyer.invoicing.CountryCode;
+import org.jlawyer.invoicing.CountryCodes;
 
 /**
  *
@@ -728,6 +730,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        DefaultComboBoxModel<CountryCode> countriesModel = new DefaultComboBoxModel<>();
+        countriesModel.addAll(CountryCodes.getCountryCodes());
+        this.cmbCountryCodeInvoicing.setModel(countriesModel);
+
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
@@ -846,6 +853,50 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         cmdSave = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanel14 = new javax.swing.JPanel();
+        jLabel27 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        txtEmail = new javax.swing.JTextField();
+        txtDisplayName = new javax.swing.JTextField();
+        chkLawyer = new javax.swing.JCheckBox();
+        txtFirstName = new javax.swing.JTextField();
+        jLabel14 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        txtCompany = new javax.swing.JTextField();
+        jLabel23 = new javax.swing.JLabel();
+        txtRole = new javax.swing.JTextField();
+        jLabel24 = new javax.swing.JLabel();
+        txtStreet = new javax.swing.JTextField();
+        jLabel28 = new javax.swing.JLabel();
+        txtAdjunct = new javax.swing.JTextField();
+        jLabel29 = new javax.swing.JLabel();
+        txtZipCode = new javax.swing.JTextField();
+        txtCity = new javax.swing.JTextField();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        cmbCountryCodeInvoicing = new javax.swing.JComboBox<>();
+        jLabel32 = new javax.swing.JLabel();
+        jSeparator3 = new javax.swing.JSeparator();
+        txtPhone = new javax.swing.JTextField();
+        jLabel33 = new javax.swing.JLabel();
+        txtFax = new javax.swing.JTextField();
+        jLabel34 = new javax.swing.JLabel();
+        txtMobile = new javax.swing.JTextField();
+        jLabel35 = new javax.swing.JLabel();
+        txtWebsite = new javax.swing.JTextField();
+        jLabel36 = new javax.swing.JLabel();
+        txtBank = new javax.swing.JTextField();
+        jLabel37 = new javax.swing.JLabel();
+        txtBic = new javax.swing.JTextField();
+        jLabel38 = new javax.swing.JLabel();
+        txtIban = new javax.swing.JTextField();
+        jLabel39 = new javax.swing.JLabel();
+        txtTaxNr = new javax.swing.JTextField();
+        jLabel40 = new javax.swing.JLabel();
+        txtUstId = new javax.swing.JTextField();
+        jLabel41 = new javax.swing.JLabel();
+        cmdPopulateFromCompanyProfile = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         chkLogin = new javax.swing.JCheckBox();
@@ -865,14 +916,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkWriteOption = new javax.swing.JCheckBox();
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
-        chkLawyer = new javax.swing.JCheckBox();
-        jLabel27 = new javax.swing.JLabel();
-        txtDisplayName = new javax.swing.JTextField();
         jPanel13 = new javax.swing.JPanel();
         chkReportCommon = new javax.swing.JCheckBox();
         chkReportConfidential = new javax.swing.JCheckBox();
-        txtEmail = new javax.swing.JTextField();
-        jLabel13 = new javax.swing.JLabel();
         chkAutoLockDocuments = new javax.swing.JCheckBox();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -1008,6 +1054,215 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.setFont(jTabbedPane1.getFont());
 
+        jLabel27.setText("Anzeigename:");
+
+        jLabel13.setText("E-Mail:");
+
+        chkLawyer.setText("Nutzer ist Anwalt");
+
+        jLabel14.setText("Vorname:");
+
+        jLabel17.setText("Name:");
+
+        jLabel23.setText("Unternehmen:");
+
+        jLabel24.setText("Funktion:");
+
+        jLabel28.setText("Strasse:");
+
+        jLabel29.setText("Adresszusatz:");
+
+        jLabel30.setText("PLZ:");
+
+        jLabel31.setText("Ort:");
+
+        jLabel32.setText("Ländercode:");
+
+        jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jLabel33.setText("Telefon:");
+
+        jLabel34.setText("Telefax:");
+
+        jLabel35.setText("Mobil:");
+
+        jLabel36.setText("www:");
+
+        jLabel37.setText("Bank:");
+
+        jLabel38.setText("BIC:");
+
+        jLabel39.setText("IBAN:");
+
+        jLabel40.setText("Steuernummer:");
+
+        jLabel41.setText("USt-ID-Nr.:");
+
+        cmdPopulateFromCompanyProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_home.png"))); // NOI18N
+        cmdPopulateFromCompanyProfile.setToolTipText("Daten aus Kanzleiprofil übernehmen");
+        cmdPopulateFromCompanyProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPopulateFromCompanyProfileActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel27)
+                    .add(jLabel14)
+                    .add(jLabel17)
+                    .add(jLabel23)
+                    .add(jLabel24)
+                    .add(jLabel28)
+                    .add(jLabel29)
+                    .add(jLabel30)
+                    .add(jLabel31)
+                    .add(jLabel32))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtCompany)
+                    .add(txtName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtFirstName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDisplayName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRole)
+                    .add(chkLawyer)
+                    .add(txtStreet)
+                    .add(txtAdjunct)
+                    .add(txtZipCode)
+                    .add(txtCity)
+                    .add(cmbCountryCodeInvoicing, 0, 300, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel13)
+                    .add(jLabel33)
+                    .add(jLabel34)
+                    .add(jLabel35)
+                    .add(jLabel36)
+                    .add(jLabel37)
+                    .add(jLabel38)
+                    .add(jLabel39)
+                    .add(jLabel40)
+                    .add(jLabel41))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                    .add(txtUstId)
+                    .add(txtIban)
+                    .add(txtBic)
+                    .add(txtBank)
+                    .add(txtWebsite)
+                    .add(txtMobile)
+                    .add(txtFax)
+                    .add(txtPhone)
+                    .add(txtEmail))
+                .add(18, 18, 18)
+                .add(cmdPopulateFromCompanyProfile)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel14Layout.createSequentialGroup()
+                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(jLabel27)
+                                .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jLabel13)
+                                .add(cmdPopulateFromCompanyProfile)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel14))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel17))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel23))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel24))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(chkLawyer)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel28))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtAdjunct, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel29))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel30))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel31))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(cmbCountryCodeInvoicing, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel32)))
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtPhone, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel33))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtFax, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel34))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtMobile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel35))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel36))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtBank, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel37))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtBic, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel38))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtIban, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel39))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel40))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtUstId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel41))))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jSeparator3))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Stammdaten", jPanel14);
+
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Allgemein"));
         jPanel1.setName(""); // NOI18N
 
@@ -1134,7 +1389,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(135, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1146,10 +1401,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(chkRemoveOption)
                 .add(0, 0, Short.MAX_VALUE))
         );
-
-        chkLawyer.setText("Nutzer ist Anwalt");
-
-        jLabel27.setText("Anzeigename:");
 
         jPanel13.setBorder(javax.swing.BorderFactory.createTitledBorder("Auswertungen"));
 
@@ -1168,7 +1419,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(chkReportCommon)
                     .add(chkReportConfidential))
-                .addContainerGap(112, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel13Layout.setVerticalGroup(
             jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1180,8 +1431,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jLabel13.setText("E-Mail:");
-
         chkAutoLockDocuments.setText("Dokumente bei Bearbeitung automatisch sperren");
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
@@ -1190,58 +1439,35 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel5Layout.createSequentialGroup()
-                                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel5Layout.createSequentialGroup()
+                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel27)
-                            .add(jLabel13))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtEmail)
-                            .add(txtDisplayName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE))
-                        .add(18, 18, 18)
-                        .add(chkLawyer)
-                        .add(189, 189, 189))
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(chkAutoLockDocuments)
-                        .add(0, 0, Short.MAX_VALUE))))
+                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(18, 18, 18)
+                .add(chkAutoLockDocuments)
+                .addContainerGap(129, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(chkLawyer)
-                    .add(jLabel27)
-                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel13))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(chkAutoLockDocuments))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(18, 18, 18)
-                .add(chkAutoLockDocuments)
-                .addContainerGap(50, Short.MAX_VALUE))
+                    .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(106, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1321,8 +1547,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel6Layout.createSequentialGroup()
                         .add(jLabel21)
-                        .add(0, 382, Short.MAX_VALUE))
-                    .add(jScrollPane5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1372,7 +1598,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE)
+                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(jPanel7Layout.createSequentialGroup()
                         .add(jLabel22)
                         .add(0, 0, Short.MAX_VALUE)))
@@ -1490,7 +1716,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(18, 18, 18)
                 .add(jLabel5)
-                .addContainerGap(248, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
@@ -1634,7 +1860,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel26)
-                .addContainerGap(154, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Sipgate / E-POST", jPanel11);
@@ -1712,8 +1938,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jLabel19)
-                        .add(0, 382, Short.MAX_VALUE))
-                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1766,7 +1992,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel12Layout.createSequentialGroup()
                         .add(jLabel7)
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1822,8 +2048,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkShowExternalUsers)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 532, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 27, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
                     .add(cmdSave))
@@ -1904,6 +2130,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             newUser.setLawyer(true);
             newUser.setCloudPort(443);
             newUser.setCloudSsl(true);
+            newUser.setCountryCodeInvoicing(CountryCodes.getDefaultCountry().getCode());
 
             ((UserListModel) this.lstUsers.getModel()).addElement(newUser);
             this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
@@ -1929,6 +2156,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.pwdEpostPassword.setText("");
         this.txtEpostSecret.setText("");
         this.txtEmail.setText("");
+
+        txtFirstName.setText("");
+        txtName.setText("");
+        txtCompany.setText("");
+        txtRole.setText("");
+        txtStreet.setText("");
+        txtAdjunct.setText("");
+        txtZipCode.setText("");
+        txtCity.setText("");
+        cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+        txtPhone.setText("");
+        txtFax.setText("");
+        txtMobile.setText("");
+        txtWebsite.setText("");
+        txtBank.setText("");
+        txtBic.setText("");
+        txtIban.setText("");
+        txtTaxNr.setText("");
+        txtUstId.setText("");
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
@@ -2054,6 +2300,31 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.txtDisplayName.setText(u.getDisplayName());
                 this.txtEmail.setText(u.getEmail());
 
+                txtFirstName.setText(u.getFirstName());
+                txtName.setText(u.getName());
+                txtCompany.setText(u.getCompany());
+                txtRole.setText(u.getRole());
+                txtStreet.setText(u.getStreet());
+                txtAdjunct.setText(u.getAdjunct());
+                txtZipCode.setText(u.getZipCode());
+                txtCity.setText(u.getCity());
+
+                String cc=u.getCountryCodeInvoicing();
+                if(cc==null)
+                    cc=CountryCodes.getDefaultCountry().getCode();
+                CountryCode selectedCc = new CountryCode(cc, "dummy");
+                cmbCountryCodeInvoicing.setSelectedItem(selectedCc);
+
+                txtPhone.setText(u.getPhone());
+                txtFax.setText(u.getFax());
+                txtMobile.setText(u.getMobile());
+                txtWebsite.setText(u.getWebsite());
+                txtBank.setText(u.getBankName());
+                txtBic.setText(u.getBankBic());
+                txtIban.setText(u.getBankIban());
+                txtTaxNr.setText(u.getTaxNr());
+                txtUstId.setText(u.getTaxVatId());
+
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
                     this.rdManualLogin.setSelected(false);
@@ -2166,6 +2437,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             this.taBeaCertificate.setText("");
 
+            txtFirstName.setText("");
+            txtName.setText("");
+            txtCompany.setText("");
+            txtRole.setText("");
+            txtStreet.setText("");
+            txtAdjunct.setText("");
+            txtZipCode.setText("");
+            txtCity.setText("");
+            cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+            txtPhone.setText("");
+            txtFax.setText("");
+            txtMobile.setText("");
+            txtWebsite.setText("");
+            txtBank.setText("");
+            txtBic.setText("");
+            txtIban.setText("");
+            txtTaxNr.setText("");
+            txtUstId.setText("");
+
         }
     }//GEN-LAST:event_lstUsersValueChanged
 
@@ -2272,14 +2562,32 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setDisplayName(this.txtDisplayName.getText());
                 u.setEmail(this.txtEmail.getText().trim());
 
+                u.setFirstName(txtFirstName.getText());
+                u.setName(txtName.getText());
+                u.setCompany(txtCompany.getText());
+                u.setRole(txtRole.getText());
+                u.setStreet(txtStreet.getText());
+                u.setAdjunct(txtAdjunct.getText());
+                u.setZipCode(txtZipCode.getText());
+                u.setCity(txtCity.getText());
+
+                u.setCountryCodeInvoicing(((CountryCode) cmbCountryCodeInvoicing.getSelectedItem()).getCode());
+
+                u.setPhone(txtPhone.getText());
+                u.setFax(txtFax.getText());
+                u.setMobile(txtMobile.getText());
+                u.setWebsite(txtWebsite.getText());
+                u.setBankName(txtBank.getText());
+                u.setBankBic(txtBic.getText());
+                u.setBankIban(txtIban.getText());
+                u.setTaxNr(txtTaxNr.getText());
+                u.setTaxVatId(txtUstId.getText());
+
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 ((UserListModel) this.lstUsers.getModel()).set(this.lstUsers.getSelectedIndex(), newUser);
 
-                // if the user edited his own settings, put it into ClientSettings
-                // e.g. do not require a restart when the signature has been edited
-                if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(newUser.getPrincipalId())) {
-                    UserSettings.getInstance().setCurrentUser(newUser);
-                }
+                // do not require a restart when the user has been edited                
+                UserSettings.getInstance().applyChangedUser(newUser);
             }
 
         } catch (Exception ex) {
@@ -2287,6 +2595,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
         this.txtUser.setText("");
 
         this.pwdBeaCertificatePassword.setText("");
@@ -2313,6 +2622,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         this.txtDisplayName.setText("");
         this.txtEmail.setText("");
+
+        txtFirstName.setText("");
+        txtName.setText("");
+        txtCompany.setText("");
+        txtRole.setText("");
+        txtStreet.setText("");
+        txtAdjunct.setText("");
+        txtZipCode.setText("");
+        txtCity.setText("");
+        cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+        txtPhone.setText("");
+        txtFax.setText("");
+        txtMobile.setText("");
+        txtWebsite.setText("");
+        txtBank.setText("");
+        txtBic.setText("");
+        txtIban.setText("");
+        txtTaxNr.setText("");
+        txtUstId.setText("");
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2671,6 +2999,26 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_chkShowExternalUsersActionPerformed
 
+    private void cmdPopulateFromCompanyProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPopulateFromCompanyProfileActionPerformed
+        ServerSettings set=ServerSettings.getInstance();
+        this.txtCity.setText(set.getSetting(ServerSettings.PROFILE_COMPANYCITY, ""));
+        this.txtEmail.setText(set.getSetting(ServerSettings.PROFILE_COMPANYEMAIL, ""));
+        this.txtFax.setText(set.getSetting(ServerSettings.PROFILE_COMPANYFAX, ""));
+        this.txtMobile.setText(set.getSetting(ServerSettings.PROFILE_COMPANYMOBILE, ""));
+        this.txtCompany.setText(set.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
+        this.txtPhone.setText(set.getSetting(ServerSettings.PROFILE_COMPANYPHONE, ""));
+        this.txtStreet.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET, ""));
+        this.txtAdjunct.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET2, ""));
+        this.txtWebsite.setText(set.getSetting(ServerSettings.PROFILE_COMPANYWWW, ""));
+        this.txtZipCode.setText(set.getSetting(ServerSettings.PROFILE_COMPANYZIP, ""));
+        
+        this.txtTaxNr.setText(set.getSetting(ServerSettings.PROFILE_COMPANYTAXID, ""));
+        this.txtUstId.setText(set.getSetting(ServerSettings.PROFILE_COMPANYUSTID, ""));
+        this.txtBank.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANK, ""));
+        this.txtBic.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE, ""));
+        this.txtIban.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
+    }//GEN-LAST:event_cmdPopulateFromCompanyProfileActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2943,11 +3291,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkWriteOption;
     private javax.swing.JComboBox cmbArea;
     private javax.swing.JComboBox cmbCountry;
+    private javax.swing.JComboBox<CountryCode> cmbCountryCodeInvoicing;
     private javax.swing.JComboBox<String> cmbPrimaryGroup;
     private javax.swing.JComboBox<String> cmbVoipId;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdGetVoipIds;
+    private javax.swing.JButton cmdPopulateFromCompanyProfile;
     private javax.swing.JButton cmdRegisterEpost;
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
@@ -2958,19 +3308,37 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
+    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel40;
+    private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -2981,6 +3349,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
+    private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2997,6 +3366,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblEpostRegistered;
     private javax.swing.JList lstUsers;
@@ -3015,13 +3385,30 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTable tblInvoicePools;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
+    private javax.swing.JTextField txtAdjunct;
+    private javax.swing.JTextField txtBank;
+    private javax.swing.JTextField txtBic;
+    private javax.swing.JTextField txtCity;
+    private javax.swing.JTextField txtCompany;
     private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtEpostCustomer;
     private javax.swing.JTextField txtEpostSecret;
+    private javax.swing.JTextField txtFax;
+    private javax.swing.JTextField txtFirstName;
+    private javax.swing.JTextField txtIban;
+    private javax.swing.JTextField txtMobile;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtPhone;
+    private javax.swing.JTextField txtRole;
+    private javax.swing.JTextField txtStreet;
+    private javax.swing.JTextField txtTaxNr;
     private javax.swing.JTextField txtUser;
+    private javax.swing.JTextField txtUstId;
     private javax.swing.JTextField txtVoipPassword;
     private javax.swing.JTextField txtVoipUser;
+    private javax.swing.JTextField txtWebsite;
+    private javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables
 
 }
