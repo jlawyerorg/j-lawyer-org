@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.ai;
 import com.jdimension.jlawyer.fax.utils.Base64;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;

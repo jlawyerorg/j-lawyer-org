@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantDictateDialog;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
@@ -2504,12 +2505,24 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.popAssistant.removeAll();
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this);
+            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter)this);
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this);
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this);
+            
+            JMenuItem mi = new JMenuItem();
+            mi.setText("Text generieren (Diktat, Prompting)");
+            //mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+            mi.addActionListener((ActionEvent e) -> {
+                AssistantDictateDialog dlg = new AssistantDictateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                dlg.setVisible(true);
+            });
+            this.popAssistant.add(mi);
+            
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);

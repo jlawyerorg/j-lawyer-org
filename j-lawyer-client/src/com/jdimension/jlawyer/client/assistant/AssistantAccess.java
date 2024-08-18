@@ -715,6 +715,14 @@ public class AssistantAccess {
         }
     }
     
+    public List<AssistantPrompt> getCustomPrompts(String requestType) throws Exception {
+        Map<String, List<AssistantPrompt>> allCustom=this.getCustomPrompts();
+        if(allCustom.containsKey(requestType)) {
+            return allCustom.get(requestType);
+        }
+        return new ArrayList<>();
+    }
+    
     private Map<String, List<AssistantPrompt>> getCustomPrompts() throws Exception {
         synchronized (customPrompts) {
             if (customPrompts.isEmpty()) {
@@ -860,7 +868,7 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                    AssistantGenericDialog dlg = new AssistantGenericDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                     dlg.setVisible(true);
                 });
                 menu.add(mi);
@@ -877,7 +885,7 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    GenericAssistantDialog dlg = new GenericAssistantDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                    AssistantGenericDialog dlg = new AssistantGenericDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                     dlg.setVisible(true);
                 });
                 menu.add(mi);

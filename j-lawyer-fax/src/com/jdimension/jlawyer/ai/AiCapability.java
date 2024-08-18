@@ -23,6 +23,7 @@ public class AiCapability implements Serializable {
     
     public static final String INPUTTYPE_STRING="STRING";
     public static final String INPUTTYPE_FILE="FILE";
+    public static final String INPUTTYPE_NONE="NONE";
     
     private String name;
     private String description;

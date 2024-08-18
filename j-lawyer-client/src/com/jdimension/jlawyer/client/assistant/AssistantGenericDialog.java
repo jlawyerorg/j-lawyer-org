@@ -697,9 +697,9 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class GenericAssistantDialog extends javax.swing.JDialog {
+public class AssistantGenericDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(GenericAssistantDialog.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantGenericDialog.class.getName());
 
     private AssistantConfig config = null;
     private AiCapability capability = null;
@@ -717,7 +717,7 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
      * @param parent
      * @param modal
      */
-    public GenericAssistantDialog(AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
+    public AssistantGenericDialog(AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -1200,19 +1200,20 @@ public class GenericAssistantDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(GenericAssistantDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            GenericAssistantDialog dialog = new GenericAssistantDialog(null, null, null, false, new javax.swing.JFrame(), true);
+            AssistantGenericDialog dialog = new AssistantGenericDialog(null, null, null, false, new javax.swing.JFrame(), true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
