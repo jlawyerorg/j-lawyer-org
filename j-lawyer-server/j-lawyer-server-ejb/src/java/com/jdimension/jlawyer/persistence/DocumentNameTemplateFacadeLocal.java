@@ -687,4 +687,6 @@ public interface DocumentNameTemplateFacadeLocal {
 
     int count();
     
+    DocumentNameTemplate findDefault();
+    
 }

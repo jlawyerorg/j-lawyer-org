@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,120 +661,554 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.io.Serializable;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "document_name_tpls")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "DocumentNameTemplate.findAll", query = "SELECT t FROM DocumentNameTemplate t"),
-    @NamedQuery(name = "DocumentNameTemplate.findDefault", query = "SELECT t FROM DocumentNameTemplate t where t.defaultTemplate = 1"),
-    @NamedQuery(name = "DocumentNameTemplate.findById", query = "SELECT t FROM DocumentNameTemplate t WHERE t.id = :id")})
-public class DocumentNameTemplate implements Serializable {
+public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    
-    @Column(name = "display_name")
-    private String displayName;
-    
-    @Column(name = "schema_syntax")
-    private String pattern;
-    
-    @Column(name = "default_tpl")
-    private boolean defaultTemplate=true;    
+    private static final Logger log = Logger.getLogger(DocumentNameTemplatesSetupDialog.class.getName());
 
-    public String getId() {
-        return id;
-    }
+    /**
+     * Creates new form DocumentNameTemplatesSetupDialog
+     *
+     * @param parent
+     * @param modal
+     */
+    public DocumentNameTemplatesSetupDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    public void setId(String id) {
-        this.id = id;
-    }
+        this.lstPreview.setModel(new DefaultListModel());
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
+        this.resetDetails();
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof DocumentNameTemplate)) {
-            return false;
+        this.tblTemplates.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            List<DocumentNameTemplate> templates = locator.lookupSystemManagementRemote().getDocumentNameTemplates();
+
+            this.tblTemplates.setDefaultRenderer(Object.class, new DocumentNameTemplateTableCellRenderer());
+
+            for (DocumentNameTemplate t : templates) {
+                ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{t, t.getPattern()});
+
+            }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblTemplates.getModel());
+            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            this.tblTemplates.setRowSorter(sorter);
+            this.tblTemplates.getRowSorter().toggleSortOrder(0);
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        DocumentNameTemplate other = (DocumentNameTemplate) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
+
+        ComponentUtils.autoSizeColumns(tblTemplates);
+
+    }
+
+    private void resetDetails() {
+        this.txtDisplayName.setText("");
+        this.txtPattern.setText("");
+        this.chkDefault.setSelected(false);
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblTemplates = new javax.swing.JTable();
+        cmdAdd = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        txtDisplayName = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        txtPattern = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        chkDefault = new javax.swing.JCheckBox();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lstPreview = new javax.swing.JList<>();
+        lblError = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Belegnummernkreise");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Belegnummernkreise"));
+
+        tblTemplates.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Name", "Schema"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblTemplates.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblTemplates.getTableHeader().setReorderingAllowed(false);
+        tblTemplates.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblTemplatesMouseClicked(evt);
+            }
+        });
+        tblTemplates.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblTemplatesKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblTemplates);
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        cmdClose.setFont(cmdClose.getFont());
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setText("Anzeigename:");
+
+        cmdSave.setFont(cmdSave.getFont());
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
+        jLabel5.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel5.setText("Nummernkreiskonfiguration");
+
+        txtPattern.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtPatternKeyReleased(evt);
+            }
+        });
+
+        jLabel2.setFont(jLabel2.getFont());
+        jLabel2.setText("Schema:");
+
+        chkDefault.setFont(chkDefault.getFont());
+        chkDefault.setText("als Standard verwenden");
+        chkDefault.setToolTipText("Rechnungsnummer bei Rechnungserstellung manuell editierbar machen");
+
+        lstPreview.setFont(lstPreview.getFont());
+        lstPreview.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane2.setViewportView(lstPreview);
+
+        lblError.setFont(lblError.getFont().deriveFont(lblError.getFont().getStyle() | java.awt.Font.BOLD));
+        lblError.setForeground(new java.awt.Color(204, 51, 0));
+        lblError.setText(" ");
+
+        jLabel10.setFont(jLabel10.getFont());
+        jLabel10.setText("y m d (y...Jahr m...Monat d...Tag)");
+
+        jLabel11.setFont(jLabel11.getFont());
+        jLabel11.setText("weitere Zeichen als fixe Bestandteile");
+
+        jLabel14.setFont(jLabel14.getFont());
+        jLabel14.setText("DATEINAME als Platzhalter für ursprünglichen Namen");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdClose))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel5)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtPattern)
+                                    .addComponent(txtDisplayName)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(258, 258, 258))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel10)
+                                            .addComponent(chkDefault)
+                                            .addComponent(jLabel14)
+                                            .addComponent(jLabel11))
+                                        .addGap(0, 42, Short.MAX_VALUE))
+                                    .addComponent(jScrollPane2))))))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtDisplayName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtPattern, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel14)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(chkDefault)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 398, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblError)
+                        .addGap(0, 8, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdClose)
+                            .addComponent(cmdSave))))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void tblTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblTemplatesMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+
+            int row = this.tblTemplates.getSelectedRow();
+
+            if (row < 0) {
+                this.resetDetails();
+            } else {
+
+                DocumentNameTemplate tpl = (DocumentNameTemplate) this.tblTemplates.getValueAt(row, 0);
+                
+                ClientSettings settings = ClientSettings.getInstance();
+                // reload, because the default flag might have been removed by setting the default on another
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    tpl = locator.lookupSystemManagementRemote().getDocumentNameTemplate(tpl.getId());
+                } catch (Exception ex) {
+                    log.error("Error getting document name template", ex);
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                this.updateUI(tpl);
+                this.updatePreview();
+            }
+
         }
-        return true;
+    }//GEN-LAST:event_tblTemplatesMouseClicked
+
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Anzeigename: ", "Neue Namensvorlage", JOptionPane.QUESTION_MESSAGE, null, null, "neue Namensvorlage");
+        if (newNameObject == null) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            DocumentNameTemplate tpl = new DocumentNameTemplate();
+            tpl.setDisplayName(newNameObject.toString());
+            tpl.setDefaultTemplate(false);
+            tpl.setPattern("yyyy-mm-dd_DATEINAME");
+            DocumentNameTemplate savedTpl = locator.lookupSystemManagementRemote().addDocumentNameTemplate(tpl);
+
+            ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getPattern()});
+            this.tblTemplates.getSelectionModel().setSelectionInterval(this.tblTemplates.getRowCount() - 1, this.tblTemplates.getRowCount() - 1);
+
+        } catch (Exception ex) {
+            log.error("Error creating new document name template", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        int row = this.tblTemplates.getSelectedRow();
+
+        if (row >= 0) {
+
+            DocumentNameTemplate tpl = (DocumentNameTemplate) this.tblTemplates.getValueAt(row, 0);
+            tpl.setDisplayName(this.txtDisplayName.getText());
+            tpl.setPattern(this.txtPattern.getText());
+            tpl.setDefaultTemplate(this.chkDefault.isSelected());
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                DocumentNameTemplate savedTpl = locator.lookupSystemManagementRemote().updateDocumentNameTemplate(tpl);
+                row = this.tblTemplates.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl, row, 0);
+                ((DefaultTableModel) this.tblTemplates.getModel()).setValueAt(savedTpl.getPattern(), row, 1);
+
+            } catch (Exception ex) {
+                log.error("Error updating document name template", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int row = this.tblTemplates.getSelectedRow();
+
+        if (row >= 0) {
+
+            DocumentNameTemplate tpl = (DocumentNameTemplate) this.tblTemplates.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupSystemManagementRemote().removeDocumentNameTemplate(tpl);
+                row = this.tblTemplates.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblTemplates.getModel()).removeRow(row);
+
+                this.resetDetails();
+            } catch (Exception ex) {
+                log.error("Error removing document name template", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
+
+    private void tblTemplatesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblTemplatesKeyReleased
+        int row = this.tblTemplates.getSelectedRow();
+
+        if (row < 0) {
+            this.resetDetails();
+        } else {
+
+            DocumentNameTemplate tpl = (DocumentNameTemplate) this.tblTemplates.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            // reload, because the default flag might have been removed by setting the default on another
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                tpl = locator.lookupSystemManagementRemote().getDocumentNameTemplate(tpl.getId());
+            } catch (Exception ex) {
+                log.error("Error getting document name template", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+            this.updateUI(tpl);
+            this.updatePreview();
+        }
+    }//GEN-LAST:event_tblTemplatesKeyReleased
+
+    private void txtPatternKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPatternKeyReleased
+        if (this.tblTemplates.getSelectedRow() > -1)
+            this.updatePreview();
+    }//GEN-LAST:event_txtPatternKeyReleased
+
+    private void updateUI(DocumentNameTemplate tpl) {
+
+        this.txtDisplayName.setText(tpl.getDisplayName());
+        this.txtPattern.setText(tpl.getPattern());
+        this.chkDefault.setSelected(tpl.isDefaultTemplate());
+
     }
 
-    @Override
-    public String toString() {
-        return this.getDisplayName();
+    private void updatePreview() {
+
+        this.lblError.setText(" ");
+        DefaultListModel dm = new DefaultListModel();
+        this.lstPreview.setModel(dm);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            DocumentNameTemplate testTpl = new DocumentNameTemplate();
+            testTpl.setPattern(this.txtPattern.getText());
+            List<String> preview = locator.lookupSystemManagementRemote().previewDocumentNamesForTemplate(testTpl, "Beispieldatei.pdf");
+
+            for (String p : preview) {
+                dm.addElement(p);
+            }
+        } catch (Exception ex) {
+            this.lblError.setText(ex.getMessage());
+            this.cmdSave.setEnabled(false);
+            return;
+        }
+
+        this.cmdSave.setEnabled(true);
+
     }
 
     /**
-     * @return the displayName
+     * @param args the command line arguments
      */
-    public String getDisplayName() {
-        return displayName;
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(DocumentNameTemplatesSetupDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+
+        //</editor-fold>
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            DocumentNameTemplatesSetupDialog dialog = new DocumentNameTemplatesSetupDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
     }
 
-    /**
-     * @param displayName the displayName to set
-     */
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    /**
-     * @return the pattern
-     */
-    public String getPattern() {
-        return pattern;
-    }
-
-    /**
-     * @param pattern the pattern to set
-     */
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
-    }
-
-    /**
-     * @return the defaultTemplate
-     */
-    public boolean isDefaultTemplate() {
-        return defaultTemplate;
-    }
-
-    /**
-     * @param defaultTemplate the defaultTemplate to set
-     */
-    public void setDefaultTemplate(boolean defaultTemplate) {
-        this.defaultTemplate = defaultTemplate;
-    }
-    
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkDefault;
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblError;
+    private javax.swing.JList<String> lstPreview;
+    private javax.swing.JTable tblTemplates;
+    private javax.swing.JTextField txtDisplayName;
+    private javax.swing.JTextField txtPattern;
+    // End of variables declaration//GEN-END:variables
 }

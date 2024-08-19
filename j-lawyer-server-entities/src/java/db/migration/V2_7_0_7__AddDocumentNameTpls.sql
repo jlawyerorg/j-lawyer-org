@@ -6,7 +6,7 @@ CREATE TABLE document_name_tpls (
 CONSTRAINT `pk_document_name_tpls` PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-insert into document_name_tpls (id, display_name, schema_syntax, default_tpl) values ('default-tpl','Standard','yyyy-MM-dd_DATEINAME',1);
+insert into document_name_tpls (id, display_name, schema_syntax, default_tpl) values ('default-tpl','Standard','yyyy-mm-dd_DATEINAME',1);
 
 insert into server_settings(settingKey, settingValue) values('jlawyer.server.database.version','2.7.0.7') ON DUPLICATE KEY UPDATE settingValue     = '2.7.0.7';
 commit;

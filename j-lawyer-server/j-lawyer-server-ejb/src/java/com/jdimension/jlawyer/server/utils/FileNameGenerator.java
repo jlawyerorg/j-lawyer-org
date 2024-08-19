@@ -661,177 +661,108 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.server.utils;
 
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Properties;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
-import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface SystemManagementRemote {
+public class FileNameGenerator {
+
+    private static final String SHORTCODECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private static final boolean DBG = false;
+
+    public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
+
+        if (pattern.contains("yyy") && !pattern.contains("yyyy")) {
+            throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
+        }
+        if (pattern.contains("yyyyy")) {
+            throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
+        }
+
+        if (pattern.contains("mmm")) {
+            throw new InvalidSchemaPatternException("m muss als m oder mm enthalten sein");
+        }
+        if (pattern.contains("ddd")) {
+            throw new InvalidSchemaPatternException("d muss als d oder dd enthalten sein");
+        }
+
+        if (pattern.indexOf('n') > -1 && !pattern.contains("nnn")) {
+            throw new InvalidSchemaPatternException("n muss mindestens als nnn (999 Rechnungen pro Jahr) enthalten sein");
+        }
+
+        return true;
+    }
+
+    public static String getFileName(String pattern, String fileName) throws InvalidSchemaPatternException {
+
+        compilePattern(pattern);
+
+        return next(pattern, fileName);
+    }
     
-    public static final int TEMPLATE_TYPE_BODY=10;
-    public static final int TEMPLATE_TYPE_HEAD=20;
+    public static String getFileName(String pattern, Date d, String fileName) throws InvalidSchemaPatternException {
 
-    AppOptionGroupBean[] getOptionGroup(String optionGroup);
+        compilePattern(pattern);
 
-    BankDataBean[] searchBankData(String query);
+        return next(pattern, d, fileName);
+    }
 
-    CityDataBean[] searchCityData(String query);
+    private static synchronized String next(String pattern, String fileName) throws InvalidSchemaPatternException {
+        return next(pattern, new Date(), fileName);
+    }
 
-    void removeAllBankData();
+    private static synchronized String next(String pattern, Date date, String fileName) throws InvalidSchemaPatternException {
 
-    void createBankData(BankDataBean[] bankData);
+        SimpleDateFormat shortYear = new SimpleDateFormat("yy");
+        SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
 
-    void removeAllCityData();
+        SimpleDateFormat shortMonth = new SimpleDateFormat("M");
+        SimpleDateFormat longMonth = new SimpleDateFormat("MM");
 
-    void createCityData(CityDataBean[] cityData);
+        SimpleDateFormat shortDay = new SimpleDateFormat("d");
+        SimpleDateFormat longDay = new SimpleDateFormat("dd");
 
-    AppOptionGroupBean createOptionGroup(AppOptionGroupBean dto);
+        Date current = date;
+        if (current == null) {
+            current = new Date();
+        }
 
-    void removeOptionGroup(String id);
+        // fixed values
+        while (pattern.contains("yyyy")) {
+            pattern = pattern.replace("yyyy", longYear.format(current));
+        }
+        while (pattern.contains("yy")) {
+            pattern = pattern.replace("yy", shortYear.format(current));
+        }
 
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception;
-    
-    public void clearCurrentBackup();
+        while (pattern.contains("mm")) {
+            pattern = pattern.replace("mm", longMonth.format(current));
+        }
+        while (pattern.contains("m")) {
+            pattern = pattern.replace("m", shortMonth.format(current));
+        }
 
-    List<AppUserBean> getUsers();
+        while (pattern.contains("dd")) {
+            pattern = pattern.replace("dd", longDay.format(current));
+        }
+        while (pattern.contains("d")) {
+            pattern = pattern.replace("d", shortDay.format(current));
+        }
 
-    List<AppRoleBean> getRoles(String principalId);
+        // variable values
+        pattern = pattern.replace("DATEINAME", fileName);
+        
+        return pattern;
 
-    AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    void deleteUser(String principalId);
-
-    ServerInformation getServerInformation();
-    
-    Properties getSystemProperties();
-    
-    String getServerLogs(int numberOfLines) throws Exception;
-
-    ServerSettingsBean getSetting(String key);
-
-    boolean setSetting(String key, String value);
-    
-    List<String> getAllOptionGroups();
-
-    AppUserBean getUser(String principalId);
-
-    MonitoringSnapshot getMonitoringSnapshot();
-
-    void statusMail(String subject, String body);
-    
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
-    
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
-
-    boolean validateFileOnServer(File file, boolean isDirectory);
-
-    String getServerVersion();
-
-    Properties getUserSettings(AppUserBean user);
-
-    void setUserSettings(AppUserBean user, Properties settings);
-
-    String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
-
-    boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
-
-    boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
-
-    boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    GenericNode getAllTemplatesTree(int templateType) throws Exception;
-
-    byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception;
-
-    boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
-
-    List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception;
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception;
-
-    List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
-
-    List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
-
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getPartyTypes();
-
-    Hashtable<String,PartyTypeBean> getPartyTypesTable();
-
-    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
-    
-    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
-
-    void removePartyType(PartyTypeBean partyType) throws Exception;
-
-    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
-
-    boolean updatePassword(String newPassword) throws Exception;
-
-    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
-
-    List<MappingTable> getMappingTables();
-    
-    List<MappingEntry> getMappingEntries(String tableName);
-    
-    void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception;
-
-    MappingTable addMappingTable(MappingTable table) throws Exception;
-
-    void deleteMappingTable(String tableName) throws Exception;
-
-    MappingTable updateMappingTable(MappingTable mt) throws Exception;
-
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception;
-
-    List<AssistantConfig> getAssistants();
-
-    AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;
-
-    AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
-    
-    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
-    
-    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
-    
-    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
-    
-    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
-    
+    }
 }

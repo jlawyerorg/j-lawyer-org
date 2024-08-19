@@ -673,6 +673,8 @@ import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.utils.FileNameGenerator;
+import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
@@ -687,6 +689,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -775,6 +778,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private FormsServiceLocal formsService;
     @EJB
     private AssistantConfigFacadeLocal assistantFacade;
+    @EJB
+    private DocumentNameTemplateFacadeLocal documentNameTemplates;
     
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -2385,6 +2390,86 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception {
         this.assistantFacade.edit(assistant);
         return this.assistantFacade.find(assistant.getId());
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        template.setId(id);
+        this.documentNameTemplates.create(template);
+        return this.documentNameTemplates.find(id);
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        this.documentNameTemplates.edit(template);
+        
+        if(template.isDefaultTemplate()) {
+            // default template - remove default flag from any other templates
+            for(DocumentNameTemplate t: this.documentNameTemplates.findAll()) {
+                if(!t.equals(template)) {
+                    t.setDefaultTemplate(false);
+                    this.documentNameTemplates.edit(t);
+                }
+            }
+        }
+        
+        return this.documentNameTemplates.find(template.getId());
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception {
+        return this.documentNameTemplates.find(templateId);
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        this.documentNameTemplates.remove(template);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception {
+        
+        List<DocumentNameTemplate> allTemplates=this.documentNameTemplates.findAll();
+        allTemplates.sort(Comparator.comparing(
+            entry -> entry.getDisplayName().toLowerCase()
+        ));
+        return allTemplates;
+        
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception {
+        
+        return this.documentNameTemplates.findDefault();
+        
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception {
+        ArrayList<String> previews = new ArrayList<>();
+
+        try {
+
+            for (int i = 0; i < 10; i++) {
+                java.util.Date now = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l * i);
+                String next = FileNameGenerator.getFileName(template.getPattern(), now, fileName);
+                previews.add(next);
+            }
+
+            return previews;
+
+        } catch (InvalidSchemaPatternException isp) {
+            throw new Exception(isp.getMessage());
+        }
     }
 
 }

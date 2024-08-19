@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +685,20 @@ public class DocumentNameTemplateFacade extends AbstractFacade<DocumentNameTempl
 
     public DocumentNameTemplateFacade() {
         super(DocumentNameTemplate.class);
+    }
+    
+    @Override
+    public DocumentNameTemplate findDefault() {
+        
+        List<DocumentNameTemplate> defaultTemplates=(List<DocumentNameTemplate>) em.createNamedQuery("DocumentNameTemplate.findDefault").getResultList();
+        if(defaultTemplates.isEmpty()) {
+            // no default - use first
+            return findAll().get(0);
+        } else {
+            // there is only one default expected
+            return defaultTemplates.get(0);
+        }
+        
     }
     
 }

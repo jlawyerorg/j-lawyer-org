@@ -661,177 +661,46 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Properties;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
-import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface SystemManagementRemote {
-    
-    public static final int TEMPLATE_TYPE_BODY=10;
-    public static final int TEMPLATE_TYPE_HEAD=20;
+public class DocumentNameTemplateTableCellRenderer extends DefaultTableCellRenderer {
 
-    AppOptionGroupBean[] getOptionGroup(String optionGroup);
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
 
-    BankDataBean[] searchBankData(String query);
+        DocumentNameTemplate tpl = (DocumentNameTemplate) table.getValueAt(row, 0);
 
-    CityDataBean[] searchCityData(String query);
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    void removeAllBankData();
+        if (column == 0) {
+            ((JLabel) ((Component) returnRenderer)).setText(tpl.getDisplayName());
+        }
 
-    void createBankData(BankDataBean[] bankData);
+        if (isSelected) {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.WHITE);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            }
+        } else {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(Color.WHITE);
+            }
+        }
 
-    void removeAllCityData();
-
-    void createCityData(CityDataBean[] cityData);
-
-    AppOptionGroupBean createOptionGroup(AppOptionGroupBean dto);
-
-    void removeOptionGroup(String id);
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception;
-    
-    public void clearCurrentBackup();
-
-    List<AppUserBean> getUsers();
-
-    List<AppRoleBean> getRoles(String principalId);
-
-    AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    void deleteUser(String principalId);
-
-    ServerInformation getServerInformation();
-    
-    Properties getSystemProperties();
-    
-    String getServerLogs(int numberOfLines) throws Exception;
-
-    ServerSettingsBean getSetting(String key);
-
-    boolean setSetting(String key, String value);
-    
-    List<String> getAllOptionGroups();
-
-    AppUserBean getUser(String principalId);
-
-    MonitoringSnapshot getMonitoringSnapshot();
-
-    void statusMail(String subject, String body);
-    
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
-    
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
-
-    boolean validateFileOnServer(File file, boolean isDirectory);
-
-    String getServerVersion();
-
-    Properties getUserSettings(AppUserBean user);
-
-    void setUserSettings(AppUserBean user, Properties settings);
-
-    String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
-
-    boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
-
-    boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
-
-    boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    GenericNode getAllTemplatesTree(int templateType) throws Exception;
-
-    byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception;
-
-    boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
-
-    List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception;
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception;
-
-    List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
-
-    List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
-
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getPartyTypes();
-
-    Hashtable<String,PartyTypeBean> getPartyTypesTable();
-
-    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
-    
-    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
-
-    void removePartyType(PartyTypeBean partyType) throws Exception;
-
-    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
-
-    boolean updatePassword(String newPassword) throws Exception;
-
-    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
-
-    List<MappingTable> getMappingTables();
-    
-    List<MappingEntry> getMappingEntries(String tableName);
-    
-    void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception;
-
-    MappingTable addMappingTable(MappingTable table) throws Exception;
-
-    void deleteMappingTable(String tableName) throws Exception;
-
-    MappingTable updateMappingTable(MappingTable mt) throws Exception;
-
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception;
-
-    List<AssistantConfig> getAssistants();
-
-    AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;
-
-    AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
-    
-    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
-    
-    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
-    
-    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
-    
-    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
-    
+        return (Component) returnRenderer;
+    }
 }
