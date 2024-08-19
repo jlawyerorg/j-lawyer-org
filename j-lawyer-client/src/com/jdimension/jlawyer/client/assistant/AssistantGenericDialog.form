@@ -136,7 +136,7 @@
     <Component class="javax.swing.JButton" name="cmdClose">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/agt_action_success.png"/>
+          <Image iconType="3" name="/icons/cancel.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Schliessen"/>
       </Properties>

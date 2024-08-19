@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
-import com.jdimension.jlawyer.client.assistant.AssistantDictateDialog;
+import com.jdimension.jlawyer.client.assistant.AssistantGenerateDialog;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
@@ -2518,7 +2518,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             mi.setText("Text generieren (Diktat, Prompting)");
             //mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
             mi.addActionListener((ActionEvent e) -> {
-                AssistantDictateDialog dlg = new AssistantDictateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                AssistantGenerateDialog dlg = new AssistantGenerateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setVisible(true);
             });
             this.popAssistant.add(mi);

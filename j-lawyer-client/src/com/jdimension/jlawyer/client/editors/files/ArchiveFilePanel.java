@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantGenerateDialog;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
@@ -1055,7 +1056,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Exception ex) {
             log.error(ex);
         }
-
+        
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
@@ -1799,6 +1800,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         popHeader = new javax.swing.JPopupMenu();
         mnuCopyIdToClipboard = new javax.swing.JMenuItem();
         mnuCopyExtIdToClipboard = new javax.swing.JMenuItem();
+        popAssistantNoContext = new javax.swing.JPopupMenu();
         tabPaneArchiveFile = new javax.swing.JTabbedPane();
         tabGeneralData = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -1866,6 +1868,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jScrollPane2 = new javax.swing.JScrollPane();
         documentTagPanel = new javax.swing.JPanel();
         cmdAddVoiceMemo = new javax.swing.JButton();
+        cmdAssistantGenerate = new javax.swing.JButton();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel15 = new javax.swing.JPanel();
@@ -2914,6 +2917,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdAssistantGenerate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdAssistantGenerate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdAssistantGenerateMouseReleased(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -2931,7 +2941,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 74, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
@@ -2940,8 +2950,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAddNote)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDrebis))
-                    .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE))
+                        .add(cmdDrebis)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdAssistantGenerate))
+                    .add(splitDocumentsMain))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -2957,7 +2969,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(lblDocumentHits)
                         .add(cmdClearSearch)
                         .add(cmdAddNote)
-                        .add(cmdAddVoiceMemo))
+                        .add(cmdAddVoiceMemo)
+                        .add(cmdAssistantGenerate))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 781, Short.MAX_VALUE)
@@ -6937,6 +6950,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdDuplicateAccountEntryActionPerformed
 
+    private void cmdAssistantGenerateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantGenerateMouseReleased
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            this.popAssistantNoContext.removeAll();
+//            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
+//            ingo.populateMenu(this.popAssistantNoContext, capabilitiesGenerate2, (AssistantInputAdapter)this);
+            
+            JMenuItem mi = new JMenuItem();
+            mi.setText("Text generieren (Diktat, Prompting)");
+            //mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+            mi.addActionListener((ActionEvent e) -> {
+                AssistantGenerateDialog dlg = new AssistantGenerateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                dlg.setVisible(true);
+            });
+            this.popAssistantNoContext.add(mi);
+            this.popAssistantNoContext.show(this.cmdAssistantGenerate, evt.getX(), evt.getY());
+            
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAssistantGenerateMouseReleased
+
     public void exportSelectedDocumentsAsPdf() {
         
 
@@ -7484,6 +7520,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdAddHistory;
     private javax.swing.JButton cmdAddNote;
     private javax.swing.JButton cmdAddVoiceMemo;
+    private javax.swing.JButton cmdAssistantGenerate;
     protected javax.swing.JButton cmdBackToSearch;
     private javax.swing.JButton cmdClearSearch;
     private javax.swing.JButton cmdCopyCaseNumber;
@@ -7657,6 +7694,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlMessagesView;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPanel pnlTimesheets;
+    private javax.swing.JPopupMenu popAssistantNoContext;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popDocumentFavorites;
     private javax.swing.JPopupMenu popDocumentTagFilter;

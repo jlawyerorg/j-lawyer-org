@@ -677,6 +677,9 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -702,9 +705,9 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class AssistantDictateDialog extends javax.swing.JDialog implements AssistantFlowAdapter {
+public class AssistantGenerateDialog extends javax.swing.JDialog implements AssistantFlowAdapter {
 
-    private static final Logger log = Logger.getLogger(AssistantDictateDialog.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantGenerateDialog.class.getName());
 
     private TargetDataLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
@@ -718,7 +721,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
 
     private AiCapability transcribeCapability = null;
     private AssistantConfig transcribeConfig = null;
-    
+
     private AiCapability generateCapability = null;
     private AssistantConfig generateConfig = null;
 
@@ -728,7 +731,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
      * @param parent
      * @param modal
      */
-    public AssistantDictateDialog(java.awt.Frame parent, boolean modal) {
+    public AssistantGenerateDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -770,7 +773,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         try {
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
             if (capabilities.isEmpty()) {
@@ -800,7 +803,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
                 this.pnlParameters.add(tf);
             }
         }
-        
+
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
@@ -846,7 +849,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
 
         popAssistant = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
-        cmdAddDocument = new javax.swing.JButton();
+        cmdCopy = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         cmdRecord = new javax.swing.JButton();
@@ -864,7 +867,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         taResult = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Text generieren (Diktat, Prompting)");
+        setTitle("Texte generieren");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
@@ -872,7 +875,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         });
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Verwerfen");
+        cmdCancel.setText("Schliessen");
         cmdCancel.setToolTipText("");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -880,12 +883,12 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
             }
         });
 
-        cmdAddDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdAddDocument.setText("Aufnahme speichern");
-        cmdAddDocument.setToolTipText("");
-        cmdAddDocument.addActionListener(new java.awt.event.ActionListener() {
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdCopy.setText("Kopieren");
+        cmdCopy.setToolTipText("");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddDocumentActionPerformed(evt);
+                cmdCopyActionPerformed(evt);
             }
         });
 
@@ -894,7 +897,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Assistent Ingo: Diktieren und Übersetzen");
+        jLabel1.setText("Diktieren / Text generieren / Übersetzen");
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -925,6 +928,11 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         cmdTranslate.setText("Übersetzen");
+        cmdTranslate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranslateActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout pnlParametersLayout = new org.jdesktop.layout.GroupLayout(pnlParameters);
         pnlParameters.setLayout(pnlParametersLayout);
@@ -1015,11 +1023,10 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdTranslate))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdAddDocument)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdCancel))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE))
+                        .add(cmdCancel)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdCopy))
+                    .add(jSplitPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1040,7 +1047,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
-                    .add(cmdAddDocument))
+                    .add(cmdCopy))
                 .addContainerGap())
         );
 
@@ -1053,22 +1060,15 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private void cmdAddDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddDocumentActionPerformed
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
 
-//        try {
-//
-//            if (!this.memoParts.isEmpty()) {
-//
-//                this.memoBytes = mergeWAVs(this.memoParts);
-//
-//            }
-//        } catch (Exception e) {
-//            log.error(e);
-//
-//        }
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.taResult.getText());
+        clipboard.setContents(strSel, null);
         this.setVisible(false);
         this.dispose();
-    }//GEN-LAST:event_cmdAddDocumentActionPerformed
+    }//GEN-LAST:event_cmdCopyActionPerformed
 
     private byte[] generateWAV(byte[] audio) throws IOException, UnsupportedAudioFileException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -1142,8 +1142,8 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
             this.popAssistant.removeAll();
-            List<AssistantPrompt> customPrompts=ingo.getCustomPrompts(AiCapability.REQUESTTYPE_GENERATE);
-            for(AssistantPrompt p: customPrompts) {
+            List<AssistantPrompt> customPrompts = ingo.getCustomPrompts(AiCapability.REQUESTTYPE_GENERATE);
+            for (AssistantPrompt p : customPrompts) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(p.getName());
                 mi.addActionListener((ActionEvent e) -> {
@@ -1151,7 +1151,7 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
                 });
                 popAssistant.add(mi);
             }
-            
+
             this.popAssistant.show(this.cmdPrompt, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -1224,18 +1224,88 @@ public class AssistantDictateDialog extends javax.swing.JDialog implements Assis
         }
     }//GEN-LAST:event_cmdExecutePromptActionPerformed
 
+    private void cmdTranslateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranslateActionPerformed
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (translateCapability.getParameters() != null && !translateCapability.getParameters().isEmpty()) {
+                params = getParameters(translateCapability);
+            }
+
+            final List<ParameterData> fParams = params;
+
+            this.progress.setIndeterminate(true);
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    List<InputData> inputs = new ArrayList<>();
+                    InputData i = new InputData();
+                    i.setType(InputData.TYPE_STRING);
+                    i.setBase64(false);
+                    i.setStringData(taResult.getText());
+                    inputs.add(i);
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getModelType(), taPrompt.getText(), fParams, inputs);
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI request", t);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Task completion actions
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        if (status.getStatus().equalsIgnoreCase("error")) {
+                            taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                }
+
+                            }
+                            taResult.insert(resultString.toString(), taResult.getCaretPosition());
+                        }
+                    }
+
+                    progress.setIndeterminate(false);
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdTranslateActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AssistantDictateDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new AssistantGenerateDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbDevices;
-    private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdExecutePrompt;
     private javax.swing.JButton cmdPrompt;
     private javax.swing.JButton cmdRecord;
