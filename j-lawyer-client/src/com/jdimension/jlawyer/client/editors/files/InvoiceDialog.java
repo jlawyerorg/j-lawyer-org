@@ -1200,7 +1200,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         cmdNavigateToDocumentXml = new javax.swing.JButton();
         jLabel16 = new javax.swing.JLabel();
         cmdCreateInvoiceDocumentXml = new javax.swing.JButton();
-        Hochladen = new javax.swing.JButton();
+        cmdUploadInvoiceDocumentXml = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         tblPayments = new javax.swing.JTable();
@@ -1758,8 +1758,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         });
 
-        Hochladen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
-        Hochladen.setText("Hochladen");
+        cmdUploadInvoiceDocumentXml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
+        cmdUploadInvoiceDocumentXml.setText("Hochladen");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1796,7 +1796,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                         .addGap(3, 3, 3)
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(cmdCreateInvoiceDocumentXml)
-                                            .addComponent(Hochladen))))))
+                                            .addComponent(cmdUploadInvoiceDocumentXml))))))
                         .addGap(0, 597, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
@@ -1826,7 +1826,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(cmdCreateInvoiceDocumentXml)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Hochladen)
+                .addComponent(cmdUploadInvoiceDocumentXml)
                 .addContainerGap())
         );
 
@@ -2792,7 +2792,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton Hochladen;
     private javax.swing.JCheckBox chkTaxes;
     private javax.swing.JComboBox<String> cmbCurrency;
     private javax.swing.JComboBox<String> cmbInvoicePool;
@@ -2819,6 +2818,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JButton cmdTimesheetPositions;
     private javax.swing.JButton cmdUploadInvoiceDocumentClassic;
+    private javax.swing.JButton cmdUploadInvoiceDocumentXml;
     private javax.swing.JButton cmdViewDocumentClassic;
     private javax.swing.JButton cmdViewDocumentXml;
     private javax.swing.JTextField dtCreated;

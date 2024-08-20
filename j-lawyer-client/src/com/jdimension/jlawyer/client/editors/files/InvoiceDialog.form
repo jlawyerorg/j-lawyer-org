@@ -1014,7 +1014,7 @@
                                               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Component id="cmdCreateInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="Hochladen" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="cmdUploadInvoiceDocumentXml" alignment="0" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                       </Group>
@@ -1057,7 +1057,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="cmdCreateInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="Hochladen" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdUploadInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -1176,7 +1176,7 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCreateInvoiceDocumentXmlActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="Hochladen">
+            <Component class="javax.swing.JButton" name="cmdUploadInvoiceDocumentXml">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons16/material/baseline_file_upload_black_48dp.png"/>
