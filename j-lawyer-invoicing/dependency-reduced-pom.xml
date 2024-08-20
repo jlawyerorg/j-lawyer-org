@@ -54,6 +54,7 @@
                   <excludes>
                     <exclude>org.jlawyer.**</exclude>
                     <exclude>org.xml.**</exclude>
+                    <exclude>org.mustangproject.**</exclude>
                   </excludes>
                 </relocation>
               </relocations>

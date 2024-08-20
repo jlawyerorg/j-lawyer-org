@@ -745,9 +745,14 @@ public class Invoice implements Serializable {
     @Column(name = "small_business")
     protected boolean smallBusiness=true;
     
+    // invoice recipient
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     protected AddressBean contact;
+    
+    // invoice sender
+    @Column(name = "sender_id")
+    private String sender;
     
     @Column(name = "total")
     protected float total=0f;
@@ -759,12 +764,16 @@ public class Invoice implements Serializable {
     @OneToOne(fetch = FetchType.EAGER)
     protected ArchiveFileDocumentsBean invoiceDocument;
     
+    @JoinColumn(name = "einvoice_document", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    private ArchiveFileDocumentsBean electronicInvoiceDocument;
+    
     @Column(name = "currency")
     protected String currency="EUR";
     
     @Column(name = "last_pool_id")
     protected String lastPoolId;
-
+    
     public Invoice() {
     }
 
@@ -1098,6 +1107,34 @@ public class Invoice implements Serializable {
      */
     public void setTotalGross(float totalGross) {
         this.totalGross = totalGross;
+    }
+
+    /**
+     * @return the sender
+     */
+    public String getSender() {
+        return sender;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    /**
+     * @return the electronicInvoiceDocument
+     */
+    public ArchiveFileDocumentsBean getElectronicInvoiceDocument() {
+        return electronicInvoiceDocument;
+    }
+
+    /**
+     * @param electronicInvoiceDocument the electronicInvoiceDocument to set
+     */
+    public void setElectronicInvoiceDocument(ArchiveFileDocumentsBean electronicInvoiceDocument) {
+        this.electronicInvoiceDocument = electronicInvoiceDocument;
     }
     
 }
