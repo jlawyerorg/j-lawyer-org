@@ -6951,15 +6951,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdDuplicateAccountEntryActionPerformed
 
     private void cmdAssistantGenerateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantGenerateMouseReleased
-        AssistantAccess ingo = AssistantAccess.getInstance();
         try {
             this.popAssistantNoContext.removeAll();
-//            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
-//            ingo.populateMenu(this.popAssistantNoContext, capabilitiesGenerate2, (AssistantInputAdapter)this);
             
             JMenuItem mi = new JMenuItem();
             mi.setText("Text generieren (Diktat, Prompting)");
-            //mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
             mi.addActionListener((ActionEvent e) -> {
                 AssistantGenerateDialog dlg = new AssistantGenerateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setVisible(true);
