@@ -1225,7 +1225,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     }//GEN-LAST:event_cmdExecutePromptActionPerformed
 
     private void cmdTranslateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranslateActionPerformed
-        AssistantAccess ingo = AssistantAccess.getInstance();
         try {
 
             List<ParameterData> params = new ArrayList<>();
