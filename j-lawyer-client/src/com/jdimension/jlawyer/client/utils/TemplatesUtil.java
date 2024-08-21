@@ -661,7 +661,7 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail;
+package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import java.util.ArrayList;
@@ -673,7 +673,7 @@ import java.util.List;
  *
  * @author jens
  */
-public class EmailTemplateAccess {
+public class TemplatesUtil {
     
     public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders, Collection<String> formPlaceHolders) {
         ArrayList<String> result=new ArrayList<>();

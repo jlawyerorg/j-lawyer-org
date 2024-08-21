@@ -733,6 +733,7 @@ public class UserSettingsKeys {
     // for new bulk save dialog
     public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
     public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
+    public static final String CONF_BULKSAVE_LASTNAMETEMPLATE_PREFIX="user.bulksave.lastnametpl.";
     
     // invoice related
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";

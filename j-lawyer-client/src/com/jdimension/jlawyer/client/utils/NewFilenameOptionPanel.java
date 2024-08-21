@@ -726,7 +726,7 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addGap(0, 414, Short.MAX_VALUE))
+                        .addGap(0, 480, Short.MAX_VALUE))
                     .addComponent(txtNewName)))
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)

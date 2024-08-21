@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -710,63 +711,67 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class BulkSaveDialog extends javax.swing.JDialog {
-    
-    public static final String TYPE_MAIL="mail";
-    public static final String TYPE_BEA="bea";
-    public static final String TYPE_SCAN="scan";
-    public static final String TYPE_DREBIS="drebis";
-    
+
+    public static final String TYPE_MAIL = "mail";
+    public static final String TYPE_BEA = "bea";
+    public static final String TYPE_SCAN = "scan";
+    public static final String TYPE_DREBIS = "drebis";
+
     private static final Logger log = Logger.getLogger(BulkSaveDialog.class.getName());
-    
-    private String sourceType=TYPE_MAIL;
-    
-    protected BulkSaveEntryProcessor entryProcessor=null;
-    
+
+    private String sourceType = TYPE_MAIL;
+
+    protected BulkSaveEntryProcessor entryProcessor = null;
+
     protected ArchiveFileBean selectedCase = null;
     protected CaseFolder caseFolder = null;
     protected CaseFolder rootFolder = null;
+    protected DocumentNameTemplate nameTemplate=null;
+    protected List<DocumentNameTemplate> allNameTemplates=new ArrayList<>();
 
     private ArrayList<BulkSaveEntry> entryList = new ArrayList<>();
 
     private ArrayList<String> existingFileNames = new ArrayList<>();
+
+    protected boolean failedOrCancelled = true;
     
-    protected boolean failedOrCancelled=true;
 
     /**
      * Creates new form BulkSaveDialog
+     *
      * @param type
      * @param parent
      * @param modal
      */
     public BulkSaveDialog(String type, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
-        this.sourceType=type;
-        
+        this.sourceType = type;
+
         initComponents();
-        
+
         this.lblByFileTypes.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
 
         pnlEntries.setLayout(new javax.swing.BoxLayout(pnlEntries, javax.swing.BoxLayout.Y_AXIS));
 
         ComponentUtils.restoreDialogSize(this);
 
-        this.initializeTags();
+        this.initializeOptions();
 
         this.extensionsPanel.setLayout(new WrapLayout());
-        
+
         this.cmdCommonTags.setEnabled(false);
         this.cmdCommonFolder.setEnabled(false);
         this.cmdTagAll.setEnabled(false);
         this.cmdFolderAll.setEnabled(false);
-        
+
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
     }
 
-    private void initializeTags() {
+    private void initializeOptions() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
-            
+
             String[] lastBulkSaveCaseTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, new String[]{""});
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<>();
@@ -774,7 +779,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 allCaseTagsAsString.add(aog.getValue());
             }
 
-            this.buildPopup(this.cmdCaseTags, this.popCaseTags, allCaseTagsAsString, lastBulkSaveCaseTags, UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, this.lblCaseTags);
+            this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, allCaseTagsAsString, lastBulkSaveCaseTags, UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, this.lblCaseTags);
             lblCaseTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCaseTags));
 
             String[] lastBulkSaveDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, new String[]{""});
@@ -784,16 +789,47 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 allDocTagsAsString.add(aog.getValue());
             }
 
-            this.buildPopup(this.cmdCommonTags, this.popCommonDocumentTags, allDocTagsAsString, lastBulkSaveDocumentTags, UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, this.lblCommonTags);
+            this.buildCheckboxPopup(this.cmdCommonTags, this.popCommonDocumentTags, allDocTagsAsString, lastBulkSaveDocumentTags, UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, this.lblCommonTags);
             lblCommonTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCommonDocumentTags));
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
         }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.allNameTemplates = locator.lookupSystemManagementRemote().getDocumentNameTemplates();
+            DocumentNameTemplate defaultNameTemplate = locator.lookupSystemManagementRemote().getDefaultDocumentNameTemplate();
+
+            this.popNameTemplates.removeAll();
+
+            String lastNameTemplate=StringUtils.nonEmpty(UserSettings.getInstance().getSetting(UserSettings.CONF_BULKSAVE_LASTNAMETEMPLATE_PREFIX + this.sourceType, defaultNameTemplate.getDisplayName()));
+            for (DocumentNameTemplate t : allNameTemplates) {
+                if(lastNameTemplate.equals(t.getDisplayName()))
+                    this.nameTemplate=t;
+                
+                JMenuItem mi = new JMenuItem(t.getDisplayName());
+                mi.addActionListener((ActionEvent e) -> {
+                    this.lblCommonNameTemplate.setText(t.getDisplayName());
+                    nameTemplate=t;
+                    UserSettings.getInstance().setSetting(UserSettings.CONF_BULKSAVE_LASTNAMETEMPLATE_PREFIX + this.sourceType, t.getDisplayName());
+                });
+                popNameTemplates.add(mi);
+
+            }
+            if(this.nameTemplate==null)
+                this.nameTemplate=defaultNameTemplate;
+            
+            this.lblCommonNameTemplate.setText(this.nameTemplate.getDisplayName());
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
+        }
     }
 
-    private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey, JLabel allValues) {
+    private void buildCheckboxPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey, JLabel allValues) {
 
         if (tagsInUse == null) {
             tagsInUse = new ArrayList<>();
@@ -855,6 +891,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         popCaseTags = new javax.swing.JPopupMenu();
         popCommonDocumentTags = new javax.swing.JPopupMenu();
         popCommonFolder = new javax.swing.JPopupMenu();
+        popNameTemplates = new javax.swing.JPopupMenu();
         lblTotalSize = new javax.swing.JLabel();
         lblFileCount = new javax.swing.JLabel();
         lblCommonTags = new javax.swing.JLabel();
@@ -875,6 +912,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         cmdCancel = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
         lblByFileTypes = new javax.swing.JLabel();
+        cmdCommonNameTemplate = new javax.swing.JButton();
+        lblCommonNameTemplate = new javax.swing.JLabel();
+        cmdNameTemplateAll = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dateien zur Akte speichern");
@@ -991,6 +1031,24 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         lblByFileTypes.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblByFileTypes.setText("Auswahl nach Dateitypen:");
 
+        cmdCommonNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdCommonNameTemplate.setToolTipText("Dateinamenschema");
+        cmdCommonNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCommonNameTemplateMousePressed(evt);
+            }
+        });
+
+        lblCommonNameTemplate.setText("Dateinamens-Template");
+
+        cmdNameTemplateAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
+        cmdNameTemplateAll.setToolTipText("für alle zum Speichern markierten Dateien übernehmen");
+        cmdNameTemplateAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNameTemplateAllActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -999,9 +1057,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSeparator2)
-                    .addComponent(jScrollPane2)
                     .addComponent(jSeparator1)
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
@@ -1021,17 +1076,26 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                         .addComponent(lblCommonFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 644, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdFolderAll))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdCommonNameTemplate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdNameTemplateAll))
+                    .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator2)
+                    .addComponent(jScrollPane2)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(cmdSave)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCancel))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(lblFileCount)
                                 .addGap(18, 18, 18)
-                                .addComponent(lblTotalSize, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addComponent(lblTotalSize, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(cmdSave)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCancel)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1056,6 +1120,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                     .addComponent(lblCommonFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdFolderAll))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE)
+                    .addComponent(cmdNameTemplateAll)
+                    .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblByFileTypes)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1065,8 +1134,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblTotalSize)
@@ -1086,45 +1155,47 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Unable to unarchive case " + selectedCase.getFileNumber(), ex);
         }
-        
+
         Thread worker = new Thread(() -> {
             try {
-                
+
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                
-                List<String> caseTags=ComponentUtils.getSelectedPopupMenuItems(this.popCaseTags);
-                for(String selCaseTag: caseTags) {
-                    ArchiveFileTagsBean tb=new ArchiveFileTagsBean();
+
+                List<String> caseTags = ComponentUtils.getSelectedPopupMenuItems(this.popCaseTags);
+                for (String selCaseTag : caseTags) {
+                    ArchiveFileTagsBean tb = new ArchiveFileTagsBean();
                     tb.setArchiveFileKey(selectedCase);
                     tb.setTagName(selCaseTag);
                     afs.setTag(this.selectedCase.getId(), tb, true);
                 }
-                
+
                 int fails = 0;
                 for (BulkSaveEntry e : entryList) {
                     if (e.isSelected()) {
                         try {
-                            
+
                             SwingUtilities.invokeAndWait(() -> {
                                 e.setDownloadProgress();
                             });
-                            
-                            if(getEntryProcessor()!=null && getEntryProcessor().isPreSaveProcessor())
+
+                            if (getEntryProcessor() != null && getEntryProcessor().isPreSaveProcessor()) {
                                 getEntryProcessor().preSave(e, entryList);
-                            
-                            String newDocId=null;
-                            if(getEntryProcessor()!=null && getEntryProcessor().isSaveProcessor()) {
-                                newDocId=getEntryProcessor().save(e, selectedCase);
+                            }
+
+                            String newDocId = null;
+                            if (getEntryProcessor() != null && getEntryProcessor().isSaveProcessor()) {
+                                newDocId = getEntryProcessor().save(e, selectedCase);
                             } else {
                                 ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "", null);
-                                newDocId=newlyAddedDocument.getId();
+                                newDocId = newlyAddedDocument.getId();
                             }
-                            
-                            if(getEntryProcessor()!=null && getEntryProcessor().isPostSaveProcessor())
+
+                            if (getEntryProcessor() != null && getEntryProcessor().isPostSaveProcessor()) {
                                 getEntryProcessor().postSave(e);
-                            
+                            }
+
                             if (e.getDocumentDate() != null) {
                                 afs.setDocumentDate(newDocId, e.getDocumentDate());
                             }
@@ -1133,11 +1204,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                                 docList.add(newDocId);
                                 afs.moveDocumentsToFolder(docList, e.getSelectedCaseFolder().getId());
                             }
-                            
-                            if(e.isFavorite()) {
+
+                            if (e.isFavorite()) {
                                 afs.setDocumentFavorite(newDocId, true);
                             }
-                            
+
                             List<String> tags = e.getDocumentTags();
                             for (String docTag : tags) {
                                 afs.setDocumentTag(newDocId, new DocumentTagsBean(newDocId, docTag), true);
@@ -1146,36 +1217,36 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                                 e.setDownloadSuccess(true, null);
                                 e.setSelected(false);
                             });
-                            
+
                         } catch (Exception ex) {
-                            failedOrCancelled=true;
-                            fails = fails+1;
+                            failedOrCancelled = true;
+                            fails = fails + 1;
                             log.error(ex);
                             SwingUtilities.invokeAndWait(() -> {
                                 e.setDownloadSuccess(false, ex.getMessage());
                             });
-                            
+
                         }
-                        
+
                     }
                 }
-                
-                if (fails==0) {
-                    this.failedOrCancelled=false;
+
+                if (fails == 0) {
+                    this.failedOrCancelled = false;
                     try {
                         Thread.sleep(1500);
                     } catch (Exception ex) {
-                        
+
                     }
                     SwingUtilities.invokeAndWait(() -> {
                         setVisible(false);
                         dispose();
                     });
-                    
+
                 } else {
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "" + fails + " Dokument(e) konnten nicht gespeichert werden - bitte prüfen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING);
                 }
-                
+
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new CasesChangedEvent());
             } catch (Exception ex) {
@@ -1196,7 +1267,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdFolderAllActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.failedOrCancelled=true;
+        this.failedOrCancelled = true;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
@@ -1226,6 +1297,18 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         this.popCommonFolder.show(this.cmdCommonFolder, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCommonFolderMousePressed
 
+    private void cmdCommonNameTemplateMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonNameTemplateMousePressed
+        this.popNameTemplates.show(this.cmdCommonFolder, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdCommonNameTemplateMousePressed
+
+    private void cmdNameTemplateAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNameTemplateAllActionPerformed
+        for (BulkSaveEntry e : this.entryList) {
+            if (e.isSelected()) {
+                e.setNameTemplate(this.nameTemplate);
+            }
+        }
+    }//GEN-LAST:event_cmdNameTemplateAllActionPerformed
+
     private void rebuildExtensionsPanel() {
         this.extensionsPanel.removeAll();
         ArrayList<String> extensions = new ArrayList<>();
@@ -1245,7 +1328,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             tb.setUnselectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_download_off_black_48dp.png")));
             tb.addActionListener((ActionEvent arg0) -> {
                 for (BulkSaveEntry e : this.entryList) {
-                    if(tb.isSelected()) {
+                    if (tb.isSelected()) {
                         tb.setToolTipText("Dateien mit Endung ." + extString + " werden gespeichert");
                     } else {
                         tb.setToolTipText("Dateien mit Endung ." + extString + " werden nicht gespeichert");
@@ -1266,15 +1349,17 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags));
         e.selectDocumentTags(ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags));
         e.setCaseFolder(this.rootFolder, caseFolder);
+        e.setAllNameTemplates(allNameTemplates);
+        e.setNameTemplate(this.nameTemplate);
 
         this.updateTotals();
         this.rebuildExtensionsPanel();
         this.checkForDuplicateFileNames();
-        
-        this.cmdCommonTags.setEnabled(this.entryList.size()>0);
-        this.cmdCommonFolder.setEnabled(this.entryList.size()>0);
-        this.cmdTagAll.setEnabled(this.entryList.size()>0);
-        this.cmdFolderAll.setEnabled(this.entryList.size()>0);
+
+        this.cmdCommonTags.setEnabled(!this.entryList.isEmpty());
+        this.cmdCommonFolder.setEnabled(!this.entryList.isEmpty());
+        this.cmdTagAll.setEnabled(!this.entryList.isEmpty());
+        this.cmdFolderAll.setEnabled(!this.entryList.isEmpty());
     }
 
     public void updateTotals() {
@@ -1283,8 +1368,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         for (BulkSaveEntry e : this.entryList) {
             if (e.isSelected()) {
                 files++;
-                if(e.getDocumentBytes()!=null)
+                if (e.getDocumentBytes() != null) {
                     totalSize += e.getDocumentBytes().length;
+                }
             }
         }
         this.lblFileCount.setText(files + " / " + this.entryList.size() + " Datei(en)");
@@ -1321,20 +1407,20 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
             FlatLaf.registerCustomDefaultsSource("themes");
-            
+
             FlatInterFont.install();
             FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
             FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
             FlatLaf.setPreferredSemiboldFontFamily(FlatInterFont.FAMILY_SEMIBOLD);
-            
+
             FlatIntelliJLaf.setup();
-            
+
             BulkSaveDialog dialog = new BulkSaveDialog(TYPE_MAIL, new javax.swing.JFrame(), true);
-            
+
             for (int i = 0; i < 10; i++) {
                 dialog.addEntry(new BulkSaveEntry());
             }
-            
+
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1349,8 +1435,10 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCaseTags;
     private javax.swing.JButton cmdCommonFolder;
+    private javax.swing.JButton cmdCommonNameTemplate;
     private javax.swing.JButton cmdCommonTags;
     private javax.swing.JButton cmdFolderAll;
+    private javax.swing.JButton cmdNameTemplateAll;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdTagAll;
     private javax.swing.JPanel extensionsPanel;
@@ -1362,6 +1450,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
     private javax.swing.JLabel lblCommonFolder;
+    private javax.swing.JLabel lblCommonNameTemplate;
     private javax.swing.JLabel lblCommonTags;
     private javax.swing.JLabel lblFileCount;
     private javax.swing.JLabel lblTotalSize;
@@ -1369,6 +1458,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private javax.swing.JPopupMenu popCaseTags;
     private javax.swing.JPopupMenu popCommonDocumentTags;
     private javax.swing.JPopupMenu popCommonFolder;
+    private javax.swing.JPopupMenu popNameTemplates;
     // End of variables declaration//GEN-END:variables
 
     /**

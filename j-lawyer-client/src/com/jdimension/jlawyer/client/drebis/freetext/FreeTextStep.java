@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.client.drebis.freetext;
 
 import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
-import com.jdimension.jlawyer.client.mail.EmailTemplateAccess;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -940,7 +940,7 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, formPlaceHolders);
+                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, formPlaceHolders);
                 HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
@@ -968,14 +968,14 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
                     partiesTriplets.add(triplet);
                 }
                 
-                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
+                placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
                 ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null);
 
-                String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues);
+                String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
                 int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                 if (cursorIndex > -1) {
                     t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
