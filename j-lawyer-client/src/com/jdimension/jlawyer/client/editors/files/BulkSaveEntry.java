@@ -668,11 +668,14 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import java.awt.Color;
 import java.awt.Component;
@@ -914,7 +917,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.popFolder.show(this.cmdFolder, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdFolderMousePressed
 
-    private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
+    private void fileNameChanged() {
         this.documentFilenameNew=this.txtFileNameNew.getText();
         String oldExt=FileUtils.getExtension(this.documentFilename);
         String newExt=FileUtils.getExtension(this.documentFilenameNew);
@@ -936,7 +939,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 this.txtFileNameNew.setCaretPosition(caretPosition);
         }
         
-        this.saveDialog.checkForDuplicateFileNames();
+        if(this.saveDialog!=null)
+            this.saveDialog.checkForDuplicateFileNames();
+    }
+    
+    private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
+        this.fileNameChanged();
     }//GEN-LAST:event_txtFileNameNewKeyReleased
 
     private void lblFileNameOrgMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameOrgMouseEntered
@@ -1129,9 +1137,10 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     /**
      * @param documentFilenameNew the documentFilenameNew to set
      */
-    public void setDocumentFilenameNew(String documentFilenameNew) {
+    private void setDocumentFilenameNew(String documentFilenameNew) {
         this.documentFilenameNew = documentFilenameNew;
         this.txtFileNameNew.setText(documentFilenameNew);
+        this.fileNameChanged();
     }
     
     public void setDocumentFilenameNewOutline(String flatLafOutline) {
@@ -1252,7 +1261,18 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      */
     public void setNameTemplate(DocumentNameTemplate nameTemplate) {
         this.nameTemplate = nameTemplate;
-        // TODO: apply name template
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            if(this.documentDate==null)
+                this.documentDate=new Date();
+            this.setDocumentFilenameNew(locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, nameTemplate));
+
+        } catch (Exception ex) {
+            log.error("Error getting new document name", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Anwenden der Dateinamensvorschrift", "Dateinamen");
+        }
     }
     
     public void setAllNameTemplates(List<DocumentNameTemplate> allTemplates) {

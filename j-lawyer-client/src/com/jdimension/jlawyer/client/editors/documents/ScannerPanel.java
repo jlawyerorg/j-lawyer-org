@@ -1488,9 +1488,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     }
                     newName = FileUtils.sanitizeFileName(newName);
 
-                    bulkEntry.setDocumentFilename(fileName);
-                    bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(new Date()) + newName);
-
+                    bulkEntry.setDocumentFilename(newName);
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 } catch (Exception ex) {

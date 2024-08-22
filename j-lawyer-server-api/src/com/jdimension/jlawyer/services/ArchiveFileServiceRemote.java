@@ -717,6 +717,8 @@ public interface ArchiveFileServiceRemote {
 
     byte[] getDocumentContent(String id) throws Exception;
     
+    String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
+    
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
 
     Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
