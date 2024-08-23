@@ -8,6 +8,8 @@ import java.io.Serializable;
 
 public class Prompt implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     private String defaultPrompt;
     
     private long maxTokens=Long.MAX_VALUE;

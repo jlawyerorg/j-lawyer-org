@@ -9,6 +9,8 @@ import java.io.Serializable;
 
 public class ParameterData implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     private String id;
     private String value;
 

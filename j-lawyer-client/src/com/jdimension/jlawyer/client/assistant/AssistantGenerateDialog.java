@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
@@ -1171,6 +1172,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
             final List<ParameterData> fParams = params;
 
             this.progress.setIndeterminate(true);
+            
+            String taResultString=this.taResult.getText();
+            int insertPosition=this.taResult.getCaretPosition();
 
             AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
 
@@ -1185,7 +1189,27 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                         AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(generateConfig, generateCapability.getRequestType(), generateCapability.getModelType(), taPrompt.getText(), fParams, inputs);
-                        resultRef.set(status);
+                        if (status.isAsync()) {
+                            Thread.sleep(1000);
+                            // poll until final result is available
+                            AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(generateConfig, status.getRequestId());
+                            while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
+                                Thread.sleep(1000);
+                                res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(generateConfig, status.getRequestId());
+                                StringBuilder resultString = new StringBuilder();
+                                for (OutputData o : res.getOutputData()) {
+                                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                        resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                    }
+
+                                }
+                                taResult.setText(taResultString);
+                                taResult.insert(resultString.toString(), insertPosition);
+                            }
+                            status.setResponse(res);
+                        } else {
+                            resultRef.set(status);
+                        }
 
                     } catch (Throwable t) {
                         log.error("Error processing AI request", t);

@@ -671,7 +671,6 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
-import com.jdimension.jlawyer.client.assistant.AssistantResultDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache;
@@ -820,7 +819,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         addCopyFunctionality(lblTo);
         addCopyFunctionality(lblCC);
         addCopyFunctionality(lblBCC);
-        
+
         WebViewRegister.getInstance();
 
         Platform.setImplicitExit(false);
@@ -918,7 +917,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         fxContainer.add(jfxPanel);
 
     }
-    
+
     // Method to add copy functionality to JLabels
     private void addCopyFunctionality(JLabel label) {
         label.addMouseListener(new MouseAdapter() {
@@ -1380,11 +1379,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             htmlContent = msg.getConvertedBodyHTML();
         }
 
-        if(!htmlContent.toLowerCase().contains("<html") && !htmlContent.contains("/>") && !htmlContent.toLowerCase().contains("<p")) {
+        if (!htmlContent.toLowerCase().contains("<html") && !htmlContent.contains("/>") && !htmlContent.toLowerCase().contains("<p")) {
             // getConvertedBodyHTML seems to return plain text in some cases
-            htmlContent=null;
+            htmlContent = null;
         }
-        
+
         if (htmlContent != null) {
 
             final String fxHtml = htmlContent;
@@ -2005,15 +2004,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         try {
             this.popAssistant.removeAll();
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this);
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this);
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this);
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter) this);
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter) this);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -2122,7 +2121,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 WebViewRegister reg = WebViewRegister.getInstance();
                 WebView webView1 = reg.get(webViewId);
 
-    Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
+                Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
                         + "    var text = \"\";\n"
                         + "    if (window.getSelection) {\n"
                         + "        text = window.getSelection().toString();\n"
@@ -2170,7 +2169,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public void processOutput(AiCapability c, AiRequestStatus status) {
 //        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
 //        dlg.setVisible(true);
-        
+
         String prependText = "";
         if (status != null) {
             if (status.getStatus().equalsIgnoreCase("error")) {
@@ -2187,7 +2186,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
-        SendEmailDialog dlg=null;
+        SendEmailDialog dlg = null;
         if (this.emlMsgContainer != null) {
             Message m = emlMsgContainer.getMessage();
             dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
@@ -2197,8 +2196,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         dlg.setArchiveFile(caseContext, null);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
-        
-        
+
     }
 
     @Override

@@ -8,6 +8,8 @@ import java.io.Serializable;
 
 public class Input implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     private String id;
 
     // Getters and setters with XmlElement annotations

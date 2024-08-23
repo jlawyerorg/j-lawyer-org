@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class AiCapability implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     public static final String REQUESTTYPE_TRANSCRIBE="transcribe";
     public static final String REQUESTTYPE_TRANSLATE="translate";
     public static final String REQUESTTYPE_SUMMARIZE="summarize";

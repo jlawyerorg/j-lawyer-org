@@ -782,11 +782,12 @@ public class AssistantAPI {
             for (int i = 0; i < inputs.size(); i++) {
                 jsonQuery.append("{");
                 jsonQuery.append("\"type\": \"").append(Jsoner.escape(inputs.get(i).getType())).append("\",");
-                if(inputs.get(i).getFileName()!=null)
+                if (inputs.get(i).getFileName() != null) {
                     jsonQuery.append("\"fileName\": \"").append(Jsoner.escape(inputs.get(i).getFileName())).append("\",");
+                }
                 jsonQuery.append("\"base64Encoded\": ").append("" + inputs.get(i).isBase64()).append(",");
                 if (inputs.get(i).isBase64()) {
-                    String b64=null;
+                    String b64 = null;
                     try {
                         Base64 encoder = new Base64();
                         b64 = encoder.encode(inputs.get(i).getData());
@@ -819,67 +820,71 @@ public class AssistantAPI {
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
-            AiRequestStatus status=new AiRequestStatus();
+            AiRequestStatus status = new AiRequestStatus();
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
                 JsonKey key = Jsoner.mintJsonKey("requestId", null);
                 status.setRequestId(result.getString(key));
-                
+
+                key = Jsoner.mintJsonKey("async", null);
+                status.setAsync(result.getBoolean(key));
+
                 key = Jsoner.mintJsonKey("status", null);
                 status.setStatus(result.getString(key));
-                
+
                 key = Jsoner.mintJsonKey("statusDetails", null);
                 status.setStatusDetails(result.getString(key));
-                
+
                 key = Jsoner.mintJsonKey("statusDetails", null);
                 status.setStatusDetails(result.getString(key));
-                
-                AiResponse res=new AiResponse();
-                status.setResponse(res);
-                JsonObject r=(JsonObject)result.get("response");
-                
-                key = Jsoner.mintJsonKey("prompt", null);
-                status.getResponse().setPrompt(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("requestType", null);
-                status.getResponse().setRequestType(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("modelType", null);
-                status.getResponse().setModelType(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("requestId", null);
-                status.getResponse().setRequestId(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("status", null);
-                status.getResponse().setStatus(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("statusMessage", null);
-                status.getResponse().setStatusMessage(r.getString(key));
-                
-                key = Jsoner.mintJsonKey("progress", null);
-                status.getResponse().setProgress(r.getFloat(key));
-                
-                key = Jsoner.mintJsonKey("executionMillis", null);
-                status.getResponse().setExecutionMillis(r.getLong(key));
-                
-                JsonArray o=(JsonArray)r.get("outputData");
-                for(Object outputObj: o) {
-                    JsonObject oo=(JsonObject)outputObj;
-                    OutputData od=new OutputData();
-                    od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
-                    if(od.isBase64Encoded()) {
-                        String b64=oo.getString(Jsoner.mintJsonKey("data", null));
-                        
-                        od.setData(new Base64().decode(b64));
-                    } else {
-                        od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+
+                AiResponse res = new AiResponse();
+                JsonObject r = (JsonObject) result.get("response");
+
+                if (r != null) {
+                    key = Jsoner.mintJsonKey("prompt", null);
+                    res.setPrompt(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("requestType", null);
+                    res.setRequestType(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("modelType", null);
+                    res.setModelType(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("requestId", null);
+                    res.setRequestId(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("status", null);
+                    res.setStatus(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("statusMessage", null);
+                    res.setStatusMessage(r.getString(key));
+
+                    key = Jsoner.mintJsonKey("progress", null);
+                    res.setProgress(r.getFloat(key));
+
+                    key = Jsoner.mintJsonKey("executionMillis", null);
+                    res.setExecutionMillis(r.getLong(key));
+
+                    JsonArray o = (JsonArray) r.get("outputData");
+                    for (Object outputObj : o) {
+                        JsonObject oo = (JsonObject) outputObj;
+                        OutputData od = new OutputData();
+                        od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                        if (od.isBase64Encoded()) {
+                            String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
+
+                            od.setData(new Base64().decode(b64));
+                        } else {
+                            od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+                        }
+
+                        od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
+                        od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
+                        res.getOutputData().add(od);
                     }
-                    
-                    od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
-                    od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
-                    res.getOutputData().add(od);
+                    status.setResponse(res);
                 }
-                
 
             }
             response.close();
@@ -891,7 +896,7 @@ public class AssistantAPI {
         } finally {
             restClient.close();
         }
-        
+
     }
 
     public List<AiCapability> getCapabilities() throws AssistantException {
@@ -918,7 +923,7 @@ public class AssistantAPI {
                     capability.setName(c.getString(stringKey));
 
                     JsonKey promptKey = Jsoner.mintJsonKey("defaultPrompt", null);
-                    JsonObject promptObject=(JsonObject)c.getMap(promptKey);
+                    JsonObject promptObject = (JsonObject) c.getMap(promptKey);
                     if (promptObject != null) {
                         Prompt p = new Prompt();
                         capability.setDefaultPrompt(p);
@@ -928,7 +933,7 @@ public class AssistantAPI {
 
                     stringKey = Jsoner.mintJsonKey("async", null);
                     capability.setAsync(c.getBoolean(stringKey));
-                    
+
                     stringKey = Jsoner.mintJsonKey("customPrompts", null);
                     capability.setCustomPrompts(c.getBoolean(stringKey));
 
@@ -992,6 +997,97 @@ public class AssistantAPI {
             restClient.close();
         }
         return allCapabilities;
+
+    }
+
+    public AiResponse getRequestStatus(String requestId) throws AssistantException {
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/request-status/" + requestId);
+
+        AiResponse resp = new AiResponse();
+        resp.setRequestId(requestId);
+
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not determine request status: " + returnValue + " [" + response.getStatus() + "]");
+                throw new AssistantException("Could not determine request status: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+//{
+//  "prompt": "",
+//  "outputData": [
+//    {
+//      "type": "string",
+//      "data": "Die Invasion der Ukraine in Kursk hat Zweifel an den Erfolgsaussichten des russischen Angriffskriegs bei Teilen der Bevölkerung geschürt. Präsident Putin kann jedoch auf die totalitäre Tradition Russlands zurückgreifen, um Kritik zu unterdrücken und Soldaten für den Krieg zu rekrutieren.",
+//      "fileName": null,
+//      "base64Encoded": false
+//    }
+//  ],
+//  "requestType": "summarize",
+//  "modelType": "occiglot-short",
+//  "requestId": "23399496688198",
+//  "status": "FINISHED",
+//  "statusMessage": "finished processing",
+//  "progress": 100,
+//  "executionMillis": 6887
+//}
+
+            JsonObject r = (JsonObject) jsonOutput;
+
+            JsonKey stringKey = Jsoner.mintJsonKey("prompt", null);
+            resp.setPrompt(r.getString(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("requestType", null);
+            resp.setRequestType(r.getString(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("modelType", null);
+            resp.setModelType(r.getString(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("status", null);
+            resp.setStatus(r.getString(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("statusMessage", null);
+            resp.setStatusMessage(r.getString(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("progress", null);
+            resp.setProgress(r.getFloat(stringKey));
+
+            stringKey = Jsoner.mintJsonKey("executionMillis", null);
+            resp.setExecutionMillis(r.getLong(stringKey));
+
+            Object outputData = r.getCollection(Jsoner.mintJsonKey("outputData", null));
+            if (outputData != null && outputData instanceof JsonArray) {
+                JsonArray output = (JsonArray) outputData;
+                for (Object outputObj : output) {
+                    JsonObject oo = (JsonObject) outputObj;
+                    OutputData od = new OutputData();
+                    od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                    if (od.isBase64Encoded()) {
+                        String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
+
+                        od.setData(new Base64().decode(b64));
+                    } else {
+                        od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+                    }
+
+                    od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
+                    od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
+                    resp.getOutputData().add(od);
+                }
+            }
+
+            response.close();
+
+        } catch (Exception ex) {
+            log.error("Could not determine request status", ex);
+            throw new AssistantException(ex);
+        } finally {
+            restClient.close();
+        }
+        return resp;
 
     }
 

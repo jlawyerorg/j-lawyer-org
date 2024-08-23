@@ -12,9 +12,12 @@ import java.io.Serializable;
  */
 public class AiRequestStatus implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     private String requestId;
     private String status;
     private String statusDetails="";
+    private boolean async=false;
     private AiResponse response=null;
 
     /**
@@ -71,6 +74,20 @@ public class AiRequestStatus implements Serializable {
      */
     public void setResponse(AiResponse response) {
         this.response = response;
+    }
+
+    /**
+     * @return the async
+     */
+    public boolean isAsync() {
+        return async;
+    }
+
+    /**
+     * @param async the async to set
+     */
+    public void setAsync(boolean async) {
+        this.async = async;
     }
     
 }

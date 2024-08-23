@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.InputData;
@@ -1447,6 +1448,25 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return api.submitRequest(requestType, modelType, prompt, params, inputs);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
+    }
+    
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception {
+        List<AssistantConfig> configs=this.assistantFacade.findAll();
+        for(AssistantConfig c: configs) {
+            if(!(c.getId().equals(config.getId()))) {
+                continue;
+            }
+            String pwd=c.getPassword();
+            if(pwd!=null)
+                pwd=Crypto.decrypt(c.getPassword());
+            
+            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
+            return api.getRequestStatus(requestId);
+        }
+        throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
+        
     }
 
     @Override

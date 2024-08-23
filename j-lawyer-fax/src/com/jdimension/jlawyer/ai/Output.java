@@ -7,6 +7,8 @@ package com.jdimension.jlawyer.ai;
 import java.io.Serializable;
 
 public class Output implements Serializable {
+    
+    protected static long serialVersionUID = 1L;
         
     private String id;
 

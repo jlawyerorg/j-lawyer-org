@@ -12,6 +12,8 @@ import java.io.Serializable;
  */
 public class OutputData implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
     public static final String TYPE_STRING="string";
     
     private String type;

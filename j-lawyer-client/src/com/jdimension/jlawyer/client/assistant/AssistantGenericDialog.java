@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
@@ -1117,7 +1118,26 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                     AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs);
-                    resultRef.set(status);
+                    if(status.isAsync()) {
+                        Thread.sleep(1000);
+                        // poll until final result is available
+                        AiResponse res=locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        while(res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
+                            Thread.sleep(1000);
+                            res=locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : res.getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                }
+
+                            }
+                            taResult.setText(resultString.toString());
+                        }
+                        status.setResponse(res);
+                    } else {
+                        resultRef.set(status);
+                    }
 
                 } catch (Throwable t) {
                     log.error("Error processing AI request", t);

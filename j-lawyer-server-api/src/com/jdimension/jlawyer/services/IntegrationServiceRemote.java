@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.ParameterData;
@@ -744,6 +745,8 @@ public interface IntegrationServiceRemote {
     Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
 
     AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception;
+    
+    AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 
     boolean updateObservedFile(String fileName, byte[] data) throws Exception;
     

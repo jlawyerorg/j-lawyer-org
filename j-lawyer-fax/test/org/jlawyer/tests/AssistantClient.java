@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.tests;
 
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.InputData;
 import java.util.ArrayList;
@@ -680,14 +681,17 @@ public class AssistantClient {
         
         try {
             AssistantAPI api = new AssistantAPI("http://localhost:8081", "admin", "a");
-            api.getCapabilities();
-            ArrayList<InputData> inputs=new ArrayList<>();
-            InputData i=new InputData();
-            i.setBase64(false);
-            i.setType("string");
-            i.setStringData("§218 BGB");
-            inputs.add(i);
-            api.submitRequest("explain", "occiglot-short", "Erläutere den folgenden Begriff oder Sachverhalt: ", null, inputs);
+//            api.getCapabilities();
+//            ArrayList<InputData> inputs=new ArrayList<>();
+//            InputData i=new InputData();
+//            i.setBase64(false);
+//            i.setType("string");
+//            i.setStringData("§218 BGB");
+//            inputs.add(i);
+//            api.submitRequest("explain", "occiglot-short", "Erläutere den folgenden Begriff oder Sachverhalt: ", null, inputs);
+
+            AiResponse response=api.getRequestStatus("23399496688198");
+            System.out.println(response.getRequestId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

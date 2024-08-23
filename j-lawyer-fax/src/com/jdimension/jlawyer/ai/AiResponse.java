@@ -14,6 +14,12 @@ import java.util.List;
  */
 public class AiResponse implements Serializable {
     
+    protected static long serialVersionUID = 1L;
+    
+    public static final String STATUS_EXECUTING="EXECUTING";
+    public static final String STATUS_FINISHED="FINISHED";
+    public static final String STATUS_FAILED="FAILED";
+    
     private String prompt;
     private List<OutputData> outputData=new ArrayList<>();
     private String requestType;
