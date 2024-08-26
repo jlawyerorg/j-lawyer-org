@@ -668,20 +668,30 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -708,11 +718,20 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     protected String documentFilenameNew=null;
     
     protected CaseFolder caseFolder = null;
+    private DocumentNameTemplate nameTemplate=null;
     
     protected BulkSaveDialog saveDialog=null;
     
     protected boolean favorite=false;
-
+    
+    // caching for data that is required to build the file name if it contains place holders
+    private List<PartyTypeBean> allPartyTypes=null;
+    private Collection<String> formPlaceHolders=null;
+    private HashMap<String, String> formPlaceHolderValues=null;
+    private AppUserBean caseLawyer=null;
+    private AppUserBean caseAssistant=null;
+    private List<PartiesTriplet> parties=null;
+    
     /**
      * Creates new form BulkSaveEntry
      */
@@ -721,6 +740,15 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         
         this.lblDownloaded.setText("");
         this.sepBottom.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+    }
+    
+    public void setPlaceHoldersCache(List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, List<PartiesTriplet> parties) {
+        this.allPartyTypes=allPartyTypes;
+        this.formPlaceHolders=formPlaceHolders;
+        this.formPlaceHolderValues=formPlaceHolderValues;
+        this.caseLawyer=caseLawyer;
+        this.caseAssistant=caseAssistant;
+        this.parties=parties;
     }
 
     /**
@@ -734,6 +762,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
         popDocTags = new javax.swing.JPopupMenu();
         popFolder = new javax.swing.JPopupMenu();
+        popNameTemplates = new javax.swing.JPopupMenu();
         togSave = new javax.swing.JToggleButton();
         lblFileNameOrg = new javax.swing.JLabel();
         txtFileNameNew = new javax.swing.JTextField();
@@ -745,6 +774,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         cmdDocTags = new javax.swing.JButton();
         cmdFolder = new javax.swing.JButton();
         lblDownloaded = new javax.swing.JLabel();
+        cmdNameTemplate = new javax.swing.JButton();
 
         togSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_download_off_black_48dp.png"))); // NOI18N
         togSave.setSelected(true);
@@ -809,6 +839,13 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
         lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/empty_20.png"))); // NOI18N
 
+        cmdNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdNameTemplateMouseReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -834,9 +871,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                                     .addComponent(togFavorite))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtFileNameNew)
                                     .addComponent(lblSelectedTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE))))))
+                                    .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(txtFileNameNew)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdNameTemplate)))))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -851,7 +891,9 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                             .addComponent(lblFileSize)
                             .addComponent(lblDownloaded))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtFileNameNew, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtFileNameNew, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdNameTemplate)))
                     .addComponent(togFavorite))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -899,7 +941,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.popFolder.show(this.cmdFolder, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdFolderMousePressed
 
-    private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
+    private void fileNameChanged() {
         this.documentFilenameNew=this.txtFileNameNew.getText();
         String oldExt=FileUtils.getExtension(this.documentFilename);
         String newExt=FileUtils.getExtension(this.documentFilenameNew);
@@ -921,7 +963,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 this.txtFileNameNew.setCaretPosition(caretPosition);
         }
         
-        this.saveDialog.checkForDuplicateFileNames();
+        if(this.saveDialog!=null)
+            this.saveDialog.checkForDuplicateFileNames();
+    }
+    
+    private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
+        this.fileNameChanged();
     }//GEN-LAST:event_txtFileNameNewKeyReleased
 
     private void lblFileNameOrgMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameOrgMouseEntered
@@ -962,6 +1009,10 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.favorite=this.togFavorite.isSelected();
     }//GEN-LAST:event_togFavoriteItemStateChanged
 
+    private void cmdNameTemplateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdNameTemplateMouseReleased
+        this.popNameTemplates.show(this.cmdNameTemplate, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdNameTemplateMouseReleased
+
     public void setDownloadProgress() {
         this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
     }
@@ -985,7 +1036,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     public void selectDocumentTags(List<String> tags) {
         ComponentUtils.selectPopupMenuItems(this.popDocTags, tags);
         
-        if (tags.size() > 0) {
+        if (!tags.isEmpty()) {
             this.cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
         } else {
             this.cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
@@ -1035,6 +1086,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDocTags;
     private javax.swing.JButton cmdFolder;
+    private javax.swing.JButton cmdNameTemplate;
     private javax.swing.JLabel lblDownloaded;
     private javax.swing.JLabel lblFileNameOrg;
     private javax.swing.JLabel lblFileSize;
@@ -1042,6 +1094,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     private javax.swing.JLabel lblSelectedTags;
     private javax.swing.JPopupMenu popDocTags;
     private javax.swing.JPopupMenu popFolder;
+    private javax.swing.JPopupMenu popNameTemplates;
     private javax.swing.JSeparator sepBottom;
     private javax.swing.JToggleButton togFavorite;
     private javax.swing.JToggleButton togSave;
@@ -1108,9 +1161,10 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     /**
      * @param documentFilenameNew the documentFilenameNew to set
      */
-    public void setDocumentFilenameNew(String documentFilenameNew) {
+    private void setDocumentFilenameNew(String documentFilenameNew) {
         this.documentFilenameNew = documentFilenameNew;
         this.txtFileNameNew.setText(documentFilenameNew);
+        this.fileNameChanged();
     }
     
     public void setDocumentFilenameNewOutline(String flatLafOutline) {
@@ -1217,5 +1271,63 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
         this.togFavorite.setSelected(favorite);
+    }
+
+    /**
+     * @return the nameTemplate
+     */
+    public DocumentNameTemplate getNameTemplate() {
+        return nameTemplate;
+    }
+
+    /**
+     * @param nameTemplate the nameTemplate to set
+     */
+    public void setNameTemplate(DocumentNameTemplate nameTemplate) {
+        this.nameTemplate = nameTemplate;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            if(this.documentDate==null)
+                this.documentDate=new Date();
+            
+            
+            String extension=FileUtils.getExtension(this.documentFilename);
+            String docName=locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, nameTemplate);
+            
+            ArchiveFileBean selectedCase=null;
+            if(this.saveDialog!=null)
+                selectedCase=this.saveDialog.getSelectedCase();
+            
+            HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            docName=TemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName=FileUtils.sanitizeFileName(docName);
+            
+            // remove any extension, because of the template it might be somewhere in the middle of the new name
+            docName=docName.replace("." + extension, "");
+            
+            // add back extension
+            docName=FileUtils.preserveExtension(this.documentFilename, docName);
+            
+            this.setDocumentFilenameNew(docName);
+
+        } catch (Exception ex) {
+            log.error("Error getting new document name", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Anwenden der Dateinamensvorschrift", "Dateinamen");
+        }
+    }
+    
+    public void setAllNameTemplates(List<DocumentNameTemplate> allTemplates) {
+        this.popNameTemplates.removeAll();
+
+            for (DocumentNameTemplate t : allTemplates) {
+                JMenuItem mi = new JMenuItem(t.getDisplayName());
+                mi.addActionListener((ActionEvent e) -> {
+                    setNameTemplate(t);
+                });
+                popNameTemplates.add(mi);
+
+            }
     }
 }

@@ -661,166 +661,108 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail;
+package com.jdimension.jlawyer.server.utils;
 
-import com.jdimension.jlawyer.email.CommonMailUtils;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.util.HashMap;
-import java.util.Map;
-import javax.mail.Folder;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
  * @author jens
  */
-public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
+public class FileNameGenerator {
 
-    private static final Logger log = Logger.getLogger(EmailFolderTreeCellRenderer.class.getName());
+    private static final String SHORTCODECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    private static final String FOLDER_SENT = "sent";
-    private static final String FOLDER_TRASH = "trash";
-    private static final String FOLDER_INBOX = "inbox";
-    private static final String FOLDER_DRAFTS = "drafts";
+    private static final boolean DBG = false;
 
-    private static final Map<String, Icon> folderIcons = new HashMap<>();
+    public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
 
-    private final ImageIcon draftsIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/drafts.png"));
-    private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
-    private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
-    private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
-    private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
-    private final ImageIcon importedIcon = new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png"));
+        if (pattern.contains("yyy") && !pattern.contains("yyyy")) {
+            throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
+        }
+        if (pattern.contains("yyyyy")) {
+            throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
+        }
 
-    private Font boldFont = null;
-    private Font plainFont = null;
+        if (pattern.contains("mmm")) {
+            throw new InvalidSchemaPatternException("m muss als m oder mm enthalten sein");
+        }
+        if (pattern.contains("ddd")) {
+            throw new InvalidSchemaPatternException("d muss als d oder dd enthalten sein");
+        }
 
-    /**
-     * Creates a new instance of EmailFolderTreeCellRenderer
-     */
-    public EmailFolderTreeCellRenderer() {
-        super();
-        this.boldFont = this.getFont().deriveFont(Font.BOLD);
-        this.plainFont = this.getFont().deriveFont(Font.PLAIN);
+        if (pattern.indexOf('n') > -1 && !pattern.contains("nnn")) {
+            throw new InvalidSchemaPatternException("n muss mindestens als nnn (999 Rechnungen pro Jahr) enthalten sein");
+        }
+
+        return true;
     }
 
-    @Override
-    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean selected, boolean b0, boolean b1, int row, boolean b2) {
+    public static String getFileName(String pattern, String fileName) throws InvalidSchemaPatternException {
 
-        super.getTreeCellRendererComponent(jTree, object, selected, b0, b1, row, b2);
-        JTree.DropLocation dropLocation = jTree.getDropLocation();
-        if (dropLocation != null
-                && dropLocation.getChildIndex() == -1
-                && jTree.getRowForPath(dropLocation.getPath()) == row) {
-            // this row represents the current drop location
-            // so render it specially, perhaps with a different color
-            this.setForeground(Color.GREEN);
+        compilePattern(pattern);
 
-        }
+        return next(pattern, fileName);
+    }
+    
+    public static String getFileName(String pattern, Date d, String fileName) throws InvalidSchemaPatternException {
 
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) object;
-        Object userObject = node.getUserObject();
+        compilePattern(pattern);
 
-        if (userObject == null) {
-            return this;
-        }
-
-//        if(this.boldFont == null)
-//            this.boldFont = this.getFont().deriveFont(Font.BOLD);
-//        if (this.plainFont == null)
-//            this.plainFont=this.getFont().deriveFont(Font.PLAIN);
-        try {
-            if (userObject instanceof FolderContainer) {
-                FolderContainer fc = (FolderContainer) userObject;
-                Folder f = fc.getFolder();
-                
-                Icon icon=this.getIconByFolder(f);
-                if(icon!=null)
-                    this.setIcon(icon);
-
-                int unread = fc.getUnreadMessageCount();
-                if (unread > 0) {
-                    this.setFont(this.boldFont);
-                } else {
-                    this.setFont(this.plainFont);
-                }
-            } else {
-                if (object.toString().contains("@")) {
-                    this.setIcon(mailboxIcon);
-                    this.setFont(this.boldFont);
-                    if (selected) {
-                        this.setForeground(Color.WHITE);
-                    } else {
-                        this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            log.error(ex);
-            log.error(ex.getMessage());
-        }
-        return this;
-
+        return next(pattern, d, fileName);
     }
 
-    private Icon getIconByFolder(Folder f) {
-
-        if (!folderIcons.containsKey(f.getName())) {
-
-            if (FOLDER_TRASH.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), trashIcon);
-            } else if (FOLDER_SENT.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), sentIcon);
-            } else if (FOLDER_DRAFTS.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), draftsIcon);
-            } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), inboxIcon);
-            } else if ("in Akte importiert".equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), importedIcon);
-            } else {
-                boolean iconIsSet = false;
-                for (String a : EmailUtils.getFolderAliases(CommonMailUtils.TRASH)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), trashIcon);
-                        iconIsSet = true;
-                        break;
-                    }
-                }
-                for (String a : EmailUtils.getFolderAliases(CommonMailUtils.DRAFTS)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), draftsIcon);
-                        iconIsSet = true;
-                        break;
-                    }
-                }
-                if (!iconIsSet) {
-                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.SENT)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), sentIcon);
-                            iconIsSet = true;
-                            break;
-                        }
-                    }
-                }
-                if (!iconIsSet) {
-                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.INBOX)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), inboxIcon);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        return folderIcons.get(f.getName());
+    private static synchronized String next(String pattern, String fileName) throws InvalidSchemaPatternException {
+        return next(pattern, new Date(), fileName);
     }
 
+    private static synchronized String next(String pattern, Date date, String fileName) throws InvalidSchemaPatternException {
+
+        SimpleDateFormat shortYear = new SimpleDateFormat("yy");
+        SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
+
+        SimpleDateFormat shortMonth = new SimpleDateFormat("M");
+        SimpleDateFormat longMonth = new SimpleDateFormat("MM");
+
+        SimpleDateFormat shortDay = new SimpleDateFormat("d");
+        SimpleDateFormat longDay = new SimpleDateFormat("dd");
+
+        Date current = date;
+        if (current == null) {
+            current = new Date();
+        }
+
+        // fixed values
+        while (pattern.contains("yyyy")) {
+            pattern = pattern.replace("yyyy", longYear.format(current));
+        }
+        while (pattern.contains("yy")) {
+            pattern = pattern.replace("yy", shortYear.format(current));
+        }
+
+        while (pattern.contains("mm")) {
+            pattern = pattern.replace("mm", longMonth.format(current));
+        }
+        while (pattern.contains("m")) {
+            pattern = pattern.replace("m", shortMonth.format(current));
+        }
+
+        while (pattern.contains("dd")) {
+            pattern = pattern.replace("dd", longDay.format(current));
+        }
+        while (pattern.contains("d")) {
+            pattern = pattern.replace("d", shortDay.format(current));
+        }
+
+        // variable values
+        pattern = pattern.replace("DATEINAME", fileName);
+        
+        return pattern;
+
+    }
 }

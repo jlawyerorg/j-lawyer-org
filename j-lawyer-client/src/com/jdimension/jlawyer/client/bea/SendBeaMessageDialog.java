@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -2041,7 +2042,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders,new ArrayList<>());
+                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders,new ArrayList<>());
                 HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
@@ -2069,9 +2070,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     partiesTriplets.add(triplet);
                 }
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null, null);
-                this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
+                this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders,new ArrayList<>());
+                placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders,new ArrayList<>());
                 ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
@@ -2079,7 +2080,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 
                 htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null, null);
 
-                String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator");
+                String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator");
                 int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
                 if (cursorIndex > -1) {
                     t = t.replace(PLACEHOLDER_CURSOR, "");

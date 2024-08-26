@@ -820,4 +820,18 @@ public interface SystemManagementRemote {
 
     AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
     
+    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
+    
+    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+    
+    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
+    
+    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
+    
 }

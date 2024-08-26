@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
@@ -2139,12 +2140,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, this.formPlaceHolders);
+                // get a list of placeholders
+                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, this.formPlaceHolders);
                 HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
 
+                // get user objects for this case
                 AppUserBean caseLawyer = null;
                 AppUserBean caseAssistant = null;
                 AppUserBean author = UserSettings.getInstance().getCurrentUser();
@@ -2161,16 +2164,18 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     }
                 }
 
+                // get selected parties
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
                 List<PartiesTriplet> partiesTriplets=new ArrayList<>();
                 for(PartiesPanelEntry pe: selectedParties) {
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
+                // get all placeholder values for the given set of placeholders
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null);
-                this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
+                this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, this.formPlaceHolders);
+                placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, this.formPlaceHolders);
                 ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
@@ -2183,7 +2188,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.html2Text(ms.getEmailSignature());
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.html2Text(ms.getEmailSignature());
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
@@ -2201,7 +2206,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         if (sig == null) {
                             sig = "";
                         }
-                        String t = EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");

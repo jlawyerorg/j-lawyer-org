@@ -794,7 +794,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 try {
                     ArchiveFileBean exportCase=(ArchiveFileBean)this.data.get("export.case");
                     byte[] content = FileUtils.readFile(new File(resultFile));
-                    String newName = FileUtils.getNewFileName(new File(resultFile).getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
+                    String newName = FileUtils.getNewFileName(exportCase, new File(resultFile).getName(), false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
                     if (newName == null || "".equalsIgnoreCase(newName)) {
                         return;
                     }

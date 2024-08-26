@@ -835,7 +835,8 @@ public class PlaceHolders {
         
         ArrayList<String> ALLPLACEHOLDERS = new ArrayList<>();
         
-        ALLPLACEHOLDERS.addAll(formsPlaceHolders);
+        if(formsPlaceHolders!=null)
+            ALLPLACEHOLDERS.addAll(formsPlaceHolders);
 
         ALLPLACEHOLDERS.add(PROFIL_FIRMA);
         ALLPLACEHOLDERS.add(PROFIL_STRASSE);

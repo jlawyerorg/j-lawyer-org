@@ -2472,11 +2472,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     dlg.dispose();
                 }
 
-                java.util.Date receivedPrefix = m.getReceptionTime();
-                if (receivedPrefix == null) {
-                    receivedPrefix = new java.util.Date();
-                }
-
                 // user hit cancel
                 if (targetCase == null) {
                     return false;
@@ -2512,8 +2507,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
 
                         bulkEntry.setDocumentFilename(attachmentName);
-                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
-
                         bulkSaveDlg.addEntry(bulkEntry);
 
                     }
@@ -2543,8 +2536,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
 
                         bulkEntry.setDocumentFilename(attachmentName);
-                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
-
                         bulkSaveDlg.addEntry(bulkEntry);
                     }
                 }
@@ -2568,8 +2559,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
                     bulkEntry.setDocumentDate(m.getReceptionTime());
                     bulkEntry.setDocumentBytes(data);
-                    bulkEntry.setDocumentFilename(newName);
-                    bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + m.getId() + "_" + newName);
+                    bulkEntry.setDocumentFilename(m.getId() + "_" + newName);
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 }
@@ -2597,7 +2587,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         bulkEntry.setDocumentDate(m.getReceptionTime());
                         bulkEntry.setDocumentBytes(attachmentData);
                         bulkEntry.setDocumentFilename(attachmentName);
-                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
                         bulkSaveDlg.addEntry(bulkEntry);
 
                     }
@@ -2627,8 +2616,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
 
                         bulkEntry.setDocumentFilename(attachmentName);
-                        bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(receivedPrefix) + newName);
-
                         bulkSaveDlg.addEntry(bulkEntry);
                     }
 
@@ -2862,7 +2849,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
             MessageExport mex = BeaAccess.exportMessage(m);
-            String newName = FileUtils.getNewFileName(m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
+            String newName = FileUtils.getNewFileName(targetCase, m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
             if (newName == null || "".equals(newName)) {
                 newName=m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
             }

@@ -776,12 +776,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    public String getNewFileName(String currentFileName) {
-
-        return FileUtils.getNewFileName(currentFileName, false);
-
-    }
-
     public void clear() {
         this.txtClaimNumber.setText("");
         this.txtFileName.setText("");
@@ -1181,27 +1175,35 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         
         try {
             String archiveFileNumber = this.txtFileNumber.getText();
-
-            // just in case the Drebis request was started in the portal without the leading zeroes
-            // removed due to custom file numbers
-            // archiveFileNumber=ArchiveFileUtils.addLeadingZeroes(archiveFileNumber);
             
-            CaseFolder rootFolder = null;
-            CaseFolder targetFolder = null;
+            ArchiveFileBean targetCase=null;
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = null;
+            try {
+                locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                targetCase=locator.lookupArchiveFileServiceRemote().getArchiveFileByFileNumber(archiveFileNumber);
+            } catch (Exception ex) {
+                log.error("Error getting case by reference number", ex);
+            }
+            
+            if(targetCase == null) {
+                CaseFolder rootFolder = null;
+                CaseFolder targetFolder = null;
                 
-            // get folders
-            SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + archiveFileNumber, null);
-            saDlg.setVisible(true);
-            ArchiveFileBean targetCase = saDlg.getCaseSelection();
-            targetFolder = saDlg.getFolderSelection();
-            rootFolder = saDlg.getRootFolder();
-
-            saDlg.dispose();
+                // get folders
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + archiveFileNumber, null);
+                saDlg.setVisible(true);
+                targetCase = saDlg.getCaseSelection();
+                targetFolder = saDlg.getFolderSelection();
+                rootFolder = saDlg.getRootFolder();
+                bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
+                saDlg.dispose();
+            }
 
             if (targetCase == null)
                 return;
             
-            bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
+            
             bulkSaveDlg.setSelectedCase(targetCase);
 
             for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
@@ -1215,9 +1217,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 String newName = da.getName() + "." + da.getSuffix();
                 newName = FileUtils.sanitizeFileName(newName);
 
-                bulkEntry.setDocumentFilename(da.getName() + "." + da.getSuffix());
-                bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(new Date()) + newName);
-
+                bulkEntry.setDocumentFilename(newName);
                 bulkSaveDlg.addEntry(bulkEntry);
 
             }

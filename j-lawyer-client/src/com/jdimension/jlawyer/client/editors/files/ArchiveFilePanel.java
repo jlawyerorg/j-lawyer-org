@@ -4736,13 +4736,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ThreadUtils.setWaitCursor(this);
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
-                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto, this.caseFolderPanel1, files, null, invoice);
                     a.start();
                 } else {
                     ThreadUtils.setWaitCursor(this);
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
-                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null, invoice);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto, this.caseFolderPanel1, files, null, invoice);
                     a.execute();
                 }
 
@@ -4804,7 +4804,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         byte[] content = remote.getDocumentContent(doc.getId());
                         ArchiveFileDocumentsBean orgDoc = remote.getDocument(doc.getId());
-                        String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
+                        String newName = FileUtils.getNewFileName(dto, doc.getName(), false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
 
                         if (newName == null || "".equals(newName)) {
                             return;
@@ -4942,7 +4942,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
             ArchiveFileDocumentsBean doc = selectedDocs.get(0);
-            String newName = FileUtils.getNewFileName(doc.getName(), false, null, this, "Dokument umbenennen");
+            String newName = FileUtils.getNewFileName(dto, doc.getName(), false, null, false, this, "Dokument umbenennen");
             this.lastPopupClosed = System.currentTimeMillis();
             if (newName == null) {
                 return;
@@ -5507,7 +5507,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     try {
 
                         byte[] content = remote.getDocumentContent(doc.getId());
-                        String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument kopieren");
+                        String newName = FileUtils.getNewFileName(sel, doc.getName(), false, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Dokument kopieren");
                         if (newName == null || "".equalsIgnoreCase(newName)) {
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
@@ -5570,7 +5570,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                     replaceDocument = response == JOptionPane.YES_OPTION;
                     if (!replaceDocument) {
-                        newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
+                        newName = FileUtils.getNewFileName(dto, newName, false, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
                         if (newName == null || "".equals(newName)) {
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
@@ -5977,7 +5977,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 if (doc.getName().toLowerCase().endsWith(".ods") || doc.getName().toLowerCase().endsWith(".odt") || doc.getName().toLowerCase().endsWith(".docx")) {
                     byte[] content = remote.getDocumentContent(doc.getId());
-                    String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument als Vorlage speichern");
+                    String newName = FileUtils.getNewFileName(dto, doc.getName(), false, new Date(), false, this, "Dokument als Vorlage speichern");
 
                     if (newName == null || "".equals(newName)) {
                         this.lastPopupClosed = System.currentTimeMillis();
@@ -6813,7 +6813,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     try {
 
                         byte[] content = remote.getDocumentContent(doc.getId());
-                        String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument verschieben");
+                        String newName = FileUtils.getNewFileName(sel, doc.getName(), false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Dokument verschieben");
                         if (newName == null || "".equalsIgnoreCase(newName)) {
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
@@ -7181,7 +7181,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected DropTarget getMyDropTarget() {
         if (dropTarget == null) {
             //dropTarget = new DropTarget(this.tblDocuments, DnDConstants.ACTION_COPY_OR_MOVE, null);
-            dropTarget = new DropTarget(this.caseFolderPanel1, DnDConstants.ACTION_COPY_OR_MOVE, null);
+            dropTarget = new DropTarget(this.caseFolderPanel1, DnDConstants.ACTION_COPY, null);
         }
         return dropTarget;
     }
@@ -7472,7 +7472,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null, null);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
 
                         a.start();
 

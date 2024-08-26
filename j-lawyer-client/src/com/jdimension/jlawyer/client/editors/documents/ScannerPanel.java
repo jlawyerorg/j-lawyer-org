@@ -1488,9 +1488,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     }
                     newName = FileUtils.sanitizeFileName(newName);
 
-                    bulkEntry.setDocumentFilename(fileName);
-                    bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(new Date()) + newName);
-
+                    bulkEntry.setDocumentFilename(newName);
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 } catch (Exception ex) {
@@ -1531,7 +1529,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             for (int r : selRow) {
                 String fileName = this.tblDirContent.getValueAt(r, 2).toString();
-                String toFileName = FileUtils.getNewFileName(fileName, false);
+                String toFileName = FileUtils.getNewFileName(null, fileName, false, false);
                 if (toFileName == null) {
                     // user cancelled
                     continue;

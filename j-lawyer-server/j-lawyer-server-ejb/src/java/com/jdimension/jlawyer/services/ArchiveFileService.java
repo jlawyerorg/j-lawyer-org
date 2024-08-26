@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
+import com.jdimension.jlawyer.server.utils.FileNameGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -2000,6 +2001,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return true;
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
+
+        try {
+            return FileNameGenerator.getFileName(tpl.getPattern(), date, fileName);
+        } catch (InvalidSchemaPatternException isp) {
+            throw new Exception(isp.getMessage());
+        }
+
+    }
+    
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] getDocumentContent(String id) throws Exception {
@@ -4974,7 +4987,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             i.setId(idGen.getID().toString());
             i.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
-            i.setName(aFile.getName());
+            i.setName(aFile.getReason());
             if (aFile.getDateCreated() != null) {
                 i.setPeriodFrom(aFile.getDateCreated());
             } else {

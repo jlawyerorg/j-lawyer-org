@@ -661,166 +661,46 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.email.CommonMailUtils;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
-import java.util.HashMap;
-import java.util.Map;
-import javax.mail.Folder;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import org.apache.log4j.Logger;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
-
-    private static final Logger log = Logger.getLogger(EmailFolderTreeCellRenderer.class.getName());
-
-    private static final String FOLDER_SENT = "sent";
-    private static final String FOLDER_TRASH = "trash";
-    private static final String FOLDER_INBOX = "inbox";
-    private static final String FOLDER_DRAFTS = "drafts";
-
-    private static final Map<String, Icon> folderIcons = new HashMap<>();
-
-    private final ImageIcon draftsIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/drafts.png"));
-    private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
-    private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
-    private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
-    private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
-    private final ImageIcon importedIcon = new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png"));
-
-    private Font boldFont = null;
-    private Font plainFont = null;
-
-    /**
-     * Creates a new instance of EmailFolderTreeCellRenderer
-     */
-    public EmailFolderTreeCellRenderer() {
-        super();
-        this.boldFont = this.getFont().deriveFont(Font.BOLD);
-        this.plainFont = this.getFont().deriveFont(Font.PLAIN);
-    }
+public class DocumentNameTemplateTableCellRenderer extends DefaultTableCellRenderer {
 
     @Override
-    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean selected, boolean b0, boolean b1, int row, boolean b2) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
 
-        super.getTreeCellRendererComponent(jTree, object, selected, b0, b1, row, b2);
-        JTree.DropLocation dropLocation = jTree.getDropLocation();
-        if (dropLocation != null
-                && dropLocation.getChildIndex() == -1
-                && jTree.getRowForPath(dropLocation.getPath()) == row) {
-            // this row represents the current drop location
-            // so render it specially, perhaps with a different color
-            this.setForeground(Color.GREEN);
+        DocumentNameTemplate tpl = (DocumentNameTemplate) table.getValueAt(row, 0);
 
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+        if (column == 0) {
+            ((JLabel) ((Component) returnRenderer)).setText(tpl.getDisplayName());
         }
 
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) object;
-        Object userObject = node.getUserObject();
-
-        if (userObject == null) {
-            return this;
-        }
-
-//        if(this.boldFont == null)
-//            this.boldFont = this.getFont().deriveFont(Font.BOLD);
-//        if (this.plainFont == null)
-//            this.plainFont=this.getFont().deriveFont(Font.PLAIN);
-        try {
-            if (userObject instanceof FolderContainer) {
-                FolderContainer fc = (FolderContainer) userObject;
-                Folder f = fc.getFolder();
-                
-                Icon icon=this.getIconByFolder(f);
-                if(icon!=null)
-                    this.setIcon(icon);
-
-                int unread = fc.getUnreadMessageCount();
-                if (unread > 0) {
-                    this.setFont(this.boldFont);
-                } else {
-                    this.setFont(this.plainFont);
-                }
-            } else {
-                if (object.toString().contains("@")) {
-                    this.setIcon(mailboxIcon);
-                    this.setFont(this.boldFont);
-                    if (selected) {
-                        this.setForeground(Color.WHITE);
-                    } else {
-                        this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-                    }
-                }
+        if (isSelected) {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.WHITE);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            log.error(ex.getMessage());
-        }
-        return this;
-
-    }
-
-    private Icon getIconByFolder(Folder f) {
-
-        if (!folderIcons.containsKey(f.getName())) {
-
-            if (FOLDER_TRASH.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), trashIcon);
-            } else if (FOLDER_SENT.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), sentIcon);
-            } else if (FOLDER_DRAFTS.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), draftsIcon);
-            } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), inboxIcon);
-            } else if ("in Akte importiert".equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), importedIcon);
-            } else {
-                boolean iconIsSet = false;
-                for (String a : EmailUtils.getFolderAliases(CommonMailUtils.TRASH)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), trashIcon);
-                        iconIsSet = true;
-                        break;
-                    }
-                }
-                for (String a : EmailUtils.getFolderAliases(CommonMailUtils.DRAFTS)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), draftsIcon);
-                        iconIsSet = true;
-                        break;
-                    }
-                }
-                if (!iconIsSet) {
-                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.SENT)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), sentIcon);
-                            iconIsSet = true;
-                            break;
-                        }
-                    }
-                }
-                if (!iconIsSet) {
-                    for (String a : EmailUtils.getFolderAliases(CommonMailUtils.INBOX)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), inboxIcon);
-                            break;
-                        }
-                    }
-                }
+        } else {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(Color.WHITE);
             }
         }
-        return folderIcons.get(f.getName());
-    }
 
+        return (Component) returnRenderer;
+    }
 }
