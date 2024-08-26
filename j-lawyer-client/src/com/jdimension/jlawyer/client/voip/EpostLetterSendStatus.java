@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.epost.EpostLetter;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -882,6 +883,8 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
 
                         try {
 
+                            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                            ArchiveFileBean selectedCase=afs.getArchiveFile(this.data.get("epost.letter.caseid").toString());
                             String newName = "E-POST-Brief_" + l.getFileName();
 
                             if (newName.length() > 228) {
@@ -889,7 +892,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                             }
                             newName = FileUtils.sanitizeFileName(newName);
                             java.util.Date sentPrefix = new Date();
-                            newName = FileUtils.getNewFileName(newName, true, sentPrefix, this, "Datei benennen");
+                            newName = FileUtils.getNewFileName(selectedCase, newName, true, sentPrefix, true, this, "Datei benennen");
                             if (newName != null) {
                                 if (newName.trim().length() == 0) {
                                     newName = "E-POST-Brief";
@@ -898,11 +901,10 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                                 if (!newName.toLowerCase().endsWith(".pdf")) {
                                     newName = newName + ".pdf";
                                 }
-                                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
                                 boolean documentExists = afs.doesDocumentExist(this.data.get("epost.letter.caseid").toString(), newName);
                                 while (documentExists) {
 
-                                    newName = FileUtils.getNewFileName(newName, true, sentPrefix, this, "Datei benennen");
+                                    newName = FileUtils.getNewFileName(selectedCase, newName, true, sentPrefix, true, this, "Datei benennen");
                                     if (newName == null || "".equals(newName)) {
                                         break;
                                     }
@@ -912,7 +914,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                             }
 
                             if (newName != null) {
-                                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                                
                                 ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "", null);
 
                                 ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();

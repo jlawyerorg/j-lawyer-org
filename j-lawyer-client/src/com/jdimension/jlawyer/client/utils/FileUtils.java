@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
 import java.awt.Toolkit;
@@ -719,14 +720,6 @@ public class FileUtils extends ServerFileUtils {
         iconCache = new HashMap<>();
         iconCache32 = new HashMap<>();
 
-    }
-
-    public static String getExtension(String fileName) {
-        int index = fileName.lastIndexOf('.');
-        if (index > -1 && index < fileName.length()) {
-            return fileName.substring(index + 1);
-        }
-        return "url-with-no-extension";
     }
 
     public Icon getFileTypeIcon(String fileName) {
@@ -841,19 +834,19 @@ public class FileUtils extends ServerFileUtils {
         }
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix) {
-        return getNewFileName(currentFileName, datetimePrefix, new java.util.Date());
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, boolean applyNameTemplate) {
+        return getNewFileName(selectedCase, currentFileName, datetimePrefix, new java.util.Date(), applyNameTemplate);
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate) {
 
-        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
+        return getNewFileName(selectedCase, currentFileName, datetimePrefix, d, applyNameTemplate, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
 
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate, Component parent) {
 
-        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei benennen");
+        return getNewFileName(selectedCase, currentFileName, datetimePrefix, d, applyNameTemplate, parent, "Datei benennen");
 
     }
 
@@ -1058,7 +1051,7 @@ public class FileUtils extends ServerFileUtils {
 
     }
     
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate, Component parent, String title) {
 
         String dtPrefix = "";
         if (datetimePrefix) {
@@ -1069,8 +1062,13 @@ public class FileUtils extends ServerFileUtils {
             parent = EditorsRegistry.getInstance().getMainWindow();
         }
 
-        NewFilenameOptionPanel p = new NewFilenameOptionPanel();
-        p.setFilename(dtPrefix + currentFileName);
+        NewFilenameOptionPanel p = null;
+        if(selectedCase==null)
+            p = new NewFilenameOptionPanel();
+        else
+            p = new NewFilenameOptionPanel(selectedCase);
+        
+        p.setFilename(currentFileName, d, applyNameTemplate);
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();

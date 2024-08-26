@@ -699,6 +699,14 @@ public class ServerFileUtils {
 
     }
     
+    public static String getExtension(String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index > -1 && index < fileName.length()) {
+            return fileName.substring(index + 1);
+        }
+        return "url-with-no-extension";
+    }
+    
     public static String sanitizeFileName(String fileName) {
         String name = fileName;
         name = name.replace(",", " ");

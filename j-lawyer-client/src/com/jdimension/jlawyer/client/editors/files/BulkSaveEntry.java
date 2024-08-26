@@ -1293,7 +1293,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 this.documentDate=new Date();
             
             
-            
+            String extension=FileUtils.getExtension(this.documentFilename);
             String docName=locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, nameTemplate);
             
             ArchiveFileBean selectedCase=null;
@@ -1303,6 +1303,11 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
             docName=TemplatesUtil.replacePlaceHolders(docName, placeHolders);
             docName=FileUtils.sanitizeFileName(docName);
+            
+            // remove any extension, because of the template it might be somewhere in the middle of the new name
+            docName=docName.replace("." + extension, "");
+            
+            // add back extension
             docName=FileUtils.preserveExtension(this.documentFilename, docName);
             
             this.setDocumentFilenameNew(docName);

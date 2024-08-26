@@ -1123,7 +1123,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
             dtde.rejectDrop();
         }
 
-        if (this.parent.getCaseFolderPanel().getCaseId() == null) {
+        if (this.parent.getCaseFolderPanel().getCase() == null) {
             dtde.rejectDrop();
         }
 
@@ -1150,7 +1150,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
                     ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                     pi.setShowCancelButton(true);
 
-                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder, null);
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCase(), this.parent.getCaseFolderPanel(), files, this.folder, null);
 
                     a.start();
 

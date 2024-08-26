@@ -776,12 +776,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    public String getNewFileName(String currentFileName) {
-
-        return FileUtils.getNewFileName(currentFileName, false);
-
-    }
-
     public void clear() {
         this.txtClaimNumber.setText("");
         this.txtFileName.setText("");

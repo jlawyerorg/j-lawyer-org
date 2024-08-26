@@ -935,7 +935,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             HashMap<String, CaseFolderSettings> folderSettings = fileService.getCaseFolderSettings(folderIds);
             caseFolders.setReadOnly(readOnly || this.caseDto.isArchived());
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
-            caseFolders.setCaseId(archiveFileKey);
+            caseFolders.setCase(this.caseDto);
             
             caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
             caseFolders.sort();

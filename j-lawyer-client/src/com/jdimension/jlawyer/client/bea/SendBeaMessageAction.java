@@ -862,7 +862,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                         if (receivedPrefix == null) {
                             receivedPrefix = new java.util.Date();
                         }
-                        String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator, "Datei benennen");
+                        String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, mex.getFileName(), true, receivedPrefix, true, this.indicator, "Datei benennen");
                         if (newName == null) {
                             return false;
                         }
@@ -880,7 +880,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                         boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
                         while (documentExists) {
-                            newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(newName, true, receivedPrefix, this.indicator, "Datei benennen");
+                            newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, newName, true, receivedPrefix, true, this.indicator, "Datei benennen");
                             if (newName == null || "".equals(newName)) {
                                 break;
                             }

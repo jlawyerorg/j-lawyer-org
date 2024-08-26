@@ -820,7 +820,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 if (receivedPrefix == null) {
                     receivedPrefix = new java.util.Date();
                 }
-                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
+                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, mex.getFileName(), true, receivedPrefix, true, this.indicator);
                 if (newName == null) {
                     return false;
                 }

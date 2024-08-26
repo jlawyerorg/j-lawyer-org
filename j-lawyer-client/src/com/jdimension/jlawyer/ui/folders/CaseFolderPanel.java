@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseFolderSettings;
@@ -727,7 +728,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private HashMap<String,Invoice> linkedInvoices=new HashMap<>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
-    private String caseId = null;
+    private ArchiveFileBean selectedCase = null;
 
     /**
      * Creates new form CaseFolderPanel
@@ -769,12 +770,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         return this.foldersListPanel;
     }
 
-    public String getCaseId() {
-        return this.caseId;
+    public ArchiveFileBean getCase() {
+        return this.selectedCase;
     }
 
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+    public void setCase(ArchiveFileBean afb) {
+        this.selectedCase = afb;
     }
 
     public CaseFolderPanel() {

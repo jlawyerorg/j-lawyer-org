@@ -689,7 +689,7 @@ public class UploadDocumentsAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(UploadDocumentsAction.class.getName());
 
-    private String archiveFileKey;
+    private ArchiveFileBean archiveFile;
     private Component owner;
     private CaseFolderPanel docTarget;
     private CaseFolder targetFolder = null;
@@ -697,10 +697,10 @@ public class UploadDocumentsAction extends ProgressableAction {
 
     private List<File> files;
 
-    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder, Invoice invoice) {
+    public UploadDocumentsAction(ProgressIndicator i, Component owner, ArchiveFileBean archiveFile, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder, Invoice invoice) {
         super(i, false);
 
-        this.archiveFileKey = archiveFileKey;
+        this.archiveFile = archiveFile;
         this.owner = owner;
         this.docTarget = docTarget;
         this.files = files;
@@ -761,20 +761,20 @@ public class UploadDocumentsAction extends ProgressableAction {
         byte[] data = FileUtils.readFile(f);
 
         String newName = f.getName();
-        boolean documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+        boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
         while (documentExists) {
 
-            newName = FileUtils.getNewFileName(newName, false, new Date(), this.indicator, "neuer Dateiname");
+            newName = FileUtils.getNewFileName(this.archiveFile, newName, false, new Date(), true, this.indicator, "neuer Dateiname");
             if (newName == null || "".equals(newName)) {
                 EditorsRegistry.getInstance().clearStatus(true);
                 ThreadUtils.setDefaultCursor(this.owner);
                 return false;
             }
-            documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+            documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
 
         }
 
-        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null, null);
+        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFile.getId(), newName, data, null, null);
 
         if (this.invoice != null) {
             afs.linkInvoiceDocument(doc.getId(), invoice.getId());

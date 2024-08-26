@@ -1259,7 +1259,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
 
             for (String id : faxEntriesIds) {
                 String defaultName = locator.lookupVoipServiceRemote().getNewFaxReportFileName(id);
-                defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
+                defaultName = FileUtils.getNewFileName(faxEntries.get(id).getCase(), defaultName, false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
                 if(defaultName==null) {
                     this.clearDetails();
                     return;
@@ -1267,7 +1267,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 
                 boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(faxEntries.get(id).getCase().getId(), defaultName);
                 while (documentExists) {
-                    defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
+                    defaultName = FileUtils.getNewFileName(faxEntries.get(id).getCase(), defaultName, false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Faxbericht");
                     if (defaultName == null || "".equals(defaultName)) {
                         this.clearDetails();
                         return;
@@ -1280,7 +1280,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
             
             for (int id : epostEntriesIds) {
                 String defaultName = locator.lookupVoipServiceRemote().getNewEpostReportFileName(id);
-                defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
+                defaultName = FileUtils.getNewFileName(epostEntries.get(id).getCase(), defaultName, false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
                 if(defaultName==null) {
                     this.clearDetails();
                     return;
@@ -1288,7 +1288,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 
                 boolean documentExists = locator.lookupArchiveFileServiceRemote().doesDocumentExist(epostEntries.get(id).getCase().getId(), defaultName);
                 while (documentExists) {
-                    defaultName = FileUtils.getNewFileName(defaultName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
+                    defaultName = FileUtils.getNewFileName(epostEntries.get(id).getCase(), defaultName, false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für E-POST-Bericht");
                     if (defaultName == null || "".equals(defaultName)) {
                         this.clearDetails();
                         return;
