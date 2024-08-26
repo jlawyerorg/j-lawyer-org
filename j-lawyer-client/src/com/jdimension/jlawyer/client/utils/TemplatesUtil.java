@@ -663,32 +663,45 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.documents.PlaceHolders;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class TemplatesUtil {
-    
+
+    private static final Logger log = Logger.getLogger(TemplatesUtil.class.getName());
+
     public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders, Collection<String> formPlaceHolders) {
-        ArrayList<String> result=new ArrayList<>();
-        if(templateText==null)
-            templateText="";
+        ArrayList<String> result = new ArrayList<>();
+        if (templateText == null) {
+            templateText = "";
+        }
         for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formPlaceHolders)) {
-            if(templateText.contains(r))
+            if (templateText.contains(r)) {
                 result.add(r);
-            
+            }
+
         }
         return result;
     }
-    
-    public static String replacePlaceHolders(String content, HashMap<String,Object> values) {
-        for (String key: values.keySet()) {
+
+    public static String replacePlaceHolders(String content, HashMap<String, Object> values) {
+        for (String key : values.keySet()) {
             String keyRegX = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
             String value = (String) values.get(key);
             if (value == null) {
@@ -700,5 +713,55 @@ public class TemplatesUtil {
 
         return content;
     }
-    
+
+    public static HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<PartiesTriplet> partiesTriplets, Invoice invoice, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            if(allPartyTypes==null) {
+                allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            }
+            List<String> allPartyTypesPlaceholders = new ArrayList<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
+
+            if(formPlaceHolders==null && contextArchiveFile != null) {
+                formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(contextArchiveFile.getId());
+            }
+            if(formPlaceHolderValues==null && contextArchiveFile != null) {
+                formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(contextArchiveFile.getId());
+            }
+
+            ArrayList<String> placeHolderNames = getPlaceHoldersInTemplate(content, allPartyTypesPlaceholders, formPlaceHolders);
+            HashMap<String, Object> ht = new HashMap<>();
+            for (String ph : placeHolderNames) {
+                ht.put(ph, "");
+            }
+
+            AppUserBean author = UserSettings.getInstance().getCurrentUser();
+            if (contextArchiveFile != null) {
+                try {
+                    if(caseLawyer==null && !StringUtils.isEmpty(contextArchiveFile.getLawyer()))
+                        caseLawyer = locator.lookupSystemManagementRemote().getUser(contextArchiveFile.getLawyer());
+                } catch (Exception ex) {
+                    log.warn("Unable to load lawyer with id " + contextArchiveFile.getLawyer());
+                }
+                try {
+                    if(caseAssistant==null && !StringUtils.isEmpty(contextArchiveFile.getAssistant()))
+                        caseAssistant = locator.lookupSystemManagementRemote().getUser(contextArchiveFile.getAssistant());
+                } catch (Exception ex) {
+                    log.warn("Unable to load assistant with id " + contextArchiveFile.getAssistant());
+                }
+            }
+
+            return locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, null, null, null);
+
+        } catch (Exception ex) {
+            log.error("Error getting placeholder values", ex);
+            return new HashMap<>();
+        }
+    }
+
 }

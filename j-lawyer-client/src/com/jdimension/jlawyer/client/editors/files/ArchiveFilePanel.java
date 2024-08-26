@@ -7149,7 +7149,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected DropTarget getMyDropTarget() {
         if (dropTarget == null) {
             //dropTarget = new DropTarget(this.tblDocuments, DnDConstants.ACTION_COPY_OR_MOVE, null);
-            dropTarget = new DropTarget(this.caseFolderPanel1, DnDConstants.ACTION_COPY_OR_MOVE, null);
+            dropTarget = new DropTarget(this.caseFolderPanel1, DnDConstants.ACTION_COPY, null);
         }
         return dropTarget;
     }
@@ -7440,7 +7440,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null, null);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
 
                         a.start();
 

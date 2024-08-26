@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -778,12 +779,16 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             placeHolders.put(PROFIL_KONTONR_AK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO_AK, ""));
         }
         
+        if(formsPlaceHolderValues==null)
+            formsPlaceHolderValues=new HashMap<>();
         for(String formPh: formsPlaceHolderValues.keySet()) {
             if(placeHolders.containsKey(formPh)) {
                 placeHolders.put(formPh, formsPlaceHolderValues.get(formPh));
             }
         }
         
+        if(selectedParties==null)
+            selectedParties=new ArrayList<>();
 
         for(PartiesTriplet ppe: selectedParties) {
             AddressBean selected=ppe.getAddress();

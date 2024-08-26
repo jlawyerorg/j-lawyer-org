@@ -764,6 +764,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
 
     }
+    
+    public FoldersListPanel getFoldersListPanel() {
+        return this.foldersListPanel;
+    }
 
     public String getCaseId() {
         return this.caseId;

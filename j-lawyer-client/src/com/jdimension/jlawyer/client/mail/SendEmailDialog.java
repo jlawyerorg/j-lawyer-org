@@ -2140,12 +2140,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
+                // get a list of placeholders
                 ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, this.formPlaceHolders);
                 HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
 
+                // get user objects for this case
                 AppUserBean caseLawyer = null;
                 AppUserBean caseAssistant = null;
                 AppUserBean author = UserSettings.getInstance().getCurrentUser();
@@ -2162,12 +2164,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     }
                 }
 
+                // get selected parties
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
                 List<PartiesTriplet> partiesTriplets=new ArrayList<>();
                 for(PartiesPanelEntry pe: selectedParties) {
                     PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
+                // get all placeholder values for the given set of placeholders
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null);
                 this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 

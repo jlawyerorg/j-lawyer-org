@@ -678,14 +678,18 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
@@ -695,6 +699,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -734,6 +739,14 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private ArrayList<String> existingFileNames = new ArrayList<>();
 
     protected boolean failedOrCancelled = true;
+    
+    // caching for data that is required to build the file name if it contains place holders
+    private List<PartyTypeBean> allPartyTypes=null;
+    private Collection<String> formPlaceHolders=null;
+    private HashMap<String, String> formPlaceHolderValues=null;
+    private AppUserBean caseLawyer=null;
+    private AppUserBean caseAssistant=null;
+    private List<PartiesTriplet> parties=new ArrayList<>();
     
 
     /**
@@ -1344,6 +1357,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
 
     public void addEntry(BulkSaveEntry e) {
         e.setSaveDialog(this);
+        
+        e.setPlaceHoldersCache(this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant, this.parties);
         this.entryList.add(e);
         this.pnlEntries.add(e);
         e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags));
@@ -1482,6 +1497,28 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(selectedCase.getId());
             for (ArchiveFileDocumentsBean d : docs) {
                 existingFileNames.add(d.getName().toLowerCase());
+            }
+            
+            // cached and passed to BulkSaveEntry to avoid loading for each entry
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            if(this.selectedCase != null) {
+                try {
+                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
+                } catch (Exception ex) {}
+                try {
+                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
+                } catch (Exception ex) {}
+                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
+                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
+                
+                try {
+                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                    for (ArchiveFileAddressesBean aab : involved) {
+                        parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+                    }
+                } catch (Exception ex) {
+                    log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
+                }
             }
 
         } catch (Exception ex) {

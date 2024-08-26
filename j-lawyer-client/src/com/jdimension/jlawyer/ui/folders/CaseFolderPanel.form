@@ -180,14 +180,12 @@
               <Group type="102" alignment="0" attributes="0">
                   <Group type="103" groupAlignment="1" max="-2" attributes="0">
                       <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
-                      <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="cmdActions" max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="sortChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdActions" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="sortChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
+                      <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
                       <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                           <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>

@@ -688,12 +688,12 @@ import org.apache.log4j.Logger;
 public class UploadDocumentsAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(UploadDocumentsAction.class.getName());
-    
+
     private String archiveFileKey;
     private Component owner;
     private CaseFolderPanel docTarget;
-    private CaseFolder targetFolder=null;
-    private Invoice invoice=null;
+    private CaseFolder targetFolder = null;
+    private Invoice invoice = null;
 
     private List<File> files;
 
@@ -704,11 +704,11 @@ public class UploadDocumentsAction extends ProgressableAction {
         this.owner = owner;
         this.docTarget = docTarget;
         this.files = files;
-        this.targetFolder=targetFolder;
-        this.invoice=invoice;
+        this.targetFolder = targetFolder;
+        this.invoice = invoice;
 
     }
-    
+
     @Override
     public int getMax() {
         return files.size();
@@ -730,57 +730,100 @@ public class UploadDocumentsAction extends ProgressableAction {
 
             for (File f : this.files) {
                 if (!this.isCancelled()) {
-                    this.progress("Speichere " + f.getName() + "...");
-                    if (!f.isDirectory()) {
 
-                        byte[] data = FileUtils.readFile(f);
-                        
-                        String newName = f.getName();
-                        boolean documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
-                        while (documentExists) {
-
-                            newName = FileUtils.getNewFileName(newName, false, new Date(), this.indicator, "neuer Dateiname");
-                            if (newName == null || "".equals(newName)) {
-                                EditorsRegistry.getInstance().clearStatus(true);
-                                ThreadUtils.setDefaultCursor(this.owner);
-                                return false;
-                            }
-                            documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
-
-                        }
-
-                        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null, null);
-                        
-                        if(this.invoice!=null) {
-                            afs.linkInvoiceDocument(doc.getId(), invoice.getId());
-                        }
-                        
-//                        persisting the folder for this document is automatically done by this call (not just UI update)
-                        SwingUtilities.invokeLater(() -> {
-                            docTarget.addDocument(doc, invoice);
-                            if(targetFolder!=null) {
-                                ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
-                                docs.add(doc);
-                                docTarget.moveDocumentsToFolder(docs, targetFolder);
-                            }
-                        });
-
+                    if (f.isDirectory()) {
+                        boolean proceed=this.processDirectory(f, this.targetFolder, afs);
+                        if(!proceed)
+                            return false;
+                    } else {
+                        boolean proceed=this.processFile(f, this.targetFolder, afs);
+                        if(!proceed)
+                            return false;
                     }
                 }
             }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return true;
+        } finally {
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
-
-            return true;
         }
-
-        EditorsRegistry.getInstance().clearStatus(true);
-        ThreadUtils.setDefaultCursor(this.owner);
 
         return true;
 
+    }
+
+    private boolean processFile(File f, CaseFolder folder, ArchiveFileServiceRemote afs) throws Exception {
+        this.progress("Speichere " + f.getName() + "...");
+
+        byte[] data = FileUtils.readFile(f);
+
+        String newName = f.getName();
+        boolean documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+        while (documentExists) {
+
+            newName = FileUtils.getNewFileName(newName, false, new Date(), this.indicator, "neuer Dateiname");
+            if (newName == null || "".equals(newName)) {
+                EditorsRegistry.getInstance().clearStatus(true);
+                ThreadUtils.setDefaultCursor(this.owner);
+                return false;
+            }
+            documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+
+        }
+
+        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null, null);
+
+        if (this.invoice != null) {
+            afs.linkInvoiceDocument(doc.getId(), invoice.getId());
+        }
+
+        // persisting the folder for this document is automatically done by this call (not just UI update)
+        SwingUtilities.invokeLater(() -> {
+            docTarget.addDocument(doc, invoice);
+            if (folder != null) {
+                ArrayList<ArchiveFileDocumentsBean> docs = new ArrayList<>();
+                docs.add(doc);
+                docTarget.moveDocumentsToFolder(docs, folder);
+            }
+        });
+        
+        return true;
+    }
+
+    private boolean processDirectory(File f, CaseFolder parentFolder, ArchiveFileServiceRemote afs) throws Exception {
+        
+        if(!f.isDirectory())
+            throw new Exception(f.getName() + " ist kein Ordner!");
+        
+        File[] children=f.listFiles();
+        CaseFolder newFolder=null;
+        if(children.length>0) {
+            if(!parentFolder.hasChild(f.getName())) {
+                newFolder=afs.createCaseFolder(parentFolder.getId(), f.getName());
+                this.docTarget.getFoldersListPanel().folderAdded(parentFolder, newFolder);
+            } else {
+                newFolder=parentFolder.getChild(f.getName());
+            }
+        }
+        
+        for(File file: children) {
+            if (!this.isCancelled()) {
+
+                    if (file.isDirectory()) {
+                        boolean proceed=this.processDirectory(file, newFolder, afs);
+                        if(!proceed)
+                            return false;
+                    } else {
+                        boolean proceed=this.processFile(file, newFolder, afs);
+                        if(!proceed)
+                            return false;
+                    }
+                }
+        }
+        return true;
+        
     }
 }

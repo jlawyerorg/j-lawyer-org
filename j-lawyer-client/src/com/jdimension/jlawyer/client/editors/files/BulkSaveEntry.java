@@ -672,10 +672,15 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import java.awt.Color;
 import java.awt.Component;
@@ -683,8 +688,10 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -716,7 +723,15 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     protected BulkSaveDialog saveDialog=null;
     
     protected boolean favorite=false;
-
+    
+    // caching for data that is required to build the file name if it contains place holders
+    private List<PartyTypeBean> allPartyTypes=null;
+    private Collection<String> formPlaceHolders=null;
+    private HashMap<String, String> formPlaceHolderValues=null;
+    private AppUserBean caseLawyer=null;
+    private AppUserBean caseAssistant=null;
+    private List<PartiesTriplet> parties=null;
+    
     /**
      * Creates new form BulkSaveEntry
      */
@@ -725,6 +740,15 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         
         this.lblDownloaded.setText("");
         this.sepBottom.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+    }
+    
+    public void setPlaceHoldersCache(List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, List<PartiesTriplet> parties) {
+        this.allPartyTypes=allPartyTypes;
+        this.formPlaceHolders=formPlaceHolders;
+        this.formPlaceHolderValues=formPlaceHolderValues;
+        this.caseLawyer=caseLawyer;
+        this.caseAssistant=caseAssistant;
+        this.parties=parties;
     }
 
     /**
@@ -1012,7 +1036,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     public void selectDocumentTags(List<String> tags) {
         ComponentUtils.selectPopupMenuItems(this.popDocTags, tags);
         
-        if (tags.size() > 0) {
+        if (!tags.isEmpty()) {
             this.cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
         } else {
             this.cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
@@ -1267,7 +1291,21 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
             if(this.documentDate==null)
                 this.documentDate=new Date();
-            this.setDocumentFilenameNew(locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, nameTemplate));
+            
+            
+            
+            String docName=locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, nameTemplate);
+            
+            ArchiveFileBean selectedCase=null;
+            if(this.saveDialog!=null)
+                selectedCase=this.saveDialog.getSelectedCase();
+            
+            HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            docName=TemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName=FileUtils.sanitizeFileName(docName);
+            docName=FileUtils.preserveExtension(this.documentFilename, docName);
+            
+            this.setDocumentFilenameNew(docName);
 
         } catch (Exception ex) {
             log.error("Error getting new document name", ex);

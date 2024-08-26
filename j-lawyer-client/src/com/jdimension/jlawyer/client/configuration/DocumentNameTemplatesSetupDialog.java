@@ -763,11 +763,12 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Belegnummernkreise");
+        setTitle("Dateinamen konfigurieren");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Belegnummernkreise"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Definitionen für Dateinamen"));
 
         tblTemplates.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -863,7 +864,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
 
         jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
-        jLabel5.setText("Nummernkreiskonfiguration");
+        jLabel5.setText("Konfiguration");
 
         txtPattern.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
@@ -898,6 +899,8 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
 
         jLabel14.setFont(jLabel14.getFont());
         jLabel14.setText("DATEINAME als Platzhalter für ursprünglichen Namen");
+
+        jLabel3.setText("Platzhalter, bspw. {{MANDANT_NAME}}");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -934,8 +937,9 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
                                             .addComponent(jLabel10)
                                             .addComponent(chkDefault)
                                             .addComponent(jLabel14)
-                                            .addComponent(jLabel11))
-                                        .addGap(0, 42, Short.MAX_VALUE))
+                                            .addComponent(jLabel11)
+                                            .addComponent(jLabel3))
+                                        .addGap(0, 55, Short.MAX_VALUE))
                                     .addComponent(jScrollPane2))))))
                 .addContainerGap())
         );
@@ -960,11 +964,13 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel14)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel11)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(chkDefault)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 398, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 369, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblError)
                         .addGap(0, 8, Short.MAX_VALUE)
@@ -1201,6 +1207,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;

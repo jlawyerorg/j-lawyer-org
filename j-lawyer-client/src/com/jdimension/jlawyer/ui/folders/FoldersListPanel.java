@@ -862,7 +862,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         parent.getChildren().remove(removedFolder);
         
         // need to rebuild the popup menu with all the folders
-        this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
         
         this.revalidate();
         this.repaint();
@@ -881,7 +881,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     
     public String getFolderPath(String folderId) {
         HashMap<String,String> folderPaths=new HashMap<>();
-        this.collectFolderPaths(folderPaths, this.rootFolder, "");
+        this.collectFolderPaths(folderPaths, this.getRootFolder(), "");
         if(folderPaths.containsKey(folderId)) {
             return folderPaths.get(folderId);
         } else {
@@ -908,7 +908,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
         
         parent.getChildren().add(newFolder);
-        this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
         this.forceRelayout();
@@ -983,5 +983,12 @@ public class FoldersListPanel extends javax.swing.JPanel {
     void folderUpdated(CaseFolder folder) {
         this.caseFolderPanel.updateDocumentsInFolder(folder);
         this.forceRelayout();
+    }
+
+    /**
+     * @return the rootFolder
+     */
+    public CaseFolder getRootFolder() {
+        return rootFolder;
     }
 }
