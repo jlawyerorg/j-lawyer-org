@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -707,7 +707,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
                 log.warn("invalid cloud port: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, ""), t);
             }
             try {
-                this.pnlCloud.setCloudPassword(Crypto.decrypt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "")));
+                this.pnlCloud.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "")));
             } catch (Throwable t) {
                 log.warn("invalid cloud password: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, ""), t);
                 this.pnlCloud.setCloudPassword("");
@@ -875,7 +875,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, ((CloudAddressBook) this.cmbAddressBook.getSelectedItem()).getHref());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, this.pnlCloud.getCloudPath());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, "" + this.pnlCloud.getCloudPort());
-            s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, Crypto.encrypt(this.pnlCloud.getCloudPassword()));
+            s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
             s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, this.pnlCloud.isSsl());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, this.pnlCloud.getCloudUser());
 

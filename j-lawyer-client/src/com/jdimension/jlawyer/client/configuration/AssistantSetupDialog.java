@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -1065,7 +1065,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
             ac.setUrl(this.txtUrl.getText());
             try {
                 if (this.txtPwd.getPassword().length > 0) {
-                    ac.setPassword(Crypto.encrypt(new String(this.txtPwd.getPassword())));
+                    ac.setPassword(CryptoProvider.defaultCrypto().encrypt(new String(this.txtPwd.getPassword())));
                 } else {
                     ac.setPassword("");
                 }
@@ -1131,7 +1131,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         
         try {
             if (ac.getPassword() != null && !"".equalsIgnoreCase(ac.getPassword())) {
-                this.txtPwd.setText(Crypto.decrypt(ac.getPassword()));
+                this.txtPwd.setText(CryptoProvider.defaultCrypto().decrypt(ac.getPassword()));
             } else {
                 this.txtPwd.setText(null);
             }

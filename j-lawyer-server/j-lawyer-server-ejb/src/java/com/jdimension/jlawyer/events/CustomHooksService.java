@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.IntegrationHookLog;
 import com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -779,7 +779,7 @@ public class CustomHooksService implements CustomHooksServiceLocal {
 
             if (hook.getAuthenticationUser() != null && !"".equalsIgnoreCase(hook.getAuthenticationUser())) {
                 if (!this.hookPwd.containsKey(hook.getName())) {
-                    this.hookPwd.put(hook.getName(), Crypto.decrypt(hook.getAuthenticationPwd()));
+                    this.hookPwd.put(hook.getName(), CryptoProvider.newCrypto().decrypt(hook.getAuthenticationPwd()));
                 }
                 client.register(new HookAuthenticator(hook.getAuthenticationUser(), this.hookPwd.get(hook.getName())));
             }

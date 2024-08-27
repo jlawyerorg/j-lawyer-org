@@ -677,7 +677,7 @@ import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.fax.SipgateInstance;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import static com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys.SERVERCONF_INSTALLATION_ID;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
@@ -907,7 +907,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new EpostException("Kein E-POST-Freischaltcode vorhanden");
         
         try {
-            return Crypto.decrypt(encryptedId.getSettingValue(), installationId.getSettingValue().toCharArray());
+            return CryptoProvider.newCrypto(installationId.getSettingValue().toCharArray()).decrypt(encryptedId.getSettingValue());
         } catch (Exception ex) {
             throw new EpostException("E-POST-Freischaltcode kann nicht entschlüsselt werden");
         }   
@@ -923,7 +923,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
         
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         return ea.getLetterStatus(token, letterId);
     }
     
@@ -937,7 +937,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
         
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         return ea.getLetterStatus(token, letterIds);
     }
 
@@ -1138,7 +1138,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         return ea.getValidatedLetter(token, letterId);
     }
 
@@ -1165,7 +1165,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         int letterId= ea.sendLetter(token, letter);
         // may cause the sending transaction to fail if the status request hits a rate limit directly after sending
         //EpostLetterStatus s=ea.getLetterStatus(token, letterId);
@@ -1216,7 +1216,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         int letterId = ea.sendRegisteredLetter(token, letter, registeredLetterMode);
         EpostLetterStatus s=ea.getLetterStatus(token, letterId);
         
@@ -1278,7 +1278,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         EpostAPI ea=new EpostAPI(this.getVendorId(), currentUser.getEpostCustomer());
-        String token=ea.login(currentUser.getEpostSecret(), Crypto.decrypt(currentUser.getEpostPassword()));
+        String token=ea.login(currentUser.getEpostSecret(), CryptoProvider.newCrypto().decrypt(currentUser.getEpostPassword()));
         return ea.validateLetter(token, letter, toEmail);
     }
 

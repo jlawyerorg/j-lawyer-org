@@ -676,7 +676,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -1503,8 +1503,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
-                ms.setEmailOutPwd(Crypto.encrypt(new String(this.pwdOutPassword.getPassword())));
-                ms.setEmailInPwd(Crypto.encrypt(new String(this.pwdInPassword.getPassword())));
+                ms.setEmailOutPwd(CryptoProvider.defaultCrypto().encrypt(new String(this.pwdOutPassword.getPassword())));
+                ms.setEmailInPwd(CryptoProvider.defaultCrypto().encrypt(new String(this.pwdInPassword.getPassword())));
                 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -1623,13 +1623,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         String inPwd = ms.getEmailInPwd();
         String outPwd = ms.getEmailOutPwd();
         try {
-            outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+            outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
         } catch (Throwable t) {
             log.error(t);
             outPwd="";
         }
         try {
-            inPwd = Crypto.decrypt(ms.getEmailInPwd());
+            inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
         } catch (Throwable t) {
             log.error(t);
             inPwd="";

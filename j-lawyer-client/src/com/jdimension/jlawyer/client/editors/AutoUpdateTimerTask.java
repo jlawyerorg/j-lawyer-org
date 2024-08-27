@@ -675,7 +675,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -767,7 +767,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
 
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + Crypto.encrypt(csession));
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + CryptoProvider.newCrypto().encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();
             urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
 

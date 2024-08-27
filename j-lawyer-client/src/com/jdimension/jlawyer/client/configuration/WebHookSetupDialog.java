@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -1084,7 +1084,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             }
             try {
                 if (this.txtPwd.getPassword().length > 0) {
-                    ih.setAuthenticationPwd(Crypto.encrypt(new String(this.txtPwd.getPassword())));
+                    ih.setAuthenticationPwd(CryptoProvider.defaultCrypto().encrypt(new String(this.txtPwd.getPassword())));
                 } else {
                     ih.setAuthenticationPwd("");
                 }
@@ -1151,7 +1151,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
 
         try {
             if (ih.getAuthenticationPwd() != null && !"".equalsIgnoreCase(ih.getAuthenticationPwd())) {
-                this.txtPwd.setText(Crypto.decrypt(ih.getAuthenticationPwd()));
+                this.txtPwd.setText(CryptoProvider.defaultCrypto().decrypt(ih.getAuthenticationPwd()));
             } else {
                 this.txtPwd.setText(null);
             }

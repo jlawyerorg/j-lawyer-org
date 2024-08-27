@@ -685,7 +685,8 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FileMetadata;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CachingCrypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
@@ -1420,10 +1421,11 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     public Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception {
         Map<AssistantConfig,List<AiCapability>> allCapabilities=new HashMap<>();
         List<AssistantConfig> configs=this.assistantFacade.findAll();
+        CachingCrypto crypto=CryptoProvider.newCrypto();
         for(AssistantConfig c: configs) {
             String pwd=c.getPassword();
             if(pwd!=null)
-                pwd=Crypto.decrypt(c.getPassword());
+                pwd=crypto.decrypt(c.getPassword());
             
             AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
             allCapabilities.put(c, api.getCapabilities());
@@ -1436,13 +1438,14 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @RolesAllowed(value = {"loginRole"})
     public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception {
         List<AssistantConfig> configs=this.assistantFacade.findAll();
+        CachingCrypto crypto=CryptoProvider.newCrypto();
         for(AssistantConfig c: configs) {
             if(!(c.getId().equals(config.getId()))) {
                 continue;
             }
             String pwd=c.getPassword();
             if(pwd!=null)
-                pwd=Crypto.decrypt(c.getPassword());
+                pwd=crypto.decrypt(c.getPassword());
             
             AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
             return api.submitRequest(requestType, modelType, prompt, params, inputs);
@@ -1454,13 +1457,14 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @RolesAllowed(value = {"loginRole"})
     public AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception {
         List<AssistantConfig> configs=this.assistantFacade.findAll();
+        CachingCrypto crypto=CryptoProvider.newCrypto();
         for(AssistantConfig c: configs) {
             if(!(c.getId().equals(config.getId()))) {
                 continue;
             }
             String pwd=c.getPassword();
             if(pwd!=null)
-                pwd=Crypto.decrypt(c.getPassword());
+                pwd=crypto.decrypt(c.getPassword());
             
             AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
             return api.getRequestStatus(requestId);

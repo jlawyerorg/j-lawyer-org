@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.timer;
 
-import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.documents.ServerTemplatesUtil;
 import com.jdimension.jlawyer.email.AttachmentInfo;
 import com.jdimension.jlawyer.email.CommonMailUtils;
@@ -682,8 +681,7 @@ import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.pojo.PartiesTriplet;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -771,7 +769,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
         String server = null;
         try {
-            String emailInPwd = Crypto.decrypt(ms.getEmailInPwd());
+            String emailInPwd = CryptoProvider.newCrypto().decrypt(ms.getEmailInPwd());
 
             //Properties props = System.getProperties();
             Properties props = new Properties();

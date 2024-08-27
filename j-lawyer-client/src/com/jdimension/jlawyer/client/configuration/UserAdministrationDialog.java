@@ -693,7 +693,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
@@ -2259,7 +2259,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.pnlCloudConnection.setCloudUser(u.getCloudUser());
                 this.pnlCloudConnection.setCloudPassword("");
                 if (u.getCloudPassword() != null && !"".equals(u.getCloudPassword())) {
-                    this.pnlCloudConnection.setCloudPassword(Crypto.decrypt(u.getCloudPassword()));
+                    this.pnlCloudConnection.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(u.getCloudPassword()));
                 }
                 this.pnlCloudConnection.setSsl(u.isCloudSsl());
 
@@ -2291,7 +2291,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.txtEpostCustomer.setText(u.getEpostCustomer());
                 this.txtEpostSecret.setText(u.getEpostSecret());
                 try {
-                    this.pwdEpostPassword.setText(Crypto.decrypt(u.getEpostPassword()));
+                    this.pwdEpostPassword.setText(CryptoProvider.defaultCrypto().decrypt(u.getEpostPassword()));
                 } catch (Throwable t) {
                     log.warn("Unable to decrypt E-POST password, might be empty", t);
                     this.pwdEpostPassword.setText("");
@@ -2333,7 +2333,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.rdManualLogin.setSelected(true);
                 }
                 try {
-                    this.pwdBeaCertificatePassword.setText(Crypto.decrypt(u.getBeaCertificatePassword()));
+                    this.pwdBeaCertificatePassword.setText(CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                 } catch (Throwable t) {
                     log.warn("Unable to decrypt beA certificate password, might be empty", t);
                     this.pwdBeaCertificatePassword.setText("");
@@ -2344,7 +2344,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), Crypto.decrypt(u.getBeaCertificatePassword()));
+                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                     for (Object key : ht.keySet()) {
                         this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
                     }
@@ -2520,7 +2520,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setCountryCode(countryId);
 
                 u.setBeaCertificate(this.currentCertificate);
-                u.setBeaCertificatePassword(Crypto.encrypt(this.pwdBeaCertificatePassword.getText().trim()));
+                u.setBeaCertificatePassword(CryptoProvider.defaultCrypto().encrypt(this.pwdBeaCertificatePassword.getText().trim()));
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
 
                 u.setCloudHost(this.pnlCloudConnection.getCloudHost());
@@ -2539,7 +2539,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 }
                 u.setCloudPath(cloudPath);
                 if (this.pnlCloudConnection.getCloudPassword().length() > 0) {
-                    u.setCloudPassword(Crypto.encrypt(this.pnlCloudConnection.getCloudPassword()));
+                    u.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(this.pnlCloudConnection.getCloudPassword()));
                 } else {
                     u.setCloudPassword(null);
                 }
@@ -2556,7 +2556,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 }
 
                 u.setEpostCustomer(this.txtEpostCustomer.getText());
-                u.setEpostPassword(Crypto.encrypt(this.pwdEpostPassword.getText().trim()));
+                u.setEpostPassword(CryptoProvider.defaultCrypto().encrypt(this.pwdEpostPassword.getText().trim()));
                 u.setEpostSecret(this.txtEpostSecret.getText());
 
                 u.setDisplayName(this.txtDisplayName.getText());

@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
@@ -791,7 +791,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD);
             if (s != null) {
                 pwd = s.getSettingValue();
-                pwd = Crypto.decrypt(pwd);
+                pwd = CryptoProvider.newCrypto().decrypt(pwd);
             }
             
             String subPath = null;

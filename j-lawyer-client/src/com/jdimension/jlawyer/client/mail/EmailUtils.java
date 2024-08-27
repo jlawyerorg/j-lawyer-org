@@ -670,7 +670,8 @@ import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CachingCrypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -692,7 +693,7 @@ import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 
 /**
  *
- * @author jens
+ * @author j-dimension
  */
 public class EmailUtils extends CommonMailUtils {
 
@@ -712,7 +713,8 @@ public class EmailUtils extends CommonMailUtils {
                 return false;
             }
 
-            if (StringUtils.isEmpty(Crypto.decrypt(ms.getEmailInPwd()))) {
+            CachingCrypto crypto=CryptoProvider.defaultCrypto();
+            if (StringUtils.isEmpty(crypto.decrypt(ms.getEmailInPwd()))) {
                 return false;
             }
 
@@ -1108,7 +1110,7 @@ public class EmailUtils extends CommonMailUtils {
 
         boolean authenticate=true;
         try {
-            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(Crypto.decrypt(ms.getEmailOutPwd())))
+            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd())))
                 authenticate=false;
         } catch (Throwable t) {
             log.error("Could not decrypt outgoing password", t);
@@ -1148,7 +1150,7 @@ public class EmailUtils extends CommonMailUtils {
             props.put("mail.smtps.user", ms.getEmailOutUser());
             String outPwd = "";
             try {
-                outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+                outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1160,7 +1162,7 @@ public class EmailUtils extends CommonMailUtils {
                 public PasswordAuthentication getPasswordAuthentication() {
                     String outPwd = "";
                     try {
-                        outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+                        outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
                     } catch (Throwable t) {
                         log.error(t);
                     }
@@ -1177,7 +1179,7 @@ public class EmailUtils extends CommonMailUtils {
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
             if(authenticate)
-                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()));
             else
                 bus.connect(ms.getEmailOutServer(), null, null);
 

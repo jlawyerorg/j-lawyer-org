@@ -681,7 +681,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -764,14 +764,14 @@ public class SendEncryptedAction extends ProgressableAction {
 
         String inPwd = "";
         try {
-            inPwd = Crypto.decrypt(ms.getEmailInPwd());
+            inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
         } catch (Throwable t) {
             log.error(t);
         }
 
         String outPwd = "";
         try {
-            outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+            outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
         } catch (Throwable t) {
             log.error(t);
         }

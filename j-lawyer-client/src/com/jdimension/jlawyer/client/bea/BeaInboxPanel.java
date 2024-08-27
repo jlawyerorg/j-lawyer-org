@@ -693,7 +693,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -893,7 +893,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
         String pwd = null;
         try {
-            pwd = Crypto.decrypt(cu.getBeaCertificatePassword());
+            pwd = CryptoProvider.defaultCrypto().decrypt(cu.getBeaCertificatePassword());
         } catch (GeneralSecurityException | IOException ge) {
             log.error("Unable to decrypt beA certificate password");
             throw new BeaWrapperException(ge);

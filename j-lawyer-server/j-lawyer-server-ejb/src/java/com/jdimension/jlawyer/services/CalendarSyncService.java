@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
@@ -683,7 +683,6 @@ import javax.ejb.Startup;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.logging.Logger;
 import org.jlawyer.cloud.NextcloudCalendarConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -776,7 +775,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             return null;
         }
 
-        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
+        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), CryptoProvider.newCrypto().decrypt(cs.getCloudPassword()));
         if (cs.getCloudPath() != null && !("".equals(cs.getCloudPath()))) {
             nc.setSubpathPrefix(cs.getCloudPath());
         }

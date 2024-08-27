@@ -661,448 +661,122 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail;
+package com.jdimension.jlawyer.security;
 
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.email.MsExchangeUtils;
-import com.jdimension.jlawyer.client.processing.ProgressIndicator;
-import com.jdimension.jlawyer.client.processing.ProgressableAction;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.persistence.DocumentTagsBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.CryptoProvider;
-import com.jdimension.jlawyer.server.utils.ContentTypes;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import javax.activation.FileDataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
-import javax.swing.JDialog;
-import org.apache.log4j.Logger;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.spec.KeySpec;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
  * @author jens
  */
-public class SendAction extends ProgressableAction {
+public class CachingCrypto {
 
-    private static final Logger log = Logger.getLogger(SendAction.class.getName());
-    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    private static final char[] DROW_SSAP = ("enfld" + "sgbnlsn" + "gdlksdsgm").toCharArray();
 
-    private List<String> attachments = null;
-    private MailboxSetup ms = null;
-    private boolean readReceipt = false;
-    private String to = "";
-    private String cc = "";
-    private String bcc = "";
-    private String subject = "";
-    private String body = "";
-    private String contentType = ContentTypes.TEXT_PLAIN;
-    private ArchiveFileBean archiveFile = null;
-    private CaseFolder caseFolder = null;
-    private String documentTag = null;
+    private static final byte[] SALT_AES = {
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12};
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
-        super(i, false, cleanAfter);
-        this.attachments = attachments;
-        this.ms = ms;
-        this.readReceipt = readReceipt;
-        this.to = to;
-        this.cc = cc;
-        this.bcc = bcc;
-        this.subject = subject;
-        this.body = body;
-        this.contentType = contentType;
-        this.documentTag = documentTag;
+    private static final byte[] NONCE_AES = {
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12};
+
+    private char[] password = DROW_SSAP;
+    private Base64 base64 = new Base64();
+    private SecretKey key=null;
+
+    public CachingCrypto() throws GeneralSecurityException {
+        this(DROW_SSAP);
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
-        this.archiveFile = af;
-        this.caseFolder = folder;
+    public CachingCrypto(char[] password) throws GeneralSecurityException {
+        this.password = password;
+
+        // GENERATE random salt (needed for PBKDF2)
+        //        final byte[] salt = new byte[64];
+//      SecureRandom random = SecureRandom.getInstanceStrong();
+//      random.nextBytes(salt);
+        final byte[] salt = SALT_AES;
+
+        // DERIVE key (from password and salt)
+        SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        KeySpec passwordBasedEncryptionKeySpec = new PBEKeySpec(this.password, salt, 10000, 256);
+        SecretKey secretKeyFromPBKDF2 = secretKeyFactory.generateSecret(passwordBasedEncryptionKeySpec);
+        this.key = new SecretKeySpec(secretKeyFromPBKDF2.getEncoded(), "AES");
+
+//        // GENERATE random nonce (number used once)
+//        final byte[] nonce = new byte[32];
+//        random.nextBytes(nonce);
     }
 
-    @Override
-    public int getMax() {
-        return 6;
-    }
+    public static void main(String[] args) throws Exception {
 
-    @Override
-    public int getMin() {
-        return 0;
-    }
+        CachingCrypto c = new CachingCrypto();
+        String originalPassword = "jRK0EG6sLq1oI9bh";
+        System.out.println("Original password: " + originalPassword);
+        String encryptedPassword = c.encrypt(originalPassword);
+        System.out.println("Encrypted password: " + encryptedPassword);
+        String decryptedPassword = c.decrypt(encryptedPassword);
+        System.out.println("Decrypted password: " + decryptedPassword);
 
-    @Override
-    public boolean execute() throws Exception {
-
-        this.progress("Verbinde...");
-        
-        String inPwd = "";
-        try {
-            inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
-        } catch (Throwable t) {
-            log.error(t);
-        }
-
-        String outPwd = "";
-        try {
-            outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
-        } catch (Throwable t) {
-            log.error(t);
-        }
-
-        
-        
-        Properties smtpProps = new Properties();
-        boolean authenticateSmtp=true;
-        try {
-            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(outPwd))
-                authenticateSmtp=false;
-        } catch (Throwable t) {
-            log.error("Could not decrypt outgoing password", t);
-        }
-        
-        if (ms.isEmailOutSsl()) {
-            smtpProps.put("mail.smtp.ssl.enable", "true");
-        }
-
-        if (ms.getEmailOutPort() != null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
-            try {
-                int testInt = Integer.parseInt(ms.getEmailOutPort());
-                smtpProps.put("mail.smtp.port", ms.getEmailOutPort());
-                smtpProps.put("mail.smtps.port", ms.getEmailOutPort());
-            } catch (Throwable t) {
-                log.error("Invalid SMTP port: " + ms.getEmailOutPort());
-            }
-        }
-
-        smtpProps.put("mail.from", ms.getEmailAddress());
-        smtpProps.put("mail.smtp.host", ms.getEmailOutServer());
-        smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
-        smtpProps.put("mail.smtp.auth", true);
-        smtpProps.put("mail.smtps.host", ms.getEmailOutServer());
-        if (ms.isEmailStartTls()) {
-            smtpProps.put("mail.smtp.starttls.enable", "true");
-        }
-        Session session = null;
-        if (!authenticateSmtp) {
-            smtpProps.put("mail.smtps.auth", false);
-            smtpProps.put("mail.smtp.auth", false);
-            session = Session.getInstance(smtpProps);
-        } else {
-            smtpProps.put("mail.smtps.auth", true);
-            smtpProps.put("mail.smtp.auth", true);
-            smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
-            smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
-            smtpProps.put("mail.password", outPwd);
-
-            final String smtpPwd=outPwd;
-            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-                
-                @Override
-                public PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(ms.getEmailOutUser(), smtpPwd);
-                }
-            };
-            session = Session.getInstance(smtpProps, auth);
-        }
-        
-        smtpProps.put("mail.password", outPwd);
-
-        // add outbox properties for storing in "sent"
-        if (ms.isMsExchange()) {
-            smtpProps.put("mail.imaps.sasl.enable", "true");
-            smtpProps.put("mail.imaps.port", "993");
-
-            smtpProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
-            smtpProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
-
-            smtpProps.put("mail.imaps.auth.login.disable", "true");
-            smtpProps.put("mail.imaps.auth.plain.disable", "true");
-
-            smtpProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-            smtpProps.setProperty("mail.imaps.socketFactory.fallback", "false");
-            smtpProps.setProperty("mail.imaps.socketFactory.port", "993");
-            smtpProps.setProperty("mail.imaps.starttls.enable", "true");
-        } else {
-            
-            smtpProps.setProperty("mail.imaps.host", ms.getEmailInServer());
-            smtpProps.setProperty("mail.imap.host", ms.getEmailInServer());
-
-            if (ms.isEmailInSsl())
-                smtpProps.setProperty("mail.store.protocol", "imaps");
-            
-            smtpProps.setProperty("mail.store.protocol", ms.getEmailInType());
-            if (ms.isEmailInSsl()) {
-                smtpProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-            }
-            ServerSettings sset = ServerSettings.getInstance();
-            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-            if (trustedServers.length() > 0) {
-                smtpProps.put("mail.imaps.ssl.trust", trustedServers);
-            }
-
-        }
-
-        try {
-            Transport bus = session.getTransport("smtp");
-
-            // Connect only once here
-            // Transport.send() disconnects after each send
-            // Usually, no username and password is required for SMTP
-            if(authenticateSmtp)
-                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), outPwd);
-            else
-                bus.connect(ms.getEmailOutServer(), null, null);
-
-            this.progress("Erstelle Nachricht...");
-            MimeMessage msg = new MimeMessage(session);
-
-            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-
-            if (this.readReceipt) {
-                msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
-                msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
-            }
-
-            msg.setRecipients(Message.RecipientType.TO, to);
-            msg.setRecipients(Message.RecipientType.CC, cc);
-            msg.setRecipients(Message.RecipientType.BCC, bcc);
-
-            msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
-            msg.setSentDate(new Date());
-
-            Multipart multiPart = new MimeMultipart();
-
-            MimeBodyPart messageText = new MimeBodyPart();
-            messageText.setContent(body, this.contentType + "; charset=UTF-8");
-            multiPart.addBodyPart(messageText);
-
-            String attachmentNames = "";
-            for (String url : this.attachments) {
-                MimeBodyPart att = new MimeBodyPart();
-                FileDataSource attFile = new FileDataSource(url);
-
-                att.attachFile(url);
-                att.setDisposition(Part.ATTACHMENT);
-                att.setFileName(attFile.getName());
-
-                attachmentNames = attachmentNames + attFile.getName() + " ";
-                multiPart.addBodyPart(att);
-            }
-
-            msg.setContent(multiPart);
-
-            this.progress("Sende...");
-            msg.saveChanges();
-            bus.send(msg);
-
-            Throwable storeException = null;
-            try {
-                if (this.archiveFile != null) {
-
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-                    this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                    msg.writeTo(bOut);
-                    bOut.close();
-                    byte[] data = bOut.toByteArray();
-
-                    String newName = msg.getSubject();
-                    if (attachmentNames.trim().length() > 0) {
-                        newName = attachmentNames.trim() + " per E-Mail";
-                    }
-                    if (newName.length() > 228) {
-                        newName = newName.substring(0, 227);
-                    }
-                    newName = newName + ".eml";
-                    newName = FileUtils.sanitizeFileName(newName);
-                    java.util.Date sentPrefix = new Date();
-                    newName = FileUtils.getNewFileName(this.archiveFile, newName, sentPrefix, true, this.indicator, "Datei benennen");
-                    if (newName != null) {
-                        if (newName.trim().length() == 0) {
-                            newName = "E-Mail";
-                        }
-
-                        if (!newName.toLowerCase().endsWith(".eml")) {
-                            newName = newName + ".eml";
-                        }
-                        boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
-                        while (documentExists) {
-
-                            newName = FileUtils.getNewFileName(this.archiveFile, newName, sentPrefix, true, this.indicator, "Datei benennen");
-                            if (newName == null || "".equals(newName)) {
-                                break;
-                            }
-                            documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
-
-                        }
-                    }
-
-                    if (newName != null) {
-
-                        ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "", null);
-
-                        if (this.documentTag != null && !("".equals(this.documentTag))) {
-                            afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
-                        }
-
-                        if (this.caseFolder != null) {
-                            ArrayList<String> docList = new ArrayList<>();
-                            docList.add(newDoc.getId());
-                            afs.moveDocumentsToFolder(docList, caseFolder.getId());
-                        }
-
-                        ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
-                        historyDto.setChangeDate(new Date());
-                        historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + msg.getSubject());
-                        afs.addHistory(this.archiveFile.getId(), historyDto);
-
-                        if (caseFolder != null) {
-                            newDoc.setFolder(caseFolder);
-                        }
-                        EventBroker eb = EventBroker.getInstance();
-                        eb.publishEvent(new DocumentAddedEvent(newDoc));
-                    }
-
-                } else {
-                    this.progress("Überspringe Speichern in Akte...");
-                }
-            } catch (Throwable t) {
-                log.error("Could not save message to archive file", t);
-                storeException = t;
-            }
-
-            bus.close();
-
-            this.progress("Suche Ordner 'Gesendet'...");
-            Properties imapProps = new Properties();
-            boolean authenticateImap = true;
-            try {
-                if (StringUtils.isEmpty(ms.getEmailInUser()) && StringUtils.isEmpty(inPwd)) {
-                    authenticateImap = false;
-                }
-            } catch (Throwable t) {
-                log.error("Could not decrypt IMAP password", t);
-            }
-            imapProps.setProperty("mail.imap.partialfetch", "false");
-            imapProps.setProperty("mail.imaps.partialfetch", "false");
-            imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-            imapProps.put("mail.from", ms.getEmailAddress());
-            
-            if(authenticateImap) {    
-                imapProps.put("mail.password", inPwd);
-            }
-            
-            
-            Store store = null;
-            if (ms.isMsExchange()) {
-                String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), inPwd);
-
-                session = Session.getInstance(imapProps);
-                store = session.getStore("imaps");
-                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
-
-            } else {
-
-                imapProps.setProperty("mail.imaps.host", ms.getEmailInServer());
-                imapProps.setProperty("mail.imap.host", ms.getEmailInServer());
-
-                if (ms.isEmailInSsl()) {
-                    imapProps.setProperty("mail.store.protocol", "imaps");
-                }
-
-                imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-                if (ms.isEmailInSsl()) {
-                    imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-                }
-                ServerSettings sset = ServerSettings.getInstance();
-                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-                if (trustedServers.length() > 0) {
-                    imapProps.put("mail.imaps.ssl.trust", trustedServers);
-                }
-                
-                if(authenticateImap) {
-                    final String imapPwd=inPwd;
-                    session = Session.getInstance(imapProps, new Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(ms.getEmailInUser(), imapPwd);
-                    }
-                });
-                } else {
-                    session=Session.getInstance(imapProps);
-                }
-                
-                store = session.getStore();
-                //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
-                store.connect();
-            }
-
-            Folder folder = EmailUtils.getInboxFolder(store);
-            if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
-            }
-
-            Folder sent = EmailUtils.getSentFolder(store);
-            if (sent != null) {
-                this.progress("Kopiere Nachricht in 'Gesendet'...");
-                boolean closed = !sent.isOpen();
-                if (!sent.isOpen()) {
-                    sent.open(Folder.READ_WRITE);
-                }
-                msg.setFlag(Flags.Flag.SEEN, true);
-                sent.appendMessages(new Message[]{msg});
-                if (closed) {
-                    EmailUtils.closeIfIMAP(sent);
-                }
-
-            } else {
-                log.error("Unable to determine 'Sent' folder for mailbox");
-            }
-
-            try {
-                EmailUtils.closeIfIMAP(folder);
-            } catch (Throwable t) {
-                log.error(t);
-            }
-
-            store.close();
-
-            for (String url : this.attachments) {
-                File f = new File(url);
-                if (f.exists()) {
-                    LauncherFactory.cleanupTempFile(url);
-                }
-            }
-
-            if (storeException != null) {
-                throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
-            }
-
-        } catch (Exception mex) {
-            log.error(mex);
-            throw new Exception("Fehler beim Senden: " + mex.getMessage());
-        }
-        return true;
+        // 685ed8be7f0001014a634488a865f86d
+        CachingCrypto c2 = new CachingCrypto("11fe8dea7f000101241f8d9d2e7ccc7e".toCharArray());
+        System.out.println(c.encrypt("J0644604401G"));
 
     }
+
+    public String encrypt(String property) throws GeneralSecurityException {
+        // ENCRYPTION
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec spec = new GCMParameterSpec(16 * 8, NONCE_AES);
+        cipher.init(Cipher.ENCRYPT_MODE, this.key, spec);
+
+        byte[] cipherTextBytes = cipher.doFinal(property.getBytes(StandardCharsets.UTF_8));
+
+        // CONVERSION of raw bytes to BASE64 representation
+        return base64Encode(cipherTextBytes);
+    }
+
+    private String base64Encode(byte[] bytes) {
+        return this.base64.encode(bytes);
+    }
+
+    public String decrypt(String property) throws GeneralSecurityException, IOException {
+
+        if (property == null) {
+            return null;
+        }
+
+        // ENCRYPTION
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec spec = new GCMParameterSpec(16 * 8, NONCE_AES);
+        //cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        // DECRYPTION
+        cipher.init(Cipher.DECRYPT_MODE, this.key, spec);
+        byte[] decryptedCipherTextBytes = cipher.doFinal(base64Decode(property));
+        return new String(decryptedCipherTextBytes, StandardCharsets.UTF_8);
+    }
+
+    private byte[] base64Decode(String property) throws IOException {
+        return this.base64.decode(property);
+    }
+
 }

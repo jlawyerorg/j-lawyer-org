@@ -661,173 +661,31 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.cloud;
+package com.jdimension.jlawyer.security;
 
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.security.CryptoProvider;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import org.aarboard.nextcloud.api.NextcloudConnector;
-import org.aarboard.nextcloud.api.filesharing.Share;
-import org.aarboard.nextcloud.api.filesharing.SharePermissions;
-import org.aarboard.nextcloud.api.filesharing.SharePermissions.SingleRight;
-import org.aarboard.nextcloud.api.filesharing.ShareType;
-import org.apache.log4j.Logger;
+import java.security.GeneralSecurityException;
 
 /**
  *
  * @author jens
  */
-public class CloudInstance {
+public class CryptoProvider {
     
-    // 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1
-    public static final SingleRight PERMISSION_READ=SingleRight.READ;
-    public static final SingleRight PERMISSION_UPDATE=SingleRight.UPDATE;
-    public static final SingleRight PERMISSION_CREATE=SingleRight.CREATE;
-    public static final SingleRight PERMISSION_DELETE=SingleRight.DELETE;
-    public static final SingleRight PERMISSION_SHARE=SingleRight.SHARE;
-
-    private static final Logger log = Logger.getLogger(CloudInstance.class.getName());
-
-    private static CloudInstance instance = null;
-    private NextcloudConnector con = null;
-
-    private CloudInstance(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
-        this.con = new NextcloudConnector(serverName, useHTTPS, port, userName, password);
-        if(path!=null && !"".equals(path)) {
-            con.setSubpathPrefix(path);
-        }
+    private static CachingCrypto defaultCrypto=null;
+    
+    public static CachingCrypto newCrypto() throws GeneralSecurityException {
+        return new CachingCrypto();
     }
     
-    public static boolean isConfigured(AppUserBean user) {
-        if (user.getCloudHost() == null || "".equals(user.getCloudHost())) {
-                return false;
-            }
-            if (user.getCloudUser() == null || "".equals(user.getCloudUser())) {
-                return false;
-            }
-            if (user.getCloudPassword() == null || "".equals(user.getCloudPassword())) {
-                return false;
-            }
-            if (user.getCloudPort() < 0) {
-                return false;
-            }
-            return true;
+    public static CachingCrypto newCrypto(char[] password) throws GeneralSecurityException {
+        return new CachingCrypto(password);
     }
-
-    public static CloudInstance getInstance(AppUserBean user) {
-        if (instance == null) {
-            if (user.getCloudHost() == null || "".equals(user.getCloudHost())) {
-                return null;
-            }
-            if (user.getCloudUser() == null || "".equals(user.getCloudUser())) {
-                return null;
-            }
-            if (user.getCloudPassword() == null || "".equals(user.getCloudPassword())) {
-                return null;
-            }
-            if (user.getCloudPort() < 0) {
-                return null;
-            }
-
-            String pwd=null;
-            try {
-                pwd=CryptoProvider.defaultCrypto().decrypt(user.getCloudPassword());
-            } catch(Throwable t) {
-                log.error("Unable to decrypt Nextcloud password", t);
-                return null;
-            }
-            
-            instance = new CloudInstance(user.getCloudHost(), user.isCloudSsl(), user.getCloudPort(), user.getCloudPath(), user.getCloudUser(), pwd);
-        }
-        return instance;
+    
+    public static synchronized CachingCrypto defaultCrypto() throws GeneralSecurityException {
+        if(defaultCrypto==null)
+            defaultCrypto=new CachingCrypto();
+        
+        return defaultCrypto;
     }
-
-    public static boolean hasInstance() {
-        return instance != null;
-    }
-
-    public boolean deleteShare(int shareId) {
-        return this.con.deleteShare(shareId);
-    }
-
-    public List<Share> getShares() {
-        return this.con.getShares();
-    }
-
-    public List<String> listFolderContent(String path) {
-        return this.con.listFolderContent(path);
-    }
-
-    public boolean folderExists(String path) {
-        return this.con.folderExists(path);
-    }
-
-    public void createFolder(String path) {
-        String[] hierarchy = path.split("/");
-        String currentPath = "";
-        for (String h : hierarchy) {
-            String current=currentPath + FileUtils.sanitizeFolderName(h);
-            if (!this.con.folderExists(current)) {
-                this.con.createFolder(current);
-            }
-            currentPath = current + "/";
-        }
-    }
-
-    public void uploadFile(File f, String remotePath) {
-        this.con.uploadFile(f, remotePath);
-    }
-
-    public List<String> listFolders(String path) {
-        List<String> content = this.con.listFolderContent(path, -1, false, false);
-        ArrayList<String> folders = new ArrayList<String>();
-        for (int i = 1; i < content.size(); i++) {
-            // skip the first one because it is the parent folder itself
-            String s = content.get(i);
-            if (s.endsWith("/")) {
-                folders.add(s);
-            }
-
-//            String p = path;
-//            if (!(p.endsWith("/"))) {
-//                p = p + "/";
-//            }
-//            p = p + s;
-//            try {
-//                ResourceProperties props = this.con.getProperties(p, false);
-//                if("httpd/unix-directory".equalsIgnoreCase(props.getContentType()) || props.getContentLength()<0) {
-//                    folders.add(s);
-//                }
-//            } catch (Throwable ioe) {
-//                log.warn("unable to determine properties for " + p, ioe);
-//            }
-        }
-        return folders;
-    }
-
-    public List<String> listFullFolders(String path, int depth) {
-        List<String> content = this.con.listFolderContent(path, depth, false, true);
-        ArrayList<String> folders = new ArrayList<String>();
-        for (int i = 1; i < content.size(); i++) {
-            // skip the first one because it is the parent folder itself
-            String s = content.get(i);
-            if (s.endsWith("/")) {
-                folders.add(s);
-            }
-
-        }
-        return folders;
-    }
-
-    public Share doShare(String path, ShareType shareType, String shareWithUserOrGroupId, boolean publicUpload, String password, SharePermissions permissions) {
-        return this.con.doShare(path, shareType, shareWithUserOrGroupId, publicUpload, password, permissions);
-    }
-
-    public void shutdown() throws Exception {
-        this.con.shutdown();
-    }
-
+    
 }

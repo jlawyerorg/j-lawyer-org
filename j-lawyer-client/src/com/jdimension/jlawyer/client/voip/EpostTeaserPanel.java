@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -814,7 +814,7 @@ public class EpostTeaserPanel extends javax.swing.JPanel {
     private void cmdOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOKActionPerformed
         if(this.txtEpostRegistrationCode.getText().trim().length()>0) {
             try {
-                String testDecrypt=Crypto.decrypt(this.txtEpostRegistrationCode.getText().trim(), ServerSettings.getInstance().getInstallationId().toCharArray());
+                String testDecrypt=CryptoProvider.newCrypto(ServerSettings.getInstance().getInstallationId().toCharArray()).decrypt(this.txtEpostRegistrationCode.getText().trim());
                 ServerSettings.getInstance().setSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED, this.txtEpostRegistrationCode.getText().trim());
             } catch (Throwable t) {
                 JOptionPane.showMessageDialog(this, "Ungültiger Code: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

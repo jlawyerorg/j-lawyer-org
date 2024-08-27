@@ -696,7 +696,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -890,7 +890,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (!this.connected) {
             String server = null;
             try {
-                String emailInPwd=Crypto.decrypt(ms.getEmailInPwd());
+                String emailInPwd=CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
                 
                 //Properties props = System.getProperties();
                 // using system properties would require to clean some properties for each new mailbox --> use new ones
