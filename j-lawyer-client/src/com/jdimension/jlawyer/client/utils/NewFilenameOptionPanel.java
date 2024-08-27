@@ -683,6 +683,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -694,8 +695,8 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(NewFilenameOptionPanel.class.getName());
 
     private ArrayList<String> existingFileNames = new ArrayList<>();
-    
-    private DocumentNameTemplate nameTemplate=null;
+
+    private DocumentNameTemplate nameTemplate = null;
 
     // caching for data that is required to build the file name if it contains place holders
     private List<PartyTypeBean> allPartyTypes = null;
@@ -706,22 +707,22 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     private List<PartiesTriplet> parties = new ArrayList<>();
 
     private ArchiveFileBean selectedCase = null;
-    private Date documentDate=null;
-    private String documentFilename=null;
-    private String documentFilenameNew=null;
+    private Date documentDate = null;
+    private String documentFilename = null;
+    private String documentFilenameNew = null;
 
     /**
      * Creates new form NewFilenameOptionPanel
      */
     public NewFilenameOptionPanel() {
         initComponents();
-        
+
         initializeOptions();
     }
 
     public NewFilenameOptionPanel(ArchiveFileBean selectedCase) {
         initComponents();
-        
+
         initializeOptions();
 
         this.selectedCase = selectedCase;
@@ -765,7 +766,7 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
             }
         }
     }
-    
+
     private void initializeOptions() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -783,33 +784,32 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
                 popNameTemplates.add(mi);
 
             }
-            this.nameTemplate=defaultNameTemplate;
+            this.nameTemplate = defaultNameTemplate;
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
         }
     }
-    
+
     public void setNameTemplate(DocumentNameTemplate nameTemplate) {
         this.nameTemplate = nameTemplate;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            String extension=FileUtils.getExtension(this.documentFilename);
-            String docName=locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, this.nameTemplate);
-            
-            HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
-            docName=TemplatesUtil.replacePlaceHolders(docName, placeHolders);
-            docName=FileUtils.sanitizeFileName(docName);
-            
+            String extension = FileUtils.getExtension(this.documentFilename);
+            String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, this.nameTemplate);
+
+            HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName = FileUtils.sanitizeFileName(docName);
+
             // remove any extension, because of the template it might be somewhere in the middle of the new name
-            docName=docName.replace("." + extension, "");
-            
+            docName = docName.replace("." + extension, "");
+
             // add back extension
-            docName=FileUtils.preserveExtension(this.documentFilename, docName);
-            
-            
+            docName = FileUtils.preserveExtension(this.documentFilename, docName);
+
             this.setDocumentFilenameNew(docName);
 
         } catch (Exception ex) {
@@ -823,53 +823,58 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
         this.txtNewName.setText(documentFilenameNew);
         this.fileNameChanged();
     }
-    
+
     private void fileNameChanged() {
-        this.documentFilenameNew=this.txtNewName.getText();
-        String oldExt=FileUtils.getExtension(this.documentFilename);
-        String newExt=FileUtils.getExtension(this.documentFilenameNew);
-        if(!oldExt.equalsIgnoreCase(newExt)) {
-            int caretPosition=this.txtNewName.getCaretPosition();
-            this.documentFilenameNew=FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
+        this.documentFilenameNew = this.txtNewName.getText();
+        String oldExt = FileUtils.getExtension(this.documentFilename);
+        String newExt = FileUtils.getExtension(this.documentFilenameNew);
+        if (!oldExt.equalsIgnoreCase(newExt)) {
+            int caretPosition = this.txtNewName.getCaretPosition();
+            this.documentFilenameNew = FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
             this.txtNewName.setText(this.documentFilenameNew);
-            if(this.txtNewName.getText().length()>=caretPosition)
+            if (this.txtNewName.getText().length() >= caretPosition) {
                 this.txtNewName.setCaretPosition(caretPosition);
+            }
         }
-        
+
         // use may have typed invalid characters
-        String checkedName=FileUtils.sanitizeFileName(this.documentFilenameNew);
-        if(!checkedName.equals(this.txtNewName.getText())) {
-            int caretPosition=this.txtNewName.getCaretPosition();
+        String checkedName = FileUtils.sanitizeFileName(this.documentFilenameNew);
+        if (!checkedName.equals(this.txtNewName.getText())) {
+            int caretPosition = this.txtNewName.getCaretPosition();
             this.txtNewName.setText(checkedName);
-            this.documentFilenameNew=checkedName;
-            if(this.txtNewName.getText().length()>=caretPosition)
+            this.documentFilenameNew = checkedName;
+            if (this.txtNewName.getText().length() >= caretPosition) {
                 this.txtNewName.setCaretPosition(caretPosition);
+            }
         }
-        
+
     }
-    
+
     public void setFilename(String name, Date documentDate, boolean applyNameTemplate) {
-        
-        if(documentDate==null)
-            this.documentDate=new Date();
-        else
-            this.documentDate=documentDate;
-        
-        this.documentFilename=name;
-        if(applyNameTemplate)
+
+        if (documentDate == null) {
+            this.documentDate = new Date();
+        } else {
+            this.documentDate = documentDate;
+        }
+
+        this.documentFilename = name;
+        if (applyNameTemplate) {
             this.setNameTemplate(this.nameTemplate);
-        else
+        } else {
             this.setDocumentFilenameNew(name);
-        
+        }
+
         this.lblIcon.setIcon(FileUtils.getInstance().getFileTypeIcon(name));
 
     }
 
     public String getFilename() {
-        if(StringUtils.isEmpty(this.txtNewName.getText()))
+        if (StringUtils.isEmpty(this.txtNewName.getText())) {
             return null;
-        else
+        } else {
             return FileUtils.preserveExtension(this.documentFilename, this.txtNewName.getText());
+        }
     }
 
     /**
@@ -893,6 +898,12 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
         lblIcon.setText(" ");
 
         jLabel1.setText("neuer Dateiname:");
+
+        txtNewName.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtNewNameFocusGained(evt);
+            }
+        });
 
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -952,6 +963,15 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     private void cmdNameTemplateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdNameTemplateMouseReleased
         this.popNameTemplates.show(this.cmdNameTemplate, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdNameTemplateMouseReleased
+
+    private void txtNewNameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtNewNameFocusGained
+        int dotPos = this.txtNewName.getText().lastIndexOf(".");
+        this.txtNewName.requestFocusInWindow();
+        if (dotPos > -1) {
+            this.txtNewName.setSelectionStart(0);
+            this.txtNewName.setSelectionEnd(dotPos);
+        }
+    }//GEN-LAST:event_txtNewNameFocusGained
 
     private Container findDialog(Container c) {
         while (!(c.getParent() instanceof JDialog) && c.getParent() != null) {
