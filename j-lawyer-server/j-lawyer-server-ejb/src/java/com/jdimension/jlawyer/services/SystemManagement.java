@@ -2008,7 +2008,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getPartyTypes() {
         List<PartyTypeBean> all = this.partyTypesFacade.findAll();
         Collections.sort(all, (Object t, Object t1) -> {
@@ -2446,7 +2445,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
     
     @Override
-    @RolesAllowed({"loginRole"})
     public DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception {
         
         return this.documentNameTemplates.findDefault();
