@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.Arrays;
 import org.apache.log4j.Logger;
 
 /**
@@ -675,28 +676,30 @@ import org.apache.log4j.Logger;
  */
 public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log=Logger.getLogger(HtmlPanel.class.getName());
-    
+    private static final Logger log = Logger.getLogger(HtmlPanel.class.getName());
+
     private String id = null;
-    private boolean readOnly=true;
+    private byte[] initialContent = null;
+    private boolean readOnly = true;
 
     /**
      * Creates new form PlaintextPanel
+     *
      * @param docId
      * @param readOnly
      */
     public HtmlPanel(String docId, boolean readOnly) {
         initComponents();
         this.id = docId;
-        this.readOnly=readOnly;
+        this.readOnly = readOnly;
         ThreadUtils.updateHtmlEditor(this.html, "");
-        
+
         ThreadUtils.enableComponent(this, !readOnly);
         ThreadUtils.enableComponent(this.html, !readOnly);
-        
+
         this.setFileName("");
     }
-    
+
     public void setFileName(String fileName) {
         this.lblFileName.setText(fileName);
     }
@@ -753,22 +756,26 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
     @Override
     public void showContent(String documentId, byte[] content) {
-        this.id=documentId;
-        //ThreadUtils.updateEditorPane(this.edtContent, new String(content));
+        this.id = documentId;
+        this.initialContent = content;
         ThreadUtils.updateHtmlEditor(html, new String(content));
     }
-    
+
     @Override
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
-            } catch (Throwable t) {
-                log.error("Error saving document with id " + this.id, t);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                
+
+            byte[] currentBytes = this.html.getText().getBytes();
+            if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
+                } catch (Throwable t) {
+                    log.error("Error saving document with id " + this.id, t);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+
+                }
             }
         }
     }
