@@ -677,7 +677,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.PartiesTriplet;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

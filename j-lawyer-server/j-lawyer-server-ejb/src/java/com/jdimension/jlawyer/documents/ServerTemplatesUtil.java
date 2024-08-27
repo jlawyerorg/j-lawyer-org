@@ -661,178 +661,88 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.documents;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import java.io.File;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Properties;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
-import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface SystemManagementRemote {
+public class ServerTemplatesUtil extends CommonTemplatesUtil {
+
+    private static final Logger log = Logger.getLogger(ServerTemplatesUtil.class.getName());
     
-    public static final int TEMPLATE_TYPE_BODY=10;
-    public static final int TEMPLATE_TYPE_HEAD=20;
-
-    AppOptionGroupBean[] getOptionGroup(String optionGroup);
-
-    BankDataBean[] searchBankData(String query);
-
-    CityDataBean[] searchCityData(String query);
-
-    void removeAllBankData();
-
-    void createBankData(BankDataBean[] bankData);
-
-    void removeAllCityData();
-
-    void createCityData(CityDataBean[] cityData);
-
-    AppOptionGroupBean createOptionGroup(AppOptionGroupBean dto);
-
-    void removeOptionGroup(String id);
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception;
+    private SystemManagementLocal sys=null;
+    private FormsServiceLocal forms=null;
     
-    public void clearCurrentBackup();
+    public ServerTemplatesUtil(SystemManagementLocal sys, FormsServiceLocal forms) {
+        this.sys=sys;
+        this.forms=forms;
+    }
 
-    List<AppUserBean> getUsers();
+    public HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<ArchiveFileAddressesBean> involved, Invoice invoice, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
+        try {
+            if(allPartyTypes==null) {
+                allPartyTypes = sys.getPartyTypes();
+            }
+            List<String> allPartyTypesPlaceholders = new ArrayList<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
 
-    List<AppRoleBean> getRoles(String principalId);
+            if(formPlaceHolders==null && contextArchiveFile != null) {
+                formPlaceHolders = forms.getPlaceHoldersForCase(contextArchiveFile.getId());
+            }
+            if(formPlaceHolderValues==null && contextArchiveFile != null) {
+                formPlaceHolderValues = forms.getPlaceHolderValuesForCase(contextArchiveFile.getId());
+            }
 
-    AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
+            ArrayList<String> placeHolderNames = getPlaceHoldersInTemplate(content, allPartyTypesPlaceholders, formPlaceHolders);
+            HashMap<String, Object> ht = new HashMap<>();
+            for (String ph : placeHolderNames) {
+                ht.put(ph, "");
+            }
 
-    AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
+            if (contextArchiveFile != null) {
+                try {
+                    if(caseLawyer==null && !ServerStringUtils.isEmpty(contextArchiveFile.getLawyer()))
+                        caseLawyer = sys.getUser(contextArchiveFile.getLawyer());
+                } catch (Exception ex) {
+                    log.warn("Unable to load lawyer with id " + contextArchiveFile.getLawyer());
+                }
+                try {
+                    if(caseAssistant==null && !ServerStringUtils.isEmpty(contextArchiveFile.getAssistant()))
+                        caseAssistant = sys.getUser(contextArchiveFile.getAssistant());
+                } catch (Exception ex) {
+                    log.warn("Unable to load assistant with id " + contextArchiveFile.getAssistant());
+                }
+            }
 
-    void deleteUser(String principalId);
+            List<PartiesTriplet> parties=new ArrayList<>();
+            for (ArchiveFileAddressesBean aab : involved) {
+                parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+            }
+            
+            return sys.getPlaceHolderValues(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, null, null, null);
 
-    ServerInformation getServerInformation();
-    
-    Properties getSystemProperties();
-    
-    String getServerLogs(int numberOfLines) throws Exception;
+        } catch (Exception ex) {
+            log.error("Error getting placeholder values", ex);
+            return new HashMap<>();
+        }
+    }
 
-    ServerSettingsBean getSetting(String key);
-
-    boolean setSetting(String key, String value);
-    
-    List<String> getAllOptionGroups();
-
-    AppUserBean getUser(String principalId);
-
-    MonitoringSnapshot getMonitoringSnapshot();
-
-    void statusMail(String subject, String body);
-    
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
-    
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
-
-    boolean validateFileOnServer(File file, boolean isDirectory);
-
-    String getServerVersion();
-
-    Properties getUserSettings(AppUserBean user);
-
-    void setUserSettings(AppUserBean user, Properties settings);
-
-    String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
-
-    boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
-
-    boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
-
-    boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    GenericNode getAllTemplatesTree(int templateType) throws Exception;
-
-    byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception;
-
-    boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
-
-    List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception;
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception;
-
-    List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
-
-    List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
-
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getPartyTypes();
-
-    Hashtable<String,PartyTypeBean> getPartyTypesTable();
-
-    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
-    
-    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
-
-    void removePartyType(PartyTypeBean partyType) throws Exception;
-
-    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
-
-    boolean updatePassword(String newPassword) throws Exception;
-
-    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
-
-    List<MappingTable> getMappingTables();
-    
-    List<MappingEntry> getMappingEntries(String tableName);
-    
-    void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception;
-
-    MappingTable addMappingTable(MappingTable table) throws Exception;
-
-    void deleteMappingTable(String tableName) throws Exception;
-
-    MappingTable updateMappingTable(MappingTable mt) throws Exception;
-
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception;
-
-    List<AssistantConfig> getAssistants();
-
-    AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;
-
-    AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
-    
-    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
-    
-    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
-    
-    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
-    
-    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
-    
 }

@@ -3068,11 +3068,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
                     newName = newName + ".eml";
                     newName = FileUtils.sanitizeFileName(newName);
-                    java.util.Date receivedPrefix = m.getReceivedDate();
-                    if (receivedPrefix == null) {
-                        receivedPrefix = new java.util.Date();
-                    }
-
+                    
                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
                     bulkEntry.setDocumentDate(sentDate);
                     bulkEntry.setDocumentBytes(data);

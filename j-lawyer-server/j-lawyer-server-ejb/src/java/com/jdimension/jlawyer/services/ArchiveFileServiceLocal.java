@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.pojo.DataBucket;
@@ -739,6 +740,7 @@ public interface ArchiveFileServiceLocal {
     boolean doesDocumentExist(String id);
 
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
+    String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
     

@@ -2506,7 +2506,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             newName = "Anhang";
                         }
 
-                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilename(newName);
                         bulkSaveDlg.addEntry(bulkEntry);
 
                     }
@@ -2535,7 +2535,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             newName = "VHN-Anhang";
                         }
 
-                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilename(newName);
                         bulkSaveDlg.addEntry(bulkEntry);
                     }
                 }
@@ -2586,7 +2586,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
                         bulkEntry.setDocumentDate(m.getReceptionTime());
                         bulkEntry.setDocumentBytes(attachmentData);
-                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilename(newName);
                         bulkSaveDlg.addEntry(bulkEntry);
 
                     }
@@ -2615,7 +2615,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             newName = "VHN-Anhang";
                         }
 
-                        bulkEntry.setDocumentFilename(attachmentName);
+                        bulkEntry.setDocumentFilename(newName);
                         bulkSaveDlg.addEntry(bulkEntry);
                     }
 
@@ -2854,7 +2854,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 newName=m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
             }
             newName = FileUtils.sanitizeFileName(newName);
-            newName = FileUtils.getNewFileNamePrefix(new Date()) + newName;
             ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "", null);
 
             if (targetFolder != null) {

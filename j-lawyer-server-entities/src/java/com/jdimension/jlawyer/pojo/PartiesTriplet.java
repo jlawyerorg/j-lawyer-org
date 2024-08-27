@@ -661,7 +661,7 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -673,6 +673,8 @@ import java.io.Serializable;
  * @author jens
  */
 public class PartiesTriplet implements Serializable {
+    
+    protected static long serialVersionUID = 1L;
 
     private AddressBean address = null;
     private PartyTypeBean partyType = null;

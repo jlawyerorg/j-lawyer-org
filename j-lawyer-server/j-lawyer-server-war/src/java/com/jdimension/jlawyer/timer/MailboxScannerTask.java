@@ -663,25 +663,33 @@
  */
 package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.documents.PlaceHolders;
+import com.jdimension.jlawyer.documents.ServerTemplatesUtil;
 import com.jdimension.jlawyer.email.AttachmentInfo;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import static com.jdimension.jlawyer.email.CommonMailUtils.INBOX;
 import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
 import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -724,11 +732,14 @@ public class MailboxScannerTask extends java.util.TimerTask {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            SystemManagementLocal sysSvc = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            FormsServiceLocal formsSvc = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
             AddressServiceLocal adrSvc = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
             List<MailboxSetup> entries = mailboxes.findAll();
 
             ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted();
+            List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypes();
             for (MailboxSetup ms : entries) {
                 if (ms.isScanInbox()) {
                     try {
@@ -742,7 +753,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         if (t == null) {
                             t = "";
                         }
-                        this.processMailbox(ms, caseSvc, adrSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize());
+                        this.processMailbox(ms, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
                     }
@@ -754,7 +765,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
     }
 
-    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize) {
+    private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
 
         log.info("Processing mailbox " + ms.getEmailAddress());
 
@@ -871,7 +882,15 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
             Message[] allMessages = inboxFolder.getMessages();
             ArrayList<Message> deleteMessages = new ArrayList<>();
+            long currentTimeStamp = System.currentTimeMillis();
             for (Message msg : allMessages) {
+
+                if (msg.getReceivedDate() != null) {
+                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * 31l * 3l))) {
+                        log.info("Message '" + msg.getSubject() + "' is older than three months and will not be processed");
+                        continue;
+                    }
+                }
 
                 String from = null;
                 Address[] froms = msg.getFrom();
@@ -887,7 +906,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     continue;
                 }
 
-                boolean excludedTo=false;
+                boolean excludedTo = false;
                 Address[] toAdrs = msg.getRecipients(Message.RecipientType.TO);
                 if (toAdrs != null) {
                     for (Address to : toAdrs) {
@@ -897,13 +916,13 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             toString = toString.toLowerCase();
                             if (exclusionList.toLowerCase().contains(toString)) {
                                 log.info("TO address is excluded from mailscanner processing: " + from);
-                                excludedTo=true;
+                                excludedTo = true;
                                 break;
                             }
                         }
                     }
                 }
-                if(excludedTo) {
+                if (excludedTo) {
                     continue;
                 }
 
@@ -941,7 +960,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             log.warn("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject, but the case is already archived - skipping!");
                         } else {
                             log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its subject");
-                            boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize);
+                            boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
                             if (saved) {
                                 deleteMessages.add(msg);
                             }
@@ -1038,7 +1057,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                                 log.warn("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body, but the case is already archived - skipping!");
                             } else {
                                 log.info("message from " + msg.getFrom().toString() + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by a file number in its body");
-                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize);
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), toCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
                                 if (saved) {
                                     deleteMessages.add(msg);
                                 }
@@ -1063,7 +1082,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                     if (uniqueCase != null) {
                         log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its FROM because there was exactly one match for " + from);
-                        boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize);
+                        boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
                         if (saved) {
                             deleteMessages.add(msg);
                         }
@@ -1093,7 +1112,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                             if (uniqueCase != null) {
                                 log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its CC because there was exactly one match for " + ccString);
-                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize);
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
                                 if (saved) {
                                     deleteMessages.add(msg);
                                 }
@@ -1128,7 +1147,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                             ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
                             if (uniqueCase != null) {
                                 log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' can be uniquely associated by its TO because there was exactly one match for " + toString);
-                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize);
+                                boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
                                 if (saved) {
                                     deleteMessages.add(msg);
                                 }
@@ -1191,7 +1210,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
     }
 
-    private boolean saveToCase(Message msg, Date received, ArchiveFileBean toCase, ArchiveFileServiceLocal caseSvc, List<String> documentTags, List<String> blacklistedFileTypes, boolean ignoreInline, int minAttachmentSize) {
+    private boolean saveToCase(Message msg, Date received, ArchiveFileBean toCase, ArchiveFileServiceLocal caseSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, List<String> documentTags, List<String> blacklistedFileTypes, boolean ignoreInline, int minAttachmentSize, DocumentNameTemplate nameTemplate, List<PartyTypeBean> allPartyTypes) {
         try {
 
             if (toCase == null) {
@@ -1204,23 +1223,45 @@ public class MailboxScannerTask extends java.util.TimerTask {
             bOut.close();
             byte[] msgData = bOut.toByteArray();
 
+            ServerTemplatesUtil serverTemplates = new ServerTemplatesUtil(sysSvc, formsSvc);
+
+            List<ArchiveFileAddressesBean> involved = caseSvc.getInvolvementDetailsForCase(toCase.getId(), false);
+            AppUserBean caseLawyer = null;
+            try {
+                caseLawyer = sysSvc.getUser(toCase.getLawyer());
+            } catch (Exception ex) {
+            }
+            AppUserBean caseAssistant = null;
+            try {
+                caseAssistant = sysSvc.getUser(toCase.getAssistant());
+            } catch (Exception ex) {
+            }
+            Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCase(toCase.getId());
+            HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCase(toCase.getId());
+
             String newNameMsg = msg.getSubject();
             if (newNameMsg == null) {
-                newNameMsg = "";
+                newNameMsg = "E-Mail ohne Betreff";
             }
             newNameMsg = newNameMsg + ".eml";
             newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
-            java.util.Date receivedPrefix = received;
-            if (receivedPrefix == null) {
-                receivedPrefix = new java.util.Date();
-            }
+            String extension = ServerFileUtils.getExtension(newNameMsg);
+            String docName = caseSvc.getNewDocumentName(newNameMsg, received, nameTemplate);
+            HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+            docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName = ServerFileUtils.sanitizeFileName(docName);
 
-            newNameMsg = ServerFileUtils.getNewFileNamePrefix(receivedPrefix) + newNameMsg;
-            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), newNameMsg)) {
-                log.error("There is already a document '" + newNameMsg + "' in case " + toCase.getFileNumber() + " - skipping entire message");
+            // remove any extension, because of the template it might be somewhere in the middle of the new name
+            docName = docName.replace("." + extension, "");
+
+            // add back extension
+            docName = ServerFileUtils.preserveExtension(newNameMsg, docName);
+
+            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
+                log.error("There is already a document '" + docName + "' in case " + toCase.getFileNumber() + " - skipping entire message");
                 return false;
             } else {
-                ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), newNameMsg, msgData, "", null);
+                ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, msgData, "", null);
                 for (String tag : documentTags) {
                     tag = tag.trim();
                     if (!tag.isEmpty()) {
@@ -1235,11 +1276,11 @@ public class MailboxScannerTask extends java.util.TimerTask {
             ArrayList<AttachmentInfo> attachmentInfos = CommonMailUtils.getAttachmentInfo(msg.getContent());
             for (AttachmentInfo attachmentInfo : attachmentInfos) {
 
-                if(attachmentInfo.isInline() && ignoreInline) {
+                if (attachmentInfo.isInline() && ignoreInline) {
                     log.warn("Attachment " + attachmentInfo.getFileName() + " is an inline attachment, it will not be stored.");
                     continue;
                 }
-                
+
                 boolean blacklisted = false;
                 for (String fileType : blacklistedFileTypes) {
                     if (attachmentInfo.getFileName().toLowerCase().endsWith("." + fileType)) {
@@ -1253,23 +1294,30 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 }
 
                 byte[] attachmentData = CommonMailUtils.getAttachmentBytes(attachmentInfo.getFileName(), msg);
-                if(attachmentData!=null && attachmentData.length<minAttachmentSize) {
+                if (attachmentData != null && attachmentData.length < minAttachmentSize) {
                     log.warn("Attachment " + attachmentInfo.getFileName() + " is smaller than the minimum size, it will not be stored.");
                     continue;
                 }
 
                 String newName = attachmentInfo.getFileName();
                 if (newName == null) {
-                    newName = "";
+                    newName = "unbekannter Anhang";
                 }
                 newName = ServerFileUtils.sanitizeFileName(newName);
-                String attFileName = ServerFileUtils.getNewFileNamePrefix(receivedPrefix) + newName;
+                extension = ServerFileUtils.getExtension(newName);
+                docName = caseSvc.getNewDocumentName(newName, received, nameTemplate);
+                placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
+                docName = ServerFileUtils.sanitizeFileName(docName);
 
-                if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), attFileName)) {
-                    log.error("There is already a document '" + attFileName + "' in case " + toCase.getFileNumber() + " - skipping this attachment");
+                // remove any extension, because of the template it might be somewhere in the middle of the new name
+                docName = docName.replace("." + extension, "");
+
+                if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
+                    log.error("There is already a document '" + docName + "' in case " + toCase.getFileNumber() + " - skipping this attachment");
                     continue;
                 } else {
-                    ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), attFileName, attachmentData, "", null);
+                    ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, attachmentData, "", null);
                     for (String tag : documentTags) {
                         DocumentTagsBean dtb = new DocumentTagsBean();
                         dtb.setArchiveFileKey(newDoc);

@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
+import com.jdimension.jlawyer.documents.FileTypes;
 import java.awt.Window;
 import java.awt.print.PrinterJob;
 import java.io.File;
@@ -685,13 +686,7 @@ import org.apache.pdfbox.printing.PDFPageable;
  *
  * @author jens
  */
-public class LauncherFactory {
-
-    public static final List<String> LO_OFFICEFILETYPES = Arrays.asList(".fodt", ".fods", ".fodp", ".odt", ".ott", ".oth", ".ods", ".odp", ".ots", ".sxc", ".stc", ".odm", ".sxw", ".stw", ".sxg", ".doc", ".docx", ".dot", ".docm", ".dotx", ".dotm", ".wpd", ".wps", ".rtf", ".txt", ".csv", ".xls", ".xlw", ".xlt", ".xlsx", ".xlsm", ".xltx", ".xltm", ".ppt", ".pps", ".pot", ".pptx", ".pptm", ".potx", ".potm", ".bmp", ".dxf", ".emf", ".eps", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".psd", ".tif", ".tiff", ".wmf", ".html");
-    public static final List<String> MS_OFFICEFILETYPES_WORD = Arrays.asList(".doc", ".docx", ".dotx", ".dot", ".rtf", ".txt", ".htm", ".xml", ".docm", ".dotm", ".mht", ".odt");
-    public static final List<String> MS_OFFICEFILETYPES_POWERPOINT = Arrays.asList(".ppt", ".pptx", ".potx", ".pot", ".odp", ".pps", ".ppsx", ".pptm", ".potm", ".ppsm");
-    public static final List<String> MS_OFFICEFILETYPES_EXCEL = Arrays.asList(".xls", ".xlsx", ".csv", ".xltx", ".xlt", ".xlsm", ".xlsb", ".ods");
-    public static final List<String> OFFICE_ADDITIONALPRINTTYPES = Arrays.asList(".pdf");
+public class LauncherFactory implements FileTypes {
 
     private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
 

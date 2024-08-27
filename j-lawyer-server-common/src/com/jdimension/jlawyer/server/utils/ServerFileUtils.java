@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.server.utils;
 
+import com.jdimension.jlawyer.documents.FileTypes;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -673,8 +674,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import org.apache.log4j.Logger;
 
 /**
@@ -707,6 +706,31 @@ public class ServerFileUtils {
         return "url-with-no-extension";
     }
     
+    public static String preserveExtension(String currentFileName, String newFileName) {
+
+        String currentExt = "";
+        for (String ext : FileTypes.LO_OFFICEFILETYPES) {
+            ext = ext.toLowerCase();
+            if (currentFileName.toLowerCase().endsWith(ext)) {
+                currentExt = ext;
+            }
+        }
+        if (currentFileName.toLowerCase().endsWith(".pdf")) {
+            currentExt = ".pdf";
+        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
+            currentExt = ".eml";
+        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
+            currentExt = ".bea";
+        }
+
+        if (!newFileName.endsWith(currentExt)) {
+            newFileName = newFileName + currentExt;
+        }
+
+        return newFileName;
+
+    }
+    
     public static String sanitizeFileName(String fileName) {
         String name = fileName;
         name = name.replace(",", " ");
@@ -733,11 +757,6 @@ public class ServerFileUtils {
         return name.trim();
     }
     
-    public static String getNewFileNamePrefix(Date d) {
-        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-        return datePrefix.format(d);
-    }
-
     public static byte[] readFile(File file) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file);) {
             if(file.length()>Integer.MAX_VALUE) {

@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -682,8 +681,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -872,31 +869,6 @@ public class FileUtils extends ServerFileUtils {
         return sanitized;
     }
 
-    public static String preserveExtension(String currentFileName, String newFileName) {
-
-        String currentExt = "";
-        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-            ext = ext.toLowerCase();
-            if (currentFileName.toLowerCase().endsWith(ext)) {
-                currentExt = ext;
-            }
-        }
-        if (currentFileName.toLowerCase().endsWith(".pdf")) {
-            currentExt = ".pdf";
-        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
-            currentExt = ".eml";
-        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
-            currentExt = ".bea";
-        }
-
-        if (!newFileName.endsWith(currentExt)) {
-            newFileName = newFileName + currentExt;
-        }
-
-        return newFileName;
-
-    }
-
     public static String createTempFile(String fileName, byte[] content) throws Exception {
         return createTempFile(fileName, content, false);
     }
@@ -1052,11 +1024,6 @@ public class FileUtils extends ServerFileUtils {
     }
     
     public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate, Component parent, String title) {
-
-        String dtPrefix = "";
-        if (datetimePrefix) {
-            dtPrefix = getNewFileNamePrefix(d);
-        }
 
         if (parent == null) {
             parent = EditorsRegistry.getInstance().getMainWindow();

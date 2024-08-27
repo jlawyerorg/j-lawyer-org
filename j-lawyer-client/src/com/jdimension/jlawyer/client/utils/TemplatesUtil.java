@@ -665,13 +665,13 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.documents.PlaceHolders;
+import com.jdimension.jlawyer.documents.CommonTemplatesUtil;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.PartiesTriplet;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -682,37 +682,9 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class TemplatesUtil {
+public class TemplatesUtil extends CommonTemplatesUtil {
 
     private static final Logger log = Logger.getLogger(TemplatesUtil.class.getName());
-
-    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders, Collection<String> formPlaceHolders) {
-        ArrayList<String> result = new ArrayList<>();
-        if (templateText == null) {
-            templateText = "";
-        }
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formPlaceHolders)) {
-            if (templateText.contains(r)) {
-                result.add(r);
-            }
-
-        }
-        return result;
-    }
-
-    public static String replacePlaceHolders(String content, HashMap<String, Object> values) {
-        for (String key : values.keySet()) {
-            String keyRegX = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-            String value = (String) values.get(key);
-            if (value == null) {
-                value = "";
-            }
-
-            content = content.replaceAll(keyRegX, value);
-        }
-
-        return content;
-    }
 
     public static HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<PartiesTriplet> partiesTriplets, Invoice invoice, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
         try {
