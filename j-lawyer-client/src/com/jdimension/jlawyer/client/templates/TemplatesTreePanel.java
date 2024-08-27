@@ -1371,7 +1371,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         }
         DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
         GenericNode folder = (GenericNode) selNode.getUserObject();
-        String newName=FileUtils.getNewFileName(null, this.lstTemplates.getSelectedValue().toString(), false, null, false, this, "Vorlage umbenennen");
+        String newName=FileUtils.getNewFileName(null, this.lstTemplates.getSelectedValue().toString(), null, false, this, "Vorlage umbenennen");
         if(newName==null)
             return;
 

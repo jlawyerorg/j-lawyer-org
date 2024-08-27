@@ -865,7 +865,7 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
     }
     
     public String getNewFileName(ArchiveFileBean selectedCase, String currentFileName) {
-        return FileUtils.getNewFileName(selectedCase, currentFileName, false, new Date(), true, this, "Datei benennen");
+        return FileUtils.getNewFileName(selectedCase, currentFileName, new Date(), true, this, "Datei benennen");
     }
 
     @Override

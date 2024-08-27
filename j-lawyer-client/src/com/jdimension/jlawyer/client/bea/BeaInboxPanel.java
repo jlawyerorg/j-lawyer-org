@@ -2849,7 +2849,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
             MessageExport mex = BeaAccess.exportMessage(m);
-            String newName = FileUtils.getNewFileName(targetCase, m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", false, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
+            String newName = FileUtils.getNewFileName(targetCase, m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
             if (newName == null || "".equals(newName)) {
                 newName=m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
             }

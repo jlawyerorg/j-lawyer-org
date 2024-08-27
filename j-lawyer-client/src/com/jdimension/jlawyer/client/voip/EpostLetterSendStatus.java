@@ -892,7 +892,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                             }
                             newName = FileUtils.sanitizeFileName(newName);
                             java.util.Date sentPrefix = new Date();
-                            newName = FileUtils.getNewFileName(selectedCase, newName, true, sentPrefix, true, this, "Datei benennen");
+                            newName = FileUtils.getNewFileName(selectedCase, newName, sentPrefix, true, this, "Datei benennen");
                             if (newName != null) {
                                 if (newName.trim().length() == 0) {
                                     newName = "E-POST-Brief";
@@ -904,7 +904,7 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                                 boolean documentExists = afs.doesDocumentExist(this.data.get("epost.letter.caseid").toString(), newName);
                                 while (documentExists) {
 
-                                    newName = FileUtils.getNewFileName(selectedCase, newName, true, sentPrefix, true, this, "Datei benennen");
+                                    newName = FileUtils.getNewFileName(selectedCase, newName, sentPrefix, true, this, "Datei benennen");
                                     if (newName == null || "".equals(newName)) {
                                         break;
                                     }

@@ -764,7 +764,7 @@ public class UploadDocumentsAction extends ProgressableAction {
         boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
         while (documentExists) {
 
-            newName = FileUtils.getNewFileName(this.archiveFile, newName, false, new Date(), true, this.indicator, "neuer Dateiname");
+            newName = FileUtils.getNewFileName(this.archiveFile, newName, new Date(), true, this.indicator, "neuer Dateiname");
             if (newName == null || "".equals(newName)) {
                 EditorsRegistry.getInstance().clearStatus(true);
                 ThreadUtils.setDefaultCursor(this.owner);
