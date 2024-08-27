@@ -707,6 +707,10 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
                     if(f.getName().endsWith(".uploading"))
                         continue;
                     
+                    // avoid macOS metadata files
+                    if(f.getName().toLowerCase().contains(".ds_store"))
+                        continue;
+                    
                     // avoid processing files that might still be written by the scanner
                     if((System.currentTimeMillis() - f.lastModified())<10000l)
                         continue;
