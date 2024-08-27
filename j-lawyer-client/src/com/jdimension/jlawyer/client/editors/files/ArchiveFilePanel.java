@@ -2136,7 +2136,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuRenameDocument);
 
         mnuSetDocumentDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        mnuSetDocumentDate.setText("Datum anpassen");
+        mnuSetDocumentDate.setText("Erstellungsdatum anpassen");
         mnuSetDocumentDate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuSetDocumentDateActionPerformed(evt);
@@ -5934,9 +5934,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuSetDocumentDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSetDocumentDateActionPerformed
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 DateTimePickerDialog dlg = new DateTimePickerDialog(EditorsRegistry.getInstance().getMainWindow(), false, doc, this.caseFolderPanel1);

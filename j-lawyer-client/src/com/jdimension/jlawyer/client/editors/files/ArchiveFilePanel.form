@@ -234,7 +234,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/schedule.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Datum anpassen"/>
+            <Property name="text" type="java.lang.String" value="Erstellungsdatum anpassen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSetDocumentDateActionPerformed"/>

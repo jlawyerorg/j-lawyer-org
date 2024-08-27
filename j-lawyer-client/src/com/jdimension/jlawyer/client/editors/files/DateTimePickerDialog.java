@@ -811,7 +811,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             remote.setDocumentDate(doc.getId(), d);
-            doc.setChangeDate(d);
+            doc.setCreationDate(d);
             this.table.updateDocument(doc);
 
             this.setVisible(false);

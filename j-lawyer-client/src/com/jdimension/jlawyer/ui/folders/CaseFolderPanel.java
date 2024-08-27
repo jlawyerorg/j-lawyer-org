@@ -1737,6 +1737,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
      * @param invoices
      */
     public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents, HashMap<String,Invoice> invoices) {
+        
+        int dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CHANGEDATE;
+        if (sortCreationDate.getSortState() == SortButton.SORT_ASC || sortCreationDate.getSortState() == SortButton.SORT_DESC) {
+            dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CREATIONDATE;
+        }
+        
         this.documents = documents;
         this.linkedInvoices=invoices;
 
@@ -1768,7 +1774,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         double prefHeight = 0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
-            DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.linkedInvoices.get(d.getId()), this.readonly);
+            DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.linkedInvoices.get(d.getId()), this.readonly, dateDisplayMode);
             if (i % 2 == 0) {
                 p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
             } else {
@@ -1797,7 +1803,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         if(invoice!=null)
             this.linkedInvoices.put(newDoc.getId(), invoice);
         
-        DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, invoice, this.readonly);
+        int dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CHANGEDATE;
+        if (sortCreationDate.getSortState() == SortButton.SORT_ASC || sortCreationDate.getSortState() == SortButton.SORT_DESC) {
+            dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CREATIONDATE;
+        }
+        
+        DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, invoice, this.readonly, dateDisplayMode);
         if (this.documents.size() % 2 == 0) {
             p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
         } else {
