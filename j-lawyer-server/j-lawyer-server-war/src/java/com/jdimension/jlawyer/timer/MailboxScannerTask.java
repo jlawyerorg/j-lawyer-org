@@ -698,6 +698,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.security.RunAs;
 import javax.mail.Address;
 import javax.mail.Authenticator;
 import javax.mail.Flags;
@@ -716,6 +717,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
+@RunAs("loginRole")
 public class MailboxScannerTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(MailboxScannerTask.class.getName());

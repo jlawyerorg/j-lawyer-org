@@ -678,7 +678,6 @@ public class TransientTimer {
     private Timer timerObserver = null;
     private Timer timerMonitor = null;
     private Timer timerFax = null;
-    private Timer timerEpost = null;
     private Timer timerPurgeBin = null;
     private Timer timerMailScanner = null;
 
@@ -743,20 +742,11 @@ public class TransientTimer {
             timerPurgeBin.schedule(new PurgeBinTask(), 35000l, 4l * 60l * 60l * 1000l);
         }
         
-        if (timerEpost == null) {
-            timerEpost = new Timer();
-
-            // start after 40s and run every 3min
-            timerEpost.schedule(new EpostQueueStatusTask(), 40000l, 3l * 60l * 1000l);
-
-        }
-        
         if (timerMailScanner == null) {
             timerMailScanner = new Timer();
 
-            // start after 40s and run every 10min
+            // start after 3min and run every 10min
             timerMailScanner.schedule(new MailboxScannerTask(), 180000l, 10l * 60l * 1000l);
-            //timerMailScanner.schedule(new MailboxScannerTask(), 20000l, 2l * 60l * 1000l);
 
         }
     }
@@ -792,9 +782,6 @@ public class TransientTimer {
             timerPurgeBin.cancel();
         }
         
-        if (timerEpost != null) {
-            timerEpost.cancel();
-        }
     }
 
 }

@@ -687,14 +687,20 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.annotation.security.RunAs;
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
+import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
  *
@@ -1334,6 +1340,92 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         ArrayList<Integer> list = new ArrayList<>();
         list.add(letterId);
         this.deleteEpostQueueEntries(list);
+    }
+    
+    @Schedule(hour = "*", minute = "*/4", persistent = false)
+    @TransactionTimeout(value = 3, unit = TimeUnit.MINUTES)
+    public void updateEpostStatus() {
+        performUpdateEpostStatus();
+    }
+    
+    @Asynchronous
+    public void performUpdateEpostStatus() {
+
+        try {
+            List<EpostQueueBean> entries = this.epostFacade.findAll();
+
+            // need to request grouped by sender id, because they might have different credentials
+            HashMap<String, List<Integer>> unfinishedLetterIds = new HashMap<>();
+            HashMap<Integer, EpostQueueBean> updateCandidates=new HashMap<>();
+
+            int failed = 0;
+            for (EpostQueueBean eqb : entries) {
+                updateCandidates.put(eqb.getLetterId(), eqb);
+                
+                int currentStatus = eqb.getLastStatusId();
+                if (!EpostUtils.isFinalStatus(currentStatus)) {
+                    if (!unfinishedLetterIds.containsKey(eqb.getSentBy())) {
+                        unfinishedLetterIds.put(eqb.getSentBy(), new ArrayList<>());
+                    }
+                    unfinishedLetterIds.get(eqb.getSentBy()).add(eqb.getLetterId());
+                }
+
+            }
+
+            List<EpostLetterStatus> newStatuus = new ArrayList<>();
+            try {
+                for (String principal : unfinishedLetterIds.keySet()) {
+                    // different principals might use the same epost credentials and we may run into the rate limit of 5s --> add delay
+                    List<EpostLetterStatus> allForUser = getLetterStatus(unfinishedLetterIds.get(principal), principal);
+                    newStatuus.addAll(allForUser);
+                    try {
+                        Thread.sleep(5500);
+                    } catch (Throwable threadEx) {
+                        log.error("Could not delay next EPOST status query", threadEx);
+                    }
+                }
+            } catch (Throwable t) {
+                log.error("Could not update status for multiple letters, skipping...", t);
+            }
+
+            for (EpostLetterStatus newStatus : newStatuus) {
+                EpostQueueBean eqb=updateCandidates.get(newStatus.getLetterId());
+                int currentStatus=eqb.getLastStatusId();
+                if (newStatus.getStatusId() != currentStatus) {
+                    // update entry
+                    eqb.setCreatedDate(newStatus.getCreatedDate());
+                    eqb.setLastStatusId(newStatus.getStatusId());
+                    eqb.setDestinationAreaStatus(newStatus.getDestinationAreaStatus());
+                    eqb.setDestinationAreaStatusDate(newStatus.getDestinationAreaStatusDate());
+                    eqb.setFileName(newStatus.getFileName());
+                    eqb.setLastStatusDetails(newStatus.getStatusDetails());
+                    eqb.setNoOfPages(newStatus.getNoOfPages());
+                    eqb.setPrintFeedbackDate(newStatus.getPrintFeedbackDate());
+                    eqb.setPrintUploadDate(newStatus.getPrintUploadDate());
+                    eqb.setProcessedDate(newStatus.getProcessedDate());
+                    eqb.setRegisteredLetterStatus(newStatus.getRegisteredLetterStatus());
+                    eqb.setRegisteredLetterStatusDate(newStatus.getRegisteredLetterStatusDate());
+                    eqb.setRegisteredLetterId(newStatus.getRegisteredLetterId());
+                    this.epostFacade.edit(eqb);
+
+                    if (EpostUtils.isFailStatus(newStatus.getStatusId())) {
+                        failed = failed + 1;
+                        singleton.setFailedLetter(eqb);
+                    }
+                }
+            }
+
+            if (failed == 0) {
+                singleton.setFailedLetter(null);
+            }
+
+            ArrayList<EpostQueueBean> list = new ArrayList<>();
+            list.addAll(this.epostFacade.findAll());
+            singleton.setEpostQueue(list);
+
+        } catch (Throwable ex) {
+             log.error("Error checking ePost letter statuses", ex);
+        }
     }
 
 }
