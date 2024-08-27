@@ -1501,7 +1501,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                     byte[] data = ((Attachment) selected).getContent();
 
-                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true, true);
+                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
                         return;
                     }

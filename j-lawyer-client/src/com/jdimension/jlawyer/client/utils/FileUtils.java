@@ -831,17 +831,17 @@ public class FileUtils extends ServerFileUtils {
         }
     }
 
-    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, boolean applyNameTemplate) {
-        return getNewFileName(selectedCase, currentFileName, datetimePrefix, new java.util.Date(), applyNameTemplate);
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean applyNameTemplate) {
+        return getNewFileName(selectedCase, currentFileName, new java.util.Date(), applyNameTemplate);
     }
 
-    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate) {
 
         return getNewFileName(selectedCase, currentFileName, d, applyNameTemplate, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
 
     }
 
-    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean datetimePrefix, java.util.Date d, boolean applyNameTemplate, Component parent) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent) {
 
         return getNewFileName(selectedCase, currentFileName, d, applyNameTemplate, parent, "Datei benennen");
 

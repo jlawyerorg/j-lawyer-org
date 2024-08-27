@@ -1970,7 +1970,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         }
                     }
 
-                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true, true);
+                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
                         return;
                     }
