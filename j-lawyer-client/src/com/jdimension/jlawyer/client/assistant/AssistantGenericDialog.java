@@ -1135,6 +1135,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                             taResult.setText(resultString.toString());
                         }
                         status.setResponse(res);
+                        resultRef.set(status);
                     } else {
                         resultRef.set(status);
                     }
