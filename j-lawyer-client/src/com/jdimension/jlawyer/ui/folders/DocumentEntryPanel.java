@@ -705,8 +705,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
     
-    public static int DATE_DISPLAY_MODE_CHANGEDATE=1;
-    public static int DATE_DISPLAY_MODE_CREATIONDATE=2;
+    public static final int DATE_DISPLAY_MODE_CHANGEDATE=1;
+    public static final int DATE_DISPLAY_MODE_CREATIONDATE=2;
     
     private int dateDisplayMode=DATE_DISPLAY_MODE_CHANGEDATE;
 
