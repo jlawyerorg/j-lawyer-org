@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -1246,10 +1247,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
 
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(html, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(html);
@@ -1291,10 +1297,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     log.warn(body);
                 }
 
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(body, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(body);
@@ -1401,10 +1412,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
             if (msg.getFromEmail() != null) {
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(msg.getFromEmail());
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(msg.getFromEmail());
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(htmlContent);
