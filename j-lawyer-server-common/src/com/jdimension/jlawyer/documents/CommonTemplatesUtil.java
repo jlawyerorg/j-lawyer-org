@@ -699,7 +699,7 @@ public class CommonTemplatesUtil {
                 value = "";
             }
 
-            content = content.replaceAll(keyRegX, value);
+            content = content.replaceAll(keyRegX, value.trim());
         }
 
         return content;

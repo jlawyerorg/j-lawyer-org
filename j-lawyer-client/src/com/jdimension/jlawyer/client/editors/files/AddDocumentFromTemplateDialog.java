@@ -897,6 +897,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             if (party != null) {
                 String contactName = party.getAddress().toDisplayName();
                 contactName = StringUtils.removeSonderzeichen(contactName);
+                contactName = contactName.trim();
                 name = name.replaceAll(ptb.getPlaceHolder(), contactName);
             }
         }
