@@ -896,6 +896,80 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
         }
 
+//<<<<<<< HEAD
+//=======
+//        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+//
+//        String templateFileName = templateName;
+//        if (templateFileName == null) {
+//            templateFileName = "";
+//        }
+//
+//        if (templateFileName.lastIndexOf(".") >= 0) {
+//            templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
+//        }
+//        String name = df.format(new Date()) + "_" + templateFileName;
+//
+//        // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
+//        ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
+//        Comparator<PartyTypeBean> prefixLengthComparator = (PartyTypeBean t1, PartyTypeBean t2) -> {
+//            String prefix1 = null;
+//            String prefix2 = null;
+//            if (t1 != null) {
+//                prefix1 = t1.getPlaceHolder();
+//            }
+//            if (t2 != null) {
+//                prefix2 = t2.getPlaceHolder();
+//            }
+//
+//            int l1 = 0;
+//            if (prefix1 != null) {
+//                l1 = prefix1.length();
+//            }
+//            int l2 = 0;
+//            if (prefix2 != null) {
+//                l2 = prefix2.length();
+//            }
+//            return Integer.compare(l1, l2);
+//        };
+//        Collections.sort(apt, prefixLengthComparator);
+//        Collections.reverse(apt);
+//
+//        for (PartyTypeBean ptb : apt) {
+//            PartiesPanelEntry party = this.pnlPartiesPanel.getSelectedParty(ptb);
+//            if (party != null) {
+//                String contactName = party.getAddress().toDisplayName();
+//                contactName = StringUtils.removeSonderzeichen(contactName);
+//                contactName = contactName.trim();
+//                name = name.replaceAll(ptb.getPlaceHolder(), contactName);
+//            }
+//        }
+//        
+//        if(this.invoice!=null && this.invoice.getInvoiceNumber()!=null) {
+//            name = name.replace("BELNR", this.invoice.getInvoiceNumber());
+//        }
+//
+//        name = name.replaceAll(",", "");
+//        name = name.replaceAll("\"", "");
+//        name = name.replaceAll("§", "");
+//        name = name.replaceAll("%", "");
+//        name = name.replaceAll("&", "");
+//        name = name.replaceAll("/", "");
+//        name = name.replaceAll("=", "");
+//        name = name.replaceAll("\\?", "");
+//        name = name.replaceAll("\\{", "");
+//        name = name.replaceAll("\\}", "");
+//        name = name.replaceAll("\\[", "");
+//        name = name.replaceAll("\\]", "");
+//        name = name.replaceAll("\\\\", "");
+//        name = name.replaceAll("\\*", "");
+//        name = name.replaceAll("#", "");
+//        name = name.replaceAll("'", "");
+//        name = name.replaceAll(":", "");
+//        name = name.replaceAll(";", "");
+//
+//        this.txtFileName.setText(name);
+//>>>>>>> origin/master
     }
 
     /**
