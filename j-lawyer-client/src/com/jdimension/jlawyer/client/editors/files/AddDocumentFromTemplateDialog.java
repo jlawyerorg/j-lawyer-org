@@ -718,6 +718,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     
     private GenericCalculationTable calculationTable = null;
     private Invoice invoice = null;
+    private AppUserBean invoiceSender = null;
     private StyledCalculationTable invoiceTable = null;
     private byte[] giroCode = null;
     private StyledCalculationTable timesheetsTable = null;
@@ -732,7 +733,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private DocumentNameTemplate nameTemplate = null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null);
+        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null);
     }
 
     /**
@@ -749,11 +750,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param invoiceTable
      * @param timesheetsTable
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
         this.invoice = invoice;
+        this.invoiceSender = invoiceSender;
         this.giroCode = giroCode;
         this.invoiceTable = invoiceTable;
         this.timesheetsTable = timesheetsTable;
@@ -1727,7 +1729,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 String extension = FileUtils.getExtension(templateFileName);
                 String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(templateFileName, new Date(), this.nameTemplate);
 
-                HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, this.aFile, partiesTriplets, this.invoice, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, this.aFile, partiesTriplets, this.invoice, this.invoiceSender, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
                 docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
 
                 // remove any extension, because of the template it might be somewhere in the middle of the new name
@@ -1812,7 +1814,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 for (String ph : placeHoldersBody) {
                     ht.put(ph, "");
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceTable, this.timesheetsTable, giroCode);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, giroCode);
 
                 int emptyValues = 0;
                 for (String key : ht.keySet()) {

@@ -1247,7 +1247,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
             String extension = ServerFileUtils.getExtension(newNameMsg);
             String docName = caseSvc.getNewDocumentName(newNameMsg, received, nameTemplate);
-            HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+            HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
             docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
             docName = ServerFileUtils.sanitizeFileName(docName);
 
@@ -1306,7 +1306,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 newName = ServerFileUtils.sanitizeFileName(newName);
                 extension = ServerFileUtils.getExtension(newName);
                 docName = caseSvc.getNewDocumentName(newName, received, nameTemplate);
-                placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
                 docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
                 docName = ServerFileUtils.sanitizeFileName(docName);
 

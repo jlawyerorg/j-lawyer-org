@@ -2398,6 +2398,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 return;
             }
 
+            AppUserBean senderUser = null;
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                senderUser = locator.lookupSystemManagementRemote().getUser(currentEntry.getSender());
+                if (senderUser == null) {
+                    JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } catch (Exception ex) {
+                log.error("error getting invoice sender", ex);
+                JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
             if (choice == 0) {
                 // generate document via template system
                 // upon PDF creation, embed XRechnung XML
@@ -2422,7 +2436,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
+                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
                 if (this.currentEntry != null) {
                     this.save();
                     try {
@@ -2436,20 +2450,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     this.cmdNavigateToDocument.setEnabled(true);
                 }
             } else {
-                AppUserBean senderUser = null;
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                    senderUser = locator.lookupSystemManagementRemote().getUser(currentEntry.getSender());
-                    if (senderUser == null) {
-                        JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                } catch (Exception ex) {
-                    log.error("error getting invoice sender", ex);
-                    JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
+                
                 org.mustangproject.Invoice i = new org.mustangproject.Invoice();
                 //i.setReferenceNumber("991-01484-64")//leitweg-id
                 i.setNumber(this.currentEntry.getInvoiceNumber());

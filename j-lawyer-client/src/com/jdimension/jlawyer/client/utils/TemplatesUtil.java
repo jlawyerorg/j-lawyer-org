@@ -686,7 +686,7 @@ public class TemplatesUtil extends CommonTemplatesUtil {
 
     private static final Logger log = Logger.getLogger(TemplatesUtil.class.getName());
 
-    public static HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<PartiesTriplet> partiesTriplets, Invoice invoice, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
+    public static HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<PartiesTriplet> partiesTriplets, Invoice invoice, AppUserBean invoiceSender, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -728,7 +728,7 @@ public class TemplatesUtil extends CommonTemplatesUtil {
                 }
             }
 
-            return locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, null, null, null);
+            return locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, null, null, null);
 
         } catch (Exception ex) {
             log.error("Error getting placeholder values", ex);

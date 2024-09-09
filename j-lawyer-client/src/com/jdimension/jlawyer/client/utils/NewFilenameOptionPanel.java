@@ -800,7 +800,7 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
             String extension = FileUtils.getExtension(this.documentFilename);
             String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, this.nameTemplate);
 
-            HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
             docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
             docName = FileUtils.sanitizeFileName(docName);
 

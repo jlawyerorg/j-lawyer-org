@@ -694,7 +694,7 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
         this.forms=forms;
     }
 
-    public HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<ArchiveFileAddressesBean> involved, Invoice invoice, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
+    public HashMap<String, Object> getPlaceHolderValues(String content, ArchiveFileBean contextArchiveFile, List<ArchiveFileAddressesBean> involved, Invoice invoice, AppUserBean invoiceSender, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant) {
         try {
             if(allPartyTypes==null) {
                 allPartyTypes = sys.getPartyTypes();
@@ -737,7 +737,7 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
                 parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
             }
             
-            return sys.getPlaceHolderValues(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, null, null, null);
+            return sys.getPlaceHolderValues(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, invoiceSender, null, null, null);
 
         } catch (Exception ex) {
             log.error("Error getting placeholder values", ex);

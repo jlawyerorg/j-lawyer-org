@@ -1300,7 +1300,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             if(this.saveDialog!=null)
                 selectedCase=this.saveDialog.getSelectedCase();
             
-            HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            HashMap<String, Object> placeHolders=TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
             docName=TemplatesUtil.replacePlaceHolders(docName, placeHolders);
             docName=FileUtils.sanitizeFileName(docName);
             

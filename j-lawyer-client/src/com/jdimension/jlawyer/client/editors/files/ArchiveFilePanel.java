@@ -4490,11 +4490,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    public ArchiveFileDocumentsBean newDocumentDialog(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
-        return this.newDocumentActionPerformedImpl(table, invoice, invoiceTable, timesheetsTable, giroCode);
+    public ArchiveFileDocumentsBean newDocumentDialog(GenericCalculationTable table, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
+        return this.newDocumentActionPerformedImpl(table, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode);
     }
 
-    private ArchiveFileDocumentsBean newDocumentActionPerformedImpl(GenericCalculationTable table, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
+    private ArchiveFileDocumentsBean newDocumentActionPerformedImpl(GenericCalculationTable table, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -4515,7 +4515,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, table, invoice, invoiceTable, timesheetsTable, giroCode);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, table, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -4549,7 +4549,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
-    private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
+    private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode) {
 
         // save all forms to have the latest data available for document creation
         this.saveFormData();
@@ -4575,7 +4575,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, rvgTable, invoice, invoiceTable, timesheetsTable, giroCode);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, rvgTable, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -4584,7 +4584,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
 
-        this.newDocumentActionPerformedImpl(null, null, null, null, null);
+        this.newDocumentActionPerformedImpl(null, null, null, null, null, null);
 
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 

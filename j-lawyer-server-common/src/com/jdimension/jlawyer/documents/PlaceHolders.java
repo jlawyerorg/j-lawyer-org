@@ -820,6 +820,28 @@ public class PlaceHolders {
     public static final String BEL_WHRG = "{{BEL_WHRG}}";
     public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
     public static final String BEL_GIROCODE = "{{BEL_GIROCODE}}";
+    // invoice sender
+    public static final String BEL_ABSAN = "{{BEL_ABSAN}}";
+    public static final String BEL_ABSEMAIL = "{{BEL_ABSEMAIL}}";
+    public static final String BEL_ABSKRZ = "{{BEL_ABSKRZ}}";
+    public static final String BEL_ABSVORNAME = "{{BEL_ABSVORNAME}}";
+    public static final String BEL_ABSNAME = "{{BEL_ABSNAME}}";
+    public static final String BEL_ABSUNTERNEHMEN = "{{BEL_ABSUNTERNEHMEN}}";
+    public static final String BEL_ABSFKT = "{{BEL_ABSFKT}}";
+    public static final String BEL_ABSSTRASSE = "{{BEL_ABSSTRASSE}}";
+    public static final String BEL_ABSZUSATZ = "{{BEL_ABSZUSATZ}}";
+    public static final String BEL_ABSPLZ = "{{BEL_ABSPLZ}}";
+    public static final String BEL_ABSORT = "{{BEL_ABSORT}}";
+    public static final String BEL_ABSLAND = "{{BEL_ABSLAND}}";
+    public static final String BEL_ABSTEL = "{{BEL_ABSTEL}}";
+    public static final String BEL_ABSFAX = "{{BEL_ABSFAX}}";
+    public static final String BEL_ABSMOBIL = "{{BEL_ABSMOBIL}}";
+    public static final String BEL_ABSWWW = "{{BEL_ABSWWW}}";
+    public static final String BEL_ABSBANK = "{{BEL_ABSBANK}}";
+    public static final String BEL_ABSBIC = "{{BEL_ABSBIC}}";
+    public static final String BEL_ABSIBAN = "{{BEL_ABSIBAN}}";
+    public static final String BEL_ABSSTEUERNR = "{{BEL_ABSSTEUERNR}}";
+    public static final String BEL_ABSUSTIDNR = "{{BEL_ABSUSTIDNR}}";
     
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     
@@ -995,6 +1017,28 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(BEL_DTERSTELLT);
         ALLPLACEHOLDERS.add(BEL_TOTAL);
         ALLPLACEHOLDERS.add(BEL_WHRG);
+        // invoice sender
+        ALLPLACEHOLDERS.add(BEL_ABSAN);
+        ALLPLACEHOLDERS.add(BEL_ABSKRZ);
+        ALLPLACEHOLDERS.add(BEL_ABSEMAIL);
+        ALLPLACEHOLDERS.add(BEL_ABSVORNAME);
+        ALLPLACEHOLDERS.add(BEL_ABSNAME);
+        ALLPLACEHOLDERS.add(BEL_ABSUNTERNEHMEN);
+        ALLPLACEHOLDERS.add(BEL_ABSFKT);
+        ALLPLACEHOLDERS.add(BEL_ABSSTRASSE);
+        ALLPLACEHOLDERS.add(BEL_ABSZUSATZ);
+        ALLPLACEHOLDERS.add(BEL_ABSPLZ);
+        ALLPLACEHOLDERS.add(BEL_ABSORT);
+        ALLPLACEHOLDERS.add(BEL_ABSLAND);
+        ALLPLACEHOLDERS.add(BEL_ABSTEL);
+        ALLPLACEHOLDERS.add(BEL_ABSFAX);
+        ALLPLACEHOLDERS.add(BEL_ABSMOBIL);
+        ALLPLACEHOLDERS.add(BEL_ABSWWW);
+        ALLPLACEHOLDERS.add(BEL_ABSBANK);
+        ALLPLACEHOLDERS.add(BEL_ABSBIC);
+        ALLPLACEHOLDERS.add(BEL_ABSIBAN);
+        ALLPLACEHOLDERS.add(BEL_ABSSTEUERNR);
+        ALLPLACEHOLDERS.add(BEL_ABSUSTIDNR);
 
         return ALLPLACEHOLDERS;
     }
