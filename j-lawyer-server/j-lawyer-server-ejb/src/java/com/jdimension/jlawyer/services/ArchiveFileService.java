@@ -6504,6 +6504,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"loginRole"})
     public boolean isDocumentLocked(String docId) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        if(db==null) {
+            log.warn("There is no document with ID " + docId + " - assuming unlocked.");
+            return false;
+        }
         return db.isLocked();
     }
 
