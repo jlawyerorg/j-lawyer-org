@@ -1051,27 +1051,154 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
 
         }
         
-        if (placeHolders.containsKey(AUTOR_AN)) {
+        if (placeHolders.containsKey(USER_AN)) {
             if (author != null) {
-                placeHolders.put(AUTOR_AN, val(author.getDisplayName()));
+                placeHolders.put(USER_AN, val(author.getDisplayName()));
             } else {
-                placeHolders.put(AUTOR_AN, "");
+                placeHolders.put(USER_AN, "");
             }
         }
-        if (placeHolders.containsKey(AUTOR_EMAIL)) {
+        if (placeHolders.containsKey(USER_EMAIL)) {
             if (author != null) {
-                placeHolders.put(AUTOR_EMAIL, val(author.getEmail()));
+                placeHolders.put(USER_EMAIL, val(author.getEmail()));
             } else {
-                placeHolders.put(AUTOR_EMAIL, "");
+                placeHolders.put(USER_EMAIL, "");
             }
         }
-        if (placeHolders.containsKey(AUTOR_KRZ)) {
+        if (placeHolders.containsKey(USER_KRZ)) {
             if (author != null) {
-                placeHolders.put(AUTOR_KRZ, val(author.getAbbreviation()));
+                placeHolders.put(USER_KRZ, val(author.getAbbreviation()));
             } else {
-                placeHolders.put(AUTOR_KRZ, "");
+                placeHolders.put(USER_KRZ, "");
             }
         }
+        if (placeHolders.containsKey(USER_VORNAME)) {
+            if (author != null) {
+                placeHolders.put(USER_VORNAME, val(author.getFirstName()));
+            } else {
+                placeHolders.put(USER_VORNAME, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_NAME)) {
+            if (author != null) {
+                placeHolders.put(USER_NAME, val(author.getName()));
+            } else {
+                placeHolders.put(USER_NAME, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_UNTERNEHMEN)) {
+            if (author != null) {
+                placeHolders.put(USER_UNTERNEHMEN, val(author.getCompany()));
+            } else {
+                placeHolders.put(USER_UNTERNEHMEN, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_FKT)) {
+            if (author != null) {
+                placeHolders.put(USER_FKT, val(author.getRole()));
+            } else {
+                placeHolders.put(USER_FKT, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_STRASSE)) {
+            if (author != null) {
+                placeHolders.put(USER_STRASSE, val(author.getStreet()));
+            } else {
+                placeHolders.put(USER_STRASSE, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_ZUSATZ)) {
+            if (author != null) {
+                placeHolders.put(USER_ZUSATZ, val(author.getAdjunct()));
+            } else {
+                placeHolders.put(USER_ZUSATZ, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_PLZ)) {
+            if (author != null) {
+                placeHolders.put(USER_PLZ, val(author.getZipCode()));
+            } else {
+                placeHolders.put(USER_PLZ, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_ORT)) {
+            if (author != null) {
+                placeHolders.put(USER_ORT, val(author.getCity()));
+            } else {
+                placeHolders.put(USER_ORT, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_LAND)) {
+            if (author != null) {
+                placeHolders.put(USER_LAND, val(author.getCountryCode()));
+            } else {
+                placeHolders.put(USER_LAND, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_TEL)) {
+            if (author != null) {
+                placeHolders.put(USER_TEL, val(author.getPhone()));
+            } else {
+                placeHolders.put(USER_TEL, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_FAX)) {
+            if (author != null) {
+                placeHolders.put(USER_FAX, val(author.getFax()));
+            } else {
+                placeHolders.put(USER_FAX, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_MOBIL)) {
+            if (author != null) {
+                placeHolders.put(USER_MOBIL, val(author.getMobile()));
+            } else {
+                placeHolders.put(USER_MOBIL, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_WWW)) {
+            if (author != null) {
+                placeHolders.put(USER_WWW, val(author.getWebsite()));
+            } else {
+                placeHolders.put(USER_WWW, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_BANK)) {
+            if (author != null) {
+                placeHolders.put(USER_BANK, val(author.getBankName()));
+            } else {
+                placeHolders.put(USER_BANK, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_BIC)) {
+            if (author != null) {
+                placeHolders.put(USER_BIC, val(author.getBankBic()));
+            } else {
+                placeHolders.put(USER_BIC, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_IBAN)) {
+            if (author != null) {
+                placeHolders.put(USER_IBAN, val(author.getBankIban()));
+            } else {
+                placeHolders.put(USER_IBAN, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_STEUERNR)) {
+            if (author != null) {
+                placeHolders.put(USER_STEUERNR, val(author.getTaxNr()));
+            } else {
+                placeHolders.put(USER_STEUERNR, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_USTIDNR)) {
+            if (author != null) {
+                placeHolders.put(USER_USTIDNR, val(author.getTaxVatId()));
+            } else {
+                placeHolders.put(USER_USTIDNR, "");
+            }
+        }
+        
         
         if (invoice != null) {
             SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);

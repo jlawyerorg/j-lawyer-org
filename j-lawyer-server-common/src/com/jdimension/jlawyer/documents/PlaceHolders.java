@@ -766,8 +766,6 @@ public class PlaceHolders {
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
-    public static final String AUTOR_AN = "{{AUTOR_AN}}";
-    public static final String AUTOR_EMAIL = "{{AUTOR_EMAIL}}";
     
     //Nutzernamen
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
@@ -776,13 +774,35 @@ public class PlaceHolders {
     // Kürzel
     public static final String AKTE_SACHBEARBEITER_KRZ = "{{AKTE_SACHBEARBEITER_KRZ}}";
     public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
-    public static final String AUTOR_KRZ = "{{AUTOR_KRZ}}";
+    
     
     public static final String DOK_DZ = "{{DOK_DZ}}";
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
+    // user / author
+    public static final String USER_AN = "{{USER_AN}}";
+    public static final String USER_EMAIL = "{{USER_EMAIL}}";
+    public static final String USER_KRZ = "{{USER_KRZ}}";
+    public static final String USER_VORNAME = "{{USER_VORNAME}}";
+    public static final String USER_NAME = "{{USER_NAME}}";
+    public static final String USER_UNTERNEHMEN = "{{USER_UNTERNEHMEN}}";
+    public static final String USER_FKT = "{{USER_FKT}}";
+    public static final String USER_STRASSE = "{{USER_STRASSE}}";
+    public static final String USER_ZUSATZ = "{{USER_ZUSATZ}}";
+    public static final String USER_PLZ = "{{USER_PLZ}}";
+    public static final String USER_ORT = "{{USER_ORT}}";
+    public static final String USER_LAND = "{{USER_LAND}}";
+    public static final String USER_TEL = "{{USER_TEL}}";
+    public static final String USER_FAX = "{{USER_FAX}}";
+    public static final String USER_MOBIL = "{{USER_MOBIL}}";
+    public static final String USER_WWW = "{{USER_WWW}}";
+    public static final String USER_BANK = "{{USER_BANK}}";
+    public static final String USER_BIC = "{{USER_BIC}}";
+    public static final String USER_IBAN = "{{USER_IBAN}}";
+    public static final String USER_STEUERNR = "{{USER_STEUERNR}}";
+    public static final String USER_USTIDNR = "{{USER_USTIDNR}}";
     
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
@@ -935,15 +955,33 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_AN);
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_KRZ);
         ALLPLACEHOLDERS.add(AKTE_ANWALT_KRZ);
-        ALLPLACEHOLDERS.add(AUTOR_KRZ);
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
         ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
         
         
-        ALLPLACEHOLDERS.add(AUTOR_AN);
-        ALLPLACEHOLDERS.add(AUTOR_EMAIL);
+        ALLPLACEHOLDERS.add(USER_AN);
+        ALLPLACEHOLDERS.add(USER_KRZ);
+        ALLPLACEHOLDERS.add(USER_EMAIL);
+        ALLPLACEHOLDERS.add(USER_VORNAME);
+        ALLPLACEHOLDERS.add(USER_NAME);
+        ALLPLACEHOLDERS.add(USER_UNTERNEHMEN);
+        ALLPLACEHOLDERS.add(USER_FKT);
+        ALLPLACEHOLDERS.add(USER_STRASSE);
+        ALLPLACEHOLDERS.add(USER_ZUSATZ);
+        ALLPLACEHOLDERS.add(USER_PLZ);
+        ALLPLACEHOLDERS.add(USER_ORT);
+        ALLPLACEHOLDERS.add(USER_LAND);
+        ALLPLACEHOLDERS.add(USER_TEL);
+        ALLPLACEHOLDERS.add(USER_FAX);
+        ALLPLACEHOLDERS.add(USER_MOBIL);
+        ALLPLACEHOLDERS.add(USER_WWW);
+        ALLPLACEHOLDERS.add(USER_BANK);
+        ALLPLACEHOLDERS.add(USER_BIC);
+        ALLPLACEHOLDERS.add(USER_IBAN);
+        ALLPLACEHOLDERS.add(USER_STEUERNR);
+        ALLPLACEHOLDERS.add(USER_USTIDNR);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
         
