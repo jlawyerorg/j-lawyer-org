@@ -891,6 +891,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
         this.chkEventInvoiceDue.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INVOICE_DUE, true));
         this.chkScheduledDailyAgenda.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_DAILY_AGENDA, true));
         this.chkScheduledWeeklyDigest.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_WEEKLY_DIGEST, true));
+        
+        this.chkWarnOnUnknownSenders.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true));
 
     }
 
@@ -926,6 +928,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
         chkScheduledDailyAgenda = new javax.swing.JCheckBox();
         chkScheduledWeeklyDigest = new javax.swing.JCheckBox();
         chkEventInstantMessageDone = new javax.swing.JCheckBox();
+        jPanel3 = new javax.swing.JPanel();
+        chkWarnOnUnknownSenders = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/UserProfileDialog"); // NOI18N
@@ -1084,6 +1088,28 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Benachrichtigungen", jPanel2);
 
+        chkWarnOnUnknownSenders.setSelected(true);
+        chkWarnOnUnknownSenders.setText("vor dem Öffnen von E-Mails unbekannter Absender warnen");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkWarnOnUnknownSenders)
+                .addContainerGap(237, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkWarnOnUnknownSenders)
+                .addContainerGap(437, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Sicherheit", jPanel3);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1127,6 +1153,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INVOICE_DUE, this.chkEventInvoiceDue.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_DAILY_AGENDA, this.chkScheduledDailyAgenda.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_WEEKLY_DIGEST, this.chkScheduledWeeklyDigest.isSelected());
+        
+        settings.setSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, this.chkWarnOnUnknownSenders.isSelected());
         
         try {
             Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
@@ -1233,6 +1261,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkEventInvoiceDue;
     private javax.swing.JCheckBox chkScheduledDailyAgenda;
     private javax.swing.JCheckBox chkScheduledWeeklyDigest;
+    private javax.swing.JCheckBox chkWarnOnUnknownSenders;
     private javax.swing.JComboBox cmbAvatar;
     private javax.swing.JButton cmdChangePassword;
     private javax.swing.JButton cmdClose;
@@ -1245,6 +1274,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAbbreviation;
     private javax.swing.JLabel lblEmail;
