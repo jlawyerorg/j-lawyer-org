@@ -7200,7 +7200,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (this.dto.getId() != null) {
                     ArchiveFileDocumentsBean eventDoc = ((DocumentAddedEvent) e).getDocument();
                     if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
-                        caseFolderPanel1.addDocument(eventDoc, null);
+                        caseFolderPanel1.addDocument(eventDoc, ((DocumentAddedEvent) e).getInvoice());
                     }
                 }
             }

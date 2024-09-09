@@ -721,6 +721,8 @@ public class ServerFileUtils {
             currentExt = ".eml";
         } else if (currentFileName.toLowerCase().endsWith(".bea")) {
             currentExt = ".bea";
+        } else if (currentFileName.toLowerCase().endsWith(".xml")) {
+            currentExt = ".xml";
         }
 
         if (!newFileName.endsWith(currentExt)) {

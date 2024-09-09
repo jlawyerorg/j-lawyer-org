@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -679,6 +680,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
@@ -695,6 +697,7 @@ import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
@@ -960,11 +963,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         this.textSearchPositionTemplateKeyReleased(null);
         this.lstPositionTemplates.setSelectedValue(null, false);
-        
+
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         List<String> l2 = new ArrayList<>();
         l2.add("");
-        for (AppUserBean aub: allUsers) {
+        for (AppUserBean aub : allUsers) {
             l2.add(aub.getPrincipalId());
         }
         String[] userItems = l2.toArray(new String[0]);
@@ -993,18 +996,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdCalculation.setEnabled(invoice != null && invoice.getId() != null);
         this.cmdTimesheetPositions.setEnabled(invoice != null && invoice.getId() != null);
         this.cmdApplyPositionTemplate.setEnabled(invoice != null && invoice.getId() != null);
-        this.cmdCreateInvoiceDocumentClassic.setEnabled(invoice != null && invoice.getId() != null);
-        this.cmdUploadInvoiceDocumentClassic.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmdCreateInvoiceDocument.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmdUploadInvoiceDocument.setEnabled(invoice != null && invoice.getId() != null);
         this.textSearchPositionTemplate.setEnabled(invoice != null && invoice.getId() != null);
         this.lstPositionTemplates.setEnabled(invoice != null && invoice.getId() != null);
         this.cmdSave.setEnabled(invoice != null && invoice.getId() != null);
 
         this.cmbInvoiceSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-       
+
         this.currentEntry = invoice;
 
-        this.cmdNavigateToDocumentClassic.setEnabled(false);
-        this.cmdViewDocumentClassic.setEnabled(false);
+        this.cmdNavigateToDocument.setEnabled(false);
+        this.cmdViewDocument.setEnabled(false);
 
         this.clearPositionsPanel();
 
@@ -1046,22 +1049,22 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if (invoice.getInvoiceType() != null) {
                 this.cmbInvoiceType.setSelectedItem(invoice.getInvoiceType());
             }
-            
-             if (invoice.getSender() != null) {
+
+            if (invoice.getSender() != null) {
                 if (!ComponentUtils.containsItem(cmbInvoiceSender, invoice.getSender())) {
                     this.cmbInvoiceSender.addItem(invoice.getSender());
                 }
                 this.cmbInvoiceSender.setSelectedItem(invoice.getSender());
             }
-            
+
             for (InvoicePool pl : this.invoicePools.values()) {
                 if (pl.getId().equals(invoice.getLastPoolId())) {
                     this.cmbInvoicePool.setSelectedItem(pl.getDisplayName());
                 }
             }
             if (invoice.getInvoiceDocument() != null) {
-                this.cmdNavigateToDocumentClassic.setEnabled(true);
-                this.cmdViewDocumentClassic.setEnabled(true);
+                this.cmdNavigateToDocument.setEnabled(true);
+                this.cmdViewDocument.setEnabled(true);
             }
             this.recipientAddress = invoice.getContact();
             if (invoice.getContact() != null) {
@@ -1189,18 +1192,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlInvoicePositions = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
-        jSeparator1 = new javax.swing.JSeparator();
-        cmdCreateInvoiceDocumentClassic = new javax.swing.JButton();
+        cmdCreateInvoiceDocument = new javax.swing.JButton();
         cmbTableHeadersLanguage = new javax.swing.JComboBox<>();
-        cmdUploadInvoiceDocumentClassic = new javax.swing.JButton();
-        cmdViewDocumentClassic = new javax.swing.JButton();
-        cmdNavigateToDocumentClassic = new javax.swing.JButton();
+        cmdUploadInvoiceDocument = new javax.swing.JButton();
+        cmdViewDocument = new javax.swing.JButton();
+        cmdNavigateToDocument = new javax.swing.JButton();
         jLabel15 = new javax.swing.JLabel();
-        cmdViewDocumentXml = new javax.swing.JButton();
-        cmdNavigateToDocumentXml = new javax.swing.JButton();
-        jLabel16 = new javax.swing.JLabel();
-        cmdCreateInvoiceDocumentXml = new javax.swing.JButton();
-        cmdUploadInvoiceDocumentXml = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         tblPayments = new javax.swing.JTable();
@@ -1692,74 +1689,45 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         jTabbedPane1.addTab("Positionen", splitMain);
 
-        cmdCreateInvoiceDocumentClassic.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        cmdCreateInvoiceDocumentClassic.setText("Erstellen");
-        cmdCreateInvoiceDocumentClassic.setToolTipText("Dokument erzeugen");
-        cmdCreateInvoiceDocumentClassic.addActionListener(new java.awt.event.ActionListener() {
+        cmdCreateInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdCreateInvoiceDocument.setText("Erstellen");
+        cmdCreateInvoiceDocument.setToolTipText("Dokument erzeugen");
+        cmdCreateInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCreateInvoiceDocumentClassicActionPerformed(evt);
+                cmdCreateInvoiceDocumentActionPerformed(evt);
             }
         });
 
         cmbTableHeadersLanguage.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DE", "EN", "FR", "NL" }));
         cmbTableHeadersLanguage.setToolTipText("Sprache der Tabellenspaltenbezeichner");
 
-        cmdUploadInvoiceDocumentClassic.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
-        cmdUploadInvoiceDocumentClassic.setText("Hochladen");
-        cmdUploadInvoiceDocumentClassic.setToolTipText("Dokument zum Beleg laden");
-        cmdUploadInvoiceDocumentClassic.addActionListener(new java.awt.event.ActionListener() {
+        cmdUploadInvoiceDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
+        cmdUploadInvoiceDocument.setText("Hochladen");
+        cmdUploadInvoiceDocument.setToolTipText("Dokument zum Beleg laden");
+        cmdUploadInvoiceDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdUploadInvoiceDocumentClassicActionPerformed(evt);
+                cmdUploadInvoiceDocumentActionPerformed(evt);
             }
         });
 
-        cmdViewDocumentClassic.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdViewDocumentClassic.setToolTipText("Dokument anzeigen");
-        cmdViewDocumentClassic.addActionListener(new java.awt.event.ActionListener() {
+        cmdViewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdViewDocument.setToolTipText("Dokument anzeigen");
+        cmdViewDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdViewDocumentClassicActionPerformed(evt);
+                cmdViewDocumentActionPerformed(evt);
             }
         });
 
-        cmdNavigateToDocumentClassic.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_forward.png"))); // NOI18N
-        cmdNavigateToDocumentClassic.setToolTipText("zum Dokument wechseln");
-        cmdNavigateToDocumentClassic.addActionListener(new java.awt.event.ActionListener() {
+        cmdNavigateToDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_forward.png"))); // NOI18N
+        cmdNavigateToDocument.setToolTipText("zum Dokument wechseln");
+        cmdNavigateToDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNavigateToDocumentClassicActionPerformed(evt);
+                cmdNavigateToDocumentActionPerformed(evt);
             }
         });
 
         jLabel15.setFont(jLabel15.getFont());
         jLabel15.setText("Rechnungsdokument");
-
-        cmdViewDocumentXml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdViewDocumentXml.setToolTipText("Dokument anzeigen");
-        cmdViewDocumentXml.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdViewDocumentXmlActionPerformed(evt);
-            }
-        });
-
-        cmdNavigateToDocumentXml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_forward.png"))); // NOI18N
-        cmdNavigateToDocumentXml.setToolTipText("zum Dokument wechseln");
-        cmdNavigateToDocumentXml.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNavigateToDocumentXmlActionPerformed(evt);
-            }
-        });
-
-        jLabel16.setText("elektronische Rechnung");
-
-        cmdCreateInvoiceDocumentXml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        cmdCreateInvoiceDocumentXml.setText("Erstellen");
-        cmdCreateInvoiceDocumentXml.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCreateInvoiceDocumentXmlActionPerformed(evt);
-            }
-        });
-
-        cmdUploadInvoiceDocumentXml.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_upload_black_48dp.png"))); // NOI18N
-        cmdUploadInvoiceDocumentXml.setText("Hochladen");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1768,66 +1736,36 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(cmdViewDocument)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdNavigateToDocument)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel15))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(24, 24, 24)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(cmdViewDocumentClassic)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmdNavigateToDocumentClassic))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(cmdViewDocumentXml)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmdNavigateToDocumentXml)))
+                                .addComponent(cmdCreateInvoiceDocument)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel15)
-                                    .addComponent(jLabel16)))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(24, 24, 24)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(cmdCreateInvoiceDocumentClassic)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmbTableHeadersLanguage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(cmdUploadInvoiceDocumentClassic)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(3, 3, 3)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(cmdCreateInvoiceDocumentXml)
-                                            .addComponent(cmdUploadInvoiceDocumentXml))))))
-                        .addGap(0, 597, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jSeparator1)))
-                .addContainerGap())
+                                .addComponent(cmbTableHeadersLanguage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(cmdUploadInvoiceDocument))))
+                .addContainerGap(596, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdNavigateToDocumentClassic)
-                    .addComponent(cmdViewDocumentClassic)
+                    .addComponent(cmdNavigateToDocument)
+                    .addComponent(cmdViewDocument)
                     .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCreateInvoiceDocumentClassic, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdCreateInvoiceDocument, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbTableHeadersLanguage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdUploadInvoiceDocumentClassic, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(cmdNavigateToDocumentXml, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdViewDocumentXml, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdCreateInvoiceDocumentXml)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdUploadInvoiceDocumentXml)
-                .addContainerGap())
+                .addComponent(cmdUploadInvoiceDocument, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(487, 487, 487))
         );
 
         jTabbedPane1.addTab("Dokumente", jPanel1);
@@ -2431,50 +2369,205 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSearchRecipientMousePressed
 
-    private void cmdCreateInvoiceDocumentClassicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateInvoiceDocumentClassicActionPerformed
+    private void cmdCreateInvoiceDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateInvoiceDocumentActionPerformed
         if (this.caseView != null) {
             if (this.currentEntry != null) {
                 this.save();
             }
-
-            StyledCalculationTable timesheetPosTable = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
-                timesheetPosTable = this.getTimesheetPositionsAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
-            } catch (Exception ex) {
-                log.error("error getting timesheet positions table", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            if (this.currentEntry.getSender() == null) {
+                JOptionPane.showMessageDialog(this, "Es ist kein Rechnungssender definiert, E-Rechnung kann nicht erstellt werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                return;
             }
 
-            byte[] giroCode = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                if (this.currentEntry != null) {
-                    giroCode = locator.lookupInvoiceServiceRemote().getGiroCode(this.currentEntry.getSender(), this.currentEntry.getTotalGross(), this.currentEntry.getInvoiceNumber());
-                }
-            } catch (Exception ex) {
-                log.error("error generating girocode", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            // Options to display
+            String[] options = {"Elektronische Rechnung (an Unternehmen)", "XRechnung (an öffentliche Auftraggeber)"};
+
+            // Show option dialog
+            int choice = JOptionPane.showOptionDialog(
+                    this, // Parent component (null for no parent)
+                    "Rechnung erstellen als:", // Message to display
+                    "Rechnungsdokument erstellen", // Title of the dialog
+                    JOptionPane.DEFAULT_OPTION, // Option type (default for custom buttons)
+                    JOptionPane.QUESTION_MESSAGE, // Message type (question icon)
+                    null, // Icon (null for default icon)
+                    options, // Options array
+                    options[0] // Initial value (default selection)
+            );
+
+            if (choice < 0) {
+                return;
             }
 
-            ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
-            if (this.currentEntry != null) {
-                this.save();
+            if (choice == 0) {
+                // generate document via template system
+                // upon PDF creation, embed XRechnung XML
+                StyledCalculationTable timesheetPosTable = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                    currentEntry.setInvoiceDocument(locator.lookupArchiveFileServiceRemote().getInvoiceDocument(currentEntry.getId()));
+                    List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
+                    timesheetPosTable = this.getTimesheetPositionsAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
                 } catch (Exception ex) {
-                    log.error("error loading invoice document", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    log.error("error getting timesheet positions table", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                this.cmdViewDocumentClassic.setEnabled(true);
-                this.cmdNavigateToDocumentClassic.setEnabled(true);
+
+                byte[] giroCode = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    if (this.currentEntry != null) {
+                        giroCode = locator.lookupInvoiceServiceRemote().getGiroCode(this.currentEntry.getSender(), this.currentEntry.getTotalGross(), this.currentEntry.getInvoiceNumber());
+                    }
+                } catch (Exception ex) {
+                    log.error("error generating girocode", ex);
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+
+                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
+                if (this.currentEntry != null) {
+                    this.save();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                        currentEntry.setInvoiceDocument(locator.lookupArchiveFileServiceRemote().getInvoiceDocument(currentEntry.getId()));
+                    } catch (Exception ex) {
+                        log.error("error loading invoice document", ex);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                    this.cmdViewDocument.setEnabled(true);
+                    this.cmdNavigateToDocument.setEnabled(true);
+                }
+            } else {
+                AppUserBean senderUser = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    senderUser = locator.lookupSystemManagementRemote().getUser(currentEntry.getSender());
+                    if (senderUser == null) {
+                        JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } catch (Exception ex) {
+                    log.error("error getting invoice sender", ex);
+                    JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                org.mustangproject.Invoice i = new org.mustangproject.Invoice();
+                //i.setReferenceNumber("991-01484-64")//leitweg-id
+                i.setNumber(this.currentEntry.getInvoiceNumber());
+                i.setDueDate(this.currentEntry.getDueDate());
+                i.setIssueDate(this.currentEntry.getCreationDate());
+                i.setDetailedDeliveryPeriod(this.currentEntry.getPeriodFrom(), this.currentEntry.getPeriodTo());
+
+                if (StringUtils.isEmpty(senderUser.getCompany())
+                        || StringUtils.isEmpty(senderUser.getStreet())
+                        || StringUtils.isEmpty(senderUser.getZipCode())
+                        || StringUtils.isEmpty(senderUser.getCity())
+                        || StringUtils.isEmpty(senderUser.getCountryCodeInvoicing())) {
+                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Adresse. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                TradeParty sender = new TradeParty(senderUser.getCompany(), senderUser.getStreet(), senderUser.getZipCode(), senderUser.getCity(), senderUser.getCountryCodeInvoicing());
+                if (!StringUtils.isEmpty(senderUser.getAdjunct())) {
+                    sender.setAdditionalAddressExtension(senderUser.getAdjunct());
+                }
+                if (!StringUtils.isEmpty(senderUser.getTaxNr())) {
+                    sender.addTaxID(senderUser.getTaxNr());
+                }
+                if (!StringUtils.isEmpty(senderUser.getTaxVatId())) {
+                    sender.addVATID(senderUser.getTaxVatId());
+                }
+
+                if (StringUtils.isEmpty(senderUser.getBankBic())
+                        || StringUtils.isEmpty(senderUser.getBankIban())) {
+                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Bankverbindung. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                // zahlung per überweisung
+                sender.addBankDetails(new BankDetails(senderUser.getBankIban(), senderUser.getBankBic()));
+                // zahlug per lastschrift
+                //sender.addDebitDetails(debitDetail);
+
+                if (StringUtils.isEmpty(senderUser.getDisplayName())
+                        || StringUtils.isEmpty(senderUser.getPhone())
+                        || StringUtils.isEmpty(senderUser.getEmail())) {
+                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Anzeigename/Telefon/E-Mail. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                sender.setContact(new Contact(senderUser.getDisplayName(), senderUser.getPhone(), senderUser.getEmail()));
+
+                i.setSender(sender);
+
+                if (currentEntry.getContact() == null) {
+                    JOptionPane.showMessageDialog(this, "Rechnungsempfänger fehlt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (StringUtils.isEmpty(currentEntry.getContact().toDisplayName())
+                        || StringUtils.isEmpty(currentEntry.getContact().getStreet())
+                        || StringUtils.isEmpty(currentEntry.getContact().getZipCode())
+                        || StringUtils.isEmpty(currentEntry.getContact().getCity())) {
+                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungsempfängers unvollständig: Adresse.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                i.setRecipient(new TradeParty(currentEntry.getContact().toDisplayName(), currentEntry.getContact().getStreet() + " " + currentEntry.getContact().getStreetNumber(), currentEntry.getContact().getZipCode(), currentEntry.getContact().getCity(), "DE"));
+
+                List<InvoicePosition> positions = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    positions = locator.lookupArchiveFileServiceRemote().getInvoicePositions(this.currentEntry.getId());
+                } catch (Exception ex) {
+                    log.error("error getting invoice positions", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // line items
+                for (InvoicePosition pos : positions) {
+                    float taxRate = pos.getTaxRate();
+                    if (!this.currentEntry.isSmallBusiness()) {
+                        taxRate = 0f;
+                    }
+                    i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", new BigDecimal(taxRate)), /*price*/ new BigDecimal(pos.getUnitPrice()), /*qty*/ new BigDecimal(pos.getUnits())));
+                }
+
+                ZUGFeRD2PullProvider zf2p = new ZUGFeRD2PullProvider();
+                zf2p.setProfile(Profiles.getByName("XRechnung"));
+                zf2p.generateXML(i);
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    String newName = FileUtils.sanitizeFileName("XRechnung-" + this.currentEntry.getInvoiceNumber() + ".xml");
+                    String updatedName = newName;
+                    boolean documentExists = afs.doesDocumentExist(this.currentEntry.getArchiveFileKey().getId(), newName);
+                    while (documentExists) {
+
+                        updatedName = FileUtils.getNewFileName(this.currentEntry.getArchiveFileKey(), newName, new Date(), true, this, "neuer Dateiname");
+                        if (updatedName == null || "".equals(updatedName)) {
+                            EditorsRegistry.getInstance().clearStatus(true);
+                            break;
+                        }
+                        documentExists = afs.doesDocumentExist(this.currentEntry.getArchiveFileKey().getId(), updatedName);
+
+                    }
+
+                    if (!StringUtils.isEmpty(updatedName)) {
+                        final ArchiveFileDocumentsBean doc = afs.addDocument(this.currentEntry.getArchiveFileKey().getId(), updatedName, zf2p.getXML(), null, null);
+                        afs.linkInvoiceDocument(doc.getId(), this.currentEntry.getId());
+                        currentEntry.setInvoiceDocument(doc);
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new DocumentAddedEvent(doc, this.currentEntry));
+                    }
+
+                    this.cmdViewDocument.setEnabled(true);
+                    this.cmdNavigateToDocument.setEnabled(true);
+
+                } catch (Exception ex) {
+                    log.error("Error storing XRechnung document", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der elektronischen Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
-    }//GEN-LAST:event_cmdCreateInvoiceDocumentClassicActionPerformed
+    }//GEN-LAST:event_cmdCreateInvoiceDocumentActionPerformed
 
-    private void cmdViewDocumentClassicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdViewDocumentClassicActionPerformed
+    private void cmdViewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdViewDocumentActionPerformed
         if (this.currentEntry != null && this.currentEntry.getInvoiceDocument() != null) {
             try {
 
@@ -2493,12 +2586,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmdViewDocumentClassicActionPerformed
+    }//GEN-LAST:event_cmdViewDocumentActionPerformed
 
-    private void cmdNavigateToDocumentClassicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNavigateToDocumentClassicActionPerformed
+    private void cmdNavigateToDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNavigateToDocumentActionPerformed
         if (this.caseView != null && this.currentEntry != null && this.currentEntry.getInvoiceDocument() != null)
             this.caseView.selectDocument(this.currentEntry.getInvoiceDocument().getName());
-    }//GEN-LAST:event_cmdNavigateToDocumentClassicActionPerformed
+    }//GEN-LAST:event_cmdNavigateToDocumentActionPerformed
 
     private void chkTaxesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkTaxesActionPerformed
         this.updateTotals(null);
@@ -2549,7 +2642,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
     }//GEN-LAST:event_textSearchPositionTemplateKeyReleased
 
-    private void cmdUploadInvoiceDocumentClassicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadInvoiceDocumentClassicActionPerformed
+    private void cmdUploadInvoiceDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadInvoiceDocumentActionPerformed
         if (this.caseView != null) {
             if (this.currentEntry != null) {
                 this.save();
@@ -2564,11 +2657,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     log.error("error loading invoice document", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                this.cmdViewDocumentClassic.setEnabled(true);
-                this.cmdNavigateToDocumentClassic.setEnabled(true);
+                this.cmdViewDocument.setEnabled(true);
+                this.cmdNavigateToDocument.setEnabled(true);
             }
         }
-    }//GEN-LAST:event_cmdUploadInvoiceDocumentClassicActionPerformed
+    }//GEN-LAST:event_cmdUploadInvoiceDocumentActionPerformed
 
     private void lstPositionTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstPositionTemplatesMouseClicked
         if (evt.getClickCount() == 2) {
@@ -2605,151 +2698,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
     }//GEN-LAST:event_cmdGiroCodeActionPerformed
-
-    private void cmdViewDocumentXmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdViewDocumentXmlActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdViewDocumentXmlActionPerformed
-
-    private void cmdNavigateToDocumentXmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNavigateToDocumentXmlActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdNavigateToDocumentXmlActionPerformed
-
-    private void cmdCreateInvoiceDocumentXmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateInvoiceDocumentXmlActionPerformed
-        if (this.caseView != null) {
-            if (this.currentEntry != null) {
-                this.save();
-            }
-            
-            if(this.currentEntry.getSender()==null) {
-                JOptionPane.showMessageDialog(this, "Es ist kein Rechnungssender definiert, E-Rechnung kann nicht erstellt werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            AppUserBean senderUser=null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                senderUser = locator.lookupSystemManagementRemote().getUser(currentEntry.getSender());
-                if(senderUser==null) {
-                    JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            } catch (Exception ex) {
-                log.error("error getting invoice sender", ex);
-                JOptionPane.showMessageDialog(this, "Rechnungssender '" + currentEntry.getSender() + " kann nicht gefunden werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            org.mustangproject.Invoice i = new org.mustangproject.Invoice();
-            //i.setReferenceNumber("991-01484-64")//leitweg-id
-            i.setNumber(this.currentEntry.getInvoiceNumber());
-            i.setDueDate(this.currentEntry.getDueDate());
-            i.setIssueDate(this.currentEntry.getCreationDate());
-            i.setDetailedDeliveryPeriod(this.currentEntry.getPeriodFrom(), this.currentEntry.getPeriodTo());
-            
-            if (StringUtils.isEmpty(senderUser.getCompany()) 
-                    || StringUtils.isEmpty(senderUser.getStreet()) 
-                    || StringUtils.isEmpty(senderUser.getZipCode())
-                    || StringUtils.isEmpty(senderUser.getCity())
-                    || StringUtils.isEmpty(senderUser.getCountryCodeInvoicing())
-                    ) {
-                JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Adresse. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            TradeParty sender = new TradeParty(senderUser.getCompany(), senderUser.getStreet(), senderUser.getZipCode(), senderUser.getCity(), senderUser.getCountryCodeInvoicing());
-            if(!StringUtils.isEmpty(senderUser.getAdjunct()))
-                sender.setAdditionalAddressExtension(senderUser.getAdjunct());
-            if(!StringUtils.isEmpty(senderUser.getTaxNr()))
-                sender.addTaxID(senderUser.getTaxNr());
-            if(!StringUtils.isEmpty(senderUser.getTaxVatId()))
-                sender.addVATID(senderUser.getTaxVatId());
-
-            
-            if (StringUtils.isEmpty(senderUser.getBankBic())
-                    || StringUtils.isEmpty(senderUser.getBankIban()) 
-                    ) {
-                JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Bankverbindung. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            // zahlung per überweisung
-            sender.addBankDetails(new BankDetails(senderUser.getBankIban(), senderUser.getBankBic()));
-            // zahlug per lastschrift
-            //sender.addDebitDetails(debitDetail);
-            
-            
-            if (StringUtils.isEmpty(senderUser.getDisplayName())
-                    || StringUtils.isEmpty(senderUser.getPhone())
-                    || StringUtils.isEmpty(senderUser.getEmail())) {
-                JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Anzeigename/Telefon/E-Mail. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            sender.setContact(new Contact(senderUser.getDisplayName(), senderUser.getPhone(), senderUser.getEmail()));
-            
-            i.setSender(sender);
-
-            if(currentEntry.getContact()==null) {
-                    JOptionPane.showMessageDialog(this, "Rechnungsempfänger fehlt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            if (StringUtils.isEmpty(currentEntry.getContact().toDisplayName()) 
-                    || StringUtils.isEmpty(currentEntry.getContact().getStreet()) 
-                    || StringUtils.isEmpty(currentEntry.getContact().getZipCode())
-                    || StringUtils.isEmpty(currentEntry.getContact().getCity())
-                    ) {
-                JOptionPane.showMessageDialog(this, "Informationen des Rechnungsempfängers unvollständig: Adresse.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            i.setRecipient(new TradeParty(currentEntry.getContact().toDisplayName(), currentEntry.getContact().getStreet() + " " + currentEntry.getContact().getStreetNumber(), currentEntry.getContact().getZipCode(), currentEntry.getContact().getCity(), "DE"));
-
-            List<InvoicePosition> positions = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                positions = locator.lookupArchiveFileServiceRemote().getInvoicePositions(this.currentEntry.getId());
-            } catch (Exception ex) {
-                log.error("error getting invoice positions", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // line items
-            for (InvoicePosition pos : positions) {
-                float taxRate = pos.getTaxRate();
-                if (!this.currentEntry.isSmallBusiness()) {
-                    taxRate = 0f;
-                }
-                i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", new BigDecimal(taxRate)), /*price*/ new BigDecimal(pos.getUnitPrice()), /*qty*/ new BigDecimal(pos.getUnits())));
-            }
-
-            ZUGFeRD2PullProvider zf2p = new ZUGFeRD2PullProvider();
-            zf2p.setProfile(Profiles.getByName("XRechnung"));
-            zf2p.generateXML(i);
-            String theXML = new String(zf2p.getXML());
-            try {
-                StringWriter sw = new StringWriter();
-                //BufferedWriter writer = new BufferedWriter(new FileWriter("xrechnung.xml"));
-                BufferedWriter writer = new BufferedWriter(sw);
-                writer.write(theXML);
-                writer.close();
-                System.out.println("e-Invoice:");
-                System.out.println(sw.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-//            ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
-//            if (this.currentEntry != null) {
-//                this.save();
-//                try {
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-//                    currentEntry.setInvoiceDocument(locator.lookupArchiveFileServiceRemote().getInvoiceDocument(currentEntry.getId()));
-//                } catch (Exception ex) {
-//                    log.error("error loading invoice document", ex);
-//                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Belegdokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//                }
-//                this.cmdViewDocumentClassic.setEnabled(true);
-//                this.cmdNavigateToDocumentClassic.setEnabled(true);
-//            }
-        }
-    }//GEN-LAST:event_cmdCreateInvoiceDocumentXmlActionPerformed
 
     /**
      * @param args the command line arguments
@@ -2804,23 +2752,19 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JButton cmdCalculation;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdConfirmInvoiceNumber;
-    private javax.swing.JButton cmdCreateInvoiceDocumentClassic;
-    private javax.swing.JButton cmdCreateInvoiceDocumentXml;
+    private javax.swing.JButton cmdCreateInvoiceDocument;
     private javax.swing.JButton cmdDateCreated;
     private javax.swing.JButton cmdDateDue;
     private javax.swing.JButton cmdDatePeriodFrom;
     private javax.swing.JButton cmdDatePeriodTo;
     private javax.swing.JButton cmdGiroCode;
-    private javax.swing.JButton cmdNavigateToDocumentClassic;
-    private javax.swing.JButton cmdNavigateToDocumentXml;
+    private javax.swing.JButton cmdNavigateToDocument;
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JButton cmdTimesheetPositions;
-    private javax.swing.JButton cmdUploadInvoiceDocumentClassic;
-    private javax.swing.JButton cmdUploadInvoiceDocumentXml;
-    private javax.swing.JButton cmdViewDocumentClassic;
-    private javax.swing.JButton cmdViewDocumentXml;
+    private javax.swing.JButton cmdUploadInvoiceDocument;
+    private javax.swing.JButton cmdViewDocument;
     private javax.swing.JTextField dtCreated;
     private javax.swing.JTextField dtDue;
     private javax.swing.JTextField dtFrom;
@@ -2832,7 +2776,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
@@ -2851,7 +2794,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblInvoiceNumber;

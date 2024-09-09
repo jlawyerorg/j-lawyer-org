@@ -980,54 +980,26 @@
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="cmdViewDocumentClassic" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="cmdNavigateToDocumentClassic" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Group type="102" attributes="0">
-                                              <Component id="cmdViewDocumentXml" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="cmdNavigateToDocumentXml" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel16" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Group type="102" attributes="0">
-                                      <EmptySpace min="24" pref="24" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="cmdCreateInvoiceDocumentClassic" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="cmbTableHeadersLanguage" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Component id="cmdUploadInvoiceDocumentClassic" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="cmdCreateInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="cmdUploadInvoiceDocumentXml" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              </Group>
-                                          </Group>
-                                      </Group>
-                                  </Group>
-                              </Group>
-                              <EmptySpace min="0" pref="597" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="1" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jSeparator1" max="32767" attributes="0"/>
+                              <Component id="cmdViewDocument" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdNavigateToDocument" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="24" pref="24" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="cmdCreateInvoiceDocument" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmbTableHeadersLanguage" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="cmdUploadInvoiceDocument" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace pref="596" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1035,38 +1007,24 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="cmdNavigateToDocumentClassic" alignment="0" max="-2" attributes="0"/>
-                          <Component id="cmdViewDocumentClassic" alignment="0" max="-2" attributes="0"/>
+                          <Component id="cmdNavigateToDocument" alignment="0" max="-2" attributes="0"/>
+                          <Component id="cmdViewDocument" alignment="0" max="-2" attributes="0"/>
                           <Component id="jLabel15" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="cmdCreateInvoiceDocumentClassic" alignment="3" min="-2" pref="31" max="-2" attributes="0"/>
+                          <Component id="cmdCreateInvoiceDocument" alignment="3" min="-2" pref="31" max="-2" attributes="0"/>
                           <Component id="cmbTableHeadersLanguage" alignment="3" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdUploadInvoiceDocumentClassic" min="-2" pref="31" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="jSeparator1" min="-2" pref="4" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="cmdNavigateToDocumentXml" alignment="0" max="32767" attributes="0"/>
-                          <Component id="cmdViewDocumentXml" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jLabel16" max="32767" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="cmdCreateInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdUploadInvoiceDocumentXml" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdUploadInvoiceDocument" min="-2" pref="31" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="487" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JSeparator" name="jSeparator1">
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdCreateInvoiceDocumentClassic">
+            <Component class="javax.swing.JButton" name="cmdCreateInvoiceDocument">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/editcopy.png"/>
@@ -1075,7 +1033,7 @@
                 <Property name="toolTipText" type="java.lang.String" value="Dokument erzeugen"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCreateInvoiceDocumentClassicActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCreateInvoiceDocumentActionPerformed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JComboBox" name="cmbTableHeadersLanguage">
@@ -1094,7 +1052,7 @@
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JButton" name="cmdUploadInvoiceDocumentClassic">
+            <Component class="javax.swing.JButton" name="cmdUploadInvoiceDocument">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons16/material/baseline_file_upload_black_48dp.png"/>
@@ -1103,10 +1061,10 @@
                 <Property name="toolTipText" type="java.lang.String" value="Dokument zum Beleg laden"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUploadInvoiceDocumentClassicActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUploadInvoiceDocumentActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="cmdViewDocumentClassic">
+            <Component class="javax.swing.JButton" name="cmdViewDocument">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/find.png"/>
@@ -1114,10 +1072,10 @@
                 <Property name="toolTipText" type="java.lang.String" value="Dokument anzeigen"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdViewDocumentClassicActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdViewDocumentActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="cmdNavigateToDocumentClassic">
+            <Component class="javax.swing.JButton" name="cmdNavigateToDocument">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/mail_forward.png"/>
@@ -1125,7 +1083,7 @@
                 <Property name="toolTipText" type="java.lang.String" value="zum Dokument wechseln"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNavigateToDocumentClassicActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNavigateToDocumentActionPerformed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel15">
@@ -1136,52 +1094,6 @@
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Rechnungsdokument"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdViewDocumentXml">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/find.png"/>
-                </Property>
-                <Property name="toolTipText" type="java.lang.String" value="Dokument anzeigen"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdViewDocumentXmlActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdNavigateToDocumentXml">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/mail_forward.png"/>
-                </Property>
-                <Property name="toolTipText" type="java.lang.String" value="zum Dokument wechseln"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNavigateToDocumentXmlActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JLabel" name="jLabel16">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="elektronische Rechnung"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdCreateInvoiceDocumentXml">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/editcopy.png"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Erstellen"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCreateInvoiceDocumentXmlActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdUploadInvoiceDocumentXml">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/material/baseline_file_upload_black_48dp.png"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Hochladen"/>
               </Properties>
             </Component>
           </SubComponents>
