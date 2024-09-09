@@ -1054,26 +1054,31 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
 
     @Override
     @RolesAllowed({"loginRole"})
-    public byte[] getGiroCode(float amount, String purpose) throws Exception {
+    public byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception {
         
-        ServerSettingsBean s = this.settingsFacade.find("profile.company.name");
-        if (s == null || s.getSettingValue().trim().isEmpty()) {
-            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname im Profil ist leer");
-        }
-        String name=s.getSettingValue().trim();
+        if(senderPrincipalId==null)
+            throw new Exception("Girocode kann nicht erstellt werden - kein Absender angegeben");
         
-        s = this.settingsFacade.find("profile.company.bankcode");
-        if (s == null || s.getSettingValue().trim().isEmpty()) {
-            throw new Exception("Girocode kann nicht erstellt werden - BIC im Profil ist leer");
+        AppUserBean sender=this.users.findByPrincipalId(senderPrincipalId);
+        if(sender==null) {
+            throw new Exception("Girocode kann nicht erstellt werden - Absender '" + senderPrincipalId + "' kann nicht gefunden werden");
         }
-        String bic=s.getSettingValue().trim();
+        
+        if (ServerStringUtils.isEmpty(sender.getCompany())) {
+            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer");
+        }
+        String name=sender.getCompany().trim();
+        
+        if (ServerStringUtils.isEmpty(sender.getBankBic())) {
+            throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer");
+        }
+        String bic=sender.getBankBic().trim();
         bic=bic.replace(" ", "");
         
-        s = this.settingsFacade.find("profile.company.accountno");
-        if (s == null || s.getSettingValue().trim().isEmpty()) {
-            throw new Exception("Girocode kann nicht erstellt werden - IBAN im Profil ist leer");
+        if (ServerStringUtils.isEmpty(sender.getBankIban())) {
+            throw new Exception("Girocode kann nicht erstellt werden - IBAN des Absenders ist leer");
         }
-        String iban=s.getSettingValue().trim();
+        String iban=sender.getBankIban().trim();
         iban=iban.replace(" ", "");
         
         try {

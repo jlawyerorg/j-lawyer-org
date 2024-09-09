@@ -2451,7 +2451,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                 if (this.currentEntry != null) {
-                    giroCode = locator.lookupInvoiceServiceRemote().getGiroCode(this.currentEntry.getTotalGross(), this.currentEntry.getInvoiceNumber());
+                    giroCode = locator.lookupInvoiceServiceRemote().getGiroCode(this.currentEntry.getSender(), this.currentEntry.getTotalGross(), this.currentEntry.getInvoiceNumber());
                 }
             } catch (Exception ex) {
                 log.error("error generating girocode", ex);
@@ -2593,7 +2593,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);
             }
             if (validAmount) {
-                GirocodeDialog gcd = new GirocodeDialog(this, true, amount, this.lblInvoiceNumber.getText());
+                GirocodeDialog gcd = new GirocodeDialog(this, true, this.cmbInvoiceSender.getSelectedItem().toString(), amount, this.lblInvoiceNumber.getText());
                 FrameUtils.centerDialog(gcd, this);
                 gcd.setVisible(true);
             } else {

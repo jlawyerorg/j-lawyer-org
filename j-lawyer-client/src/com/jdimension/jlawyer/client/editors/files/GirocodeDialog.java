@@ -692,10 +692,11 @@ public class GirocodeDialog extends javax.swing.JDialog {
      * Creates new form GirocodeDialog
      * @param parent
      * @param modal
+     * @param senderPrincipalId
      * @param amount
      * @param purpose
      */
-    public GirocodeDialog(InvoiceDialog parent, boolean modal, float amount, String purpose) {
+    public GirocodeDialog(InvoiceDialog parent, boolean modal, String senderPrincipalId, float amount, String purpose) {
         super(parent, modal);
         initComponents();
         
@@ -710,7 +711,7 @@ public class GirocodeDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.qrImage = locator.lookupInvoiceServiceRemote().getGiroCode(amount, purpose);
+            this.qrImage = locator.lookupInvoiceServiceRemote().getGiroCode(senderPrincipalId, amount, purpose);
             ImageIcon qr=new ImageIcon(this.qrImage);
             this.lblGirocode.setIcon(qr);
             this.lblGirocode.setText("");
@@ -871,7 +872,7 @@ public class GirocodeDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            GirocodeDialog dialog = new GirocodeDialog(null, true, 0f, null);
+            GirocodeDialog dialog = new GirocodeDialog(null, true, null, 0f, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

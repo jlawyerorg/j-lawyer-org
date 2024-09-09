@@ -680,6 +680,6 @@ public interface InvoiceServiceLocal {
 
     void checkInvoicesDue();
 
-    byte[] getGiroCode(float amount, String purpose) throws Exception;
+    byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception;
     
 }
