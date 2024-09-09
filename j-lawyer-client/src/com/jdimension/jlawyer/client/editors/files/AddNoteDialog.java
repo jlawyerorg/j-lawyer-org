@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -768,7 +769,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         for (AppOptionGroupBean tag : settings.getDocumentTagDtos()) {
             allTags2.add(tag.getValue());
         }
-        Collections.sort(allTags2);
+        StringUtils.sortIgnoreCase(allTags2);
         for (String s : allTags2) {
             dm2.addElement(s);
         }
