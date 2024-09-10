@@ -768,5 +768,45 @@ public class DummyPersistence implements ImporterPersistence {
     public boolean setCustomField3Party(String value) {
         return true;
     }
+
+    @Override
+    public boolean addressTagExists(String tagName) {
+        return false;
+    }
+
+    @Override
+    public boolean createAddressTag(String tagName) throws Exception {
+        return true;
+    }
+
+    @Override
+    public boolean documentTagExists(String tagName) {
+        return false;
+    }
+
+    @Override
+    public boolean createDocumentTag(String tagName) throws Exception {
+        return true;
+    }
+
+    @Override
+    public boolean partyTypeExists(String name, String placeHolder) {
+        return false;
+    }
+
+    @Override
+    public boolean createPartyType(String name, String placeHolder, int color, int sequence) {
+        return true;
+    }
+
+    @Override
+    public boolean eventTemplateExists(String name) {
+        return false;
+    }
+
+    @Override
+    public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays) {
+        return true;
+    }
     
 }

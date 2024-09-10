@@ -689,6 +689,10 @@ public class OdfImporter {
     public static final String TABLE_CUSTOMFIELDS_ADDRESS="Konfiguration-Adresse-EigeneFelder";
     public static final String TABLE_CUSTOMFIELDS_PARTIES="Konfiguration-Beteiligte-EigeneFelder";
     
+    public static final String TABLE_PARTYTYPES="Konfiguration-Beteiligte-Beteiligtentypen";
+    
+    public static final String TABLE_CALENDAR_EVENTTEMPLATES="Konfiguration-Kalender-Ereignisvorlagen";
+    
     private SpreadsheetDocument ods=null;
     private ImporterPersistence persister=null;
     
@@ -788,6 +792,22 @@ public class OdfImporter {
                 processConfigurationCustomFieldsParty(row, columnMap, logs);
             }
         }
+        
+        if (TABLE_PARTYTYPES.equals(sheet.getTableName())) {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Beteiligtentypen"));
+            for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
+                Row row = sheet.getRowByIndex(rowIndex);
+                processConfigurationPartyType(row, columnMap, logs);
+            }
+        }
+        
+        if (TABLE_CALENDAR_EVENTTEMPLATES.equals(sheet.getTableName())) {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Ereignisvorlagen"));
+            for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
+                Row row = sheet.getRowByIndex(rowIndex);
+                processConfigurationEventTemplate(row, columnMap, logs);
+            }
+        }
     }
 
     private void processConfigurationTagsCase(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
@@ -808,8 +828,8 @@ public class OdfImporter {
         if(ServerStringUtils.isEmpty(value))
             return;
         
-        if(!persister.caseTagExists(value)) {
-            persister.createCaseTag(value);
+        if(!persister.addressTagExists(value)) {
+            persister.createAddressTag(value);
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Adressetikett " + value + " wurde erstellt"));
         } else {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Adressetikett " + value + " existiert bereits"));
@@ -821,8 +841,8 @@ public class OdfImporter {
         if(ServerStringUtils.isEmpty(value))
             return;
         
-        if(!persister.caseTagExists(value)) {
-            persister.createCaseTag(value);
+        if(!persister.documentTagExists(value)) {
+            persister.createDocumentTag(value);
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Dokumentetikett " + value + " wurde erstellt"));
         } else {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Dokumentetikett " + value + " existiert bereits"));
@@ -848,7 +868,7 @@ public class OdfImporter {
             if(!currentCustom2.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 enthält bereits den Wert " + currentCustom2 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Case(custom2);
+                persister.setCustomField2Case(custom2);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 wurde erstellt"));
             }
         }
@@ -857,7 +877,7 @@ public class OdfImporter {
             if(!currentCustom3.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 enthält bereits den Wert " + currentCustom3 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Case(custom3);
+                persister.setCustomField3Case(custom3);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 wurde erstellt"));
             }
         }
@@ -883,7 +903,7 @@ public class OdfImporter {
             if(!currentCustom2.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 enthält bereits den Wert " + currentCustom2 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Address(custom2);
+                persister.setCustomField2Address(custom2);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 wurde erstellt"));
             }
         }
@@ -892,7 +912,7 @@ public class OdfImporter {
             if(!currentCustom3.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 enthält bereits den Wert " + currentCustom3 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Address(custom3);
+                persister.setCustomField3Address(custom3);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 wurde erstellt"));
             }
         }
@@ -918,7 +938,7 @@ public class OdfImporter {
             if(!currentCustom2.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 enthält bereits den Wert " + currentCustom2 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Party(custom2);
+                persister.setCustomField2Party(custom2);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 2 wurde erstellt"));
             }
         }
@@ -927,7 +947,7 @@ public class OdfImporter {
             if(!currentCustom3.toLowerCase().contains("eigenes feld")) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 enthält bereits den Wert " + currentCustom3 + ", welcher durch den Import nicht überschrieben wird"));
             } else {
-                persister.setCustomField1Party(custom3);
+                persister.setCustomField3Party(custom3);
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Eigenes Feld 3 wurde erstellt"));
             }
         }
@@ -941,6 +961,81 @@ public class OdfImporter {
             return cell.getStringValue();
         } else {
             return "";
+        }
+    }
+
+    private void processConfigurationPartyType(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
+        String name = getCellValueByColumnName(row, columnMap, "Bezeichung", logs);
+        String placeHolder = getCellValueByColumnName(row, columnMap, "Platzhalter", logs);
+        String colorNumber = getCellValueByColumnName(row, columnMap, "Farbwert", logs);
+        String sequenceNumber = getCellValueByColumnName(row, columnMap, "Sequenznummer", logs);
+        if(ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(placeHolder) || ServerStringUtils.isEmpty(colorNumber)) {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_ERROR, "Beteiligtentyp unvollständig: " + name + " / " + placeHolder + " / " + colorNumber));
+            return;
+        }
+        int sequence=99;
+        if(!ServerStringUtils.isEmpty(sequenceNumber)) {
+            try {
+                sequence=Integer.parseInt(sequenceNumber);
+            } catch (Throwable t) {
+                logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Beteiligtentyp " + name + " hat eine ungültige Sequenznummer " + sequenceNumber + " - setze auf Standardwert"));
+            }
+        }
+        int color=-15830347;
+        if(!ServerStringUtils.isEmpty(colorNumber)) {
+            try {
+                color=Integer.parseInt(colorNumber);
+            } catch (Throwable t) {
+                logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Beteiligtentyp " + name + " hat eine ungültige Farbangabe " + colorNumber + " - setze auf Standardwert"));
+            }
+        }
+        
+        if(!persister.partyTypeExists(name, placeHolder)) {
+            persister.createPartyType(name, placeHolder, color, sequence);
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Beteiligtentyp " + name + " wurde erstellt"));
+        } else {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Beteiligtentyp " + name + " existiert bereits"));
+        }
+    }
+
+    private void processConfigurationEventTemplate(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
+        String name = getCellValueByColumnName(row, columnMap, "Name", logs);
+        String description = getCellValueByColumnName(row, columnMap, "Beschreibung", logs);
+        String relatedString = getCellValueByColumnName(row, columnMap, "zweiten Eintrag automatisch erstellen", logs);
+        String relatedName = getCellValueByColumnName(row, columnMap, "Name zweiter Eintrag", logs);
+        String relatedDescription = getCellValueByColumnName(row, columnMap, "Beschreibung zweiter Eintrag", logs);
+        String offsetDaysNumber = getCellValueByColumnName(row, columnMap, "Versatz in Tagen", logs);
+        if(ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(description) || ServerStringUtils.isEmpty(relatedString)) {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_ERROR, "Ereignisvorlage unvollständig: " + name + " / " + description + " / " + relatedString));
+            return;
+        }
+        
+        boolean related=false;
+        if("1".equals(relatedString) || "ja".equals(relatedString) || "true".equals(relatedString)) {
+            related=true;
+            if (ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(description) || ServerStringUtils.isEmpty(relatedString)) {
+                logs.add(new ImportLogEntry(ImportLogEntry.TYPE_ERROR, "Ereignisvorlage (zweiter Eintrag) unvollständig: " + relatedName + " / " + relatedDescription + " / " + offsetDaysNumber));
+                return;
+            }
+        }
+        
+        int offsetDays = 0;
+        if (related) {
+            if (!ServerStringUtils.isEmpty(offsetDaysNumber)) {
+                try {
+                    offsetDays = Integer.parseInt(offsetDaysNumber);
+                } catch (Throwable t) {
+                    logs.add(new ImportLogEntry(ImportLogEntry.TYPE_WARN, "Ereignisvorlage " + name + " hat einen ungültigen Tagesversatz " + offsetDaysNumber + " - setze auf Standardwert"));
+                    offsetDays = -7;
+                }
+            }
+        }
+        
+        if(!persister.eventTemplateExists(name)) {
+            persister.createEventTemplate(name, description, related, relatedName, relatedDescription, offsetDays);
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Ereignisvorlage " + name + " wurde erstellt"));
+        } else {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Ereignisvorlage " + name + " existiert bereits"));
         }
     }
     

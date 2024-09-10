@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import java.io.File;
@@ -834,5 +835,11 @@ public interface SystemManagementRemote {
     List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
     
     DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
+
+    byte[] getImportTemplateOds() throws Exception;
+
+    List<String> listImportSheets(byte[] odsData) throws Exception;
+
+    List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun) throws Exception;
     
 }

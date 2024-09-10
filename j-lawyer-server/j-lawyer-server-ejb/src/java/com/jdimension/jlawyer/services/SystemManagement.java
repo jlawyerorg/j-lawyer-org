@@ -666,10 +666,15 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
+import com.jdimension.jlawyer.imports.DefaultPersistence;
+import com.jdimension.jlawyer.imports.DummyPersistence;
+import com.jdimension.jlawyer.imports.ImporterPersistence;
+import com.jdimension.jlawyer.imports.OdfImporter;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FileMetadata;
+import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
@@ -781,6 +786,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private AssistantConfigFacadeLocal assistantFacade;
     @EJB
     private DocumentNameTemplateFacadeLocal documentNameTemplates;
+    @EJB
+    private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
     
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -2469,6 +2476,51 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         } catch (InvalidSchemaPatternException isp) {
             throw new Exception(isp.getMessage());
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] getImportTemplateOds() throws Exception {
+        try (InputStream is = SystemManagement.class.getResourceAsStream("/com/jdimension/jlawyer/imports/importtemplate.ods");) {
+            // Check if the InputStream is not null (file found)
+            if (is == null) {
+                throw new IOException("Import-Vorlage konnte nicht gefunden werden");
+            }
+
+            // Use a ByteArrayOutputStream to hold the bytes
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[1024];
+            int nRead;
+
+            // Read the file in chunks of 1024 bytes and write them to the ByteArrayOutputStream
+            while ((nRead = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+
+            // Return the byte array
+            return buffer.toByteArray();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> listImportSheets(byte[] odsData) throws Exception {
+        ImporterPersistence persister = new DummyPersistence();
+        OdfImporter importer = new OdfImporter(odsData, persister);
+        return importer.listSheets(odsData);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun) throws Exception {
+        ImporterPersistence persister = null;
+        if(dryRun)
+            persister=new DummyPersistence();
+        else
+            persister=new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
+        OdfImporter importer = new OdfImporter(odsData, persister);
+        return importer.processSheets(sheetNames, dryRun);
+        
     }
 
 }

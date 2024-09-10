@@ -662,11 +662,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.pojo.imports;
 
+import java.io.Serializable;
+
 /**
  *
  * @author jens
  */
-public class ImportLogEntry {
+public class ImportLogEntry implements Serializable {
+    
+    protected static long serialVersionUID = 1L;
     
     public static final int TYPE_CREATED=10;
     public static final int TYPE_UPDATED=11;

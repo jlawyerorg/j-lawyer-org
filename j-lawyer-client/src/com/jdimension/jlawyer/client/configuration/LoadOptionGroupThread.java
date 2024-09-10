@@ -668,10 +668,6 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import java.awt.Component;
 import java.util.Arrays;
 import javax.swing.JList;
@@ -691,6 +687,9 @@ public class LoadOptionGroupThread implements Runnable {
     
     /**
      * Creates a new instance of LoadOptionGroupThread
+     * @param owner
+     * @param optionGroup
+     * @param target
      */
     public LoadOptionGroupThread(Component owner, String optionGroup, JList target) {
         this.optionGroup=optionGroup;
@@ -698,30 +697,27 @@ public class LoadOptionGroupThread implements Runnable {
         this.target=target;
     }
 
+    @Override
     public void run() {
         
         ClientSettings settings=ClientSettings.getInstance();
-        AppOptionGroupBean[] dtos=null;
+        AppOptionGroupBean[] dtos;
         try {
         JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             dtos=mgmt.getOptionGroup(this.optionGroup);
             Arrays.sort(dtos, new AppOptionGroupBeanComparator());
-            //mgmt.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
         
         OptionGroupListModel model=new OptionGroupListModel();
-        for(int i=0;i<dtos.length;i++) {
-            
-            model.addElement(dtos[i]);
+        for (AppOptionGroupBean dto : dtos) {
+            model.addElement(dto);
         }
         ThreadUtils.setListModel(this.target, model);
         ThreadUtils.setDefaultCursor(this.owner);

@@ -1088,9 +1088,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jMenuBar1 = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mnuDocumentsBin = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuBankImport = new javax.swing.JMenuItem();
         mnuZipCodeImport = new javax.swing.JMenuItem();
         mnuAddressImport = new javax.swing.JMenuItem();
+        mnuImportFromSheet = new javax.swing.JMenuItem();
         mnuBeaCourtAddressImport = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JSeparator();
         mnuExit = new javax.swing.JMenuItem();
@@ -1299,6 +1301,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFile.add(mnuDocumentsBin);
+        mnuFile.add(jSeparator1);
 
         mnuBankImport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         mnuBankImport.setText(bundle.getString("menu.file.import.banks")); // NOI18N
@@ -1327,8 +1330,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuFile.add(mnuAddressImport);
 
+        mnuImportFromSheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        mnuImportFromSheet.setText("Import: Einstellungen");
+        mnuImportFromSheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuImportFromSheetActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mnuImportFromSheet);
+
         mnuBeaCourtAddressImport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
-        mnuBeaCourtAddressImport.setText("Import Gerichtsadressen");
+        mnuBeaCourtAddressImport.setText("Import: Gerichtsadressen");
         mnuBeaCourtAddressImport.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuBeaCourtAddressImportActionPerformed(evt);
@@ -2820,6 +2832,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuDocumentNameTemplatesActionPerformed
 
+    private void mnuImportFromSheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuImportFromSheetActionPerformed
+        if (checkAdmin()) {
+            ImportFromSheetsDialog dlg = new ImportFromSheetsDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuImportFromSheetActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2829,6 +2849,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
@@ -2899,6 +2920,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuForum;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JMenuItem mnuImportFromSheet;
     private javax.swing.JMenuItem mnuInvoiceCurrencies;
     private javax.swing.JMenuItem mnuInvoicePools;
     private javax.swing.JMenuItem mnuInvoicePositionTemplates;

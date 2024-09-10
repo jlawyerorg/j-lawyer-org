@@ -672,6 +672,12 @@ public interface ImporterPersistence {
     public boolean caseTagExists(String tagName);
     public boolean createCaseTag(String tagName) throws Exception;
     
+    public boolean addressTagExists(String tagName);
+    public boolean createAddressTag(String tagName) throws Exception;
+    
+    public boolean documentTagExists(String tagName);
+    public boolean createDocumentTag(String tagName) throws Exception;
+    
     public String getCustomField1Case();
     public String getCustomField2Case();
     public String getCustomField3Case();
@@ -695,5 +701,13 @@ public interface ImporterPersistence {
     public boolean setCustomField1Party(String value);
     public boolean setCustomField2Party(String value);
     public boolean setCustomField3Party(String value);
+
+    public boolean partyTypeExists(String name, String placeHolder);
+
+    public boolean createPartyType(String name, String placeHolder, int color, int sequence);
+
+    public boolean eventTemplateExists(String name);
+
+    public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays);
     
 }
