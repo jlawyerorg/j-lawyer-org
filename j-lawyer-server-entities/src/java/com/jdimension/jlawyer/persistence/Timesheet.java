@@ -708,6 +708,8 @@ public class Timesheet implements Serializable {
     protected boolean limited=true;
     @Column(name = "limit_net")
     protected float limit=0f;
+    @Column(name = "pct_done")
+    private float percentageDone=0f;
         
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
@@ -886,6 +888,20 @@ public class Timesheet implements Serializable {
                 return STATUS_OPEN;
                 
         }
+    }
+
+    /**
+     * @return the percentageDone
+     */
+    public float getPercentageDone() {
+        return percentageDone;
+    }
+
+    /**
+     * @param percentageDone the percentageDone to set
+     */
+    public void setPercentageDone(float percentageDone) {
+        this.percentageDone = percentageDone;
     }
 
 }

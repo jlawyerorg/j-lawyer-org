@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TimesheetUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -707,6 +708,8 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         this.lblStatus.setText("(" + timesheet.getStatusString() + ")");
         this.taDescription.setText(timesheet.getDescription());
         this.taDescription.setToolTipText(timesheet.getDescription());
+        
+        TimesheetUtils.renderPieChartLabel(pieChart, timesheet);
     }
     
     /**
@@ -724,6 +727,7 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         cmdDelete = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
+        pieChart = new com.jdimension.jlawyer.ui.charts.PieChartLabel();
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         cmdOpen.setToolTipText("einsehen / bearbeiten");
@@ -756,6 +760,8 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         taDescription.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taDescription);
 
+        pieChart.setText("pieChartLabel1");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -767,24 +773,25 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                 .addComponent(cmdDelete)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(pieChart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblStatus)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1))
-                .addContainerGap())
+                        .addContainerGap(180, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdOpen)
-                    .addComponent(cmdDelete)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblStatus)
-                        .addComponent(lblName)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdDelete, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pieChart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -825,6 +832,7 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblStatus;
+    private com.jdimension.jlawyer.ui.charts.PieChartLabel pieChart;
     private javax.swing.JTextArea taDescription;
     // End of variables declaration//GEN-END:variables
 
