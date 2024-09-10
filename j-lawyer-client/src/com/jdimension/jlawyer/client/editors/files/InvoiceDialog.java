@@ -1003,7 +1003,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdSave.setEnabled(invoice != null && invoice.getId() != null);
 
         this.cmbInvoiceSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-
+        
         this.currentEntry = invoice;
 
         this.cmdNavigateToDocument.setEnabled(false);

@@ -5252,6 +5252,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setStatus(invoice.getStatus());
             updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
             updatedInvoice.setCurrency(invoice.getCurrency());
+            updatedInvoice.setSender(invoice.getSender());
 
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
