@@ -855,12 +855,9 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
         if(insTest!=null && insTest instanceof InsuranceInfo)
             insTest2=(InsuranceInfo) this.data.get("claimdetails.insurance");
         
-        final InsuranceInfo insurance = insTest2;
-        
+        final InsuranceInfo insurance = insTest2;        
         final ArrayList<DrebisPerson> persons = (ArrayList<DrebisPerson>) this.data.get("clients.drebispersons");
-
         final ArrayList<DrebisPerson> others = (ArrayList<DrebisPerson>) this.data.get("others.drebispersons");
-
         final ArrayList<ArchiveFileDocumentsBean> drebDocs = (ArrayList<ArchiveFileDocumentsBean>) this.data.get("documents.drebisdocumentbeans");
 
         new Thread(() -> {
@@ -875,7 +872,6 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
                 for (ArchiveFileDocumentsBean doc: drebDocs) {
                     
                     ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                    //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                     byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                     String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                     
@@ -924,16 +920,12 @@ public class SubmitClaimStep extends javax.swing.JPanel implements WizardStepInt
             } catch (DrebisException de) {
                 log.error("Error submitting claim note", de);
                 ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
-                return;
                 
             } catch (Exception e) {
                 log.error("Error submitting claim note", e);
                 ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
-                return;
             }
         }).start();
-
-        return;
     }
 
     @Override

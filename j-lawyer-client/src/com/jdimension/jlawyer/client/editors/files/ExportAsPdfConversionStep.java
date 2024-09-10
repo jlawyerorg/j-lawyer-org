@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -699,7 +698,7 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
     private ArrayList<File> pdfFiles = new ArrayList<>();
 
     /**
-     * Creates new form EpostLetterValidationStep
+     * Creates new form ExportAsPdfConversionStep
      */
     public ExportAsPdfConversionStep() {
         initComponents();
@@ -715,7 +714,6 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 

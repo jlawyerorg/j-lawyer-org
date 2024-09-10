@@ -697,13 +697,11 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
 
     @Override
     public void nextEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 
@@ -797,9 +795,7 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
 
         final String lBreak = System.getProperty("line.separator");
         final InsuranceInfo insurance = (InsuranceInfo) this.data.get("clients.insurance");
-        
         final ArrayList<DrebisPerson> persons = (ArrayList<DrebisPerson>) this.data.get("clients.drebispersons");
-
         final ArrayList<ArchiveFileDocumentsBean> drebDocs = (ArrayList<ArchiveFileDocumentsBean>) this.data.get("documents.drebisdocumentbeans");
 
         new Thread(() -> {
@@ -813,7 +809,6 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
                 for (ArchiveFileDocumentsBean doc: drebDocs) {
                     
                     ThreadUtils.appendToTextArea("Konvertiere zu PDF: " + doc.getName() + "...", taLog);
-                    //byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                     byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                     String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                     if (doc.getName().toLowerCase().endsWith(".pdf")) {
@@ -853,16 +848,11 @@ public class SubmitFreeTextStep extends javax.swing.JPanel implements WizardStep
             } catch (DrebisException de) {
                 log.error("Error submitting freetext message", de);
                 ThreadUtils.appendToTextArea("FEHLER: " + de.getId() + " " + de.getMessage() + " (" + de.getDetailMessage() + "); Objekt: " + de.getErrorObject(), taLog);
-                return;
-                
             } catch (Exception e) {
                 log.error("Error submitting freetext message", e);
                 ThreadUtils.appendToTextArea("FEHLER: " + e.getMessage(), taLog);
-                return;
             }
         }).start();
-
-        return;
     }
 
     @Override

@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -2451,82 +2452,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
             } else {
                 
-                org.mustangproject.Invoice i = new org.mustangproject.Invoice();
-                //i.setReferenceNumber("991-01484-64")//leitweg-id
-                i.setNumber(this.currentEntry.getInvoiceNumber());
-                i.setDueDate(this.currentEntry.getDueDate());
-                i.setIssueDate(this.currentEntry.getCreationDate());
-                i.setDetailedDeliveryPeriod(this.currentEntry.getPeriodFrom(), this.currentEntry.getPeriodTo());
-
-                if (StringUtils.isEmpty(senderUser.getCompany())
-                        || StringUtils.isEmpty(senderUser.getStreet())
-                        || StringUtils.isEmpty(senderUser.getZipCode())
-                        || StringUtils.isEmpty(senderUser.getCity())
-                        || StringUtils.isEmpty(senderUser.getCountryCodeInvoicing())) {
-                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Adresse. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                TradeParty sender = new TradeParty(senderUser.getCompany(), senderUser.getStreet(), senderUser.getZipCode(), senderUser.getCity(), senderUser.getCountryCodeInvoicing());
-                if (!StringUtils.isEmpty(senderUser.getAdjunct())) {
-                    sender.setAdditionalAddressExtension(senderUser.getAdjunct());
-                }
-                if (!StringUtils.isEmpty(senderUser.getTaxNr())) {
-                    sender.addTaxID(senderUser.getTaxNr());
-                }
-                if (!StringUtils.isEmpty(senderUser.getTaxVatId())) {
-                    sender.addVATID(senderUser.getTaxVatId());
-                }
-
-                if (StringUtils.isEmpty(senderUser.getBankBic())
-                        || StringUtils.isEmpty(senderUser.getBankIban())) {
-                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Bankverbindung. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                // zahlung per überweisung
-                sender.addBankDetails(new BankDetails(senderUser.getBankIban(), senderUser.getBankBic()));
-                // zahlug per lastschrift
-                //sender.addDebitDetails(debitDetail);
-
-                if (StringUtils.isEmpty(senderUser.getDisplayName())
-                        || StringUtils.isEmpty(senderUser.getPhone())
-                        || StringUtils.isEmpty(senderUser.getEmail())) {
-                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungssenders unvollständig: Anzeigename/Telefon/E-Mail. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                sender.setContact(new Contact(senderUser.getDisplayName(), senderUser.getPhone(), senderUser.getEmail()));
-
-                i.setSender(sender);
-
-                if (currentEntry.getContact() == null) {
-                    JOptionPane.showMessageDialog(this, "Rechnungsempfänger fehlt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (StringUtils.isEmpty(currentEntry.getContact().toDisplayName())
-                        || StringUtils.isEmpty(currentEntry.getContact().getStreet())
-                        || StringUtils.isEmpty(currentEntry.getContact().getZipCode())
-                        || StringUtils.isEmpty(currentEntry.getContact().getCity())) {
-                    JOptionPane.showMessageDialog(this, "Informationen des Rechnungsempfängers unvollständig: Adresse.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                i.setRecipient(new TradeParty(currentEntry.getContact().toDisplayName(), currentEntry.getContact().getStreet() + " " + currentEntry.getContact().getStreetNumber(), currentEntry.getContact().getZipCode(), currentEntry.getContact().getCity(), "DE"));
-
-                List<InvoicePosition> positions = null;
+                org.mustangproject.Invoice i = null;
                 try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                    positions = locator.lookupArchiveFileServiceRemote().getInvoicePositions(this.currentEntry.getId());
+                    i = EInvoiceUtils.getEInvoice(this.currentEntry, senderUser);
                 } catch (Exception ex) {
-                    log.error("error getting invoice positions", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
-                }
-
-                // line items
-                for (InvoicePosition pos : positions) {
-                    float taxRate = pos.getTaxRate();
-                    if (!this.currentEntry.isSmallBusiness()) {
-                        taxRate = 0f;
-                    }
-                    i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", new BigDecimal(taxRate)), /*price*/ new BigDecimal(pos.getUnitPrice()), /*qty*/ new BigDecimal(pos.getUnits())));
                 }
 
                 ZUGFeRD2PullProvider zf2p = new ZUGFeRD2PullProvider();

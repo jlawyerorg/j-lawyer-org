@@ -691,7 +691,7 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
     private ArrayList<File> pdfFiles = new ArrayList<>();
 
     /**
-     * Creates new form EpostLetterValidationStep
+     * Creates new form EpostPdfConversionStep
      */
     public EpostPdfConversionStep() {
         initComponents();
@@ -704,7 +704,6 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
 
     @Override
     public void previousEvent() {
-//        this.data.put("data1", this.jTextField1.getText());
         return;
     }
 
@@ -796,7 +795,6 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
             
             for (ArchiveFileDocumentsBean d : docs) {
                 try {
-                    //byte[] content = content = locator.lookupArchiveFileServiceRemote().getDocumentContent(d.getId());
                     byte[] content=CachingDocumentLoader.getInstance().getDocument(d.getId());
 
                     if (d.getName().toLowerCase().endsWith(".pdf")) {
@@ -809,7 +807,6 @@ public class EpostPdfConversionStep extends javax.swing.JPanel implements Wizard
 
                         String tempPath = FileUtils.createTempFile(d.getName(), content);
                         String tempPdfPath = conv.convertToPDF(tempPath);
-                        //content = FileUtils.readFile(new File(tempPdfPath));
                         FileUtils.cleanupTempFile(tempPdfPath);
                         FileUtils.cleanupTempFile(tempPath);
                         this.pdfFiles.add(new File(tempPdfPath));
