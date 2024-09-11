@@ -688,7 +688,7 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     private Timesheet timesheet=null;
 
     /**
-     * Creates new form InvoiceEntryPanel
+     * Creates new form TimesheetEntryPanel
      * @param caseView
      */
     public TimesheetEntryPanel(ArchiveFilePanel caseView) {
@@ -710,6 +710,7 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         this.taDescription.setToolTipText(timesheet.getDescription());
         
         TimesheetUtils.renderPieChartLabel(pieChart, timesheet);
+        caseView.checkTimesheetLimits();
     }
     
     /**
@@ -803,8 +804,10 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         dlg.setEntry(this.getTimesheet());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        if(dlg.getEntry()!=null)
+        if(dlg.getEntry()!=null) {
             this.setEntry(caseDto, dlg.getEntry());
+            this.caseView.checkTimesheetLimits();
+        }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed

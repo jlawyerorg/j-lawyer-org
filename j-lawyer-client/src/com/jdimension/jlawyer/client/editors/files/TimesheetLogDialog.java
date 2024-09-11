@@ -1121,6 +1121,27 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         this.timer.cancel();
     }//GEN-LAST:event_formWindowClosed
 
+    public void updatePercentageDone(Timesheet timesheet) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            Timesheet t=afs.getTimesheet(timesheet.getId());
+            if(t!=null) {
+                for(int i=0;i<this.pnlOpenTimesheets.getComponentCount();i++) {
+                    if(this.pnlOpenTimesheets.getComponent(i) instanceof TimesheetDialogEntryPanel) {
+                        TimesheetDialogEntryPanel tep=(TimesheetDialogEntryPanel)this.pnlOpenTimesheets.getComponent(i);
+                        if(tep.getEntry()!=null && tep.getEntry().getId().equals(timesheet.getId()))
+                            tep.updatePercentageDone(t.getPercentageDone());
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error determining open timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     private void filterSheets(String filter) {
         this.pnlOpenTimesheets.removeAll();
         filter = filter.toLowerCase();

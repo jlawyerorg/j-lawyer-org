@@ -925,6 +925,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 tp.setEntry(this.caseDto, ts);
                 this.timesheetsPanel.add(tp);
             }
+            this.owner.checkTimesheetLimits();
             
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);

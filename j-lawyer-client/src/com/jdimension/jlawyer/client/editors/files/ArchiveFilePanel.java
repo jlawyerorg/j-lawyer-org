@@ -1612,6 +1612,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);
         }
+        
+        // reset tab colors, currently used for indicating timesheets that have exceeded their limit
+        int tabIndex = tabPaneArchiveFile.indexOfTab("Finanzen");
+        if(tabIndex>-1) {
+            tabPaneArchiveFile.setForegroundAt(tabIndex, Color.BLACK);
+        } else {
+            log.warn("Tab with name Finanzen cannot be found");
+        }
+        tabIndex = subTabsFinance.indexOfTab("Zeiterfassung");
+        if(tabIndex>-1) {
+            subTabsFinance.setForegroundAt(tabIndex, Color.BLACK);
+        } else {
+            log.warn("Sub-tab with name Zeiterfassung cannot be found");
+        }
+        
 
     }
 
@@ -7993,5 +8008,31 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
+    }
+    
+    public void checkTimesheetLimits() {
+        Color tabForeGround=Color.BLACK;
+        for(int i=0;i<this.pnlTimesheets.getComponentCount();i++) {
+            Component c=this.pnlTimesheets.getComponent(i);
+            if(c instanceof TimesheetEntryPanel) {
+                Timesheet t=((TimesheetEntryPanel)c).getTimesheet();
+                if(t.isLimited() && t.getPercentageDone()>100f) {
+                    tabForeGround=DefaultColorTheme.COLOR_LOGO_RED;
+                    break;
+                }
+            }
+        }
+        int tabIndex = tabPaneArchiveFile.indexOfTab("Finanzen");
+        if(tabIndex>-1) {
+            tabPaneArchiveFile.setForegroundAt(tabIndex, tabForeGround);
+        } else {
+            log.warn("Tab with name Finanzen cannot be found");
+        }
+        tabIndex = subTabsFinance.indexOfTab("Zeiterfassung");
+        if(tabIndex>-1) {
+            subTabsFinance.setForegroundAt(tabIndex, tabForeGround);
+        } else {
+            log.warn("Sub-tab with name Zeiterfassung cannot be found");
+        }
     }
 }

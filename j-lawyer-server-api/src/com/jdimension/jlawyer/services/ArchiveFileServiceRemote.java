@@ -891,6 +891,8 @@ public interface ArchiveFileServiceRemote {
     void removeTimesheet(String timesheetId) throws Exception;
 
     List<Timesheet> getTimesheets(String caseId) throws Exception;
+    
+    Timesheet getTimesheet(String timesheetId) throws Exception;
 
     List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
 

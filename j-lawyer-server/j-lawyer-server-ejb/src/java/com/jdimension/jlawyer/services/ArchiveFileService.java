@@ -5566,6 +5566,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             StringGenerator idGen = new StringGenerator();
             timesheet.setId(idGen.getID().toString());
             timesheet.setArchiveFileKey(aFile);
+            timesheet.setPercentageDone(0f);
 
             this.timesheetFacade.create(timesheet);
 
@@ -5586,6 +5587,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    private float getTimesheetPercentageDone(Timesheet ts) {
+        if(!ts.isLimited())
+            return 0f;
+        
+        // avoid div by zero
+        if(ts.getLimit()==0f)
+            return 0f;
+        
+        List<TimesheetPosition> positions=this.timesheetPositionsFacade.findByTimesheet(ts);
+        float currentTotal=0f;
+        for(TimesheetPosition p: positions) {
+            currentTotal=currentTotal+p.getTotal();
+        }
+        return currentTotal / ts.getLimit() * 100f;
+        
+    }
+    
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception {
@@ -5621,7 +5639,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedTimesheet.setName(timesheet.getName());
             updatedTimesheet.setStatus(timesheet.getStatus());
 
+            if(timesheet.isLimited()) {
+                float pctDone=getTimesheetPercentageDone(timesheet);
+                updatedTimesheet.setPercentageDone(pctDone);
+            } else {
+                updatedTimesheet.setPercentageDone(0f);
+            }
+            
+            
             this.timesheetFacade.edit(updatedTimesheet);
+            
+            
 
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt geändert (" + updatedTimesheet.getName() + ")");
 
@@ -5665,6 +5693,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Timesheet getTimesheet(String timesheetId) throws Exception {
+        return this.timesheetFacade.find(timesheetId);
+    }
+    
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<Timesheet> getTimesheets(String caseId) throws Exception {
@@ -5882,6 +5916,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 existing.setUnitPrice(position.getUnitPrice());
                 existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
                 this.timesheetPositionsFacade.edit(existing);
+                
+                if (sheet.isLimited()) {
+                    float pctDone = getTimesheetPercentageDone(sheet);
+                    sheet.setPercentageDone(pctDone);
+                } else {
+                    sheet.setPercentageDone(0f);
+                }
+                this.timesheetFacade.edit(sheet);
             }
 
             // start new one with same parameters
@@ -5933,7 +5975,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setUnitPrice(position.getUnitPrice());
             existing.setTotal(existing.getUnitPrice() * (((float) existing.getStopped().getTime() - (float) existing.getStarted().getTime()) / 1000f / 60f / 60f));
             this.timesheetPositionsFacade.edit(existing);
-
+            
+            if (sheet.isLimited()) {
+                float pctDone = getTimesheetPercentageDone(sheet);
+                sheet.setPercentageDone(pctDone);
+                this.timesheetFacade.edit(sheet);
+            }
+                
             return this.timesheetPositionsFacade.find(position.getId());
 
         }
@@ -5964,7 +6012,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setUnitPrice(position.getUnitPrice());
             existing.setStarted(position.getStarted());
             existing.setStopped(position.getStopped());
+            if(position.getStarted()!=null && position.getStopped()!=null && position.getStarted().getTime()<position.getStopped().getTime()) {
+                existing.setTotal(position.getUnitPrice() * (((float) position.getStopped().getTime() - (float) position.getStarted().getTime()) / 1000f / 60f / 60f));
+            }
             this.timesheetPositionsFacade.edit(existing);
+            
+            if (sheet.isLimited()) {
+                float pctDone = getTimesheetPercentageDone(sheet);
+                sheet.setPercentageDone(pctDone);
+                this.timesheetFacade.edit(sheet);
+            }
 
             return this.timesheetPositionsFacade.find(position.getId());
 
@@ -6011,6 +6068,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             TimesheetPosition removePos = this.timesheetPositionsFacade.find(position.getId());
             this.timesheetPositionsFacade.remove(removePos);
+            
+            if (timesheet.isLimited()) {
+                float pctDone = getTimesheetPercentageDone(timesheet);
+                timesheet.setPercentageDone(pctDone);
+                this.timesheetFacade.edit(timesheet);
+            }
+            
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -6054,6 +6118,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatePos.setPrincipal(position.getPrincipal());
 
             this.timesheetPositionsFacade.edit(updatePos);
+            
+            if (timesheet.isLimited()) {
+                float pctDone = getTimesheetPercentageDone(timesheet);
+                timesheet.setPercentageDone(pctDone);
+                this.timesheetFacade.edit(timesheet);
+            }
+            
             return this.timesheetPositionsFacade.find(updatePos.getId());
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -6089,6 +6160,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             for (TimesheetPosition pos : this.timesheetPositionsFacade.findByTimesheet(timesheet)) {
                 this.timesheetPositionsFacade.remove(pos);
+            }
+            if(timesheet.isLimited()) {
+                timesheet.setPercentageDone(0f);
+                this.timesheetFacade.edit(timesheet);
             }
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
@@ -6187,8 +6262,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         position.setUnitPrice(position.getUnitPrice());
         position.setStarted(position.getStarted());
         position.setStopped(position.getStopped());
+        position.setTotal(position.getUnitPrice() * (((float) position.getStopped().getTime() - (float) position.getStarted().getTime()) / 1000f / 60f / 60f));
 
         this.timesheetPositionsFacade.create(position);
+        
+        if (sheet.isLimited()) {
+            float pctDone = getTimesheetPercentageDone(sheet);
+            sheet.setPercentageDone(pctDone);
+            this.timesheetFacade.edit(sheet);
+        }
 
         return this.timesheetPositionsFacade.find(position.getId());
 

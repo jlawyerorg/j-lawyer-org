@@ -667,9 +667,6 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TimesheetUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
-import java.awt.Color;
-import java.text.DecimalFormat;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -687,6 +684,10 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
     public TimesheetDialogEntryPanel(TimesheetLogDialog parent) {
         initComponents();
         this.parent=parent;
+    }
+    
+    public Timesheet getEntry() {
+        return this.entry;
     }
     
     public void setEntry(Timesheet ts) {
@@ -773,4 +774,10 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblName;
     private com.jdimension.jlawyer.ui.charts.PieChartLabel pieChart;
     // End of variables declaration//GEN-END:variables
+
+    void updatePercentageDone(float percentageDone) {
+        if(this.entry!=null)
+            this.entry.setPercentageDone(percentageDone);
+        TimesheetUtils.renderPieChartLabel(pieChart, this.entry);
+    }
 }

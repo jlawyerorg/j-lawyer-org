@@ -1245,7 +1245,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             this.fillCurrentEntry();
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updateTimesheet(this.caseDto.getId(), this.currentEntry);
+            this.currentEntry = locator.lookupArchiveFileServiceRemote().updateTimesheet(this.caseDto.getId(), this.currentEntry);
 
         } catch (Exception ex) {
             log.error("error saving timesheet", ex);

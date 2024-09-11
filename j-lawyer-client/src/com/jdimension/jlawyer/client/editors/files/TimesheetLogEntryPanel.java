@@ -1025,6 +1025,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             }
         }
         this.containingParent.entryStartedOrStopped();
+        this.containingParent.updatePercentageDone(entrySheet);
     }
     
     private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
@@ -1092,6 +1093,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
+        this.containingParent.updatePercentageDone(entrySheet);
+        
         SwingUtilities.invokeLater(() -> {
             try {
                 Thread.sleep(1500);
@@ -1132,6 +1135,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             TimesheetPosition updated = afs.timesheetPositionSave(this.entry.getTimesheet().getId(), entry);
             this.setEntry(entryCase, entrySheet, updated);
+            this.containingParent.updatePercentageDone(entrySheet);
         } catch (Exception ex) {
             log.error("Error updating timesheet position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
