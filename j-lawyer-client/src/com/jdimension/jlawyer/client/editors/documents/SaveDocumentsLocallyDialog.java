@@ -870,7 +870,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
                 byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 if (this.convertToPdf && conv.supportsInputFormat(doc.getName())) {
                     String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                    String tempPdfPath = conv.convertToPDF(tempPath);
+                    String tempPdfPath = conv.convertToPDF(tempPath, doc);
                     byte[] fileContent = FileUtils.readFile(new File(tempPdfPath));
                     FileUtils.cleanupTempFile(tempPdfPath);
                     FileUtils.cleanupTempFile(tempPath);

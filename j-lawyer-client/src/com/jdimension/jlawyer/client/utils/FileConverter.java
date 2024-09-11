@@ -665,6 +665,12 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -675,6 +681,8 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
+import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
+import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
 
 /**
  *
@@ -708,6 +716,49 @@ public class FileConverter {
         return null;
     }
 
+    /**
+     * This method will check if the document is related to an invoice and
+     * generate a ZUGFerd electronic invoice.
+     *
+     * @param file
+     * @param doc
+     * @return
+     * @throws Exception
+     */
+    public String convertToPDF(String file, ArchiveFileDocumentsBean doc) throws Exception {
+
+        String pdfTempFile = convertToPDF(file);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        FileConverter conv = FileConverter.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        List<Invoice> invoices = locator.lookupArchiveFileServiceRemote().getInvoicesForDocument(doc.getId());
+        if (invoices.size() > 1) {
+            throw new Exception("Diesem Dokument ist mit mehreren Rechnungen verknüpft, elektronische Rechnung kann nicht erstellt werden.");
+        }
+        if (invoices.size() == 1) {
+            // generate electronic invoice
+            Invoice sourceInvoice = invoices.get(0);
+            if (StringUtils.isEmpty(sourceInvoice.getSender())) {
+                throw new Exception("Die dem Dokument zugeordnete Rechnung hat keinen Absender, elektronische Rechnung kann nicht erstellt werden.");
+            }
+
+            AppUserBean sender = locator.lookupSystemManagementRemote().getUser(sourceInvoice.getSender());
+            if (sender == null) {
+                throw new Exception("Die dem Dokument zugeordnete Rechnung hat den unbekannten Absender '" + sourceInvoice.getSender() + "', elektronische Rechnung kann nicht erstellt werden.");
+            }
+
+            org.mustangproject.Invoice i = EInvoiceUtils.getEInvoice(sourceInvoice, sender);
+            
+        
+            IZUGFeRDExporter ze = new ZUGFeRDExporterFromPDFA().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
+            ze.setTransaction(i);
+            ze.export(pdfTempFile);
+        }
+
+        return pdfTempFile;
+    }
+
     public String convertTo(String file, String targetFileExtension) throws Exception {
         return null;
     }
@@ -738,7 +789,7 @@ public class FileConverter {
         }
         return url;
     }
-    
+
     protected String bea2pdf(String url) throws Exception {
         if (url.toLowerCase().endsWith(".bea")) {
 
@@ -747,24 +798,24 @@ public class FileConverter {
             MessageExport export = new MessageExport();
             export.setContent(data);
             Message msg = BeaAccess.getMessageFromExport(export);
-            
-            byte[] pdf=msg.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
-            String beaPdf=FileUtils.createTempFile(inputFile.getName() + ".pdf", pdf);
-            
-            ArrayList<Attachment> attachments=msg.getAttachments();
+
+            byte[] pdf = msg.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+            String beaPdf = FileUtils.createTempFile(inputFile.getName() + ".pdf", pdf);
+
+            ArrayList<Attachment> attachments = msg.getAttachments();
             if (!attachments.isEmpty()) {
                 PDFMergerUtility merger = new PDFMergerUtility();
 
                 merger.addSource(new File(beaPdf));
-                
+
                 for (Attachment att : attachments) {
-                    
+
                     try {
-                        String attFile=FileUtils.createTempFile(att.getFileName(), att.getContent());
-                        String attFilePdf=convertToPDF(attFile);
-                        
+                        String attFile = FileUtils.createTempFile(att.getFileName(), att.getContent());
+                        String attFilePdf = convertToPDF(attFile);
+
                         merger.addSource(new File(attFilePdf));
-                    
+
                     } catch (Throwable t) {
                         log.error("unable to convert attachment " + att.getFileName() + " of beA message " + url + " to PDF - skipping!", t);
                     }
@@ -879,7 +930,7 @@ public class FileConverter {
 
         @Override
         public String convertToPDF(String url) throws Exception {
-            
+
             if (url.toLowerCase().endsWith(".pdf")) {
                 return pdf2pdf(url);
             }
@@ -887,11 +938,11 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".eml")) {
                 return eml2pdf(url);
             }
-            
+
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
-            
+
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
@@ -1045,7 +1096,7 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".eml")) {
                 return eml2pdf(url);
             }
-            
+
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
@@ -1131,11 +1182,11 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".eml")) {
                 return eml2pdf(url);
             }
-            
+
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
-            
+
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }

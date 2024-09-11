@@ -723,7 +723,7 @@ public class SendPDFAction extends ProgressableAction {
                 if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {
                     dlg.addAttachment(tmpUrl, doc.getDictateSign());
                 } else {
-                    String pdfUrl = conv.convertToPDF(tmpUrl);
+                    String pdfUrl = conv.convertToPDF(tmpUrl, doc);
                     try {
                         // give some more time to LibreOffice to shut down
                         Thread.sleep(2500);

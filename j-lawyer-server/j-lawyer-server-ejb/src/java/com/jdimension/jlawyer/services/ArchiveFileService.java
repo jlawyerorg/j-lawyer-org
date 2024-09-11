@@ -5108,6 +5108,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
+    public List<Invoice> getInvoicesForDocument(String docId) throws Exception {
+        // this call will also check if caller is allowed for this case
+        ArchiveFileDocumentsBean doc=this.getDocument(docId);
+        
+        return this.invoicesFacade.findByInvoiceDocument(doc);
+        
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 

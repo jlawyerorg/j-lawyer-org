@@ -5598,7 +5598,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 FileConverter conv = FileConverter.getInstance();
                 String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                String tempPdfPath = conv.convertToPDF(tempPath);
+                String tempPdfPath = conv.convertToPDF(tempPath, doc);
                 byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
                 FileUtils.cleanupTempFile(tempPath);
                 FileUtils.cleanupTempFile(tempPdfPath);
@@ -6029,7 +6029,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 if (!(tmpUrl.toLowerCase().endsWith(".pdf"))) {
                     FileConverter conv = FileConverter.getInstance();
-                    tmpUrl = conv.convertToPDF(tmpUrl);
+                    tmpUrl = conv.convertToPDF(tmpUrl, doc);
                 }
 
                 PDFEncryptionDialog encDlg = new PDFEncryptionDialog(EditorsRegistry.getInstance().getMainWindow(), true, tmpUrl);
