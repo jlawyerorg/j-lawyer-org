@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -683,11 +685,20 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.mustangproject.Invoice;
+import org.mustangproject.ZUGFeRD.ZUGFeRDImporter;
+import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -729,6 +740,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.saveCallback = saveCallback;
         this.lblTotalPages.setIcon(null);
         ThreadUtils.updateLabel(this.lblContent, "");
+
+        tabs.putClientProperty("JTabbedPane.tabRotation", "left");
+        this.xmlInvoice.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
 
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(32);
         this.jScrollPane1.getHorizontalScrollBar().setUnitIncrement(16);
@@ -793,8 +807,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         cmdPageBackward.setEnabled(currentPage > 0);
         cmdLastPage.setEnabled((currentPage + 1) < renderedPages);
         cmdPageForward.setEnabled((currentPage + 1) < renderedPages);
-        
-        if(!this.cmdPageForward.isEnabled()) {
+
+        if (!this.cmdPageForward.isEnabled()) {
             this.cmdPageBackward.requestFocus();
         }
     }
@@ -808,9 +822,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        pnlPages = new javax.swing.JPanel();
-        lblContent = new javax.swing.JLabel();
         cmdPageForward = new javax.swing.JButton();
         cmdPageBackward = new javax.swing.JButton();
         lblCurrentPage = new javax.swing.JLabel();
@@ -822,15 +833,16 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         lblTotalPages = new javax.swing.JLabel();
         cmdRotateRight = new javax.swing.JButton();
         cmdRotateLeft = new javax.swing.JButton();
-
-        pnlPages.setLayout(new javax.swing.BoxLayout(pnlPages, javax.swing.BoxLayout.PAGE_AXIS));
-
-        lblContent.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblContent.setText("Lade...");
-        lblContent.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        pnlPages.add(lblContent);
-
-        jScrollPane1.setViewportView(pnlPages);
+        tabs = new javax.swing.JTabbedPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        pnlPages = new javax.swing.JPanel();
+        lblContent = new javax.swing.JLabel();
+        pnlInvoice = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        htmlInvoice = new javax.swing.JEditorPane();
+        pnlInvoiceXml = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        xmlInvoice = new javax.swing.JTextPane();
 
         cmdPageForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
         cmdPageForward.addActionListener(new java.awt.event.ActionListener() {
@@ -902,11 +914,58 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             }
         });
 
+        tabs.setTabPlacement(javax.swing.JTabbedPane.LEFT);
+        tabs.setFont(tabs.getFont());
+
+        pnlPages.setLayout(new javax.swing.BoxLayout(pnlPages, javax.swing.BoxLayout.PAGE_AXIS));
+
+        lblContent.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblContent.setText("Lade...");
+        lblContent.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        pnlPages.add(lblContent);
+
+        jScrollPane1.setViewportView(pnlPages);
+
+        tabs.addTab("PDF", jScrollPane1);
+
+        jScrollPane2.setViewportView(htmlInvoice);
+
+        javax.swing.GroupLayout pnlInvoiceLayout = new javax.swing.GroupLayout(pnlInvoice);
+        pnlInvoice.setLayout(pnlInvoiceLayout);
+        pnlInvoiceLayout.setHorizontalGroup(
+            pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+        );
+        pnlInvoiceLayout.setVerticalGroup(
+            pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
+        );
+
+        tabs.addTab("E-Rechnung (HTML)", pnlInvoice);
+
+        xmlInvoice.setFont(new java.awt.Font("Courier", 1, 17)); // NOI18N
+        jScrollPane3.setViewportView(xmlInvoice);
+
+        javax.swing.GroupLayout pnlInvoiceXmlLayout = new javax.swing.GroupLayout(pnlInvoiceXml);
+        pnlInvoiceXml.setLayout(pnlInvoiceXmlLayout);
+        pnlInvoiceXmlLayout.setHorizontalGroup(
+            pnlInvoiceXmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlInvoiceXmlLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        pnlInvoiceXmlLayout.setVerticalGroup(
+            pnlInvoiceXmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
+        );
+
+        tabs.addTab("E-Rechnung (XML)", pnlInvoiceXml);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(cmdFirstPage)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -921,7 +980,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTotalPages)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cmdRotateLeft)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdRotateRight)
@@ -929,6 +988,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdFitToScreen))
+            .addComponent(tabs)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -949,7 +1009,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             .addComponent(lblTotalPages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(cmdLastPage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
+                .addComponent(tabs))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1101,13 +1161,20 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     private javax.swing.JButton cmdPageForward;
     private javax.swing.JButton cmdRotateLeft;
     private javax.swing.JButton cmdRotateRight;
+    private javax.swing.JEditorPane htmlInvoice;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JLabel lblContent;
     private javax.swing.JLabel lblCurrentPage;
     private javax.swing.JLabel lblTotalPages;
+    private javax.swing.JPanel pnlInvoice;
+    private javax.swing.JPanel pnlInvoiceXml;
     private javax.swing.JPanel pnlPages;
     private javax.swing.JSlider sliderZoom;
+    private javax.swing.JTabbedPane tabs;
+    private javax.swing.JTextPane xmlInvoice;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -1288,6 +1355,86 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.pnlPages.removeAll();
         this.renderContent(0, 0, 9, this.zoomFactor);
 
+        this.tabs.setEnabledAt(1, false);
+        this.tabs.setEnabledAt(2, false);
+        try {
+            ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
+            if (zii.canParse()) {
+                String invoiceHtml = EInvoiceUtils.invoiceToHTML(zii);
+                this.tabs.setEnabledAt(1, true);
+                this.tabs.setEnabledAt(2, true);
+                this.tabs.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.tabs.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.htmlInvoice.setContentType("text/html");
+                this.htmlInvoice.setText(invoiceHtml);
+                this.htmlInvoice.setEditable(false);
+
+                ZUGFeRDImporter zi = new ZUGFeRDImporter(new ByteArrayInputStream(content));
+                byte[] invoiceXml = zi.getRawXML();
+
+                xmlInvoice.setEditable(false);
+
+                // Create a StyledDocument for syntax highlighting
+                StyledDocument doc = xmlInvoice.getStyledDocument();
+
+                // Add styles
+                StyleContext context = new StyleContext();
+                Style tagStyle = context.addStyle("Tag", null);
+                StyleConstants.setForeground(tagStyle, DefaultColorTheme.COLOR_LOGO_GREEN);
+
+                Style attributeStyle = context.addStyle("Attribute", null);
+                StyleConstants.setForeground(attributeStyle, Color.ORANGE);
+
+                Style valueStyle = context.addStyle("Value", null);
+                StyleConstants.setForeground(valueStyle, DefaultColorTheme.COLOR_LIGHT_GREY);
+
+                // Sample XML content
+                String xml = new String(invoiceXml);
+
+                // Apply styles
+                try {
+                    // Basic highlighting logic
+                    doc.insertString(0, xml, null); // Insert XML string
+
+                    highlightXML(doc, xml, tagStyle, attributeStyle, valueStyle); // Call method to highlight the XML
+                } catch (BadLocationException e) {
+                    log.error(e);
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Error rendering e-invoice", ex);
+        }
+
+    }
+
+    private static void highlightXML(StyledDocument doc, String xml, Style tagStyle, Style attributeStyle, Style valueStyle) {
+        int pos = 0;
+        boolean insideTag = false;
+        boolean insideAttributeValue = false;
+
+        for (int i = 0; i < xml.length(); i++) {
+            char ch = xml.charAt(i);
+
+            if (ch == '<') {
+                insideTag = true;
+                pos = i;
+            } else if (ch == '>') {
+                doc.setCharacterAttributes(pos, i - pos + 1, tagStyle, false);
+                insideTag = false;
+            } else if (insideTag && ch == '\"') {
+                insideAttributeValue = !insideAttributeValue;
+                if (!insideAttributeValue) {
+                    doc.setCharacterAttributes(pos, i - pos + 1, valueStyle, false);
+                }
+                pos = i;
+            } else if (insideTag && !insideAttributeValue && Character.isWhitespace(ch)) {
+                if (i > pos) {
+                    doc.setCharacterAttributes(pos, i - pos, attributeStyle, false);
+                }
+                pos = i;
+            }
+        }
     }
 
     public void showContent(byte[] content) {

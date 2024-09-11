@@ -730,7 +730,6 @@ public class FileConverter {
         String pdfTempFile = convertToPDF(file);
 
         ClientSettings settings = ClientSettings.getInstance();
-        FileConverter conv = FileConverter.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         List<Invoice> invoices = locator.lookupArchiveFileServiceRemote().getInvoicesForDocument(doc.getId());
         if (invoices.size() > 1) {
