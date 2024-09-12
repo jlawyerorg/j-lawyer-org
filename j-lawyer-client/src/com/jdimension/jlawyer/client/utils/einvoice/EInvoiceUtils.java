@@ -804,11 +804,6 @@ public class EInvoiceUtils {
         if(invoice.getDetailedDeliveryPeriodFrom()!=null && invoice.getDetailedDeliveryPeriodTo()!=null)
             html.append("<p>Leistungszeitraum: ").append(df.format(invoice.getDetailedDeliveryPeriodFrom()))
                 .append(" - ").append(df.format(invoice.getDetailedDeliveryPeriodTo())).append("</p>");
-        if(invoice.getTradeSettlement()!=null) {
-            for(IZUGFeRDTradeSettlement ts: invoice.getTradeSettlement()) {
-                
-            }
-        }
 
         // Seller (TradeParty)
         TradeParty sender = invoice.getSender();
@@ -826,7 +821,6 @@ public class EInvoiceUtils {
                     html.append("<p>Bank: ").append(StringUtils.nonNull(bd.getAccountName())).append(" - ").append("BIC: ").append(StringUtils.nonNull(bd.getBIC())).append(" ").append("IBAN: ").append(bd.getIBAN()).append("</p>");
                 }
             }
-            //html.append("<p>Debit Details: ").append(sender.get.getDebitorID()).append("</p>");
         }
 
         // Buyer (TradeParty)
@@ -861,7 +855,6 @@ public class EInvoiceUtils {
             .append("</tr>");
 
         // Invoice Items
-        //IZUGFeRDExportableItem[] items = invoice.getZFItems();
         List<Item> items=zii.getLineItemList();
         BigDecimal totalTaxAmount = BigDecimal.ZERO;
         BigDecimal totalAmount = BigDecimal.ZERO;
