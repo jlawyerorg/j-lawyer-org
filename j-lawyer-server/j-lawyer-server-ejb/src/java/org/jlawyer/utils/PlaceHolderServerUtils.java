@@ -866,6 +866,12 @@ public class PlaceHolderServerUtils extends PlaceHolders {
             if (placeHolders.containsKey(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()), val(selected.getBankAccount()));
             }
+            if (placeHolders.containsKey(getPlaceHolderForType(_SEPAREF, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_SEPAREF, ptb.getPlaceHolder()), val(selected.getSepaReference()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_SEPASEIT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_SEPASEIT, ptb.getPlaceHolder()), val(selected.getSepaSince()));
+            }
             if (placeHolders.containsKey(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()), val(selected.getInsuranceNumber()));
             }

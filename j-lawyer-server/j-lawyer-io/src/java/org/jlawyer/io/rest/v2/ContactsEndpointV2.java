@@ -936,6 +936,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setBankAccount(contact.getBankAccount());
             currentContact.setBankCode(contact.getBankCode());
             currentContact.setBankName(contact.getBankName());
+            currentContact.setSepaReference(contact.getSepaReference());
+            currentContact.setSepaSince(contact.getSepaSince());
             currentContact.setBeaSafeId(contact.getBeaSafeId());
             currentContact.setBirthDate(contact.getBirthDate());
             currentContact.setCity(contact.getCity());

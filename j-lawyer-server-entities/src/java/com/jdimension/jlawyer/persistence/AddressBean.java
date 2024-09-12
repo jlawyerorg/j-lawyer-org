@@ -786,6 +786,12 @@ public class AddressBean implements Serializable {
     private String bankCode;
     @Column(name = "bankAccount")
     private String bankAccount;
+    
+    @Column(name = "sepa_reference")
+    private String sepaReference;
+    @Column(name = "sepa_since")
+    private String sepaSince;
+    
     @Column(name = "email")
     private String email;
     @Column(name = "website")
@@ -1808,6 +1814,34 @@ public class AddressBean implements Serializable {
      */
     public void setExternalId5(String externalId5) {
         this.externalId5 = externalId5;
+    }
+
+    /**
+     * @return the sepaReference
+     */
+    public String getSepaReference() {
+        return sepaReference;
+    }
+
+    /**
+     * @param sepaReference the sepaReference to set
+     */
+    public void setSepaReference(String sepaReference) {
+        this.sepaReference = sepaReference;
+    }
+
+    /**
+     * @return the sepaSince
+     */
+    public String getSepaSince() {
+        return sepaSince;
+    }
+
+    /**
+     * @param sepaSince the sepaSince to set
+     */
+    public void setSepaSince(String sepaSince) {
+        this.sepaSince = sepaSince;
     }
     
 }

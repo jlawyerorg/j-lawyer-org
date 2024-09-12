@@ -720,6 +720,8 @@ public class PlaceHolders {
     public static final String _BANK = "{{###_BANK}}";
     public static final String _BLZ = "{{###_BLZ}}";
     public static final String _KONTONR = "{{###_KONTONR}}";
+    public static final String _SEPAREF = "{{###_SEPAREF}}";
+    public static final String _SEPASEIT = "{{###_SEPASEIT}}";
     public static final String _RECHTSSCHUTZ = "{{###_RECHTSSCHUTZ}}";
     public static final String _VRECHTSSCHUTZ = "{{###_VRECHTSSCHUTZ}}";
     public static final String _KFZVERS = "{{###_KFZVERS}}";
@@ -928,6 +930,8 @@ public class PlaceHolders {
             ALLPLACEHOLDERS.add(_BANK.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_BLZ.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_KONTONR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_SEPAREF.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_SEPASEIT.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_KFZVERS.replace("###", typePlaceHolder));

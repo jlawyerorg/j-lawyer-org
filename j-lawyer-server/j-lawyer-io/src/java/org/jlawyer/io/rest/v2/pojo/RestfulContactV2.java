@@ -708,6 +708,8 @@ public class RestfulContactV2 {
     private String bankName=null;
     private String bankCode=null;
     private String bankAccount=null;
+    private String sepaReference;
+    private String sepaSince;
     private String email=null;
     private String website=null;
     private String creator=null;
@@ -750,6 +752,8 @@ public class RestfulContactV2 {
         ad.setBankAccount(this.getBankAccount());
         ad.setBankCode(this.getBankCode());
         ad.setBankName(this.getBankName());
+        ad.setSepaReference(this.getSepaReference());
+        ad.setSepaSince(this.getSepaSince());
         ad.setBeaSafeId(this.getBeaSafeId());
         ad.setBirthDate(this.getBirthDate());
         ad.setCity(this.getCity());
@@ -818,6 +822,8 @@ public class RestfulContactV2 {
         ad.setBankAccount(a.getBankAccount());
         ad.setBankCode(a.getBankCode());
         ad.setBankName(a.getBankName());
+        ad.setSepaReference(a.getSepaReference());
+        ad.setSepaSince(a.getSepaSince());
         ad.setBeaSafeId(a.getBeaSafeId());
         ad.setBirthDate(a.getBirthDate());
         ad.setCity(a.getCity());
@@ -1781,6 +1787,34 @@ public class RestfulContactV2 {
      */
     public void setExternalId5(String externalId5) {
         this.externalId5 = externalId5;
+    }
+
+    /**
+     * @return the sepaReference
+     */
+    public String getSepaReference() {
+        return sepaReference;
+    }
+
+    /**
+     * @param sepaReference the sepaReference to set
+     */
+    public void setSepaReference(String sepaReference) {
+        this.sepaReference = sepaReference;
+    }
+
+    /**
+     * @return the sepaSince
+     */
+    public String getSepaSince() {
+        return sepaSince;
+    }
+
+    /**
+     * @param sepaSince the sepaSince to set
+     */
+    public void setSepaSince(String sepaSince) {
+        this.sepaSince = sepaSince;
     }
     
     
