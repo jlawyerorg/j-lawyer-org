@@ -713,6 +713,7 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
         cmdDownloadTemplate = new javax.swing.JButton();
         cmdUploadSheet = new javax.swing.JButton();
         cmdDryRun = new javax.swing.JButton();
+        cmdExport = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Einstellungen importieren");
@@ -772,6 +773,14 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/file_download_20dp_0E72B5.png"))); // NOI18N
+        cmdExport.setText("Export");
+        cmdExport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -779,7 +788,7 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 694, Short.MAX_VALUE)
                     .add(progBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
@@ -791,8 +800,10 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                     .add(layout.createSequentialGroup()
                         .add(cmdDownloadTemplate)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdExport)
+                        .add(18, 18, 18)
                         .add(cmdUploadSheet)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -801,7 +812,8 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdDownloadTemplate)
-                    .add(cmdUploadSheet))
+                    .add(cmdUploadSheet)
+                    .add(cmdExport))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -826,14 +838,19 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
 
-    private void cmdDownloadTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownloadTemplateActionPerformed
+    private void downloadOrExport(boolean export) {
         JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String destFileName = "j-lawyer-Importvorlage-" + System.currentTimeMillis() + ".ods";
+            
+            String destFileName = null;
+            if(export)
+                destFileName="j-lawyer-Export-" + System.currentTimeMillis() + ".ods";
+            else
+                destFileName="j-lawyer-Importvorlage-" + System.currentTimeMillis() + ".ods";
             String destFile = chooser.getSelectedFile().getAbsolutePath() + File.separator + destFileName;
             try {
                 ClientSettings settings = ClientSettings.getInstance();
@@ -842,9 +859,9 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                 try {
                     locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     sys = locator.lookupSystemManagementRemote();
-                    byte[] odsTemplate = sys.getImportTemplateOds();
+                    byte[] odsTemplate = sys.getImportTemplateOds(export);
                     FileUtils.writeFile(new File(destFile), odsTemplate);
-                    JOptionPane.showMessageDialog(this, "Vorlage als '" + destFileName + "' gespeichert.", "Importvorlage", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Datei als '" + destFileName + "' gespeichert.", "Download / Export", JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
                     log.error("Error connecting to server", ex);
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -855,6 +872,10 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    
+    private void cmdDownloadTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownloadTemplateActionPerformed
+        this.downloadOrExport(false);
 
     }//GEN-LAST:event_cmdDownloadTemplateActionPerformed
 
@@ -936,6 +957,10 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
         this.executeImport(true);
     }//GEN-LAST:event_cmdDryRunActionPerformed
 
+    private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
+        this.downloadOrExport(true);
+    }//GEN-LAST:event_cmdExportActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -949,6 +974,7 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdDownloadTemplate;
     private javax.swing.JButton cmdDryRun;
+    private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdImport;
     private javax.swing.JButton cmdUploadSheet;
     private javax.swing.JScrollPane jScrollPane1;

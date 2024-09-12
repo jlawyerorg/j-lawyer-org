@@ -663,6 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.imports;
 
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author jens
@@ -807,6 +812,31 @@ public class DummyPersistence implements ImporterPersistence {
     @Override
     public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays) {
         return true;
+    }
+
+    @Override
+    public List<String> getCaseTags() {
+        return new ArrayList<>();
+    }
+    
+    @Override
+    public List<String> getAddressTags() {
+        return new ArrayList<>();
+    }
+    
+    @Override
+    public List<String> getDocumentTags() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<CalendarEntryTemplate> getEventTemplates() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<PartyTypeBean> getPartyTypes() {
+        return new ArrayList<>();
     }
     
 }

@@ -663,6 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.imports;
 
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import java.util.List;
+
 /**
  *
  * @author jens
@@ -671,12 +675,15 @@ public interface ImporterPersistence {
     
     public boolean caseTagExists(String tagName);
     public boolean createCaseTag(String tagName) throws Exception;
+    public List<String> getCaseTags();
     
     public boolean addressTagExists(String tagName);
     public boolean createAddressTag(String tagName) throws Exception;
+    public List<String> getAddressTags();
     
     public boolean documentTagExists(String tagName);
     public boolean createDocumentTag(String tagName) throws Exception;
+    public List<String> getDocumentTags();
     
     public String getCustomField1Case();
     public String getCustomField2Case();
@@ -703,11 +710,11 @@ public interface ImporterPersistence {
     public boolean setCustomField3Party(String value);
 
     public boolean partyTypeExists(String name, String placeHolder);
-
     public boolean createPartyType(String name, String placeHolder, int color, int sequence);
+    public List<PartyTypeBean> getPartyTypes();
 
     public boolean eventTemplateExists(String name);
-
     public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays);
+    public List<CalendarEntryTemplate> getEventTemplates();
     
 }

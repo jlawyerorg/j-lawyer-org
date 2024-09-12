@@ -836,7 +836,7 @@ public interface SystemManagementRemote {
     
     DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
 
-    byte[] getImportTemplateOds() throws Exception;
+    byte[] getImportTemplateOds(boolean exportCurrentData) throws Exception;
 
     List<String> listImportSheets(byte[] odsData) throws Exception;
 

@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -720,6 +721,30 @@ public class DefaultPersistence implements ImporterPersistence {
     @Override
     public boolean createCaseTag(String tagName) throws Exception {
         return createTag(tagName, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+    }
+    
+    @Override
+    public List<String> getCaseTags() {
+        return getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+    }
+    
+    @Override
+    public List<String> getAddressTags() {
+        return getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+    }
+    
+    @Override
+    public List<String> getDocumentTags() {
+        return getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+    }
+    
+    private List<String> getOptionGroup(String groupName) {
+        ArrayList<String> result=new ArrayList<>();
+        AppOptionGroupBean[] options=this.sys.getOptionGroup(groupName);
+        for(AppOptionGroupBean o: options) {
+            result.add(o.getValue());
+        }
+        return result;
     }
 
     private String getCustomFieldLabel(String prefix, int index) {
@@ -856,6 +881,11 @@ public class DefaultPersistence implements ImporterPersistence {
     }
 
     @Override
+    public List<PartyTypeBean> getPartyTypes() {
+        return this.partyTypes.findAll();
+    }
+    
+    @Override
     public boolean partyTypeExists(String name, String placeHolder) {
         List<PartyTypeBean> allParties=this.partyTypes.findAll();
         for(PartyTypeBean p: allParties) {
@@ -877,6 +907,11 @@ public class DefaultPersistence implements ImporterPersistence {
         return true;
     }
 
+    @Override
+    public List<CalendarEntryTemplate> getEventTemplates() {
+        return this.eventTemplates.findAll();
+    }
+    
     @Override
     public boolean eventTemplateExists(String name) {
         List<CalendarEntryTemplate> allTemplates=this.eventTemplates.findAll();

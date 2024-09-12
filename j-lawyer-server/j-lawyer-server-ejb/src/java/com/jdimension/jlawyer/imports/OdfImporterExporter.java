@@ -663,14 +663,18 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.imports;
 
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.odftoolkit.simple.SpreadsheetDocument;
+import org.odftoolkit.simple.style.StyleTypeDefinitions.FontStyle;
 import org.odftoolkit.simple.table.Cell;
 import org.odftoolkit.simple.table.Row;
 import org.odftoolkit.simple.table.Table;
@@ -679,7 +683,7 @@ import org.odftoolkit.simple.table.Table;
  *
  * @author jens
  */
-public class OdfImporter {
+public class OdfImporterExporter {
     
     public static final String TABLE_TAGS_CASE="Konfiguration-Akte-Etikett";
     public static final String TABLE_TAGS_ADDRESS="Konfiguration-Adresse-Etikett";
@@ -696,12 +700,12 @@ public class OdfImporter {
     private SpreadsheetDocument ods=null;
     private ImporterPersistence persister=null;
     
-    public OdfImporter(byte[] odsData, ImporterPersistence persister) throws Exception {
+    public OdfImporterExporter(byte[] odsData, ImporterPersistence persister) throws Exception {
         this.ods = SpreadsheetDocument.loadDocument(new ByteArrayInputStream(odsData));
         this.persister=persister;
     }
     
-    public List<String> listSheets(byte[] odsData) throws Exception {
+    public List<String> listSheets() throws Exception {
         List<String> sheetNames = new ArrayList<>();
         for (Table sheet : ods.getTableList()) {
             sheetNames.add(sheet.getTableName());
@@ -719,13 +723,28 @@ public class OdfImporter {
         return null;
     }
     
-    public List<ImportLogEntry> processSheets(List<String> sheetNames, boolean dryRun) throws Exception {
+    public byte[] exportSheets(List<String> sheetNames) throws Exception {
+        for(String sheetName: sheetNames) {
+            Table t=findSheet(sheetName);
+            if(t!=null) {
+                exportTable(t);
+            } else {
+                throw new Exception("Tabelle mit Namen '" + sheetName + "' kann nicht in der Exportdatei gefunden werden.");
+            }
+        }
+        
+        ByteArrayOutputStream bout=new ByteArrayOutputStream();
+        this.ods.save(bout);
+        return bout.toByteArray();
+    }
+    
+    public List<ImportLogEntry> importSheets(List<String> sheetNames, boolean dryRun) throws Exception {
         List<ImportLogEntry> logs=new ArrayList<>();
         for(String sheetName: sheetNames) {
             Table t=findSheet(sheetName);
             if(t!=null) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheetName + " gefunden"));
-                processTable(t, logs);
+                importTable(t, logs);
             } else {
                 throw new Exception("Tabelle mit Namen '" + sheetName + "' kann nicht in der Importdatei gefunden werden.");
             }
@@ -733,7 +752,50 @@ public class OdfImporter {
         return logs;
     }
     
-    private void processTable(Table sheet, List<ImportLogEntry> logs) throws Exception {
+    private void exportTable(Table sheet) throws Exception {
+        // Get the first row (header row)
+        Row headerRow = sheet.getRowByIndex(0);
+
+        // Create a map to store column names and their indices
+        Map<String, Integer> columnMap = new HashMap<>();
+
+        // Iterate over the header row to populate the column map
+        for (int i = 0; i < headerRow.getCellCount(); i++) {
+            Cell cell = headerRow.getCellByIndex(i);
+            String columnName = cell.getStringValue();
+            columnMap.put(columnName, i);
+        }
+        
+        // Now process each subsequent row (i.e., rowIndex starts from 1)
+        if (TABLE_TAGS_CASE.equals(sheet.getTableName())) {
+            exportConfigurationTagsCase(sheet, columnMap);
+        }
+        if (TABLE_TAGS_ADDRESS.equals(sheet.getTableName())) {
+            exportConfigurationTagsAddress(sheet, columnMap);
+        }
+        if (TABLE_TAGS_DOCUMENT.equals(sheet.getTableName())) {
+            exportConfigurationTagsDocument(sheet, columnMap);
+        }
+        if (TABLE_CUSTOMFIELDS_CASE.equals(sheet.getTableName())) {
+            exportConfigurationCustomFieldsCase(sheet, columnMap);
+        }
+        if (TABLE_CUSTOMFIELDS_ADDRESS.equals(sheet.getTableName())) {
+            exportConfigurationCustomFieldsAddress(sheet, columnMap);
+        }
+        if (TABLE_CUSTOMFIELDS_PARTIES.equals(sheet.getTableName())) {
+            exportConfigurationCustomFieldsParty(sheet, columnMap);
+        }
+        
+        if (TABLE_PARTYTYPES.equals(sheet.getTableName())) {
+            exportConfigurationPartyType(sheet, columnMap);
+        }
+        
+        if (TABLE_CALENDAR_EVENTTEMPLATES.equals(sheet.getTableName())) {
+            exportConfigurationEventTemplate(sheet, columnMap);
+        }
+    }
+    
+    private void importTable(Table sheet, List<ImportLogEntry> logs) throws Exception {
         // Get the first row (header row)
         Row headerRow = sheet.getRowByIndex(0);
 
@@ -754,42 +816,42 @@ public class OdfImporter {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Aktenetiketten"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationTagsCase(row, columnMap, logs);
+                importConfigurationTagsCase(row, columnMap, logs);
             }
         }
         if (TABLE_TAGS_ADDRESS.equals(sheet.getTableName())) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Adressetiketten"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationTagsAddress(row, columnMap, logs);
+                importConfigurationTagsAddress(row, columnMap, logs);
             }
         }
         if (TABLE_TAGS_DOCUMENT.equals(sheet.getTableName())) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Dokumentetiketten"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationTagsDocument(row, columnMap, logs);
+                importConfigurationTagsDocument(row, columnMap, logs);
             }
         }
         if (TABLE_CUSTOMFIELDS_CASE.equals(sheet.getTableName())) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " eigene Felder für Akten"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationCustomFieldsCase(row, columnMap, logs);
+                importConfigurationCustomFieldsCase(row, columnMap, logs);
             }
         }
         if (TABLE_CUSTOMFIELDS_ADDRESS.equals(sheet.getTableName())) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " eigene Felder für Adressen"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationCustomFieldsAddress(row, columnMap, logs);
+                importConfigurationCustomFieldsAddress(row, columnMap, logs);
             }
         }
         if (TABLE_CUSTOMFIELDS_PARTIES.equals(sheet.getTableName())) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " eigene Felder für Beteiligte"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationCustomFieldsParty(row, columnMap, logs);
+                importConfigurationCustomFieldsParty(row, columnMap, logs);
             }
         }
         
@@ -797,7 +859,7 @@ public class OdfImporter {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Beteiligtentypen"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationPartyType(row, columnMap, logs);
+                importConfigurationPartyType(row, columnMap, logs);
             }
         }
         
@@ -805,12 +867,12 @@ public class OdfImporter {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Ereignisvorlagen"));
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
-                processConfigurationEventTemplate(row, columnMap, logs);
+                importConfigurationEventTemplate(row, columnMap, logs);
             }
         }
     }
 
-    private void processConfigurationTagsCase(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationTagsCase(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String value = getCellValueByColumnName(row, columnMap, "Etikettenname", logs);
         if(ServerStringUtils.isEmpty(value))
             return;
@@ -823,7 +885,7 @@ public class OdfImporter {
         }
     }
     
-    private void processConfigurationTagsAddress(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationTagsAddress(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String value = getCellValueByColumnName(row, columnMap, "Etikettenname", logs);
         if(ServerStringUtils.isEmpty(value))
             return;
@@ -836,7 +898,7 @@ public class OdfImporter {
         }
     }
     
-    private void processConfigurationTagsDocument(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationTagsDocument(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String value = getCellValueByColumnName(row, columnMap, "Etikettenname", logs);
         if(ServerStringUtils.isEmpty(value))
             return;
@@ -849,7 +911,7 @@ public class OdfImporter {
         }
     }
     
-    private void processConfigurationCustomFieldsCase(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationCustomFieldsCase(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String custom1 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 1", logs);
         String custom2 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 2", logs);
         String custom3 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 3", logs);
@@ -884,7 +946,7 @@ public class OdfImporter {
         
     }
     
-    private void processConfigurationCustomFieldsAddress(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationCustomFieldsAddress(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String custom1 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 1", logs);
         String custom2 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 2", logs);
         String custom3 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 3", logs);
@@ -919,7 +981,7 @@ public class OdfImporter {
         
     }
     
-    private void processConfigurationCustomFieldsParty(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
+    private void importConfigurationCustomFieldsParty(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) throws Exception {
         String custom1 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 1", logs);
         String custom2 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 2", logs);
         String custom3 = getCellValueByColumnName(row, columnMap, "Eigenes Feld 3", logs);
@@ -964,8 +1026,8 @@ public class OdfImporter {
         }
     }
 
-    private void processConfigurationPartyType(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
-        String name = getCellValueByColumnName(row, columnMap, "Bezeichung", logs);
+    private void importConfigurationPartyType(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
+        String name = getCellValueByColumnName(row, columnMap, "Bezeichnung", logs);
         String placeHolder = getCellValueByColumnName(row, columnMap, "Platzhalter", logs);
         String colorNumber = getCellValueByColumnName(row, columnMap, "Farbwert", logs);
         String sequenceNumber = getCellValueByColumnName(row, columnMap, "Sequenznummer", logs);
@@ -998,7 +1060,7 @@ public class OdfImporter {
         }
     }
 
-    private void processConfigurationEventTemplate(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
+    private void importConfigurationEventTemplate(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
         String name = getCellValueByColumnName(row, columnMap, "Name", logs);
         String description = getCellValueByColumnName(row, columnMap, "Beschreibung", logs);
         String relatedString = getCellValueByColumnName(row, columnMap, "zweiten Eintrag automatisch erstellen", logs);
@@ -1038,6 +1100,115 @@ public class OdfImporter {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Ereignisvorlage " + name + " existiert bereits"));
         }
     }
+
+    private void setCellValueByColumnName(Row row, Map<String, Integer> columnMap, String columnName, String value) {
+        Integer columnIndex = columnMap.get(columnName);
+        if (columnIndex != null) {
+            Cell cell = row.getCellByIndex(columnIndex);
+            cell.setStringValue(value);
+        }
+    }
     
+    private void exportConfigurationTagsCase(Table t, Map<String, Integer> columnMap) {
+        exportConfigurationTags(t, columnMap, persister.getCaseTags());
+    }
+    
+    private void exportConfigurationTagsAddress(Table t, Map<String, Integer> columnMap) {
+        exportConfigurationTags(t, columnMap, persister.getAddressTags());
+    }
+    
+    private void exportConfigurationTagsDocument(Table t, Map<String, Integer> columnMap) {
+        exportConfigurationTags(t, columnMap, persister.getDocumentTags());
+    }
+    
+    private void exportConfigurationTags(Table t, Map<String, Integer> columnMap, List<String> tags) {
+        for(String tag: tags) {
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Etikettenname", tag);
+            
+            resetRowStyling(newRow);
+        }
+    }
+    
+    // Reset the styling of all cells in the row to default
+    private static void resetRowStyling(Row row) {
+        for (int i = 0; i < row.getCellCount(); i++) {
+            Cell cell = row.getCellByIndex(i);
+            
+            // Clear any bold/italic/underline, reset font size and color to default
+            cell.getStyleHandler().getTextPropertiesForWrite().setFontStyle(FontStyle.REGULAR);
+            cell.getStyleHandler().getTextPropertiesForWrite().setFontSizeInPoint(10d);
+            cell.getStyleHandler().getTextPropertiesForWrite().setFontName("Arial"); // Example font
+            cell.getStyleHandler().getTextPropertiesForWrite().setFontColor(null); // Reset font color to default
+        }
+    }
+
+    private void exportConfigurationCustomFieldsCase(Table t, Map<String, Integer> columnMap) {
+        
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 1", persister.getCustomField1Case());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 2", persister.getCustomField2Case());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 3", persister.getCustomField3Case());
+            
+            resetRowStyling(newRow);
+    }
+    
+    private void exportConfigurationCustomFieldsAddress(Table t, Map<String, Integer> columnMap) {
+        
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 1", persister.getCustomField1Address());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 2", persister.getCustomField2Address());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 3", persister.getCustomField3Address());
+            
+            resetRowStyling(newRow);
+    }
+    
+    private void exportConfigurationCustomFieldsParty(Table t, Map<String, Integer> columnMap) {
+        
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 1", persister.getCustomField1Party());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 2", persister.getCustomField2Party());
+            setCellValueByColumnName(newRow, columnMap, "Eigenes Feld 3", persister.getCustomField3Party());
+            
+            resetRowStyling(newRow);
+    }
+
+    private void exportConfigurationEventTemplate(Table t, Map<String, Integer> columnMap) {
+        for(CalendarEntryTemplate tpl: persister.getEventTemplates()) {
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Name", tpl.getName());
+            setCellValueByColumnName(newRow, columnMap, "Beschreibung", tpl.getDescription());
+            setCellValueByColumnName(newRow, columnMap, "zweiten Eintrag automatisch erstellen", "" + tpl.isRelated());
+            setCellValueByColumnName(newRow, columnMap, "Name zweiter Eintrag", tpl.getRelatedName());
+            setCellValueByColumnName(newRow, columnMap, "Beschreibung zweiter Eintrag", tpl.getRelatedDescription());
+            setCellValueByColumnName(newRow, columnMap, "Versatz in Tagen", "" + tpl.getRelatedOffsetDays());
+            
+            resetRowStyling(newRow);
+        }
+    }
+
+    private void exportConfigurationPartyType(Table t, Map<String, Integer> columnMap) {
+        for(PartyTypeBean pt: persister.getPartyTypes()) {
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "Bezeichnung", pt.getName());
+            setCellValueByColumnName(newRow, columnMap, "Platzhalter", pt.getPlaceHolder());
+            setCellValueByColumnName(newRow, columnMap, "Farbwert", "" + pt.getColor());
+            setCellValueByColumnName(newRow, columnMap, "Sequenznummer", "" + pt.getSequenceNumber());
+            
+            resetRowStyling(newRow);
+        }
+    }
     
 }

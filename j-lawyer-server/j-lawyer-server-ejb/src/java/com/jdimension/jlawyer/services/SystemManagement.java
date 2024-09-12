@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.imports.DefaultPersistence;
 import com.jdimension.jlawyer.imports.DummyPersistence;
 import com.jdimension.jlawyer.imports.ImporterPersistence;
-import com.jdimension.jlawyer.imports.OdfImporter;
+import com.jdimension.jlawyer.imports.OdfImporterExporter;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -755,9 +755,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     private static final Logger log = Logger.getLogger(SystemManagement.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-    
-    private static final String ROLE_LOGIN="loginRole";
-    
+
+    private static final String ROLE_LOGIN = "loginRole";
+
     @Resource
     private SessionContext context;
     @EJB
@@ -788,7 +788,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private DocumentNameTemplateFacadeLocal documentNameTemplates;
     @EJB
     private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
-    
+
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
     private JMSContext jmsContext;
@@ -803,27 +803,28 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
 
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getAllOptionGroups() {
-        List<AppOptionGroupBean> fullList=appOptionGroupBeanFacade.findAll();
-        List<String> optionGroups=new ArrayList<>();
-        for(AppOptionGroupBean aog: fullList) {
-            if(!optionGroups.contains(aog.getOptionGroup()))
+        List<AppOptionGroupBean> fullList = appOptionGroupBeanFacade.findAll();
+        List<String> optionGroups = new ArrayList<>();
+        for (AppOptionGroupBean aog : fullList) {
+            if (!optionGroups.contains(aog.getOptionGroup())) {
                 optionGroups.add(aog.getOptionGroup());
+            }
         }
         return optionGroups;
 
     }
-   
+
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<BankDataBean> list = new ArrayList<>();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -862,7 +863,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<CityDataBean> list = new ArrayList<>();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
 
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
@@ -924,7 +925,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllBankData() {
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
+        try (Connection con = utils.getConnection(); Statement st = con.createStatement()) {
 
             st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
@@ -953,7 +954,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllCityData() {
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
+        try (Connection con = utils.getConnection(); Statement st = con.createStatement()) {
             st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
@@ -992,12 +993,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private String getTypedFolderName(int templateType) {
-        if(templateType==SystemManagementRemote.TEMPLATE_TYPE_HEAD)
+        if (templateType == SystemManagementRemote.TEMPLATE_TYPE_HEAD) {
             return "letterheads";
-        else
+        } else {
             return "templates";
+        }
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception {
@@ -1103,15 +1105,15 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             if (ROLE_LOGIN.equalsIgnoreCase(r.getRole())) {
 
                 List<AppRoleBean> currentRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
-                boolean currentlyActive=false;
+                boolean currentlyActive = false;
                 for (AppRoleBean cr : currentRoles) {
-                    if(ROLE_LOGIN.equalsIgnoreCase(cr.getRole())) {
-                        currentlyActive=true;
+                    if (ROLE_LOGIN.equalsIgnoreCase(cr.getRole())) {
+                        currentlyActive = true;
                         break;
                     }
                 }
 
-                if(currentlyActive) {
+                if (currentlyActive) {
                     // just a simple user update
                     this.checkUserLimit(true);
                 } else {
@@ -1176,20 +1178,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerInformation si = new ServerInformation();
         return si;
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public Properties getSystemProperties() {
         return System.getProperties();
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public String getServerLogs(int numberOfLines) throws Exception {
         File logDir = new File(System.getProperty("jboss.server.log.dir"));
         File wildFlyLog = new File(logDir.getAbsolutePath() + File.separator + "server.log");
         return ServerFileUtils.readLinesFromEnd(wildFlyLog, numberOfLines);
-        
+
     }
 
     @Override
@@ -1487,7 +1489,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         Session session = null;
         Store store = null;
-        if(isMsExchange) {
+        if (isMsExchange) {
             props.put("mail.imaps.sasl.enable", "true");
             props.put("mail.imaps.port", "993");
 
@@ -1539,7 +1541,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");  ResultSet rs = st.executeQuery()) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1"); ResultSet rs = st.executeQuery()) {
 
             if (rs.next()) {
                 version = rs.getString(1);
@@ -1734,7 +1736,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
-        
+
         String dst = localBaseDir + File.separator + fileName;
 
         File f2 = new File(dst);
@@ -1743,7 +1745,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        try ( OutputStream out = new FileOutputStream(f2)) {
+        try (OutputStream out = new FileOutputStream(f2)) {
 
             out.write(data);
 
@@ -1775,7 +1777,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         File f = new File(del);
         return f.delete();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public GenericNode getAllTemplatesTree(int templateType) throws Exception {
@@ -1876,10 +1878,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getTemplatesByPath(int templateType, String templatesPath) throws Exception {
-        if(!templatesPath.startsWith(File.separator))
-            templatesPath=File.separator + templatesPath;
+        if (!templatesPath.startsWith(File.separator)) {
+            templatesPath = File.separator + templatesPath;
+        }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatesPath);
-        
+
         File f = new File(localBaseDir);
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
@@ -1892,7 +1895,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception {
@@ -1922,24 +1925,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, String templatePath, String templateName, String caseId) throws Exception {
-        
-        if(!templatePath.startsWith(File.separator))
-            templatePath=File.separator + templatePath;
+
+        if (!templatePath.startsWith(File.separator)) {
+            templatePath = File.separator + templatePath;
+        }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatePath);
-        
+
         String tpl = localBaseDir + File.separator + templateName;
-        
+
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
-        
-        Collection<String> formsPlaceHolders=this.formsService.getPlaceHoldersForCase(caseId);
+
+        Collection<String> formsPlaceHolders = this.formsService.getPlaceHoldersForCase(caseId);
 
         return LibreOfficeAccess.getPlaceHolders(tpl, allPartyTypesPlaceholders, formsPlaceHolders);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
@@ -2037,10 +2041,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             PartyTypeBean f1 = (PartyTypeBean) u1;
             PartyTypeBean f2 = (PartyTypeBean) u2;
 
-            
-
             int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
-            if(sequenceSortResult != 0) {
+            if (sequenceSortResult != 0) {
                 return sequenceSortResult;
             } else {
                 String f1name = "";
@@ -2146,10 +2148,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public void addObservedFile(String fileName, byte[] content, String source) throws Exception {
-        
-        if(fileName==null || "".equals(fileName))
+
+        if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
-        
+        }
+
         ServerSettingsBean mode = settingsFacade.find("jlawyer.server.observe.directory");
         if (mode == null || "".equals(mode.getSettingValue())) {
             log.error("No server directory configured for scans");
@@ -2200,24 +2203,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
 
-        try ( FileOutputStream fout = new FileOutputStream(uploadFile)) {
+        try (FileOutputStream fout = new FileOutputStream(uploadFile)) {
             fout.write(content);
         }
-        
+
         OcrRequest req = new OcrRequest();
         if (!OcrUtils.hasMetadata(uploadFile)) {
             FileMetadata newMetadata = OcrUtils.generateMetadata(uploadFile, context.getCallerPrincipal().getName(), source);
             if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
                 // send request to perform OCR
                 req.getAbsolutePaths().add(uploadFile.getAbsolutePath());
-                
+
             }
         }
-        if(!req.getAbsolutePaths().isEmpty())
+        if (!req.getAbsolutePaths().isEmpty()) {
             this.publishOcrRequest(req);
+        }
 
     }
-    
+
     private void publishOcrRequest(OcrRequest req) {
         try {
             ObjectMessage msg = this.jmsContext.createObjectMessage(req);
@@ -2358,13 +2362,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         localBaseDir = localBaseDir + getTypedFolderName(templateType);
-        if(!ServerStringUtils.isEmpty(appendDirectories)) {
+        if (!ServerStringUtils.isEmpty(appendDirectories)) {
             return localBaseDir + appendDirectories;
         } else {
             return localBaseDir + System.getProperty("file.separator");
         }
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public String getTemplatesBaseDir(int templateType) throws Exception {
@@ -2373,7 +2377,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception {
+    public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode) throws Exception {
         return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode);
     }
 
@@ -2386,7 +2390,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AssistantConfig addAssistant(AssistantConfig assistant) throws Exception {
-        String id=new StringGenerator().getID().toString();
+        String id = new StringGenerator().getID().toString();
         assistant.setId(id);
         this.assistantFacade.create(assistant);
         return this.assistantFacade.find(id);
@@ -2398,66 +2402,66 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.assistantFacade.edit(assistant);
         return this.assistantFacade.find(assistant.getId());
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
-        StringGenerator idGen=new StringGenerator();
-        String id=idGen.getID().toString();
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
         template.setId(id);
         this.documentNameTemplates.create(template);
         return this.documentNameTemplates.find(id);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
         this.documentNameTemplates.edit(template);
-        
-        if(template.isDefaultTemplate()) {
+
+        if (template.isDefaultTemplate()) {
             // default template - remove default flag from any other templates
-            for(DocumentNameTemplate t: this.documentNameTemplates.findAll()) {
-                if(!t.equals(template)) {
+            for (DocumentNameTemplate t : this.documentNameTemplates.findAll()) {
+                if (!t.equals(template)) {
                     t.setDefaultTemplate(false);
                     this.documentNameTemplates.edit(t);
                 }
             }
         }
-        
+
         return this.documentNameTemplates.find(template.getId());
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception {
         return this.documentNameTemplates.find(templateId);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
         this.documentNameTemplates.remove(template);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception {
-        
-        List<DocumentNameTemplate> allTemplates=this.documentNameTemplates.findAll();
+
+        List<DocumentNameTemplate> allTemplates = this.documentNameTemplates.findAll();
         allTemplates.sort(Comparator.comparing(
-            entry -> entry.getDisplayName().toLowerCase()
+                entry -> entry.getDisplayName().toLowerCase()
         ));
         return allTemplates;
-        
+
     }
-    
+
     @Override
     public DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception {
-        
+
         return this.documentNameTemplates.findDefault();
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception {
@@ -2480,7 +2484,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public byte[] getImportTemplateOds() throws Exception {
+    public byte[] getImportTemplateOds(boolean exportCurrentData) throws Exception {
         try (InputStream is = SystemManagement.class.getResourceAsStream("/com/jdimension/jlawyer/imports/importtemplate.ods");) {
             // Check if the InputStream is not null (file found)
             if (is == null) {
@@ -2496,9 +2500,18 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             while ((nRead = is.read(data, 0, data.length)) != -1) {
                 buffer.write(data, 0, nRead);
             }
+            byte[] templateBytes=buffer.toByteArray();
 
-            // Return the byte array
-            return buffer.toByteArray();
+            if (exportCurrentData) {
+                // export into the template
+                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
+                OdfImporterExporter importer = new OdfImporterExporter(templateBytes, persister);
+                return importer.exportSheets(importer.listSheets());
+            } else {
+                // Return the byte array
+                return templateBytes;
+            }
+
         }
     }
 
@@ -2506,21 +2519,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public List<String> listImportSheets(byte[] odsData) throws Exception {
         ImporterPersistence persister = new DummyPersistence();
-        OdfImporter importer = new OdfImporter(odsData, persister);
-        return importer.listSheets(odsData);
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister);
+        return importer.listSheets();
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun) throws Exception {
         ImporterPersistence persister = null;
-        if(dryRun)
-            persister=new DummyPersistence();
-        else
-            persister=new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
-        OdfImporter importer = new OdfImporter(odsData, persister);
-        return importer.processSheets(sheetNames, dryRun);
-        
+        if (dryRun) {
+            persister = new DummyPersistence();
+        } else {
+            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
+        }
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister);
+        return importer.importSheets(sheetNames, dryRun);
+
     }
 
 }
