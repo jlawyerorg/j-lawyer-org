@@ -735,6 +735,7 @@ public class FileConverter {
         if (invoices.size() > 1) {
             throw new Exception("Diesem Dokument ist mit mehreren Rechnungen verknüpft, elektronische Rechnung kann nicht erstellt werden.");
         }
+        
         if (invoices.size() == 1) {
             // generate electronic invoice
             Invoice sourceInvoice = invoices.get(0);
@@ -1014,7 +1015,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
@@ -1103,10 +1104,25 @@ public class FileConverter {
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
+            
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+
+                // Remove trailing slash if it exists
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
+            }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
+                Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+"}", "--outdir", parentPath, url});
                 int exit = p.waitFor();
                 if (exit != 0) {
                     if (isRetry) {
@@ -1205,7 +1221,11 @@ public class FileConverter {
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
                 //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", parentPath, url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", parentPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+"}", "--outdir", parentPath, url});
+                
                 int exit = p.waitFor();
 
                 if (exit != 0) {

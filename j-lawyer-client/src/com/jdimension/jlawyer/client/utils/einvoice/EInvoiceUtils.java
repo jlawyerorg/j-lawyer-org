@@ -724,6 +724,10 @@ public class EInvoiceUtils {
                 || StringUtils.isEmpty(senderUser.getBankIban())) {
             throw new Exception("Informationen des Rechnungssenders unvollständig: Bankverbindung. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen");
         }
+        
+        
+        i.setPaymentTermDescription("zahle einfach irgendwie");
+        
         // zahlung per überweisung
         BankDetails senderBank=new BankDetails(senderUser.getBankIban(), senderUser.getBankBic());
         senderBank.setAccountName(senderUser.getBankName());
@@ -808,7 +812,7 @@ public class EInvoiceUtils {
         // Seller (TradeParty)
         TradeParty sender = invoice.getSender();
         if (sender != null) {
-            html.append("<h2>Rechnungsabsender</h2>");
+            html.append("<p>&nbsp;</p><h2>Rechnungsabsender</h2>");
             html.append("<p>").append(sender.getName()).append("</p>");
             html.append("<p>").append(sender.getStreet()).append(sender.getZIP()).append(" ").append(sender.getLocation()).append("</p>");
             if(sender.getTaxID()!=null)
@@ -826,7 +830,7 @@ public class EInvoiceUtils {
         // Buyer (TradeParty)
         TradeParty recipient = invoice.getRecipient();
         if (recipient != null) {
-            html.append("<h2>Rechnungsempf&auml;nger</h2>");
+            html.append("<p>&nbsp;</p><h2>Rechnungsempf&auml;nger</h2>");
             html.append("<p>").append(recipient.getName()).append("</p>");
             html.append("<p>").append(recipient.getStreet()).append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append("</p>");
             if(recipient.getTaxID()!=null)
@@ -842,7 +846,7 @@ public class EInvoiceUtils {
         }
 
         // Invoice Table Header
-        html.append("<h2>Rechnungspositionen</h2>");
+        html.append("<p>&nbsp;</p><h2>Rechnungspositionen</h2>");
         html.append("<table>");
         html.append("<tr>")
             .append("<th>Name</th>")
@@ -884,16 +888,20 @@ public class EInvoiceUtils {
         html.append("</table>");
 
         // Tax and Total Summary
-        html.append("<h2>Gesamt</h2>");
+        html.append("<p>&nbsp;</p><h2>Gesamt</h2>");
         html.append("<p>Netto gesamt: ").append(moneyFormat.format(totalAmount.setScale(2, RoundingMode.HALF_UP))).append(" ").append(invoice.getCurrency()).append("</p>");
         html.append("<p>USt gesamt: ").append(moneyFormat.format(totalTaxAmount.setScale(2, RoundingMode.HALF_UP))).append(" ").append(invoice.getCurrency()).append("</p>");
         html.append("<p class=\"total\">Total: ").append(moneyFormat.format(totalAmount.add(totalTaxAmount).setScale(2, RoundingMode.HALF_UP))).append(" ").append(invoice.getCurrency()).append("</p>");
 
         // Payment Terms
         IZUGFeRDPaymentTerms paymentTerms = invoice.getPaymentTerms();
-        if (paymentTerms != null) {
-            html.append("<h2>Zahlungsbedingungen</h2>");
-            html.append("<p>").append(paymentTerms.getDescription()).append("</p>");
+        String paymentTermsDescription = zii.getPaymentTerms();
+        if (paymentTerms != null || paymentTermsDescription!=null) {
+            html.append("<p>&nbsp;</p><h2>Zahlungsbedingungen</h2>");
+            if(paymentTerms!=null)
+                html.append("<p>").append(paymentTerms.getDescription()).append("</p>");
+            if(paymentTermsDescription!=null)
+                html.append("<p>").append(paymentTermsDescription).append("</p>");
         }
 
         // Footer

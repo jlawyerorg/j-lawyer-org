@@ -4978,6 +4978,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setTotalGross(0f);
             i.setCurrency(currency);
             i.setLastPoolId(pool.getId());
+            i.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
 
             Date paymentDate = new Date();
             LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -5263,6 +5264,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setSmallBusiness(invoice.isSmallBusiness());
             updatedInvoice.setCurrency(invoice.getCurrency());
             updatedInvoice.setSender(invoice.getSender());
+            updatedInvoice.setPaymentType(invoice.getPaymentType());
 
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
@@ -5525,6 +5527,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newInvoice.setPeriodFrom(oldInvoice.getPeriodFrom());
         newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
         newInvoice.setStatus(Invoice.STATUS_NEW);
+        newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
         newInvoice.setTotal(oldInvoice.getTotal());
         newInvoice.setTotalGross(oldInvoice.getTotalGross());
         this.updateInvoice(toCaseId, newInvoice);

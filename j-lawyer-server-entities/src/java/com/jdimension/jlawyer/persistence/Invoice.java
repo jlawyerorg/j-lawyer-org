@@ -705,6 +705,13 @@ public class Invoice implements Serializable {
     // cancelled
     public static final int STATUS_CANCELLED=40;
     
+    public static final String PAYMENTTYPE_DIRECTDEBIT="DIRECTDEBIT";
+    public static final String PAYMENTTYPE_BANKTRANSFER="BANKTRANSFER";
+    public static final String PAYMENTTYPE_OTHER="OTHER";
+    
+    public static List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_BANKTRANSFER, PAYMENTTYPE_DIRECTDEBIT, PAYMENTTYPE_OTHER);
+    
+    
     protected static long serialVersionUID = 1L;
     
     @Id
@@ -773,6 +780,9 @@ public class Invoice implements Serializable {
     
     @Column(name = "last_pool_id")
     protected String lastPoolId;
+    
+    @Column(name = "payment_type")
+    private String paymentType;
     
     public Invoice() {
     }
@@ -1135,6 +1145,38 @@ public class Invoice implements Serializable {
      */
     public void setElectronicInvoiceDocument(ArchiveFileDocumentsBean electronicInvoiceDocument) {
         this.electronicInvoiceDocument = electronicInvoiceDocument;
+    }
+
+    /**
+     * @return the paymentType
+     */
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    /**
+     * @param paymentType the paymentType to set
+     */
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+    
+    public static String paymentTypeForDisplayValue(String dv) {
+        if("Überweisung".equals(dv))
+            return PAYMENTTYPE_BANKTRANSFER;
+        else if("Lastschrift".equals(dv))
+            return PAYMENTTYPE_DIRECTDEBIT;
+        else
+            return PAYMENTTYPE_OTHER;
+    }
+    
+    public static String paymentTypeDisplayValueForType(String type) {
+        if(PAYMENTTYPE_BANKTRANSFER.equals(type))
+            return "Überweisung";
+        else if(PAYMENTTYPE_DIRECTDEBIT.equals(type))
+            return "Lastschrift";
+        else
+            return "Sonstige";
     }
     
 }
