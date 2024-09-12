@@ -1092,8 +1092,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuBankImport = new javax.swing.JMenuItem();
         mnuZipCodeImport = new javax.swing.JMenuItem();
         mnuAddressImport = new javax.swing.JMenuItem();
-        mnuImportFromSheet = new javax.swing.JMenuItem();
         mnuBeaCourtAddressImport = new javax.swing.JMenuItem();
+        mnuImportFromSheet = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JSeparator();
         mnuExit = new javax.swing.JMenuItem();
         mnuView = new javax.swing.JMenu();
@@ -1330,15 +1330,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuFile.add(mnuAddressImport);
 
-        mnuImportFromSheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
-        mnuImportFromSheet.setText("Import: Einstellungen");
-        mnuImportFromSheet.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuImportFromSheetActionPerformed(evt);
-            }
-        });
-        mnuFile.add(mnuImportFromSheet);
-
         mnuBeaCourtAddressImport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         mnuBeaCourtAddressImport.setText("Import: Gerichtsadressen");
         mnuBeaCourtAddressImport.addActionListener(new java.awt.event.ActionListener() {
@@ -1347,6 +1338,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFile.add(mnuBeaCourtAddressImport);
+
+        mnuImportFromSheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        mnuImportFromSheet.setText("Import / Export: Einstellungen");
+        mnuImportFromSheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuImportFromSheetActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mnuImportFromSheet);
         mnuFile.add(jSeparator3);
 
         mnuExit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/logout.png"))); // NOI18N
