@@ -978,7 +978,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.cmbPaymentMethods.addItem(Invoice.paymentTypeDisplayValueForType(Invoice.PAYMENTTYPE_BANKTRANSFER));
             if (!StringUtils.isEmpty(ad.getSepaReference())) {
                 this.cmbPaymentMethods.addItem(Invoice.paymentTypeDisplayValueForType(Invoice.PAYMENTTYPE_DIRECTDEBIT));
-                this.lblDirectDebit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+                this.lblDirectDebit.setIcon(new javax.swing.ImageIcon(getClass().getResource(ICON_SUCCESS)));
                 if (!StringUtils.isEmpty(ad.getSepaSince())) {
                     this.lblDirectDebit.setText("Es liegt ein Lastschriftmandat vor: " + ad.getSepaReference() + " vom " + ad.getSepaSince());
                 } else {

@@ -709,7 +709,7 @@ public class Invoice implements Serializable {
     public static final String PAYMENTTYPE_BANKTRANSFER="BANKTRANSFER";
     public static final String PAYMENTTYPE_OTHER="OTHER";
     
-    public static List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_BANKTRANSFER, PAYMENTTYPE_DIRECTDEBIT, PAYMENTTYPE_OTHER);
+    public static final List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_BANKTRANSFER, PAYMENTTYPE_DIRECTDEBIT, PAYMENTTYPE_OTHER);
     
     
     protected static long serialVersionUID = 1L;
