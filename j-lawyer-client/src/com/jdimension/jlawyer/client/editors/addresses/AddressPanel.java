@@ -966,6 +966,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtBankName.setText(dto.getBankName());
         this.txtSepaReference.setText(dto.getSepaReference());
         this.txtSepaSince.setText(dto.getSepaSince());
+        this.txtLeitwegId.setText(dto.getLeitwegId());
         this.txtCity.setText(dto.getCity());
         this.txtCompany.setText(dto.getCompany());
         this.txtDepartment.setText(dto.getDepartment());
@@ -1498,6 +1499,10 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         txtRegCourt = new javax.swing.JTextField();
         jLabel37 = new javax.swing.JLabel();
         jLabel38 = new javax.swing.JLabel();
+        jPanel25 = new javax.swing.JPanel();
+        jLabel53 = new javax.swing.JLabel();
+        txtLeitwegId = new javax.swing.JTextField();
+        jLabel54 = new javax.swing.JLabel();
         jPanel18 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -2113,7 +2118,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel20Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtDepartment)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, cmbLegalForm, 0, 1010, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, cmbLegalForm, 0, 1067, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtRegCourt)
                     .add(txtCompany)
                     .add(txtRegNr))
@@ -2144,13 +2149,46 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .addContainerGap())
         );
 
+        jPanel25.setBorder(javax.swing.BorderFactory.createTitledBorder("elektronische Rechnung"));
+
+        jLabel53.setText("Leitweg-ID:");
+
+        jLabel54.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel54.setToolTipText("Die Leitweg-ID ist ein Kennzeichen einer elektronischen Rechnung zur eindeutigen Adressierung von öffentlichen Auftraggebern in Deutschland.");
+
+        org.jdesktop.layout.GroupLayout jPanel25Layout = new org.jdesktop.layout.GroupLayout(jPanel25);
+        jPanel25.setLayout(jPanel25Layout);
+        jPanel25Layout.setHorizontalGroup(
+            jPanel25Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel25Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel53)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(txtLeitwegId)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel54)
+                .addContainerGap())
+        );
+        jPanel25Layout.setVerticalGroup(
+            jPanel25Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel25Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel25Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel53)
+                    .add(txtLeitwegId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel54, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         org.jdesktop.layout.GroupLayout jPanel26Layout = new org.jdesktop.layout.GroupLayout(jPanel26);
         jPanel26.setLayout(jPanel26Layout);
         jPanel26Layout.setHorizontalGroup(
             jPanel26Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel26Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel20, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel26Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel20, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel25, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel26Layout.setVerticalGroup(
@@ -2158,7 +2196,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             .add(jPanel26Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(450, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(419, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Organisation", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_business_black_48dp.png")), jPanel26); // NOI18N
@@ -2589,12 +2629,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel14)
                     .add(txtBankAccount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel51)
-                    .add(txtSepaReference, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(txtSepaSince, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel52)
-                    .add(cmdSelectSepaSince, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdSelectSepaSince, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel51)
+                        .add(txtSepaReference, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(txtSepaSince, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel52)))
                 .addContainerGap())
         );
 
@@ -3768,6 +3809,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JLabel jLabel50;
     private javax.swing.JLabel jLabel51;
     private javax.swing.JLabel jLabel52;
+    private javax.swing.JLabel jLabel53;
+    private javax.swing.JLabel jLabel54;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -3789,6 +3832,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JPanel jPanel22;
     private javax.swing.JPanel jPanel23;
     private javax.swing.JPanel jPanel24;
+    private javax.swing.JPanel jPanel25;
     private javax.swing.JPanel jPanel26;
     private javax.swing.JPanel jPanel27;
     private javax.swing.JPanel jPanel28;
@@ -3849,6 +3893,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JTextField txtFirstName2;
     private javax.swing.JTextField txtInitials;
     protected javax.swing.JTextField txtInsuranceNumber;
+    private javax.swing.JTextField txtLeitwegId;
     protected javax.swing.JTextField txtMobile;
     protected javax.swing.JTextField txtMotorInsuranceNumber;
     protected javax.swing.JTextField txtName;
@@ -3893,6 +3938,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             return true;
         }
         if (!StringUtils.equals(dto.getSepaSince(), this.txtSepaSince.getText())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getLeitwegId(), this.txtLeitwegId.getText())) {
             return true;
         }
         if (!StringUtils.equals(dto.getCity(), this.txtCity.getText())) {
@@ -4072,6 +4120,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         adr.setBankName(this.txtBankName.getText());
         adr.setSepaReference(this.txtSepaReference.getText());
         adr.setSepaSince(this.txtSepaSince.getText());
+        adr.setLeitwegId(this.txtLeitwegId.getText());
         adr.setCity(this.txtCity.getText());
         adr.setCompany(this.txtCompany.getText());
         adr.setDepartment(this.txtDepartment.getText());

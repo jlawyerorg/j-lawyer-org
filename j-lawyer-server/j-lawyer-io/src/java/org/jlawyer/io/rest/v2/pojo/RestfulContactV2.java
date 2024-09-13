@@ -708,8 +708,9 @@ public class RestfulContactV2 {
     private String bankName=null;
     private String bankCode=null;
     private String bankAccount=null;
-    private String sepaReference;
-    private String sepaSince;
+    private String sepaReference=null;
+    private String sepaSince=null;
+    private String leitwegId=null;
     private String email=null;
     private String website=null;
     private String creator=null;
@@ -754,6 +755,7 @@ public class RestfulContactV2 {
         ad.setBankName(this.getBankName());
         ad.setSepaReference(this.getSepaReference());
         ad.setSepaSince(this.getSepaSince());
+        ad.setLeitwegId(this.getLeitwegId());
         ad.setBeaSafeId(this.getBeaSafeId());
         ad.setBirthDate(this.getBirthDate());
         ad.setCity(this.getCity());
@@ -824,6 +826,7 @@ public class RestfulContactV2 {
         ad.setBankName(a.getBankName());
         ad.setSepaReference(a.getSepaReference());
         ad.setSepaSince(a.getSepaSince());
+        ad.setLeitwegId(a.getLeitwegId());
         ad.setBeaSafeId(a.getBeaSafeId());
         ad.setBirthDate(a.getBirthDate());
         ad.setCity(a.getCity());
@@ -1815,6 +1818,20 @@ public class RestfulContactV2 {
      */
     public void setSepaSince(String sepaSince) {
         this.sepaSince = sepaSince;
+    }
+
+    /**
+     * @return the leitwegId
+     */
+    public String getLeitwegId() {
+        return leitwegId;
+    }
+
+    /**
+     * @param leitwegId the leitwegId to set
+     */
+    public void setLeitwegId(String leitwegId) {
+        this.leitwegId = leitwegId;
     }
     
     

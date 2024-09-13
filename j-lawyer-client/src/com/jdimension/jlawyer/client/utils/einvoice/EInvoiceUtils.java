@@ -715,7 +715,7 @@ public class EInvoiceUtils {
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         
         org.mustangproject.Invoice i = new org.mustangproject.Invoice();
-        //i.setReferenceNumber("991-01484-64")//leitweg-id
+        
         i.setNumber(caseInvoice.getInvoiceNumber());
         i.setDueDate(caseInvoice.getDueDate());
         i.setIssueDate(caseInvoice.getCreationDate());
@@ -779,6 +779,10 @@ public class EInvoiceUtils {
             throw new Exception("Informationen des Rechnungsempfängers unvollständig: Adresse.");
         }
         i.setRecipient(new TradeParty(caseInvoice.getContact().toDisplayName(), caseInvoice.getContact().getStreet() + " " + caseInvoice.getContact().getStreetNumber(), caseInvoice.getContact().getZipCode(), caseInvoice.getContact().getCity(), "DE"));
+        
+        if(!StringUtils.isEmpty(caseInvoice.getContact().getLeitwegId()))
+            i.setReferenceNumber(caseInvoice.getContact().getLeitwegId());
+        
 
         List<InvoicePosition> positions = null;
         try {

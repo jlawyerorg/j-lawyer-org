@@ -792,6 +792,9 @@ public class AddressBean implements Serializable {
     @Column(name = "sepa_since")
     private String sepaSince;
     
+    @Column(name = "leitweg_id")
+    private String leitwegId;
+    
     @Column(name = "email")
     private String email;
     @Column(name = "website")
@@ -1842,6 +1845,20 @@ public class AddressBean implements Serializable {
      */
     public void setSepaSince(String sepaSince) {
         this.sepaSince = sepaSince;
+    }
+
+    /**
+     * @return the leitwegId
+     */
+    public String getLeitwegId() {
+        return leitwegId;
+    }
+
+    /**
+     * @param leitwegId the leitwegId to set
+     */
+    public void setLeitwegId(String leitwegId) {
+        this.leitwegId = leitwegId;
     }
     
 }
