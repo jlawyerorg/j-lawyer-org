@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.imports;
 
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.List;
 
@@ -716,5 +717,7 @@ public interface ImporterPersistence {
     public boolean eventTemplateExists(String name);
     public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays);
     public List<CalendarEntryTemplate> getEventTemplates();
+    
+    public List<FormTypeBean> getFormTypes();
     
 }

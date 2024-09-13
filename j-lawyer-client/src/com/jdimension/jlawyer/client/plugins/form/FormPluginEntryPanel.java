@@ -687,7 +687,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     
 
     /**
-     * Creates new form HitPanel
+     * Creates new form FormPluginEntryPanel
      * @param parent
      * @param container
      * @param callback
@@ -706,6 +706,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     public void setEntry(FormPlugin plugin) {
         this.plugin = plugin;
         this.lblName.setText(plugin.getName());
+        this.lblId.setText(plugin.getId());
         this.lblDescription.setText(plugin.getDescription());
         this.lblVersionAvailable.setText(plugin.getVersionInRepository());
         this.lblVersionInstalled.setText(plugin.getVersionInstalled());
@@ -765,6 +766,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         lblVersionInstalled = new javax.swing.JLabel();
         cmdSettings = new javax.swing.JButton();
+        lblId = new javax.swing.JLabel();
 
         mnuDownload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         mnuDownload.setText("installieren");
@@ -784,7 +786,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         });
         actionPopup.add(mnuRemove);
 
-        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getSize()+2f));
+        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD, lblName.getFont().getSize()+2));
         lblName.setText("Pluginname");
         lblName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -830,6 +832,9 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblId.setFont(lblId.getFont().deriveFont(lblId.getFont().getStyle() | java.awt.Font.BOLD));
+        lblId.setText("ID");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -849,9 +854,11 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
                         .addComponent(lblUpdated)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblVersionInstalled)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 133, Short.MAX_VALUE)
                         .addComponent(cmdSettings))
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblId)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblType))
@@ -877,7 +884,8 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblDescription)
-                            .addComponent(lblType))))
+                            .addComponent(lblType)
+                            .addComponent(lblId))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblState)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -972,6 +980,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdSettings;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblDescription;
+    private javax.swing.JLabel lblId;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblState;
     private javax.swing.JLabel lblType;

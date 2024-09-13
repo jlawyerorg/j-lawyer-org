@@ -783,6 +783,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @EJB
     private FormsServiceLocal formsService;
     @EJB
+    private FormTypeBeanFacadeLocal formTypes;
+    @EJB
     private AssistantConfigFacadeLocal assistantFacade;
     @EJB
     private DocumentNameTemplateFacadeLocal documentNameTemplates;
@@ -2504,7 +2506,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             if (exportCurrentData) {
                 // export into the template
-                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
+                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes);
                 OdfImporterExporter importer = new OdfImporterExporter(templateBytes, persister);
                 return importer.exportSheets(importer.listSheets());
             } else {
@@ -2530,7 +2532,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if (dryRun) {
             persister = new DummyPersistence();
         } else {
-            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates);
+            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes);
         }
         OdfImporterExporter importer = new OdfImporterExporter(odsData, persister);
         return importer.importSheets(sheetNames, dryRun);

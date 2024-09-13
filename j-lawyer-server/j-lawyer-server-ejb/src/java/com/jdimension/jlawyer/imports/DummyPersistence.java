@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.imports;
 
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.List;
@@ -836,6 +837,11 @@ public class DummyPersistence implements ImporterPersistence {
 
     @Override
     public List<PartyTypeBean> getPartyTypes() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<FormTypeBean> getFormTypes() {
         return new ArrayList<>();
     }
     

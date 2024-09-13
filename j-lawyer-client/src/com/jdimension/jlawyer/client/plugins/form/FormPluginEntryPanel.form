@@ -63,10 +63,12 @@
                       <Component id="lblUpdated" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblVersionInstalled" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="136" max="32767" attributes="0"/>
+                      <EmptySpace pref="133" max="32767" attributes="0"/>
                       <Component id="cmdSettings" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lblId" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblDescription" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblType" min="-2" max="-2" attributes="0"/>
@@ -99,6 +101,7 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblDescription" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblType" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblId" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -114,7 +117,7 @@
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font component="lblName" property="font" relativeSize="true" size="2"/>
+            <Font bold="true" component="lblName" property="font" relativeSize="true" size="2"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Pluginname"/>
@@ -183,6 +186,16 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSettingsActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblId">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblId" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" value="ID"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.imports;
 
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
@@ -696,6 +697,7 @@ public class OdfImporterExporter {
     public static final String TABLE_PARTYTYPES="Konfiguration-Beteiligte-Beteiligtentypen";
     
     public static final String TABLE_CALENDAR_EVENTTEMPLATES="Konfiguration-Kalender-Ereignisvorlagen";
+    public static final String TABLE_CASE_FORMS="Konfiguration-Akte-Falldatenblätter";
     
     private SpreadsheetDocument ods=null;
     private ImporterPersistence persister=null;
@@ -792,6 +794,9 @@ public class OdfImporterExporter {
         
         if (TABLE_CALENDAR_EVENTTEMPLATES.equals(sheet.getTableName())) {
             exportConfigurationEventTemplate(sheet, columnMap);
+        }
+        if (TABLE_CASE_FORMS.equals(sheet.getTableName())) {
+            exportConfigurationCaseForms(sheet, columnMap);
         }
     }
     
@@ -1063,11 +1068,15 @@ public class OdfImporterExporter {
     private void importConfigurationEventTemplate(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
         String name = getCellValueByColumnName(row, columnMap, "Name", logs);
         String description = getCellValueByColumnName(row, columnMap, "Beschreibung", logs);
+        if(description==null)
+            description="";
         String relatedString = getCellValueByColumnName(row, columnMap, "zweiten Eintrag automatisch erstellen", logs);
         String relatedName = getCellValueByColumnName(row, columnMap, "Name zweiter Eintrag", logs);
         String relatedDescription = getCellValueByColumnName(row, columnMap, "Beschreibung zweiter Eintrag", logs);
+        if(relatedDescription==null)
+            relatedDescription="";
         String offsetDaysNumber = getCellValueByColumnName(row, columnMap, "Versatz in Tagen", logs);
-        if(ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(description) || ServerStringUtils.isEmpty(relatedString)) {
+        if(ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(relatedString)) {
             logs.add(new ImportLogEntry(ImportLogEntry.TYPE_ERROR, "Ereignisvorlage unvollständig: " + name + " / " + description + " / " + relatedString));
             return;
         }
@@ -1075,7 +1084,7 @@ public class OdfImporterExporter {
         boolean related=false;
         if("1".equals(relatedString) || "ja".equals(relatedString) || "true".equals(relatedString)) {
             related=true;
-            if (ServerStringUtils.isEmpty(name) || ServerStringUtils.isEmpty(description) || ServerStringUtils.isEmpty(relatedString)) {
+            if (ServerStringUtils.isEmpty(relatedName) || ServerStringUtils.isEmpty(relatedString)) {
                 logs.add(new ImportLogEntry(ImportLogEntry.TYPE_ERROR, "Ereignisvorlage (zweiter Eintrag) unvollständig: " + relatedName + " / " + relatedDescription + " / " + offsetDaysNumber));
                 return;
             }
@@ -1206,6 +1215,17 @@ public class OdfImporterExporter {
             setCellValueByColumnName(newRow, columnMap, "Platzhalter", pt.getPlaceHolder());
             setCellValueByColumnName(newRow, columnMap, "Farbwert", "" + pt.getColor());
             setCellValueByColumnName(newRow, columnMap, "Sequenznummer", "" + pt.getSequenceNumber());
+            
+            resetRowStyling(newRow);
+        }
+    }
+
+    private void exportConfigurationCaseForms(Table t, Map<String, Integer> columnMap) {
+        for(FormTypeBean ft: persister.getFormTypes()) {
+            Row newRow = t.appendRow();
+
+            // Set values for the row based on column name
+            setCellValueByColumnName(newRow, columnMap, "ID", ft.getId());
             
             resetRowStyling(newRow);
         }

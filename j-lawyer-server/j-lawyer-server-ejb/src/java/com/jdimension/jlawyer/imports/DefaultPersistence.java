@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.imports;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplateFacadeLocal;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
+import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -686,12 +688,14 @@ public class DefaultPersistence implements ImporterPersistence {
     private ServerSettingsBeanFacadeLocal set=null;
     private PartyTypeBeanFacadeLocal partyTypes=null;
     private CalendarEntryTemplateFacadeLocal eventTemplates=null;
+    private FormTypeBeanFacadeLocal forms=null;
     
-    public DefaultPersistence(SystemManagementLocal sys, ServerSettingsBeanFacadeLocal set, PartyTypeBeanFacadeLocal partyTypes, CalendarEntryTemplateFacadeLocal eventTemplates) {
+    public DefaultPersistence(SystemManagementLocal sys, ServerSettingsBeanFacadeLocal set, PartyTypeBeanFacadeLocal partyTypes, CalendarEntryTemplateFacadeLocal eventTemplates, FormTypeBeanFacadeLocal forms) {
         this.sys=sys;
         this.set=set;
         this.partyTypes=partyTypes;
         this.eventTemplates=eventTemplates;
+        this.forms=forms;
     }
 
     private boolean tagExists(String tagName, String optionGroup) {
@@ -934,6 +938,11 @@ public class DefaultPersistence implements ImporterPersistence {
         t.setRelatedOffsetDays(offsetDays);
         this.eventTemplates.create(t);
         return true;
+    }
+
+    @Override
+    public List<FormTypeBean> getFormTypes() {
+        return this.forms.findAll();
     }
     
 }
