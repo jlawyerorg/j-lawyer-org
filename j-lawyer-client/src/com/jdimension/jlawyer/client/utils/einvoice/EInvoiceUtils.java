@@ -843,7 +843,7 @@ public class EInvoiceUtils {
         if (sender != null) {
             html.append("<p>&nbsp;</p><h2>Rechnungsabsender</h2>");
             html.append("<p>").append(sender.getName()).append("</p>");
-            html.append("<p>").append(sender.getStreet()).append(sender.getZIP()).append(" ").append(sender.getLocation()).append("</p>");
+            html.append("<p>").append(sender.getStreet()).append(" ").append(sender.getZIP()).append(" ").append(sender.getLocation()).append("</p>");
             if (sender.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(sender.getTaxID()).append("</p>");
             }
