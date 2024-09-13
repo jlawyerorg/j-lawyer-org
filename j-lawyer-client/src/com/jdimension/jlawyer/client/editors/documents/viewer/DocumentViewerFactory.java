@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.awt.Dimension;
@@ -759,6 +760,20 @@ public class DocumentViewerFactory {
             xjp.setPreferredSize(new Dimension(width, height));
             xjp.showContent(id, content);
             return xjp;
+        } else if (lFileName.endsWith(".xml") && EInvoiceUtils.isEInvoice(new String(content))) {
+            XRechnungPanel xmlp = new XRechnungPanel();
+            xmlp.setSize(new Dimension(width, height));
+            xmlp.setMaximumSize(new Dimension(width, height));
+            xmlp.setPreferredSize(new Dimension(width, height));
+            xmlp.showContent(id, content);
+            return xmlp;
+        } else if (lFileName.endsWith(".xml")) {
+            XmlPanel xmlp = new XmlPanel();
+            xmlp.setSize(new Dimension(width, height));
+            xmlp.setMaximumSize(new Dimension(width, height));
+            xmlp.setPreferredSize(new Dimension(width, height));
+            xmlp.showContent(id, content);
+            return xmlp;
         } else if (lFileName.endsWith(".eml")) {
             try {
                 InputStream source = new ByteArrayInputStream(content);

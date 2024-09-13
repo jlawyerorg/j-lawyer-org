@@ -800,6 +800,13 @@ public class ThreadUtils {
         });
     }
     
+    public static void updateTextPane(final JTextPane textPane, final String text) {
+        SwingUtilities.invokeLater(() -> {
+            textPane.setText(text);
+            textPane.setCaretPosition(0);
+        });
+    }
+    
     public static void updateEditorPane(final JEditorPane ep, final String text) {
         SwingUtilities.invokeLater(() -> {
             ep.setText(text);

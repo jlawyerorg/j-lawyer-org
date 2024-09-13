@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -680,9 +681,8 @@ import org.mustangproject.Invoice;
 import org.mustangproject.Item;
 import org.mustangproject.Product;
 import org.mustangproject.TradeParty;
-import org.mustangproject.ZUGFeRD.IZUGFeRDExportableItem;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
-import org.mustangproject.ZUGFeRD.IZUGFeRDTradeSettlement;
+import org.mustangproject.ZUGFeRD.ZUGFeRDImporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 
 /**
@@ -692,6 +692,24 @@ import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 public class EInvoiceUtils {
 
     private static final Logger log = Logger.getLogger(EInvoiceUtils.class.getName());
+    private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+
+    public static boolean isEInvoice(String xml) {
+
+        try {
+            // Convert the XML string to an input stream
+            ByteArrayInputStream xmlInput = new ByteArrayInputStream(xml.getBytes());
+
+            // Create an instance of ZUGFeRDImporter
+            ZUGFeRDImporter importer = new ZUGFeRDImporter(xmlInput);
+
+            // Check if the file is a ZUGFeRD invoice
+            return importer.canParse();
+        } catch (Exception ex) {
+            log.error("Error checking XML for electronic invoice information", ex);
+            return false;
+        }
+    }
 
     public static org.mustangproject.Invoice getEInvoice(com.jdimension.jlawyer.persistence.Invoice caseInvoice, AppUserBean senderUser) throws Exception {
         org.mustangproject.Invoice i = new org.mustangproject.Invoice();
@@ -724,12 +742,17 @@ public class EInvoiceUtils {
                 || StringUtils.isEmpty(senderUser.getBankIban())) {
             throw new Exception("Informationen des Rechnungssenders unvollständig: Bankverbindung. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen");
         }
-        
-        
-        i.setPaymentTermDescription("zahle einfach irgendwie");
-        
+
+        if (com.jdimension.jlawyer.persistence.Invoice.PAYMENTTYPE_BANKTRANSFER.equals(caseInvoice.getPaymentType())) {
+            i.setPaymentTermDescription("Bitte überweisen Sie den Rechnungsbetrag bis zum " + df.format(caseInvoice.getDueDate()) + ".");
+        } else if (com.jdimension.jlawyer.persistence.Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(caseInvoice.getPaymentType())) {
+            i.setPaymentTermDescription("Den Rechnungsbetrag wird spätestens zum " + df.format(caseInvoice.getDueDate()) + " per Lastschrift (Mandatsreferenz " + caseInvoice.getContact().getSepaReference() + ") von Ihrem Konto " + caseInvoice.getContact().getBankAccount() + " eingezogen.");
+        } else {
+            i.setPaymentTermDescription("Die Rechnung ist zahlbar bis zum " + df.format(caseInvoice.getDueDate()) + ".");
+        }
+
         // zahlung per überweisung
-        BankDetails senderBank=new BankDetails(senderUser.getBankIban(), senderUser.getBankBic());
+        BankDetails senderBank = new BankDetails(senderUser.getBankIban(), senderUser.getBankBic());
         senderBank.setAccountName(senderUser.getBankName());
         sender.addBankDetails(senderBank);
         // zahlug per lastschrift
@@ -775,39 +798,43 @@ public class EInvoiceUtils {
 
         return i;
     }
-    
+
     public static String invoiceToHTML(ZUGFeRDInvoiceImporter zii) throws Exception {
-        
-        Invoice invoice=zii.extractInvoice();
-        
+
+        Invoice invoice = zii.extractInvoice();
+
         StringBuilder html = new StringBuilder();
-        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-        DecimalFormat moneyFormat=new DecimalFormat("0.00");
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        DecimalFormat moneyFormat = new DecimalFormat("0.00");
 
         // HTML header
         html.append("<html><head><title>Rechnung</title>");
         html.append("<style>")
-            .append("body { font-family: Arial, sans-serif; }")
-            .append("table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }")
-            .append("th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }")
-            .append("th { background-color: #f2f2f2; }")
-            .append(".total { font-weight: bold; }")
-            .append("</style>")
-            .append("</head><body>");
+                .append("body { font-family: Arial, sans-serif; }")
+                .append("table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }")
+                .append("th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }")
+                .append("th { background-color: #f2f2f2; }")
+                .append(".total { font-weight: bold; }")
+                .append("</style>")
+                .append("</head><body>");
 
         // Invoice Header
         html.append("<h1>Rechnung ").append(invoice.getNumber()).append("</h1>");
-        if(invoice.getIssueDate()!=null)
+        if (invoice.getIssueDate() != null) {
             html.append("<p>erstellt: ").append(df.format(invoice.getIssueDate())).append("</p>");
-        if(invoice.getDueDate()!=null)
+        }
+        if (invoice.getDueDate() != null) {
             html.append("<p>fällig: ").append(df.format(invoice.getDueDate())).append("</p>");
+        }
 
         // Delivery period
-        if(invoice.getDeliveryDate()!=null)
+        if (invoice.getDeliveryDate() != null) {
             html.append("<p>Leistungsdatum: ").append(invoice.getDeliveryDate()).append("</p>");
-        if(invoice.getDetailedDeliveryPeriodFrom()!=null && invoice.getDetailedDeliveryPeriodTo()!=null)
+        }
+        if (invoice.getDetailedDeliveryPeriodFrom() != null && invoice.getDetailedDeliveryPeriodTo() != null) {
             html.append("<p>Leistungszeitraum: ").append(df.format(invoice.getDetailedDeliveryPeriodFrom()))
-                .append(" - ").append(df.format(invoice.getDetailedDeliveryPeriodTo())).append("</p>");
+                    .append(" - ").append(df.format(invoice.getDetailedDeliveryPeriodTo())).append("</p>");
+        }
 
         // Seller (TradeParty)
         TradeParty sender = invoice.getSender();
@@ -815,13 +842,15 @@ public class EInvoiceUtils {
             html.append("<p>&nbsp;</p><h2>Rechnungsabsender</h2>");
             html.append("<p>").append(sender.getName()).append("</p>");
             html.append("<p>").append(sender.getStreet()).append(sender.getZIP()).append(" ").append(sender.getLocation()).append("</p>");
-            if(sender.getTaxID()!=null)
+            if (sender.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(sender.getTaxID()).append("</p>");
-            if(sender.getVATID()!=null)
+            }
+            if (sender.getVATID() != null) {
                 html.append("<p>USt-ID: ").append(sender.getVATID()).append("</p>");
-            if(sender.getBankDetails()!=null) {
-                List<BankDetails> bdl=sender.getBankDetails();
-                for(BankDetails bd: bdl) {
+            }
+            if (sender.getBankDetails() != null) {
+                List<BankDetails> bdl = sender.getBankDetails();
+                for (BankDetails bd : bdl) {
                     html.append("<p>Bank: ").append(StringUtils.nonNull(bd.getAccountName())).append(" - ").append("BIC: ").append(StringUtils.nonNull(bd.getBIC())).append(" ").append("IBAN: ").append(bd.getIBAN()).append("</p>");
                 }
             }
@@ -833,14 +862,17 @@ public class EInvoiceUtils {
             html.append("<p>&nbsp;</p><h2>Rechnungsempf&auml;nger</h2>");
             html.append("<p>").append(recipient.getName()).append("</p>");
             html.append("<p>").append(recipient.getStreet()).append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append("</p>");
-            if(recipient.getTaxID()!=null)
+            if (recipient.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(recipient.getTaxID()).append("</p>");
-            if(recipient.getVATID()!=null)
+            }
+            if (recipient.getVATID() != null) {
                 html.append("<p>USt-ID: ").append(recipient.getVATID()).append("</p>");
-            if(recipient.getBankDetails()!=null) {
-                List<BankDetails> bdl=recipient.getBankDetails();
-                for(BankDetails bd: bdl)
+            }
+            if (recipient.getBankDetails() != null) {
+                List<BankDetails> bdl = recipient.getBankDetails();
+                for (BankDetails bd : bdl) {
                     html.append("<p>Bank: ").append(StringUtils.nonNull(bd.getAccountName())).append(" - ").append("BIC: ").append(StringUtils.nonNull(bd.getBIC())).append(" ").append("IBAN: ").append(bd.getIBAN()).append("</p>");
+                }
             }
             //html.append("<p>Debit Details: ").append(recipient.getDebitorID()).append("</p>");
         }
@@ -849,17 +881,17 @@ public class EInvoiceUtils {
         html.append("<p>&nbsp;</p><h2>Rechnungspositionen</h2>");
         html.append("<table>");
         html.append("<tr>")
-            .append("<th>Name</th>")
-            .append("<th>Beschreibung</th>")
-            .append("<th>Menge</th>")
-            .append("<th>Einzel</th>")
-            .append("<th>Gesamt</th>")
-            .append("<th>USt</th>")
-            .append("<th>USt-Betrag</th>")
-            .append("</tr>");
+                .append("<th>Name</th>")
+                .append("<th>Beschreibung</th>")
+                .append("<th>Menge</th>")
+                .append("<th>Einzel</th>")
+                .append("<th>Gesamt</th>")
+                .append("<th>USt</th>")
+                .append("<th>USt-Betrag</th>")
+                .append("</tr>");
 
         // Invoice Items
-        List<Item> items=zii.getLineItemList();
+        List<Item> items = zii.getLineItemList();
         BigDecimal totalTaxAmount = BigDecimal.ZERO;
         BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -867,7 +899,7 @@ public class EInvoiceUtils {
             BigDecimal quantity = item.getQuantity();
             BigDecimal price = item.getPrice();
             BigDecimal total = price.multiply(quantity);
-            
+
             BigDecimal tax = item.getProduct().getVATPercent();
             BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100));
 
@@ -875,14 +907,14 @@ public class EInvoiceUtils {
             totalAmount = totalAmount.add(total);
 
             html.append("<tr>")
-                .append("<td>").append(item.getProduct().getName()).append("</td>")
-                .append("<td>").append(item.getProduct().getDescription()).append("</td>")
-                .append("<td align=\"right\">").append(moneyFormat.format(quantity)).append("</td>")
-                .append("<td align=\"right\">").append(moneyFormat.format(price)).append("</td>")
-                .append("<td align=\"right\">").append(moneyFormat.format(total)).append("</td>")
-                .append("<td align=\"right\">").append(item.getProduct().getVATPercent()).append("%</td>")
-                .append("<td align=\"right\">").append(moneyFormat.format(taxAmount)).append("</td>")
-                .append("</tr>");
+                    .append("<td>").append(item.getProduct().getName()).append("</td>")
+                    .append("<td>").append(item.getProduct().getDescription()).append("</td>")
+                    .append("<td align=\"right\">").append(moneyFormat.format(quantity)).append("</td>")
+                    .append("<td align=\"right\">").append(moneyFormat.format(price)).append("</td>")
+                    .append("<td align=\"right\">").append(moneyFormat.format(total)).append("</td>")
+                    .append("<td align=\"right\">").append(item.getProduct().getVATPercent()).append("%</td>")
+                    .append("<td align=\"right\">").append(moneyFormat.format(taxAmount)).append("</td>")
+                    .append("</tr>");
         }
 
         html.append("</table>");
@@ -896,12 +928,14 @@ public class EInvoiceUtils {
         // Payment Terms
         IZUGFeRDPaymentTerms paymentTerms = invoice.getPaymentTerms();
         String paymentTermsDescription = zii.getPaymentTerms();
-        if (paymentTerms != null || paymentTermsDescription!=null) {
+        if (paymentTerms != null || paymentTermsDescription != null) {
             html.append("<p>&nbsp;</p><h2>Zahlungsbedingungen</h2>");
-            if(paymentTerms!=null)
+            if (paymentTerms != null) {
                 html.append("<p>").append(paymentTerms.getDescription()).append("</p>");
-            if(paymentTermsDescription!=null)
+            }
+            if (paymentTermsDescription != null) {
                 html.append("<p>").append(paymentTermsDescription).append("</p>");
+            }
         }
 
         // Footer
