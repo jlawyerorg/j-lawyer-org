@@ -757,7 +757,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         for (AppOptionGroupBean tag : settings.getArchiveFileTagDtos()) {
             allTags.add(tag.getValue());
         }
-        Collections.sort(allTags);
+        StringUtils.sortIgnoreCase(allTags);
         for (String s : allTags) {
             dm.addElement(s);
         }
