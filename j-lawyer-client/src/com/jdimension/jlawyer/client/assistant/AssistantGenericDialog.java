@@ -707,6 +707,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private AssistantInputAdapter inputAdapter = null;
     
     private AiRequestStatus result=null;
+    
+    private boolean interrupted=false;
 
     /**
      * Creates new form GenericAssistantDialog
@@ -819,6 +821,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         pnlTitle = new javax.swing.JPanel();
         lblRequestType = new javax.swing.JLabel();
         cmdSubmit = new javax.swing.JButton();
+        cmdInterrupt = new javax.swing.JButton();
         progress = new javax.swing.JProgressBar();
         pnlParameters = new javax.swing.JPanel();
         splitInputOutput = new javax.swing.JSplitPane();
@@ -886,6 +889,13 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
+        cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdInterruptActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
         pnlTitle.setLayout(pnlTitleLayout);
         pnlTitleLayout.setHorizontalGroup(
@@ -895,16 +905,20 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdSubmit)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdInterrupt)
                 .addContainerGap())
         );
         pnlTitleLayout.setVerticalGroup(
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlTitleLayout.createSequentialGroup()
+            .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblRequestType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlTitleLayout.createSequentialGroup()
-                        .addComponent(cmdSubmit)
+                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlTitleLayout.createSequentialGroup()
+                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdInterrupt)
+                            .addComponent(cmdSubmit))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1089,6 +1103,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private void startBackgroundTask() {
 
         this.taResult.setText("");
+        this.interrupted=false;
+        
+        this.cmdSubmit.setEnabled(false);
+        this.cmdInterrupt.setEnabled(true);
+        
         ((DefaultListModel)this.lstOutputFiles.getModel()).removeAllElements();
         
         List<ParameterData> params = new ArrayList<>();
@@ -1133,6 +1152,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
                             }
                             taResult.setText(resultString.toString());
+                            if(interrupted)
+                                break;
                         }
                         status.setResponse(res);
                         resultRef.set(status);
@@ -1143,6 +1164,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 } catch (Throwable t) {
                     log.error("Error processing AI request", t);
                 }
+                cmdSubmit.setEnabled(true);
+                cmdInterrupt.setEnabled(false);
                 return null;
             }
 
@@ -1204,6 +1227,10 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdProcessOutputActionPerformed
 
+    private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
+        this.interrupted=true;
+    }//GEN-LAST:event_cmdInterruptActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1248,6 +1275,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdInterrupt;
     private javax.swing.JButton cmdProcessOutput;
     private javax.swing.JButton cmdSubmit;
     private javax.swing.JPanel jPanel1;

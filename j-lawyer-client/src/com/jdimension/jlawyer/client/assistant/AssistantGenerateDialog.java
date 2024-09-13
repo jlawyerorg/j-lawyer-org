@@ -725,6 +725,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
     private AiCapability generateCapability = null;
     private AssistantConfig generateConfig = null;
+    
+    private boolean interrupted=false;
 
     /**
      * Creates new form AddVoiceMemoDialog
@@ -864,6 +866,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         jScrollPane2 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         cmdExecutePrompt = new javax.swing.JButton();
+        cmdInterrupt = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taResult = new javax.swing.JTextArea();
 
@@ -971,6 +974,13 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
             }
         });
 
+        cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
+        cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdInterruptActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -979,9 +989,13 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                 .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 748, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdPrompt)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(cmdPrompt)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                            .add(cmdExecutePrompt)
+                            .addContainerGap()))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .add(cmdExecutePrompt)
+                        .add(cmdInterrupt)
                         .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
@@ -992,7 +1006,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                         .add(cmdPrompt)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdExecutePrompt)
-                        .add(0, 32, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdInterrupt)
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1164,6 +1180,11 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
 
+            this.interrupted=false;
+        
+            this.cmdExecutePrompt.setEnabled(false);
+            this.cmdInterrupt.setEnabled(true);
+            
             List<ParameterData> params = new ArrayList<>();
             if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
                 params = getParameters(transcribeCapability);
@@ -1205,6 +1226,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                                 }
                                 taResult.setText(taResultString);
                                 taResult.insert(resultString.toString(), insertPosition);
+                                if(interrupted)
+                                    break;
                             }
                             status.setResponse(res);
                         } else {
@@ -1214,6 +1237,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     } catch (Throwable t) {
                         log.error("Error processing AI request", t);
                     }
+                    cmdExecutePrompt.setEnabled(true);
+                    cmdInterrupt.setEnabled(false);
                     return null;
                 }
 
@@ -1317,6 +1342,10 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         }
     }//GEN-LAST:event_cmdTranslateActionPerformed
 
+    private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
+        this.interrupted=true;
+    }//GEN-LAST:event_cmdInterruptActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1330,6 +1359,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdExecutePrompt;
+    private javax.swing.JButton cmdInterrupt;
     private javax.swing.JButton cmdPrompt;
     private javax.swing.JButton cmdRecord;
     private javax.swing.JButton cmdTranslate;
