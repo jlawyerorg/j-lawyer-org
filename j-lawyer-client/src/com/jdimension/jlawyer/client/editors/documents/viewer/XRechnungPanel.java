@@ -764,7 +764,6 @@ public class XRechnungPanel extends javax.swing.JPanel implements PreviewPanel {
                 ByteArrayInputStream xmlInput = new ByteArrayInputStream(content);
 
                 // Create an instance of ZUGFeRDImporter
-                //ZUGFeRDImporter zii = new ZUGFeRDImporter(xmlInput);
                 ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
 
                 if (zii.canParse()) {

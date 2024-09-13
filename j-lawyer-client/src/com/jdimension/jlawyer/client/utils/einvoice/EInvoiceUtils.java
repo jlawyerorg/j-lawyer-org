@@ -692,8 +692,7 @@ import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 public class EInvoiceUtils {
 
     private static final Logger log = Logger.getLogger(EInvoiceUtils.class.getName());
-    private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-
+    
     public static boolean isEInvoice(String xml) {
 
         try {
@@ -712,6 +711,9 @@ public class EInvoiceUtils {
     }
 
     public static org.mustangproject.Invoice getEInvoice(com.jdimension.jlawyer.persistence.Invoice caseInvoice, AppUserBean senderUser) throws Exception {
+        
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        
         org.mustangproject.Invoice i = new org.mustangproject.Invoice();
         //i.setReferenceNumber("991-01484-64")//leitweg-id
         i.setNumber(caseInvoice.getInvoiceNumber());
