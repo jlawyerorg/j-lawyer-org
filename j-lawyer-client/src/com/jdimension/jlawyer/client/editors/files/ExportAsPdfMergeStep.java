@@ -1123,6 +1123,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             if (shortenedFileName.length() > 70) {
                 shortenedFileName = shortenedFileName.substring(0, 69);
             }
+            shortenedFileName=filterTextForWinAnsi(shortenedFileName);
             contentStream.showText(shortenedFileName + " ...... " + (destinationPageIndex + 1)); // Displayed page number
             contentStream.endText();
 
@@ -1131,6 +1132,26 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         }
 
         contentStream.close();
+    }
+    
+    // Function to filter out unsupported characters for WinAnsiEncoding
+    private static String filterTextForWinAnsi(String text) {
+        StringBuilder filteredText = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            if (isWinAnsiSupported(c)) {
+                filteredText.append(c);
+            } else {
+                // Replace unsupported characters with "?" or skip them
+                filteredText.append("?");
+            }
+        }
+        return filteredText.toString();
+    }
+
+    // Function to check if the character is supported in WinAnsiEncoding
+    private static boolean isWinAnsiSupported(char c) {
+        return (c >= 32 && c <= 126) || // Basic ASCII characters
+               (c >= 160 && c <= 255);  // Additional Latin characters in WinAnsiEncoding
     }
 
     private static File createTempFileFromPDDocument(PDDocument document) throws IOException {
