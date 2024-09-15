@@ -669,6 +669,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.glassfish.jersey.client.JerseyWebTarget;
@@ -694,14 +695,18 @@ public class AssistantAPI {
     private String baseUri = null;
     private String user = null;
     private String password = null;
+    private int connectTimeout=5;
+    private int readTimeout=60;
 
-    public AssistantAPI(String baseUri, String user, String password) {
+    public AssistantAPI(String baseUri, String user, String password, int connectTimeout, int readTimeout) {
         this.baseUri = baseUri;
         if (!this.baseUri.endsWith("/")) {
             this.baseUri = this.baseUri + "/";
         }
         this.user = user;
         this.password = password;
+        this.connectTimeout=connectTimeout;
+        this.readTimeout=readTimeout;
     }
 
     private String getAuthString() {
@@ -738,6 +743,8 @@ public class AssistantAPI {
         String authStringEnc = this.getAuthString();
 
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
         JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/request-submit");
 
         StringBuilder jsonQuery = new StringBuilder();
@@ -901,6 +908,8 @@ public class AssistantAPI {
 
     public List<AiCapability> getCapabilities() throws AssistantException {
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
         JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/capabilities");
         List<AiCapability> allCapabilities = new ArrayList<>();
         try {
@@ -1002,6 +1011,8 @@ public class AssistantAPI {
 
     public AiResponse getRequestStatus(String requestId) throws AssistantException {
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
         JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/request-status/" + requestId);
 
         AiResponse resp = new AiResponse();
