@@ -1200,6 +1200,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentText=ed.getSelectedText();
+        if(StringUtils.isEmpty(ed.getSelectedText()))
+            contentText=ed.getText();
         if(ed.getContentType().toLowerCase().contains("html"))
             contentText=EmailUtils.html2Text(contentText);
         
@@ -1210,16 +1212,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         i.setBase64(false);
         i.setStringData(contentText);
         
-        i.setStringData(ed.getText());
+        //i.setStringData(ed.getText());
         inputs.add(i);
         return inputs;
     }
 
     @Override
     public void processOutput(AiCapability c, AiRequestStatus status) {
-//        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
-//        dlg.setVisible(true);
-        
         String prependText = "";
         if (status != null) {
             if (status.getStatus().equalsIgnoreCase("error")) {
@@ -2521,7 +2520,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             
             JMenuItem mi = new JMenuItem();
             mi.setText("Text generieren (Diktat, Prompting)");
-            //mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
             mi.addActionListener((ActionEvent e) -> {
                 AssistantGenerateDialog dlg = new AssistantGenerateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setVisible(true);

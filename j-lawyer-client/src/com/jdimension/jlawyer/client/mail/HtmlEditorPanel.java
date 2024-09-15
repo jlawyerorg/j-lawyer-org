@@ -668,6 +668,7 @@ import java.awt.Component;
 import java.awt.Container;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JEditorPane;
 
 /**
  *
@@ -720,7 +721,29 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     
     @Override
     public String getSelectedText() {
-        return this.htmlPane.getText();
+        //return this.htmlPane.getText();
+        String sel=getSelectedTextFromEditorPane(this.htmlPane);
+        if(sel==null)
+            return this.htmlPane.getText();
+        return sel;
+    }
+    
+    // This is more of a hack - SHEF does not give access to the selected text 
+    // and also not to the underlying editor pane
+    // so - browse the component graph and look for the editor pane
+    private String getSelectedTextFromEditorPane(Container c) {
+        
+        for (Component child : c.getComponents()) {
+            if (child instanceof JEditorPane) {
+                return ((JEditorPane) child).getSelectedText();
+            } else if (child instanceof Container) {
+                String sel = getSelectedTextFromEditorPane((Container) child);
+                if (sel != null) {
+                    return sel;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
