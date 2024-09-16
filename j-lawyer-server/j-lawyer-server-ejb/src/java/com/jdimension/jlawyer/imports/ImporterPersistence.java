@@ -719,5 +719,6 @@ public interface ImporterPersistence {
     public List<CalendarEntryTemplate> getEventTemplates();
     
     public List<FormTypeBean> getFormTypes();
+    public boolean installFormPlugin(String id, String clientVersion);
     
 }

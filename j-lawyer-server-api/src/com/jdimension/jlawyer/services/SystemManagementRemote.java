@@ -836,10 +836,10 @@ public interface SystemManagementRemote {
     
     DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
 
-    byte[] getImportTemplateOds(boolean exportCurrentData) throws Exception;
+    byte[] getImportTemplateOds(boolean exportCurrentData, String fullClientVersion) throws Exception;
 
-    List<String> listImportSheets(byte[] odsData) throws Exception;
+    List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception;
 
-    List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun) throws Exception;
+    List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception;
     
 }

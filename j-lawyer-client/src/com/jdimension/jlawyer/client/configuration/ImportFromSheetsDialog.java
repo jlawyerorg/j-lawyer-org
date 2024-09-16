@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -859,7 +860,7 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                 try {
                     locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     sys = locator.lookupSystemManagementRemote();
-                    byte[] odsTemplate = sys.getImportTemplateOds(export);
+                    byte[] odsTemplate = sys.getImportTemplateOds(export, VersionUtils.getFullClientVersion());
                     FileUtils.writeFile(new File(destFile), odsTemplate);
                     JOptionPane.showMessageDialog(this, "Datei als '" + destFileName + "' gespeichert.", "Download / Export", JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
@@ -903,7 +904,7 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
                 File ods = fc.getSelectedFile();
                 this.odsData = FileUtils.readFile(ods);
 
-                List<String> sheetNames = sys.listImportSheets(odsData);
+                List<String> sheetNames = sys.listImportSheets(odsData, VersionUtils.getFullClientVersion());
                 this.taLog.setText("");
                 for (String s : sheetNames) {
                     this.taLog.append("Tabellenblatt gefunden: [" + s + "]");
@@ -929,9 +930,9 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
             try {
                 locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 sys = locator.lookupSystemManagementRemote();
-                List<String> sheetNames = sys.listImportSheets(this.odsData);
+                List<String> sheetNames = sys.listImportSheets(this.odsData, VersionUtils.getFullClientVersion());
                 for (String s : sheetNames) {
-                    List<ImportLogEntry> logs = sys.importSheets(this.odsData, List.of(s), dryRun);
+                    List<ImportLogEntry> logs = sys.importSheets(this.odsData, List.of(s), dryRun, VersionUtils.getFullClientVersion());
                     for (ImportLogEntry l : logs) {
                         this.taLog.append(l.toString());
                         this.taLog.append(System.lineSeparator());

@@ -684,7 +684,7 @@ public class OdfImporterClient {
             byte[] odsData=ServerFileUtils.readFile(new File("/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-server-ejb/src/java/com/jdimension/jlawyer/imports/sampleimport.ods"));
             ImporterPersistence persister=new DummyPersistence();
             
-            OdfImporterExporter importer=new OdfImporterExporter(odsData, persister);
+            OdfImporterExporter importer=new OdfImporterExporter(odsData, persister, "2.7.0.0");
             
             List<String> sheetNames=importer.listSheets();
             System.out.println(sheetNames);

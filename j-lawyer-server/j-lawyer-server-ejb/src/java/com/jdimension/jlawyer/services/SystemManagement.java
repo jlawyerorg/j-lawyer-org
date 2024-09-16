@@ -2486,7 +2486,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public byte[] getImportTemplateOds(boolean exportCurrentData) throws Exception {
+    public byte[] getImportTemplateOds(boolean exportCurrentData, String fullClientVersion) throws Exception {
         try (InputStream is = SystemManagement.class.getResourceAsStream("/com/jdimension/jlawyer/imports/importtemplate.ods");) {
             // Check if the InputStream is not null (file found)
             if (is == null) {
@@ -2506,8 +2506,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             if (exportCurrentData) {
                 // export into the template
-                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes);
-                OdfImporterExporter importer = new OdfImporterExporter(templateBytes, persister);
+                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes, this.formsService);
+                OdfImporterExporter importer = new OdfImporterExporter(templateBytes, persister, fullClientVersion);
                 return importer.exportSheets(importer.listSheets());
             } else {
                 // Return the byte array
@@ -2519,22 +2519,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> listImportSheets(byte[] odsData) throws Exception {
+    public List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception {
         ImporterPersistence persister = new DummyPersistence();
-        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister);
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister, fullClientVersion);
         return importer.listSheets();
     }
 
     @Override
     @RolesAllowed({"adminRole"})
-    public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun) throws Exception {
+    public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception {
         ImporterPersistence persister = null;
         if (dryRun) {
             persister = new DummyPersistence();
         } else {
-            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes);
+            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes, this.formsService);
         }
-        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister);
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister, fullClientVersion);
         return importer.importSheets(sheetNames, dryRun);
 
     }

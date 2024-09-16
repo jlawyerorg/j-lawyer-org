@@ -844,5 +844,10 @@ public class DummyPersistence implements ImporterPersistence {
     public List<FormTypeBean> getFormTypes() {
         return new ArrayList<>();
     }
+
+    @Override
+    public boolean installFormPlugin(String id, String clientVersion) {
+        return true;
+    }
     
 }

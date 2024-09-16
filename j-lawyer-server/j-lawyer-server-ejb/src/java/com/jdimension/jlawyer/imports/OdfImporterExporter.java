@@ -701,8 +701,10 @@ public class OdfImporterExporter {
     
     private SpreadsheetDocument ods=null;
     private ImporterPersistence persister=null;
+    private String fullClientVersion=null;
     
-    public OdfImporterExporter(byte[] odsData, ImporterPersistence persister) throws Exception {
+    public OdfImporterExporter(byte[] odsData, ImporterPersistence persister, String fullClientVersion) throws Exception {
+        this.fullClientVersion=fullClientVersion;
         this.ods = SpreadsheetDocument.loadDocument(new ByteArrayInputStream(odsData));
         this.persister=persister;
     }
@@ -873,6 +875,13 @@ public class OdfImporterExporter {
             for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
                 Row row = sheet.getRowByIndex(rowIndex);
                 importConfigurationEventTemplate(row, columnMap, logs);
+            }
+        }
+        if (TABLE_CASE_FORMS.equals(sheet.getTableName())) {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Tabelle " + sheet.getTableName() + " enthält " + sheet.getRowCount() + " Falldatenblätter"));
+            for (int rowIndex = 1; rowIndex < sheet.getRowCount(); rowIndex++) {
+                Row row = sheet.getRowByIndex(rowIndex);
+                importConfigurationCaseForms(row, columnMap, logs);
             }
         }
     }
@@ -1226,8 +1235,30 @@ public class OdfImporterExporter {
 
             // Set values for the row based on column name
             setCellValueByColumnName(newRow, columnMap, "ID", ft.getId());
+            setCellValueByColumnName(newRow, columnMap, "Clientversion", this.fullClientVersion);
             
             resetRowStyling(newRow);
+        }
+    }
+
+    private void importConfigurationCaseForms(Row row, Map<String, Integer> columnMap, List<ImportLogEntry> logs) {
+        String id = getCellValueByColumnName(row, columnMap, "ID", logs);
+        String clientVersion = getCellValueByColumnName(row, columnMap, "Clientversion", logs);
+        
+        List<FormTypeBean> formTypes=this.persister.getFormTypes();
+        boolean formTypeExists=false;
+        for(FormTypeBean ftb: formTypes) {
+            if(ftb.getId().equals(id)) {
+                formTypeExists=true;
+                break;
+            }
+        }
+        
+        if(!formTypeExists) {
+            persister.installFormPlugin(id, clientVersion);
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Falldatenblatt " + id + " wurde erstellt"));
+        } else {
+            logs.add(new ImportLogEntry(ImportLogEntry.TYPE_INFO, "Falldatenblatt " + id + " existiert bereits"));
         }
     }
     

@@ -672,51 +672,61 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.ServerFormPlugin;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class DefaultPersistence implements ImporterPersistence {
-    
-    private SystemManagementLocal sys=null;
-    private ServerSettingsBeanFacadeLocal set=null;
-    private PartyTypeBeanFacadeLocal partyTypes=null;
-    private CalendarEntryTemplateFacadeLocal eventTemplates=null;
-    private FormTypeBeanFacadeLocal forms=null;
-    
-    public DefaultPersistence(SystemManagementLocal sys, ServerSettingsBeanFacadeLocal set, PartyTypeBeanFacadeLocal partyTypes, CalendarEntryTemplateFacadeLocal eventTemplates, FormTypeBeanFacadeLocal forms) {
-        this.sys=sys;
-        this.set=set;
-        this.partyTypes=partyTypes;
-        this.eventTemplates=eventTemplates;
-        this.forms=forms;
+
+    private static final Logger log = Logger.getLogger(DefaultPersistence.class.getName());
+
+    private SystemManagementLocal sys = null;
+    private ServerSettingsBeanFacadeLocal set = null;
+    private PartyTypeBeanFacadeLocal partyTypes = null;
+    private CalendarEntryTemplateFacadeLocal eventTemplates = null;
+    private FormTypeBeanFacadeLocal forms = null;
+    private FormsServiceLocal formsSvc = null;
+
+    public DefaultPersistence(SystemManagementLocal sys, ServerSettingsBeanFacadeLocal set, PartyTypeBeanFacadeLocal partyTypes, CalendarEntryTemplateFacadeLocal eventTemplates, FormTypeBeanFacadeLocal forms, FormsServiceLocal formsSvc) {
+        this.sys = sys;
+        this.set = set;
+        this.partyTypes = partyTypes;
+        this.eventTemplates = eventTemplates;
+        this.forms = forms;
+        this.formsSvc = formsSvc;
     }
 
     private boolean tagExists(String tagName, String optionGroup) {
-        if(tagName==null)
-            tagName="";
-        AppOptionGroupBean[] dtos=this.sys.getOptionGroup(optionGroup);
-        for(AppOptionGroupBean dto: dtos) {
-            if(tagName.equals(dto.getValue()))
+        if (tagName == null) {
+            tagName = "";
+        }
+        AppOptionGroupBean[] dtos = this.sys.getOptionGroup(optionGroup);
+        for (AppOptionGroupBean dto : dtos) {
+            if (tagName.equals(dto.getValue())) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     private boolean createTag(String tagName, String optionGroup) {
-        AppOptionGroupBean dto=new AppOptionGroupBean();
+        AppOptionGroupBean dto = new AppOptionGroupBean();
         dto.setOptionGroup(optionGroup);
         dto.setValue(tagName);
         this.sys.createOptionGroup(dto);
         return true;
     }
-    
+
     @Override
     public boolean caseTagExists(String tagName) {
         return tagExists(tagName, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
@@ -726,44 +736,44 @@ public class DefaultPersistence implements ImporterPersistence {
     public boolean createCaseTag(String tagName) throws Exception {
         return createTag(tagName, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
     }
-    
+
     @Override
     public List<String> getCaseTags() {
         return getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
     }
-    
+
     @Override
     public List<String> getAddressTags() {
         return getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
     }
-    
+
     @Override
     public List<String> getDocumentTags() {
         return getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
     }
-    
+
     private List<String> getOptionGroup(String groupName) {
-        ArrayList<String> result=new ArrayList<>();
-        AppOptionGroupBean[] options=this.sys.getOptionGroup(groupName);
-        for(AppOptionGroupBean o: options) {
+        ArrayList<String> result = new ArrayList<>();
+        AppOptionGroupBean[] options = this.sys.getOptionGroup(groupName);
+        for (AppOptionGroupBean o : options) {
             result.add(o.getValue());
         }
         return result;
     }
 
     private String getCustomFieldLabel(String prefix, int index) {
-        ServerSettingsBean s=this.set.find(prefix + index);
-        if(s==null) {
+        ServerSettingsBean s = this.set.find(prefix + index);
+        if (s == null) {
             return "Eigenes Feld " + index;
         } else {
             return s.getSettingValue();
         }
     }
-    
+
     private boolean setCustomFieldLabel(String prefix, int index, String label) {
-        ServerSettingsBean s=this.set.find(prefix + index);
-        if(s==null) {
-            s=new ServerSettingsBean();
+        ServerSettingsBean s = this.set.find(prefix + index);
+        if (s == null) {
+            s = new ServerSettingsBean();
             s.setSettingKey(prefix + index);
             s.setSettingValue(label);
             this.set.create(s);
@@ -773,7 +783,7 @@ public class DefaultPersistence implements ImporterPersistence {
         }
         return true;
     }
-    
+
     @Override
     public String getCustomField1Case() {
         return getCustomFieldLabel(ServerSettingsKeys.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX, 1);
@@ -888,22 +898,23 @@ public class DefaultPersistence implements ImporterPersistence {
     public List<PartyTypeBean> getPartyTypes() {
         return this.partyTypes.findAll();
     }
-    
+
     @Override
     public boolean partyTypeExists(String name, String placeHolder) {
-        List<PartyTypeBean> allParties=this.partyTypes.findAll();
-        for(PartyTypeBean p: allParties) {
-            if(placeHolder.equals(p.getPlaceHolder()) || name.equals(p.getName()))
+        List<PartyTypeBean> allParties = this.partyTypes.findAll();
+        for (PartyTypeBean p : allParties) {
+            if (placeHolder.equals(p.getPlaceHolder()) || name.equals(p.getName())) {
                 return true;
+            }
         }
         return false;
     }
 
     @Override
     public boolean createPartyType(String name, String placeHolder, int color, int sequence) {
-        PartyTypeBean party=new PartyTypeBean();
+        PartyTypeBean party = new PartyTypeBean();
         party.setColor(color);
-        party.setId(""+System.currentTimeMillis());
+        party.setId("" + System.currentTimeMillis());
         party.setName(name);
         party.setPlaceHolder(placeHolder);
         party.setSequenceNumber(sequence);
@@ -915,21 +926,22 @@ public class DefaultPersistence implements ImporterPersistence {
     public List<CalendarEntryTemplate> getEventTemplates() {
         return this.eventTemplates.findAll();
     }
-    
+
     @Override
     public boolean eventTemplateExists(String name) {
-        List<CalendarEntryTemplate> allTemplates=this.eventTemplates.findAll();
-        for(CalendarEntryTemplate t: allTemplates) {
-            if(name.equals(t.getName()))
+        List<CalendarEntryTemplate> allTemplates = this.eventTemplates.findAll();
+        for (CalendarEntryTemplate t : allTemplates) {
+            if (name.equals(t.getName())) {
                 return true;
+            }
         }
         return false;
     }
 
     @Override
     public boolean createEventTemplate(String name, String description, boolean related, String relatedName, String relatedDescription, int offsetDays) {
-        CalendarEntryTemplate t=new CalendarEntryTemplate();
-        t.setId(""+System.currentTimeMillis());
+        CalendarEntryTemplate t = new CalendarEntryTemplate();
+        t.setId("" + System.currentTimeMillis());
         t.setName(name);
         t.setDescription(description);
         t.setRelated(related);
@@ -944,5 +956,23 @@ public class DefaultPersistence implements ImporterPersistence {
     public List<FormTypeBean> getFormTypes() {
         return this.forms.findAll();
     }
-    
+
+    @Override
+    public boolean installFormPlugin(String id, String clientVersion) {
+        try {
+            Map<String, ServerFormPlugin> repoPlugins = this.formsSvc.getPluginsInRepository(clientVersion);
+            for (ServerFormPlugin sfp : repoPlugins.values()) {
+                if (sfp.getId().equals(id)) {
+                    this.formsSvc.installRepositoryPlugin(sfp);
+                    return true;
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Unable to install form plugin " + id, ex);
+            return false;
+        }
+
+        return false;
+    }
+
 }
