@@ -835,6 +835,23 @@ public class TimesheetPosition implements Serializable {
     public float getTotal() {
         return total;
     }
+    
+    public float calculateTotal(int intervalMinutes) {
+        float positionTotal = 0f;
+        if (started != null && stopped != null && started.getTime() < stopped.getTime()) {
+            float totalMinutes = ((float) (stopped.getTime() - started.getTime())) / 1000f / 60f;
+            if (intervalMinutes == 0) {
+                intervalMinutes = 1;
+            }
+            double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
+            float roundedMinutesFloat = new Float(roundedMinutes);
+            float unitPrice = this.unitPrice;
+            if (unitPrice != 0) {
+                positionTotal = roundedMinutesFloat / 60f * unitPrice;
+            }
+        }
+        return positionTotal;
+    }
 
     /**
      * @param total the total to set
