@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -703,14 +704,16 @@ public class GirocodeDialog extends javax.swing.JDialog {
         this.lblAmount.setText(cf.format(amount));
         this.lblPurpose.setText(purpose);
         
-        ServerSettings set=ServerSettings.getInstance();
-        this.lblName.setText(set.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
-        this.lblBic.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE, ""));
-        this.lblIban.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
-        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            AppUserBean senderUser=locator.lookupSystemManagementRemote().getUser(senderPrincipalId);
+            this.lblName.setText(senderUser.getCompany());
+            this.lblBic.setText(senderUser.getBankBic());
+            this.lblIban.setText(senderUser.getBankIban());
+            
+            
             this.qrImage = locator.lookupInvoiceServiceRemote().getGiroCode(senderPrincipalId, amount, purpose);
             ImageIcon qr=new ImageIcon(this.qrImage);
             this.lblGirocode.setIcon(qr);
