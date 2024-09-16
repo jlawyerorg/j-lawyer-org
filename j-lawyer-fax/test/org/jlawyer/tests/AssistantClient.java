@@ -665,8 +665,6 @@ package org.jlawyer.tests;
 
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AssistantAPI;
-import com.jdimension.jlawyer.ai.InputData;
-import java.util.ArrayList;
 
 /**
  *
@@ -680,7 +678,7 @@ public class AssistantClient {
     public static void main(String[] args) {
         
         try {
-            AssistantAPI api = new AssistantAPI("http://localhost:8081", "admin", "a");
+            AssistantAPI api = new AssistantAPI("http://localhost:8081", "admin", "a", 3, 60);
 //            api.getCapabilities();
 //            ArrayList<InputData> inputs=new ArrayList<>();
 //            InputData i=new InputData();

@@ -1163,6 +1163,10 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
                 } catch (Throwable t) {
                     log.error("Error processing AI request", t);
+                    AiRequestStatus status=new AiRequestStatus();
+                    status.setStatus("ERROR");
+                    status.setStatusDetails(t.getMessage());
+                    resultRef.set(status);
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);

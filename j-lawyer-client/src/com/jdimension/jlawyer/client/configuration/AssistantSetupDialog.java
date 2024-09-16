@@ -730,6 +730,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         this.txtUrl.setText("");
         this.txtPwd.setText("");
         this.txtUser.setText("");
+        this.txtConfigurations.setText("");
         this.spnConnectTimeout.setValue(3);
         this.spnReadTimeout.setValue(5);
 
@@ -769,6 +770,8 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
+        txtConfigurations = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -894,6 +897,8 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
 
         jLabel13.setText("Sekunden");
 
+        jLabel2.setText("Konfigurationen:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -906,17 +911,15 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdClose))
-                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel11))
-                        .addGap(22, 22, 22)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtUrl)
-                            .addComponent(txtName)
-                            .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel11)
+                            .addComponent(jLabel2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel9)
                                     .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -930,7 +933,11 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                                         .addComponent(spnConnectTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel12)))
-                                .addGap(0, 242, Short.MAX_VALUE))))
+                                .addGap(0, 200, Short.MAX_VALUE))
+                            .addComponent(txtConfigurations, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtName)
+                            .addComponent(txtUrl, javax.swing.GroupLayout.Alignment.LEADING)))
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel7)
@@ -976,7 +983,11 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                             .addComponent(spnReadTimeout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel10)
                             .addComponent(jLabel13))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtConfigurations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addGap(62, 62, 62)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel4)
@@ -994,8 +1005,6 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                         .addComponent(cmdClose)))
                 .addContainerGap())
         );
-
-        getAccessibleContext().setAccessibleName("Assistent Ingo");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -1038,6 +1047,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
             ac.setReadTimeout(5);
             ac.setUserName(null);
             ac.setPassword(null);
+            ac.setConfiguration("");
 
             AssistantConfig savedAssistant = locator.lookupIntegrationServiceRemote().addAssistantConfig(ac);
 
@@ -1060,9 +1070,10 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
             AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
             ac.setName(this.txtName.getText());
             ac.setUserName(this.txtUser.getText());
-            ac.setConnectionTimeout(((Number) this.spnConnectTimeout.getValue()).longValue());
-            ac.setReadTimeout(((Number) this.spnReadTimeout.getValue()).longValue());
+            ac.setConnectionTimeout(((Number) this.spnConnectTimeout.getValue()).intValue());
+            ac.setReadTimeout(((Number) this.spnReadTimeout.getValue()).intValue());
             ac.setUrl(this.txtUrl.getText());
+            ac.setConfiguration(this.txtConfigurations.getText());
             try {
                 if (this.txtPwd.getPassword().length > 0) {
                     ac.setPassword(CryptoProvider.defaultCrypto().encrypt(new String(this.txtPwd.getPassword())));
@@ -1146,6 +1157,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         this.txtUser.setText(ac.getUserName());
         this.spnConnectTimeout.setValue(ac.getConnectionTimeout());
         this.spnReadTimeout.setValue(ac.getReadTimeout());
+        this.txtConfigurations.setText(ac.getConfiguration());
 
     }
 
@@ -1203,6 +1215,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1215,6 +1228,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
     private javax.swing.JSpinner spnConnectTimeout;
     private javax.swing.JSpinner spnReadTimeout;
     private javax.swing.JTable tblAssistants;
+    private javax.swing.JTextField txtConfigurations;
     private javax.swing.JTextField txtName;
     private javax.swing.JPasswordField txtPwd;
     private javax.swing.JTextField txtUrl;

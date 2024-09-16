@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.Input;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.Prompt;

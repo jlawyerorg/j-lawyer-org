@@ -36,6 +36,8 @@ public class AiCapability implements Serializable {
     
     private Prompt defaultPrompt=null;
     
+    private List<Configuration> configurations=new ArrayList<>();
+    
     private List<Parameter> parameters=new ArrayList<>();
     
     private List<Input> input=new ArrayList<>();
@@ -215,6 +217,20 @@ public class AiCapability implements Serializable {
      */
     public void setCustomPrompts(boolean customPrompts) {
         this.customPrompts = customPrompts;
+    }
+
+    /**
+     * @return the configurations
+     */
+    public List<Configuration> getConfigurations() {
+        return configurations;
+    }
+
+    /**
+     * @param configurations the configurations to set
+     */
+    public void setConfigurations(List<Configuration> configurations) {
+        this.configurations = configurations;
     }
     
     

@@ -1236,6 +1236,10 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
                     } catch (Throwable t) {
                         log.error("Error processing AI request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("ERROR");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
                     }
                     cmdExecutePrompt.setEnabled(true);
                     cmdInterrupt.setEnabled(false);

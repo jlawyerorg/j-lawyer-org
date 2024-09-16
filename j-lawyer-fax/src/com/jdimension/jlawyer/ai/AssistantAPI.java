@@ -715,7 +715,7 @@ public class AssistantAPI {
         return encoder.encode(authString.getBytes());
     }
 
-    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws AssistantException {
+    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs) throws AssistantException {
         log.info("submitting j-lawyer.AI request");
 
 
@@ -768,15 +768,30 @@ public class AssistantAPI {
 
             jsonQuery.append("],");
         }
-        if (params != null && !params.isEmpty()) {
-            jsonQuery.append("\"parameterData\": [");
+//        if (params != null && !params.isEmpty()) {
+//            jsonQuery.append("\"parameterData\": [");
+//
+//            for (int i = 0; i < params.size(); i++) {
+//                jsonQuery.append("{");
+//                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
+//                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
+//                jsonQuery.append("}");
+//                if (i < params.size() - 1) {
+//                    jsonQuery.append(",");
+//                }
+//            }
+//
+//            jsonQuery.append("],");
+//        }
+        if (configurations != null && !configurations.isEmpty()) {
+            jsonQuery.append("\"configurationData\": [");
 
-            for (int i = 0; i < params.size(); i++) {
+            for (int i = 0; i < configurations.size(); i++) {
                 jsonQuery.append("{");
-                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
-                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
+                jsonQuery.append("\"id\": \"").append(Jsoner.escape(configurations.get(i).getId())).append("\",");
+                jsonQuery.append("\"value\": \"").append(Jsoner.escape(configurations.get(i).getValue())).append("\"");
                 jsonQuery.append("}");
-                if (i < params.size() - 1) {
+                if (i < configurations.size() - 1) {
                     jsonQuery.append(",");
                 }
             }
@@ -986,6 +1001,18 @@ public class AssistantAPI {
                             parameter.setName(o.getString(Jsoner.mintJsonKey("name", null)));
                             parameter.setType(o.getString(Jsoner.mintJsonKey("type", null)));
                             capability.getParameters().add(parameter);
+                        }
+                    }
+                    
+                    Object configurations = c.getCollection(Jsoner.mintJsonKey("configurations", null));
+                    if (configurations != null && configurations instanceof JsonArray) {
+                        JsonArray configurationsArray = (JsonArray) configurations;
+                        for (Object oObj : configurationsArray) {
+                            JsonObject o = (JsonObject) oObj;
+                            Configuration config = new Configuration();
+                            config.setId(o.getString(Jsoner.mintJsonKey("id", null)));
+                            config.setDescription(o.getString(Jsoner.mintJsonKey("description", null)));
+                            capability.getConfigurations().add(config);
                         }
                     }
 

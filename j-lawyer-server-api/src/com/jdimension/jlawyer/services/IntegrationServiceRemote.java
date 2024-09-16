@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
-import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.email.EmailTemplate;
