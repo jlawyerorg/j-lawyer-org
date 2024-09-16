@@ -1211,8 +1211,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         i.setType(InputData.TYPE_STRING);
         i.setBase64(false);
         i.setStringData(contentText);
-        
-        //i.setStringData(ed.getText());
         inputs.add(i);
         return inputs;
     }
