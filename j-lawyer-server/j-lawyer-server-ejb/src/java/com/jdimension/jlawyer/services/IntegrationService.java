@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.AssistantException;
+import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
@@ -688,6 +689,7 @@ import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -711,6 +713,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -723,6 +726,7 @@ import javax.jms.JMSContext;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.utils.ocr.OcrRequest;
 import org.jlawyer.utils.ocr.OcrUtils;
 
@@ -1418,6 +1422,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 1, unit = TimeUnit.MINUTES)
     public Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception {
         Map<AssistantConfig,List<AiCapability>> allCapabilities=new HashMap<>();
         List<AssistantConfig> configs=this.assistantFacade.findAll();
@@ -1427,7 +1432,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if(pwd!=null)
                 pwd=crypto.decrypt(c.getPassword());
             
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
+            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
             allCapabilities.put(c, api.getCapabilities());
         }
         
@@ -1436,6 +1441,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception {
         List<AssistantConfig> configs=this.assistantFacade.findAll();
         CachingCrypto crypto=CryptoProvider.newCrypto();
@@ -1447,14 +1453,41 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if(pwd!=null)
                 pwd=crypto.decrypt(c.getPassword());
             
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
-            return api.submitRequest(requestType, modelType, prompt, params, inputs);
+            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+            List<ConfigurationData> configurations=new ArrayList<>();
+            String rawConfigs=c.getConfiguration();
+            if(!ServerStringUtils.isEmpty(rawConfigs))
+                configurations=parseConfiguration(rawConfigs);
+            return api.submitRequest(requestType, modelType, prompt, configurations, params, inputs);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
     }
     
+    private static List<ConfigurationData> parseConfiguration(String configString) {
+        List<ConfigurationData> configList = new ArrayList<>();
+
+        // Split the string by comma to get key-value pairs
+        String[] pairs = configString.split(",");
+
+        // Loop over each pair and split by the equals sign
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+
+            if (keyValue.length == 2) {
+                // Create a new ConfigurationData object with the key as id and value
+                ConfigurationData configData = new ConfigurationData();
+                configData.setId(keyValue[0]);
+                configData.setValue(keyValue[1]);
+                configList.add(configData);
+            }
+        }
+        
+        return configList;
+    }
+    
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception {
         List<AssistantConfig> configs=this.assistantFacade.findAll();
         CachingCrypto crypto=CryptoProvider.newCrypto();
@@ -1466,7 +1499,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if(pwd!=null)
                 pwd=crypto.decrypt(c.getPassword());
             
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd);
+            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
             return api.getRequestStatus(requestId);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
