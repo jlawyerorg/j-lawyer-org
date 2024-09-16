@@ -913,7 +913,7 @@ public interface ArchiveFileServiceRemote {
 
     void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
 
-    TimesheetPosition updateTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
+    void updateTimesheetPositions(String timesheetId, List<TimesheetPosition> positions) throws Exception;
 
     void removeAllTimesheetPositions(String timesheetId) throws Exception;
 

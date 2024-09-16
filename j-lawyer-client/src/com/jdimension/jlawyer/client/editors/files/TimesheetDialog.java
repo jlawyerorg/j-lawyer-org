@@ -1224,21 +1224,23 @@ public class TimesheetDialog extends javax.swing.JDialog {
         }
 
         ClientSettings settings = ClientSettings.getInstance();
+        List<TimesheetPosition> allPositions = new ArrayList<>();
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof TimesheetPositionEntryPanel) {
-
                 ((TimesheetPositionEntryPanel) c).updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
-                TimesheetPosition pos = ((TimesheetPositionEntryPanel) c).getEntry();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupArchiveFileServiceRemote().updateTimesheetPosition(this.currentEntry.getId(), pos);
+                allPositions.add(((TimesheetPositionEntryPanel) c).getEntry());
 
-                } catch (Exception ex) {
-                    log.error("Error updating timesheet position", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
             }
+        }
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().updateTimesheetPositions(this.currentEntry.getId(), allPositions);
+
+        } catch (Exception ex) {
+            log.error("Error updating timesheet position", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
 
         try {
