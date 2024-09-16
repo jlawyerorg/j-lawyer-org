@@ -832,6 +832,18 @@ public class ThreadUtils {
         }
 
     }
+    
+    public static void updateButton(final JButton button, final String text) {
+
+        if (button == null) {
+            log.warn("Button to be updated is null", new Exception());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                button.setText(text);
+            });
+        }
+
+    }
 
     public static void updateLabelIcon(final JLabel label, final ImageIcon icon) {
         SwingUtilities.invokeLater(() -> {

@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
@@ -690,16 +691,13 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -801,7 +799,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         FrameUtils.centerDialog(this, parent);
 
         this.cmbDevices.removeAllItems();
-        populateMicrophoneDevices(getAudioFormat());
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
@@ -867,35 +865,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
-    }
-
-    private void populateMicrophoneDevices(AudioFormat audioFormat) {
-        String lastDevice = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, null);
-
-        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-        for (Mixer.Info mixerInfo : mixerInfos) {
-            Mixer mixer = AudioSystem.getMixer(mixerInfo);
-            Line.Info[] lineInfos = mixer.getTargetLineInfo();
-            for (Line.Info lineInfo : lineInfos) {
-                if (lineInfo instanceof DataLine.Info) {
-                    DataLine.Info dataLineInfo = (DataLine.Info) lineInfo;
-                    AudioFormat[] formats = dataLineInfo.getFormats();
-                    for (AudioFormat format : formats) {
-                        if (format.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)
-                                && format.getSampleSizeInBits() == audioFormat.getSampleSizeInBits()
-                                && format.getChannels() == audioFormat.getChannels()) {
-                            // Display sample rate in Hz
-                            this.cmbDevices.addItem(mixerInfo.getName());
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (lastDevice != null) {
-            this.cmbDevices.setSelectedItem(lastDevice);
-        }
     }
 
     /**
@@ -1155,56 +1124,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCopyActionPerformed
-
-    private byte[] generateWAV(byte[] audio) throws IOException, UnsupportedAudioFileException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        // Write WAV header for the merged audio
-        writeWavHeader(outputStream, audio.length);
-
-        outputStream.write(audio);
-
-        return outputStream.toByteArray();
-    }
-
-    private void writeWavHeader(ByteArrayOutputStream outputStream, long totalDataLen) throws IOException {
-        // Define audio format for WAV header
-        AudioFormat audioFormat = getAudioFormat();
-
-        // Calculate total audio length (including header)
-        long totalAudioLen = totalDataLen + 36;
-
-        // Write WAV header
-        outputStream.write("RIFF".getBytes());
-        outputStream.write(intToBytes((int) totalAudioLen));
-        outputStream.write("WAVE".getBytes());
-        outputStream.write("fmt ".getBytes());
-        outputStream.write(intToBytes(16)); // Subchunk1Size
-        outputStream.write(shortToBytes((short) 1)); // AudioFormat (PCM)
-        outputStream.write(shortToBytes((short) 1)); // NumChannels
-        outputStream.write(intToBytes((int) audioFormat.getSampleRate())); // SampleRate
-        outputStream.write(intToBytes((int) audioFormat.getSampleRate() * audioFormat.getSampleSizeInBits() / 8)); // ByteRate
-        outputStream.write(shortToBytes((short) (audioFormat.getSampleSizeInBits() / 8))); // BlockAlign
-        outputStream.write(shortToBytes((short) audioFormat.getSampleSizeInBits())); // BitsPerSample
-        outputStream.write("data".getBytes());
-        outputStream.write(intToBytes((int) totalDataLen));
-    }
-
-    private static byte[] intToBytes(int value) {
-        byte[] bytes = new byte[4];
-        bytes[0] = (byte) (value & 0xFF);
-        bytes[1] = (byte) ((value >> 8) & 0xFF);
-        bytes[2] = (byte) ((value >> 16) & 0xFF);
-        bytes[3] = (byte) ((value >> 24) & 0xFF);
-        return bytes;
-    }
-
-    private static byte[] shortToBytes(short value) {
-        byte[] bytes = new byte[2];
-        bytes[0] = (byte) (value & 0xFF);
-        bytes[1] = (byte) ((value >> 8) & 0xFF);
-        return bytes;
-    }
 
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
@@ -1473,7 +1392,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
     private void startRecording() {
         try {
-            AudioFormat audioFormat = getAudioFormat();
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
             // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
@@ -1547,7 +1466,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    List<InputData> inputs = getTranscribeInputs(generateWAV(dictatePart));
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
 
                     ClientSettings settings = ClientSettings.getInstance();
                     try {
@@ -1623,20 +1542,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
             parameters.add(d);
         }
         return parameters;
-
-    }
-
-    private AudioFormat getAudioFormat() {
-
-        return new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                44100, // Sample rate
-                16, // Bits per sample
-                1, // Number of channels
-                2, // Frame size
-                44100, // Frame rate
-                false // Big endian
-        );
 
     }
 

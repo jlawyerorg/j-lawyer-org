@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -714,36 +715,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         ComponentUtils.restoreDialogSize(this);
 
         this.cmbDevices.removeAllItems();
-        populateMicrophoneDevices(getAudioFormat());
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
-    }
-
-    private void populateMicrophoneDevices(AudioFormat audioFormat) {
-        String lastDevice=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, null);
-        
-        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-        for (Mixer.Info mixerInfo : mixerInfos) {
-            Mixer mixer = AudioSystem.getMixer(mixerInfo);
-            Line.Info[] lineInfos = mixer.getTargetLineInfo();
-            for (Line.Info lineInfo : lineInfos) {
-                if (lineInfo instanceof DataLine.Info) {
-                    DataLine.Info dataLineInfo = (DataLine.Info) lineInfo;
-                    AudioFormat[] formats = dataLineInfo.getFormats();
-                    for (AudioFormat format : formats) {
-                        if (format.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)
-                                && format.getSampleSizeInBits() == audioFormat.getSampleSizeInBits()
-                                && format.getChannels() == audioFormat.getChannels()) {
-                            // Display sample rate in Hz
-                            this.cmbDevices.addItem(mixerInfo.getName());
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if(lastDevice!=null)
-            this.cmbDevices.setSelectedItem(lastDevice);
     }
 
     /**
@@ -920,7 +893,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private void writeWavHeader(ByteArrayOutputStream outputStream, long totalDataLen) throws IOException {
         // Define audio format for WAV header
-        AudioFormat audioFormat = getAudioFormat();
+        AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
         // Calculate total audio length (including header)
         long totalAudioLen = totalDataLen + 36;
@@ -1014,7 +987,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private void startRecording() {
         try {
-            AudioFormat audioFormat = getAudioFormat();
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
             // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
@@ -1076,17 +1049,4 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
     }
 
-    private AudioFormat getAudioFormat() {
-
-        return new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                44100, // Sample rate
-                16, // Bits per sample
-                1, // Number of channels
-                2, // Frame size
-                44100, // Frame rate
-                false // Big endian
-        );
-
-    }
 }

@@ -742,6 +742,8 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public void setText(String t) {
         this.taText.setText(t);
     }
+    
+    
 
     @Override
     public void setCaretPosition(int pos) {
@@ -756,5 +758,10 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public String getSelectedText() {
         return this.taText.getSelectedText();
+    }
+
+    @Override
+    public void insert(String t, int pos) {
+        this.taText.insert(t, pos);
     }
 }

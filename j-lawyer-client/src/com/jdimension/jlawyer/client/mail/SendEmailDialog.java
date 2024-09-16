@@ -689,6 +689,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -717,6 +718,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -726,6 +728,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -755,11 +763,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
     
+    private boolean isRecording = false;
+    private long recordingStarted=-1;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    
     private boolean replyOrForward=false;
 
     // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder
     private String cloudLink = null;
+    
+    // transcription
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
 
     /**
      * Creates new form SendEmailDialog
@@ -789,6 +806,24 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void initialize() {
         initComponents();
+        
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
+            
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
@@ -1294,6 +1329,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         txtTo = new javax.swing.JTextField();
         cmbFrom = new javax.swing.JComboBox<>();
         cmdAssistant = new javax.swing.JButton();
+        cmdTranscribe = new javax.swing.JButton();
+        cmbDevices = new javax.swing.JComboBox<>();
         jPanel6 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         text = new javax.swing.JRadioButton();
@@ -1395,7 +1432,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         );
         contentPanelLayout.setVerticalGroup(
             contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 271, Short.MAX_VALUE)
+            .addGap(0, 291, Short.MAX_VALUE)
         );
 
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1498,6 +1535,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setText("00:00");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
+            }
+        });
+
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1530,6 +1578,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdTranscribe)
+                        .addGap(18, 18, 18)
                         .addComponent(cmdAssistant)))
                 .addContainerGap())
         );
@@ -1568,7 +1620,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(5, 5, 5))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addComponent(cmdAssistant)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(cmdTranscribe)
+                                .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(cmdAssistant))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
                 .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -2531,6 +2587,175 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_cmdAssistantMouseReleased
 
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
+        } else {
+            stopRecording();
+        }
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
+
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
+
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+            
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                System.err.println("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            
+            isRecording = true;
+            this.recordingStarted=System.currentTimeMillis();
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                        
+                        
+                        long totalSeconds = (System.currentTimeMillis()-recordingStarted) / 1000;
+                        // Calculate minutes and seconds
+                        long minutes = totalSeconds / 60;
+                        long seconds = totalSeconds % 60;
+                        // Format the result as mm:ss
+                        ThreadUtils.updateButton(cmdTranscribe, String.format("%02d:%02d", minutes, seconds));
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void stopRecording() {
+        isRecording = false;
+        
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters(transcribeCapability);
+            }
+
+            final List<ParameterData> fParams = params;
+
+            //this.progress.setIndeterminate(true);
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getModelType(), "", fParams, inputs);
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI request", t);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Task completion actions
+                    cmdTranscribe.setText("00:00");
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText="";
+                        if (status.getStatus().equalsIgnoreCase("error")) {
+                            //taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
+                            resultText=status.getStatus() + ": " + status.getStatusDetails();
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                }
+
+                            }
+                            //taResult.insert(resultString.toString(), taResult.getCaretPosition());
+                            resultText=resultString.toString();
+                        }
+                        
+                        
+                        tp.insert(resultText, tp.getCaretPosition());
+                        //this.tp.setCaretPosition(Math.max(0, cursorIndex));
+                        hp.insert(resultText, hp.getCaretPosition());
+                                
+                        
+                        
+                    }
+
+                    //progress.setIndeterminate(false);
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+
+    }
+    
+    public List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("Sounddatei.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
+    
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2598,6 +2823,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
+    private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbFrom;
     private javax.swing.JComboBox cmbReviewAssignee;
@@ -2611,6 +2837,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JButton cmdSaveDraft;
     private javax.swing.JButton cmdSend;
     private javax.swing.JButton cmdShowReviewSelector;
+    private javax.swing.JButton cmdTranscribe;
     private javax.swing.JPanel contentPanel;
     private javax.swing.JRadioButton html;
     private javax.swing.JLabel jLabel1;

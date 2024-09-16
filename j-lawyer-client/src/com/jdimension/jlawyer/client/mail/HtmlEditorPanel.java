@@ -669,12 +669,15 @@ import java.awt.Container;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author Kutschke
  */
 public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImplementation {
+    
+    private static final Logger log=Logger.getLogger(HtmlEditorPanel.class.getName());
 
     /**
      * Creates new form HtmlEditorPanel
@@ -718,20 +721,21 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public String getText() {
         return this.htmlPane.getText();
     }
-    
+
     @Override
     public String getSelectedText() {
-        String sel=getSelectedTextFromEditorPane(this.htmlPane);
-        if(sel==null)
+        String sel = getSelectedTextFromEditorPane(this.htmlPane);
+        if (sel == null) {
             return this.htmlPane.getText();
+        }
         return sel;
     }
-    
+
     // This is more of a hack - SHEF does not give access to the selected text 
     // and also not to the underlying editor pane
     // so - browse the component graph and look for the editor pane
     private String getSelectedTextFromEditorPane(Container c) {
-        
+
         for (Component child : c.getComponents()) {
             if (child instanceof JEditorPane) {
                 return ((JEditorPane) child).getSelectedText();
@@ -789,4 +793,33 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         super.requestFocus();
         this.htmlPane.requestFocus();
     }
+
+    @Override
+    public void insert(String t, int pos) {
+        this.insertToEditorPane(this.htmlPane, t, pos);
+    }
+
+    private boolean insertToEditorPane(Container c, String t, int pos) {
+
+        for (Component child : c.getComponents()) {
+            if (child instanceof JEditorPane) {
+                try {
+//                    String pre = ((JEditorPane) child).getText(0, pos);
+//                    String post = ((JEditorPane) child).getText(pos + 1, ((JEditorPane) child).getText().length());
+//                    String newText = pre + t + post;
+                    this.setText(t + this.getText());
+                } catch (Throwable th) {
+                    log.warn("unable to insert text", th);
+                }
+                return true;
+            } else if (child instanceof Container) {
+                boolean inserted = insertToEditorPane((Container) child, t, pos);
+                if (inserted) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
