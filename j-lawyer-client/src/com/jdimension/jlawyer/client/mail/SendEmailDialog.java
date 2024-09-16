@@ -2169,7 +2169,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     partiesTriplets.add(triplet);
                 }
                 // get all placeholder values for the given set of placeholders
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null);
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
                 this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, this.formPlaceHolders);
@@ -2177,7 +2177,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null);
+                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
 
                 if (this.cloudLink != null) {
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);
@@ -2519,7 +2519,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JMenuItem mi = new JMenuItem();
             mi.setText("Text generieren (Diktat, Prompting)");
             mi.addActionListener((ActionEvent e) -> {
-                AssistantGenerateDialog dlg = new AssistantGenerateDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                AssistantGenerateDialog dlg = new AssistantGenerateDialog(null, this.contextArchiveFile, EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setVisible(true);
             });
             this.popAssistant.add(mi);

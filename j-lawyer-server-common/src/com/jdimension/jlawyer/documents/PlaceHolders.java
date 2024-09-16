@@ -847,6 +847,8 @@ public class PlaceHolders {
     
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     
+    public static final String INGO_TEXT = "{{INGO_TEXT}}";
+    
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<>();
     
@@ -1043,6 +1045,8 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(BEL_ABSIBAN);
         ALLPLACEHOLDERS.add(BEL_ABSSTEUERNR);
         ALLPLACEHOLDERS.add(BEL_ABSUSTIDNR);
+        
+        ALLPLACEHOLDERS.add(INGO_TEXT);
 
         return ALLPLACEHOLDERS;
     }

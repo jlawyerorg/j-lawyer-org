@@ -973,7 +973,7 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null);
+                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, null, null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
 
                 String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
                 int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);

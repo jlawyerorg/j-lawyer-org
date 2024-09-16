@@ -732,6 +732,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     /**
      * Creates new form GenericAssistantDialog
      *
+     * @param selectedCase
      * @param config
      * @param c
      * @param inputAdapter

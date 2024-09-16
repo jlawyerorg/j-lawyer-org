@@ -2537,7 +2537,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode);
+                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode, null);
                 if (this.currentEntry != null) {
                     this.save();
                     try {

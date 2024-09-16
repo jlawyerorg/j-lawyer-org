@@ -670,12 +670,19 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Toolkit;
@@ -727,19 +734,68 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     private AssistantConfig generateConfig = null;
     
     private boolean interrupted=false;
+    
+    // variables used for placeholder support in prompts
+    private List<PartyTypeBean> allPartyTypes = null;
+    private Collection<String> formPlaceHolders = null;
+    private HashMap<String, String> formPlaceHolderValues = null;
+    private AppUserBean caseLawyer = null;
+    private AppUserBean caseAssistant = null;
+    private List<PartiesTriplet> parties = new ArrayList<>();
+    private ArchiveFileBean selectedCase = null;
+    
+    // used for calling document creation dialog
+    private ArchiveFilePanel caseView=null;
 
     /**
-     * Creates new form AddVoiceMemoDialog
+     * Creates new form AssistantGenerateDialog
      *
+     * @param selectedCase
      * @param parent
      * @param modal
      */
-    public AssistantGenerateDialog(java.awt.Frame parent, boolean modal) {
+    public AssistantGenerateDialog(ArchiveFilePanel caseView, ArchiveFileBean selectedCase, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
         this.progress.setIndeterminate(false);
         this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        
+        this.caseView=caseView;
+        this.cmdNewDocument.setEnabled(this.caseView!=null);
+        
+        this.selectedCase = selectedCase;
+        if (this.selectedCase != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                try {
+                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
+                } catch (Exception ex) {
+                }
+                try {
+                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
+                } catch (Exception ex) {
+                }
+                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
+                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
+
+                try {
+                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                    for (ArchiveFileAddressesBean aab : involved) {
+                        parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+                    }
+                } catch (Exception ex) {
+                    log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
+                }
+
+            } catch (Exception ex) {
+                log.error("Error getting data for case " + selectedCase.getId(), ex);
+                ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Akteninformationen", "Akteninformationen laden");
+            }
+        }
 
         ComponentUtils.restoreDialogSize(this);
         FrameUtils.centerDialog(this, parent);
@@ -869,6 +925,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         cmdInterrupt = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taResult = new javax.swing.JTextArea();
+        cmdNewDocument = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Texte generieren");
@@ -1023,6 +1080,15 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
         jSplitPane1.setRightComponent(jScrollPane1);
 
+        cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdNewDocument.setText("neues Dokument");
+        cmdNewDocument.setToolTipText("Neues Dokument aus Vorlage erstellen und das Ergebnis dieses Dialogs übergeben. \nDie Vorlage benötigt den Platzhalter {{INGO_TEXT}}.");
+        cmdNewDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewDocumentActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1042,6 +1108,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(cmdCancel)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdNewDocument)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCopy))
                     .add(jSplitPane1))
                 .addContainerGap())
@@ -1064,7 +1132,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
-                    .add(cmdCopy))
+                    .add(cmdCopy)
+                    .add(cmdNewDocument))
                 .addContainerGap())
         );
 
@@ -1164,7 +1233,16 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                 JMenuItem mi = new JMenuItem();
                 mi.setText(p.getName());
                 mi.addActionListener((ActionEvent e) -> {
-                    this.taPrompt.setText(p.getPrompt());
+                    
+                    if (!p.getPrompt().contains("{{")) {
+                        // no placeholders in prompt
+                        this.taPrompt.setText(p.getPrompt());
+                    } else {
+                        // placeholders present in prompt
+                        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                        String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
+                        this.taPrompt.setText(promptWithValues);
+                    }
                 });
                 popAssistant.add(mi);
             }
@@ -1350,12 +1428,17 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         this.interrupted=true;
     }//GEN-LAST:event_cmdInterruptActionPerformed
 
+    private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
+        if(this.caseView!=null)
+            this.caseView.newDocumentDialog(null, null, null, null, null, null, this.taResult.getText());
+    }//GEN-LAST:event_cmdNewDocumentActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AssistantGenerateDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new AssistantGenerateDialog(null, null, new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1364,6 +1447,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdExecutePrompt;
     private javax.swing.JButton cmdInterrupt;
+    private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdPrompt;
     private javax.swing.JButton cmdRecord;
     private javax.swing.JButton cmdTranslate;
@@ -1574,7 +1658,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     }
 
                 }
-                this.taPrompt.insert(result.toString(), this.taResult.getCaretPosition());
+                this.taResult.insert(result.toString(), this.taResult.getCaretPosition());
             }
         }
     }
