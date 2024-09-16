@@ -687,7 +687,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-        Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRemotePlugins();
+        Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRepositoryPlugins();
         for (Map.Entry me : remotePlugins.entrySet()) {
             FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, this.formPluginsPanel, this);
             fpe.setEntry((FormPlugin)me.getValue());

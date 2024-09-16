@@ -667,10 +667,12 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
+import com.jdimension.jlawyer.pojo.ServerFormPlugin;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -709,5 +711,9 @@ public interface FormsServiceRemote {
     Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
 
     HashMap<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception;
+
+    Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception;
+
+    boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception;
 
 }

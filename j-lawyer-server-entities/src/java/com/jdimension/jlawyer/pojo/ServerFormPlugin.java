@@ -36,22 +36,22 @@ receive widespread use, become available for other developers to
 incorporate.  Many developers of free software are heartened and
 encouraged by the resulting cooperation.  However, in the case of
 software used on network servers, this result may fail to come about.
-The GNU General Public License permits making a modified version and
+The GNU General Public License permits making a modified versionInRepository and
 letting the public access it on a server without ever releasing its
 source code to the public.
 
   The GNU Affero General Public License is designed specifically to
 ensure that, in such cases, the modified source code becomes available
 to the community.  It requires the operator of a network server to
-provide the source code of the modified version running there to the
-users of that server.  Therefore, public use of a modified version, on
+provide the source code of the modified versionInRepository running there to the
+users of that server.  Therefore, public use of a modified versionInRepository, on
 a publicly accessible server, gives the public access to the source
-code of the modified version.
+code of the modified versionInRepository.
 
   An older license, called the Affero General Public License and
 published by Affero, was designed to accomplish similar goals.  This is
-a different license, not a version of the Affero GPL, but Affero has
-released a new version of the Affero GPL which permits relicensing under
+a different license, not a versionInRepository of the Affero GPL, but Affero has
+released a new versionInRepository of the Affero GPL which permits relicensing under
 this license.
 
   The precise terms and conditions for copying, distribution and
@@ -61,7 +61,7 @@ modification follow.
 
   0. Definitions.
 
-  "This License" refers to version 3 of the GNU Affero General Public License.
+  "This License" refers to versionInRepository 3 of the GNU Affero General Public License.
 
   "Copyright" also means copyright-like laws that apply to other kinds of
 works, such as semiconductor masks.
@@ -72,7 +72,7 @@ License.  Each licensee is addressed as "you".  "Licensees" and
 
   To "modify" a work means to copy from or adapt all or part of the work
 in a fashion requiring copyright permission, other than the making of an
-exact copy.  The resulting work is called a "modified version" of the
+exact copy.  The resulting work is called a "modified versionInRepository" of the
 earlier work or a work "based on" the earlier work.
 
   A "covered work" means either the unmodified Program or a work based
@@ -299,7 +299,7 @@ the only significant mode of use of the product.
   "Installation Information" for a User Product means any methods,
 procedures, authorization keys, or other information required to install
 and execute modified versions of a covered work in that User Product from
-a modified version of its Corresponding Source.  The information must
+a modified versionInRepository of its Corresponding Source.  The information must
 suffice to ensure that the continued functioning of the modified object
 code is in no case prevented or interfered with solely because
 modification has been made.
@@ -360,7 +360,7 @@ that material) supplement the terms of this License with terms:
 
     c) Prohibiting misrepresentation of the origin of that material, or
     requiring that modified versions of such material be marked in
-    reasonable ways as different from the original version; or
+    reasonable ways as different from the original versionInRepository; or
 
     d) Limiting the use for publicity purposes of names of licensors or
     authors of the material; or
@@ -461,14 +461,14 @@ sale, or importing the Program or any portion of it.
 
   A "contributor" is a copyright holder who authorizes use under this
 License of the Program or a work on which the Program is based.  The
-work thus licensed is called the contributor's "contributor version".
+work thus licensed is called the contributor's "contributor versionInRepository".
 
   A contributor's "essential patent claims" are all patent claims
 owned or controlled by the contributor, whether already acquired or
 hereafter acquired, that would be infringed by some manner, permitted
-by this License, of making, using, or selling its contributor version,
+by this License, of making, using, or selling its contributor versionInRepository,
 but do not include claims that would be infringed only as a
-consequence of further modification of the contributor version.  For
+consequence of further modification of the contributor versionInRepository.  For
 purposes of this definition, "control" includes the right to grant
 patent sublicenses in a manner consistent with the requirements of
 this License.
@@ -476,7 +476,7 @@ this License.
   Each contributor grants you a non-exclusive, worldwide, royalty-free
 patent license under the contributor's essential patent claims, to
 make, use, sell, offer for sale, import and otherwise run, modify and
-propagate the contents of its contributor version.
+propagate the contents of its contributor versionInRepository.
 
   In the following three paragraphs, a "patent license" is any express
 agreement or commitment, however denominated, not to enforce a patent
@@ -541,49 +541,49 @@ License would be to refrain entirely from conveying the Program.
   13. Remote Network Interaction; Use with the GNU General Public License.
 
   Notwithstanding any other provision of this License, if you modify the
-Program, your modified version must prominently offer all users
-interacting with it remotely through a computer network (if your version
+Program, your modified versionInRepository must prominently offer all users
+interacting with it remotely through a computer network (if your versionInRepository
 supports such interaction) an opportunity to receive the Corresponding
-Source of your version by providing access to the Corresponding Source
+Source of your versionInRepository by providing access to the Corresponding Source
 from a network server at no charge, through some standard or customary
 means of facilitating copying of software.  This Corresponding Source
-shall include the Corresponding Source for any work covered by version 3
+shall include the Corresponding Source for any work covered by versionInRepository 3
 of the GNU General Public License that is incorporated pursuant to the
 following paragraph.
 
   Notwithstanding any other provision of this License, you have
 permission to link or combine any covered work with a work licensed
-under version 3 of the GNU General Public License into a single
+under versionInRepository 3 of the GNU General Public License into a single
 combined work, and to convey the resulting work.  The terms of this
 License will continue to apply to the part which is the covered work,
-but the work with which it is combined will remain governed by version
+but the work with which it is combined will remain governed by versionInRepository
 3 of the GNU General Public License.
 
   14. Revised Versions of this License.
 
   The Free Software Foundation may publish revised and/or new versions of
 the GNU Affero General Public License from time to time.  Such new versions
-will be similar in spirit to the present version, but may differ in detail to
+will be similar in spirit to the present versionInRepository, but may differ in detail to
 address new problems or concerns.
 
-  Each version is given a distinguishing version number.  If the
-Program specifies that a certain numbered version of the GNU Affero General
-Public License "or any later version" applies to it, you have the
+  Each versionInRepository is given a distinguishing versionInRepository number.  If the
+Program specifies that a certain numbered versionInRepository of the GNU Affero General
+Public License "or any later versionInRepository" applies to it, you have the
 option of following the terms and conditions either of that numbered
-version or of any later version published by the Free Software
-Foundation.  If the Program does not specify a version number of the
-GNU Affero General Public License, you may choose any version ever published
+versionInRepository or of any later versionInRepository published by the Free Software
+Foundation.  If the Program does not specify a versionInRepository number of the
+GNU Affero General Public License, you may choose any versionInRepository ever published
 by the Free Software Foundation.
 
   If the Program specifies that a proxy can decide which future
 versions of the GNU Affero General Public License can be used, that proxy's
-public statement of acceptance of a version permanently authorizes you
-to choose that version for the Program.
+public statement of acceptance of a versionInRepository permanently authorizes you
+to choose that versionInRepository for the Program.
 
   Later license versions may give you additional or different
 permissions.  However, no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
-later version.
+later versionInRepository.
 
   15. Disclaimer of Warranty.
 
@@ -635,8 +635,8 @@ the "copyright" line and a pointer to where the full notice is found.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    the Free Software Foundation, either versionInRepository 3 of the License, or
+    (at your option) any later versionInRepository.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -661,561 +661,222 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.events.CaseFormUpdatedEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
-import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
-import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.pojo.FormPluginSetting;
-import com.jdimension.jlawyer.pojo.ServerFormPlugin;
-import com.jdimension.jlawyer.server.utils.ServerStringUtils;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.Resource;
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
-import javax.ejb.SessionContext;
-import javax.ejb.Stateless;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 /**
  *
  * @author jens
  */
-@Stateless
-//@SecurityDomain("j-lawyer-security")
-public class FormsService implements FormsServiceRemote, FormsServiceLocal {
+public class ServerFormPlugin implements Comparable, Serializable {
 
-    private static final Logger log = Logger.getLogger(FormsService.class.getName());
-    @Resource
-    private SessionContext context;
-    @EJB
-    private ArchiveFileFormsBeanFacadeLocal caseFormsFacade;
+    protected static long serialVersionUID = 1L;
+    
+    public static final String TYPE_PLUGIN = "plugin";
+    public static final String TYPE_LIBRARY = "library";
 
-    @EJB
-    private ArchiveFileBeanFacadeLocal caseFacade;
+    protected String name = null;
+    protected String id = null;
+    protected String versionInRepository = null;
+    protected String url = null;
+    protected String forVersion = null;
+    protected String description = null;
+    protected String placeHolder = null;
+    protected String type = null;
+    protected String[] dependsOn = new String[0];
+    protected ArrayList<String> files = new ArrayList<>();
+    
+    protected ArrayList<FormPluginSetting> settings=new ArrayList<>();
+    
+    public ServerFormPlugin() {
+    }
 
-    @EJB
-    private ArchiveFileFormEntriesBeanFacadeLocal caseFormEntriesFacade;
-
-    @EJB
-    private FormTypeBeanFacadeLocal formTypesFacade;
-
-    @EJB
-    private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
-    @EJB
-    private ArchiveFileServiceLocal archiveFileService;
-
-    // custom hooks support
-    @Inject
-    Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<FormTypeBean> getAllFormTypes() {
-        return this.formTypesFacade.findAll();
+    public FormTypeBean toFormTypeBean() {
+        FormTypeBean ftb = new FormTypeBean();
+        ftb.setId(this.id);
+        ftb.setPlaceHolder(this.placeHolder);
+        ftb.setVersion(this.versionInRepository);
+        ftb.setName(this.name);
+        ftb.setUsageType(this.type);
+        return ftb;
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeBean addFormType(FormTypeBean form) {
+    public String toString() {
+        return this.getName();
+    }
 
-        this.formTypesFacade.create(form);
-        return this.formTypesFacade.find(form.getId());
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the versionInRepository
+     */
+    public String getVersionInRepository() {
+        return versionInRepository;
+    }
+
+    /**
+     * @param version the versionInRepository to set
+     */
+    public void setVersionInRepository(String version) {
+        this.versionInRepository = version;
+    }
+
+    /**
+     * @return the forVersion
+     */
+    public String getForVersion() {
+        return forVersion;
+    }
+
+    /**
+     * @param forVersion the forVersion to set
+     */
+    public void setForVersion(String forVersion) {
+        this.forVersion = forVersion;
+    }
+
+    /**
+     * @return the files
+     */
+    public ArrayList<String> getFiles() {
+        return files;
+    }
+
+    /**
+     * @param files the files to set
+     */
+    public void setFiles(ArrayList<String> files) {
+        this.files = files;
+    }
+
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+        if (!this.url.endsWith("/")) {
+            this.url = this.url + "/";
+        }
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeArtefactBean addFormTypeArtefact(FormTypeArtefactBean file) {
-
-        file.setId(file.getFileName());
-        this.formArtefactsFacade.create(file);
-        return this.formArtefactsFacade.find(file.getId());
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<FormTypeArtefactBean> getFormTypeArtefacts(String formTypeId) {
-        FormTypeBean formType = this.formTypesFacade.find(formTypeId);
-        if (formType == null) {
-            return new ArrayList();
-        }
-
-        return this.formArtefactsFacade.findByFormType(formType);
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public FormTypeBean getFormType(String id) {
-        return this.formTypesFacade.find(id);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeBean updateFormType(FormTypeBean formType) throws Exception {
-
-        FormTypeBean ftb = this.formTypesFacade.find(formType.getId());
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formType.getId());
-            throw new Exception("Falldatenblatt " + formType.getId() + " ist nicht vorhanden!");
-        }
-
-        ftb.setName(formType.getName());
-        ftb.setPlaceHolder(formType.getPlaceHolder());
-        ftb.setVersion(formType.getVersion());
-
-        this.formTypesFacade.edit(ftb);
-
-        return this.formTypesFacade.find(ftb.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeFormTypeArtefacts(String formTypeId) throws Exception {
-        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formTypeId);
-            throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
-        }
-        List<FormTypeArtefactBean> artefacts = this.formArtefactsFacade.findByFormType(ftb);
-        for (FormTypeArtefactBean arte : artefacts) {
-            this.formArtefactsFacade.remove(arte);
+    public int compareTo(Object o) {
+        if (o instanceof ServerFormPlugin) {
+            return this.getName().compareTo(((ServerFormPlugin) o).getName());
+        } else {
+            return -1;
         }
     }
 
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception {
-
-        ArchiveFileBean afb = this.caseFacade.find(caseId);
-        if (afb == null) {
-            throw new Exception("Akte " + caseId + " kann nicht gefunden werden!");
-        }
-
-        if (ServerStringUtils.isEmpty(form.getPlaceHolder())) {
-            throw new Exception("Platzhalterpräfix darf nicht leer sein!");
-        }
-
-        List<ArchiveFileFormsBean> caseForms = this.caseFormsFacade.findByArchiveFileKey(afb);
-        for (ArchiveFileFormsBean a : caseForms) {
-            if (a.getPlaceHolder().equals(form.getPlaceHolder())) {
-                throw new Exception("Platzhalterpräfix " + form.getPlaceHolder() + " ist bereits vergeben!");
-            }
-        }
-
-        StringGenerator idGen = new StringGenerator();
-        String id = idGen.getID().toString();
-        form.setArchiveFileKey(afb);
-        form.setCreationDate(new Date());
-        form.setId(id);
-        this.caseFormsFacade.create(form);
-
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(afb);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(afb.getId(), newHistEntry);
-
-        return this.caseFormsFacade.find(id);
-
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
     }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileFormsBean> getFormsForCase(String caseId) {
-        ArchiveFileBean afb = this.caseFacade.find(caseId);
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
-        if (afb != null) {
-            return this.caseFormsFacade.findByArchiveFileKey(afb);
-        }
-        return list;
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
     }
 
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeFormType(String formTypeId) throws Exception {
-
-        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formTypeId);
-            throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> existing = this.caseFormsFacade.findByFormType(ftb);
-        if (!existing.isEmpty()) {
-            throw new Exception("Falldatenblatt " + formTypeId + " kann nicht gelöscht werden, da es noch in Akten verwendet wird!");
-        }
-
-        this.formTypesFacade.remove(ftb);
-
+    /**
+     * @return the placeHolder
+     */
+    public String getPlaceHolder() {
+        return placeHolder;
     }
 
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public void removeForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        this.caseFormsFacade.remove(afb);
-
-        StringGenerator idGen = new StringGenerator();
-
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(afb.getArchiveFileKey());
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(afb.getArchiveFileKey().getId(), newHistEntry);
+    /**
+     * @param placeHolder the placeHolder to set
+     */
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
     }
 
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
-
-        if (formId == null) {
-            log.error("Form id cannot be null when setting form entries");
-            throw new Exception("Form id cannot be null when setting form entries");
-        }
-
-        if (formEntries == null) {
-            log.error("List of form entries to update for form id " + formId + " is empty. Skipping...");
-            throw new Exception("List of form entries to update for form id " + formId + " is empty. Skipping...");
-        }
-
-        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
-            if (newEntry.getPlaceHolder() == null || "".equals(newEntry.getPlaceHolder())) {
-                log.error("At least one entry has an empty placeholder when updating form entries for form " + formId);
-                throw new Exception("At least one entry has an empty placeholder when updating form entries for form " + formId);
-            }
-        }
-
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
-        boolean entriesChanged = entriesChanged(existingEntries, formEntries);
-
-        for (ArchiveFileFormEntriesBean existing : existingEntries) {
-            this.caseFormEntriesFacade.remove(existing);
-        }
-
-        StringGenerator idGen = new StringGenerator();
-        long totalChars = 0;
-        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
-            newEntry.setForm(afb);
-            newEntry.setArchiveFileKey(afb.getArchiveFileKey());
-            newEntry.setId(idGen.getID().toString());
-            newEntry.setEntryKey(newEntry.getPlaceHolder());
-            if (newEntry.getStringValue() != null) {
-                totalChars = totalChars + newEntry.getStringValue().length();
-            }
-            this.caseFormEntriesFacade.create(newEntry);
-        }
-        log.info(context.getCallerPrincipal().getName() + " saved " + formEntries.size() + " entries with total " + totalChars + " chars to form " + formId);
-
-        if (entriesChanged) {
-            try {
-                CaseFormUpdatedEvent evt = new CaseFormUpdatedEvent();
-                evt.setCaseId(afb.getArchiveFileKey().getId());
-                evt.setFormId(formId);
-                this.updatedCaseFormEvent.fireAsync(evt);
-            } catch (Throwable t) {
-                log.error("unable fire CaseFormUpdatedEvent", t);
-            }
-        }
-
+    /**
+     * @return the type
+     */
+    public String getType() {
+        return type;
     }
 
-    private boolean entriesChanged(List<ArchiveFileFormEntriesBean> first, List<ArchiveFileFormEntriesBean> second) {
-        if (first == null && second == null) {
-            return false;
-        }
-
-        if (first == null && second != null) {
-            return true;
-        }
-
-        if (first != null && second == null) {
-            return true;
-        }
-
-        if (first != null && second != null) {
-            if (first.size() != second.size()) {
-                return true;
-            }
-        }
-
-        HashMap<String, String> firstMap = new HashMap<>();
-        for (ArchiveFileFormEntriesBean fe : first) {
-            firstMap.put(fe.getPlaceHolder(), fe.getStringValue());
-        }
-        HashMap<String, String> secondMap = new HashMap<>();
-        for (ArchiveFileFormEntriesBean fe : second) {
-            secondMap.put(fe.getPlaceHolder(), fe.getStringValue());
-        }
-
-        for (String key : firstMap.keySet()) {
-            String v1 = firstMap.get(key);
-            if (!secondMap.containsKey(key)) {
-                return true;
-            } else {
-                String v2 = secondMap.get(key);
-                if (v1 == null && v2 != null) {
-                    return true;
-                }
-                if (v2 == null && v1 != null) {
-                    return true;
-                }
-                if (v1 != null) {
-                    if (!(v1.equals(v2))) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
+    /**
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
     }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
-        if (existingEntries == null) {
-            existingEntries = new ArrayList<>();
-        }
-        return existingEntries;
+    /**
+     * @return the dependsOn
+     */
+    public String[] getDependsOn() {
+        return dependsOn;
     }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileFormsBean getForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        return afb;
-
+    /**
+     * @param dependsOn the dependsOn to set
+     */
+    public void setDependsOn(String[] dependsOn) {
+        this.dependsOn = dependsOn;
+    }
+    
+    /**
+     * @return the settings
+     */
+    public ArrayList<FormPluginSetting> getSettings() {
+        return settings;
+    }
+    
+    public boolean hasSettings() {
+        return !(this.settings.isEmpty());
     }
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
-        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
-        if (caseBean == null) {
-            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        ArrayList<String> placeHolders = new ArrayList<>();
-        for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
-            for (ArchiveFileFormEntriesBean e : entries) {
-                String ph = e.getPlaceHolder();
-                if (!(ph.startsWith("{{"))) {
-                    ph = "{{" + ph;
-                }
-                if (!(ph.endsWith("}}"))) {
-                    ph = ph + "}}";
-                }
-                if (!placeHolders.contains(ph)) {
-                    placeHolders.add(ph);
-                }
-            }
-        }
-        return placeHolders;
-
-    }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
-        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
-        if (caseBean == null) {
-            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        HashMap<String, String> placeHolders = new HashMap<>();
-        for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
-            for (ArchiveFileFormEntriesBean e : entries) {
-                String ph = e.getPlaceHolder();
-                if (!(ph.startsWith("{{"))) {
-                    ph = "{{" + ph;
-                }
-                if (!(ph.endsWith("}}"))) {
-                    ph = ph + "}}";
-                }
-                if (!placeHolders.containsKey(ph)) {
-                    placeHolders.put(ph, e.getStringValue());
-                }
-            }
-        }
-        return placeHolders;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception {
-        TreeMap<String, ServerFormPlugin> formPlugins = new TreeMap<>();
-
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-forms.xml");
-        URLConnection urlCon = updateURL.openConnection();
-        urlCon.setConnectTimeout(5000);
-        urlCon.setReadTimeout(5000);
-        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + clientVersion);
-
-        InputStream is = urlCon.getInputStream();
-        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-        char[] buffer = new char[1024];
-        int len = 0;
-        StringBuilder sb = new StringBuilder();
-        while ((len = reader.read(buffer)) > -1) {
-            sb.append(buffer, 0, len);
-        }
-        reader.close();
-        is.close();
-        String formsContent = sb.toString();
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
-        }
-        DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-        InputSource inSrc1 = new InputSource(new StringReader(formsContent));
-        inSrc1.setEncoding("UTF-8");
-        Document remoteDoc = remoteDb.parse(inSrc1);
-
-        NodeList remoteList = remoteDoc.getElementsByTagName("form");
-
-        for (int i = 0; i < remoteList.getLength(); i++) {
-            Node n = remoteList.item(i);
-            String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
-            if (forVersion.contains(clientVersion)) {
-                ServerFormPlugin fp = new ServerFormPlugin();
-                fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
-                fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
-                fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
-                fp.setVersionInRepository(n.getAttributes().getNamedItem("version").getNodeValue());
-                fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                String depends = "";
-                if (n.getAttributes().getNamedItem("depends") != null) {
-                    depends = n.getAttributes().getNamedItem("depends").getNodeValue();
-                }
-                String[] dependencies = depends.split(",");
-                fp.setDependsOn(dependencies);
-                fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
-                fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
-                fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
-                String files = n.getAttributes().getNamedItem("files").getNodeValue();
-                fp.getFiles().addAll(Arrays.asList(files.split(",")));
-                if (n.getChildNodes() != null) {
-                    NodeList settingsList = n.getChildNodes();
-                    for (int s = 0; s < settingsList.getLength(); s++) {
-                        Node setting = settingsList.item(s);
-                        if ("setting".equalsIgnoreCase(setting.getNodeName())) {
-                            FormPluginSetting ps = new FormPluginSetting();
-                            ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
-                            ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
-                            ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
-                            ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
-                            fp.getSettings().add(ps);
-                        }
-                    }
-                }
-
-                formPlugins.put(fp.getName(), fp);
-            }
-        }
-
-        return formPlugins;
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception {
-        FormTypeBean newFormType = addFormType(plugin.toFormTypeBean());
-
-        for (String f : plugin.getFiles()) {
-
-            URL u = new URL(plugin.getUrl() + f);
-            URLConnection urlCon = u.openConnection();
-            //urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(5000);
-            urlCon.setReadTimeout(5000);
-
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String content = sb.toString();
-
-            FormTypeArtefactBean newArtefact = new FormTypeArtefactBean();
-            newArtefact.setContent(content.getBytes());
-            newArtefact.setFileName(f);
-            newArtefact.setFormType(newFormType);
-            newArtefact.setId(f);
-            addFormTypeArtefact(newArtefact);
-
-        }
-        return true;
+    /**
+     * @param settings the settings to set
+     */
+    public void setSettings(ArrayList<FormPluginSetting> settings) {
+        this.settings = settings;
     }
 
 }

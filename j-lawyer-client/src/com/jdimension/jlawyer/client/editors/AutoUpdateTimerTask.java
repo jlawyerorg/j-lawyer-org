@@ -859,7 +859,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
         }
         
         try {
-            Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRemotePlugins();
+            Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRepositoryPlugins();
             List<FormPlugin> updatable=new ArrayList<>();
             for (Map.Entry me : remotePlugins.entrySet()) {
                 if(((FormPlugin)me.getValue()).getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {

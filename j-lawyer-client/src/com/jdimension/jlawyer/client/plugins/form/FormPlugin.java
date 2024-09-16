@@ -663,12 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
+import com.jdimension.jlawyer.pojo.ServerFormPlugin;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import groovy.util.GroovyScriptEngine;
@@ -687,7 +689,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class FormPlugin implements Comparable {
+public class FormPlugin extends ServerFormPlugin implements Comparable {
 
     public static final int STATE_INSTALLED = 10;
     public static final int STATE_INSTALLING = 11;
@@ -696,30 +698,31 @@ public class FormPlugin implements Comparable {
     
     private static final Logger log = Logger.getLogger(FormPlugin.class.getName());
 
-    public static final String TYPE_PLUGIN = "plugin";
-    public static final String TYPE_LIBRARY = "library";
-
-    private String name = null;
-    private String id = null;
     private ArchiveFileBean caseDto = null;
-    private String versionInRepository = null;
-    private String url = null;
-    private String forVersion = null;
-    private String description = null;
-    private String placeHolder = null;
-    private String type = null;
-    private String[] dependsOn = new String[0];
-    private ArrayList<String> files = new ArrayList<>();
     private int state=STATE_NOT_INSTALLED;
     private String versionInstalled=null;
     
-    protected ArrayList<FormPluginSetting> settings=new ArrayList<>();
-
     Class scriptClass = null;
     Object scriptInstance = null;
     private JPanel ui = null;
 
     public FormPlugin() {
+        super();
+    }
+    
+    public FormPlugin(ServerFormPlugin sfp) {
+        super();
+        this.dependsOn=sfp.getDependsOn();
+        this.description=sfp.getDescription();
+        this.files=sfp.getFiles();
+        this.forVersion=sfp.getForVersion();
+        this.id=sfp.getId();
+        this.name=sfp.getName();
+        this.placeHolder=sfp.getPlaceHolder();
+        this.settings=sfp.getSettings();
+        this.type=sfp.getType();
+        this.url=sfp.getUrl();
+        this.versionInRepository=sfp.getVersionInRepository();
     }
 
     public ArrayList<String> getPlaceHolders() {
@@ -800,16 +803,6 @@ public class FormPlugin implements Comparable {
             t.printStackTrace();
         }
         return null;
-    }
-
-    private FormTypeBean toFormTypeBean() {
-        FormTypeBean ftb = new FormTypeBean();
-        ftb.setId(this.id);
-        ftb.setPlaceHolder(this.placeHolder);
-        ftb.setVersion(this.versionInRepository);
-        ftb.setName(this.name);
-        ftb.setUsageType(this.type);
-        return ftb;
     }
 
     public void update() throws Exception {
@@ -947,93 +940,6 @@ public class FormPlugin implements Comparable {
         return this.getName();
     }
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the versionInRepository
-     */
-    public String getVersionInRepository() {
-        return versionInRepository;
-    }
-
-    /**
-     * @param version the versionInRepository to set
-     */
-    public void setVersionInRepository(String version) {
-        this.versionInRepository = version;
-    }
-
-    /**
-     * @return the forVersion
-     */
-    public String getForVersion() {
-        return forVersion;
-    }
-
-    /**
-     * @param forVersion the forVersion to set
-     */
-    public void setForVersion(String forVersion) {
-        this.forVersion = forVersion;
-    }
-
-    /**
-     * @return the files
-     */
-    public ArrayList<String> getFiles() {
-        return files;
-    }
-
-    /**
-     * @param files the files to set
-     */
-    public void setFiles(ArrayList<String> files) {
-        this.files = files;
-    }
-
-    /**
-     * @return the url
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * @param url the url to set
-     */
-    public void setUrl(String url) {
-        this.url = url;
-        if (!this.url.endsWith("/")) {
-            this.url = this.url + "/";
-        }
-    }
-
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @Override
     public int compareTo(Object o) {
         if (o instanceof FormPlugin) {
@@ -1041,62 +947,6 @@ public class FormPlugin implements Comparable {
         } else {
             return -1;
         }
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the placeHolder
-     */
-    public String getPlaceHolder() {
-        return placeHolder;
-    }
-
-    /**
-     * @param placeHolder the placeHolder to set
-     */
-    public void setPlaceHolder(String placeHolder) {
-        this.placeHolder = placeHolder;
-    }
-
-    /**
-     * @return the type
-     */
-    public String getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the dependsOn
-     */
-    public String[] getDependsOn() {
-        return dependsOn;
-    }
-
-    /**
-     * @param dependsOn the dependsOn to set
-     */
-    public void setDependsOn(String[] dependsOn) {
-        this.dependsOn = dependsOn;
     }
 
     /**
@@ -1111,24 +961,6 @@ public class FormPlugin implements Comparable {
      */
     public void setCaseDto(ArchiveFileBean caseDto) {
         this.caseDto = caseDto;
-    }
-
-    /**
-     * @return the settings
-     */
-    public ArrayList<FormPluginSetting> getSettings() {
-        return settings;
-    }
-    
-    public boolean hasSettings() {
-        return !(this.settings.isEmpty());
-    }
-
-    /**
-     * @param settings the settings to set
-     */
-    public void setSettings(ArrayList<FormPluginSetting> settings) {
-        this.settings = settings;
     }
 
     /**
